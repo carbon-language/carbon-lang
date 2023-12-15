@@ -52,11 +52,11 @@ TEST_F(TypedNodeTest, Empty) {
 
   EXPECT_TRUE(tree->IsValid<FileStart>(file.start));
   EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
-  EXPECT_TRUE(file.start.Extract(tree).has_value());
+  EXPECT_TRUE(tree->Extract(file.start).has_value());
 
   EXPECT_TRUE(tree->IsValid<FileEnd>(file.end));
   EXPECT_TRUE(tree->ExtractAs<FileEnd>(file.end).has_value());
-  EXPECT_TRUE(file.end.Extract(tree).has_value());
+  EXPECT_TRUE(tree->Extract(file.end).has_value());
 
   EXPECT_FALSE(tree->IsValid<FileEnd>(file.start));
   EXPECT_FALSE(tree->ExtractAs<FileEnd>(file.start).has_value());
@@ -73,7 +73,7 @@ TEST_F(TypedNodeTest, Function) {
 
   auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
-  auto f_sig = f_fn->signature.Extract(tree);
+  auto f_sig = tree->Extract(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.is_present());
 
@@ -98,9 +98,9 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_EQ(fn->body.size(), 1);
   auto for_stmt = tree->ExtractAs<ForStatement>(fn->body[0]);
   ASSERT_TRUE(for_stmt.has_value());
-  auto for_header = for_stmt->header.Extract(tree);
+  auto for_header = tree->Extract(for_stmt->header);
   ASSERT_TRUE(for_header.has_value());
-  auto for_var = for_header->var.Extract(tree);
+  auto for_var = tree->Extract(for_header->var);
   ASSERT_TRUE(for_var.has_value());
   auto for_var_binding = tree->ExtractAs<BindingPattern>(for_var->pattern);
   ASSERT_TRUE(for_var_binding.has_value());

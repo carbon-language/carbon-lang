@@ -45,9 +45,9 @@ using FileEnd = LeafNode<NodeKind::FileEnd>;
 // A complete source file. Note that there is no corresponding parse node for
 // the file. The file is instead the complete contents of the parse tree.
 struct File {
-  Required<FileStart> start;
+  TypedNodeId<FileStart> start;
   BracketedList<AnyDecl, FileStart> decls;
-  Required<FileEnd> end;
+  TypedNodeId<FileEnd> end;
 
   static auto Make(const Tree* tree) -> File {
     return tree->ExtractNodeFromChildren<File>(tree->roots());
@@ -80,7 +80,7 @@ using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind = NodeKind::CodeBlock;
-  Required<CodeBlockStart> left_brace;
+  TypedNodeId<CodeBlockStart> left_brace;
   BracketedList<AnyStatement, CodeBlockStart> statements;
 };
 
@@ -93,14 +93,14 @@ using PatternListComma = LeafNode<NodeKind::PatternListComma>;
 // A parameter list: `(a: i32, b: i32)`.
 struct TuplePattern {
   static constexpr auto Kind = NodeKind::TuplePattern;
-  Required<TuplePatternStart> left_paren;
+  TypedNodeId<TuplePatternStart> left_paren;
   CommaSeparatedList<PatternListComma, TuplePatternStart> params;
 };
 
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList;
-  Required<ImplicitParamListStart> left_square;
+  TypedNodeId<ImplicitParamListStart> left_square;
   CommaSeparatedList<PatternListComma, ImplicitParamListStart> params;
 };
 
@@ -116,9 +116,9 @@ struct ReturnType {
 template <const NodeKind& KindT>
 struct FunctionSignature {
   static constexpr auto Kind = KindT;
-  Required<FunctionIntroducer> introducer;
-  Required<IdentifierName> name;
-  Required<TuplePattern> params;
+  TypedNodeId<FunctionIntroducer> introducer;
+  TypedNodeId<IdentifierName> name;
+  TypedNodeId<TuplePattern> params;
   Optional<ReturnType> return_type;
 };
 
@@ -129,7 +129,7 @@ using FunctionDefinitionStart =
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
   static constexpr auto Kind = NodeKind::FunctionDefinition;
-  Required<FunctionDefinitionStart> signature;
+  TypedNodeId<FunctionDefinitionStart> signature;
   BracketedList<AnyStatement, FunctionDefinitionStart> body;
 };
 
@@ -140,13 +140,13 @@ using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart>;
 // TODO: Consider flattening this into `ArrayExpr`.
 struct ArrayExprSemi {
   static constexpr auto Kind = NodeKind::ArrayExprSemi;
-  Required<ArrayExprStart> left_square;
+  TypedNodeId<ArrayExprStart> left_square;
   AnyExpr type;
 };
 
 // An array type, such as  `[i32; 3]` or `[i32;]`.
 struct ArrayExpr {
-  Required<ArrayExprSemi> start;
+  TypedNodeId<ArrayExprSemi> start;
   OptionalNot<ArrayExprSemi> bound;
 };
 
@@ -167,7 +167,7 @@ struct Address {
 // A template binding: `template T:! type`.
 struct Template {
   static constexpr auto Kind = NodeKind::Template;
-  // This is a Required<GenericBindingPattern> in any valid program.
+  // This is a TypedNodeId<GenericBindingPattern> in any valid program.
   // TODO: Should the parser enforce that?
   AnyPattern inner;
 };
@@ -178,9 +178,9 @@ using LetInitializer = LeafNode<NodeKind::LetInitializer>;
 // A `let` declaration: `let a: i32 = 5;`.
 struct LetDecl {
   static constexpr auto Kind = NodeKind::LetDecl;
-  Required<LetIntroducer> introducer;
+  TypedNodeId<LetIntroducer> introducer;
   AnyPattern pattern;
-  Required<LetInitializer> equals;
+  TypedNodeId<LetInitializer> equals;
   AnyExpr initializer;
 };
 
@@ -191,12 +191,12 @@ using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
   static constexpr auto Kind = NodeKind::VariableDecl;
-  Required<VariableIntroducer> introducer;
+  TypedNodeId<VariableIntroducer> introducer;
   Optional<ReturnedModifier> returned;
   AnyPattern pattern;
 
   struct Initializer {
-    Required<VariableInitializer> equals;
+    TypedNodeId<VariableInitializer> equals;
     AnyExpr value;
   };
   std::optional<Initializer> initializer;
@@ -213,7 +213,7 @@ using BreakStatementStart = LeafNode<NodeKind::BreakStatementStart>;
 // A break statement: `break;`.
 struct BreakStatement {
   static constexpr auto Kind = NodeKind::BreakStatement;
-  Required<BreakStatementStart> introducer;
+  TypedNodeId<BreakStatementStart> introducer;
 };
 
 using ContinueStatementStart = LeafNode<NodeKind::ContinueStatementStart>;
@@ -221,7 +221,7 @@ using ContinueStatementStart = LeafNode<NodeKind::ContinueStatementStart>;
 // A continue statement: `continue;`.
 struct ContinueStatement {
   static constexpr auto Kind = NodeKind::ContinueStatement;
-  Required<ContinueStatementStart> introducer;
+  TypedNodeId<ContinueStatementStart> introducer;
 };
 
 using ReturnStatementStart = LeafNode<NodeKind::ReturnStatementStart>;
@@ -230,7 +230,7 @@ using ReturnVarModifier = LeafNode<NodeKind::ReturnVarModifier>;
 // A return statement: `return;` or `return expr;` or `return var;`.
 struct ReturnStatement {
   static constexpr auto Kind = NodeKind::ReturnStatement;
-  Required<ReturnStatementStart> introducer;
+  TypedNodeId<ReturnStatementStart> introducer;
   OptionalNot<ReturnStatementStart> expr;
   Optional<ReturnVarModifier> var;
 };
@@ -240,23 +240,23 @@ using ForHeaderStart = LeafNode<NodeKind::ForHeaderStart>;
 // The `var ... in` portion of a `for` statement.
 struct ForIn {
   static constexpr auto Kind = NodeKind::ForIn;
-  Required<VariableIntroducer> introducer;
+  TypedNodeId<VariableIntroducer> introducer;
   AnyPattern pattern;
 };
 
 // The `for (var ... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind = NodeKind::ForHeader;
-  Required<ForHeaderStart> introducer;
-  Required<ForIn> var;
+  TypedNodeId<ForHeaderStart> introducer;
+  TypedNodeId<ForIn> var;
   AnyExpr range;
 };
 
 // A complete `for (...) { ... }` statement.
 struct ForStatement {
   static constexpr auto Kind = NodeKind::ForStatement;
-  Required<ForHeader> header;
-  Required<CodeBlock> body;
+  TypedNodeId<ForHeader> header;
+  TypedNodeId<CodeBlock> body;
 };
 
 using IfConditionStart = LeafNode<NodeKind::IfConditionStart>;
@@ -264,7 +264,7 @@ using IfConditionStart = LeafNode<NodeKind::IfConditionStart>;
 // The condition portion of an `if` statement: `(expr)`.
 struct IfCondition {
   static constexpr auto Kind = NodeKind::IfCondition;
-  Required<IfConditionStart> left_paren;
+  TypedNodeId<IfConditionStart> left_paren;
   AnyExpr condition;
 };
 
@@ -273,11 +273,11 @@ using IfStatementElse = LeafNode<NodeKind::IfStatementElse>;
 // An `if` statement: `if (expr) { ... } else { ... }`.
 struct IfStatement {
   static constexpr auto Kind = NodeKind::IfStatement;
-  Required<IfCondition> head;
-  Required<CodeBlock> then;
+  TypedNodeId<IfCondition> head;
+  TypedNodeId<CodeBlock> then;
 
   struct Else {
-    Required<IfStatementElse> else_token;
+    TypedNodeId<IfStatementElse> else_token;
     // Either a CodeBlock or an IfStatement.
     AnyStatement statement;
   };
@@ -289,15 +289,15 @@ using WhileConditionStart = LeafNode<NodeKind::WhileConditionStart>;
 // The condition portion of a `while` statement: `(expr)`.
 struct WhileCondition {
   static constexpr auto Kind = NodeKind::WhileCondition;
-  Required<WhileConditionStart> left_paren;
+  TypedNodeId<WhileConditionStart> left_paren;
   AnyExpr condition;
 };
 
 // A `while` statement: `while (expr) { ... }`.
 struct WhileStatement {
   static constexpr auto Kind = NodeKind::WhileStatement;
-  Required<WhileCondition> head;
-  Required<CodeBlock> body;
+  TypedNodeId<WhileCondition> head;
+  TypedNodeId<CodeBlock> body;
 };
 
 // The opening portion of an indexing expression: `a[`.
@@ -311,7 +311,7 @@ struct IndexExprStart {
 // An indexing expression, such as `a[1]`.
 struct IndexExpr {
   static constexpr auto Kind = NodeKind::IndexExpr;
-  Required<IndexExprStart> start;
+  TypedNodeId<IndexExprStart> start;
   AnyExpr index;
 };
 
@@ -320,7 +320,7 @@ using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
   static constexpr auto Kind = NodeKind::ParenExpr;
-  Required<ExprOpenParen> left_paren;
+  TypedNodeId<ExprOpenParen> left_paren;
   AnyExpr expr;
 };
 
@@ -329,7 +329,7 @@ using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
 struct TupleLiteral {
   static constexpr auto Kind = NodeKind::TupleLiteral;
-  Required<ExprOpenParen> left_paren;
+  TypedNodeId<ExprOpenParen> left_paren;
   CommaSeparatedList<TupleLiteralComma, ExprOpenParen> elements;
 };
 
@@ -346,7 +346,7 @@ using CallExprComma = LeafNode<NodeKind::CallExprComma>;
 // A call expression: `F(a, b, c)`.
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr;
-  Required<CallExprStart> start;
+  TypedNodeId<CallExprStart> start;
   CommaSeparatedList<CallExprComma, CallExprStart> arguments;
 };
 
@@ -361,21 +361,21 @@ struct QualifiedDecl {
 
   // TODO: This will eventually need to support more general expressions, for
   // example `GenericType(type_args).ChildType(child_type_args).Name`.
-  Required<IdentifierName> rhs;
+  TypedNodeId<IdentifierName> rhs;
 };
 
 // A simple member access expression: `a.b`.
 struct MemberAccessExpr {
   static constexpr auto Kind = NodeKind::MemberAccessExpr;
   AnyExpr lhs;
-  Required<IdentifierName> rhs;
+  TypedNodeId<IdentifierName> rhs;
 };
 
 // A simple indirect member access expression: `a->b`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind = NodeKind::PointerMemberAccessExpr;
   AnyExpr lhs;
-  Required<IdentifierName> rhs;
+  TypedNodeId<IdentifierName> rhs;
 };
 
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
@@ -440,12 +440,16 @@ struct IfExprThen {
 // A full `if` expression: `if expr then expr else expr`.
 struct IfExprElse {
   static constexpr auto Kind = NodeKind::IfExprElse;
-  Required<IfExprIf> start;
-  Required<IfExprIf> then;
+  TypedNodeId<IfExprIf> start;
+  TypedNodeId<IfExprThen> then;
   AnyExpr else_result;
 };
 
 // TODO: StructLiteral onwards
+
+// #define CARBON_PARSE_NODE_KIND(Name, ...)     \
+//   using Name##Id = TypedNodeId<Name>;
+// #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Parse
 

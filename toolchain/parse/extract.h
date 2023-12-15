@@ -33,29 +33,15 @@ using AnyDecl = NodeId;
 using AnyStatement = NodeId;
 using AnyPattern = NodeId;
 
-// A child that is known to be of the specified kind `T`.
+// Extract a `TypeNodeId<T>` as a single required child.
 template <typename T>
-class Required : public NodeId {
- public:
-  explicit Required(NodeId node_id) : NodeId(node_id) {}
-
-  // Get the representation of this child node. Returns `nullopt` if the node is
-  // invalid.
-  auto Extract(const Tree* tree) const -> std::optional<T> {
-    CARBON_CHECK(tree->node_kind(*this) == T::Kind);
-    return tree->ExtractAs<T>(*this);
-  }
-};
-
-// Extract a `Required<T>` as a single child.
-template <typename T>
-struct Tree::Extractable<Required<T>> {
+struct Tree::Extractable<TypedNodeId<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<Required<T>> {
+                      SiblingIterator end) -> std::optional<TypedNodeId<T>> {
     if (it == end || tree->node_kind(*it) != T::Kind) {
       return std::nullopt;
     }
-    return Required<T>(*it++);
+    return TypedNodeId<T>(*it++);
   }
 };
 

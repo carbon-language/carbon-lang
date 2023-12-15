@@ -32,6 +32,19 @@ struct NodeId : public IdBase {
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
+// Typed version of `NodeId` that references a node of type `T`:
+template <typename T>
+struct TypedNodeId : public NodeId {
+  explicit TypedNodeId(NodeId node_id) : NodeId(node_id) {}
+
+  // An explicitly invalid instance.
+  static const TypedNodeId<T> Invalid;
+};
+
+template <typename T>
+constexpr TypedNodeId<T> TypedNodeId<T>::Invalid =
+    TypedNodeId<T>(NodeId::InvalidIndex);
+
 // A tree of parsed tokens based on the language grammar.
 //
 // This is a purely syntactic parse tree without any semantics yet attached. It
@@ -146,10 +159,14 @@ class Tree : public Printable<Tree> {
   auto ExtractNodeFromChildren(
       llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
 
-  // Converts this node to a typed node of a specified type, if it is a valid
+  // Converts this node_id to a typed node of a specified type, if it is a valid
   // node of that kind.
   template <typename T>
   auto ExtractAs(NodeId node_id) const -> std::optional<T>;
+
+  // Converts to a typed node, if it is not an error.
+  template <typename T>
+  auto Extract(TypedNodeId<T> node_id) const -> std::optional<T>;
 
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
@@ -403,6 +420,15 @@ auto Tree::ExtractNodeFromChildren(
 template <typename T>
 auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
   if (!IsValid<T>(node_id)) {
+    return std::nullopt;
+  }
+
+  return ExtractNodeFromChildren<T>(children(node_id));
+}
+
+template <typename T>
+auto Tree::Extract(TypedNodeId<T> node_id) const -> std::optional<T> {
+  if (node_has_error(node_id)) {
     return std::nullopt;
   }
 
