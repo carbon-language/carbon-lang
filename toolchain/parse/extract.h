@@ -42,8 +42,8 @@ class Required : public NodeId {
   // Get the representation of this child node. Returns `nullopt` if the node is
   // invalid.
   auto Extract(const Tree* tree) const -> std::optional<T> {
-    CARBON_CHECK(kind(tree) == T::Kind);
-    return ExtractAs<T>(tree);
+    CARBON_CHECK(tree->node_kind(*this) == T::Kind);
+    return tree->ExtractAs<T>(*this);
   }
 };
 
@@ -52,7 +52,7 @@ template <typename T>
 struct Tree::Extractable<Required<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<Required<T>> {
-    if (it == end || it->kind(tree) != T::Kind) {
+    if (it == end || tree->node_kind(*it) != T::Kind) {
       return std::nullopt;
     }
     return Required<T>(*it++);
@@ -78,7 +78,7 @@ class Optional {
   // `std::nullopt` if this element was present but malformed. Use `is_present`
   // to determine if the element was present at all.
   auto Extract(const Tree* tree) const -> std::optional<T> {
-    return is_present() ? node_.ExtractAs<T>(tree) : std::nullopt;
+    return is_present() ? tree->ExtractAs<T>(node_id_) : std::nullopt;
   }
 
  private:
@@ -90,7 +90,7 @@ template <typename T>
 struct Tree::Extractable<Optional<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<Optional<T>> {
-    if (it == end || it->kind(tree) != T::Kind) {
+    if (it == end || tree->node_kind(*it) != T::Kind) {
       return Optional<T>(std::nullopt);
     }
     return Optional<T>(*it++);
@@ -121,7 +121,7 @@ template <typename T>
 struct Tree::Extractable<OptionalNot<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<OptionalNot<T>> {
-    if (it == end || it->kind(tree) == T::Kind) {
+    if (it == end || tree->node_kind(*it) == T::Kind) {
       return OptionalNot<T>(std::nullopt);
     }
     return OptionalNot<T>(*it++);
@@ -140,7 +140,7 @@ struct Tree::Extractable<BracketedList<T, Bracket>> {
                       SiblingIterator end)
       -> std::optional<BracketedList<T, Bracket>> {
     BracketedList<T, Bracket> result;
-    while (it != end && (*it).kind(tree) != Bracket::Kind) {
+    while (it != end && tree->node_kind(*it) != Bracket::Kind) {
       auto item = Extractable<T>::Extract(tree, it, end);
       if (!item.has_value()) {
         return std::nullopt;

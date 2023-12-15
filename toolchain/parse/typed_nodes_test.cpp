@@ -50,16 +50,16 @@ TEST_F(TypedNodeTest, Empty) {
   auto* tree = &GetTree("");
   auto file = File::Make(tree);
 
-  EXPECT_TRUE(file.start.IsValid<FileStart>(tree));
-  EXPECT_TRUE(file.start.ExtractAs<FileStart>(tree).has_value());
+  EXPECT_TRUE(tree->IsValid<FileStart>(file.start));
+  EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
   EXPECT_TRUE(file.start.Extract(tree).has_value());
 
-  EXPECT_TRUE(file.end.IsValid<FileEnd>(tree));
-  EXPECT_TRUE(file.end.ExtractAs<FileEnd>(tree).has_value());
+  EXPECT_TRUE(tree->IsValid<FileEnd>(file.end));
+  EXPECT_TRUE(tree->ExtractAs<FileEnd>(file.end).has_value());
   EXPECT_TRUE(file.end.Extract(tree).has_value());
 
-  EXPECT_FALSE(file.start.IsValid<FileEnd>(tree));
-  EXPECT_FALSE(file.start.ExtractAs<FileEnd>(tree).has_value());
+  EXPECT_FALSE(tree->IsValid<FileEnd>(file.start));
+  EXPECT_FALSE(tree->ExtractAs<FileEnd>(file.start).has_value());
 }
 
 TEST_F(TypedNodeTest, Function) {
@@ -71,13 +71,13 @@ TEST_F(TypedNodeTest, Function) {
 
   ASSERT_EQ(file.decls.size(), 2);
 
-  auto f_fn = file.decls[0].ExtractAs<FunctionDefinition>(tree);
+  auto f_fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(f_fn.has_value());
   auto f_sig = f_fn->signature.Extract(tree);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.is_present());
 
-  auto g_fn = file.decls[1].ExtractAs<FunctionDecl>(tree);
+  auto g_fn = tree->ExtractAs<FunctionDecl>(file.decls[1]);
   ASSERT_TRUE(g_fn.has_value());
   EXPECT_TRUE(g_fn->return_type.is_present());
 }
@@ -93,18 +93,18 @@ TEST_F(TypedNodeTest, For) {
   auto file = File::Make(tree);
 
   ASSERT_EQ(file.decls.size(), 1);
-  auto fn = file.decls[0].ExtractAs<FunctionDefinition>(tree);
+  auto fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);
   ASSERT_TRUE(fn.has_value());
   ASSERT_EQ(fn->body.size(), 1);
-  auto for_stmt = fn->body[0].ExtractAs<ForStatement>(tree);
+  auto for_stmt = tree->ExtractAs<ForStatement>(fn->body[0]);
   ASSERT_TRUE(for_stmt.has_value());
   auto for_header = for_stmt->header.Extract(tree);
   ASSERT_TRUE(for_header.has_value());
   auto for_var = for_header->var.Extract(tree);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding = for_var->pattern.ExtractAs<PatternBinding>(tree);
+  auto for_var_binding = tree->ExtractAs<BindingPattern>(for_var->pattern);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name = for_var_binding->name.ExtractAs<Name>(tree);
+  auto for_var_name = tree->ExtractAs<IdentifierName>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 

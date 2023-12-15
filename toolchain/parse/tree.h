@@ -140,6 +140,23 @@ class Tree : public Printable<Tree> {
 
   auto node_subtree_size(NodeId n) const -> int32_t;
 
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range.
+  template <typename T>
+  auto ExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
+
+  // Converts this node to a typed node of a specified type, if it is a valid
+  // node of that kind.
+  template <typename T>
+  auto ExtractAs(NodeId node_id) const -> std::optional<T>;
+
+  // Returns whether this node is a valid node of the specified type.
+  template <typename T>
+  auto IsValid(NodeId node_id) const -> bool {
+    return node_kind(node_id) == T::Kind && !node_has_error(node_id);
+  }
+
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
   }
@@ -372,6 +389,25 @@ class Tree::SiblingIterator
 
   NodeId node_;
 };
+
+template <typename T>
+auto Tree::ExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+  auto it = children.begin();
+  auto result = Extractable<T>::Extract(this, it, children.end());
+  CARBON_CHECK(result.has_value()) << "Malformed parse node";
+  CARBON_CHECK(it == children.end()) << "Malformed parse node";
+  return *result;
+}
+
+template <typename T>
+auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
+  if (!IsValid<T>(node_id)) {
+    return std::nullopt;
+  }
+
+  return ExtractNodeFromChildren<T>(children(node_id));
+}
 
 }  // namespace Carbon::Parse
 
