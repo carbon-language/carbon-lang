@@ -217,6 +217,7 @@ struct ArrayExprSemi {
 
 // An array type, such as  `[i32; 3]` or `[i32;]`.
 struct ArrayExpr {
+  static constexpr auto Kind = NodeKind::ArrayExpr;
   TypedNodeId<ArrayExprSemi> start;
   OptionalNot<ArrayExprSemi> bound;
 };

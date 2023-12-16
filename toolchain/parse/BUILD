@@ -103,6 +103,7 @@ cc_test(
     size = "small",
     srcs = ["typed_nodes_test.cpp"],
     deps = [
+        ":node_kind",
         ":tree",
         ":typed_nodes",
         "//testing/base:gtest_main",

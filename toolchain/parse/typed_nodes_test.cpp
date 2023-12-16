@@ -16,6 +16,12 @@
 namespace Carbon::Parse {
 namespace {
 
+// Check that each node kind defines a Kind member using the correct
+// NodeKind enumerator.
+#define CARBON_PARSE_NODE_KIND(Name, ...) \
+  static_assert(Name::Kind == NodeKind::Name, #Name);
+#include "toolchain/parse/node_kind.def"
+
 class TypedNodeTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
