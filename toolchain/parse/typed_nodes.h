@@ -17,16 +17,16 @@ struct LeafNode {
 };
 
 // A pair of a list item and its optional following comma.
-template <typename Comma>
+template <typename Element, typename Comma>
 struct ListItem {
-  NodeId value;
+  Element value;
   std::optional<TypedNodeId<Comma>> comma;
 };
 
 // A list of items, parameterized by the kind of the comma and the opening
 // bracket.
-template <typename Comma, typename Bracket>
-using CommaSeparatedList = BracketedList<ListItem<Comma>, Bracket>;
+template <typename Element, typename Comma, typename Bracket>
+using CommaSeparatedList = BracketedList<ListItem<Element, Comma>, Bracket>;
 
 // Each type defined below corresponds to a parse node kind, and describes the
 // expected child structure of that parse node.
@@ -94,14 +94,17 @@ using PatternListComma = LeafNode<NodeKind::PatternListComma>;
 struct TuplePattern {
   static constexpr auto Kind = NodeKind::TuplePattern;
   TypedNodeId<TuplePatternStart> left_paren;
-  CommaSeparatedList<PatternListComma, TuplePatternStart> params;
+  CommaSeparatedList<AnyBindingPattern, PatternListComma, TuplePatternStart>
+      params;
 };
 
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList;
   TypedNodeId<ImplicitParamListStart> left_square;
-  CommaSeparatedList<PatternListComma, ImplicitParamListStart> params;
+  CommaSeparatedList<AnyBindingPattern, PatternListComma,
+                     ImplicitParamListStart>
+      params;
 };
 
 using FunctionIntroducer = LeafNode<NodeKind::FunctionIntroducer>;
@@ -330,7 +333,7 @@ using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 struct TupleLiteral {
   static constexpr auto Kind = NodeKind::TupleLiteral;
   TypedNodeId<ExprOpenParen> left_paren;
-  CommaSeparatedList<TupleLiteralComma, ExprOpenParen> elements;
+  CommaSeparatedList<AnyExpr, TupleLiteralComma, ExprOpenParen> elements;
 };
 
 // The opening portion of a call expression: `F(`.
@@ -347,7 +350,7 @@ using CallExprComma = LeafNode<NodeKind::CallExprComma>;
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr;
   TypedNodeId<CallExprStart> start;
-  CommaSeparatedList<CallExprComma, CallExprStart> arguments;
+  CommaSeparatedList<AnyExpr, CallExprComma, CallExprStart> arguments;
 };
 
 // A qualified name: `A.B`.

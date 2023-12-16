@@ -32,6 +32,7 @@ using AnyExpr = NodeId;
 using AnyDecl = NodeId;
 using AnyStatement = NodeId;
 using AnyPattern = NodeId;
+using AnyBindingPattern = NodeId;
 
 // TODO: define Or<T, U>.
 
