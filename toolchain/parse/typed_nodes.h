@@ -36,6 +36,18 @@ using CommaSeparatedList = BracketedList<ListItem<Element, Comma>, Bracket>;
 // error, so can never be extracted.
 using InvalidParse = LeafNode<NodeKind::InvalidParse>;
 
+// An invalid subtree. Always has an error so can never be extracted.
+using InvalidParseStart = LeafNode<NodeKind::InvalidParseStart>;
+struct InvalidParseSubtree {
+  static constexpr auto Kind = NodeKind::InvalidParseSubtree;
+  TypedNodeId<InvalidParseStart> start;
+  BracketedList<NodeId, InvalidParseStart> statements;
+};
+
+// A placeholder node to be replaced; it will never exist in a valid parse tree.
+// Its token kind is not enforced even when valid.
+using Placeholder = LeafNode<NodeKind::Placeholder>;
+
 // The start of the file.
 using FileStart = LeafNode<NodeKind::FileStart>;
 
@@ -63,14 +75,72 @@ using IdentifierName = LeafNode<NodeKind::IdentifierName>;
 // A name in an expression context.
 using IdentifierNameExpr = LeafNode<NodeKind::IdentifierNameExpr>;
 
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`.
+using SelfValueName = LeafNode<NodeKind::SelfValueName>;
+using SelfValueNameExpr = LeafNode<NodeKind::SelfValueNameExpr>;
+using SelfTypeNameExpr = LeafNode<NodeKind::SelfTypeNameExpr>;
+
+// The `base` value keyword, introduced by `base: B`. Typically referenced in
+// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
+// declared name, as in `{.base: partial B}`.
+using BaseName = LeafNode<NodeKind::BaseName>;
+
+// The `package` keyword in an expression.
+using PackageExpr = LeafNode<NodeKind::PackageExpr>;
+
 // TODO: Library, package, import (likely to change soon).
+
+// The name of a package or library for `package`, `import`, and `library`.
+using PackageName = LeafNode<NodeKind::PackageName>;
+using LibraryName = LeafNode<NodeKind::LibraryName>;
+
+using PackageIntroducer = LeafNode<NodeKind::PackageIntroducer>;
+using PackageApi = LeafNode<NodeKind::PackageApi>;
+using PackageImpl = LeafNode<NodeKind::PackageImpl>;
+
+// `library` in `package` or `import`:
+struct LibrarySpecifier {
+  static constexpr auto Kind = NodeKind::LibrarySpecifier;
+  TypedNodeId<LibraryName> name;
+};
+
+// First line of the file, such as:
+//   `package MyPackage library "MyLibrary" impl;`
+struct PackageDirective {
+  static constexpr auto Kind = NodeKind::PackageDirective;
+  TypedNodeId<PackageIntroducer> introducer;
+  std::optional<TypedNodeId<PackageName>> name;
+  std::optional<TypedNodeId<LibrarySpecifier>> library;
+  // PackageApi or PackageImpl TODO: Or<>
+  NodeId api_or_impl;
+};
+
+// `import TheirPackage library "TheirLibrary";`
+using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
+struct ImportDirective {
+  static constexpr auto Kind = NodeKind::ImportDirective;
+  TypedNodeId<ImportIntroducer> introducer;
+  std::optional<TypedNodeId<PackageName>> name;
+  std::optional<TypedNodeId<LibrarySpecifier>> library;
+};
+
+// `library` as directive:
+using DefaultLibrary = LeafNode<NodeKind::DefaultLibrary>;
+using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
+struct LibraryDirective {
+  static constexpr auto Kind = NodeKind::LibraryDirective;
+  TypedNodeId<LibraryIntroducer> introducer;
+  // DefaultLibrary or LibraryName  TODO: Or<>
+  NodeId library_name;
+};
 
 using NamespaceStart = LeafNode<NodeKind::NamespaceStart>;
 
 // A namespace: `namespace N;`.
 struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace;
-  NamespaceStart introducer;
+  TypedNodeId<NamespaceStart> introducer;
   // IdentifierName or QualifiedDecl.
   NodeId name;
 };
@@ -94,16 +164,14 @@ using PatternListComma = LeafNode<NodeKind::PatternListComma>;
 struct TuplePattern {
   static constexpr auto Kind = NodeKind::TuplePattern;
   TypedNodeId<TuplePatternStart> left_paren;
-  CommaSeparatedList<AnyBindingPattern, PatternListComma, TuplePatternStart>
-      params;
+  CommaSeparatedList<AnyPattern, PatternListComma, TuplePatternStart> params;
 };
 
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList;
   TypedNodeId<ImplicitParamListStart> left_square;
-  CommaSeparatedList<AnyBindingPattern, PatternListComma,
-                     ImplicitParamListStart>
+  CommaSeparatedList<AnyPattern, PatternListComma, ImplicitParamListStart>
       params;
 };
 
@@ -156,7 +224,15 @@ struct ArrayExpr {
 // A pattern binding, such as `name: Type`.
 struct BindingPattern {
   static constexpr auto Kind = NodeKind::BindingPattern;
-  // Either `Name` or `SelfValueName`.
+  // Either `IdentifierName` or `SelfValueName`.  TODO: Or<>
+  NodeId name;
+  AnyExpr type;
+};
+
+// `name:! Type`
+struct GenericBindingPattern {
+  static constexpr auto Kind = NodeKind::GenericBindingPattern;
+  // Either `IdentifierName` or `SelfValueName`.  TODO: Or<>
   NodeId name;
   AnyExpr type;
 };
@@ -281,7 +357,7 @@ struct IfStatement {
 
   struct Else {
     TypedNodeId<IfStatementElse> else_token;
-    // Either a CodeBlock or an IfStatement.
+    // Either a CodeBlock or an IfStatement.  TODO: Or<>
     AnyStatement statement;
   };
   std::optional<Else> else_clause;
@@ -359,8 +435,8 @@ struct CallExpr {
 struct QualifiedDecl {
   static constexpr auto Kind = NodeKind::QualifiedDecl;
 
-  // For now, this is either a Name or a QualifiedDecl.
-  NodeId lhs;
+  // For now, this is either an IdentifierName or a QualifiedDecl.
+  AnyNameComponent lhs;
 
   // TODO: This will eventually need to support more general expressions, for
   // example `GenericType(type_args).ChildType(child_type_args).Name`.
@@ -379,19 +455,6 @@ struct PointerMemberAccessExpr {
   static constexpr auto Kind = NodeKind::PointerMemberAccessExpr;
   AnyExpr lhs;
   TypedNodeId<IdentifierName> rhs;
-};
-
-// The first operand of a short-circuiting infix operator: `a and` or `a or`.
-// The complete operator expression will be an InfixOperator with this as the
-// `lhs`.
-// FIXME: should this be a template?
-struct ShortCircuitOperandAnd {
-  static constexpr auto Kind = NodeKind::ShortCircuitOperandAnd;
-  AnyExpr operand;
-};
-struct ShortCircuitOperandOr {
-  static constexpr auto Kind = NodeKind::ShortCircuitOperandOr;
-  AnyExpr operand;
 };
 
 // A prefix operator expression.
@@ -416,9 +479,13 @@ struct PostfixOperator {
   AnyExpr operand;
 };
 
+// Literals, operators, and modifiers
+
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
   using Name = LeafNode<NodeKind::Name>;
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
+  using Name##Modifier = LeafNode<NodeKind::Name##Modifier>;
 #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) \
   using PrefixOperator##Name = PrefixOperator<NodeKind::PrefixOperator##Name>;
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
@@ -427,6 +494,32 @@ struct PostfixOperator {
   using PostfixOperator##Name =                            \
       PostfixOperator<NodeKind::PostfixOperator##Name>;
 #include "toolchain/parse/node_kind.def"
+
+// The first operand of a short-circuiting infix operator: `a and` or `a or`.
+// The complete operator expression will be an InfixOperator with this as the
+// `lhs`.
+// FIXME: should this be a template?
+struct ShortCircuitOperandAnd {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperandAnd;
+  AnyExpr operand;
+};
+
+struct ShortCircuitOperandOr {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperandOr;
+  AnyExpr operand;
+};
+
+struct ShortCircuitOperatorAnd {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperatorAnd;
+  TypedNodeId<ShortCircuitOperandAnd> lhs;
+  AnyExpr rhs;
+};
+
+struct ShortCircuitOperatorOr {
+  static constexpr auto Kind = NodeKind::ShortCircuitOperatorOr;
+  TypedNodeId<ShortCircuitOperandOr> lhs;
+  AnyExpr rhs;
+};
 
 // The `if` portion of an `if` expression: `if expr`.
 struct IfExprIf {
@@ -448,11 +541,129 @@ struct IfExprElse {
   AnyExpr else_result;
 };
 
-// TODO: StructLiteral onwards
+// Common to struct literals and struct type literals
 
-// #define CARBON_PARSE_NODE_KIND(Name, ...)     \
-//   using Name##Id = TypedNodeId<Name>;
-// #include "toolchain/parse/node_kind.def"
+// `{`
+using StructLiteralOrStructTypeLiteralStart =
+    LeafNode<NodeKind::StructLiteralOrStructTypeLiteralStart>;
+// `,`
+using StructComma = LeafNode<NodeKind::StructComma>;
+
+// `.a`
+struct StructFieldDesignator {
+  static constexpr auto Kind = NodeKind::StructFieldDesignator;
+  TypedNodeId<IdentifierName> name;
+};
+
+// `.a = 0`
+struct StructFieldValue {
+  static constexpr auto Kind = NodeKind::StructFieldValue;
+  TypedNodeId<StructFieldDesignator> designator;
+  AnyExpr expr;
+};
+
+// `.a: i32`
+struct StructFieldType {
+  static constexpr auto Kind = NodeKind::StructFieldType;
+  TypedNodeId<StructFieldDesignator> designator;
+  AnyExpr type_expr;
+};
+
+// Struct literals, such as `{.a = 0}`:
+struct StructLiteral {
+  static constexpr auto Kind = NodeKind::StructLiteral;
+  TypedNodeId<StructLiteralOrStructTypeLiteralStart> introducer;
+  CommaSeparatedList<TypedNodeId<StructFieldValue>, StructComma,
+                     StructLiteralOrStructTypeLiteralStart>
+      fields;
+};
+
+// Struct type literals, such as `{.a: i32}`:
+struct StructTypeLiteral {
+  static constexpr auto Kind = NodeKind::StructTypeLiteral;
+  TypedNodeId<StructLiteralOrStructTypeLiteralStart> introducer;
+  CommaSeparatedList<TypedNodeId<StructFieldType>, StructComma,
+                     StructLiteralOrStructTypeLiteralStart>
+      fields;
+};
+
+// FIXME: TODO below here
+
+// `class`
+using ClassIntroducer = LeafNode<NodeKind::ClassIntroducer>;
+struct ClassDefinitionStart {
+  static constexpr auto Kind = NodeKind::ClassDefinitionStart;
+  TypedNodeId<ClassIntroducer> introducer;
+};
+struct ClassDefinition {
+  static constexpr auto Kind = NodeKind::ClassDefinition;
+  TypedNodeId<ClassDefinitionStart> introducer;
+};
+struct ClassDecl {
+  static constexpr auto Kind = NodeKind::ClassDecl;
+  TypedNodeId<ClassIntroducer> introducer;
+};
+
+// `base`
+using BaseIntroducer = LeafNode<NodeKind::BaseIntroducer>;
+using BaseColon = LeafNode<NodeKind::BaseColon>;
+struct BaseDecl {
+  static constexpr auto Kind = NodeKind::BaseDecl;
+  TypedNodeId<BaseIntroducer> introducer;
+};
+
+// `interface`
+using InterfaceIntroducer = LeafNode<NodeKind::InterfaceIntroducer>;
+struct InterfaceDefinitionStart {
+  static constexpr auto Kind = NodeKind::InterfaceDefinitionStart;
+  TypedNodeId<InterfaceIntroducer> introducer;
+};
+struct InterfaceDefinition {
+  static constexpr auto Kind = NodeKind::InterfaceDefinition;
+  TypedNodeId<InterfaceDefinitionStart> introducer;
+};
+struct InterfaceDecl {
+  static constexpr auto Kind = NodeKind::InterfaceDecl;
+  TypedNodeId<InterfaceIntroducer> introducer;
+};
+
+// `impl`...`as`
+using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer>;
+using ImplAs = LeafNode<NodeKind::ImplAs>;
+struct ImplForall {
+  static constexpr auto Kind = NodeKind::ImplForall;
+};
+struct ImplDefinitionStart {
+  static constexpr auto Kind = NodeKind::ImplDefinitionStart;
+  TypedNodeId<ImplIntroducer> introducer;
+};
+struct ImplDefinition {
+  static constexpr auto Kind = NodeKind::ImplDefinition;
+  TypedNodeId<ImplDefinitionStart> introducer;
+};
+struct ImplDecl {
+  static constexpr auto Kind = NodeKind::ImplDecl;
+  TypedNodeId<ImplIntroducer> introducer;
+};
+
+// `constraint`
+using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer>;
+struct NamedConstraintDefinitionStart {
+  static constexpr auto Kind = NodeKind::NamedConstraintDefinitionStart;
+  TypedNodeId<NamedConstraintIntroducer> introducer;
+};
+struct NamedConstraintDefinition {
+  static constexpr auto Kind = NodeKind::NamedConstraintDefinition;
+  TypedNodeId<NamedConstraintDefinitionStart> introducer;
+};
+struct NamedConstraintDecl {
+  static constexpr auto Kind = NodeKind::NamedConstraintDecl;
+  TypedNodeId<NamedConstraintIntroducer> introducer;
+};
+
+// Define `FooId` as `TypedNodeId<Foo>` for every kind of parse node `Foo`.
+#define CARBON_PARSE_NODE_KIND(Name, ...) using Name##Id = TypedNodeId<Name>;
+#include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Parse
 

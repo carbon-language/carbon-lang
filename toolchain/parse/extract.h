@@ -32,9 +32,9 @@ using AnyExpr = NodeId;
 using AnyDecl = NodeId;
 using AnyStatement = NodeId;
 using AnyPattern = NodeId;
-using AnyBindingPattern = NodeId;
+using AnyNameComponent = NodeId;
 
-// TODO: define Or<T, U>.
+// TODO: define Or<T, U> and Not<Kind>.
 
 // Extract a `TypeNodeId<T>` as a single required child.
 template <typename T>
