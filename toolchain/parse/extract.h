@@ -33,6 +33,8 @@ using AnyDecl = NodeId;
 using AnyStatement = NodeId;
 using AnyPattern = NodeId;
 
+// TODO: define Or<T, U>.
+
 // Extract a `TypeNodeId<T>` as a single required child.
 template <typename T>
 struct Tree::Extractable<TypedNodeId<T>> {

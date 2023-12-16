@@ -71,7 +71,7 @@ using NamespaceStart = LeafNode<NodeKind::NamespaceStart>;
 struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace;
   NamespaceStart introducer;
-  // Name or QualifiedDecl.
+  // IdentifierName or QualifiedDecl.
   NodeId name;
 };
 
