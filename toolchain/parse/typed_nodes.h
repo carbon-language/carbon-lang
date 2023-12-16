@@ -31,6 +31,8 @@ using CommaSeparatedList = BracketedList<ListItem<Element, Comma>, Bracket>;
 // Each type defined below corresponds to a parse node kind, and describes the
 // expected child structure of that parse node.
 
+// Error nodes
+
 // An invalid parse. Used to balance the parse tree. This type is here only to
 // ensure we have a type for each parse node kind. This node kind always has an
 // error, so can never be extracted.
@@ -47,6 +49,8 @@ struct InvalidParseSubtree {
 // A placeholder node to be replaced; it will never exist in a valid parse tree.
 // Its token kind is not enforced even when valid.
 using Placeholder = LeafNode<NodeKind::Placeholder>;
+
+// File nodes
 
 // The start of the file.
 using FileStart = LeafNode<NodeKind::FileStart>;
@@ -65,6 +69,8 @@ struct File {
     return tree->ExtractNodeFromChildren<File>(tree->roots());
   }
 };
+
+// General-purpose nodes
 
 // An empty declaration, such as `;`.
 using EmptyDecl = LeafNode<NodeKind::EmptyDecl>;
@@ -86,10 +92,10 @@ using SelfTypeNameExpr = LeafNode<NodeKind::SelfTypeNameExpr>;
 // declared name, as in `{.base: partial B}`.
 using BaseName = LeafNode<NodeKind::BaseName>;
 
+// Library, package, import
+
 // The `package` keyword in an expression.
 using PackageExpr = LeafNode<NodeKind::PackageExpr>;
-
-// TODO: Library, package, import (likely to change soon).
 
 // The name of a package or library for `package`, `import`, and `library`.
 using PackageName = LeafNode<NodeKind::PackageName>;
@@ -135,15 +141,20 @@ struct LibraryDirective {
   NodeId library_name;
 };
 
+// Namespace nodes
+
 using NamespaceStart = LeafNode<NodeKind::NamespaceStart>;
 
 // A namespace: `namespace N;`.
 struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace;
   TypedNodeId<NamespaceStart> introducer;
+  BracketedList<AnyModifier, NamespaceStart> modifiers;
   // IdentifierName or QualifiedDecl.
   NodeId name;
 };
+
+// Function nodes
 
 using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
 
@@ -188,6 +199,7 @@ template <const NodeKind& KindT>
 struct FunctionSignature {
   static constexpr auto Kind = KindT;
   TypedNodeId<FunctionIntroducer> introducer;
+  BracketedList<AnyModifier, FunctionIntroducer> modifiers;
   TypedNodeId<IdentifierName> name;
   TypedNodeId<TuplePattern> params;
   std::optional<TypedNodeId<ReturnType>> return_type;
@@ -204,23 +216,7 @@ struct FunctionDefinition {
   BracketedList<AnyStatement, FunctionDefinitionStart> body;
 };
 
-using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart>;
-
-// The start of an array type, `[i32;`.
-//
-// TODO: Consider flattening this into `ArrayExpr`.
-struct ArrayExprSemi {
-  static constexpr auto Kind = NodeKind::ArrayExprSemi;
-  TypedNodeId<ArrayExprStart> left_square;
-  AnyExpr type;
-};
-
-// An array type, such as  `[i32; 3]` or `[i32;]`.
-struct ArrayExpr {
-  static constexpr auto Kind = NodeKind::ArrayExpr;
-  TypedNodeId<ArrayExprSemi> start;
-  OptionalNot<ArrayExprSemi> bound;
-};
+// Pattern nodes
 
 // A pattern binding, such as `name: Type`.
 struct BindingPattern {
@@ -252,6 +248,8 @@ struct Template {
   AnyPattern inner;
 };
 
+// `let` nodes
+
 using LetIntroducer = LeafNode<NodeKind::LetIntroducer>;
 using LetInitializer = LeafNode<NodeKind::LetInitializer>;
 
@@ -259,10 +257,13 @@ using LetInitializer = LeafNode<NodeKind::LetInitializer>;
 struct LetDecl {
   static constexpr auto Kind = NodeKind::LetDecl;
   TypedNodeId<LetIntroducer> introducer;
+  BracketedList<AnyModifier, LetIntroducer> modifiers;
   AnyPattern pattern;
   TypedNodeId<LetInitializer> equals;
   AnyExpr initializer;
 };
+
+// `var` nodes
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
@@ -272,6 +273,7 @@ using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 struct VariableDecl {
   static constexpr auto Kind = NodeKind::VariableDecl;
   TypedNodeId<VariableIntroducer> introducer;
+  BracketedList<AnyModifier, VariableIntroducer> modifiers;
   std::optional<TypedNodeId<ReturnedModifier>> returned;
   AnyPattern pattern;
 
@@ -281,6 +283,8 @@ struct VariableDecl {
   };
   std::optional<Initializer> initializer;
 };
+
+// Statement nodes
 
 // An expression statement: `F(x);`.
 struct ExprStatement {
@@ -378,6 +382,26 @@ struct WhileStatement {
   static constexpr auto Kind = NodeKind::WhileStatement;
   TypedNodeId<WhileCondition> head;
   TypedNodeId<CodeBlock> body;
+};
+
+// Expression nodes
+
+using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart>;
+
+// The start of an array type, `[i32;`.
+//
+// TODO: Consider flattening this into `ArrayExpr`.
+struct ArrayExprSemi {
+  static constexpr auto Kind = NodeKind::ArrayExprSemi;
+  TypedNodeId<ArrayExprStart> left_square;
+  AnyExpr type;
+};
+
+// An array type, such as  `[i32; 3]` or `[i32;]`.
+struct ArrayExpr {
+  static constexpr auto Kind = NodeKind::ArrayExpr;
+  TypedNodeId<ArrayExprSemi> start;
+  OptionalNot<ArrayExprSemi> bound;
 };
 
 // The opening portion of an indexing expression: `a[`.
@@ -542,7 +566,7 @@ struct IfExprElse {
   AnyExpr else_result;
 };
 
-// Common to struct literals and struct type literals
+// Struct literals and struct type literals
 
 // `{`
 using StructLiteralOrStructTypeLiteralStart =
@@ -588,78 +612,136 @@ struct StructTypeLiteral {
       fields;
 };
 
-// FIXME: TODO below here
+// `class` declarations and definitions
 
 // `class`
 using ClassIntroducer = LeafNode<NodeKind::ClassIntroducer>;
-struct ClassDefinitionStart {
-  static constexpr auto Kind = NodeKind::ClassDefinitionStart;
+
+// A class signature `class C`
+template <const NodeKind& KindT>
+struct ClassSignature {
+  static constexpr auto Kind = KindT;
   TypedNodeId<ClassIntroducer> introducer;
+  BracketedList<AnyModifier, ClassIntroducer> modifiers;
+  AnyNameComponent name;
 };
+
+// `class C;`
+using ClassDecl = ClassSignature<NodeKind::ClassDecl>;
+// `class C {`
+using ClassDefinitionStart = ClassSignature<NodeKind::ClassDefinitionStart>;
+
+// `class C { ... }`
 struct ClassDefinition {
   static constexpr auto Kind = NodeKind::ClassDefinition;
-  TypedNodeId<ClassDefinitionStart> introducer;
+  TypedNodeId<ClassDefinitionStart> signature;
+  BracketedList<AnyDecl, ClassDefinitionStart> members;
 };
-struct ClassDecl {
-  static constexpr auto Kind = NodeKind::ClassDecl;
-  TypedNodeId<ClassIntroducer> introducer;
-};
+
+// Base class declaration
 
 // `base`
 using BaseIntroducer = LeafNode<NodeKind::BaseIntroducer>;
 using BaseColon = LeafNode<NodeKind::BaseColon>;
+// `extend base: BaseClass;`
 struct BaseDecl {
   static constexpr auto Kind = NodeKind::BaseDecl;
   TypedNodeId<BaseIntroducer> introducer;
+  BracketedList<AnyModifier, BaseIntroducer> modifiers;
+  TypedNodeId<BaseColon> colon;
+  AnyExpr base_class;
 };
+
+// Interface declarations and definitions
 
 // `interface`
 using InterfaceIntroducer = LeafNode<NodeKind::InterfaceIntroducer>;
-struct InterfaceDefinitionStart {
-  static constexpr auto Kind = NodeKind::InterfaceDefinitionStart;
+
+// `interface I`
+template <const NodeKind& KindT>
+struct InterfaceSignature {
+  static constexpr auto Kind = KindT;
   TypedNodeId<InterfaceIntroducer> introducer;
-};
-struct InterfaceDefinition {
-  static constexpr auto Kind = NodeKind::InterfaceDefinition;
-  TypedNodeId<InterfaceDefinitionStart> introducer;
-};
-struct InterfaceDecl {
-  static constexpr auto Kind = NodeKind::InterfaceDecl;
-  TypedNodeId<InterfaceIntroducer> introducer;
+  BracketedList<AnyModifier, InterfaceIntroducer> modifiers;
+  AnyNameComponent name;
 };
 
-// `impl`...`as`
+// `interface I;`
+using InterfaceDecl = InterfaceSignature<NodeKind::InterfaceDecl>;
+// `interface I {`
+using InterfaceDefinitionStart =
+    InterfaceSignature<NodeKind::InterfaceDefinitionStart>;
+
+// `interface I { ... }`
+struct InterfaceDefinition {
+  static constexpr auto Kind = NodeKind::InterfaceDefinition;
+  TypedNodeId<InterfaceDefinitionStart> signature;
+  BracketedList<AnyDecl, InterfaceDefinitionStart> members;
+};
+
+// `impl`...`as` declarations and definitions
+
+// `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer>;
+// `as`
 using ImplAs = LeafNode<NodeKind::ImplAs>;
+
+// `forall [...]`
 struct ImplForall {
   static constexpr auto Kind = NodeKind::ImplForall;
+  TypedNodeId<ImplicitParamList> params;
 };
-struct ImplDefinitionStart {
-  static constexpr auto Kind = NodeKind::ImplDefinitionStart;
+
+// `impl T as I`
+template <const NodeKind& KindT>
+struct ImplSignature {
+  static constexpr auto Kind = KindT;
   TypedNodeId<ImplIntroducer> introducer;
+  BracketedList<AnyModifier, ImplIntroducer> modifiers;
+  std::optional<TypedNodeId<ImplForall>> forall;
+  std::optional<AnyExpr> type_expr;
+  TypedNodeId<ImplAs> as;
+  AnyExpr interface;
 };
+
+// `impl T as I;`
+using ImplDecl = ImplSignature<NodeKind::ImplDecl>;
+// `impl T as I {`
+using ImplDefinitionStart = ImplSignature<NodeKind::ImplDefinitionStart>;
+
+// `impl T as I { ... }`
 struct ImplDefinition {
   static constexpr auto Kind = NodeKind::ImplDefinition;
-  TypedNodeId<ImplDefinitionStart> introducer;
+  TypedNodeId<ImplDefinitionStart> signature;
+  BracketedList<AnyDecl, ImplDefinitionStart> members;
 };
-struct ImplDecl {
-  static constexpr auto Kind = NodeKind::ImplDecl;
-  TypedNodeId<ImplIntroducer> introducer;
-};
+
+// Named constraint declarations and definitions
 
 // `constraint`
 using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer>;
-struct NamedConstraintDefinitionStart {
-  static constexpr auto Kind = NodeKind::NamedConstraintDefinitionStart;
+
+// `constraint NC`
+template <const NodeKind& KindT>
+struct NamedConstraintSignature {
+  static constexpr auto Kind = KindT;
   TypedNodeId<NamedConstraintIntroducer> introducer;
+  BracketedList<AnyModifier, NamedConstraintIntroducer> modifiers;
+  AnyNameComponent name;
 };
+
+// `constraint NC;`
+using NamedConstraintDecl =
+    NamedConstraintSignature<NodeKind::NamedConstraintDecl>;
+// `constraint NC {`
+using NamedConstraintDefinitionStart =
+    NamedConstraintSignature<NodeKind::NamedConstraintDefinitionStart>;
+
+// `constraint NC { ... }`
 struct NamedConstraintDefinition {
   static constexpr auto Kind = NodeKind::NamedConstraintDefinition;
-  TypedNodeId<NamedConstraintDefinitionStart> introducer;
-};
-struct NamedConstraintDecl {
-  static constexpr auto Kind = NodeKind::NamedConstraintDecl;
-  TypedNodeId<NamedConstraintIntroducer> introducer;
+  TypedNodeId<NamedConstraintDefinitionStart> signature;
+  BracketedList<AnyDecl, NamedConstraintDefinitionStart> members;
 };
 
 // Define `FooId` as `TypedNodeId<Foo>` for every kind of parse node `Foo`.

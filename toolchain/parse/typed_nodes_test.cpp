@@ -71,7 +71,7 @@ TEST_F(TypedNodeTest, Empty) {
 TEST_F(TypedNodeTest, Function) {
   auto* tree = &GetTree(R"carbon(
     fn F() {}
-    fn G() -> i32;
+    virtual fn G() -> i32;
   )carbon");
   auto file = File::Make(tree);
 
@@ -82,10 +82,12 @@ TEST_F(TypedNodeTest, Function) {
   auto f_sig = tree->Extract(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
   EXPECT_FALSE(f_sig->return_type.has_value());
+  EXPECT_TRUE(f_sig->modifiers.empty());
 
   auto g_fn = tree->ExtractAs<FunctionDecl>(file.decls[1]);
   ASSERT_TRUE(g_fn.has_value());
   EXPECT_TRUE(g_fn->return_type.has_value());
+  EXPECT_FALSE(g_fn->modifiers.empty());
 }
 
 TEST_F(TypedNodeTest, For) {

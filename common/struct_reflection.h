@@ -75,7 +75,8 @@ constexpr auto CountFields() -> int {
   if constexpr (CanListInitialize<T, Fields...>(0)) {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
-    static_assert(sizeof...(Fields) <= 5,
+    // Note: Compare against the maximum number of fields supported *PLUS 1*.
+    static_assert(sizeof...(Fields) <= 6,
                   "Unsupported: too many fields in struct");
     return sizeof...(Fields) - 1;
   } else if constexpr (sizeof...(Fields) > 32) {

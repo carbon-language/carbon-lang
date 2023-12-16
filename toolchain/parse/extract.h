@@ -28,11 +28,12 @@ struct Tree::Extractable<NodeId> {
 // Aliases for `NodeId` to describe particular kinds of nodes.
 //
 // TODO: We should check that the right kind of node is present.
-using AnyExpr = NodeId;
 using AnyDecl = NodeId;
-using AnyStatement = NodeId;
-using AnyPattern = NodeId;
+using AnyExpr = NodeId;
 using AnyNameComponent = NodeId;
+using AnyModifier = NodeId;
+using AnyPattern = NodeId;
+using AnyStatement = NodeId;
 
 // TODO: define Or<T, U> and Not<Kind>.
 
