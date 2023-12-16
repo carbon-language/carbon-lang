@@ -39,47 +39,11 @@ struct Tree::Extractable<TypedNodeId<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<TypedNodeId<T>> {
     if (it == end || tree->node_kind(*it) != T::Kind) {
+      llvm::errs() << "FIXME: Extract TypedNodeId " << T::Kind << " error\n";
       return std::nullopt;
     }
+    llvm::errs() << "FIXME: Extract TypedNodeId " << T::Kind << " success\n";
     return TypedNodeId<T>(*it++);
-  }
-};
-
-// An optional child. If this child is present, it will be of kind `T`.
-template <typename T>
-class Optional {
- public:
-  explicit Optional(NodeId node_id) : node_id_(node_id) {}
-  explicit Optional(std::nullopt_t) : node_id_(NodeId::Invalid) {}
-
-  // Returns whether this element was present.
-  auto is_present() -> bool { return node_id_ != NodeId::Invalid; }
-
-  // Gets the `Node`, if this element was present.
-  auto GetNode() const -> std::optional<NodeId> {
-    return is_present() ? node_id_ : std::nullopt;
-  }
-
-  // Gets the typed node, if it is present and valid. Note that this returns
-  // `std::nullopt` if this element was present but malformed. Use `is_present`
-  // to determine if the element was present at all.
-  auto Extract(const Tree* tree) const -> std::optional<T> {
-    return is_present() ? tree->ExtractAs<T>(node_id_) : std::nullopt;
-  }
-
- private:
-  NodeId node_id_;
-};
-
-// Extract an `Optional<T>` as either zero or one child.
-template <typename T>
-struct Tree::Extractable<Optional<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<Optional<T>> {
-    if (it == end || tree->node_kind(*it) != T::Kind) {
-      return Optional<T>(std::nullopt);
-    }
-    return Optional<T>(*it++);
   }
 };
 
@@ -148,11 +112,14 @@ struct Tree::Extractable<std::optional<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<std::optional<T>> {
     auto old_it = it;
-    if (std::optional<T> value = Extractable<T>::Extract(tree, it, end)) {
+    std::optional<T> value = Extractable<T>::Extract(tree, it, end);
+    if (value) {
+      llvm::errs() << "FIXME: Extract std::optional found\n";
       return value;
     }
+    llvm::errs() << "FIXME: Extract std::optional missing\n";
     it = old_it;
-    return std::nullopt;
+    return value;
   }
 };
 
@@ -166,6 +133,7 @@ struct Tree::Extractable<std::tuple<T...>> {
       -> std::optional<std::tuple<T...>> {
     std::tuple<std::optional<T>...> fields;
 
+    llvm::errs() << "FIXME: Extract tuple\n";
     // Use a fold over the `=` operator to parse fields from right to left.
     [[maybe_unused]] int unused;
     static_cast<void>(
@@ -173,9 +141,11 @@ struct Tree::Extractable<std::tuple<T...>> {
           unused) = ... = 0));
 
     if (!(std::get<Index>(fields).has_value() && ...)) {
+      llvm::errs() << "FIXME: Extract tuple error\n";
       return std::nullopt;
     }
 
+    llvm::errs() << "FIXME: Extract tuple success\n";
     return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
   }
 
@@ -194,10 +164,13 @@ struct Tree::Extractable {
                       SiblingIterator end) -> std::optional<T> {
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
+    llvm::errs() << "FIXME: Extract simple aggregate\n";
     auto tuple = Extractable<TupleType>::Extract(tree, it, end);
     if (!tuple.has_value()) {
+      llvm::errs() << "FIXME: Extract simple aggregate error\n";
       return std::nullopt;
     }
+    llvm::errs() << "FIXME: Extract simple aggregate success\n";
 
     // Convert the tuple to the struct type.
     return std::apply(

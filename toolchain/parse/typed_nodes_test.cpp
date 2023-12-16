@@ -75,11 +75,11 @@ TEST_F(TypedNodeTest, Function) {
   ASSERT_TRUE(f_fn.has_value());
   auto f_sig = tree->Extract(f_fn->signature);
   ASSERT_TRUE(f_sig.has_value());
-  EXPECT_FALSE(f_sig->return_type.is_present());
+  EXPECT_FALSE(f_sig->return_type.has_value());
 
   auto g_fn = tree->ExtractAs<FunctionDecl>(file.decls[1]);
   ASSERT_TRUE(g_fn.has_value());
-  EXPECT_TRUE(g_fn->return_type.is_present());
+  EXPECT_TRUE(g_fn->return_type.has_value());
 }
 
 TEST_F(TypedNodeTest, For) {

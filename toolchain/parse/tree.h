@@ -407,11 +407,27 @@ class Tree::SiblingIterator
   NodeId node_;
 };
 
+// FIXME: delete
+template <class T>
+static inline auto GetKind() {
+  return T::Kind;
+}
+
+struct File;
+
+template <>
+inline auto GetKind<File>() {
+  return "File";
+}
+
 template <typename T>
 auto Tree::ExtractNodeFromChildren(
     llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
   auto it = children.begin();
+  llvm::errs() << "FIXME: ExtractNodeFromChildren " << GetKind<T>()
+               << " start\n";
   auto result = Extractable<T>::Extract(this, it, children.end());
+  llvm::errs() << "FIXME: ExtractNodeFromChildren " << GetKind<T>() << " end\n";
   CARBON_CHECK(result.has_value()) << "Malformed parse node";
   CARBON_CHECK(it == children.end()) << "Malformed parse node";
   return *result;
@@ -429,8 +445,10 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
 template <typename T>
 auto Tree::Extract(TypedNodeId<T> node_id) const -> std::optional<T> {
   if (node_has_error(node_id)) {
+    llvm::errs() << "FIXME: b " << T::Kind << " err\n";
     return std::nullopt;
   }
+  llvm::errs() << "FIXME: b " << T::Kind << " success\n";
 
   return ExtractNodeFromChildren<T>(children(node_id));
 }

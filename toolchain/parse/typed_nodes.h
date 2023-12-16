@@ -20,7 +20,7 @@ struct LeafNode {
 template <typename Comma>
 struct ListItem {
   NodeId value;
-  Optional<Comma> comma;
+  std::optional<TypedNodeId<Comma>> comma;
 };
 
 // A list of items, parameterized by the kind of the comma and the opening
@@ -119,7 +119,7 @@ struct FunctionSignature {
   TypedNodeId<FunctionIntroducer> introducer;
   TypedNodeId<IdentifierName> name;
   TypedNodeId<TuplePattern> params;
-  Optional<ReturnType> return_type;
+  std::optional<TypedNodeId<ReturnType>> return_type;
 };
 
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl>;
@@ -192,7 +192,7 @@ using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 struct VariableDecl {
   static constexpr auto Kind = NodeKind::VariableDecl;
   TypedNodeId<VariableIntroducer> introducer;
-  Optional<ReturnedModifier> returned;
+  std::optional<TypedNodeId<ReturnedModifier>> returned;
   AnyPattern pattern;
 
   struct Initializer {
@@ -232,7 +232,7 @@ struct ReturnStatement {
   static constexpr auto Kind = NodeKind::ReturnStatement;
   TypedNodeId<ReturnStatementStart> introducer;
   OptionalNot<ReturnStatementStart> expr;
-  Optional<ReturnVarModifier> var;
+  std::optional<TypedNodeId<ReturnVarModifier>> var;
 };
 
 using ForHeaderStart = LeafNode<NodeKind::ForHeaderStart>;
