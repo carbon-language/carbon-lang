@@ -47,6 +47,7 @@ cc_library(
     hdrs = [
         "extract.h",
         "tree.h",
+        "typed_nodes.h",
     ],
     deps = [
         ":node_kind",
@@ -87,17 +88,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "typed_nodes",
-    hdrs = ["typed_nodes.h"],
-    deps = [
-        ":node_kind",
-        ":tree",
-        "//common:struct_reflection",
-        "//toolchain/lex:tokenized_buffer",
-    ],
-)
-
 cc_test(
     name = "typed_nodes_test",
     size = "small",
@@ -105,7 +95,6 @@ cc_test(
     deps = [
         ":node_kind",
         ":tree",
-        ":typed_nodes",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",

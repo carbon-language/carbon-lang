@@ -41,7 +41,7 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'c'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '.', has_error: yes},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 14},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
@@ -61,7 +61,7 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'c'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '.', has_error: yes},
-// CHECK:STDOUT:       {kind: 'StructTypeLiteral', text: '}', subtree_size: 14},
+// CHECK:STDOUT:       {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 20},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

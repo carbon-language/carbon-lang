@@ -203,6 +203,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
 // `library` as directive:
 //   LibraryIntroducer
 //   DefaultLibrary or _external_: LibraryName
+//   PackageApi or PackageImpl
 // LibraryDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, Default)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, Library)
@@ -210,14 +211,14 @@ CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
                                CARBON_IF_VALID(Semi))
 
 // `library` in `package` or `import`:
-//   _external_: LibraryName
+//   _external_: LibraryName or DefaultLibrary
 // LibrarySpecifier
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
 
 // `namespace`:
 //   NamespaceStart
 //   _repeated_ _external_: modifier
-//   _external_: Name or QualifiedDecl
+//   _external_: IdentifierName or QualifiedDecl
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, Namespace)
 CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart, CARBON_IF_VALID(Semi))
@@ -234,7 +235,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 // `fn`:
 //     FunctionIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: Name or QualifiedDecl
+//     _external_: IdentifierName or QualifiedDecl
+//     _optional_ _external_: ImplicitParamList
 //     _external_: TuplePattern
 //       _external_: type expression
 //     ReturnType
@@ -291,7 +293,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExprSemi, 2, CARBON_IF_VALID(Semi))
 CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi, CloseSquareBracket)
 
 // A binding pattern, such as `name: Type`:
-//       Name or SelfValueName
+//       IdentifierName or SelfValueName
 //       _external_: type expression
 //     [Generic]BindingPattern
 //   _optional_ Address
@@ -446,8 +448,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, Comma)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart, CloseParen)
 
 // A qualified declaration, such as `a.b`:
-//   _external_: Name or QualifiedDecl
-//   _external_: Name
+//   _external_: IdentifierName or QualifiedDecl
+//   _external_: IdentifierName
 // QualifiedDecl
 //
 // TODO: This will eventually more general expressions, for example with
@@ -458,14 +460,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDecl, 2, Period)
 // `GetObject().(Interface.member)`:
 //   _external_: lhs expression
 //   _external_: rhs expression
-// QualifiedExpr
+// MemberAccessExpr
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpr, 2, Period)
 
 // A pointer member access expression, such as `a->b` or
 // `GetObject()->(Interface.member)`:
 //   _external_: lhs expression
 //   _external_: rhs expression
-// QualifiedExpr
+// PointerMemberAccessExpr
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2, MinusGreater)
 
 // A value literal.
@@ -558,7 +560,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3, CARBON_IF_VALID(Else))
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
-//         _external_: Name
+//         _external_: IdentifierName or BaseName
 //       StructFieldDesignator
 //       _external_: expression
 //     StructFieldValue
@@ -568,7 +570,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3, CARBON_IF_VALID(Else))
 //
 // Struct type literals, such as `{.a: i32}`:
 //   StructLiteralOrStructTypeLiteralStart
-//         _external_: Name
+//         _external_: IdentifierName or BaseName
 //       StructFieldDesignator
 //       _external_: type expression
 //     StructFieldType
@@ -609,7 +611,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 // `class`:
 //     ClassIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: Name or QualifiedDecl
+//     _external_: IdentifierName or QualifiedDecl
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -638,7 +640,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer, CARBON_IF_VALID(Semi))
 // `interface`:
 //     InterfaceIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: Name or QualifiedDecl
+//     _external_: IdentifierName or QualifiedDecl
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -684,7 +686,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
 // `constraint`:
 //     NamedConstraintIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: Name or QualifiedDecl
+//     _external_: IdentifierName or QualifiedDecl
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition

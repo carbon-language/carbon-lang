@@ -108,7 +108,8 @@ using PackageImpl = LeafNode<NodeKind::PackageImpl>;
 // `library` in `package` or `import`:
 struct LibrarySpecifier {
   static constexpr auto Kind = NodeKind::LibrarySpecifier;
-  TypedNodeId<LibraryName> name;
+  // LibraryName or DefaultLibrary TODO: Or<>
+  NodeId name;
 };
 
 // First line of the file, such as:
@@ -139,6 +140,8 @@ struct LibraryDirective {
   TypedNodeId<LibraryIntroducer> introducer;
   // DefaultLibrary or LibraryName  TODO: Or<>
   NodeId library_name;
+  // PackageApi or PackageImpl TODO: Or<>
+  NodeId api_or_impl;
 };
 
 // Namespace nodes
@@ -200,7 +203,9 @@ struct FunctionSignature {
   static constexpr auto Kind = KindT;
   TypedNodeId<FunctionIntroducer> introducer;
   BracketedList<AnyModifier, FunctionIntroducer> modifiers;
-  TypedNodeId<IdentifierName> name;
+  // For now, this is either an IdentifierName or a QualifiedDecl.
+  AnyNameComponent name;
+  std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
   TypedNodeId<TuplePattern> params;
   std::optional<TypedNodeId<ReturnType>> return_type;
 };
@@ -472,14 +477,14 @@ struct QualifiedDecl {
 struct MemberAccessExpr {
   static constexpr auto Kind = NodeKind::MemberAccessExpr;
   AnyExpr lhs;
-  TypedNodeId<IdentifierName> rhs;
+  AnyExpr rhs;
 };
 
 // A simple indirect member access expression: `a->b`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind = NodeKind::PointerMemberAccessExpr;
   AnyExpr lhs;
-  TypedNodeId<IdentifierName> rhs;
+  AnyExpr rhs;
 };
 
 // A prefix operator expression.
@@ -577,7 +582,8 @@ using StructComma = LeafNode<NodeKind::StructComma>;
 // `.a`
 struct StructFieldDesignator {
   static constexpr auto Kind = NodeKind::StructFieldDesignator;
-  TypedNodeId<IdentifierName> name;
+  // IdentifierName or BaseName TODO: Or<>
+  NodeId name;
 };
 
 // `.a = 0`

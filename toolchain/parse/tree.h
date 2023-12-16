@@ -154,15 +154,25 @@ class Tree : public Printable<Tree> {
   auto node_subtree_size(NodeId n) const -> int32_t;
 
   // Extract a node of type `T` from a sibling range. This is expected to
-  // consume the complete sibling range.
+  // consume the complete sibling range. Malformed tree errors are fatal.
   template <typename T>
   auto ExtractNodeFromChildren(
       llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
+
+  // Like ExtractNodeFromChildren() but returns std::nullopt on error.
+  template <typename T>
+  auto TryExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children) const
+      -> std::optional<T>;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
   // node of that kind.
   template <typename T>
   auto ExtractAs(NodeId node_id) const -> std::optional<T>;
+
+  // Like ExtractAs(), but malformed tree errors are not fatal.
+  template <typename T>
+  auto TryExtractAs(NodeId node_id) const -> std::optional<T>;
 
   // Converts to a typed node, if it is not an error.
   template <typename T>
@@ -421,15 +431,27 @@ inline auto GetKind<File>() {
 }
 
 template <typename T>
-auto Tree::ExtractNodeFromChildren(
-    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+auto Tree::TryExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children) const
+    -> std::optional<T> {
   auto it = children.begin();
-  llvm::errs() << "FIXME: ExtractNodeFromChildren " << GetKind<T>()
+  llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
                << " start\n";
   auto result = Extractable<T>::Extract(this, it, children.end());
-  llvm::errs() << "FIXME: ExtractNodeFromChildren " << GetKind<T>() << " end\n";
+  llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
+               << " end\n";
+  if (it != children.end()) {
+    return std::nullopt;
+  }
+  return result;
+}
+
+template <typename T>
+auto Tree::ExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+  auto result = TryExtractNodeFromChildren<T>(children);
+  // TODO: Print children on error.
   CARBON_CHECK(result.has_value()) << "Malformed parse node";
-  CARBON_CHECK(it == children.end()) << "Malformed parse node";
   return *result;
 }
 
@@ -443,7 +465,17 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
 }
 
 template <typename T>
+auto Tree::TryExtractAs(NodeId node_id) const -> std::optional<T> {
+  if (!IsValid<T>(node_id)) {
+    return std::nullopt;
+  }
+
+  return TryExtractNodeFromChildren<T>(children(node_id));
+}
+
+template <typename T>
 auto Tree::Extract(TypedNodeId<T> node_id) const -> std::optional<T> {
+  CARBON_DCHECK(node_kind(node_id) == T::Kind);
   if (node_has_error(node_id)) {
     llvm::errs() << "FIXME: b " << T::Kind << " err\n";
     return std::nullopt;
