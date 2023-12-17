@@ -612,6 +612,8 @@ CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 //     ClassIntroducer
 //     _repeated_ _external_: modifier
 //     _external_: IdentifierName or QualifiedDecl
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -641,6 +643,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer, CARBON_IF_VALID(Semi))
 //     InterfaceIntroducer
 //     _repeated_ _external_: modifier
 //     _external_: IdentifierName or QualifiedDecl
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -687,6 +691,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
 //     NamedConstraintIntroducer
 //     _repeated_ _external_: modifier
 //     _external_: IdentifierName or QualifiedDecl
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition
