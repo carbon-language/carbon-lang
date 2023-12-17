@@ -123,6 +123,27 @@ struct Tree::Extractable<BracketedList<T, Bracket>> {
   }
 };
 
+// Extract a `llvm::SmallVector<T>` by extracting `T`s until we can't.
+template <typename T>
+struct Tree::Extractable<llvm::SmallVector<T>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end)
+      -> std::optional<llvm::SmallVector<T>> {
+    llvm::SmallVector<T> result;
+    while (it != end) {
+      auto old_it = it;
+      auto item = Extractable<T>::Extract(tree, it, end);
+      if (!item.has_value()) {
+        it = old_it;
+        break;
+      }
+      result.push_back(*item);
+    }
+    std::reverse(result.begin(), result.end());
+    return result;
+  }
+};
+
 // Extract an `optional<T>` from a list of child nodes by attempting to extract
 // a `T`, and extracting nothing if that fails.
 template <typename T>

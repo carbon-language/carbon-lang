@@ -201,7 +201,7 @@ using NamespaceStart = LeafNode<NodeKind::NamespaceStart>;
 struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace.Define(NodeCategory::Decl);
   TypedNodeId<NamespaceStart> introducer;
-  BracketedList<AnyModifier, NamespaceStart> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   NodeIdOneOf<IdentifierName, QualifiedDecl> name;
 };
 
@@ -213,7 +213,7 @@ using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
 struct CodeBlock {
   static constexpr auto Kind = NodeKind::CodeBlock.Define();
   TypedNodeId<CodeBlockStart> left_brace;
-  BracketedList<AnyStatement, CodeBlockStart> statements;
+  llvm::SmallVector<AnyStatement> statements;
 };
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
@@ -251,7 +251,7 @@ template <const NodeKind& KindT>
 struct FunctionSignature {
   static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
   TypedNodeId<FunctionIntroducer> introducer;
-  BracketedList<AnyModifier, FunctionIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   // For now, this is either an IdentifierName or a QualifiedDecl.
   AnyNameComponent name;
   std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
@@ -268,7 +268,7 @@ struct FunctionDefinition {
   static constexpr auto Kind =
       NodeKind::FunctionDefinition.Define(NodeCategory::Decl);
   TypedNodeId<FunctionDefinitionStart> signature;
-  BracketedList<AnyStatement, FunctionDefinitionStart> body;
+  llvm::SmallVector<AnyStatement> body;
 };
 
 // Pattern nodes
@@ -313,7 +313,7 @@ struct LetDecl {
   static constexpr auto Kind =
       NodeKind::LetDecl.Define(NodeCategory::Decl | NodeCategory::Statement);
   TypedNodeId<LetIntroducer> introducer;
-  BracketedList<AnyModifier, LetIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   AnyPattern pattern;
   TypedNodeId<LetInitializer> equals;
   AnyExpr initializer;
@@ -330,7 +330,7 @@ struct VariableDecl {
   static constexpr auto Kind = NodeKind::VariableDecl.Define(
       NodeCategory::Decl | NodeCategory::Statement);
   TypedNodeId<VariableIntroducer> introducer;
-  BracketedList<AnyModifier, VariableIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   std::optional<TypedNodeId<ReturnedModifier>> returned;
   AnyPattern pattern;
 
@@ -677,27 +677,28 @@ struct StructTypeLiteral {
 using ClassIntroducer = LeafNode<NodeKind::ClassIntroducer>;
 
 // A class signature `class C`
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct ClassSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
   TypedNodeId<ClassIntroducer> introducer;
-  BracketedList<AnyModifier, ClassIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   AnyNameComponent name;
   std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
   std::optional<TypedNodeId<TuplePattern>> params;
 };
 
 // `class C;`
-using ClassDecl = ClassSignature<NodeKind::ClassDecl>;
+using ClassDecl = ClassSignature<NodeKind::ClassDecl, NodeCategory::Decl>;
 // `class C {`
-using ClassDefinitionStart = ClassSignature<NodeKind::ClassDefinitionStart>;
+using ClassDefinitionStart =
+    ClassSignature<NodeKind::ClassDefinitionStart, NodeCategory::None>;
 
 // `class C { ... }`
 struct ClassDefinition {
   static constexpr auto Kind =
       NodeKind::ClassDefinition.Define(NodeCategory::Decl);
   TypedNodeId<ClassDefinitionStart> signature;
-  BracketedList<AnyDecl, ClassDefinitionStart> members;
+  llvm::SmallVector<AnyDecl> members;
 };
 
 // Base class declaration
@@ -709,7 +710,7 @@ using BaseColon = LeafNode<NodeKind::BaseColon>;
 struct BaseDecl {
   static constexpr auto Kind = NodeKind::BaseDecl.Define(NodeCategory::Decl);
   TypedNodeId<BaseIntroducer> introducer;
-  BracketedList<AnyModifier, BaseIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   TypedNodeId<BaseColon> colon;
   AnyExpr base_class;
 };
@@ -720,28 +721,29 @@ struct BaseDecl {
 using InterfaceIntroducer = LeafNode<NodeKind::InterfaceIntroducer>;
 
 // `interface I`
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct InterfaceSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
   TypedNodeId<InterfaceIntroducer> introducer;
-  BracketedList<AnyModifier, InterfaceIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   AnyNameComponent name;
   std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
   std::optional<TypedNodeId<TuplePattern>> params;
 };
 
 // `interface I;`
-using InterfaceDecl = InterfaceSignature<NodeKind::InterfaceDecl>;
+using InterfaceDecl =
+    InterfaceSignature<NodeKind::InterfaceDecl, NodeCategory::Decl>;
 // `interface I {`
 using InterfaceDefinitionStart =
-    InterfaceSignature<NodeKind::InterfaceDefinitionStart>;
+    InterfaceSignature<NodeKind::InterfaceDefinitionStart, NodeCategory::None>;
 
 // `interface I { ... }`
 struct InterfaceDefinition {
   static constexpr auto Kind =
       NodeKind::InterfaceDefinition.Define(NodeCategory::Decl);
   TypedNodeId<InterfaceDefinitionStart> signature;
-  BracketedList<AnyDecl, InterfaceDefinitionStart> members;
+  llvm::SmallVector<AnyDecl> members;
 };
 
 // `impl`...`as` declarations and definitions
@@ -758,11 +760,11 @@ struct ImplForall {
 };
 
 // `impl T as I`
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct ImplSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
   TypedNodeId<ImplIntroducer> introducer;
-  BracketedList<AnyModifier, ImplIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   std::optional<TypedNodeId<ImplForall>> forall;
   std::optional<AnyExpr> type_expr;
   TypedNodeId<ImplAs> as;
@@ -770,16 +772,17 @@ struct ImplSignature {
 };
 
 // `impl T as I;`
-using ImplDecl = ImplSignature<NodeKind::ImplDecl>;
+using ImplDecl = ImplSignature<NodeKind::ImplDecl, NodeCategory::Decl>;
 // `impl T as I {`
-using ImplDefinitionStart = ImplSignature<NodeKind::ImplDefinitionStart>;
+using ImplDefinitionStart =
+    ImplSignature<NodeKind::ImplDefinitionStart, NodeCategory::None>;
 
 // `impl T as I { ... }`
 struct ImplDefinition {
   static constexpr auto Kind =
       NodeKind::ImplDefinition.Define(NodeCategory::Decl);
   TypedNodeId<ImplDefinitionStart> signature;
-  BracketedList<AnyDecl, ImplDefinitionStart> members;
+  llvm::SmallVector<AnyDecl> members;
 };
 
 // Named constraint declarations and definitions
@@ -788,11 +791,11 @@ struct ImplDefinition {
 using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer>;
 
 // `constraint NC`
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct NamedConstraintSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
   TypedNodeId<NamedConstraintIntroducer> introducer;
-  BracketedList<AnyModifier, NamedConstraintIntroducer> modifiers;
+  llvm::SmallVector<AnyModifier> modifiers;
   AnyNameComponent name;
   std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
   std::optional<TypedNodeId<TuplePattern>> params;
@@ -800,17 +803,18 @@ struct NamedConstraintSignature {
 
 // `constraint NC;`
 using NamedConstraintDecl =
-    NamedConstraintSignature<NodeKind::NamedConstraintDecl>;
+    NamedConstraintSignature<NodeKind::NamedConstraintDecl, NodeCategory::Decl>;
 // `constraint NC {`
 using NamedConstraintDefinitionStart =
-    NamedConstraintSignature<NodeKind::NamedConstraintDefinitionStart>;
+    NamedConstraintSignature<NodeKind::NamedConstraintDefinitionStart,
+                             NodeCategory::None>;
 
 // `constraint NC { ... }`
 struct NamedConstraintDefinition {
   static constexpr auto Kind =
       NodeKind::NamedConstraintDefinition.Define(NodeCategory::Decl);
   TypedNodeId<NamedConstraintDefinitionStart> signature;
-  BracketedList<AnyDecl, NamedConstraintDefinitionStart> members;
+  llvm::SmallVector<AnyDecl> members;
 };
 
 // Define `FooId` as `TypedNodeId<Foo>` for every kind of parse node `Foo`.
