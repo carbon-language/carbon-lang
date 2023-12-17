@@ -5,6 +5,7 @@
 #include "toolchain/parse/node_kind.h"
 
 #include "common/check.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
@@ -74,6 +75,18 @@ auto NodeKind::CheckMatchesTokenKind(Lex::TokenKind token_kind, bool has_error)
       << "Created parse node with NodeKind " << *this << " and has_error "
       << has_error << " for lexical token kind " << token_kind
       << ", but expected token kind " << expected_token_kind;
+}
+
+auto NodeKind::category() const -> NodeCategory {
+  return definition().category();
+}
+
+auto NodeKind::definition() const -> const Definition& {
+  static constexpr const Definition* Table[] = {
+#define CARBON_PARSE_NODE_KIND(Name) &Parse::Name::Kind,
+#include "toolchain/parse/node_kind.def"
+  };
+  return *Table[AsInt()];
 }
 
 }  // namespace Carbon::Parse

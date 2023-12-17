@@ -12,13 +12,15 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/extract.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
 namespace {
 
 // Check that each node kind defines a Kind member using the correct
 // NodeKind enumerator.
-#define CARBON_PARSE_NODE_KIND(Name, ...) \
+#define CARBON_PARSE_NODE_KIND(Name) \
   static_assert(Name::Kind == NodeKind::Name, #Name);
 #include "toolchain/parse/node_kind.def"
 

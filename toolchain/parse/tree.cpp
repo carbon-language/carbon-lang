@@ -11,6 +11,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/extract.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 
@@ -224,8 +225,8 @@ static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind)
     -> bool {
   switch (kind) {
     // FIXME: remove `|| true`
-#define CARBON_PARSE_NODE_KIND(Name, ...) \
-  case NodeKind::Name:                    \
+#define CARBON_PARSE_NODE_KIND(Name) \
+  case NodeKind::Name:               \
     return tree->TryExtractAs<Name>(node_id).has_value() || true;
 #include "toolchain/parse/node_kind.def"
   }

@@ -16,12 +16,34 @@ filegroup(
 cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
-    hdrs = ["node_kind.h"],
+    hdrs = [
+        "node_id.h",
+        "node_kind.h",
+        "typed_nodes.h",
+    ],
     textual_hdrs = ["node_kind.def"],
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//toolchain/base:index_base",
         "//toolchain/lex:token_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "typed_nodes_test",
+    size = "small",
+    srcs = ["typed_nodes_test.cpp"],
+    deps = [
+        ":node_kind",
+        ":tree",
+        "//testing/base:gtest_main",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
+        "//toolchain/lex",
+        "//toolchain/lex:tokenized_buffer",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -47,7 +69,6 @@ cc_library(
     hdrs = [
         "extract.h",
         "tree.h",
-        "typed_nodes.h",
     ],
     deps = [
         ":node_kind",
@@ -85,22 +106,6 @@ cc_test(
         "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "typed_nodes_test",
-    size = "small",
-    srcs = ["typed_nodes_test.cpp"],
-    deps = [
-        ":node_kind",
-        ":tree",
-        "//testing/base:gtest_main",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:mocks",
-        "//toolchain/lex",
-        "//toolchain/lex:tokenized_buffer",
-        "@com_google_googletest//:gtest",
     ],
 )
 

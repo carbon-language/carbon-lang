@@ -10,8 +10,21 @@
 
 #include "common/struct_reflection.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
+
+// A complete source file. Note that there is no corresponding parse node for
+// the file. The file is instead the complete contents of the parse tree.
+struct File {
+  TypedNodeId<FileStart> start;
+  BracketedList<AnyDecl, FileStart> decls;
+  TypedNodeId<FileEnd> end;
+
+  static auto Make(const Tree* tree) -> File {
+    return tree->ExtractNodeFromChildren<File>(tree->roots());
+  }
+};
 
 // Extract an `NodeId` as a single child.
 template <>
@@ -24,18 +37,6 @@ struct Tree::Extractable<NodeId> {
     return NodeId(*it++);
   }
 };
-
-// Aliases for `NodeId` to describe particular kinds of nodes.
-//
-// TODO: We should check that the right kind of node is present.
-using AnyDecl = NodeId;
-using AnyExpr = NodeId;
-using AnyNameComponent = NodeId;
-using AnyModifier = NodeId;
-using AnyPattern = NodeId;
-using AnyStatement = NodeId;
-
-// TODO: define Or<T, U> and Not<Kind>.
 
 // Extract a `TypeNodeId<T>` as a single required child.
 template <typename T>
@@ -51,25 +52,6 @@ struct Tree::Extractable<TypedNodeId<T>> {
   }
 };
 
-// An optional child. If this child is present, it will not be of kind `T`.
-template <typename T>
-class OptionalNot {
- public:
-  explicit OptionalNot(NodeId node_id) : node_id_(node_id) {}
-  explicit OptionalNot(std::nullopt_t) : node_id_(NodeId::Invalid) {}
-
-  // Returns whether this element was present.
-  auto is_present() -> bool { return node_id_ != NodeId::Invalid; }
-
-  // Gets the `Node`, if this element was present.
-  auto GetNode() const -> std::optional<NodeId> {
-    return is_present() ? node_id_ : std::nullopt;
-  }
-
- private:
-  NodeId node_id_;
-};
-
 // Extract an `OptionalNot<T>` as either zero or one child.
 template <typename T>
 struct Tree::Extractable<OptionalNot<T>> {
@@ -81,11 +63,6 @@ struct Tree::Extractable<OptionalNot<T>> {
     return OptionalNot<T>(*it++);
   }
 };
-
-// A list of `T`s, terminated by a `Bracket`. Each `T` should implement
-// `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
-template <typename T, typename Bracket>
-class BracketedList : public std::vector<T> {};
 
 // Extract a `BracketedList` by extracting `T`s until we reach `Bracket`.
 template <typename T, typename Bracket>

@@ -14,36 +14,10 @@
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_id.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
-
-// A lightweight handle representing a node in the tree.
-//
-// Objects of this type are small and cheap to copy and store. They don't
-// contain any of the information about the node, and serve as a handle that
-// can be used with the underlying tree to query for detailed information.
-struct NodeId : public IdBase {
-  // An explicitly invalid instance.
-  static const NodeId Invalid;
-
-  using IdBase::IdBase;
-};
-
-constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
-
-// Typed version of `NodeId` that references a node of type `T`:
-template <typename T>
-struct TypedNodeId : public NodeId {
-  explicit TypedNodeId(NodeId node_id) : NodeId(node_id) {}
-
-  // An explicitly invalid instance.
-  static const TypedNodeId<T> Invalid;
-};
-
-template <typename T>
-constexpr TypedNodeId<T> TypedNodeId<T>::Invalid =
-    TypedNodeId<T>(NodeId::InvalidIndex);
 
 // A tree of parsed tokens based on the language grammar.
 //
@@ -420,7 +394,7 @@ class Tree::SiblingIterator
 // FIXME: delete
 template <class T>
 static inline auto GetKind() {
-  return T::Kind;
+  return NodeKind(T::Kind);
 }
 
 struct File;

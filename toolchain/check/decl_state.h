@@ -43,7 +43,7 @@ enum class KeywordModifierSet : uint32_t {
 };
 
 inline auto operator!(KeywordModifierSet k) -> bool {
-  return !static_cast<unsigned>(k);
+  return !static_cast<uint32_t>(k);
 }
 
 // State stored for each declaration we are currently in: the kind of
