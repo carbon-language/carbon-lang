@@ -118,5 +118,16 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_var_name.has_value());
 }
 
+auto CategoryMatches(const NodeKind::Definition& def, NodeKind kind,
+                     const char* name) {
+  EXPECT_EQ(def.category(), kind.category()) << name;
+}
+
+TEST_F(TypedNodeTest, CategoryMatches) {
+#define CARBON_PARSE_NODE_KIND(Name) \
+  CategoryMatches(Name::Kind, NodeKind::Name, #Name);
+#include "toolchain/parse/node_kind.def"
+}
+
 }  // namespace
 }  // namespace Carbon::Parse
