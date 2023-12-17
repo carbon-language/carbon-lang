@@ -38,13 +38,14 @@ struct Tree::Extractable<NodeId> {
   }
 };
 
-// Extract a `TypeNodeId<T>` as a single required child.
+// Extract a `TypedNodeId<T>` as a single required child.
 template <typename T>
 struct Tree::Extractable<TypedNodeId<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end) -> std::optional<TypedNodeId<T>> {
     if (it == end || tree->node_kind(*it) != T::Kind) {
-      llvm::errs() << "FIXME: Extract TypedNodeId " << T::Kind << " error\n";
+      llvm::errs() << "FIXME: Extract TypedNodeId " << tree->node_kind(*it)
+                   << " != " << T::Kind << " error\n";
       return std::nullopt;
     }
     llvm::errs() << "FIXME: Extract TypedNodeId " << T::Kind << " success\n";
@@ -80,6 +81,23 @@ struct Tree::Extractable<NodeIdInCategory<Category>> {
     llvm::errs() << "FIXME: Extract NodeIdInCategory " << tree->node_kind(*it)
                  << " success\n";
     return NodeIdInCategory<Category>(*it++);
+  }
+};
+
+// Extract a `NodeIdOneOf<T, U>` as a single required child.
+template <typename T, typename U>
+struct Tree::Extractable<NodeIdOneOf<T, U>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<NodeIdOneOf<T, U>> {
+    auto kind = tree->node_kind(*it);
+    llvm::errs() << "FIXME: Extract NodeIdOneOf " << kind << " ? " << T::Kind
+                 << " or " << U::Kind;
+    if (it == end || (kind != T::Kind && kind != U::Kind)) {
+      llvm::errs() << " error\n";
+      return std::nullopt;
+    }
+    llvm::errs() << " success\n";
+    return NodeIdOneOf<T, U>(*it++);
   }
 };
 

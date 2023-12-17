@@ -10,7 +10,7 @@
 
 namespace Carbon::Parse {
 
-// Matches any NodeKind whose `category()` overlaps with `Category`.
+// NodeId that matches any NodeKind whose `category()` overlaps with `Category`.
 template <NodeCategory Category>
 struct NodeIdInCategory : public NodeId {
   explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
@@ -31,7 +31,20 @@ using AnyNameComponent = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPattern = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatement = NodeIdInCategory<NodeCategory::Statement>;
 
-// TODO: Define NodeIdOneOf<T, U> (listed as `Or<>` below) and NodeIdNot<Kind>.
+// NodeId with kind that matches either T::Kind or U::Kind.
+template <typename T, typename U>
+struct NodeIdOneOf : public NodeId {
+  explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+
+  // An explicitly invalid instance.
+  static const NodeIdOneOf<T, U> Invalid;
+};
+
+template <typename T, typename U>
+constexpr NodeIdOneOf<T, U> NodeIdOneOf<T, U>::Invalid =
+    NodeIdOneOf<T, U>(NodeId::InvalidIndex);
+
+// TODO: Define NodeIdNot<Kind>.
 
 // A list of `T`s, terminated by a `Bracket`. Each `T` should implement
 // `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
@@ -117,6 +130,21 @@ using SelfTypeNameExpr =
 // declared name, as in `{.base: partial B}`.
 using BaseName = LeafNode<NodeKind::BaseName>;
 
+// A qualified name: `A.B`.
+//
+// TODO: This is not a declaration. Rename this parse node.
+struct QualifiedDecl {
+  static constexpr auto Kind =
+      NodeKind::QualifiedDecl.Define(NodeCategory::NameComponent);
+
+  // For now, this is either an IdentifierName or a QualifiedDecl.
+  AnyNameComponent lhs;
+
+  // TODO: This will eventually need to support more general expressions, for
+  // example `GenericType(type_args).ChildType(child_type_args).Name`.
+  TypedNodeId<IdentifierName> rhs;
+};
+
 // Library, package, import
 
 // The `package` keyword in an expression.
@@ -125,6 +153,7 @@ using PackageExpr = LeafNode<NodeKind::PackageExpr, NodeCategory::Expr>;
 // The name of a package or library for `package`, `import`, and `library`.
 using PackageName = LeafNode<NodeKind::PackageName>;
 using LibraryName = LeafNode<NodeKind::LibraryName>;
+using DefaultLibrary = LeafNode<NodeKind::DefaultLibrary>;
 
 using PackageIntroducer = LeafNode<NodeKind::PackageIntroducer>;
 using PackageApi = LeafNode<NodeKind::PackageApi>;
@@ -133,8 +162,7 @@ using PackageImpl = LeafNode<NodeKind::PackageImpl>;
 // `library` in `package` or `import`:
 struct LibrarySpecifier {
   static constexpr auto Kind = NodeKind::LibrarySpecifier.Define();
-  // LibraryName or DefaultLibrary TODO: Or<>
-  NodeId name;
+  NodeIdOneOf<LibraryName, DefaultLibrary> name;
 };
 
 // First line of the file, such as:
@@ -144,8 +172,7 @@ struct PackageDirective {
   TypedNodeId<PackageIntroducer> introducer;
   std::optional<TypedNodeId<PackageName>> name;
   std::optional<TypedNodeId<LibrarySpecifier>> library;
-  // PackageApi or PackageImpl TODO: Or<>
-  NodeId api_or_impl;
+  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
 // `import TheirPackage library "TheirLibrary";`
@@ -158,15 +185,12 @@ struct ImportDirective {
 };
 
 // `library` as directive:
-using DefaultLibrary = LeafNode<NodeKind::DefaultLibrary>;
 using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
 struct LibraryDirective {
   static constexpr auto Kind = NodeKind::LibraryDirective.Define();
   TypedNodeId<LibraryIntroducer> introducer;
-  // DefaultLibrary or LibraryName  TODO: Or<>
-  NodeId library_name;
-  // PackageApi or PackageImpl TODO: Or<>
-  NodeId api_or_impl;
+  NodeIdOneOf<LibraryName, DefaultLibrary> library_name;
+  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
 // Namespace nodes
@@ -178,8 +202,7 @@ struct Namespace {
   static constexpr auto Kind = NodeKind::Namespace.Define(NodeCategory::Decl);
   TypedNodeId<NamespaceStart> introducer;
   BracketedList<AnyModifier, NamespaceStart> modifiers;
-  // IdentifierName or QualifiedDecl.
-  NodeId name;
+  NodeIdOneOf<IdentifierName, QualifiedDecl> name;
 };
 
 // Function nodes
@@ -254,8 +277,7 @@ struct FunctionDefinition {
 struct BindingPattern {
   static constexpr auto Kind =
       NodeKind::BindingPattern.Define(NodeCategory::Pattern);
-  // Either `IdentifierName` or `SelfValueName`.  TODO: Or<>
-  NodeId name;
+  NodeIdOneOf<IdentifierName, SelfValueName> name;
   AnyExpr type;
 };
 
@@ -263,8 +285,7 @@ struct BindingPattern {
 struct GenericBindingPattern {
   static constexpr auto Kind =
       NodeKind::GenericBindingPattern.Define(NodeCategory::Pattern);
-  // Either `IdentifierName` or `SelfValueName`.  TODO: Or<>
-  NodeId name;
+  NodeIdOneOf<IdentifierName, SelfValueName> name;
   AnyExpr type;
 };
 
@@ -404,8 +425,7 @@ struct IfStatement {
 
   struct Else {
     TypedNodeId<IfStatementElse> else_token;
-    // Either a CodeBlock or an IfStatement.  TODO: Or<>
-    NodeId statement;
+    NodeIdOneOf<CodeBlock, IfStatement> body;
   };
   std::optional<Else> else_clause;
 };
@@ -496,21 +516,6 @@ struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr.Define(NodeCategory::Expr);
   TypedNodeId<CallExprStart> start;
   CommaSeparatedList<AnyExpr, CallExprComma, CallExprStart> arguments;
-};
-
-// A qualified name: `A.B`.
-//
-// TODO: This is not a declaration. Rename this parse node.
-struct QualifiedDecl {
-  static constexpr auto Kind =
-      NodeKind::QualifiedDecl.Define(NodeCategory::NameComponent);
-
-  // For now, this is either an IdentifierName or a QualifiedDecl.
-  AnyNameComponent lhs;
-
-  // TODO: This will eventually need to support more general expressions, for
-  // example `GenericType(type_args).ChildType(child_type_args).Name`.
-  TypedNodeId<IdentifierName> rhs;
 };
 
 // A simple member access expression: `a.b`.
@@ -629,8 +634,7 @@ using StructComma = LeafNode<NodeKind::StructComma>;
 // `.a`
 struct StructFieldDesignator {
   static constexpr auto Kind = NodeKind::StructFieldDesignator.Define();
-  // IdentifierName or BaseName TODO: Or<>
-  NodeId name;
+  NodeIdOneOf<IdentifierName, BaseName> name;
 };
 
 // `.a = 0`
