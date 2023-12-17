@@ -31,29 +31,11 @@ using AnyNameComponent = AnyInCategory<NodeCategory::NameComponent>;
 using AnyPattern = AnyInCategory<NodeCategory::Pattern>;
 using AnyStatement = AnyInCategory<NodeCategory::Statement>;
 
-// TODO: define TypeIdOneOf<T, U> (listed as `Or<>` below) and TypeIdNot<Kind>.
-
-// An optional child. If this child is present, it will not be of kind `T`.
-template <typename T>
-class OptionalNot {
- public:
-  explicit OptionalNot(NodeId node_id) : node_id_(node_id) {}
-  explicit OptionalNot(std::nullopt_t) : node_id_(NodeId::Invalid) {}
-
-  // Returns whether this element was present.
-  auto is_present() -> bool { return node_id_ != NodeId::Invalid; }
-
-  // Gets the `Node`, if this element was present.
-  auto GetNode() const -> std::optional<NodeId> {
-    return is_present() ? node_id_ : std::nullopt;
-  }
-
- private:
-  NodeId node_id_;
-};
+// TODO: Define TypeIdOneOf<T, U> (listed as `Or<>` below) and TypeIdNot<Kind>.
 
 // A list of `T`s, terminated by a `Bracket`. Each `T` should implement
 // `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
+// TODO: Replace with `llvm::SmallVector`
 template <typename T, typename Bracket>
 class BracketedList : public std::vector<T> {};
 
@@ -92,6 +74,7 @@ struct InvalidParseSubtree {
   static constexpr auto Kind =
       NodeKind::InvalidParseSubtree.Define(NodeCategory::Decl);
   TypedNodeId<InvalidParseStart> start;
+  // TODO: use `TypeIdNot<InvalidParseStart>` instead of `NodeId`.
   BracketedList<NodeId, InvalidParseStart> statements;
 };
 
@@ -372,7 +355,7 @@ struct ReturnStatement {
   static constexpr auto Kind =
       NodeKind::ReturnStatement.Define(NodeCategory::Statement);
   TypedNodeId<ReturnStatementStart> introducer;
-  OptionalNot<ReturnStatementStart> expr;
+  std::optional<AnyExpr> expr;
   std::optional<TypedNodeId<ReturnVarModifier>> var;
 };
 
@@ -461,7 +444,7 @@ struct ArrayExprSemi {
 struct ArrayExpr {
   static constexpr auto Kind = NodeKind::ArrayExpr.Define(NodeCategory::Expr);
   TypedNodeId<ArrayExprSemi> start;
-  OptionalNot<ArrayExprSemi> bound;
+  std::optional<AnyExpr> bound;
 };
 
 // The opening portion of an indexing expression: `a[`.
