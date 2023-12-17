@@ -83,12 +83,14 @@ struct LeafNode {
 // An invalid parse. Used to balance the parse tree. This type is here only to
 // ensure we have a type for each parse node kind. This node kind always has an
 // error, so can never be extracted.
-using InvalidParse = LeafNode<NodeKind::InvalidParse>;
+using InvalidParse =
+    LeafNode<NodeKind::InvalidParse, NodeCategory::Decl | NodeCategory::Expr>;
 
 // An invalid subtree. Always has an error so can never be extracted.
 using InvalidParseStart = LeafNode<NodeKind::InvalidParseStart>;
 struct InvalidParseSubtree {
-  static constexpr auto Kind = NodeKind::InvalidParseSubtree.Define();
+  static constexpr auto Kind =
+      NodeKind::InvalidParseSubtree.Define(NodeCategory::Decl);
   TypedNodeId<InvalidParseStart> start;
   BracketedList<NodeId, InvalidParseStart> statements;
 };
@@ -108,7 +110,8 @@ using FileEnd = LeafNode<NodeKind::FileEnd>;
 // General-purpose nodes
 
 // An empty declaration, such as `;`.
-using EmptyDecl = LeafNode<NodeKind::EmptyDecl>;
+using EmptyDecl =
+    LeafNode<NodeKind::EmptyDecl, NodeCategory::Decl | NodeCategory::Statement>;
 
 // A name in a non-expression context, such as a declaration.
 using IdentifierName =
@@ -121,8 +124,10 @@ using IdentifierNameExpr =
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`.
 using SelfValueName = LeafNode<NodeKind::SelfValueName>;
-using SelfValueNameExpr = LeafNode<NodeKind::SelfValueNameExpr>;
-using SelfTypeNameExpr = LeafNode<NodeKind::SelfTypeNameExpr>;
+using SelfValueNameExpr =
+    LeafNode<NodeKind::SelfValueNameExpr, NodeCategory::Expr>;
+using SelfTypeNameExpr =
+    LeafNode<NodeKind::SelfTypeNameExpr, NodeCategory::Expr>;
 
 // The `base` value keyword, introduced by `base: B`. Typically referenced in
 // an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
@@ -417,7 +422,7 @@ struct IfStatement {
   struct Else {
     TypedNodeId<IfStatementElse> else_token;
     // Either a CodeBlock or an IfStatement.  TODO: Or<>
-    AnyStatement statement;
+    NodeId statement;
   };
   std::optional<Else> else_clause;
 };
@@ -530,7 +535,8 @@ struct MemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::MemberAccessExpr.Define(NodeCategory::Expr);
   AnyExpr lhs;
-  AnyExpr rhs;
+  // TODO: Figure out which nodes can appear here
+  NodeId rhs;
 };
 
 // A simple indirect member access expression: `a->b`.
@@ -538,7 +544,8 @@ struct PointerMemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::PointerMemberAccessExpr.Define(NodeCategory::Expr);
   AnyExpr lhs;
-  AnyExpr rhs;
+  // TODO: Figure out which nodes can appear here
+  NodeId rhs;
 };
 
 // A prefix operator expression.
@@ -689,6 +696,8 @@ struct ClassSignature {
   TypedNodeId<ClassIntroducer> introducer;
   BracketedList<AnyModifier, ClassIntroducer> modifiers;
   AnyNameComponent name;
+  std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
+  std::optional<TypedNodeId<TuplePattern>> params;
 };
 
 // `class C;`
@@ -730,6 +739,8 @@ struct InterfaceSignature {
   TypedNodeId<InterfaceIntroducer> introducer;
   BracketedList<AnyModifier, InterfaceIntroducer> modifiers;
   AnyNameComponent name;
+  std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
+  std::optional<TypedNodeId<TuplePattern>> params;
 };
 
 // `interface I;`
@@ -796,6 +807,8 @@ struct NamedConstraintSignature {
   TypedNodeId<NamedConstraintIntroducer> introducer;
   BracketedList<AnyModifier, NamedConstraintIntroducer> modifiers;
   AnyNameComponent name;
+  std::optional<TypedNodeId<ImplicitParamList>> implicit_params;
+  std::optional<TypedNodeId<TuplePattern>> params;
 };
 
 // `constraint NC;`

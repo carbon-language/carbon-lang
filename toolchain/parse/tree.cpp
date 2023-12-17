@@ -227,7 +227,7 @@ static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind)
     // FIXME: remove `|| true`
 #define CARBON_PARSE_NODE_KIND(Name) \
   case NodeKind::Name:               \
-    return tree->TryExtractAs<Name>(node_id).has_value() || true;
+    return tree->TryExtractAs<Name>(node_id).has_value();
 #include "toolchain/parse/node_kind.def"
   }
 }
