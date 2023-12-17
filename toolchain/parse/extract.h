@@ -101,6 +101,21 @@ struct Tree::Extractable<NodeIdOneOf<T, U>> {
   }
 };
 
+// Extract a `NodeIdNot<T>` as a single required child.
+template <typename T>
+struct Tree::Extractable<NodeIdNot<T>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<NodeIdNot<T>> {
+    if (it == end || tree->node_kind(*it) == T::Kind) {
+      llvm::errs() << "FIXME: Extract NodeIdNot " << T::Kind << " error\n";
+      return std::nullopt;
+    }
+    llvm::errs() << "FIXME: Extract NodeIdNot " << tree->node_kind(*it)
+                 << " != " << T::Kind << " success\n";
+    return NodeIdNot<T>(*it++);
+  }
+};
+
 // Extract a `BracketedList` by extracting `T`s until we reach `Bracket`.
 template <typename T, typename Bracket>
 struct Tree::Extractable<BracketedList<T, Bracket>> {

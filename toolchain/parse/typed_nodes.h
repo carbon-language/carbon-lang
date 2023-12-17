@@ -44,7 +44,18 @@ template <typename T, typename U>
 constexpr NodeIdOneOf<T, U> NodeIdOneOf<T, U>::Invalid =
     NodeIdOneOf<T, U>(NodeId::InvalidIndex);
 
-// TODO: Define NodeIdNot<Kind>.
+// NodeId with kind that is anything but T::Kind.
+template <typename T>
+struct NodeIdNot : public NodeId {
+  explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
+
+  // An explicitly invalid instance.
+  static const NodeIdNot<T> Invalid;
+};
+
+template <typename T>
+constexpr NodeIdNot<T> NodeIdNot<T>::Invalid =
+    NodeIdNot<T>(NodeId::InvalidIndex);
 
 // A list of `T`s, terminated by a `Bracket`. Each `T` should implement
 // `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
@@ -61,8 +72,8 @@ struct ListItem {
 
 // A list of items, parameterized by the kind of the comma and the opening
 // bracket.
-template <typename Element, typename Comma, typename Bracket>
-using CommaSeparatedList = BracketedList<ListItem<Element, Comma>, Bracket>;
+template <typename Element, typename Comma>
+using CommaSeparatedList = llvm::SmallVector<ListItem<Element, Comma>>;
 
 // This class provides a shorthand for defining parse node kinds for leaf nodes.
 template <const NodeKind& KindT, NodeCategory Category = NodeCategory::None>
@@ -87,8 +98,7 @@ struct InvalidParseSubtree {
   static constexpr auto Kind =
       NodeKind::InvalidParseSubtree.Define(NodeCategory::Decl);
   TypedNodeId<InvalidParseStart> start;
-  // TODO: use `NodeIdNot<InvalidParseStart>` instead of `NodeId`.
-  BracketedList<NodeId, InvalidParseStart> statements;
+  llvm::SmallVector<NodeIdNot<InvalidParseStart>> extra;
 };
 
 // A placeholder node to be replaced; it will never exist in a valid parse tree.
@@ -227,15 +237,14 @@ struct TuplePattern {
   static constexpr auto Kind =
       NodeKind::TuplePattern.Define(NodeCategory::Pattern);
   TypedNodeId<TuplePatternStart> left_paren;
-  CommaSeparatedList<AnyPattern, PatternListComma, TuplePatternStart> params;
+  CommaSeparatedList<AnyPattern, PatternListComma> params;
 };
 
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList.Define();
   TypedNodeId<ImplicitParamListStart> left_square;
-  CommaSeparatedList<AnyPattern, PatternListComma, ImplicitParamListStart>
-      params;
+  CommaSeparatedList<AnyPattern, PatternListComma> params;
 };
 
 using FunctionIntroducer = LeafNode<NodeKind::FunctionIntroducer>;
@@ -498,7 +507,7 @@ struct TupleLiteral {
   static constexpr auto Kind =
       NodeKind::TupleLiteral.Define(NodeCategory::Expr);
   TypedNodeId<ExprOpenParen> left_paren;
-  CommaSeparatedList<AnyExpr, TupleLiteralComma, ExprOpenParen> elements;
+  CommaSeparatedList<AnyExpr, TupleLiteralComma> elements;
 };
 
 // The opening portion of a call expression: `F(`.
@@ -515,7 +524,7 @@ using CallExprComma = LeafNode<NodeKind::CallExprComma>;
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr.Define(NodeCategory::Expr);
   TypedNodeId<CallExprStart> start;
-  CommaSeparatedList<AnyExpr, CallExprComma, CallExprStart> arguments;
+  CommaSeparatedList<AnyExpr, CallExprComma> arguments;
 };
 
 // A simple member access expression: `a.b`.
@@ -656,9 +665,7 @@ struct StructLiteral {
   static constexpr auto Kind =
       NodeKind::StructLiteral.Define(NodeCategory::Expr);
   TypedNodeId<StructLiteralOrStructTypeLiteralStart> introducer;
-  CommaSeparatedList<TypedNodeId<StructFieldValue>, StructComma,
-                     StructLiteralOrStructTypeLiteralStart>
-      fields;
+  CommaSeparatedList<TypedNodeId<StructFieldValue>, StructComma> fields;
 };
 
 // Struct type literals, such as `{.a: i32}`:
@@ -666,9 +673,7 @@ struct StructTypeLiteral {
   static constexpr auto Kind =
       NodeKind::StructTypeLiteral.Define(NodeCategory::Expr);
   TypedNodeId<StructLiteralOrStructTypeLiteralStart> introducer;
-  CommaSeparatedList<TypedNodeId<StructFieldType>, StructComma,
-                     StructLiteralOrStructTypeLiteralStart>
-      fields;
+  CommaSeparatedList<TypedNodeId<StructFieldType>, StructComma> fields;
 };
 
 // `class` declarations and definitions
