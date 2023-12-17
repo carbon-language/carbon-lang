@@ -52,18 +52,18 @@ struct Tree::Extractable<TypedNodeId<T>> {
   }
 };
 
-// Extract an `AnyInCategory<Category>` as a single child.
+// Extract an `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory Category>
-struct Tree::Extractable<AnyInCategory<Category>> {
+struct Tree::Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end)
-      -> std::optional<AnyInCategory<Category>> {
+      -> std::optional<NodeIdInCategory<Category>> {
     if (!Category) {
-      llvm::errs() << "FIXME AnyInCategory <none>\n";
+      llvm::errs() << "FIXME NodeIdInCategory <none>\n";
     }
-#define CARBON_NODE_CATEGORY(Name)                     \
-  if (!!(Category & NodeCategory::Name)) {             \
-    llvm::errs() << "FIXME AnyInCategory " #Name "\n"; \
+#define CARBON_NODE_CATEGORY(Name)                        \
+  if (!!(Category & NodeCategory::Name)) {                \
+    llvm::errs() << "FIXME NodeIdInCategory " #Name "\n"; \
   }
     CARBON_NODE_CATEGORY(Decl)
     CARBON_NODE_CATEGORY(Expr)
@@ -73,13 +73,13 @@ struct Tree::Extractable<AnyInCategory<Category>> {
     CARBON_NODE_CATEGORY(Statement)
 
     if (it == end || !(tree->node_kind(*it).category() & Category)) {
-      llvm::errs() << "FIXME: Extract AnyInCategory " << tree->node_kind(*it)
+      llvm::errs() << "FIXME: Extract NodeIdInCategory " << tree->node_kind(*it)
                    << " error\n";
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract AnyInCategory " << tree->node_kind(*it)
+    llvm::errs() << "FIXME: Extract NodeIdInCategory " << tree->node_kind(*it)
                  << " success\n";
-    return AnyInCategory<Category>(*it++);
+    return NodeIdInCategory<Category>(*it++);
   }
 };
 

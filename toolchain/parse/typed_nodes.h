@@ -12,26 +12,26 @@ namespace Carbon::Parse {
 
 // Matches any NodeKind whose `category()` overlaps with `Category`.
 template <NodeCategory Category>
-struct AnyInCategory : public NodeId {
-  explicit AnyInCategory(NodeId node_id) : NodeId(node_id) {}
+struct NodeIdInCategory : public NodeId {
+  explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
 
   // An explicitly invalid instance.
-  static const AnyInCategory<Category> Invalid;
+  static const NodeIdInCategory<Category> Invalid;
 };
 
 template <NodeCategory Category>
-constexpr AnyInCategory<Category> AnyInCategory<Category>::Invalid =
-    AnyInCategory<Category>(NodeId::InvalidIndex);
+constexpr NodeIdInCategory<Category> NodeIdInCategory<Category>::Invalid =
+    NodeIdInCategory<Category>(NodeId::InvalidIndex);
 
-// Aliases for `AnyInCategory` to describe particular kinds of nodes.
-using AnyDecl = AnyInCategory<NodeCategory::Decl>;
-using AnyExpr = AnyInCategory<NodeCategory::Expr>;
-using AnyModifier = AnyInCategory<NodeCategory::Modifier>;
-using AnyNameComponent = AnyInCategory<NodeCategory::NameComponent>;
-using AnyPattern = AnyInCategory<NodeCategory::Pattern>;
-using AnyStatement = AnyInCategory<NodeCategory::Statement>;
+// Aliases for `NodeIdInCategory` to describe particular categories of nodes.
+using AnyDecl = NodeIdInCategory<NodeCategory::Decl>;
+using AnyExpr = NodeIdInCategory<NodeCategory::Expr>;
+using AnyModifier = NodeIdInCategory<NodeCategory::Modifier>;
+using AnyNameComponent = NodeIdInCategory<NodeCategory::NameComponent>;
+using AnyPattern = NodeIdInCategory<NodeCategory::Pattern>;
+using AnyStatement = NodeIdInCategory<NodeCategory::Statement>;
 
-// TODO: Define TypeIdOneOf<T, U> (listed as `Or<>` below) and TypeIdNot<Kind>.
+// TODO: Define NodeIdOneOf<T, U> (listed as `Or<>` below) and NodeIdNot<Kind>.
 
 // A list of `T`s, terminated by a `Bracket`. Each `T` should implement
 // `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
@@ -74,7 +74,7 @@ struct InvalidParseSubtree {
   static constexpr auto Kind =
       NodeKind::InvalidParseSubtree.Define(NodeCategory::Decl);
   TypedNodeId<InvalidParseStart> start;
-  // TODO: use `TypeIdNot<InvalidParseStart>` instead of `NodeId`.
+  // TODO: use `NodeIdNot<InvalidParseStart>` instead of `NodeId`.
   BracketedList<NodeId, InvalidParseStart> statements;
 };
 
