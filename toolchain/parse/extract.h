@@ -52,6 +52,37 @@ struct Tree::Extractable<TypedNodeId<T>> {
   }
 };
 
+// Extract an `AnyInCategory<Category>` as a single child.
+template <NodeCategory Category>
+struct Tree::Extractable<AnyInCategory<Category>> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end)
+      -> std::optional<AnyInCategory<Category>> {
+    if (!Category) {
+      llvm::errs() << "FIXME AnyInCategory <none>\n";
+    }
+#define CARBON_NODE_CATEGORY(Name)                     \
+  if (!!(Category & NodeCategory::Name)) {             \
+    llvm::errs() << "FIXME AnyInCategory " #Name "\n"; \
+  }
+    CARBON_NODE_CATEGORY(Decl)
+    CARBON_NODE_CATEGORY(Expr)
+    CARBON_NODE_CATEGORY(Modifier)
+    CARBON_NODE_CATEGORY(NameComponent)
+    CARBON_NODE_CATEGORY(Pattern)
+    CARBON_NODE_CATEGORY(Statement)
+
+    if (it == end || !(tree->node_kind(*it).category() & Category)) {
+      llvm::errs() << "FIXME: Extract AnyInCategory " << tree->node_kind(*it)
+                   << " error\n";
+      return std::nullopt;
+    }
+    llvm::errs() << "FIXME: Extract AnyInCategory " << tree->node_kind(*it)
+                 << " success\n";
+    return AnyInCategory<Category>(*it++);
+  }
+};
+
 // Extract an `OptionalNot<T>` as either zero or one child.
 template <typename T>
 struct Tree::Extractable<OptionalNot<T>> {
