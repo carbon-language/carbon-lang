@@ -57,12 +57,6 @@ template <typename T>
 constexpr NodeIdNot<T> NodeIdNot<T>::Invalid =
     NodeIdNot<T>(NodeId::InvalidIndex);
 
-// A list of `T`s, terminated by a `Bracket`. Each `T` should implement
-// `ChildTraits`, and `Bracket` should be the struct for a parse node kind.
-// TODO: Replace with `llvm::SmallVector`
-template <typename T, typename Bracket>
-class BracketedList : public std::vector<T> {};
-
 // A pair of a list item and its optional following comma.
 template <typename Element, typename Comma>
 struct ListItem {
@@ -70,8 +64,7 @@ struct ListItem {
   std::optional<TypedNodeId<Comma>> comma;
 };
 
-// A list of items, parameterized by the kind of the comma and the opening
-// bracket.
+// A list of items, parameterized by the kind of the elements and comma.
 template <typename Element, typename Comma>
 using CommaSeparatedList = llvm::SmallVector<ListItem<Element, Comma>>;
 

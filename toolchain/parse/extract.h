@@ -18,7 +18,7 @@ namespace Carbon::Parse {
 // the file. The file is instead the complete contents of the parse tree.
 struct File {
   TypedNodeId<FileStart> start;
-  BracketedList<AnyDecl, FileStart> decls;
+  llvm::SmallVector<AnyDecl> decls;
   TypedNodeId<FileEnd> end;
 
   static auto Make(const Tree* tree) -> File {
@@ -113,28 +113,6 @@ struct Tree::Extractable<NodeIdNot<T>> {
     llvm::errs() << "FIXME: Extract NodeIdNot " << tree->node_kind(*it)
                  << " != " << T::Kind << " success\n";
     return NodeIdNot<T>(*it++);
-  }
-};
-
-// Extract a `BracketedList` by extracting `T`s until we reach `Bracket`.
-template <typename T, typename Bracket>
-struct Tree::Extractable<BracketedList<T, Bracket>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end)
-      -> std::optional<BracketedList<T, Bracket>> {
-    BracketedList<T, Bracket> result;
-    while (it != end && tree->node_kind(*it) != Bracket::Kind) {
-      auto item = Extractable<T>::Extract(tree, it, end);
-      if (!item.has_value()) {
-        return std::nullopt;
-      }
-      result.push_back(*item);
-    }
-    if (it == end) {
-      return std::nullopt;
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
   }
 };
 
