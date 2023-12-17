@@ -308,7 +308,7 @@ class Tree : public Printable<Tree> {
 class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
                                         std::random_access_iterator_tag, NodeId,
-                                        int, NodeId*, NodeId>,
+                                        int, const NodeId*, NodeId>,
       public Printable<Tree::PostorderIterator> {
  public:
   PostorderIterator() = delete;
@@ -360,7 +360,7 @@ class Tree::PostorderIterator
 class Tree::SiblingIterator
     : public llvm::iterator_facade_base<SiblingIterator,
                                         std::forward_iterator_tag, NodeId, int,
-                                        NodeId*, NodeId>,
+                                        const NodeId*, NodeId>,
       public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;

@@ -31,7 +31,7 @@ using AnyNameComponent = AnyInCategory<NodeCategory::NameComponent>;
 using AnyPattern = AnyInCategory<NodeCategory::Pattern>;
 using AnyStatement = AnyInCategory<NodeCategory::Statement>;
 
-// TODO: define Or<T, U> and Not<Kind>.
+// TODO: define TypeIdOneOf<T, U> (listed as `Or<>` below) and TypeIdNot<Kind>.
 
 // An optional child. If this child is present, it will not be of kind `T`.
 template <typename T>
