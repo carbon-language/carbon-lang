@@ -29,15 +29,22 @@ try:
 except FileNotFoundError:
     sys.exit("ERROR: unable to find deps file: %s" % deps_path)
 
+# bazel_dep repos can have a `name~version` format, whereas use_repo and
+# use_repo_rule have a `@@_main~rule_name~repo_name` format. We process the
+# latter case first because we only have a couple; once done, we can assume
+# anything after the ~ is a version.
 for dep in deps:
     print("Checking dependency: " + dep)
     repo, _, rule = dep.partition("//")
-    # Ignore the version, just use the repo name.
-    repo = repo.split("~")[0]
-    if repo == "" and not rule.startswith("third_party"):
-        # Carbon code is always allowed.
+
+    # These are stubs wrapping system libraries for LLVM. They aren't
+    # distributed and so should be fine.
+    if repo in (
+        "@@_main~_repo_rules~llvm_zlib",
+        "@@_main~_repo_rules~llvm_zstd",
+    ):
         continue
-    if repo == "@@llvm-project":
+    if repo == "@@_main~llvm_project~llvm-project":
         package, _, rule = rule.partition(":")
 
         # Other packages in the LLVM project shouldn't be accidentally used
@@ -56,13 +63,15 @@ for dep in deps:
 
         # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
         continue
+
+    # Ignore the version, just use the repo name.
+    repo = repo.split("~")[0]
+    if repo == "" and not rule.startswith("third_party"):
+        # Carbon code is always allowed.
+        continue
     if repo == "@@rules_cc" and rule == ":link_extra_lib":
         # An empty stub library added by rules_cc:
         # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
-        continue
-    if repo in ("@llvm_terminfo", "@@llvm_zlib", "@@llvm_zstd"):
-        # These are stubs wrapping system libraries for LLVM. They aren't
-        # distributed and so should be fine.
         continue
     if repo in (
         "@com_github_google_benchmark",

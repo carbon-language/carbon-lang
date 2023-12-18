@@ -220,8 +220,6 @@ repos:
 exclude: |
   (?x)^(
       MODULE.bazel.lock|
-      bazel/patches/.*\.patch|
+      bazel/llvm_project/.*\.patch|
       third_party/examples/.*/carbon/.*|
-      third_party/llvm-project/.*|
-      third_party/clangd/.*|
   )$
