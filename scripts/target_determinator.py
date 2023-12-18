@@ -87,6 +87,7 @@ def main() -> None:
         [
             target_determinator,
             f"--bazel={bazel}",
+            "-bazel-opts=--lockfile_mode=off",
             parsed_args.baseline[0],
         ]
         + parsed_args.args,
