@@ -2,7 +2,16 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Bazel modules."""
+"""Bazel modules.
+
+If `MODULE.bazel.lock` changes locally, it means the host platform is not part
+of the GitHub supported set. Create a new PR with the result of
+`bazel mod deps`.
+
+Normally, test actions are used to require updates on platforms that GitHub will
+run tests on. Right now that's linux amd64 and osx x86_64. Because other
+platforms cannot be validated, they may fall out of sync on changes.
+"""
 
 module(name = "carbon")
 
