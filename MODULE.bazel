@@ -84,15 +84,7 @@ http_archive(
     ],
 )
 
-http_archive(
-    name = "llvm_zstd",
-    build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
-    sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
-    strip_prefix = "zstd-1.5.2",
-    urls = [
-        "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz",
-    ],
-)
+bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
