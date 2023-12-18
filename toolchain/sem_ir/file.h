@@ -225,11 +225,12 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
-    return value_stores_->string_literals();
+  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+    return value_stores_->string_literal_values();
   }
-  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
-    return value_stores_->string_literals();
+  auto string_literal_values() const
+      -> const StringStoreWrapper<StringLiteralValueId>& {
+    return value_stores_->string_literal_values();
   }
 
   auto functions() -> ValueStore<FunctionId>& { return functions_; }

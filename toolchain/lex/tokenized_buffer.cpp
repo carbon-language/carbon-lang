@@ -108,8 +108,8 @@ auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
-    -> StringLiteralId {
+auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
+    -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
   return token_info.string_literal_id;
@@ -270,8 +270,8 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       break;
     case TokenKind::StringLiteral:
       output_stream << ", value: `"
-                    << value_stores_->string_literals().Get(
-                           GetStringLiteral(token))
+                    << value_stores_->string_literal_values().Get(
+                           GetStringLiteralValue(token))
                     << "`";
       break;
     default:
