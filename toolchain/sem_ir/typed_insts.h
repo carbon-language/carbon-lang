@@ -616,19 +616,17 @@ struct VarStorage {
   NameId name_id;
 };
 
-// HasParseNode<T> is true if T has a `Parse::NodeId parse_node` field.
-// FIXME: rename to end with `Member` and update toolchain doc
+// HasParseNodeMember<T> is true if T has a `Parse::NodeId parse_node` field.
 template <typename T, typename ParseNodeType = Parse::NodeId T::*>
-inline constexpr bool HasParseNode = false;
+inline constexpr bool HasParseNodeMember = false;
 template <typename T>
-inline constexpr bool HasParseNode<T, decltype(&T::parse_node)> = true;
+inline constexpr bool HasParseNodeMember<T, decltype(&T::parse_node)> = true;
 
-// HasTypeId<T> is true if T has a `TypeId type_id` field.
-// FIXME: rename to end with `Member`
+// HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
-inline constexpr bool HasTypeId = false;
+inline constexpr bool HasTypeIdMember = false;
 template <typename T>
-inline constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
+inline constexpr bool HasTypeIdMember<T, decltype(&T::type_id)> = true;
 
 }  // namespace Carbon::SemIR
 

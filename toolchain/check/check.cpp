@@ -154,7 +154,7 @@ static auto ProcessParseNodes(Context& context,
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
-      // FIXME: switch to parse::TypedNodeId<T> here
+      // TODO: switch to parse::Name##Id(parse_node) here
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
     if (!Check::Handle##Name(context, parse_node)) {                         \

@@ -27,7 +27,7 @@ struct TypedInstArgsInfo {
   using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedInst>()));
 
   static constexpr int FirstArgField =
-      HasParseNode<TypedInst> + HasTypeId<TypedInst>;
+      HasParseNodeMember<TypedInst> + HasTypeIdMember<TypedInst>;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
@@ -73,10 +73,10 @@ class Inst : public Printable<Inst> {
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (HasParseNode<TypedInst>) {
+    if constexpr (HasParseNodeMember<TypedInst>) {
       parse_node_ = typed_inst.parse_node;
     }
-    if constexpr (HasTypeId<TypedInst>) {
+    if constexpr (HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
     if constexpr (Info::NumArgs > 0) {
@@ -100,7 +100,7 @@ class Inst : public Printable<Inst> {
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
-      if constexpr (HasParseNode<TypedInst>) {
+      if constexpr (HasParseNodeMember<TypedInst>) {
         return TypedInst{parse_node(), type_id_and_args...};
       } else {
         return TypedInst{type_id_and_args...};
@@ -108,7 +108,7 @@ class Inst : public Printable<Inst> {
     };
 
     auto build_with_args = [&](auto... args) {
-      if constexpr (HasTypeId<TypedInst>) {
+      if constexpr (HasTypeIdMember<TypedInst>) {
         return build_with_type_id_and_args(type_id(), args...);
       } else {
         return build_with_type_id_and_args(args...);

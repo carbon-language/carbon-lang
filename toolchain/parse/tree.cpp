@@ -224,7 +224,6 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
 static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind)
     -> bool {
   switch (kind) {
-    // FIXME: remove `|| true`
 #define CARBON_PARSE_NODE_KIND(Name) \
   case NodeKind::Name:               \
     return tree->TryExtractAs<Name>(node_id).has_value();
