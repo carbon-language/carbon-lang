@@ -10,6 +10,7 @@
 #include "common/enum_base.h"
 #include "llvm/ADT/BitmaskEnum.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_id.h"
 
 namespace Carbon::Parse {
 
@@ -113,6 +114,32 @@ class NodeKind::Definition : public NodeKind {
 constexpr auto NodeKind::Define(NodeCategory category) const -> Definition {
   return Definition(*this, category);
 }
+
+// HasKindMember<T> is true if T has a `static const NodeKind::Definition Kind`
+// member.
+template <typename T, typename KindType = const NodeKind::Definition*>
+inline constexpr bool HasKindMember = false;
+template <typename T>
+inline constexpr bool HasKindMember<T, decltype(&T::Kind)> = true;
+
+// For looking up the type associated with a given id type.
+template <typename T>
+struct NodeForId;
+
+// `<KindName>Id` is a typed version of `NodeId` that references a node of kind
+// `<KindName>`:
+template <const NodeKind&>
+struct KindId : public NodeId {
+  static const KindId Invalid;
+
+  explicit KindId(NodeId node_id) : NodeId(node_id) {}
+};
+template <const NodeKind& Kind>
+constexpr KindId<Kind> KindId<Kind>::Invalid = KindId(NodeId::Invalid.index);
+
+#define CARBON_PARSE_NODE_KIND(KindName) \
+  using KindName##Id = KindId<NodeKind::KindName>;
+#include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Parse
 

@@ -56,7 +56,7 @@ class Tree : public Printable<Tree> {
   struct PackagingNames {
     NodeId node;
     IdentifierId package_id = IdentifierId::Invalid;
-    StringLiteralId library_id = StringLiteralId::Invalid;
+    StringLiteralValueId library_id = StringLiteralValueId::Invalid;
   };
 
   // The file's packaging.
@@ -149,8 +149,8 @@ class Tree : public Printable<Tree> {
   auto TryExtractAs(NodeId node_id) const -> std::optional<T>;
 
   // Converts to a typed node, if it is not an error.
-  template <typename T>
-  auto Extract(TypedNodeId<T> node_id) const -> std::optional<T>;
+  template <typename IdT>
+  auto Extract(IdT id) const -> std::optional<typename NodeForId<IdT>::Kind>;
 
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
@@ -411,7 +411,7 @@ auto Tree::TryExtractNodeFromChildren(
   auto it = children.begin();
   llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
                << " start\n";
-  auto result = Extractable<T>::Extract(this, it, children.end());
+  auto result = Extractable<T>::ExtractImpl(this, it, children.end());
   llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
                << " end\n";
   if (it != children.end()) {
@@ -431,6 +431,7 @@ auto Tree::ExtractNodeFromChildren(
 
 template <typename T>
 auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
+  static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {
     return std::nullopt;
   }
@@ -440,6 +441,7 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
 
 template <typename T>
 auto Tree::TryExtractAs(NodeId node_id) const -> std::optional<T> {
+  static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {
     return std::nullopt;
   }
@@ -447,16 +449,18 @@ auto Tree::TryExtractAs(NodeId node_id) const -> std::optional<T> {
   return TryExtractNodeFromChildren<T>(children(node_id));
 }
 
-template <typename T>
-auto Tree::Extract(TypedNodeId<T> node_id) const -> std::optional<T> {
-  CARBON_DCHECK(node_kind(node_id) == T::Kind);
-  if (node_has_error(node_id)) {
+template <typename IdT>
+auto Tree::Extract(IdT id) const
+    -> std::optional<typename NodeForId<IdT>::Kind> {
+  using T = typename NodeForId<IdT>::Kind;
+  CARBON_DCHECK(node_kind(id) == T::Kind);
+  if (node_has_error(id)) {
     llvm::errs() << "FIXME: b " << T::Kind << " err\n";
     return std::nullopt;
   }
   llvm::errs() << "FIXME: b " << T::Kind << " success\n";
 
-  return ExtractNodeFromChildren<T>(children(node_id));
+  return ExtractNodeFromChildren<T>(children(id));
 }
 
 }  // namespace Carbon::Parse

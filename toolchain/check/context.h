@@ -340,7 +340,7 @@ class Context {
   }
   auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+  auto string_literals() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literals();
   }
   auto functions() -> ValueStore<SemIR::FunctionId>& {

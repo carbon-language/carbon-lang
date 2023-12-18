@@ -109,7 +109,7 @@ auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
 }
 
 auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
-    -> StringLiteralId {
+    -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
   return token_info.string_literal_id;

@@ -23,19 +23,6 @@ struct NodeId : public IdBase {
 
 constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
 
-// Typed version of `NodeId` that references a node of type `T`:
-template <typename T>
-struct TypedNodeId : public NodeId {
-  explicit TypedNodeId(NodeId node_id) : NodeId(node_id) {}
-
-  // An explicitly invalid instance.
-  static const TypedNodeId<T> Invalid;
-};
-
-template <typename T>
-constexpr TypedNodeId<T> TypedNodeId<T>::Invalid =
-    TypedNodeId<T>(NodeId::InvalidIndex);
-
 }  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSE_NODE_ID_H_

@@ -443,7 +443,7 @@ struct StringLiteral {
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  StringLiteralId string_literal_id;
+  StringLiteralValueId string_literal_id;
 };
 
 struct StructAccess {
@@ -617,12 +617,14 @@ struct VarStorage {
 };
 
 // HasParseNode<T> is true if T has a `Parse::NodeId parse_node` field.
+// FIXME: rename to end with `Member` and update toolchain doc
 template <typename T, typename ParseNodeType = Parse::NodeId T::*>
 inline constexpr bool HasParseNode = false;
 template <typename T>
 inline constexpr bool HasParseNode<T, decltype(&T::parse_node)> = true;
 
 // HasTypeId<T> is true if T has a `TypeId type_id` field.
+// FIXME: rename to end with `Member`
 template <typename T, typename TypeIdType = TypeId T::*>
 inline constexpr bool HasTypeId = false;
 template <typename T>

@@ -17,9 +17,9 @@ namespace Carbon::Parse {
 // A complete source file. Note that there is no corresponding parse node for
 // the file. The file is instead the complete contents of the parse tree.
 struct File {
-  TypedNodeId<FileStart> start;
+  FileStartId start;
   llvm::SmallVector<AnyDecl> decls;
-  TypedNodeId<FileEnd> end;
+  FileEndId end;
 
   static auto Make(const Tree* tree) -> File {
     return tree->ExtractNodeFromChildren<File>(tree->roots());
@@ -38,18 +38,19 @@ struct Tree::Extractable<NodeId> {
   }
 };
 
-// Extract a `TypedNodeId<T>` as a single required child.
-template <typename T>
-struct Tree::Extractable<TypedNodeId<T>> {
+// Extract a `FooId`, which is the same as `KindId<NodeKind::Foo>`,
+// as a single required child.
+template <const NodeKind& Kind>
+struct Tree::Extractable<KindId<Kind>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<TypedNodeId<T>> {
-    if (it == end || tree->node_kind(*it) != T::Kind) {
-      llvm::errs() << "FIXME: Extract TypedNodeId " << tree->node_kind(*it)
-                   << " != " << T::Kind << " error\n";
+                      SiblingIterator end) -> std::optional<KindId<Kind>> {
+    if (it == end || tree->node_kind(*it) != Kind) {
+      llvm::errs() << "FIXME: Extract KindId " << tree->node_kind(*it)
+                   << " != " << Kind << " error\n";
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract TypedNodeId " << T::Kind << " success\n";
-    return TypedNodeId<T>(*it++);
+    llvm::errs() << "FIXME: Extract KindId " << Kind << " success\n";
+    return KindId<Kind>(*it++);
   }
 };
 
@@ -191,9 +192,8 @@ struct Tree::Extractable<std::tuple<T...>> {
 template <typename T>
 struct Tree::Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
-
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<T> {
+  static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
+                          SiblingIterator end) -> std::optional<T> {
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
     llvm::errs() << "FIXME: Extract simple aggregate\n";
@@ -210,6 +210,12 @@ struct Tree::Extractable {
           return T{std::forward<decltype(value)>(value)...};
         },
         *tuple);
+  }
+
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end) -> std::optional<T> {
+    static_assert(!HasKindMember<T>, "Missing Id suffix");
+    return ExtractImpl(tree, it, end);
   }
 };
 
