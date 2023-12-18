@@ -158,7 +158,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetRealLiteral(TokenIndex token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  auto GetStringLiteral(TokenIndex token) const -> StringLiteralId;
+  auto GetStringLiteral(TokenIndex token) const -> StringLiteralValueId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   auto GetTypeLiteralSize(TokenIndex token) const -> const llvm::APInt&;
@@ -293,7 +293,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           "Unable to pack token and identifier index into the same space!");
 
       IdentifierId ident_id = IdentifierId::Invalid;
-      StringLiteralId string_literal_id;
+      StringLiteralValueId string_literal_id;
       IntId int_id;
       RealId real_id;
       TokenIndex closing_token;

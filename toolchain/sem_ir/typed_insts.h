@@ -443,7 +443,7 @@ struct StringLiteral {
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  StringLiteralId string_literal_id;
+  StringLiteralValueId string_literal_id;
 };
 
 struct StructAccess {
