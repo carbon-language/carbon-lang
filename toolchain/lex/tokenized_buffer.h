@@ -158,7 +158,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetRealLiteral(TokenIndex token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  auto GetStringLiteral(TokenIndex token) const -> StringLiteralValueId;
+  auto GetStringLiteralValue(TokenIndex token) const -> StringLiteralValueId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   auto GetTypeLiteralSize(TokenIndex token) const -> const llvm::APInt&;

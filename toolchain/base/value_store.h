@@ -242,7 +242,7 @@ class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
 class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
   explicit SharedValueStores()
-      : identifiers_(&strings_), string_literals_(&strings_) {}
+      : identifiers_(&strings_), string_literal_values_(&strings_) {}
 
   // Not copyable or movable.
   SharedValueStores(const SharedValueStores&) = delete;
@@ -258,12 +258,12 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto ints() const -> const ValueStore<IntId>& { return ints_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
-  auto string_literals() -> StringStoreWrapper<StringLiteralValueId>& {
-    return string_literals_;
+  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+    return string_literal_values_;
   }
-  auto string_literals() const
+  auto string_literal_values() const
       -> const StringStoreWrapper<StringLiteralValueId>& {
-    return string_literals_;
+    return string_literal_values_;
   }
 
   auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
@@ -287,7 +287,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
 
   ValueStore<StringId> strings_;
   StringStoreWrapper<IdentifierId> identifiers_;
-  StringStoreWrapper<StringLiteralValueId> string_literals_;
+  StringStoreWrapper<StringLiteralValueId> string_literal_values_;
 };
 
 }  // namespace Carbon
