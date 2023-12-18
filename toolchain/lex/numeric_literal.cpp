@@ -387,7 +387,7 @@ auto NumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto NumericLiteral::Parser::CheckLeadingZero() -> bool {
-  if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
+  if (radix_ == Radix::Decimal && int_part_.starts_with("0") &&
       int_part_ != "0") {
     CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
                       "Unknown base specifier in numeric literal.");

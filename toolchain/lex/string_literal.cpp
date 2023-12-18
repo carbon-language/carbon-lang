@@ -40,10 +40,10 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
     -> std::optional<Introducer> {
   MultiLineKind kind = NotMultiLine;
   llvm::StringRef indicator;
-  if (source_text.startswith(MultiLineIndicator)) {
+  if (source_text.starts_with(MultiLineIndicator)) {
     kind = MultiLine;
     indicator = llvm::StringRef(MultiLineIndicator);
-  } else if (source_text.startswith(DoubleQuotedMultiLineIndicator)) {
+  } else if (source_text.starts_with(DoubleQuotedMultiLineIndicator)) {
     kind = MultiLineWithDoubleQuotes;
     indicator = llvm::StringRef(DoubleQuotedMultiLineIndicator);
   }
@@ -135,7 +135,7 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
         break;
       case '\\':
         if (escape.size() == 1 ||
-            source_text.substr(cursor + 1).startswith(escape.substr(1))) {
+            source_text.substr(cursor + 1).starts_with(escape.substr(1))) {
           content_needs_validation = true;
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
@@ -162,7 +162,7 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
         break;
       case '"':
       case '\'':
-        if (source_text.substr(cursor).startswith(terminator)) {
+        if (source_text.substr(cursor).starts_with(terminator)) {
           llvm::StringRef text =
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
@@ -379,7 +379,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
     if (!contents.consume_front(indent)) {
       const char* line_start = contents.begin();
       contents = contents.drop_while(IsHorizontalWhitespace);
-      if (!contents.startswith("\n")) {
+      if (!contents.starts_with("\n")) {
         CARBON_DIAGNOSTIC(
             MismatchedIndentInString, Error,
             "Indentation does not match that of the closing `'''` in "

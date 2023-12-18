@@ -755,7 +755,7 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 }
 
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
-  CARBON_DCHECK(source_text.substr(position).startswith("//"));
+  CARBON_DCHECK(source_text.substr(position).starts_with("//"));
 
   // Any comment must be the only non-whitespace on the line.
   const auto* line_info = current_line_info();
