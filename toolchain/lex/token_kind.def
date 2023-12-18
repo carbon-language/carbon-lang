@@ -21,7 +21,7 @@
 //   - CARBON_KEYWORD_TOKEN(Name, Spelling)
 //     Defines a keyword which has the provided spelling, such as `if`.
 //     Spellings must be unique.
-//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(Token)
+//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(TokenIndex)
 //     Wrapped around one of the abokve _TOKEN macros, indicates that this
 //     token has one additional virtual node in the parse tree.
 //
@@ -31,6 +31,10 @@
 #ifndef CARBON_TOKEN
 #define CARBON_TOKEN(Name)
 #endif
+
+// The error token comes first because we want it to get the zero value, which
+// will also be used in default initialization.
+CARBON_TOKEN(Error)
 
 #ifndef CARBON_SYMBOL_TOKEN
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
@@ -177,7 +181,6 @@ CARBON_KEYWORD_TOKEN(Not,                 "not")
 CARBON_KEYWORD_TOKEN(Observe,             "observe")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_KEYWORD_TOKEN(Or,                "or"))
-CARBON_KEYWORD_TOKEN(Override,            "override")
 CARBON_KEYWORD_TOKEN(Package,             "package")
 CARBON_KEYWORD_TOKEN(Partial,             "partial")
 CARBON_KEYWORD_TOKEN(Private,             "private")
@@ -203,15 +206,14 @@ CARBON_KEYWORD_TOKEN(While,               "while")
 #undef CARBON_KEYWORD_TOKEN
 
 CARBON_TOKEN(Identifier)
-CARBON_TOKEN(IntegerLiteral)
+CARBON_TOKEN(IntLiteral)
 CARBON_TOKEN(RealLiteral)
 CARBON_TOKEN(StringLiteral)
-CARBON_TOKEN(IntegerTypeLiteral)
-CARBON_TOKEN(UnsignedIntegerTypeLiteral)
-CARBON_TOKEN(FloatingPointTypeLiteral)
-CARBON_TOKEN(Error)
-CARBON_TOKEN(StartOfFile)
-CARBON_TOKEN(EndOfFile)
+CARBON_TOKEN(IntTypeLiteral)
+CARBON_TOKEN(UnsignedIntTypeLiteral)
+CARBON_TOKEN(FloatTypeLiteral)
+CARBON_TOKEN(FileStart)
+CARBON_TOKEN(FileEnd)
 
 #undef CARBON_TOKEN
 #undef CARBON_TOKEN_WITH_VIRTUAL_NODE

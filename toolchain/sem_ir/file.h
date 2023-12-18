@@ -6,11 +6,14 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "toolchain/sem_ir/node.h"
+#include "toolchain/base/value_store.h"
+#include "toolchain/base/yaml.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
 
@@ -34,9 +37,16 @@ struct Function : public Printable<Function> {
   }
 
   // The function name.
-  StringId name_id;
-  // A block containing a single reference node per parameter.
-  NodeBlockId param_refs_id;
+  NameId name_id;
+  // The first declaration of the function. This is a FunctionDecl.
+  InstId decl_id = InstId::Invalid;
+  // The definition, if the function has been defined or is currently being
+  // defined. This is a FunctionDecl.
+  InstId definition_id = InstId::Invalid;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
@@ -44,36 +54,115 @@ struct Function : public Printable<Function> {
   // doesn't have a return slot. If this is valid, a call to the function is
   // expected to have an additional final argument corresponding to the return
   // slot.
-  NodeId return_slot_id;
+  InstId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<NodeBlockId> body_block_ids;
+  llvm::SmallVector<InstBlockId> body_block_ids = {};
 };
 
-struct RealLiteral : public Printable<RealLiteral> {
+// A class.
+struct Class : public Printable<Class> {
+  enum InheritanceKind : int8_t {
+    // `abstract class`
+    Abstract,
+    // `base class`
+    Base,
+    // `class`
+    Final,
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{mantissa: ";
-    mantissa.print(out, /*isSigned=*/false);
-    out << ", exponent: " << exponent << ", is_decimal: " << is_decimal << "}";
+    out << "{name: " << name_id;
+    out << "}";
   }
 
-  llvm::APInt mantissa;
-  llvm::APInt exponent;
+  // Determines whether this class has been fully defined. This is false until
+  // we reach the `}` of the class definition.
+  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
-  // If false, the value is mantissa * 2^exponent.
-  // If true, the value is mantissa * 10^exponent.
-  bool is_decimal;
+  // The following members always have values, and do not change throughout the
+  // lifetime of the class.
+
+  // The class name.
+  NameId name_id;
+  // The class type, which is the type of `Self` in the class definition.
+  TypeId self_type_id;
+  // The first declaration of the class. This is a ClassDecl.
+  InstId decl_id = InstId::Invalid;
+  // The kind of inheritance that this class supports.
+  // TODO: The rules here are not yet decided. See #3384.
+  InheritanceKind inheritance_kind;
+
+  // The following members are set at the `{` of the class definition.
+
+  // The definition of the class. This is a ClassDecl.
+  InstId definition_id = InstId::Invalid;
+  // The class scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+  // The first block of the class body.
+  // TODO: Handle control flow in the class body, such as if-expressions.
+  InstBlockId body_block_id = InstBlockId::Invalid;
+
+  // The following members are accumulated throughout the class definition.
+
+  // The base class declaration. Invalid if the class has no base class. This is
+  // a BaseDecl instruction.
+  InstId base_id = InstId::Invalid;
+
+  // The following members are set at the `}` of the class definition.
+
+  // The object representation type to use for this class. This is valid once
+  // the class is defined.
+  TypeId object_repr_id = TypeId::Invalid;
+};
+
+// An interface.
+struct Interface : public Printable<Interface> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id;
+    out << "}";
+  }
+
+  // Determines whether this interface has been fully defined. This is false
+  // until we reach the `}` of the interface definition.
+  auto is_defined() const -> bool { return defined; }
+
+  // The following members always have values, and do not change throughout the
+  // lifetime of the interface.
+
+  // The interface name.
+  NameId name_id;
+  // TODO: TypeId self_type_id;
+  // The first declaration of the interface. This is a InterfaceDecl.
+  InstId decl_id = InstId::Invalid;
+
+  // The following members are set at the `{` of the interface definition.
+
+  // The definition of the interface. This is a InterfaceDecl.
+  InstId definition_id = InstId::Invalid;
+  // The interface scope.
+  NameScopeId scope_id = NameScopeId::Invalid;
+  // The first block of the interface body.
+  // TODO: Handle control flow in the interface body, such as if-expressions.
+  InstBlockId body_block_id = InstBlockId::Invalid;
+
+  // The following members are set at the `}` of the class definition.
+  bool defined = true;
 };
 
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
   // Produces a file for the builtins.
-  explicit File();
+  explicit File(SharedValueStores& value_stores);
 
   // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(std::string filename, const File* builtins);
+  explicit File(SharedValueStores& value_stores, std::string filename,
+                const File* builtins);
+
+  File(const File&) = delete;
+  File& operator=(const File&) = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -83,250 +172,106 @@ class File : public Printable<File> {
   // TODO: In the future, the things to print may change, for example by adding
   // preludes. We may then want the ability to omit other things similar to
   // builtins.
-  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    Print(out, /*include_builtins=*/false);
+  auto Print(llvm::raw_ostream& out, bool include_builtins = false) const
+      -> void {
+    Yaml::Print(out, OutputYaml(include_builtins));
   }
+  auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
 
-  // Returns array bound value from the bound node.
-  auto GetArrayBoundValue(NodeId bound_id) const -> uint64_t {
-    return GetIntegerLiteral(GetNode(bound_id).GetAsIntegerLiteral())
+  // Returns array bound value from the bound instruction.
+  auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
+    return ints()
+        .Get(insts().GetAs<IntLiteral>(bound_id).int_id)
         .getZExtValue();
   }
 
-  // Returns the requested IR.
-  auto GetCrossReferenceIR(CrossReferenceIRId xref_id) const -> const File& {
-    return *cross_reference_irs_[xref_id.index];
-  }
-
-  // Adds a callable, returning an ID to reference it.
-  auto AddFunction(Function function) -> FunctionId {
-    FunctionId id(functions_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    functions_.push_back(function);
-    return id;
-  }
-
-  // Returns the requested callable.
-  auto GetFunction(FunctionId function_id) const -> const Function& {
-    return functions_[function_id.index];
-  }
-
-  // Returns the requested callable.
-  auto GetFunction(FunctionId function_id) -> Function& {
-    return functions_[function_id.index];
-  }
-
-  // Adds an integer literal, returning an ID to reference it.
-  auto AddIntegerLiteral(llvm::APInt integer_literal) -> IntegerLiteralId {
-    IntegerLiteralId id(integer_literals_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    integer_literals_.push_back(integer_literal);
-    return id;
-  }
-
-  // Returns the requested integer literal.
-  auto GetIntegerLiteral(IntegerLiteralId int_id) const -> const llvm::APInt& {
-    return integer_literals_[int_id.index];
-  }
-
-  // Adds a name scope, returning an ID to reference it.
-  auto AddNameScope() -> NameScopeId {
-    NameScopeId name_scopes_id(name_scopes_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(name_scopes_id.index >= 0);
-    name_scopes_.resize(name_scopes_id.index + 1);
-    return name_scopes_id;
-  }
-
-  // Adds an entry to a name scope. Returns true on success, false on
-  // duplicates.
-  auto AddNameScopeEntry(NameScopeId scope_id, StringId name_id,
-                         NodeId target_id) -> bool {
-    return name_scopes_[scope_id.index].insert({name_id, target_id}).second;
-  }
-
-  // Returns the requested name scope.
-  auto GetNameScope(NameScopeId scope_id) const
-      -> const llvm::DenseMap<StringId, NodeId>& {
-    return name_scopes_[scope_id.index];
-  }
-
-  // Adds a node to the node list, returning an ID to reference the node. Note
-  // that this doesn't add the node to any node block. Check::Context::AddNode
-  // or NodeBlockStack::AddNode should usually be used instead, to add the node
-  // to the current block.
-  auto AddNodeInNoBlock(Node node) -> NodeId {
-    NodeId node_id(nodes_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(node_id.index >= 0);
-    nodes_.push_back(node);
-    return node_id;
-  }
-
-  // Overwrites a given node with a new value.
-  auto ReplaceNode(NodeId node_id, Node node) -> void {
-    nodes_[node_id.index] = node;
-  }
-
-  // Returns the requested node.
-  auto GetNode(NodeId node_id) const -> Node { return nodes_[node_id.index]; }
-
-  // Reserves and returns a node block ID. The contents of the node block
-  // should be specified by calling SetNodeBlock, or by pushing the ID onto the
-  // NodeBlockStack.
-  auto AddNodeBlockId() -> NodeBlockId {
-    NodeBlockId id(node_blocks_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    node_blocks_.push_back({});
-    return id;
-  }
-
-  // Sets the contents of an empty node block to the given content.
-  auto SetNodeBlock(NodeBlockId block_id, llvm::ArrayRef<NodeId> content)
-      -> void {
-    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
-    CARBON_CHECK(node_blocks_[block_id.index].empty())
-        << "node block content set more than once";
-    node_blocks_[block_id.index] = AllocateCopy(content);
-  }
-
-  // Adds a node block with the given content, returning an ID to reference it.
-  auto AddNodeBlock(llvm::ArrayRef<NodeId> content) -> NodeBlockId {
-    NodeBlockId id(node_blocks_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    node_blocks_.push_back(AllocateCopy(content));
-    return id;
-  }
-
-  // Adds a node block of the given size.
-  auto AddUninitializedNodeBlock(size_t size) -> NodeBlockId {
-    NodeBlockId id(node_blocks_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    node_blocks_.push_back(AllocateUninitialized<NodeId>(size));
-    return id;
-  }
-
-  // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) const -> llvm::ArrayRef<NodeId> {
-    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
-    return node_blocks_[block_id.index];
-  }
-
-  // Returns the requested node block.
-  auto GetNodeBlock(NodeBlockId block_id) -> llvm::MutableArrayRef<NodeId> {
-    CARBON_CHECK(block_id != NodeBlockId::Unreachable);
-    return node_blocks_[block_id.index];
-  }
-
-  // Adds a real literal, returning an ID to reference it.
-  auto AddRealLiteral(RealLiteral real_literal) -> RealLiteralId {
-    RealLiteralId id(real_literals_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    real_literals_.push_back(real_literal);
-    return id;
-  }
-
-  // Returns the requested real literal.
-  auto GetRealLiteral(RealLiteralId int_id) const -> const RealLiteral& {
-    return real_literals_[int_id.index];
-  }
-
-  // Adds an string, returning an ID to reference it.
-  auto AddString(llvm::StringRef str) -> StringId {
-    // Look up the string, or add it if it's new.
-    StringId next_id(strings_.size());
-    auto [it, added] = string_to_id_.insert({str, next_id});
-
-    if (added) {
-      // TODO: Return failure on overflow instead of crashing.
-      CARBON_CHECK(next_id.index >= 0);
-      // Update the reverse mapping from IDs to strings.
-      CARBON_DCHECK(it->second == next_id);
-      strings_.push_back(it->first());
+  // Marks a type as complete, and sets its value representation.
+  auto CompleteType(TypeId object_type_id, ValueRepr value_repr) -> void {
+    if (object_type_id.index < 0) {
+      // We already know our builtin types are complete.
+      return;
     }
-
-    return it->second;
+    CARBON_CHECK(types().Get(object_type_id).value_repr.kind ==
+                 ValueRepr::Unknown)
+        << "Type " << object_type_id << " completed more than once";
+    types().Get(object_type_id).value_repr = value_repr;
+    complete_types_.push_back(object_type_id);
   }
 
-  // Returns the requested string.
-  auto GetString(StringId string_id) const -> llvm::StringRef {
-    return strings_[string_id.index];
+  // Gets the pointee type of the given type, which must be a pointer type.
+  auto GetPointeeType(TypeId pointer_id) const -> TypeId {
+    return types().GetAs<PointerType>(pointer_id).pointee_id;
   }
 
-  // Adds a type, returning an ID to reference it.
-  auto AddType(NodeId node_id) -> TypeId {
-    TypeId type_id(types_.size());
-    // Should never happen, will always overflow node_ids first.
-    CARBON_DCHECK(type_id.index >= 0);
-    types_.push_back(node_id);
-    return type_id;
+  // Produces a string version of a type.
+  auto StringifyType(TypeId type_id) const -> std::string;
+
+  // Same as `StringifyType`, but starting with an instruction representing a
+  // type expression rather than a canonical type.
+  auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
+
+  // Directly expose SharedValueStores members.
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
+  auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
+    return value_stores_->identifiers();
+  }
+  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const ValueStore<IntId>& {
+    return value_stores_->ints();
+  }
+  auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
+  auto reals() const -> const ValueStore<RealId>& {
+    return value_stores_->reals();
+  }
+  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
+  }
+  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
+    return value_stores_->string_literals();
   }
 
-  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
-  // order to avoid a check; callers that need that should use
-  // GetTypeAllowBuiltinTypes.
-  auto GetType(TypeId type_id) const -> NodeId {
-    // Double-check it's not called with TypeType or InvalidType.
-    CARBON_CHECK(type_id.index >= 0)
-        << "Invalid argument for GetType: " << type_id;
-    return types_[type_id.index];
+  auto functions() -> ValueStore<FunctionId>& { return functions_; }
+  auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
+  auto classes() -> ValueStore<ClassId>& { return classes_; }
+  auto classes() const -> const ValueStore<ClassId>& { return classes_; }
+  auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
+  auto interfaces() const -> const ValueStore<InterfaceId>& {
+    return interfaces_;
+  }
+  auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
+  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
+    return cross_ref_irs_;
+  }
+  auto names() const -> NameStoreWrapper {
+    return NameStoreWrapper(&identifiers());
+  }
+  auto name_scopes() -> NameScopeStore& { return name_scopes_; }
+  auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
+  auto types() -> TypeStore& { return types_; }
+  auto types() const -> const TypeStore& { return types_; }
+  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
+  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
+    return type_blocks_;
+  }
+  auto insts() -> InstStore& { return insts_; }
+  auto insts() const -> const InstStore& { return insts_; }
+  auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
+  auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
+  auto constants() -> ConstantStore& { return constants_; }
+  auto constants() const -> const ConstantStore& { return constants_; }
+
+  // A list of types that were completed in this file, in the order in which
+  // they were completed. Earlier types in this list cannot contain instances of
+  // later types.
+  auto complete_types() const -> llvm::ArrayRef<TypeId> {
+    return complete_types_;
   }
 
-  auto GetTypeAllowBuiltinTypes(TypeId type_id) const -> NodeId {
-    if (type_id == TypeId::TypeType) {
-      return NodeId::BuiltinTypeType;
-    } else if (type_id == TypeId::Error) {
-      return NodeId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
-      return NodeId::Invalid;
-    } else {
-      return GetType(type_id);
-    }
-  }
-
-  // Adds a type block with the given content, returning an ID to reference it.
-  auto AddTypeBlock(llvm::ArrayRef<TypeId> content) -> TypeBlockId {
-    TypeBlockId id(type_blocks_.size());
-    // TODO: Return failure on overflow instead of crashing.
-    CARBON_CHECK(id.index >= 0);
-    type_blocks_.push_back(AllocateCopy(content));
-    return id;
-  }
-
-  // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) const -> llvm::ArrayRef<TypeId> {
-    return type_blocks_[block_id.index];
-  }
-
-  // Returns the requested type block.
-  auto GetTypeBlock(TypeBlockId block_id) -> llvm::MutableArrayRef<TypeId> {
-    return type_blocks_[block_id.index];
-  }
-
-  // Produces a string version of a type. If `in_type_context` is false, an
-  // explicit conversion to type `type` will be added in cases where the type
-  // expression would otherwise have a different type, such as a tuple or
-  // struct type.
-  auto StringifyType(TypeId type_id, bool in_type_context = false) const
-      -> std::string;
-
-  auto functions_size() const -> int { return functions_.size(); }
-  auto nodes_size() const -> int { return nodes_.size(); }
-  auto node_blocks_size() const -> int { return node_blocks_.size(); }
-
-  auto types() const -> llvm::ArrayRef<NodeId> { return types_; }
-
-  auto top_node_block_id() const -> NodeBlockId { return top_node_block_id_; }
-  auto set_top_node_block_id(NodeBlockId block_id) -> void {
-    top_node_block_id_ = block_id;
+  auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
+  auto set_top_inst_block_id(InstBlockId block_id) -> void {
+    top_inst_block_id_ = block_id;
   }
 
   // Returns true if there were errors creating the semantics IR.
@@ -336,28 +281,12 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // Allocates an uninitialized array using our slab allocator.
-  template <typename T>
-  auto AllocateUninitialized(std::size_t size) -> llvm::MutableArrayRef<T> {
-    // We're not going to run a destructor, so ensure that's OK.
-    static_assert(std::is_trivially_destructible_v<T>);
-
-    T* storage =
-        static_cast<T*>(allocator_.Allocate(size * sizeof(T), alignof(T)));
-    return llvm::MutableArrayRef<T>(storage, size);
-  }
-
-  // Allocates a copy of the given data using our slab allocator.
-  template <typename T>
-  auto AllocateCopy(llvm::ArrayRef<T> data) -> llvm::MutableArrayRef<T> {
-    auto result = AllocateUninitialized<T>(data.size());
-    std::uninitialized_copy(data.begin(), data.end(), result.begin());
-    return result;
-  }
-
   bool has_errors_ = false;
 
-  // Slab allocator, used to allocate node and type blocks.
+  // Shared, compile-scoped values.
+  SharedValueStores* value_stores_;
+
+  // Slab allocator, used to allocate instruction and type blocks.
   llvm::BumpPtrAllocator allocator_;
 
   // The associated filename.
@@ -365,65 +294,70 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for callable objects.
-  llvm::SmallVector<Function> functions_;
+  ValueStore<FunctionId> functions_;
+
+  // Storage for classes.
+  ValueStore<ClassId> classes_;
+
+  // Storage for interfaces.
+  ValueStore<InterfaceId> interfaces_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
-  // crossing node blocks).
-  llvm::SmallVector<const File*> cross_reference_irs_;
-
-  // Storage for integer literals.
-  llvm::SmallVector<llvm::APInt> integer_literals_;
+  // crossing instruction blocks).
+  ValueStore<CrossRefIRId> cross_ref_irs_;
 
   // Storage for name scopes.
-  llvm::SmallVector<llvm::DenseMap<StringId, NodeId>> name_scopes_;
-
-  // Storage for real literals.
-  llvm::SmallVector<RealLiteral> real_literals_;
-
-  // Storage for strings. strings_ provides a list of allocated strings, while
-  // string_to_id_ provides a mapping to identify strings.
-  llvm::StringMap<StringId> string_to_id_;
-  llvm::SmallVector<llvm::StringRef> strings_;
-
-  // Nodes which correspond to in-use types. Stored separately for easy access
-  // by lowering.
-  llvm::SmallVector<NodeId> types_;
+  NameScopeStore name_scopes_;
 
   // Type blocks within the IR. These reference entries in types_. Storage for
   // the data is provided by allocator_.
-  llvm::SmallVector<llvm::MutableArrayRef<TypeId>> type_blocks_;
+  BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All nodes. The first entries will always be cross-references to builtins,
-  // at indices matching BuiltinKind ordering.
-  llvm::SmallVector<Node> nodes_;
+  // All instructions. The first entries will always be cross-references to
+  // builtins, at indices matching BuiltinKind ordering.
+  InstStore insts_;
 
-  // Node blocks within the IR. These reference entries in nodes_. Storage for
-  // the data is provided by allocator_.
-  llvm::SmallVector<llvm::MutableArrayRef<NodeId>> node_blocks_;
+  // Instruction blocks within the IR. These reference entries in
+  // insts_. Storage for the data is provided by allocator_.
+  InstBlockStore inst_blocks_;
 
-  // The top node block ID.
-  NodeBlockId top_node_block_id_ = NodeBlockId::Invalid;
+  // The top instruction block ID.
+  InstBlockId top_inst_block_id_ = InstBlockId::Invalid;
+
+  // Storage for instructions that represent computed global constants, such as
+  // types.
+  ConstantStore constants_;
+
+  // Descriptions of types used in this file.
+  TypeStore types_ = TypeStore(&insts_);
+
+  // Types that were completed in this file.
+  llvm::SmallVector<TypeId> complete_types_;
 };
 
-// The expression category of a semantics node. See /docs/design/values.md for
-// details.
-enum class ExpressionCategory : int8_t {
-  // This node does not correspond to an expression, and as such has no
+// The expression category of a sem_ir instruction. See /docs/design/values.md
+// for details.
+enum class ExprCategory : int8_t {
+  // This instruction does not correspond to an expression, and as such has no
   // category.
-  NotExpression,
-  // This node represents a value expression.
+  NotExpr,
+  // The category of this instruction is not known due to an error.
+  Error,
+  // This instruction represents a value expression.
   Value,
-  // This node represents a durable reference expression, that denotes an
+  // This instruction represents a durable reference expression, that denotes an
   // object that outlives the current full expression context.
-  DurableReference,
-  // This node represents an ephemeral reference expression, that denotes an
+  DurableRef,
+  // This instruction represents an ephemeral reference expression, that denotes
+  // an
   // object that does not outlive the current full expression context.
-  EphemeralReference,
-  // This node represents an initializing expression, that describes how to
+  EphemeralRef,
+  // This instruction represents an initializing expression, that describes how
+  // to
   // initialize an object.
   Initializing,
-  // This node represents a syntactic combination of expressions that are
+  // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
@@ -431,48 +365,22 @@ enum class ExpressionCategory : int8_t {
   Last = Mixed
 };
 
-// Returns the expression category for a node.
-auto GetExpressionCategory(const File& file, NodeId node_id)
-    -> ExpressionCategory;
-
-// The value representation to use when passing by value.
-struct ValueRepresentation {
-  enum Kind : int8_t {
-    // The type has no value representation. This is used for empty types, such
-    // as `()`, where there is no value.
-    None,
-    // The value representation is a copy of the value. On call boundaries, the
-    // value itself will be passed. `type` is the value type.
-    // TODO: `type` should be `const`-qualified, but is currently not.
-    Copy,
-    // The value representation is a pointer to an object. When used as a
-    // parameter, the argument is a reference expression. `type` is the pointee
-    // type.
-    // TODO: `type` should be `const`-qualified, but is currently not.
-    Pointer,
-    // The value representation has been customized, and has the same behavior
-    // as the value representation of some other type.
-    // TODO: This is not implemented or used yet.
-    Custom,
-  };
-  // The kind of value representation used by this type.
-  Kind kind;
-  // The type used to model the value representation.
-  TypeId type;
-};
+// Returns the expression category for an instruction.
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns information about the value representation to use for a type.
-auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation;
+inline auto GetValueRepr(const File& file, TypeId type_id) -> ValueRepr {
+  return file.types().GetValueRepr(type_id);
+}
 
 // The initializing representation to use when returning by value.
-struct InitializingRepresentation {
+struct InitRepr {
   enum Kind : int8_t {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
     None,
-    // An initializing expression produces a value, which is copied into the
-    // initialized object.
+    // An initializing expression produces an object representation by value,
+    // which is copied into the initialized object.
     ByCopy,
     // An initializing expression takes a location as input, which is
     // initialized as a side effect of evaluating the expression.
@@ -489,8 +397,7 @@ struct InitializingRepresentation {
 };
 
 // Returns information about the initializing representation to use for a type.
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation;
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr;
 
 }  // namespace Carbon::SemIR
 

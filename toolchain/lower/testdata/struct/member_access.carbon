@@ -14,7 +14,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Run() {
+// CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT:   %x = alloca { double, i32 }, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8

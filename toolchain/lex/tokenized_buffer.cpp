@@ -4,971 +4,57 @@
 
 #include "toolchain/lex/tokenized_buffer.h"
 
-#include <algorithm>
-#include <array>
 #include <cmath>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/value_store.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/character_set.h"
-#include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 
-#if __x86_64__
-#include <x86intrin.h>
-#endif
-
 namespace Carbon::Lex {
 
-// TODO: Move Overload and VariantMatch somewhere more central.
-
-// Form an overload set from a list of functions. For example:
-//
-// ```
-// auto overloaded = Overload{[] (int) {}, [] (float) {}};
-// ```
-template <typename... Fs>
-struct Overload : Fs... {
-  using Fs::operator()...;
-};
-template <typename... Fs>
-Overload(Fs...) -> Overload<Fs...>;
-
-// Pattern-match against the type of the value stored in the variant `V`. Each
-// element of `fs` should be a function that takes one or more of the variant
-// values in `V`.
-template <typename V, typename... Fs>
-auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
-  return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
-}
-
-// Scans the provided text and returns the prefix `StringRef` of contiguous
-// identifier characters.
-//
-// This is a performance sensitive function and so uses vectorized code
-// sequences to optimize its scanning. When modifying, the identifier lexing
-// benchmarks should be checked for regressions.
-//
-// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
-//
-// TODO: Currently, this code does not implement Carbon's design for Unicode
-// characters in identifiers. It does work on UTF-8 code unit sequences, but
-// currently considers non-ASCII characters to be non-identifier characters.
-// Some work has been done to ensure the hot loop, while optimized, retains
-// enough information to add Unicode handling without completely destroying the
-// relevant optimizations.
-static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
-  // A table of booleans that we can use to classify bytes as being valid
-  // identifier (or keyword) characters. This is used in the generic,
-  // non-vectorized fallback code to scan for length of an identifier.
-  static constexpr std::array<bool, 256> IsIdByteTable = ([]() constexpr {
-    std::array<bool, 256> table = {};
-    for (char c = '0'; c <= '9'; ++c) {
-      table[c] = true;
-    }
-    for (char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = true;
-    }
-    for (char c = 'a'; c <= 'z'; ++c) {
-      table[c] = true;
-    }
-    table['_'] = true;
-    return table;
-  })();
-
-#if __x86_64__
-  // This code uses a scheme derived from the techniques in Geoff Langdale and
-  // Daniel Lemire's work on parsing JSON[1]. Specifically, that paper outlines
-  // a technique of using two 4-bit indexed in-register look-up tables (LUTs) to
-  // classify bytes in a branchless SIMD code sequence.
-  //
-  // [1]: https://arxiv.org/pdf/1902.08318.pdf
-  //
-  // The goal is to get a bit mask classifying different sets of bytes. For each
-  // input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
-  // character. Otherwise, we want the mask bits to be set with the following
-  // logic derived by inspecting the high nibble and low nibble of the input:
-  // bit0 = 1 for `_`: high `0x5` and low `0xF`
-  // bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
-  // bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
-  // bit3 = 1 for `P-Z` and 'p-z': high `0x5` or `0x7` and low `0x0` - `0xA`
-  // bit4 = unused
-  // bit5 = unused
-  // bit6 = unused
-  // bit7 = unused
-  //
-  // No bits set means definitively non-ID ASCII character.
-  //
-  // bits 4-7 remain unused if we need to classify more characters.
-  const auto high_lut = _mm_setr_epi8(
-      /* __b0=*/0b0000'0000,
-      /* __b1=*/0b0000'0000,
-      /* __b2=*/0b0000'0000,
-      /* __b3=*/0b0000'0010,
-      /* __b4=*/0b0000'0100,
-      /* __b5=*/0b0000'1001,
-      /* __b6=*/0b0000'0100,
-      /* __b7=*/0b0000'1000,
-      /* __b8=*/0b0000'0000,
-      /* __b9=*/0b0000'0000,
-      /*__b10=*/0b0000'0000,
-      /*__b11=*/0b0000'0000,
-      /*__b12=*/0b0000'0000,
-      /*__b13=*/0b0000'0000,
-      /*__b14=*/0b0000'0000,
-      /*__b15=*/0b0000'0000);
-  const auto low_lut = _mm_setr_epi8(
-      /* __b0=*/0b0000'1010,
-      /* __b1=*/0b0000'1110,
-      /* __b2=*/0b0000'1110,
-      /* __b3=*/0b0000'1110,
-      /* __b4=*/0b0000'1110,
-      /* __b5=*/0b0000'1110,
-      /* __b6=*/0b0000'1110,
-      /* __b7=*/0b0000'1110,
-      /* __b8=*/0b0000'1110,
-      /* __b9=*/0b0000'1110,
-      /*__b10=*/0b0000'1100,
-      /*__b11=*/0b0000'0100,
-      /*__b12=*/0b0000'0100,
-      /*__b13=*/0b0000'0100,
-      /*__b14=*/0b0000'0100,
-      /*__b15=*/0b0000'0101);
-
-  // Use `ssize_t` for performance here as we index memory in a tight loop.
-  ssize_t i = 0;
-  const ssize_t size = text.size();
-  while ((i + 16) <= size) {
-    __m128i input =
-        _mm_loadu_si128(reinterpret_cast<const __m128i*>(text.data() + i));
-
-    // The high bits of each byte indicate a non-ASCII character encoded using
-    // UTF-8. Test those and fall back to the scalar code if present. These
-    // bytes will also cause spurious zeros in the LUT results, but we can
-    // ignore that because we track them independently here.
-#if __SSE4_1__
-    if (!_mm_test_all_zeros(_mm_set1_epi8(0x80), input)) {
-      break;
-    }
-#else
-    if (_mm_movemask_epi8(input) != 0) {
-      break;
-    }
-#endif
-
-    // Do two LUT lookups and mask the results together to get the results for
-    // both low and high nibbles. Note that we don't need to mask out the high
-    // bit of input here because we track that above for UTF-8 handling.
-    __m128i low_mask = _mm_shuffle_epi8(low_lut, input);
-    // Note that the input needs to be masked to only include the high nibble or
-    // we could end up with bit7 set forcing the result to a zero byte.
-    __m128i input_high =
-        _mm_and_si128(_mm_srli_epi32(input, 4), _mm_set1_epi8(0x0f));
-    __m128i high_mask = _mm_shuffle_epi8(high_lut, input_high);
-    __m128i mask = _mm_and_si128(low_mask, high_mask);
-
-    // Now compare to find the completely zero bytes.
-    __m128i id_byte_mask_vec = _mm_cmpeq_epi8(mask, _mm_setzero_si128());
-    int tail_ascii_mask = _mm_movemask_epi8(id_byte_mask_vec);
-
-    // Check if there are bits in the tail mask, which means zero bytes and the
-    // end of the identifier. We could do this without materializing the scalar
-    // mask on more recent CPUs, but we generally expect the median length we
-    // encounter to be <16 characters and so we avoid the extra instruction in
-    // that case and predict this branch to succeed so it is laid out in a
-    // reasonable way.
-    if (LLVM_LIKELY(tail_ascii_mask != 0)) {
-      // Move past the definitively classified bytes that are part of the
-      // identifier, and return the complete identifier text.
-      i += __builtin_ctz(tail_ascii_mask);
-      return text.substr(0, i);
-    }
-    i += 16;
-  }
-
-  // Fallback to scalar loop. We only end up here when we don't have >=16
-  // bytes to scan or we find a UTF-8 unicode character.
-  // TODO: This assumes all Unicode characters are non-identifiers.
-  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
-    ++i;
-  }
-
-  return text.substr(0, i);
-#else
-  // TODO: Optimize this with SIMD for other architectures.
-  return text.take_while(
-      [](char c) { return IsIdByteTable[static_cast<unsigned char>(c)]; });
-#endif
-}
-
-// Implementation of the lexer logic itself.
-//
-// The design is that lexing can loop over the source buffer, consuming it into
-// tokens by calling into this API. This class handles the state and breaks down
-// the different lexing steps that may be used. It directly updates the provided
-// tokenized buffer with the lexed tokens.
-class TokenizedBuffer::Lexer {
- public:
-  // Symbolic result of a lexing action. This indicates whether we successfully
-  // lexed a token, or whether other lexing actions should be attempted.
-  //
-  // While it wraps a simple boolean state, its API both helps make the failures
-  // more self documenting, and by consuming the actual token constructively
-  // when one is produced, it helps ensure the correct result is returned.
-  class LexResult {
-   public:
-    // Consumes (and discard) a valid token to construct a result
-    // indicating a token has been produced. Relies on implicit conversions.
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    LexResult(Token /*discarded_token*/) : LexResult(true) {}
-
-    // Returns a result indicating no token was produced.
-    static auto NoMatch() -> LexResult { return LexResult(false); }
-
-    // Tests whether a token was produced by the lexing routine, and
-    // the lexer can continue forming tokens.
-    explicit operator bool() const { return formed_token_; }
-
-   private:
-    explicit LexResult(bool formed_token) : formed_token_(formed_token) {}
-
-    bool formed_token_;
-  };
-
-  using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult;
-  using DispatchTableT = std::array<DispatchFunctionT*, 256>;
-
-  Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
-      : buffer_(&buffer),
-        translator_(&buffer),
-        emitter_(translator_, consumer),
-        token_translator_(&buffer),
-        token_emitter_(token_translator_, consumer),
-        current_line_(buffer.AddLine(LineInfo(0))),
-        current_line_info_(&buffer.GetLineInfo(current_line_)) {}
-
-  // Perform the necessary bookkeeping to step past a newline at the current
-  // line and column.
-  auto HandleNewline() -> void {
-    current_line_info_->length = current_column_;
-
-    current_line_ = buffer_->AddLine(
-        LineInfo(current_line_info_->start + current_column_ + 1));
-    current_line_info_ = &buffer_->GetLineInfo(current_line_);
-    current_column_ = 0;
-    set_indent_ = false;
-  }
-
-  auto NoteWhitespace() -> void {
-    buffer_->token_infos_.back().has_trailing_space = true;
-  }
-
-  auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
-    const char* const whitespace_start = source_text.begin();
-
-    while (!source_text.empty()) {
-      // We only support line-oriented commenting and lex comments as-if they
-      // were whitespace.
-      if (source_text.startswith("//")) {
-        // Any comment must be the only non-whitespace on the line.
-        if (set_indent_) {
-          CARBON_DIAGNOSTIC(TrailingComment, Error,
-                            "Trailing comments are not permitted.");
-
-          emitter_.Emit(source_text.begin(), TrailingComment);
-        }
-        // The introducer '//' must be followed by whitespace or EOF.
-        if (source_text.size() > 2 && !IsSpace(source_text[2])) {
-          CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-                            "Whitespace is required after '//'.");
-          emitter_.Emit(source_text.begin() + 2,
-                        NoWhitespaceAfterCommentIntroducer);
-        }
-        while (!source_text.empty() && source_text.front() != '\n') {
-          ++current_column_;
-          source_text = source_text.drop_front();
-        }
-        if (source_text.empty()) {
-          break;
-        }
-      }
-
-      switch (source_text.front()) {
-        default:
-          // If we find a non-whitespace character without exhausting the
-          // buffer, return true to continue lexing.
-          CARBON_CHECK(!IsSpace(source_text.front()));
-          if (whitespace_start != source_text.begin()) {
-            NoteWhitespace();
-          }
-          return true;
-
-        case '\n':
-          // If this is the last character in the source, directly return here
-          // to avoid creating an empty line.
-          source_text = source_text.drop_front();
-          if (source_text.empty()) {
-            current_line_info_->length = current_column_;
-            return false;
-          }
-
-          // Otherwise, add a line and set up to continue lexing.
-          HandleNewline();
-          continue;
-
-        case ' ':
-        case '\t':
-          // Skip other forms of whitespace while tracking column.
-          // TODO: This obviously needs looooots more work to handle unicode
-          // whitespace as well as special handling to allow better tokenization
-          // of operators. This is just a stub to check that our column
-          // management works.
-          ++current_column_;
-          source_text = source_text.drop_front();
-          continue;
-      }
-    }
-
-    CARBON_CHECK(source_text.empty())
-        << "Cannot reach here w/o finishing the text!";
-    // Update the line length as this is also the end of a line.
-    current_line_info_->length = current_column_;
-    return false;
-  }
-
-  auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    std::optional<NumericLiteral> literal = NumericLiteral::Lex(source_text);
-    if (!literal) {
-      return LexError(source_text);
-    }
-
-    int int_column = current_column_;
-    int token_size = literal->text().size();
-    current_column_ += token_size;
-    source_text = source_text.drop_front(token_size);
-
-    if (!set_indent_) {
-      current_line_info_->indent = int_column;
-      set_indent_ = true;
-    }
-
-    return VariantMatch(
-        literal->ComputeValue(emitter_),
-        [&](NumericLiteral::IntegerValue&& value) {
-          auto token = buffer_->AddToken({.kind = TokenKind::IntegerLiteral,
-                                          .token_line = current_line_,
-                                          .column = int_column});
-          buffer_->GetTokenInfo(token).literal_index =
-              buffer_->literal_int_storage_.size();
-          buffer_->literal_int_storage_.push_back(std::move(value.value));
-          return token;
-        },
-        [&](NumericLiteral::RealValue&& value) {
-          auto token = buffer_->AddToken({.kind = TokenKind::RealLiteral,
-                                          .token_line = current_line_,
-                                          .column = int_column});
-          buffer_->GetTokenInfo(token).literal_index =
-              buffer_->literal_int_storage_.size();
-          buffer_->literal_int_storage_.push_back(std::move(value.mantissa));
-          buffer_->literal_int_storage_.push_back(std::move(value.exponent));
-          CARBON_CHECK(buffer_->GetRealLiteral(token).is_decimal ==
-                       (value.radix == NumericLiteral::Radix::Decimal));
-          return token;
-        },
-        [&](NumericLiteral::UnrecoverableError) {
-          auto token = buffer_->AddToken({
-              .kind = TokenKind::Error,
-              .token_line = current_line_,
-              .column = int_column,
-              .error_length = token_size,
-          });
-          return token;
-        });
-  }
-
-  auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    std::optional<StringLiteral> literal = StringLiteral::Lex(source_text);
-    if (!literal) {
-      return LexError(source_text);
-    }
-
-    Line string_line = current_line_;
-    int string_column = current_column_;
-    int literal_size = literal->text().size();
-    source_text = source_text.drop_front(literal_size);
-
-    if (!set_indent_) {
-      current_line_info_->indent = string_column;
-      set_indent_ = true;
-    }
-
-    // Update line and column information.
-    if (!literal->is_multi_line()) {
-      current_column_ += literal_size;
-    } else {
-      for (char c : literal->text()) {
-        if (c == '\n') {
-          HandleNewline();
-          // The indentation of all lines in a multi-line string literal is
-          // that of the first line.
-          current_line_info_->indent = string_column;
-          set_indent_ = true;
-        } else {
-          ++current_column_;
-        }
-      }
-    }
-
-    if (literal->is_terminated()) {
-      auto token =
-          buffer_->AddToken({.kind = TokenKind::StringLiteral,
-                             .token_line = string_line,
-                             .column = string_column,
-                             .literal_index = static_cast<int32_t>(
-                                 buffer_->literal_string_storage_.size())});
-      buffer_->literal_string_storage_.push_back(
-          literal->ComputeValue(emitter_));
-      return token;
-    } else {
-      CARBON_DIAGNOSTIC(UnterminatedString, Error,
-                        "String is missing a terminator.");
-      emitter_.Emit(literal->text().begin(), UnterminatedString);
-      return buffer_->AddToken({.kind = TokenKind::Error,
-                                .token_line = string_line,
-                                .column = string_column,
-                                .error_length = literal_size});
-    }
-  }
-
-  auto LexSymbolToken(llvm::StringRef& source_text,
-                      TokenKind kind = TokenKind::Error) -> LexResult {
-    auto compute_symbol_kind = [](llvm::StringRef source_text) {
-      return llvm::StringSwitch<TokenKind>(source_text)
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#include "toolchain/lex/token_kind.def"
-          .Default(TokenKind::Error);
-    };
-
-    // We use the `error` token as a place-holder for cases where one character
-    // isn't enough to pick a definitive symbol token. Recompute the kind using
-    // the full symbol set.
-    if (LLVM_UNLIKELY(kind == TokenKind::Error)) {
-      kind = compute_symbol_kind(source_text);
-      if (kind == TokenKind::Error) {
-        return LexError(source_text);
-      }
-    } else {
-      // Verify in a debug build that the incoming token kind is correct.
-      CARBON_DCHECK(kind == compute_symbol_kind(source_text))
-          << "Incoming token kind '" << kind
-          << "' does not match computed kind '"
-          << compute_symbol_kind(source_text) << "'!";
-    }
-
-    if (!set_indent_) {
-      current_line_info_->indent = current_column_;
-      set_indent_ = true;
-    }
-
-    Token token = buffer_->AddToken(
-        {.kind = kind, .token_line = current_line_, .column = current_column_});
-    current_column_ += kind.fixed_spelling().size();
-    source_text = source_text.drop_front(kind.fixed_spelling().size());
-
-    // Opening symbols just need to be pushed onto our queue of opening groups.
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-      return token;
-    }
-
-    // Only closing symbols need further special handling.
-    if (!kind.is_closing_symbol()) {
-      return token;
-    }
-
-    TokenInfo& closing_token_info = buffer_->GetTokenInfo(token);
-
-    // Check that there is a matching opening symbol before we consume this as
-    // a closing symbol.
-    if (open_groups_.empty() ||
-        buffer_->GetTokenInfo(open_groups_.back()).kind.closing_symbol() !=
-            kind) {
-      has_mismatched_brackets_ = true;
-      return token;
-    }
-
-    // Handle this matching closing symbol.
-    Token opening_token = open_groups_.pop_back_val();
-    TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
-    opening_token_info.closing_token = token;
-    closing_token_info.opening_token = opening_token;
-    return token;
-  }
-
-  // Given a word that has already been lexed, determine whether it is a type
-  // literal and if so form the corresponding token.
-  auto LexWordAsTypeLiteralToken(llvm::StringRef word, int column)
-      -> LexResult {
-    if (word.size() < 2) {
-      // Too short to form one of these tokens.
-      return LexResult::NoMatch();
-    }
-    if (word[1] < '1' || word[1] > '9') {
-      // Doesn't start with a valid initial digit.
-      return LexResult::NoMatch();
-    }
-
-    std::optional<TokenKind> kind;
-    switch (word.front()) {
-      case 'i':
-        kind = TokenKind::IntegerTypeLiteral;
-        break;
-      case 'u':
-        kind = TokenKind::UnsignedIntegerTypeLiteral;
-        break;
-      case 'f':
-        kind = TokenKind::FloatingPointTypeLiteral;
-        break;
-      default:
-        return LexResult::NoMatch();
-    };
-
-    llvm::StringRef suffix = word.substr(1);
-    if (!CanLexInteger(emitter_, suffix)) {
-      return buffer_->AddToken(
-          {.kind = TokenKind::Error,
-           .token_line = current_line_,
-           .column = column,
-           .error_length = static_cast<int32_t>(word.size())});
-    }
-    llvm::APInt suffix_value;
-    if (suffix.getAsInteger(10, suffix_value)) {
-      return LexResult::NoMatch();
-    }
-
-    auto token = buffer_->AddToken(
-        {.kind = *kind, .token_line = current_line_, .column = column});
-    buffer_->GetTokenInfo(token).literal_index =
-        buffer_->literal_int_storage_.size();
-    buffer_->literal_int_storage_.push_back(std::move(suffix_value));
-    return token;
-  }
-
-  auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
-    auto insert_result = buffer_->identifier_map_.insert(
-        {text, Identifier(buffer_->identifier_infos_.size())});
-    if (insert_result.second) {
-      buffer_->identifier_infos_.push_back({text});
-    }
-    return insert_result.first->second;
-  }
-
-  auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
-    if (static_cast<unsigned char>(source_text.front()) > 0x7F) {
-      // TODO: Need to add support for Unicode lexing.
-      return LexError(source_text);
-    }
-    CARBON_CHECK(IsAlpha(source_text.front()) || source_text.front() == '_');
-
-    if (!set_indent_) {
-      current_line_info_->indent = current_column_;
-      set_indent_ = true;
-    }
-
-    // Take the valid characters off the front of the source buffer.
-    llvm::StringRef identifier_text = ScanForIdentifierPrefix(source_text);
-    CARBON_CHECK(!identifier_text.empty())
-        << "Must have at least one character!";
-    int identifier_column = current_column_;
-    current_column_ += identifier_text.size();
-    source_text = source_text.drop_front(identifier_text.size());
-
-    // Check if the text is a type literal, and if so form such a literal.
-    if (LexResult result =
-            LexWordAsTypeLiteralToken(identifier_text, identifier_column)) {
-      return result;
-    }
-
-    // Check if the text matches a keyword token, and if so use that.
-    TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
-#define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, TokenKind::Name)
-#include "toolchain/lex/token_kind.def"
-                         .Default(TokenKind::Error);
-    if (kind != TokenKind::Error) {
-      return buffer_->AddToken({.kind = kind,
-                                .token_line = current_line_,
-                                .column = identifier_column});
-    }
-
-    // Otherwise we have a generic identifier.
-    return buffer_->AddToken({.kind = TokenKind::Identifier,
-                              .token_line = current_line_,
-                              .column = identifier_column,
-                              .id = GetOrCreateIdentifier(identifier_text)});
-  }
-
-  auto LexError(llvm::StringRef& source_text) -> LexResult {
-    llvm::StringRef error_text = source_text.take_while([](char c) {
-      if (IsAlnum(c)) {
-        return false;
-      }
-      switch (c) {
-        case '_':
-        case '\t':
-        case '\n':
-          return false;
-        default:
-          break;
-      }
-      return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lex/token_kind.def"
-          .Default(true);
-    });
-    if (error_text.empty()) {
-      // TODO: Reimplement this to use the lexer properly. In the meantime,
-      // guarantee that we eat at least one byte.
-      error_text = source_text.take_front(1);
-    }
-
-    auto token = buffer_->AddToken(
-        {.kind = TokenKind::Error,
-         .token_line = current_line_,
-         .column = current_column_,
-         .error_length = static_cast<int32_t>(error_text.size())});
-    CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
-                      "Encountered unrecognized characters while parsing.");
-    emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
-
-    current_column_ += error_text.size();
-    source_text = source_text.drop_front(error_text.size());
-    return token;
-  }
-
-  auto LexEndOfFile() -> LexResult {
-    // The end-of-file token is always considered to be whitespace.
-    NoteWhitespace();
-
-    return buffer_->AddToken({.kind = TokenKind::EndOfFile,
-                              .token_line = current_line_,
-                              .column = current_column_});
-  }
-
-  // If brackets didn't pair or nest properly, find a set of places to insert
-  // brackets to fix the nesting, issue suitable diagnostics, and update the
-  // token list to describe the fixes.
-  auto DiagnoseAndFixMismatchedBrackets() -> void {
-    if (!has_mismatched_brackets_ && open_groups_.empty()) {
-      return;
-    }
-
-    llvm::SmallVector<std::pair<int, TokenInfo>> new_tokens;
-
-    // Look for mismatched brackets and decide where to add tokens to fix them.
-    open_groups_.clear();
-    for (auto token : buffer_->tokens()) {
-      auto kind = buffer_->GetKind(token);
-      if (kind.is_opening_symbol()) {
-        open_groups_.push_back(token);
-        continue;
-      }
-
-      if (!kind.is_closing_symbol()) {
-        continue;
-      }
-
-      while (true) {
-        if (open_groups_.empty()) {
-          TokenInfo& token_info = buffer_->GetTokenInfo(token);
-          token_info.kind = TokenKind::Error;
-          token_info.error_length = kind.fixed_spelling().size();
-
-          CARBON_DIAGNOSTIC(
-              UnmatchedClosing, Error,
-              "Closing symbol without a corresponding opening symbol.");
-          token_emitter_.Emit(token, UnmatchedClosing);
-          break;
-        }
-
-        Token opening_token = open_groups_.pop_back_val();
-        TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
-        if (kind == opening_kind.closing_symbol()) {
-          break;
-        }
-
-        CARBON_DIAGNOSTIC(
-            MismatchedClosing, Error,
-            "Closing symbol does not match most recent opening symbol.");
-        token_emitter_.Emit(opening_token, MismatchedClosing);
-
-        CARBON_CHECK(token.index != 0) << "Must have a prior opening token!";
-        Token prev_token = Token(token.index - 1);
-
-        // Find the end of the previous token, and add a matching closing token
-        // there. Note that new_token_column is a 1-based column number.
-        // TODO: Do a smarter scan for where to put the closing token, or
-        // whether to insert an opening token instead.
-        auto [new_token_line, new_token_column] =
-            buffer_->GetEndLocation(prev_token);
-        new_tokens.push_back(
-            {token.index,
-             {.kind = opening_kind.closing_symbol(),
-              .has_trailing_space = buffer_->HasTrailingWhitespace(prev_token),
-              .is_recovery = true,
-              .token_line = new_token_line,
-              .column = new_token_column - 1}});
-      }
-    }
-
-    // Diagnose any remaining unmatched opening symbols.
-    for (auto token : open_groups_) {
-      auto kind = buffer_->GetKind(token);
-      TokenInfo& token_info = buffer_->GetTokenInfo(token);
-      token_info.kind = TokenKind::Error;
-      token_info.error_length = kind.fixed_spelling().size();
-
-      CARBON_DIAGNOSTIC(
-          UnmatchedOpening, Error,
-          "Opening symbol without a corresponding closing symbol.");
-      token_emitter_.Emit(token, UnmatchedOpening);
-    }
-
-    // Merge the recovery tokens into the token list.
-    auto old_tokens = std::move(buffer_->token_infos_);
-    buffer_->token_infos_.clear();
-    buffer_->token_infos_.reserve(old_tokens.size() + new_tokens.size());
-
-    int old_tokens_offset = 0;
-    for (auto [next_offset, info] : new_tokens) {
-      buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                   old_tokens.begin() + next_offset);
-      buffer_->token_infos_.push_back(info);
-      old_tokens_offset = next_offset;
-    }
-    buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                 old_tokens.end());
-
-    // Update the token list with closing and opening tokens. Note that this
-    // must be done last, and must be redone for all tokens, because token
-    // indexes were changed in the previous step.
-    open_groups_.clear();
-    for (auto token : buffer_->tokens()) {
-      auto kind = buffer_->GetKind(token);
-      if (kind.is_opening_symbol()) {
-        open_groups_.push_back(token);
-      } else if (kind.is_closing_symbol()) {
-        CARBON_CHECK(!open_groups_.empty()) << "Failed to balance brackets";
-        auto opening_token = open_groups_.pop_back_val();
-
-        CARBON_CHECK(kind ==
-                     buffer_->GetTokenInfo(opening_token).kind.closing_symbol())
-            << "Failed to balance brackets";
-        TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
-        TokenInfo& closing_token_info = buffer_->GetTokenInfo(token);
-        opening_token_info.closing_token = token;
-        closing_token_info.opening_token = opening_token;
-      }
-    }
-  }
-
-  auto AddStartOfFileToken() -> void {
-    // Note that the start-of-file always has trailing space because it *is*
-    // whitespace.
-    buffer_->AddToken({.kind = TokenKind::StartOfFile,
-                       .has_trailing_space = true,
-                       .token_line = current_line_,
-                       .column = current_column_});
-  }
-
-  // We use a collection of static member functions for table-based dispatch to
-  // lexer methods. These are named static member functions so that they show up
-  // helpfully in profiles and backtraces, but they tend to not contain the
-  // interesting logic and simply delegate to the relevant methods. All of their
-  // signatures need to be exactly the same however in order to ensure we can
-  // build efficient dispatch tables out of them.
-  static auto DispatchLexError(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexError(source_text);
-  }
-  static auto DispatchLexSymbol(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexSymbolToken(source_text);
-  }
-  template <const TokenKind& Token>
-  static auto DispatchLexOneCharSymbol(Lexer& lexer,
-                                       llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexSymbolToken(source_text, Token);
-  }
-  static auto DispatchLexWord(Lexer& lexer, llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexKeywordOrIdentifier(source_text);
-  }
-  static auto DispatchLexNumericLiteral(Lexer& lexer,
-                                        llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexNumericLiteral(source_text);
-  }
-  static auto DispatchLexStringLiteral(Lexer& lexer,
-                                       llvm::StringRef& source_text)
-      -> LexResult {
-    return lexer.LexStringLiteral(source_text);
-  }
-
-  constexpr static auto MakeDispatchTable() -> DispatchTableT {
-    DispatchTableT table = {};
-    for (int i = 0; i < 256; ++i) {
-      table[i] = &DispatchLexError;
-    }
-
-    // Symbols have some special dispatching. First, set the first character of
-    // each symbol token spelling to dispatch to the symbol lexer. We don't
-    // provide a pre-computed token here, so the symbol lexer will compute the
-    // exact symbol token kind. We'll override this with more specific dispatch
-    // below.
-#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexSymbol;
-#include "toolchain/lex/token_kind.def"
-
-    // Now special cased single-character symbols that are guaranteed to not
-    // join with another symbol. These are grouping symbols, terminators,
-    // or separators in the grammar and have a good reason to be
-    // orthogonal to any other punctuation. We do this separately because this
-    // needs to override some of the generic handling above, and provide a
-    // custom token.
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbol<TokenKind::TokenName>;
-#include "toolchain/lex/token_kind.def"
-
-    table['_'] = &DispatchLexWord;
-    // Note that we don't use `llvm::seq` because this needs to be `constexpr`
-    // evaluated.
-    for (unsigned char c = 'a'; c <= 'z'; ++c) {
-      table[c] = &DispatchLexWord;
-    }
-    for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-      table[c] = &DispatchLexWord;
-    }
-    // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
-    // as whitespace characters should already have been skipped and the
-    // only remaining valid Unicode characters would be part of an
-    // identifier. That code can either accept or reject.
-    for (int i = 0x80; i < 0x100; ++i) {
-      table[i] = &DispatchLexWord;
-    }
-
-    for (unsigned char c = '0'; c <= '9'; ++c) {
-      table[c] = &DispatchLexNumericLiteral;
-    }
-
-    table['\''] = &DispatchLexStringLiteral;
-    table['"'] = &DispatchLexStringLiteral;
-    table['#'] = &DispatchLexStringLiteral;
-
-    return table;
-  };
-
- private:
-  TokenizedBuffer* buffer_;
-
-  SourceBufferLocationTranslator translator_;
-  LexerDiagnosticEmitter emitter_;
-
-  TokenLocationTranslator token_translator_;
-  TokenDiagnosticEmitter token_emitter_;
-
-  Line current_line_;
-  LineInfo* current_line_info_;
-
-  int current_column_ = 0;
-  bool set_indent_ = false;
-  bool has_mismatched_brackets_ = false;
-
-  llvm::SmallVector<Token> open_groups_;
-};
-
-auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
-    -> TokenizedBuffer {
-  TokenizedBuffer buffer(source);
-  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
-  Lexer lexer(buffer, error_tracking_consumer);
-
-  // Build a table of function pointers that we can use to dispatch to the
-  // correct lexer routine based on the first byte of source text.
-  //
-  // While it is tempting to simply use a `switch` on the first byte and
-  // dispatch with cases into this, in practice that doesn't produce great code.
-  // There seem to be two issues that are the root cause.
-  //
-  // First, there are lots of different values of bytes that dispatch to a
-  // fairly small set of routines, and then some byte values that dispatch
-  // differently for each byte. This pattern isn't one that the compiler-based
-  // lowering of switches works well with -- it tries to balance all the cases,
-  // and in doing so emits several compares and other control flow rather than a
-  // simple jump table.
-  //
-  // Second, with a `case`, it isn't as obvious how to create a single, uniform
-  // interface that is effective for *every* byte value, and thus makes for a
-  // single consistent table-based dispatch. By forcing these to be function
-  // pointers, we also coerce the code to use a strictly homogeneous structure
-  // that can form a single dispatch table.
-  //
-  // These two actually interact -- the second issue is part of what makes the
-  // non-table lowering in the first one desirable for many switches and cases.
-  //
-  // Ultimately, when table-based dispatch is such an important technique, we
-  // get better results by taking full control and manually creating the
-  // dispatch structures.
-  constexpr Lexer::DispatchTableT DispatchTable = Lexer::MakeDispatchTable();
-
-  // Before lexing any source text, add the start-of-file token so that code can
-  // assume a non-empty token buffer for the rest of lexing.
-  lexer.AddStartOfFileToken();
-
-  llvm::StringRef source_text = source.text();
-  while (lexer.SkipWhitespace(source_text)) {
-    Lexer::LexResult result =
-        DispatchTable[static_cast<unsigned char>(source_text.front())](
-            lexer, source_text);
-    CARBON_CHECK(result) << "Failed to form a token!";
-  }
-
-  lexer.LexEndOfFile();
-  lexer.DiagnoseAndFixMismatchedBrackets();
-
-  if (error_tracking_consumer.seen_error()) {
-    buffer.has_errors_ = true;
-  }
-
-  return buffer;
-}
-
-auto TokenizedBuffer::GetKind(Token token) const -> TokenKind {
+auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
   return GetTokenInfo(token).kind;
 }
 
-auto TokenizedBuffer::GetLine(Token token) const -> Line {
+auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
   return GetTokenInfo(token).token_line;
 }
 
-auto TokenizedBuffer::GetLineNumber(Token token) const -> int {
+auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
   return GetLineNumber(GetLine(token));
 }
 
-auto TokenizedBuffer::GetColumnNumber(Token token) const -> int {
+auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   return GetTokenInfo(token).column + 1;
 }
 
-auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
+auto TokenizedBuffer::GetEndLocation(TokenIndex token) const
+    -> std::pair<LineIndex, int> {
+  auto line = GetLine(token);
+  int column = GetColumnNumber(token);
+  auto token_text = GetTokenText(token);
+
+  if (auto [before_newline, after_newline] = token_text.rsplit('\n');
+      before_newline.size() == token_text.size()) {
+    // Token fits on one line, advance the column number.
+    column += before_newline.size();
+  } else {
+    // Token contains newlines.
+    line.index += before_newline.count('\n') + 1;
+    column = 1 + after_newline.size();
+  }
+
+  return {line, column};
+}
+
+auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();
   if (!fixed_spelling.empty()) {
@@ -983,7 +69,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntegerLiteral ||
+  if (token_info.kind == TokenKind::IntLiteral ||
       token_info.kind == TokenKind::RealLiteral) {
     const auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
@@ -1014,117 +100,93 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return llvm::StringRef(suffix.data() - 1, suffix.size() + 1);
   }
 
-  if (token_info.kind == TokenKind::StartOfFile ||
-      token_info.kind == TokenKind::EndOfFile) {
+  if (token_info.kind == TokenKind::FileStart ||
+      token_info.kind == TokenKind::FileEnd) {
     return llvm::StringRef();
   }
 
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return GetIdentifierText(token_info.id);
+  return value_stores_->identifiers().Get(token_info.ident_id);
 }
 
-auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
+auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::Identifier) << token_info.kind;
-  return token_info.id;
+  return token_info.ident_id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const
-    -> const llvm::APInt& {
+auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
-  CARBON_CHECK(token_info.kind == TokenKind::IntegerLiteral) << token_info.kind;
-  return literal_int_storage_[token_info.literal_index];
+  CARBON_CHECK(token_info.kind == TokenKind::IntLiteral) << token_info.kind;
+  return token_info.int_id;
 }
 
-auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
+auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::RealLiteral) << token_info.kind;
-
-  // Note that every real literal is at least three characters long, so we can
-  // safely look at the second character to determine whether we have a
-  // decimal or hexadecimal literal.
-  const auto& line_info = GetLineInfo(token_info.token_line);
-  int64_t token_start = line_info.start + token_info.column;
-  char second_char = source_->text()[token_start + 1];
-  bool is_decimal = second_char != 'x' && second_char != 'b';
-
-  return {.mantissa = literal_int_storage_[token_info.literal_index],
-          .exponent = literal_int_storage_[token_info.literal_index + 1],
-          .is_decimal = is_decimal};
+  return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
+    -> StringLiteralId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
-  return literal_string_storage_[token_info.literal_index];
+  return token_info.string_literal_id;
 }
 
-auto TokenizedBuffer::GetTypeLiteralSize(Token token) const
+auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const
     -> const llvm::APInt& {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return literal_int_storage_[token_info.literal_index];
+  return value_stores_->ints().Get(token_info.int_id);
 }
 
-auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
-    -> Token {
+auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
+    -> TokenIndex {
   const auto& opening_token_info = GetTokenInfo(opening_token);
   CARBON_CHECK(opening_token_info.kind.is_opening_symbol())
       << opening_token_info.kind;
   return opening_token_info.closing_token;
 }
 
-auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
-    -> Token {
+auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
+    -> TokenIndex {
   const auto& closing_token_info = GetTokenInfo(closing_token);
   CARBON_CHECK(closing_token_info.kind.is_closing_symbol())
       << closing_token_info.kind;
   return closing_token_info.opening_token;
 }
 
-auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
+auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const -> bool {
   auto it = TokenIterator(token);
   return it == tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
 }
 
-auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
+auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const -> bool {
   return GetTokenInfo(token).has_trailing_space;
 }
 
-auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
+auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return GetTokenInfo(token).is_recovery;
 }
 
-auto TokenizedBuffer::GetLineNumber(Line line) const -> int {
+auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
   return line.index + 1;
 }
 
-auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
+auto TokenizedBuffer::GetNextLine(LineIndex line) const -> LineIndex {
+  LineIndex next(line.index + 1);
+  CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
+  return next;
+}
+
+auto TokenizedBuffer::GetPrevLine(LineIndex line) const -> LineIndex {
+  CARBON_CHECK(line.index > 0);
+  return LineIndex(line.index - 1);
+}
+
+auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
   return GetLineInfo(line).indent + 1;
-}
-
-auto TokenizedBuffer::GetIdentifierText(Identifier identifier) const
-    -> llvm::StringRef {
-  return identifier_infos_[identifier.index].text;
-}
-
-auto TokenizedBuffer::GetEndLocation(Token token) const
-    -> std::pair<Line, int> {
-  Line line = GetLine(token);
-  int column = GetColumnNumber(token);
-  auto token_text = GetTokenText(token);
-
-  if (auto [before_newline, after_newline] = token_text.rsplit('\n');
-      before_newline.size() == token_text.size()) {
-    // Token fits on one line, advance the column number.
-    column += before_newline.size();
-  } else {
-    // Token contains newlines.
-    line.index += before_newline.count('\n') + 1;
-    column = 1 + after_newline.size();
-  }
-
-  return {line, column};
 }
 
 auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
@@ -1149,7 +211,8 @@ static auto ComputeDecimalPrintedWidth(int number) -> int {
   return static_cast<int>(std::log10(number)) + 1;
 }
 
-auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
+auto TokenizedBuffer::GetTokenPrintWidths(TokenIndex token) const
+    -> PrintWidths {
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth(token_infos_.size());
   widths.kind = GetKind(token).name().size();
@@ -1170,11 +233,11 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
 
   PrintWidths widths = {};
   widths.index = ComputeDecimalPrintedWidth((token_infos_.size()));
-  for (Token token : tokens()) {
+  for (TokenIndex token : tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
 
-  for (Token token : tokens()) {
+  for (TokenIndex token : tokens()) {
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
@@ -1182,12 +245,13 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
-                                 Token token) const -> void {
+                                 TokenIndex token) const -> void {
   PrintToken(output_stream, token, {});
 }
 
-auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
-                                 PrintWidths widths) const -> void {
+auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
+                                 TokenIndex token, PrintWidths widths) const
+    -> void {
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
   const auto& token_info = GetTokenInfo(token);
@@ -1212,16 +276,22 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     case TokenKind::Identifier:
       output_stream << ", identifier: " << GetIdentifier(token).index;
       break;
-    case TokenKind::IntegerLiteral:
+    case TokenKind::IntLiteral:
       output_stream << ", value: `";
-      GetIntegerLiteral(token).print(output_stream, /*isSigned=*/false);
+      value_stores_->ints()
+          .Get(GetIntLiteral(token))
+          .print(output_stream, /*isSigned=*/false);
       output_stream << "`";
       break;
     case TokenKind::RealLiteral:
-      output_stream << ", value: `" << GetRealLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->reals().Get(GetRealLiteral(token)) << "`";
       break;
     case TokenKind::StringLiteral:
-      output_stream << ", value: `" << GetStringLiteral(token) << "`";
+      output_stream << ", value: `"
+                    << value_stores_->string_literals().Get(
+                           GetStringLiteral(token))
+                    << "`";
       break;
     default:
       if (token_info.kind.is_opening_symbol()) {
@@ -1244,31 +314,31 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   output_stream << " },";
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) -> LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) -> LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::GetLineInfo(Line line) const -> const LineInfo& {
+auto TokenizedBuffer::GetLineInfo(LineIndex line) const -> const LineInfo& {
   return line_infos_[line.index];
 }
 
-auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
+auto TokenizedBuffer::AddLine(LineInfo info) -> LineIndex {
   line_infos_.push_back(info);
-  return Line(static_cast<int>(line_infos_.size()) - 1);
+  return LineIndex(static_cast<int>(line_infos_.size()) - 1);
 }
 
-auto TokenizedBuffer::GetTokenInfo(Token token) -> TokenInfo& {
+auto TokenizedBuffer::GetTokenInfo(TokenIndex token) -> TokenInfo& {
   return token_infos_[token.index];
 }
 
-auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
+auto TokenizedBuffer::GetTokenInfo(TokenIndex token) const -> const TokenInfo& {
   return token_infos_[token.index];
 }
 
-auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
+auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {
   token_infos_.push_back(info);
   expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
-  return Token(static_cast<int>(token_infos_.size()) - 1);
+  return TokenIndex(static_cast<int>(token_infos_.size()) - 1);
 }
 
 auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
@@ -1320,7 +390,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
           .column_number = column_number + 1};
 }
 
-auto TokenLocationTranslator::GetLocation(Token token) -> DiagnosticLocation {
+auto TokenLocationTranslator::GetLocation(TokenIndex token)
+    -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
@@ -1330,8 +401,11 @@ auto TokenLocationTranslator::GetLocation(Token token) -> DiagnosticLocation {
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
-      token_start);
+  DiagnosticLocation loc =
+      TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
+          token_start);
+  loc.length = buffer_->GetTokenText(token).size();
+  return loc;
 }
 
 }  // namespace Carbon::Lex

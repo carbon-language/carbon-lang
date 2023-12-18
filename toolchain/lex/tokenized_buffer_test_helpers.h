@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 
 #include "common/check.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Testing {
@@ -45,6 +46,7 @@ struct ExpectedToken {
   int indent_column = -1;
   bool recovery = false;
   llvm::StringRef text = "";
+  SharedValueStores* value_stores = nullptr;
   std::optional<llvm::StringRef> string_contents = std::nullopt;
 };
 
@@ -121,7 +123,9 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
                  expected.kind == Lex::TokenKind::StringLiteral);
     if (expected.string_contents &&
         actual_kind == Lex::TokenKind::StringLiteral) {
-      llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
+      llvm::StringRef actual_contents =
+          expected.value_stores->string_literals().Get(
+              buffer.GetStringLiteral(token));
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"
                          << actual_contents.str() << "`, expected `"

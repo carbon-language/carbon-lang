@@ -46,10 +46,10 @@ fn F() {
 // CHECK:STDOUT:   store i32 %8, ptr %11, align 4
 // CHECK:STDOUT:   %12 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple6, i32 0, i32 2
 // CHECK:STDOUT:   store i32 %9, ptr %12, align 4
-// CHECK:STDOUT:   %tuple7 = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 8
-// CHECK:STDOUT:   %13 = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %tuple7, i32 0, i32 0
+// CHECK:STDOUT:   %tuple7 = alloca { ptr, ptr }, align 8
+// CHECK:STDOUT:   %13 = getelementptr inbounds { ptr, ptr }, ptr %tuple7, i32 0, i32 0
 // CHECK:STDOUT:   store ptr %tuple, ptr %13, align 8
-// CHECK:STDOUT:   %14 = getelementptr inbounds { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %tuple7, i32 0, i32 1
+// CHECK:STDOUT:   %14 = getelementptr inbounds { ptr, ptr }, ptr %tuple7, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %tuple6, ptr %14, align 8
 // CHECK:STDOUT:   call void @G(ptr %tuple7)
 // CHECK:STDOUT:   ret void

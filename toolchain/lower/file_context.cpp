@@ -8,21 +8,20 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/node.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
-                         llvm::StringRef module_name,
-                         const SemIR::File& semantics_ir,
+                         llvm::StringRef module_name, const SemIR::File& sem_ir,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      semantics_ir_(&semantics_ir),
+      sem_ir_(&sem_ir),
       vlog_stream_(vlog_stream) {
-  CARBON_CHECK(!semantics_ir.has_errors())
+  CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";
 }
 
@@ -30,23 +29,24 @@ FileContext::FileContext(llvm::LLVMContext& llvm_context,
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  // Lower types.
-  auto types = semantics_ir_->types();
-  types_.resize_for_overwrite(types.size());
-  for (auto [i, type] : llvm::enumerate(types)) {
-    types_[i] = BuildType(type);
+  // Lower all types that were required to be complete. Note that this may
+  // leave some entries in `types_` null, if those types were mentioned but not
+  // used.
+  types_.resize(sem_ir_->types().size());
+  for (auto type_id : sem_ir_->complete_types()) {
+    types_[type_id.index] = BuildType(sem_ir_->types().Get(type_id).inst_id);
   }
 
   // Lower function declarations.
-  functions_.resize_for_overwrite(semantics_ir_->functions_size());
-  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
-    functions_[i] = BuildFunctionDeclaration(SemIR::FunctionId(i));
+  functions_.resize_for_overwrite(sem_ir_->functions().size());
+  for (auto i : llvm::seq(sem_ir_->functions().size())) {
+    functions_[i] = BuildFunctionDecl(SemIR::FunctionId(i));
   }
 
   // TODO: Lower global variable declarations.
 
   // Lower function definitions.
-  for (auto i : llvm::seq(semantics_ir_->functions_size())) {
+  for (auto i : llvm::seq(sem_ir_->functions().size())) {
     BuildFunctionDefinition(SemIR::FunctionId(i));
   }
 
@@ -55,75 +55,123 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
-    -> llvm::Function* {
-  const auto& function = semantics_ir().GetFunction(function_id);
-  const bool has_return_slot = function.return_slot_id.is_valid();
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  // All builtins are types, with the same empty lowered value.
+  if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
+    return GetTypeAsValue();
+  }
 
-  SemIR::InitializingRepresentation return_rep =
+  auto target = sem_ir().insts().Get(inst_id);
+  if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
+    return GetFunction(function_decl->function_id);
+  }
+
+  if (target.type_id() == SemIR::TypeId::TypeType) {
+    return GetTypeAsValue();
+  }
+
+  CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
+}
+
+// Returns the parameter for the given instruction from a function parameter
+// list.
+static auto GetAsParam(const SemIR::File& sem_ir, SemIR::InstId pattern_id)
+    -> std::pair<SemIR::InstId, SemIR::Param> {
+  auto pattern = sem_ir.insts().Get(pattern_id);
+
+  // Step over `addr`.
+  if (auto addr = pattern.TryAs<SemIR::AddrPattern>()) {
+    pattern_id = addr->inner_id;
+    pattern = sem_ir.insts().Get(pattern_id);
+  }
+
+  return {pattern_id, pattern.As<SemIR::Param>()};
+}
+
+auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
+    -> llvm::Function* {
+  const auto& function = sem_ir().functions().Get(function_id);
+  const bool has_return_slot = function.return_slot_id.is_valid();
+  auto implicit_param_refs =
+      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
+
+  SemIR::InitRepr return_rep =
       function.return_type_id.is_valid()
-          ? SemIR::GetInitializingRepresentation(semantics_ir(),
-                                                 function.return_type_id)
-          : SemIR::InitializingRepresentation{
-                .kind = SemIR::InitializingRepresentation::None};
+          ? SemIR::GetInitRepr(sem_ir(), function.return_type_id)
+          : SemIR::InitRepr{.kind = SemIR::InitRepr::None};
   CARBON_CHECK(return_rep.has_return_slot() == has_return_slot);
 
   llvm::SmallVector<llvm::Type*> param_types;
-  // TODO: Consider either storing `param_node_ids` somewhere so that we can
+  // TODO: Consider either storing `param_inst_ids` somewhere so that we can
   // reuse it from `BuildFunctionDefinition` and when building calls, or factor
   // out a mechanism to compute the mapping between parameters and arguments on
   // demand.
-  llvm::SmallVector<SemIR::NodeId> param_node_ids;
-  param_types.reserve(has_return_slot + param_refs.size());
-  param_node_ids.reserve(has_return_slot + param_refs.size());
+  llvm::SmallVector<SemIR::InstId> param_inst_ids;
+  auto max_llvm_params =
+      has_return_slot + implicit_param_refs.size() + param_refs.size();
+  param_types.reserve(max_llvm_params);
+  param_inst_ids.reserve(max_llvm_params);
   if (has_return_slot) {
     param_types.push_back(GetType(function.return_type_id)->getPointerTo());
-    param_node_ids.push_back(function.return_slot_id);
+    param_inst_ids.push_back(function.return_slot_id);
   }
-  for (auto param_ref_id : param_refs) {
-    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
-    switch (auto value_rep =
-                SemIR::GetValueRepresentation(semantics_ir(), param_type_id);
+  for (auto param_ref_id :
+       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
+    auto param_type_id = GetAsParam(sem_ir(), param_ref_id).second.type_id;
+    switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
             value_rep.kind) {
-      case SemIR::ValueRepresentation::None:
+      case SemIR::ValueRepr::Unknown:
+        CARBON_FATAL()
+            << "Incomplete parameter type lowering function declaration";
+      case SemIR::ValueRepr::None:
         break;
-      case SemIR::ValueRepresentation::Copy:
-      case SemIR::ValueRepresentation::Custom:
-        param_types.push_back(GetType(value_rep.type));
-        param_node_ids.push_back(param_ref_id);
-        break;
-      case SemIR::ValueRepresentation::Pointer:
-        param_types.push_back(GetType(value_rep.type)->getPointerTo());
-        param_node_ids.push_back(param_ref_id);
+      case SemIR::ValueRepr::Copy:
+      case SemIR::ValueRepr::Custom:
+      case SemIR::ValueRepr::Pointer:
+        param_types.push_back(GetType(value_rep.type_id));
+        param_inst_ids.push_back(param_ref_id);
         break;
     }
   }
 
   // If the initializing representation doesn't produce a value, set the return
   // type to void.
-  llvm::Type* return_type =
-      return_rep.kind == SemIR::InitializingRepresentation::ByCopy
-          ? GetType(function.return_type_id)
-          : llvm::Type::getVoidTy(llvm_context());
+  llvm::Type* return_type = return_rep.kind == SemIR::InitRepr::ByCopy
+                                ? GetType(function.return_type_id)
+                                : llvm::Type::getVoidTy(llvm_context());
+
+  std::string mangled_name;
+  if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
+    // TODO: Add an implicit `return 0` if `Run` doesn't return `i32`.
+    mangled_name = "main";
+  } else if (auto name =
+                 sem_ir().names().GetAsStringIfIdentifier(function.name_id)) {
+    // TODO: Decide on a name mangling scheme.
+    mangled_name = *name;
+  } else {
+    CARBON_FATAL() << "Unexpected special name for function: "
+                   << function.name_id;
+  }
 
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, param_types, /*isVarArg=*/false);
-  auto* llvm_function = llvm::Function::Create(
-      function_type, llvm::Function::ExternalLinkage,
-      semantics_ir().GetString(function.name_id), llvm_module());
+  auto* llvm_function =
+      llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
+                             mangled_name, llvm_module());
 
   // Set up parameters and the return slot.
-  for (auto [node_id, arg] :
-       llvm::zip_equal(param_node_ids, llvm_function->args())) {
-    if (node_id == function.return_slot_id) {
-      arg.setName("return");
+  for (auto [inst_id, arg] :
+       llvm::zip_equal(param_inst_ids, llvm_function->args())) {
+    auto name_id = SemIR::NameId::Invalid;
+    if (inst_id == function.return_slot_id) {
+      name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else {
-      arg.setName(semantics_ir().GetString(
-          semantics_ir().GetNode(node_id).GetAsParameter()));
+      name_id = GetAsParam(sem_ir(), inst_id).second.name_id;
     }
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
 
   return llvm_function;
@@ -131,7 +179,7 @@ auto FileContext::BuildFunctionDeclaration(SemIR::FunctionId function_id)
 
 auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     -> void {
-  const auto& function = semantics_ir().GetFunction(function_id);
+  const auto& function = sem_ir().functions().Get(function_id);
   const auto& body_block_ids = function.body_block_ids;
   if (body_block_ids.empty()) {
     // Function is probably defined in another file; not an error.
@@ -144,25 +192,28 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   const bool has_return_slot = function.return_slot_id.is_valid();
 
   // Add parameters to locals.
-  // TODO: This duplicates the mapping between semantics nodes and LLVM
-  // function parameters that was already computed in BuildFunctionDeclaration.
+  // TODO: This duplicates the mapping between sem_ir instructions and LLVM
+  // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
-  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  auto implicit_param_refs =
+      sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
+  auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
     function_lowering.SetLocal(function.return_slot_id,
                                llvm_function->getArg(param_index));
     ++param_index;
   }
-  for (auto param_ref_id : param_refs) {
-    auto param_type_id = semantics_ir().GetNode(param_ref_id).type_id();
-    if (SemIR::GetValueRepresentation(semantics_ir(), param_type_id).kind ==
-        SemIR::ValueRepresentation::None) {
+  for (auto param_ref_id :
+       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
+    auto [param_id, param] = GetAsParam(sem_ir(), param_ref_id);
+    auto param_type_id = param.type_id;
+    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind ==
+        SemIR::ValueRepr::None) {
       function_lowering.SetLocal(
-          param_ref_id, llvm::PoisonValue::get(GetType(param_type_id)));
+          param_id, llvm::PoisonValue::get(GetType(param_type_id)));
     } else {
-      function_lowering.SetLocal(param_ref_id,
-                                 llvm_function->getArg(param_index));
+      function_lowering.SetLocal(param_id, llvm_function->getArg(param_index));
       ++param_index;
     }
   }
@@ -176,66 +227,91 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.builder().SetInsertPoint(llvm_block);
     function_lowering.LowerBlock(block_id);
   }
+
+  // LLVM requires that the entry block has no predecessors.
+  auto* entry_block = &llvm_function->getEntryBlock();
+  if (entry_block->hasNPredecessorsOrMore(1)) {
+    auto* new_entry_block = llvm::BasicBlock::Create(
+        llvm_context(), "entry", llvm_function, entry_block);
+    llvm::BranchInst::Create(entry_block, new_entry_block);
+  }
 }
 
-auto FileContext::BuildType(SemIR::NodeId node_id) -> llvm::Type* {
-  switch (node_id.index) {
-    case SemIR::BuiltinKind::FloatingPointType.AsInt():
+auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
+  switch (inst_id.index) {
+    case SemIR::BuiltinKind::FloatType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
-    case SemIR::BuiltinKind::IntegerType.AsInt():
+    case SemIR::BuiltinKind::IntType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getInt32Ty(*llvm_context_);
     case SemIR::BuiltinKind::BoolType.AsInt():
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
       return llvm::Type::getInt1Ty(*llvm_context_);
+    case SemIR::BuiltinKind::FunctionType.AsInt():
+    case SemIR::BuiltinKind::BoundMethodType.AsInt():
+    case SemIR::BuiltinKind::NamespaceType.AsInt():
+      // Return an empty struct as a placeholder.
+      return llvm::StructType::get(*llvm_context_);
     default:
       // Handled below.
       break;
   }
 
-  auto node = semantics_ir_->GetNode(node_id);
-  switch (node.kind()) {
-    case SemIR::NodeKind::ArrayType: {
-      auto [bound_node_id, type_id] = node.GetAsArrayType();
+  auto inst = sem_ir_->insts().Get(inst_id);
+  switch (inst.kind()) {
+    case SemIR::ArrayType::Kind: {
+      auto array_type = inst.As<SemIR::ArrayType>();
       return llvm::ArrayType::get(
-          GetType(type_id), semantics_ir_->GetArrayBoundValue(bound_node_id));
+          GetType(array_type.element_type_id),
+          sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
-    case SemIR::NodeKind::ConstType:
-      return GetType(node.GetAsConstType());
-    case SemIR::NodeKind::PointerType:
+    case SemIR::ClassType::Kind: {
+      auto object_repr_id = sem_ir_->classes()
+                                .Get(inst.As<SemIR::ClassType>().class_id)
+                                .object_repr_id;
+      return GetType(object_repr_id);
+    }
+    case SemIR::ConstType::Kind:
+      return GetType(inst.As<SemIR::ConstType>().inner_id);
+    case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    case SemIR::NodeKind::StructType: {
-      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
+    case SemIR::StructType::Kind: {
+      auto fields =
+          sem_ir_->inst_blocks().Get(inst.As<SemIR::StructType>().fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(refs.size());
-      for (auto ref_id : refs) {
-        auto [field_name_id, field_type_id] =
-            semantics_ir_->GetNode(ref_id).GetAsStructTypeField();
+      subtypes.reserve(fields.size());
+      for (auto field_id : fields) {
+        auto field = sem_ir_->insts().GetAs<SemIR::StructTypeField>(field_id);
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
-        CARBON_CHECK(field_type_id.index < SemIR::BuiltinKind::ValidCount)
-            << field_type_id;
-        subtypes.push_back(GetType(field_type_id));
+        CARBON_CHECK(field.field_type_id.index < SemIR::BuiltinKind::ValidCount)
+            << field.field_type_id;
+        subtypes.push_back(GetType(field.field_type_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::NodeKind::TupleType: {
+    case SemIR::TupleType::Kind: {
       // TODO: Investigate special-casing handling of empty tuples so that they
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      auto elements =
+          sem_ir_->type_blocks().Get(inst.As<SemIR::TupleType>().elements_id);
       llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(refs.size());
-      for (auto ref_id : refs) {
-        subtypes.push_back(GetType(ref_id));
+      subtypes.reserve(elements.size());
+      for (auto element_id : elements) {
+        subtypes.push_back(GetType(element_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
+    case SemIR::UnboundElementType::Kind: {
+      // Return an empty struct as a placeholder.
+      return llvm::StructType::get(*llvm_context_);
+    }
     default: {
-      CARBON_FATAL() << "Cannot use node as type: " << node_id;
+      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " " << inst;
     }
   }
 }

@@ -27,6 +27,7 @@ cc_library(
 
 cc_test(
     name = "parse_and_execute_test",
+    size = "small",
     srcs = ["parse_and_execute_test.cpp"],
     deps = [
         ":parse_and_execute",

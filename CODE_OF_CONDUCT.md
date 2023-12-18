@@ -150,7 +150,7 @@ the following members:
 
 -   Allison Poppe (@acpoppe on Discord and GitHub)
 -   Céline Dedaj (@celineausberlin on Discord and GitHub)
--   Christopher Di Bella (@cjdb on Discord and GitHub)
+-   Christopher Di Bella (@cjdb.work on Discord, @cjdb on GitHub)
 -   Lexi Bromfield (@lexinadia on Discord and @lexi-nadia on GitHub)
 -   flysand (@flysand on Discord and @flysand7 on GitHub)
 

@@ -20,39 +20,52 @@ fn F();
 // CHECK:STDERR:              ^
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:32: ERROR: `{.a: i32, .b: i32}` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:                                ^
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:34: ERROR: `type` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `type` does not support indexing.
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:                                  ^
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 var d: i32 = {.a: i32, .b: i32}[0];
 
-// CHECK:STDOUT: file "fail_invalid_base.carbon" {
-// CHECK:STDOUT:   %.loc11 = namespace {}
-// CHECK:STDOUT:   %a: ref i32 = var "a"
-// CHECK:STDOUT:   %N.ref = name_reference_untyped "N", %.loc11
+// CHECK:STDOUT: --- fail_invalid_base.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.N = %.loc11, .a = %a, .F = %F, .b = %b, .c = %c, .d = %d}
+// CHECK:STDOUT:   %.loc11: <namespace> = namespace {}
+// CHECK:STDOUT:   %a.var: ref i32 = var a
+// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %.loc11
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0
-// CHECK:STDOUT:   assign %a, <error>
-// CHECK:STDOUT:   %F = fn_decl @F
-// CHECK:STDOUT:   %b: ref i32 = var "b"
-// CHECK:STDOUT:   %F.ref = name_reference_untyped "F", %F
+// CHECK:STDOUT:   assign %a.var, <error>
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F
 // CHECK:STDOUT:   %.loc21: i32 = int_literal 1
-// CHECK:STDOUT:   assign %b, <error>
-// CHECK:STDOUT:   %c: ref i32 = var "c"
+// CHECK:STDOUT:   assign %b.var, <error>
+// CHECK:STDOUT:   %c.var: ref i32 = var c
+// CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
+// CHECK:STDOUT:   %.loc26_29.1: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
 // CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_value %.loc26_29.2, (%.loc26_20, %.loc26_28)
-// CHECK:STDOUT:   assign %c, <error>
-// CHECK:STDOUT:   %d: ref i32 = var "d"
+// CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_value (%.loc26_20, %.loc26_28)
+// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = converted %.loc26_29.1, %.loc26_29.2
+// CHECK:STDOUT:   assign %c.var, <error>
+// CHECK:STDOUT:   %d.var: ref i32 = var d
+// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
 // CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0
-// CHECK:STDOUT:   assign %d, <error>
+// CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:

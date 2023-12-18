@@ -6,6 +6,7 @@ load("@rules_python//python:defs.bzl", "py_test")
 
 py_test(
     name = "no_op_test",
+    size = "small",
     srcs = ["no_op_test.py"],
     main = "no_op_test.py",
 )

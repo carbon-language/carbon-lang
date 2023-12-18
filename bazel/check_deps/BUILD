@@ -36,6 +36,7 @@ genquery(
 
 py_test(
     name = "check_non_test_cc_deps",
+    size = "small",
     srcs = ["check_non_test_cc_deps.py"],
     data = [":non_test_cc_deps.txt"],
     main = "check_non_test_cc_deps.py",

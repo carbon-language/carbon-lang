@@ -175,6 +175,25 @@ cc_fuzz_test(
 )
 
 cc_library(
+    name = "lex",
+    srcs = ["lex.cpp"],
+    hdrs = ["lex.h"],
+    deps = [
+        ":character_set",
+        ":helpers",
+        ":numeric_literal",
+        ":string_literal",
+        ":token_kind",
+        ":tokenized_buffer",
+        "//common:check",
+        "//toolchain/base:value_store",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
@@ -188,6 +207,7 @@ cc_library(
         "//common:ostream",
         "//common:string_helpers",
         "//toolchain/base:index_base",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
@@ -199,8 +219,10 @@ cc_library(
     testonly = 1,
     hdrs = ["tokenized_buffer_test_helpers.h"],
     deps = [
+        ":lex",
         ":tokenized_buffer",
         "//common:check",
+        "//toolchain/base:value_store",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -211,10 +233,12 @@ cc_test(
     size = "small",
     srcs = ["tokenized_buffer_test.cpp"],
     deps = [
+        ":lex",
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/testing:yaml_test_helpers",
@@ -229,8 +253,9 @@ cc_fuzz_test(
     srcs = ["tokenized_buffer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/tokenized_buffer/*"]),
     deps = [
-        ":tokenized_buffer",
+        ":lex",
         "//common:check",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
@@ -242,9 +267,11 @@ cc_binary(
     testonly = 1,
     srcs = ["tokenized_buffer_benchmark.cpp"],
     deps = [
+        ":lex",
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@com_github_google_benchmark//:benchmark_main",

@@ -40,10 +40,10 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
     -> std::optional<Introducer> {
   MultiLineKind kind = NotMultiLine;
   llvm::StringRef indicator;
-  if (source_text.startswith(MultiLineIndicator)) {
+  if (source_text.starts_with(MultiLineIndicator)) {
     kind = MultiLine;
     indicator = llvm::StringRef(MultiLineIndicator);
-  } else if (source_text.startswith(DoubleQuotedMultiLineIndicator)) {
+  } else if (source_text.starts_with(DoubleQuotedMultiLineIndicator)) {
     kind = MultiLineWithDoubleQuotes;
     indicator = llvm::StringRef(DoubleQuotedMultiLineIndicator);
   }
@@ -114,11 +114,13 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
+  bool content_needs_validation = false;
+
   // TODO: Detect indent / dedent for multi-line string literals in order to
   // stop parsing on dedent before a terminator is found.
   for (; cursor < source_text_size; ++cursor) {
     // Use a lookup table to allow us to quickly skip uninteresting characters.
-    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\''};
+    static constexpr CharSet InterestingChars = {'\\', '\n', '"', '\'', '\t'};
     if (!InterestingChars[source_text[cursor]]) {
       continue;
     }
@@ -127,9 +129,14 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
     // escape sequences starting with a predictable character and not containing
     // embedded and unescaped terminators or newlines.
     switch (source_text[cursor]) {
+      case '\t':
+        // Tabs have extra validation.
+        content_needs_validation = true;
+        break;
       case '\\':
         if (escape.size() == 1 ||
-            source_text.substr(cursor + 1).startswith(escape.substr(1))) {
+            source_text.substr(cursor + 1).starts_with(escape.substr(1))) {
+          content_needs_validation = true;
           cursor += escape.size();
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
@@ -137,7 +144,8 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
           if (cursor >= source_text_size || (introducer->kind == NotMultiLine &&
                                              source_text[cursor] == '\n')) {
             llvm::StringRef text = source_text.take_front(cursor);
-            return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+            return StringLiteral(text, text.drop_front(prefix_len),
+                                 content_needs_validation, hash_level,
                                  introducer->kind,
                                  /*is_terminated=*/false);
           }
@@ -146,19 +154,21 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
       case '\n':
         if (introducer->kind == NotMultiLine) {
           llvm::StringRef text = source_text.take_front(cursor);
-          return StringLiteral(text, text.drop_front(prefix_len), hash_level,
+          return StringLiteral(text, text.drop_front(prefix_len),
+                               content_needs_validation, hash_level,
                                introducer->kind,
                                /*is_terminated=*/false);
         }
         break;
       case '"':
       case '\'':
-        if (source_text.substr(cursor).startswith(terminator)) {
+        if (source_text.substr(cursor).starts_with(terminator)) {
           llvm::StringRef text =
               source_text.substr(0, cursor + terminator.size());
           llvm::StringRef content =
               source_text.substr(prefix_len, cursor - prefix_len);
-          return StringLiteral(text, content, hash_level, introducer->kind,
+          return StringLiteral(text, content, content_needs_validation,
+                               hash_level, introducer->kind,
                                /*is_terminated=*/true);
         }
         break;
@@ -169,7 +179,7 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
   }
   // No terminator was found.
   return StringLiteral(source_text, source_text.drop_front(prefix_len),
-                       hash_level, introducer->kind,
+                       content_needs_validation, hash_level, introducer->kind,
                        /*is_terminated=*/false);
 }
 
@@ -214,9 +224,9 @@ static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
 static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
-                                        std::string& result) -> bool {
+                                        char*& buffer_cursor) -> bool {
   unsigned code_point;
-  if (!CanLexInteger(emitter, digits)) {
+  if (!CanLexInt(emitter, digits)) {
     return false;
   }
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
@@ -238,17 +248,31 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
   // Convert the code point to a sequence of UTF-8 code units.
   // Every code point fits in 6 UTF-8 code units.
   const llvm::UTF32 utf32_code_units[1] = {code_point};
-  llvm::UTF8 utf8_code_units[6];
   const llvm::UTF32* src_pos = utf32_code_units;
-  llvm::UTF8* dest_pos = utf8_code_units;
+  auto*& buffer_cursor_as_utf8 = reinterpret_cast<llvm::UTF8*&>(buffer_cursor);
   llvm::ConversionResult conv_result = llvm::ConvertUTF32toUTF8(
-      &src_pos, src_pos + 1, &dest_pos, dest_pos + 6, llvm::strictConversion);
+      &src_pos, src_pos + 1, &buffer_cursor_as_utf8, buffer_cursor_as_utf8 + 6,
+      llvm::strictConversion);
   if (conv_result != llvm::conversionOK) {
     llvm_unreachable("conversion of valid code point to UTF-8 cannot fail");
   }
-  result.insert(result.end(), reinterpret_cast<char*>(utf8_code_units),
-                reinterpret_cast<char*>(dest_pos));
   return true;
+}
+
+// Appends a character to the buffer and advances the cursor.
+static auto AppendChar(char*& buffer_cursor, char append_char) -> void {
+  buffer_cursor[0] = append_char;
+  ++buffer_cursor;
+}
+
+// Appends the front of contents to the buffer and advances the cursor.
+static auto AppendFrontOfContents(char*& buffer_cursor,
+                                  llvm::StringRef contents, size_t len_or_npos)
+    -> void {
+  auto len =
+      len_or_npos == llvm::StringRef::npos ? contents.size() : len_or_npos;
+  memcpy(buffer_cursor, contents.data(), len);
+  buffer_cursor += len;
 }
 
 // Expand an escape sequence, appending the expanded value to the given
@@ -257,32 +281,32 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // `\n`), and will be updated to remove the leading escape sequence.
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
-                                           std::string& result) -> void {
+                                           char*& buffer_cursor) -> void {
   CARBON_CHECK(!content.empty()) << "should have escaped closing delimiter";
   char first = content.front();
   content = content.drop_front(1);
 
   switch (first) {
     case 't':
-      result += '\t';
+      AppendChar(buffer_cursor, '\t');
       return;
     case 'n':
-      result += '\n';
+      AppendChar(buffer_cursor, '\n');
       return;
     case 'r':
-      result += '\r';
+      AppendChar(buffer_cursor, '\r');
       return;
     case '"':
-      result += '"';
+      AppendChar(buffer_cursor, '"');
       return;
     case '\'':
-      result += '\'';
+      AppendChar(buffer_cursor, '\'');
       return;
     case '\\':
-      result += '\\';
+      AppendChar(buffer_cursor, '\\');
       return;
     case '0':
-      result += '\0';
+      AppendChar(buffer_cursor, '\0');
       if (!content.empty() && IsDecimalDigit(content.front())) {
         CARBON_DIAGNOSTIC(
             DecimalEscapeSequence, Error,
@@ -295,8 +319,8 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
     case 'x':
       if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
           IsUpperHexDigit(content[1])) {
-        result +=
-            static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
+        AppendChar(buffer_cursor, static_cast<char>(llvm::hexFromNibbles(
+                                      content[0], content[1])));
         content = content.drop_front(2);
         return;
       }
@@ -311,7 +335,7 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
         llvm::StringRef digits = remaining.take_while(IsUpperHexDigit);
         remaining = remaining.drop_front(digits.size());
         if (!digits.empty() && remaining.consume_front("}")) {
-          if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
+          if (!ExpandUnicodeEscapeSequence(emitter, digits, buffer_cursor)) {
             break;
           }
           content = remaining;
@@ -335,15 +359,14 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
   // If we get here, we didn't recognize this escape sequence and have already
   // issued a diagnostic. For error recovery purposes, expand this escape
   // sequence to itself, dropping the introducer (for example, `\q` -> `q`).
-  result += first;
+  AppendChar(buffer_cursor, first);
 }
 
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
     LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
-    llvm::StringRef indent) -> std::string {
-  std::string result;
-  result.reserve(contents.size());
+    llvm::StringRef indent, char* buffer) -> llvm::StringRef {
+  char* buffer_cursor = buffer;
 
   llvm::SmallString<16> escape("\\");
   escape.resize(1 + hash_level, '#');
@@ -356,7 +379,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
     if (!contents.consume_front(indent)) {
       const char* line_start = contents.begin();
       contents = contents.drop_while(IsHorizontalWhitespace);
-      if (!contents.startswith("\n")) {
+      if (!contents.starts_with("\n")) {
         CARBON_DIAGNOSTIC(
             MismatchedIndentInString, Error,
             "Indentation does not match that of the closing `'''` in "
@@ -365,9 +388,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
     }
 
-    // Tracks the length of the result at the last time we expanded an escape
-    // to ensure we don't misinterpret it as unescaped when backtracking.
-    size_t last_escape_length = 0;
+    // Tracks the position at the last time we expanded an escape to ensure we
+    // don't misinterpret it as unescaped when backtracking.
+    char* buffer_last_escape = buffer_cursor;
 
     // Process the contents of the line.
     while (true) {
@@ -376,22 +399,24 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
       });
-      result += contents.substr(0, end_of_regular_text);
-      contents = contents.substr(end_of_regular_text);
-
-      if (contents.empty()) {
-        return result;
+      AppendFrontOfContents(buffer_cursor, contents, end_of_regular_text);
+      if (end_of_regular_text == llvm::StringRef::npos) {
+        return llvm::StringRef(buffer, buffer_cursor - buffer);
       }
+      contents = contents.drop_front(end_of_regular_text);
 
       if (contents.consume_front("\n")) {
         // Trailing whitespace in the source before a newline doesn't contribute
         // to the string literal value. However, escaped whitespace (like `\t`)
         // and any whitespace just before that does contribute.
-        while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back()) && result.length() > last_escape_length) {
-          result.pop_back();
+        while (buffer_cursor > buffer_last_escape) {
+          char back = *(buffer_cursor - 1);
+          if (back == '\n' || !IsSpace(back)) {
+            break;
+          }
+          --buffer_cursor;
         }
-        result += '\n';
+        AppendChar(buffer_cursor, '\n');
         // Move onto to the next line.
         break;
       }
@@ -412,7 +437,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "escape sequence in a string literal.");
           emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
           // Include the whitespace in the string contents for error recovery.
-          result += contents.substr(0, after_space);
+          AppendFrontOfContents(buffer_cursor, contents, after_space);
         }
         contents = contents.substr(after_space);
         continue;
@@ -420,7 +445,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       if (!contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
-        result += contents.front();
+        AppendChar(buffer_cursor, contents.front());
         contents = contents.drop_front(1);
         continue;
       }
@@ -432,14 +457,15 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      ExpandAndConsumeEscapeSequence(emitter, contents, result);
-      last_escape_length = result.length();
+      ExpandAndConsumeEscapeSequence(emitter, contents, buffer_cursor);
+      buffer_last_escape = buffer_cursor;
     }
   }
 }
 
-auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
-    -> std::string {
+auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
+                                 LexerDiagnosticEmitter& emitter) const
+    -> llvm::StringRef {
   if (!is_terminated_) {
     return "";
   }
@@ -451,8 +477,20 @@ auto StringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
   }
   llvm::StringRef indent =
       multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
-  return ExpandEscapeSequencesAndRemoveIndent(emitter, content_, hash_level_,
-                                              indent);
+  if (!content_needs_validation_ && (!multi_line_ || indent.empty())) {
+    return content_;
+  }
+
+  // "Expanding" escape sequences should only ever shorten content. As a
+  // consequence, the output string should allows fit within this allocation.
+  // Although this may waste some space, it avoids a reallocation.
+  auto result = ExpandEscapeSequencesAndRemoveIndent(
+      emitter, content_, hash_level_, indent,
+      allocator.Allocate<char>(content_.size()));
+  CARBON_CHECK(result.size() <= content_.size())
+      << "Content grew from " << content_.size() << " to " << result.size()
+      << ": `" << content_ << "`";
+  return result;
 }
 
 }  // namespace Carbon::Lex

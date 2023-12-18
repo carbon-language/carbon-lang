@@ -17,7 +17,7 @@ namespace {
 using ::Carbon::Testing::IsDiagnostic;
 using ::testing::InSequence;
 
-CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringRef);
+CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
 
 struct FakeDiagnosticLocationTranslator
     : DiagnosticLocationTranslator<DiagnosticLocation> {

@@ -18,6 +18,17 @@
 
 namespace Carbon::Parse {
 
+// An amount by which to look ahead of the current token. Lookahead should be
+// used sparingly, and unbounded lookahead should be avoided.
+//
+// TODO: Decide whether we want to avoid lookahead altogether.
+//
+// NOLINTNEXTLINE(performance-enum-size): Deliberately matches index size.
+enum class Lookahead : int32_t {
+  CurrentToken = 0,
+  NextToken = 1,
+};
+
 // Context and shared functionality for parser handlers. See state.def for state
 // documentation.
 class Context {
@@ -28,28 +39,19 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Supported kinds for HandlePattern.
-  enum class PatternKind : int8_t { DeducedParameter, Parameter, Variable };
-
-  // Supported return values for GetDeclarationContext.
-  enum class DeclarationContext : int8_t {
-    File,  // Top-level context.
-    Class,
-    Interface,
-    NamedConstraint,
+  // Used for restricting ordering of `package` and `import` directives.
+  enum class PackagingState : int8_t {
+    FileStart,
+    InImports,
+    AfterNonPackagingDecl,
+    // A warning about `import` placement has been issued so we don't keep
+    // issuing more (when `import` is repeated) until more non-`import`
+    // declarations come up.
+    InImportsAfterNonPackagingDecl,
   };
 
   // Used to track state on state_stack_.
   struct StateStackEntry : public Printable<StateStackEntry> {
-    explicit StateStackEntry(State state, PrecedenceGroup ambient_precedence,
-                             PrecedenceGroup lhs_precedence, Lex::Token token,
-                             int32_t subtree_start)
-        : state(state),
-          ambient_precedence(ambient_precedence),
-          lhs_precedence(lhs_precedence),
-          token(token),
-          subtree_start(subtree_start) {}
-
     // Prints state information for verbose output.
     auto Print(llvm::raw_ostream& output) const -> void {
       output << state << " @" << token << " subtree_start=" << subtree_start
@@ -66,13 +68,13 @@ class Context {
     // operator precedence. The ambient_precedence deals with how the expression
     // should interact with outside context, while the lhs_precedence is
     // specific to the lhs of an operator expression.
-    PrecedenceGroup ambient_precedence;
-    PrecedenceGroup lhs_precedence;
+    PrecedenceGroup ambient_precedence = PrecedenceGroup::ForTopLevelExpr();
+    PrecedenceGroup lhs_precedence = PrecedenceGroup::ForTopLevelExpr();
 
     // A token providing context based on the subtree. This will typically be
     // the first token in the subtree, but may sometimes be a token within. It
     // will typically be used for the subtree's root node.
-    Lex::Token token;
+    Lex::TokenIndex token;
     // The offset within the Tree of the subtree start.
     int32_t subtree_start;
   };
@@ -94,29 +96,53 @@ class Context {
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
-  auto AddLeafNode(NodeKind kind, Lex::Token token, bool has_error = false)
+  auto AddLeafNode(NodeKind kind, Lex::TokenIndex token, bool has_error = false)
       -> void;
 
   // Adds a node to the parse tree that has children.
-  auto AddNode(NodeKind kind, Lex::Token token, int subtree_start,
+  auto AddNode(NodeKind kind, Lex::TokenIndex token, int subtree_start,
                bool has_error) -> void;
 
+  // Replaces the placeholder node at the indicated position with a leaf node.
+  //
+  // To reserve a position in the parse tree, you may add a placeholder parse
+  // node using code like:
+  //   ```
+  //   context.PushState(State::WillFillInPlaceholder);
+  //   context.AddLeafNode(NodeKind::Placeholder, *context.position());
+  //   ```
+  // It may be replaced with the intended leaf parse node with code like:
+  //   ```
+  //   auto HandleWillFillInPlaceholder(Context& context) -> void {
+  //     auto state = context.PopState();
+  //     context.ReplacePlaceholderNode(state.subtree_start, /* replacement */);
+  //   }
+  //   ```
+  auto ReplacePlaceholderNode(int32_t position, NodeKind kind,
+                              Lex::TokenIndex token, bool has_error = false)
+      -> void;
+
   // Returns the current position and moves past it.
-  auto Consume() -> Lex::Token { return *(position_++); }
+  auto Consume() -> Lex::TokenIndex { return *(position_++); }
+
+  // Consumes the current token. Does not return it.
+  auto ConsumeAndDiscard() -> void { ++position_; }
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
-  auto ConsumeAndAddOpenParen(Lex::Token default_token, NodeKind start_kind)
-      -> std::optional<Lex::Token>;
+  auto ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
+                              NodeKind start_kind)
+      -> std::optional<Lex::TokenIndex>;
 
   // Parses a closing symbol corresponding to the opening symbol
   // `expected_open`, possibly skipping forward and diagnosing if necessary.
   // Creates a parse node of the specified close kind. If `expected_open` is not
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::Token expected_open, StateStackEntry state,
-                                NodeKind close_kind) -> void;
+  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
+                                StateStackEntry state, NodeKind close_kind)
+      -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -125,16 +151,16 @@ class Context {
 
   // Returns the current position and moves past it. Requires the token is the
   // expected kind.
-  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::Token;
+  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex;
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
-  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::Token>;
+  auto ConsumeIf(Lex::TokenKind kind) -> std::optional<Lex::TokenIndex>;
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
   auto FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
-      -> std::optional<Lex::Token>;
+      -> std::optional<Lex::TokenIndex>;
 
   // If the token is an opening symbol for a matched group, skips to the matched
   // closing symbol and returns true. Otherwise, returns false.
@@ -155,11 +181,11 @@ class Context {
   //   less indentation, there is likely a missing semicolon. Continued
   //   declarations or statements across multiple lines should be indented.
   //
-  // Returns a semicolon token if one is the likely end.
-  auto SkipPastLikelyEnd(Lex::Token skip_root) -> std::optional<Lex::Token>;
+  // Returns the last token consumed.
+  auto SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex;
 
   // Skip forward to the given token. Verifies that it is actually forward.
-  auto SkipTo(Lex::Token t) -> void;
+  auto SkipTo(Lex::TokenIndex t) -> void;
 
   // Returns true if the current token satisfies the lexical validity rules
   // for an infix operator.
@@ -183,14 +209,18 @@ class Context {
   auto ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
                         bool already_has_error) -> ListTokenKind;
 
-  // Gets the kind of the next token to be consumed.
-  auto PositionKind() const -> Lex::TokenKind {
-    return tokens_->GetKind(*position_);
+  // Gets the kind of the next token to be consumed. If `lookahead` is
+  // provided, it specifies which token to inspect.
+  auto PositionKind(Lookahead lookahead = Lookahead::CurrentToken) const
+      -> Lex::TokenKind {
+    return tokens_->GetKind(position_[static_cast<int32_t>(lookahead)]);
   }
 
-  // Tests whether the next token to be consumed is of the specified kind.
-  auto PositionIs(Lex::TokenKind kind) const -> bool {
-    return PositionKind() == kind;
+  // Tests whether the next token to be consumed is of the specified kind. If
+  // `lookahead` is provided, it specifies which token to inspect.
+  auto PositionIs(Lex::TokenKind kind,
+                  Lookahead lookahead = Lookahead::CurrentToken) const -> bool {
+    return PositionKind(lookahead) == kind;
   }
 
   // Pops the state and keeps the value for inspection.
@@ -208,33 +238,30 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
-  }
+  auto PushState(State state) -> void { PushState(state, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
-  // new subtree with a token that isn't the start of the subtree.
-  auto PushState(State state, Lex::Token token) -> void {
-    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
-                              PrecedenceGroup::ForTopLevelExpression(), token,
-                              tree_->size()));
+  // new subtree when the current position isn't the start of the subtree.
+  auto PushState(State state, Lex::TokenIndex token) -> void {
+    PushState({.state = state, .token = token, .subtree_start = tree_->size()});
   }
 
   // Pushes a new expression state with specific precedence.
-  auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(State::Expression, ambient_precedence,
-                              PrecedenceGroup::ForTopLevelExpression(),
-                              *position_, tree_->size()));
+  auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
+    PushState({.state = State::Expr,
+               .ambient_precedence = ambient_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExpressionLoop(State state,
-                                  PrecedenceGroup ambient_precedence,
-                                  PrecedenceGroup lhs_precedence) -> void {
-    PushState(StateStackEntry(state, ambient_precedence, lhs_precedence,
-                              *position_, tree_->size()));
+  auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
+                            PrecedenceGroup lhs_precedence) -> void {
+    PushState({.state = state,
+               .ambient_precedence = ambient_precedence,
+               .lhs_precedence = lhs_precedence,
+               .token = *position_,
+               .subtree_start = tree_->size()});
   }
 
   // Pushes a constructed state onto the stack.
@@ -245,36 +272,40 @@ class Context {
         << "Excessive stack size: likely infinite loop";
   }
 
-  // Returns the current declaration context according to state_stack_.
-  // This is expected to be called in cases which are close to a context.
-  // Although it looks like it could be O(n) for state_stack_'s depth, valid
-  // parses should only need to look down a couple steps.
-  //
-  // This currently assumes it's being called from within the declaration's
-  // DeclarationScopeLoop.
-  auto GetDeclarationContext() -> DeclarationContext;
+  // Pushes a constructed state onto the stack, with a different parse state.
+  auto PushState(StateStackEntry state_entry, State parse_state) -> void {
+    state_entry.state = parse_state;
+    PushState(state_entry);
+  }
 
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  // For HandlePattern, tries to consume a wrapping keyword.
-  auto ConsumeIfPatternKeyword(Lex::TokenKind keyword_token,
-                               State keyword_state, int subtree_start) -> void;
-
   // Emits a diagnostic for a declaration missing a semi.
-  auto EmitExpectedDeclarationSemi(Lex::TokenKind expected_kind) -> void;
+  auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 
   // Emits a diagnostic for a declaration missing a semi or definition.
-  auto EmitExpectedDeclarationSemiOrDefinition(Lex::TokenKind expected_kind)
-      -> void;
+  auto EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind) -> void;
 
   // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
-  auto RecoverFromDeclarationError(StateStackEntry state,
-                                   NodeKind parse_node_kind,
-                                   bool skip_past_likely_end) -> void;
+  auto RecoverFromDeclError(StateStackEntry state, NodeKind parse_node_kind,
+                            bool skip_past_likely_end) -> void;
+
+  // Sets the package directive information. Called at most once.
+  auto set_packaging_directive(Tree::PackagingNames packaging_names,
+                               Tree::ApiOrImpl api_or_impl) -> void {
+    CARBON_CHECK(!tree_->packaging_directive_);
+    tree_->packaging_directive_ = {.names = packaging_names,
+                                   .api_or_impl = api_or_impl};
+  }
+
+  // Adds an import.
+  auto AddImport(Tree::PackagingNames package) -> void {
+    tree_->imports_.push_back(package);
+  }
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -296,10 +327,22 @@ class Context {
     return state_stack_;
   }
 
+  auto packaging_state() const -> PackagingState { return packaging_state_; }
+  auto set_packaging_state(PackagingState packaging_state) -> void {
+    packaging_state_ = packaging_state;
+  }
+  auto first_non_packaging_token() const -> Lex::TokenIndex {
+    return first_non_packaging_token_;
+  }
+  auto set_first_non_packaging_token(Lex::TokenIndex token) -> void {
+    CARBON_CHECK(!first_non_packaging_token_.is_valid());
+    first_non_packaging_token_ = token;
+  }
+
  private:
   // Prints a single token for a stack dump. Used by PrintForStackDump.
-  auto PrintTokenForStackDump(llvm::raw_ostream& output, Lex::Token token) const
-      -> void;
+  auto PrintTokenForStackDump(llvm::raw_ostream& output,
+                              Lex::TokenIndex token) const -> void;
 
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
@@ -310,15 +353,19 @@ class Context {
 
   // The current position within the token buffer.
   Lex::TokenIterator position_;
-  // The EndOfFile token.
+  // The FileEnd token.
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+
+  // The current packaging state, whether `import`/`package` are allowed.
+  PackagingState packaging_state_ = PackagingState::FileStart;
+  // The first non-packaging token, starting as invalid. Used for packaging
+  // state warnings.
+  Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
 };
 
-// `clang-format` has a bug with spacing around `->` returns in macros. See
-// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
 #include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse

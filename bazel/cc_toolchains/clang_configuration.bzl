@@ -250,3 +250,7 @@ configure_clang_toolchain = repository_rule(
     },
     environ = ["CC"],
 )
+
+clang_toolchain_extension = module_extension(
+    implementation = lambda ctx: configure_clang_toolchain(name = "bazel_cc_toolchain"),
+)

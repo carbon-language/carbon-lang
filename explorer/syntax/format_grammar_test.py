@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import unittest
 
-from carbon.explorer.syntax import format_grammar
+from explorer.syntax import format_grammar
 
 
 class TestFormatGrammar(unittest.TestCase):

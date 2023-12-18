@@ -8,30 +8,36 @@
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 
-namespace Carbon::Lex {
+namespace llvm {
 
-// Adapts Radix for use with formatv.
-// NOTE: clangd may see this as unused, but it will be invoked by diagnostics.
-// We don't do anything to disable the warning because clang compile invocations
-// should warn if it's actually unused.
-static auto operator<<(llvm::raw_ostream& out, NumericLiteral::Radix radix)
-    -> llvm::raw_ostream& {
-  switch (radix) {
-    case NumericLiteral::Radix::Binary:
-      out << "binary";
-      break;
-    case NumericLiteral::Radix::Decimal:
-      out << "decimal";
-      break;
-    case NumericLiteral::Radix::Hexadecimal:
-      out << "hexadecimal";
-      break;
+// We use formatv primarily for diagnostics. In these cases, it's expected that
+// the spelling in source code should be used.
+template <>
+struct format_provider<Carbon::Lex::NumericLiteral::Radix> {
+  using Radix = Carbon::Lex::NumericLiteral::Radix;
+  static void format(const Radix& radix, raw_ostream& out,
+                     StringRef /*style*/) {
+    switch (radix) {
+      case Radix::Binary:
+        out << "binary";
+        break;
+      case Radix::Decimal:
+        out << "decimal";
+        break;
+      case Radix::Hexadecimal:
+        out << "hexadecimal";
+        break;
+    }
   }
-  return out;
-}
+};
+
+}  // namespace llvm
+
+namespace Carbon::Lex {
 
 auto NumericLiteral::Lex(llvm::StringRef source_text)
     -> std::optional<NumericLiteral> {
@@ -107,7 +113,7 @@ class NumericLiteral::Parser {
  public:
   Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteral literal);
 
-  auto IsInteger() -> bool {
+  auto IsInt() -> bool {
     return literal_.radix_point_ == static_cast<int>(literal_.text_.size());
   }
 
@@ -200,8 +206,8 @@ auto NumericLiteral::Parser::Check() -> bool {
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
-static auto ParseInteger(llvm::StringRef digits, NumericLiteral::Radix radix,
-                         bool needs_cleaning) -> llvm::APInt {
+static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
+                     bool needs_cleaning) -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
@@ -219,9 +225,9 @@ static auto ParseInteger(llvm::StringRef digits, NumericLiteral::Radix radix,
 }
 
 auto NumericLiteral::Parser::GetMantissa() -> llvm::APInt {
-  const char* end = IsInteger() ? int_part_.end() : fract_part_.end();
+  const char* end = IsInt() ? int_part_.end() : fract_part_.end();
   llvm::StringRef digits(int_part_.begin(), end - int_part_.begin());
-  return ParseInteger(digits, radix_, mantissa_needs_cleaning_);
+  return ParseInt(digits, radix_, mantissa_needs_cleaning_);
 }
 
 auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
@@ -230,7 +236,7 @@ auto NumericLiteral::Parser::GetExponent() -> llvm::APInt {
   llvm::APInt exponent(64, 0);
   if (!exponent_part_.empty()) {
     exponent =
-        ParseInteger(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
+        ParseInt(exponent_part_, Radix::Decimal, exponent_needs_cleaning_);
 
     // The exponent is a signed integer, and the number we just parsed is
     // non-negative, so ensure we have a wide enough representation to
@@ -327,7 +333,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
   }
 
-  if (!CanLexInteger(emitter_, text)) {
+  if (!CanLexInt(emitter_, text)) {
     return {.ok = false};
   }
 
@@ -381,7 +387,7 @@ auto NumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto NumericLiteral::Parser::CheckLeadingZero() -> bool {
-  if (radix_ == Radix::Decimal && int_part_.startswith("0") &&
+  if (radix_ == Radix::Decimal && int_part_.starts_with("0") &&
       int_part_ != "0") {
     CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
                       "Unknown base specifier in numeric literal.");
@@ -401,7 +407,7 @@ auto NumericLiteral::Parser::CheckIntPart() -> bool {
 // Check the fractional part (after the '.' and before the exponent, if any)
 // is valid.
 auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
-  if (IsInteger()) {
+  if (IsInt()) {
     return true;
   }
 
@@ -450,8 +456,8 @@ auto NumericLiteral::ComputeValue(DiagnosticEmitter<const char*>& emitter) const
     return UnrecoverableError();
   }
 
-  if (parser.IsInteger()) {
-    return IntegerValue{.value = parser.GetMantissa()};
+  if (parser.IsInt()) {
+    return IntValue{.value = parser.GetMantissa()};
   }
 
   return RealValue{

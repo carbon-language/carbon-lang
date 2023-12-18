@@ -5,21 +5,25 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:11: ERROR: No return expression should be provided in this context.
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:3: ERROR: No return expression should be provided in this context.
   // CHECK:STDERR:   return 0;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: There was no return type provided.
   // CHECK:STDERR: fn Main() {
-  // CHECK:STDERR: ^
+  // CHECK:STDERR: ^~~~~~~~~~~
   return 0;
 }
 
-// CHECK:STDOUT: file "fail_value_disallowed.carbon" {
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT: --- fail_value_disallowed.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc14
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

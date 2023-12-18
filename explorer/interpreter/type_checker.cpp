@@ -2733,19 +2733,29 @@ static auto IsInstanceMember(Nonnull<const Element*> element) {
   }
 }
 
-auto TypeChecker::CheckAddrMeAccess(
+auto TypeChecker::CheckAddrSelfAccess(
     Nonnull<MemberAccessExpression*> access,
     Nonnull<const FunctionDeclaration*> func_decl, const Bindings& bindings,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
-  if (func_decl->is_method() &&
-      func_decl->self_pattern().kind() == PatternKind::AddrPattern) {
+  if (!func_decl->is_method()) {
+    return Success();
+  }
+
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> self_type,
+      Substitute(bindings, &func_decl->self_pattern().static_type()));
+  if (self_type->kind() == Value::Kind::PointerType &&
+      access->object().static_type().kind() != Value::Kind::PointerType) {
+    return ProgramError(access->source_loc())
+           << "method " << *access
+           << " does not match the target function's self pattern (did you "
+              "forget an `addr`?)";
+  }
+  if (func_decl->self_pattern().kind() == PatternKind::AddrPattern) {
     access->set_is_addr_me_method();
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Value*> me_type,
-        Substitute(bindings, &func_decl->self_pattern().static_type()));
-    CARBON_RETURN_IF_ERROR(
-        ExpectExactType(access->source_loc(), "method access, receiver type",
-                        me_type, &access->object().static_type(), impl_scope));
+    CARBON_RETURN_IF_ERROR(ExpectExactType(
+        access->source_loc(), "method access, receiver type", self_type,
+        &access->object().static_type(), impl_scope));
     if (access->object().expression_category() !=
         ExpressionCategory::Reference) {
       return ProgramError(access->source_loc())
@@ -2916,7 +2926,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 const auto* func_decl = cast<FunctionDeclaration>(member);
-                CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
+                CARBON_RETURN_IF_ERROR(CheckAddrSelfAccess(
                     &access, func_decl, t_class.bindings(), impl_scope));
                 if (access.is_type_access()) {
                   access.set_static_type(field_type);
@@ -3000,7 +3010,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
             CARBON_RETURN_IF_ERROR(
-                CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+                CheckAddrSelfAccess(&access, func_decl, bindings, impl_scope));
             if (access.is_type_access()) {
               access.set_static_type(inst_member_type);
             } else {
@@ -3344,8 +3354,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             }
             access.set_expression_category(ExpressionCategory::Value);
             CARBON_RETURN_IF_ERROR(
-                CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
-                                  bindings_for_member(), impl_scope));
+                CheckAddrSelfAccess(&access, cast<FunctionDeclaration>(*decl),
+                                    bindings_for_member(), impl_scope));
             return Success();
           }
           break;
@@ -4104,8 +4114,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> element_type,
-          TypeCheckTypeExp(&array_literal.element_type_expression(),
-                           impl_scope));
+          TypeCheckTypeExp(&array_literal.element_type_expression(), impl_scope,
+                           false));
       std::optional<size_t> array_size;
       if (array_literal.has_size_expression()) {
         CARBON_RETURN_IF_ERROR(
@@ -4321,7 +4331,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         // TODO: Per proposal #2188, we should be performing conversions at
         // this level rather than on the overall initializer.
-        if (!IsNonDeduceableType(type)) {
+        if (TypeIsDeduceable(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, ExpressionResult::Value(*expected),
                             binding.type().source_loc(), std::nullopt,
@@ -4331,15 +4341,9 @@ auto TypeChecker::TypeCheckPattern(
                    << "' does not match actual type '" << **expected << "'";
           }
 
-          if (type->kind() == Value::Kind::StaticArrayType) {
-            const auto& arr = cast<StaticArrayType>(*type);
-            CARBON_CHECK(!arr.has_size());
-            const size_t size = GetSize(*expected);
-            type = arena_->New<StaticArrayType>(&arr.element_type(), size);
-          } else {
-            type = *expected;
-          }
+          type = DeducePatternType(type, *expected, arena_);
         }
+
       } else {
         CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
@@ -5163,16 +5167,27 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
     CARBON_CHECK(!fun->name().is_qualified())
         << "qualified function name not permitted in class scope";
+
+    if (fun->virt_override() == VirtualOverride::Abstract &&
+        fun->body().has_value()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": abstract method cannot have a body.";
+    }
+
     bool has_vtable_entry =
         class_vtable.find(fun->name().inner_name()) != class_vtable.end();
     // TODO: Implement complete declaration logic from
     // `/docs/design/classes.md#virtual-methods`.
     switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
-        // Not supported yet.
-        return ProgramError(fun->source_loc())
-               << "Error declaring `" << fun->name() << "`"
-               << ": `abstract` methods are not yet supported.";
+        if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": `abstract` methods are allowed only in abstract "
+                    "classes.";
+        }
+        break;
       case VirtualOverride::None:
       case VirtualOverride::Virtual:
         if (has_vtable_entry) {
@@ -5230,6 +5245,24 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         }
         class_vtable[DestructorName] = {fun, class_level};
         break;
+    }
+  }
+
+  if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+    auto abstract_method_it = std::find_if(
+        class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
+          const auto* const fun = vt.getValue().first;
+          return fun->is_method() &&
+                 fun->virt_override() == VirtualOverride::Abstract;
+        });
+
+    if (abstract_method_it != class_vtable.end()) {
+      auto fun_name = GetName(*abstract_method_it->getValue().first);
+      CARBON_CHECK(fun_name.has_value());
+      return ProgramError(class_decl->source_loc())
+             << "Error declaring `" << class_decl->name() << "`"
+             << ": non abstract class should implement abstract method `"
+             << *fun_name << "`.";
     }
   }
 

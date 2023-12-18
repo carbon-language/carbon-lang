@@ -6,31 +6,38 @@
 
 namespace Carbon::Parse {
 
-// Handles PeriodAs variants and ArrowExpression.
+// Handles PeriodAs variants and ArrowExpr.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
 static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                 bool is_arrow) -> void {
   auto state = context.PopState();
 
-  // `.` identifier
+  // We're handling `.something` or `->something`.
   auto dot = context.ConsumeChecked(is_arrow ? Lex::TokenKind::MinusGreater
                                              : Lex::TokenKind::Period);
 
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::Name)) {
+  if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
+                                      NodeKind::IdentifierName)) {
+    // OK, `.` identifier.
+  } else if (node_kind != NodeKind::QualifiedDecl &&
+             context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
+                                             NodeKind::BaseName)) {
+    // OK, `.base`. This is allowed in any name context other than declaring a
+    // new qualified name: `fn Namespace.base() {}`
+  } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
-                      "Expected identifier after `{0}`.", llvm::StringRef);
-    context.emitter().Emit(*context.position(),
-                           ExpectedIdentifierAfterDotOrArrow,
-                           is_arrow ? "->" : ".");
+                      "Expected identifier after `{0}`.", llvm::StringLiteral);
+    context.emitter().Emit(
+        *context.position(), ExpectedIdentifierAfterDotOrArrow,
+        is_arrow ? llvm::StringLiteral("->") : llvm::StringLiteral("."));
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
-      context.AddLeafNode(NodeKind::Name, context.Consume(),
+      context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
                           /*has_error=*/true);
     } else {
-      context.AddLeafNode(NodeKind::Name, *context.position(),
+      context.AddLeafNode(NodeKind::IdentifierName, *context.position(),
                           /*has_error=*/true);
       // Indicate the error to the parent state so that it can avoid producing
       // more errors.
@@ -41,13 +48,13 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
-auto HandlePeriodAsDeclaration(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedDeclaration,
+auto HandlePeriodAsDecl(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::QualifiedDecl,
                       /*is_arrow=*/false);
 }
 
-auto HandlePeriodAsExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::MemberAccessExpression,
+auto HandlePeriodAsExpr(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::MemberAccessExpr,
                       /*is_arrow=*/false);
 }
 
@@ -56,8 +63,8 @@ auto HandlePeriodAsStruct(Context& context) -> void {
                       /*is_arrow=*/false);
 }
 
-auto HandleArrowExpression(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpression,
+auto HandleArrowExpr(Context& context) -> void {
+  HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpr,
                       /*is_arrow=*/true);
 }
 

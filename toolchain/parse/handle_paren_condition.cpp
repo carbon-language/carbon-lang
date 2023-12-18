@@ -11,13 +11,12 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
                                  State finish_state) -> void {
   auto state = context.PopState();
 
-  std::optional<Lex::Token> open_paren =
+  std::optional<Lex::TokenIndex> open_paren =
       context.ConsumeAndAddOpenParen(state.token, start_kind);
   if (open_paren) {
     state.token = *open_paren;
   }
-  state.state = finish_state;
-  context.PushState(state);
+  context.PushState(state, finish_state);
 
   if (!open_paren && context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     // For an open curly, assume the condition was completely omitted.
@@ -26,7 +25,7 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
     context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
                         /*has_error=*/true);
   } else {
-    context.PushState(State::Expression);
+    context.PushState(State::Expr);
   }
 }
 

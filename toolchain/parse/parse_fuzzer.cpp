@@ -6,8 +6,9 @@
 #include <cstring>
 
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/lex/lex.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Testing {
@@ -31,7 +32,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
   // Lex the input.
-  auto tokens = Lex::TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
+  SharedValueStores value_stores;
+  auto tokens = Lex::Lex(value_stores, *source, NullDiagnosticConsumer());
   if (tokens.has_errors()) {
     return 0;
   }

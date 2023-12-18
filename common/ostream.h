@@ -6,6 +6,7 @@
 #define CARBON_COMMON_OSTREAM_H_
 
 #include <ostream>
+#include <type_traits>
 
 #include "llvm/Support/raw_os_ostream.h"
 // Libraries should include this header instead of raw_ostream.
@@ -49,6 +50,15 @@ class Printable {
     }
   }
 };
+
+// Returns the result of printing the value.
+template <typename T>
+inline auto PrintToString(const T& val) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream stream(str);
+  stream << val;
+  return str;
+}
 
 }  // namespace Carbon
 

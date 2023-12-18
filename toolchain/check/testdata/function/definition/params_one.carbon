@@ -6,11 +6,15 @@
 
 fn Foo(a: i32) {}
 
-// CHECK:STDOUT: file "params_one.carbon" {
-// CHECK:STDOUT:   %Foo = fn_decl @Foo
+// CHECK:STDOUT: --- params_one.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo}
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

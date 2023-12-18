@@ -4,32 +4,40 @@
 //
 // AUTOUPDATE
 
-fn Run(a: i32) {}
+fn G(a: i32) {}
 
-fn Main() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:6: ERROR: Cannot implicitly convert from `f64` to `i32`.
-  // CHECK:STDERR:   Run(1.0);
-  // CHECK:STDERR:      ^
+fn F() {
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   G(1.0);
+  // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Initializing parameter 1 of function declared here.
-  // CHECK:STDERR: fn Run(a: i32) {}
-  // CHECK:STDERR: ^
-  Run(1.0);
+  // CHECK:STDERR: fn G(a: i32) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  G(1.0);
 }
 
-// CHECK:STDOUT: file "fail_param_type.carbon" {
-// CHECK:STDOUT:   %Run = fn_decl @Run
-// CHECK:STDOUT:   %Main = fn_decl @Main
+// CHECK:STDOUT: --- fail_param_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc16: type = tuple_type ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run(%a: i32) {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%a: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run.ref = name_reference_untyped "Run", package.%Run
-// CHECK:STDOUT:   %.loc16_7: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc16_6: type = tuple_type ()
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1
+// CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

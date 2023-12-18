@@ -177,20 +177,22 @@ struct OperatorPriorityTable {
 };
 }  // namespace
 
-auto PrecedenceGroup::ForPostfixExpression() -> PrecedenceGroup {
+auto PrecedenceGroup::ForPostfixExpr() -> PrecedenceGroup {
   return PrecedenceGroup(Highest);
 }
 
-auto PrecedenceGroup::ForTopLevelExpression() -> PrecedenceGroup {
+auto PrecedenceGroup::ForTopLevelExpr() -> PrecedenceGroup {
   return PrecedenceGroup(If);
 }
 
-auto PrecedenceGroup::ForExpressionStatement() -> PrecedenceGroup {
+auto PrecedenceGroup::ForExprStatement() -> PrecedenceGroup {
   return PrecedenceGroup(Lowest);
 }
 
-auto PrecedenceGroup::ForType() -> PrecedenceGroup {
-  return ForTopLevelExpression();
+auto PrecedenceGroup::ForType() -> PrecedenceGroup { return ForTopLevelExpr(); }
+
+auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
+  return PrecedenceGroup(As);
 }
 
 auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)

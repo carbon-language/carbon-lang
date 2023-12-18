@@ -13,7 +13,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'empty.carbon'
 // CHECK:STDOUT: source_filename = "empty.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @Run() {
+// CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT:   %x = alloca {}, align 8
 // CHECK:STDOUT:   %y = alloca {}, align 8
 // CHECK:STDOUT:   ret i32 0

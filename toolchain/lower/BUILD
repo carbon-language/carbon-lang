@@ -41,9 +41,10 @@ cc_library(
     deps = [
         "//common:check",
         "//common:vlog",
+        "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:node",
-        "//toolchain/sem_ir:node_kind",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],

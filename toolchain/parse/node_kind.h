@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "common/enum_base.h"
+#include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Parse {
 
@@ -20,8 +21,13 @@ CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 // tree.
 class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
  public:
-#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/node_kind.def"
+
+  // Validates that a `parse_node_kind` parser node can be generated for a
+  // `lex_token_kind` lexer token.
+  auto CheckMatchesTokenKind(Lex::TokenKind lex_token_kind, bool has_error)
+      -> void;
 
   // Returns true if the node is bracketed; otherwise, child_count is used.
   auto has_bracket() const -> bool;

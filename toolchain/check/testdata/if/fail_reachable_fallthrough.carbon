@@ -33,15 +33,18 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDERR: ^
 }
 
-// CHECK:STDOUT: file "fail_reachable_fallthrough.carbon" {
-// CHECK:STDOUT:   %If1 = fn_decl @If1
-// CHECK:STDOUT:   %If2 = fn_decl @If2
-// CHECK:STDOUT:   %If3 = fn_decl @If3
+// CHECK:STDOUT: --- fail_reachable_fallthrough.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.If1 = %If1, .If2 = %If2, .If3 = %If3}
+// CHECK:STDOUT:   %If1: <function> = fn_decl @If1
+// CHECK:STDOUT:   %If2: <function> = fn_decl @If2
+// CHECK:STDOUT:   %If3: <function> = fn_decl @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -56,7 +59,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -71,7 +74,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_reference "b", %b
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
@@ -80,3 +83,4 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

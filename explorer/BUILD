@@ -42,8 +42,8 @@ cc_binary(
     ],
 )
 
-cc_library(
-    name = "file_test_common",
+cc_binary(
+    name = "file_test",
     testonly = 1,
     srcs = ["file_test.cpp"],
     deps = [
@@ -57,20 +57,18 @@ cc_library(
 )
 
 file_test(
-    name = "file_test",
+    name = "file_test.notrace",
     size = "small",
+    prebuilt_binary = ":file_test",
     shard_count = 20,
     tests = glob(["testdata/**/*.carbon"]),
-    deps = [
-        ":file_test_common",
-        "@com_googlesource_code_re2//:re2",
-    ],
 )
 
 file_test(
     name = "file_test.trace",
     size = "small",
     args = ["--trace"],
+    prebuilt_binary = ":file_test",
     shard_count = 30,
     tests = glob(
         ["testdata/**/*.carbon"],
@@ -86,7 +84,6 @@ file_test(
             "testdata/linked_list/typed_linked_list.carbon",
         ],
     ),
-    deps = [":file_test_common"],
 )
 
 glob_sh_run(

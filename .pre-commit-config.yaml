@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9 # frozen: v4.4.0
+    rev: c4a0b883114b00d8d76b479c820ce7950211c99b # frozen: v4.5.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 193ee766ca496871f93621d6b58d57a6564ff81b # frozen: 23.7.0
+    rev: 2a1c67e0b2f81df602ec1f6e7aeb030b9709dc7c # frozen: 23.11.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: efd8b1e16f05132acf6edcf2827eeab21e0e00db # frozen: v3.0.0
+    rev: ffb6a759a979008c0e6dff86e39f4745a2d9eac4 # frozen: v3.1.0
     hooks:
       - id: prettier
   - repo: local
@@ -72,14 +72,14 @@ repos:
         types_or: [c++, proto]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==16.0.6']
+        additional_dependencies: ['clang-format==17.0.1']
       - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
-        additional_dependencies: ['clang-format==16.0.6']
+        additional_dependencies: ['clang-format==17.0.1']
 
   - repo: local
     hooks:
@@ -119,11 +119,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: c838a5e98878f17889cfce311e1406d252f87ec5 # frozen: 6.0.0
+    rev: 10f4af6dbcf93456ba7df762278ae61ba3120dc6 # frozen: 6.1.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '6e63c9e9c65e1df04465cdcda0f2490e89291f58' # frozen: v1.4.1
+    rev: '4daa14b20c0f48f472528c2b5f5bca28a18a7ce0' # frozen: v1.7.1
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -145,7 +145,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: 355e50e14fd03fe83e4ed9aa0489824b150b3b58 # frozen: v2.2.5
+    rev: 6e41aba91fb32e9feb741a6258eefeb9c6e4a482 # frozen: v2.2.6
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -207,6 +207,7 @@ repos:
               .bazelversion|
               .github/pull_request_template.md|
               compile_flags.txt|
+              github_tools/requirements.txt|
               third_party/.*|
               .*\.def|
               .*\.svg|
@@ -218,8 +219,7 @@ repos:
 # This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
-      bazel/patches/.*\.patch|
+      MODULE.bazel.lock|
+      bazel/llvm_project/.*\.patch|
       third_party/examples/.*/carbon/.*|
-      third_party/llvm-project/.*|
-      third_party/clangd/.*|
   )$

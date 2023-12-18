@@ -51,7 +51,7 @@ _BAZEL_TOOLS_VERSION_SHAS = {
     },
 }
 
-_TARGET_DETERMINATOR_URL = "https://github.com/bazel-contrib/target-determinator/releases/download/v0.23.0/"  # noqa: E501
+_TARGET_DETERMINATOR_URL = "https://github.com/bazel-contrib/target-determinator/releases/download/v0.25.0/"  # noqa: E501
 
 """Version SHAs.
 
@@ -59,15 +59,15 @@ Gather shas with:
     for v in darwin.amd64 darwin.arm64 linux.amd64 linux.arm64 \
         windows.amd64.exe
     do
-        echo "\"$v\": \"$(wget -q -O - https://github.com/bazel-contrib/target-determinator/releases/download/v0.23.0/target-determinator.$v | sha256sum | cut -d ' ' -f1)\", # noqa: E501"
+        echo "\"$v\": \"$(wget -q -O - https://github.com/bazel-contrib/target-determinator/releases/download/v0.25.0/target-determinator.$v | sha256sum | cut -d ' ' -f1)\", # noqa: E501"
     done
 """
 _TARGET_DETERMINATOR_SHAS = {
-    "darwin.amd64": "aba6dce8a978d2174b37dd1355eecba86db93be1ff77742d0753d8efd6a8a316",  # noqa: E501
-    "darwin.arm64": "6c3c308dcfc651408ed5490245ea3e0180fc49d4cc9b762ab84a4b979bcb07b8",  # noqa: E501
-    "linux.amd64": "5200dbca0dd4980690d5060cf8e04abac927efaca143567c51fe24cf973364d2",  # noqa: E501
-    "linux.arm64": "3c04f8bb2742219eb3415c6d675dcfe9175745eb7b1d6c3706085a9987f9f719",  # noqa: E501
-    "windows.amd64.exe": "3aea5bd52fdf29bfe6995ffcacc2b2c2299af02dc58f1039022ff758b58214c3",  # noqa: E501
+    "darwin.amd64": "8c7245603dede429b978e214ca327c3f3d686a1bc712c1298fca0396a0f25f23",  # noqa: E501
+    "darwin.arm64": "8f975b471c4a51d32781b757e1ece9700221bfd4c0ea507c18fa382360d1111f",  # noqa: E501
+    "linux.amd64": "c8a09143e9fe6eccc4b27a6be92c5929e5a78034a8d0b4c43dbed4ee539ec903",  # noqa: E501
+    "linux.arm64": "f34618c885d239d77a31f594daf73a67c1133ab4a0376d37a29dbe8d1d2b0b90",  # noqa: E501
+    "windows.amd64.exe": "e14fd75e33d193f579505cf3e641e07025904fc027686e13e154ba8e10ac0f58",  # noqa: E501
 }
 
 
@@ -149,6 +149,8 @@ def _get_machine() -> str:
     machine = platform.machine()
     if machine == "x86_64":
         machine = "amd64"
+    elif machine == "aarch64":
+        machine = "arm64"
     return machine
 
 

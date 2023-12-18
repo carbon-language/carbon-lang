@@ -39,20 +39,24 @@ class PrecedenceGroup {
 
   // Get the sentinel precedence level for a postfix expression. All operators
   // have lower precedence than this.
-  static auto ForPostfixExpression() -> PrecedenceGroup;
+  static auto ForPostfixExpr() -> PrecedenceGroup;
 
   // Get the precedence level for a top-level or parenthesized expression. All
   // expression operators have higher precedence than this.
-  static auto ForTopLevelExpression() -> PrecedenceGroup;
+  static auto ForTopLevelExpr() -> PrecedenceGroup;
 
   // Get the sentinel precedence level for a statement context. All operators,
   // including statement operators like `=` and `++`, have higher precedence
   // than this.
-  static auto ForExpressionStatement() -> PrecedenceGroup;
+  static auto ForExprStatement() -> PrecedenceGroup;
 
   // Get the precedence level at which to parse a type expression. All type
   // operators have higher precedence than this.
   static auto ForType() -> PrecedenceGroup;
+
+  // Get the precedence level at which to parse the type expression between
+  // `impl` and `as`.
+  static auto ForImplAs() -> PrecedenceGroup;
 
   // Look up the operator information of the given prefix operator token, or
   // return std::nullopt if the given token is not a prefix operator.
@@ -78,7 +82,7 @@ class PrecedenceGroup {
       -> OperatorPriority;
 
   // Get the associativity of this precedence group.
-  [[nodiscard]] auto GetAssociativity() const -> Associativity {
+  auto GetAssociativity() const -> Associativity {
     return static_cast<Associativity>(GetPriority(*this, *this));
   }
 

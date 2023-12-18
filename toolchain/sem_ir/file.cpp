@@ -7,52 +7,90 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
+#include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/builtin_kind.h"
-#include "toolchain/sem_ir/node.h"
-#include "toolchain/sem_ir/node_kind.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::SemIR {
 
-File::File()
-    // Builtins are always the first IR, even when self-referential.
-    : filename_("<builtins>"),
-      cross_reference_irs_({this}),
-      // Default entry for NodeBlockId::Empty.
-      node_blocks_(1) {
-  nodes_.reserve(BuiltinKind::ValidCount);
+auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
+  out << "{kind: ";
+  switch (kind) {
+    case Unknown:
+      out << "unknown";
+      break;
+    case None:
+      out << "none";
+      break;
+    case Copy:
+      out << "copy";
+      break;
+    case Pointer:
+      out << "pointer";
+      break;
+    case Custom:
+      out << "custom";
+      break;
+  }
+  out << ", type: " << type_id << "}";
+}
+
+auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
+  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
+}
+
+File::File(SharedValueStores& value_stores)
+    : value_stores_(&value_stores),
+      filename_("<builtins>"),
+      type_blocks_(allocator_),
+      inst_blocks_(allocator_) {
+  auto builtins_id = cross_ref_irs_.Add(this);
+  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+      << "Builtins must be the first IR, even if self-referential";
+
+  // Default entry for InstBlockId::Empty.
+  inst_blocks_.AddDefaultValue();
+
+  insts_.Reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                               \
-  nodes_.push_back(Node::Builtin::Make(BuiltinKind::Name,                      \
-                                       BuiltinKind::Name == BuiltinKind::Error \
-                                           ? TypeId::Error                     \
-                                           : TypeId::TypeType));
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                         \
+  insts_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
+                                  ? TypeId::Error                     \
+                                  : TypeId::TypeType,                 \
+                              BuiltinKind::Name});
 #include "toolchain/sem_ir/builtin_kind.def"
 
-  CARBON_CHECK(nodes_.size() == BuiltinKind::ValidCount)
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount
-      << " nodes, actual: " << nodes_.size();
+      << " insts, actual: " << insts_.size();
 }
 
-File::File(std::string filename, const File* builtins)
-    // Builtins are always the first IR.
-    : filename_(std::move(filename)),
-      cross_reference_irs_({builtins}),
-      // Default entry for NodeBlockId::Empty.
-      node_blocks_(1) {
+File::File(SharedValueStores& value_stores, std::string filename,
+           const File* builtins)
+    : value_stores_(&value_stores),
+      filename_(std::move(filename)),
+      type_blocks_(allocator_),
+      inst_blocks_(allocator_) {
   CARBON_CHECK(builtins != nullptr);
-  CARBON_CHECK(builtins->cross_reference_irs_[0] == builtins)
-      << "Not called with builtins!";
+  auto builtins_id = cross_ref_irs_.Add(builtins);
+  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+      << "Builtins must be the first IR";
+
+  // Default entry for InstBlockId::Empty.
+  inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
-  nodes_.reserve(BuiltinKind::ValidCount);
-  static constexpr auto BuiltinIR = CrossReferenceIRId(0);
-  for (auto [i, node] : llvm::enumerate(builtins->nodes_)) {
+  insts_.Reserve(BuiltinKind::ValidCount);
+  static constexpr auto BuiltinIR = CrossRefIRId(0);
+  for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    nodes_.push_back(Node::CrossReference::Make(node.type_id(), BuiltinIR,
-                                                SemIR::NodeId(i)));
+    insts_.AddInNoBlock(CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
   }
 }
 
@@ -64,22 +102,23 @@ auto File::Verify() const -> ErrorOr<Success> {
 
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
-  for (const Function& function : functions_) {
-    for (NodeBlockId block_id : function.body_block_ids) {
+  for (const Function& function : functions_.array_ref()) {
+    for (InstBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
-      for (NodeId node_id : GetNodeBlock(block_id)) {
-        TerminatorKind node_kind = GetNode(node_id).kind().terminator_kind();
+      for (InstId inst_id : inst_blocks().Get(block_id)) {
+        TerminatorKind inst_kind =
+            insts().Get(inst_id).kind().terminator_kind();
         if (prior_kind == TerminatorKind::Terminator) {
-          return Error(llvm::formatv("Node {0} in block {1} follows terminator",
-                                     node_id, block_id));
+          return Error(llvm::formatv("Inst {0} in block {1} follows terminator",
+                                     inst_id, block_id));
         }
-        if (prior_kind > node_kind) {
+        if (prior_kind > inst_kind) {
           return Error(
-              llvm::formatv("Non-terminator node {0} in block {1} follows "
+              llvm::formatv("Non-terminator inst {0} in block {1} follows "
                             "terminator sequence",
-                            node_id, block_id));
+                            inst_id, block_id));
         }
-        prior_kind = node_kind;
+        prior_kind = inst_kind;
       }
       if (prior_kind != TerminatorKind::Terminator) {
         return Error(llvm::formatv("No terminator in block {0}", block_id));
@@ -87,235 +126,208 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that a node only references other nodes that are either global
-  // or that dominate it.
+  // TODO: Check that an instruction only references other instructions that are
+  // either global or that dominate it.
   return Success();
 }
 
-static constexpr int BaseIndent = 4;
-static constexpr int IndentStep = 2;
-
-// Define PrintList for ArrayRef.
-template <typename T, typename PrintT =
-                          std::function<void(llvm::raw_ostream&, const T& val)>>
-static auto PrintList(
-    llvm::raw_ostream& out, llvm::StringLiteral name, llvm::ArrayRef<T> list,
-    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
-  out.indent(BaseIndent);
-  out << name << ": [\n";
-  for (const auto& element : list) {
-    out.indent(BaseIndent + IndentStep);
-    print(out, element);
-    out << ",\n";
-  }
-  out.indent(BaseIndent);
-  out << "]\n";
+auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([this,
+                              include_builtins](Yaml::OutputMapping::Map map) {
+    map.Add("filename", filename_);
+    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("cross_ref_irs_size",
+                      Yaml::OutputScalar(cross_ref_irs_.size()));
+              map.Add("functions", functions_.OutputYaml());
+              map.Add("classes", classes_.OutputYaml());
+              map.Add("types", types_.OutputYaml());
+              map.Add("type_blocks", type_blocks_.OutputYaml());
+              map.Add("insts",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                        int start =
+                            include_builtins ? 0 : BuiltinKind::ValidCount;
+                        for (int i : llvm::seq(start, insts_.size())) {
+                          auto id = InstId(i);
+                          map.Add(PrintToString(id),
+                                  Yaml::OutputScalar(insts_.Get(id)));
+                        }
+                      }));
+              map.Add("inst_blocks", inst_blocks_.OutputYaml());
+            }));
+  });
 }
 
-// Adapt PrintList for a vector.
-template <typename T, typename PrintT =
-                          std::function<void(llvm::raw_ostream&, const T& val)>>
-static auto PrintList(
-    llvm::raw_ostream& out, llvm::StringLiteral name,
-    const llvm::SmallVector<T>& list,
-    PrintT print = [](llvm::raw_ostream& out, const T& val) { out << val; }) {
-  PrintList(out, name, llvm::ArrayRef(list), print);
-}
-
-// PrintBlock is only used for vectors.
-template <typename T>
-static auto PrintBlock(llvm::raw_ostream& out, llvm::StringLiteral block_name,
-                       const llvm::SmallVector<T>& blocks) {
-  out.indent(BaseIndent);
-  out << block_name << ": [\n";
-  for (const auto& block : blocks) {
-    out.indent(BaseIndent + IndentStep);
-    out << "[\n";
-
-    for (const auto& node : block) {
-      out.indent(BaseIndent + 2 * IndentStep);
-      out << node << ",\n";
-    }
-    out.indent(BaseIndent + IndentStep);
-    out << "],\n";
-  }
-  out.indent(BaseIndent);
-  out << "]\n";
-}
-
-auto File::Print(llvm::raw_ostream& out, bool include_builtins) const -> void {
-  out << "- filename: " << filename_ << "\n"
-      << "  sem_ir:\n"
-      << "  - cross_reference_irs_size: " << cross_reference_irs_.size()
-      << "\n";
-
-  PrintList(out, "functions", functions_);
-  // Integer literals are an APInt, and default to a signed print, but the
-  // ZExtValue print is correct.
-  PrintList(out, "integer_literals", integer_literals_,
-            [](llvm::raw_ostream& out, const llvm::APInt& val) {
-              val.print(out, /*isSigned=*/false);
-            });
-  PrintList(out, "real_literals", real_literals_);
-  PrintList(out, "strings", strings_);
-  PrintList(out, "types", types_);
-  PrintBlock(out, "type_blocks", type_blocks_);
-
-  llvm::ArrayRef nodes = nodes_;
-  if (!include_builtins) {
-    nodes = nodes.drop_front(BuiltinKind::ValidCount);
-  }
-  PrintList(out, "nodes", nodes);
-
-  PrintBlock(out, "node_blocks", node_blocks_);
-}
-
-// Map a node kind representing a type into an integer describing the
+// Map an instruction kind representing a type into an integer describing the
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
-static auto GetTypePrecedence(NodeKind kind) -> int {
+static auto GetTypePrecedence(InstKind kind) -> int {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
-    case NodeKind::ArrayType:
-    case NodeKind::Builtin:
-    case NodeKind::StructType:
-    case NodeKind::TupleType:
+    case ArrayType::Kind:
+    case Builtin::Kind:
+    case ClassType::Kind:
+    case NameRef::Kind:
+    case StructType::Kind:
+    case TupleType::Kind:
+    case UnboundElementType::Kind:
       return 0;
-    case NodeKind::ConstType:
+    case ConstType::Kind:
       return -1;
-    case NodeKind::PointerType:
+    case PointerType::Kind:
       return -2;
 
-    case NodeKind::CrossReference:
+    case CrossRef::Kind:
       // TODO: Once we support stringification of cross-references, we'll need
       // to determine the precedence of the target of the cross-reference. For
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
-    case NodeKind::AddressOf:
-    case NodeKind::ArrayIndex:
-    case NodeKind::ArrayInit:
-    case NodeKind::Assign:
-    case NodeKind::BinaryOperatorAdd:
-    case NodeKind::BindValue:
-    case NodeKind::BlockArg:
-    case NodeKind::BoolLiteral:
-    case NodeKind::Branch:
-    case NodeKind::BranchIf:
-    case NodeKind::BranchWithArg:
-    case NodeKind::Call:
-    case NodeKind::Dereference:
-    case NodeKind::FunctionDeclaration:
-    case NodeKind::InitializeFrom:
-    case NodeKind::IntegerLiteral:
-    case NodeKind::Invalid:
-    case NodeKind::NameReference:
-    case NodeKind::NameReferenceUntyped:
-    case NodeKind::Namespace:
-    case NodeKind::NoOp:
-    case NodeKind::Parameter:
-    case NodeKind::RealLiteral:
-    case NodeKind::Return:
-    case NodeKind::ReturnExpression:
-    case NodeKind::SpliceBlock:
-    case NodeKind::StringLiteral:
-    case NodeKind::StructAccess:
-    case NodeKind::StructTypeField:
-    case NodeKind::StructLiteral:
-    case NodeKind::StructInit:
-    case NodeKind::StructValue:
-    case NodeKind::Temporary:
-    case NodeKind::TemporaryStorage:
-    case NodeKind::TupleAccess:
-    case NodeKind::TupleIndex:
-    case NodeKind::TupleLiteral:
-    case NodeKind::TupleInit:
-    case NodeKind::TupleValue:
-    case NodeKind::UnaryOperatorNot:
-    case NodeKind::ValueAsReference:
-    case NodeKind::VarStorage:
-      CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
+    case AddressOf::Kind:
+    case AddrPattern::Kind:
+    case ArrayIndex::Kind:
+    case ArrayInit::Kind:
+    case Assign::Kind:
+    case BaseDecl::Kind:
+    case BindName::Kind:
+    case BindValue::Kind:
+    case BlockArg::Kind:
+    case BoolLiteral::Kind:
+    case BoundMethod::Kind:
+    case Branch::Kind:
+    case BranchIf::Kind:
+    case BranchWithArg::Kind:
+    case Call::Kind:
+    case ClassDecl::Kind:
+    case ClassElementAccess::Kind:
+    case ClassInit::Kind:
+    case Converted::Kind:
+    case Deref::Kind:
+    case FieldDecl::Kind:
+    case FunctionDecl::Kind:
+    case Import::Kind:
+    case InitializeFrom::Kind:
+    case InterfaceDecl::Kind:
+    case IntLiteral::Kind:
+    case LazyImportRef::Kind:
+    case Namespace::Kind:
+    case NoOp::Kind:
+    case Param::Kind:
+    case RealLiteral::Kind:
+    case Return::Kind:
+    case ReturnExpr::Kind:
+    case SpliceBlock::Kind:
+    case StringLiteral::Kind:
+    case StructAccess::Kind:
+    case StructTypeField::Kind:
+    case StructLiteral::Kind:
+    case StructInit::Kind:
+    case StructValue::Kind:
+    case Temporary::Kind:
+    case TemporaryStorage::Kind:
+    case TupleAccess::Kind:
+    case TupleIndex::Kind:
+    case TupleLiteral::Kind:
+    case TupleInit::Kind:
+    case TupleValue::Kind:
+    case UnaryOperatorNot::Kind:
+    case ValueAsRef::Kind:
+    case ValueOfInitializer::Kind:
+    case VarStorage::Kind:
+      CARBON_FATAL() << "GetTypePrecedence for non-type inst kind " << kind;
   }
 }
 
-auto File::StringifyType(TypeId type_id, bool in_type_context) const
-    -> std::string {
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExpr(types().GetInstId(type_id));
+}
+
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
   struct Step {
-    // The node to print.
-    NodeId node_id;
-    // The index into node_id to print. Not used by all types.
+    // The instruction to print.
+    InstId inst_id;
+    // The index into inst_id to print. Not used by all types.
     int index = 0;
 
     auto Next() const -> Step {
-      return {.node_id = node_id, .index = index + 1};
+      return {.inst_id = inst_id, .index = index + 1};
     }
   };
-  auto outer_node_id = GetTypeAllowBuiltinTypes(type_id);
-  llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
+  llvm::SmallVector<Step> steps = {{.inst_id = outer_inst_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
-    if (!step.node_id.is_valid()) {
+    if (!step.inst_id.is_valid()) {
       out << "<invalid type>";
       continue;
     }
 
     // Builtins have designated labels.
-    if (step.node_id.index < BuiltinKind::ValidCount) {
-      out << BuiltinKind::FromInt(step.node_id.index).label();
+    if (step.inst_id.index < BuiltinKind::ValidCount) {
+      out << BuiltinKind::FromInt(step.inst_id.index).label();
       continue;
     }
 
-    auto node = GetNode(step.node_id);
+    auto inst = insts().Get(step.inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-      case NodeKind::ArrayType: {
-        auto [bound_id, type_id] = node.GetAsArrayType();
+    switch (inst.kind()) {
+      case ArrayType::Kind: {
+        auto array = inst.As<ArrayType>();
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+          steps.push_back(
+              {.inst_id = types().GetInstId(array.element_type_id)});
         } else if (step.index == 1) {
-          out << "; " << GetArrayBoundValue(bound_id) << "]";
+          out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
         break;
       }
-      case NodeKind::ConstType: {
+      case ClassType::Kind: {
+        auto class_name_id =
+            classes().Get(inst.As<ClassType>().class_id).name_id;
+        out << names().GetFormatted(class_name_id);
+        break;
+      }
+      case ConstType::Kind: {
         if (step.index == 0) {
           out << "const ";
 
           // Add parentheses if required.
-          auto inner_type_node_id =
-              GetTypeAllowBuiltinTypes(node.GetAsConstType());
-          if (GetTypePrecedence(GetNode(inner_type_node_id).kind()) <
-              GetTypePrecedence(node.kind())) {
+          auto inner_type_inst_id =
+              types().GetInstId(inst.As<ConstType>().inner_id);
+          if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
+              GetTypePrecedence(inst.kind())) {
             out << "(";
             steps.push_back(step.Next());
           }
 
-          steps.push_back({.node_id = inner_type_node_id});
+          steps.push_back({.inst_id = inner_type_inst_id});
         } else if (step.index == 1) {
           out << ")";
         }
         break;
       }
-      case NodeKind::PointerType: {
+      case NameRef::Kind: {
+        out << names().GetFormatted(inst.As<NameRef>().name_id);
+        break;
+      }
+      case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back(
-              {.node_id = GetTypeAllowBuiltinTypes(node.GetAsPointerType())});
+          steps.push_back({.inst_id = types().GetInstId(
+                               inst.As<PointerType>().pointee_id)});
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
-      case NodeKind::StructType: {
-        auto refs = GetNodeBlock(node.GetAsStructType());
+      case StructType::Kind: {
+        auto refs = inst_blocks().Get(inst.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -329,17 +341,17 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
         }
 
         steps.push_back(step.Next());
-        steps.push_back({.node_id = refs[step.index]});
+        steps.push_back({.inst_id = refs[step.index]});
         break;
       }
-      case NodeKind::StructTypeField: {
-        auto [name_id, type_id] = node.GetAsStructTypeField();
-        out << "." << GetString(name_id) << ": ";
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+      case StructTypeField::Kind: {
+        auto field = inst.As<StructTypeField>();
+        out << "." << names().GetFormatted(field.name_id) << ": ";
+        steps.push_back({.inst_id = types().GetInstId(field.field_type_id)});
         break;
       }
-      case NodeKind::TupleType: {
-        auto refs = GetTypeBlock(node.GetAsTupleType());
+      case TupleType::Kind: {
+        auto refs = type_blocks().Get(inst.As<TupleType>().elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -357,331 +369,241 @@ auto File::StringifyType(TypeId type_id, bool in_type_context) const
           break;
         }
         steps.push_back(step.Next());
-        steps.push_back(
-            {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+        steps.push_back({.inst_id = types().GetInstId(refs[step.index])});
         break;
       }
-      case NodeKind::AddressOf:
-      case NodeKind::ArrayIndex:
-      case NodeKind::ArrayInit:
-      case NodeKind::Assign:
-      case NodeKind::BinaryOperatorAdd:
-      case NodeKind::BindValue:
-      case NodeKind::BlockArg:
-      case NodeKind::BoolLiteral:
-      case NodeKind::Branch:
-      case NodeKind::BranchIf:
-      case NodeKind::BranchWithArg:
-      case NodeKind::Builtin:
-      case NodeKind::Call:
-      case NodeKind::CrossReference:
-      case NodeKind::Dereference:
-      case NodeKind::FunctionDeclaration:
-      case NodeKind::InitializeFrom:
-      case NodeKind::IntegerLiteral:
-      case NodeKind::NameReference:
-      case NodeKind::NameReferenceUntyped:
-      case NodeKind::Namespace:
-      case NodeKind::NoOp:
-      case NodeKind::Parameter:
-      case NodeKind::RealLiteral:
-      case NodeKind::Return:
-      case NodeKind::ReturnExpression:
-      case NodeKind::SpliceBlock:
-      case NodeKind::StringLiteral:
-      case NodeKind::StructAccess:
-      case NodeKind::StructLiteral:
-      case NodeKind::StructInit:
-      case NodeKind::StructValue:
-      case NodeKind::Temporary:
-      case NodeKind::TemporaryStorage:
-      case NodeKind::TupleAccess:
-      case NodeKind::TupleIndex:
-      case NodeKind::TupleLiteral:
-      case NodeKind::TupleInit:
-      case NodeKind::TupleValue:
-      case NodeKind::UnaryOperatorNot:
-      case NodeKind::ValueAsReference:
-      case NodeKind::VarStorage:
-        // We don't need to handle stringification for nodes that don't show up
-        // in errors, but make it clear what's going on so that it's clearer
-        // when stringification is needed.
-        out << "<cannot stringify " << step.node_id << ">";
+      case UnboundElementType::Kind: {
+        if (step.index == 0) {
+          out << "<unbound element of class ";
+          steps.push_back(step.Next());
+          steps.push_back({.inst_id = types().GetInstId(
+                               inst.As<UnboundElementType>().class_type_id)});
+        } else {
+          out << ">";
+        }
         break;
-      case NodeKind::Invalid:
-        llvm_unreachable("NodeKind::Invalid is never used.");
-    }
-  }
-
-  // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type` if it's not implied by the context.
-  if (!in_type_context) {
-    auto outer_node = GetNode(outer_node_id);
-    if (outer_node.kind() == NodeKind::TupleType ||
-        (outer_node.kind() == NodeKind::StructType &&
-         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
-      out << " as type";
+      }
+      case AddressOf::Kind:
+      case AddrPattern::Kind:
+      case ArrayIndex::Kind:
+      case ArrayInit::Kind:
+      case Assign::Kind:
+      case BaseDecl::Kind:
+      case BindName::Kind:
+      case BindValue::Kind:
+      case BlockArg::Kind:
+      case BoolLiteral::Kind:
+      case BoundMethod::Kind:
+      case Branch::Kind:
+      case BranchIf::Kind:
+      case BranchWithArg::Kind:
+      case Builtin::Kind:
+      case Call::Kind:
+      case ClassDecl::Kind:
+      case ClassElementAccess::Kind:
+      case ClassInit::Kind:
+      case Converted::Kind:
+      case CrossRef::Kind:
+      case Deref::Kind:
+      case FieldDecl::Kind:
+      case FunctionDecl::Kind:
+      case Import::Kind:
+      case InitializeFrom::Kind:
+      case InterfaceDecl::Kind:
+      case IntLiteral::Kind:
+      case LazyImportRef::Kind:
+      case Namespace::Kind:
+      case NoOp::Kind:
+      case Param::Kind:
+      case RealLiteral::Kind:
+      case Return::Kind:
+      case ReturnExpr::Kind:
+      case SpliceBlock::Kind:
+      case StringLiteral::Kind:
+      case StructAccess::Kind:
+      case StructLiteral::Kind:
+      case StructInit::Kind:
+      case StructValue::Kind:
+      case Temporary::Kind:
+      case TemporaryStorage::Kind:
+      case TupleAccess::Kind:
+      case TupleIndex::Kind:
+      case TupleLiteral::Kind:
+      case TupleInit::Kind:
+      case TupleValue::Kind:
+      case UnaryOperatorNot::Kind:
+      case ValueAsRef::Kind:
+      case ValueOfInitializer::Kind:
+      case VarStorage::Kind:
+        // We don't need to handle stringification for instructions that don't
+        // show up in errors, but make it clear what's going on so that it's
+        // clearer when stringification is needed.
+        out << "<cannot stringify " << step.inst_id << ">";
+        break;
     }
   }
 
   return str;
 }
 
-auto GetExpressionCategory(const File& file, NodeId node_id)
-    -> ExpressionCategory {
+auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   const File* ir = &file;
+
+  // The overall expression category if the current instruction is a value
+  // expression.
+  ExprCategory value_category = ExprCategory::Value;
+
   while (true) {
-    auto node = ir->GetNode(node_id);
+    auto inst = ir->insts().Get(inst_id);
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-      case NodeKind::Invalid:
-      case NodeKind::Assign:
-      case NodeKind::Branch:
-      case NodeKind::BranchIf:
-      case NodeKind::BranchWithArg:
-      case NodeKind::FunctionDeclaration:
-      case NodeKind::NameReferenceUntyped:
-      case NodeKind::Namespace:
-      case NodeKind::NoOp:
-      case NodeKind::Return:
-      case NodeKind::ReturnExpression:
-      case NodeKind::StructTypeField:
-        return ExpressionCategory::NotExpression;
+    switch (inst.kind()) {
+      case Assign::Kind:
+      case BaseDecl::Kind:
+      case Branch::Kind:
+      case BranchIf::Kind:
+      case BranchWithArg::Kind:
+      case ClassDecl::Kind:
+      case FieldDecl::Kind:
+      case FunctionDecl::Kind:
+      case Import::Kind:
+      case InterfaceDecl::Kind:
+      case LazyImportRef::Kind:
+      case Namespace::Kind:
+      case NoOp::Kind:
+      case Return::Kind:
+      case ReturnExpr::Kind:
+      case StructTypeField::Kind:
+        return ExprCategory::NotExpr;
 
-      case NodeKind::CrossReference: {
-        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
-        ir = &ir->GetCrossReferenceIR(xref_id);
-        node_id = xref_node_id;
+      case CrossRef::Kind: {
+        auto xref = inst.As<CrossRef>();
+        ir = ir->cross_ref_irs().Get(xref.ir_id);
+        inst_id = xref.inst_id;
         continue;
       }
 
-      case NodeKind::NameReference: {
-        auto [name_id, value_id] = node.GetAsNameReference();
-        node_id = value_id;
+      case NameRef::Kind: {
+        inst_id = inst.As<NameRef>().value_id;
         continue;
       }
 
-      case NodeKind::AddressOf:
-      case NodeKind::ArrayType:
-      case NodeKind::BinaryOperatorAdd:
-      case NodeKind::BindValue:
-      case NodeKind::BlockArg:
-      case NodeKind::BoolLiteral:
-      case NodeKind::Builtin:
-      case NodeKind::ConstType:
-      case NodeKind::IntegerLiteral:
-      case NodeKind::Parameter:
-      case NodeKind::PointerType:
-      case NodeKind::RealLiteral:
-      case NodeKind::StringLiteral:
-      case NodeKind::StructValue:
-      case NodeKind::StructType:
-      case NodeKind::TupleValue:
-      case NodeKind::TupleType:
-      case NodeKind::UnaryOperatorNot:
-        return ExpressionCategory::Value;
-
-      case NodeKind::ArrayIndex: {
-        auto [base_id, index_id] = node.GetAsArrayIndex();
-        node_id = base_id;
+      case Converted::Kind: {
+        inst_id = inst.As<Converted>().result_id;
         continue;
       }
 
-      case NodeKind::StructAccess: {
-        auto [base_id, member_index] = node.GetAsStructAccess();
-        node_id = base_id;
+      case AddressOf::Kind:
+      case AddrPattern::Kind:
+      case ArrayType::Kind:
+      case BindValue::Kind:
+      case BlockArg::Kind:
+      case BoolLiteral::Kind:
+      case BoundMethod::Kind:
+      case ClassType::Kind:
+      case ConstType::Kind:
+      case IntLiteral::Kind:
+      case Param::Kind:
+      case PointerType::Kind:
+      case RealLiteral::Kind:
+      case StringLiteral::Kind:
+      case StructValue::Kind:
+      case StructType::Kind:
+      case TupleValue::Kind:
+      case TupleType::Kind:
+      case UnaryOperatorNot::Kind:
+      case UnboundElementType::Kind:
+      case ValueOfInitializer::Kind:
+        return value_category;
+
+      case Builtin::Kind: {
+        if (inst.As<Builtin>().builtin_kind == BuiltinKind::Error) {
+          return ExprCategory::Error;
+        }
+        return value_category;
+      }
+
+      case BindName::Kind: {
+        inst_id = inst.As<BindName>().value_id;
         continue;
       }
 
-      case NodeKind::TupleAccess: {
-        auto [base_id, index_id] = node.GetAsTupleAccess();
-        node_id = base_id;
+      case ArrayIndex::Kind: {
+        inst_id = inst.As<ArrayIndex>().array_id;
         continue;
       }
 
-      case NodeKind::TupleIndex: {
-        auto [base_id, index_id] = node.GetAsTupleIndex();
-        node_id = base_id;
+      case ClassElementAccess::Kind: {
+        inst_id = inst.As<ClassElementAccess>().base_id;
+        // A value of class type is a pointer to an object representation.
+        // Therefore, if the base is a value, the result is an ephemeral
+        // reference.
+        value_category = ExprCategory::EphemeralRef;
         continue;
       }
 
-      case NodeKind::SpliceBlock: {
-        auto [block_id, result_id] = node.GetAsSpliceBlock();
-        node_id = result_id;
+      case StructAccess::Kind: {
+        inst_id = inst.As<StructAccess>().struct_id;
         continue;
       }
 
-      case NodeKind::StructLiteral:
-      case NodeKind::TupleLiteral:
-        return ExpressionCategory::Mixed;
+      case TupleAccess::Kind: {
+        inst_id = inst.As<TupleAccess>().tuple_id;
+        continue;
+      }
 
-      case NodeKind::ArrayInit:
-      case NodeKind::Call:
-      case NodeKind::InitializeFrom:
-      case NodeKind::StructInit:
-      case NodeKind::TupleInit:
-        return ExpressionCategory::Initializing;
+      case TupleIndex::Kind: {
+        inst_id = inst.As<TupleIndex>().tuple_id;
+        continue;
+      }
 
-      case NodeKind::Dereference:
-      case NodeKind::VarStorage:
-        return ExpressionCategory::DurableReference;
+      case SpliceBlock::Kind: {
+        inst_id = inst.As<SpliceBlock>().result_id;
+        continue;
+      }
 
-      case NodeKind::Temporary:
-      case NodeKind::TemporaryStorage:
-      case NodeKind::ValueAsReference:
-        return ExpressionCategory::EphemeralReference;
+      case StructLiteral::Kind:
+      case TupleLiteral::Kind:
+        return ExprCategory::Mixed;
+
+      case ArrayInit::Kind:
+      case Call::Kind:
+      case InitializeFrom::Kind:
+      case ClassInit::Kind:
+      case StructInit::Kind:
+      case TupleInit::Kind:
+        return ExprCategory::Initializing;
+
+      case Deref::Kind:
+      case VarStorage::Kind:
+        return ExprCategory::DurableRef;
+
+      case Temporary::Kind:
+      case TemporaryStorage::Kind:
+      case ValueAsRef::Kind:
+        return ExprCategory::EphemeralRef;
     }
   }
 }
 
-auto GetValueRepresentation(const File& file, TypeId type_id)
-    -> ValueRepresentation {
-  const File* ir = &file;
-  NodeId node_id = ir->GetTypeAllowBuiltinTypes(type_id);
-  while (true) {
-    auto node = ir->GetNode(node_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (node.kind()) {
-      case NodeKind::AddressOf:
-      case NodeKind::ArrayIndex:
-      case NodeKind::ArrayInit:
-      case NodeKind::Assign:
-      case NodeKind::BinaryOperatorAdd:
-      case NodeKind::BindValue:
-      case NodeKind::BlockArg:
-      case NodeKind::BoolLiteral:
-      case NodeKind::Branch:
-      case NodeKind::BranchIf:
-      case NodeKind::BranchWithArg:
-      case NodeKind::Call:
-      case NodeKind::Dereference:
-      case NodeKind::FunctionDeclaration:
-      case NodeKind::InitializeFrom:
-      case NodeKind::IntegerLiteral:
-      case NodeKind::Invalid:
-      case NodeKind::NameReference:
-      case NodeKind::NameReferenceUntyped:
-      case NodeKind::Namespace:
-      case NodeKind::NoOp:
-      case NodeKind::Parameter:
-      case NodeKind::RealLiteral:
-      case NodeKind::Return:
-      case NodeKind::ReturnExpression:
-      case NodeKind::StringLiteral:
-      case NodeKind::StructAccess:
-      case NodeKind::StructTypeField:
-      case NodeKind::StructLiteral:
-      case NodeKind::StructInit:
-      case NodeKind::StructValue:
-      case NodeKind::Temporary:
-      case NodeKind::TemporaryStorage:
-      case NodeKind::TupleAccess:
-      case NodeKind::TupleIndex:
-      case NodeKind::TupleLiteral:
-      case NodeKind::TupleInit:
-      case NodeKind::TupleValue:
-      case NodeKind::UnaryOperatorNot:
-      case NodeKind::ValueAsReference:
-      case NodeKind::VarStorage:
-        CARBON_FATAL() << "Type refers to non-type node " << node;
-
-      case NodeKind::CrossReference: {
-        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
-        ir = &ir->GetCrossReferenceIR(xref_id);
-        node_id = xref_node_id;
-        continue;
-      }
-
-      case NodeKind::SpliceBlock: {
-        auto [block_id, result_id] = node.GetAsSpliceBlock();
-        node_id = result_id;
-        continue;
-      }
-
-      case NodeKind::ArrayType:
-        // For arrays, it's convenient to always use a pointer representation,
-        // even when the array has zero or one element, in order to support
-        // indexing.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-
-      case NodeKind::StructType: {
-        const auto& fields = ir->GetNodeBlock(node.GetAsStructType());
-        if (fields.empty()) {
-          // An empty struct has an empty representation.
-          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-        }
-        if (fields.size() == 1) {
-          // A struct with one field has the same representation as its field.
-          auto [field_name_id, field_type_id] =
-              ir->GetNode(fields.front()).GetAsStructTypeField();
-          node_id = ir->GetTypeAllowBuiltinTypes(field_type_id);
-          continue;
-        }
-        // For any other struct, use a pointer representation.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-      }
-
-      case NodeKind::TupleType: {
-        const auto& elements = ir->GetTypeBlock(node.GetAsTupleType());
-        if (elements.empty()) {
-          // An empty tuple has an empty representation.
-          return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-        }
-        if (elements.size() == 1) {
-          // A one-tuple has the same representation as its sole element.
-          node_id = ir->GetTypeAllowBuiltinTypes(elements.front());
-          continue;
-        }
-        // For any other tuple, use a pointer representation.
-        return {.kind = ValueRepresentation::Pointer, .type = type_id};
-      }
-
-      case NodeKind::Builtin:
-        // clang warns on unhandled enum values; clang-tidy is incorrect here.
-        // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-        switch (node.GetAsBuiltin()) {
-          case BuiltinKind::TypeType:
-          case BuiltinKind::Error:
-          case BuiltinKind::Invalid:
-            return {.kind = ValueRepresentation::None, .type = TypeId::Invalid};
-          case BuiltinKind::BoolType:
-          case BuiltinKind::IntegerType:
-          case BuiltinKind::FloatingPointType:
-            return {.kind = ValueRepresentation::Copy, .type = type_id};
-          case BuiltinKind::StringType:
-            // TODO: Decide on string value semantics. This should probably be a
-            // custom value representation carrying a pointer and size or
-            // similar.
-            return {.kind = ValueRepresentation::Pointer, .type = type_id};
-        }
-
-      case NodeKind::PointerType:
-        return {.kind = ValueRepresentation::Copy, .type = type_id};
-
-      case NodeKind::ConstType:
-        node_id = ir->GetTypeAllowBuiltinTypes(node.GetAsConstType());
-        continue;
-    }
-  }
-}
-
-auto GetInitializingRepresentation(const File& file, TypeId type_id)
-    -> InitializingRepresentation {
-  auto value_rep = GetValueRepresentation(file, type_id);
+auto GetInitRepr(const File& file, TypeId type_id) -> InitRepr {
+  auto value_rep = GetValueRepr(file, type_id);
   switch (value_rep.kind) {
-    case ValueRepresentation::None:
-      return {.kind = InitializingRepresentation::None};
+    case ValueRepr::None:
+      return {.kind = InitRepr::None};
 
-    case ValueRepresentation::Copy:
+    case ValueRepr::Copy:
       // TODO: Use in-place initialization for types that have non-trivial
       // destructive move.
-      return {.kind = InitializingRepresentation::ByCopy};
+      return {.kind = InitRepr::ByCopy};
 
-    case ValueRepresentation::Pointer:
-    case ValueRepresentation::Custom:
-      return {.kind = InitializingRepresentation::InPlace};
+    case ValueRepr::Pointer:
+    case ValueRepr::Custom:
+      return {.kind = InitRepr::InPlace};
+
+    case ValueRepr::Unknown:
+      CARBON_FATAL()
+          << "Attempting to perform initialization of incomplete type";
   }
 }
 

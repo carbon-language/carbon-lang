@@ -7,20 +7,33 @@
 var x: (i32,) = (4,);
 var y: (i32,) = x;
 
-// CHECK:STDOUT: file "one_element.carbon" {
+// CHECK:STDOUT: --- one_element.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_13.2: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc7_13.3: type = tuple_type (i32)
-// CHECK:STDOUT:   %x: ref (i32,) = var "x"
+// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
+// CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2
+// CHECK:STDOUT:   %x.var: ref (i32,) = var x
+// CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc7_20.1: (i32,) = tuple_literal (%.loc7_18)
-// CHECK:STDOUT:   %.loc7_20.2: init (i32,) = tuple_init %.loc7_20.1, (%.loc7_18)
-// CHECK:STDOUT:   assign %x, %.loc7_20.2
+// CHECK:STDOUT:   %.loc7_20.2: init (i32,) = tuple_init (%.loc7_18) to %x.var
+// CHECK:STDOUT:   %.loc7_20.3: init (i32,) = converted %.loc7_20.1, %.loc7_20.2
+// CHECK:STDOUT:   assign %x.var, %.loc7_20.3
 // CHECK:STDOUT:   %.loc8_13: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %y: ref (i32,) = var "y"
-// CHECK:STDOUT:   %x.ref: ref (i32,) = name_reference "x", %x
-// CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %x.ref, member0
+// CHECK:STDOUT:   %.loc7_13.3: type = converted %.loc8_13, constants.%.loc7_13.2
+// CHECK:STDOUT:   %y.var: ref (i32,) = var y
+// CHECK:STDOUT:   %y: ref (i32,) = bind_name y, %y.var
+// CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
+// CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %.loc8_17.2: i32 = bind_value %.loc8_17.1
-// CHECK:STDOUT:   %.loc8_17.3: init (i32,) = tuple_init %x.ref, (%.loc8_17.2)
-// CHECK:STDOUT:   assign %y, %.loc8_17.3
+// CHECK:STDOUT:   %.loc8_17.3: init (i32,) = tuple_init (%.loc8_17.2) to %y.var
+// CHECK:STDOUT:   %.loc8_17.4: init (i32,) = converted %x.ref, %.loc8_17.3
+// CHECK:STDOUT:   assign %y.var, %.loc8_17.4
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

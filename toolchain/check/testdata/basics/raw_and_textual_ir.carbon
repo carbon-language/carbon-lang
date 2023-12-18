@@ -8,120 +8,124 @@
 //
 // AUTOUPDATE
 
-fn Foo(n: i32) -> (i32, f64) {
-  return (n + 2, 3.4);
+fn Foo(n: i32) -> (i32, i32, f64) {
+  return (n, 2, 3.4);
 }
 
-// CHECK:STDOUT: - filename: raw_and_textual_ir.carbon
-// CHECK:STDOUT:   sem_ir:
-// CHECK:STDOUT:   - cross_reference_irs_size: 1
-// CHECK:STDOUT:     functions: [
-// CHECK:STDOUT:       {name: str0, param_refs: block1, return_type: type3, return_slot: node+4, body: [block4]},
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     integer_literals: [
-// CHECK:STDOUT:       2,
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     real_literals: [
-// CHECK:STDOUT:       {mantissa: 34, exponent: -1, is_decimal: 1},
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     strings: [
-// CHECK:STDOUT:       Foo,
-// CHECK:STDOUT:       n,
-// CHECK:STDOUT:       return,
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     types: [
-// CHECK:STDOUT:       nodeIntegerType,
-// CHECK:STDOUT:       node+1,
-// CHECK:STDOUT:       nodeFloatingPointType,
-// CHECK:STDOUT:       node+3,
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     type_blocks: [
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         typeTypeType,
-// CHECK:STDOUT:         typeTypeType,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         type0,
-// CHECK:STDOUT:         type2,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     nodes: [
-// CHECK:STDOUT:       {kind: Parameter, arg0: str1, type: type0},
-// CHECK:STDOUT:       {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:       {kind: TupleLiteral, arg0: block2, type: type1},
-// CHECK:STDOUT:       {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
-// CHECK:STDOUT:       {kind: VarStorage, arg0: str2, type: type3},
-// CHECK:STDOUT:       {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:       {kind: NameReference, arg0: str1, arg1: node+0, type: type0},
-// CHECK:STDOUT:       {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:       {kind: BinaryOperatorAdd, arg0: node+6, arg1: node+7, type: type0},
-// CHECK:STDOUT:       {kind: RealLiteral, arg0: real0, type: type2},
-// CHECK:STDOUT:       {kind: TupleLiteral, arg0: block5, type: type3},
-// CHECK:STDOUT:       {kind: TupleAccess, arg0: node+4, arg1: member0, type: type0},
-// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+8, arg1: node+11, type: type0},
-// CHECK:STDOUT:       {kind: TupleAccess, arg0: node+4, arg1: member1, type: type2},
-// CHECK:STDOUT:       {kind: InitializeFrom, arg0: node+9, arg1: node+13, type: type2},
-// CHECK:STDOUT:       {kind: TupleInit, arg0: node+10, arg1: block6, type: type3},
-// CHECK:STDOUT:       {kind: ReturnExpression, arg0: node+15},
-// CHECK:STDOUT:     ]
-// CHECK:STDOUT:     node_blocks: [
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+0,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         nodeIntegerType,
-// CHECK:STDOUT:         nodeFloatingPointType,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+0,
-// CHECK:STDOUT:         node+1,
-// CHECK:STDOUT:         node+2,
-// CHECK:STDOUT:         node+3,
-// CHECK:STDOUT:         node+4,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+6,
-// CHECK:STDOUT:         node+7,
-// CHECK:STDOUT:         node+8,
-// CHECK:STDOUT:         node+9,
-// CHECK:STDOUT:         node+10,
-// CHECK:STDOUT:         node+11,
-// CHECK:STDOUT:         node+12,
-// CHECK:STDOUT:         node+13,
-// CHECK:STDOUT:         node+14,
-// CHECK:STDOUT:         node+15,
-// CHECK:STDOUT:         node+16,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+8,
-// CHECK:STDOUT:         node+9,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+12,
-// CHECK:STDOUT:         node+14,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:       [
-// CHECK:STDOUT:         node+5,
-// CHECK:STDOUT:       ],
-// CHECK:STDOUT:     ]
+// CHECK:STDOUT: ---
+// CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
+// CHECK:STDOUT: sem_ir:
+// CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   functions:
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block1, return_type: type4, return_slot: inst+6, body: [block4]}
+// CHECK:STDOUT:   classes:         {}
+// CHECK:STDOUT:   types:
+// CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type1:           {inst: instIntType, value_rep: {kind: copy, type: type1}}
+// CHECK:STDOUT:     type2:           {inst: inst+2, value_rep: {kind: unknown, type: type<invalid>}}
+// CHECK:STDOUT:     type3:           {inst: instFloatType, value_rep: {kind: copy, type: type3}}
+// CHECK:STDOUT:     type4:           {inst: inst+4, value_rep: {kind: pointer, type: type5}}
+// CHECK:STDOUT:     type5:           {inst: inst+7, value_rep: {kind: copy, type: type5}}
+// CHECK:STDOUT:     type6:           {inst: instFunctionType, value_rep: {kind: copy, type: type6}}
+// CHECK:STDOUT:   type_blocks:
+// CHECK:STDOUT:     typeBlock0:
+// CHECK:STDOUT:       0:               typeTypeType
+// CHECK:STDOUT:       1:               typeTypeType
+// CHECK:STDOUT:       2:               typeTypeType
+// CHECK:STDOUT:     typeBlock1:
+// CHECK:STDOUT:       0:               type1
+// CHECK:STDOUT:       1:               type1
+// CHECK:STDOUT:       2:               type3
+// CHECK:STDOUT:   insts:
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
+// CHECK:STDOUT:     inst+2:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
+// CHECK:STDOUT:     inst+3:          {kind: TupleLiteral, arg0: block2, type: type2}
+// CHECK:STDOUT:     inst+4:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
+// CHECK:STDOUT:     inst+5:          {kind: Converted, arg0: inst+3, arg1: inst+4, type: typeTypeType}
+// CHECK:STDOUT:     inst+6:          {kind: VarStorage, arg0: nameReturnSlot, type: type4}
+// CHECK:STDOUT:     inst+7:          {kind: PointerType, arg0: type4, type: typeTypeType}
+// CHECK:STDOUT:     inst+8:          {kind: FunctionDecl, arg0: function0, type: type6}
+// CHECK:STDOUT:     inst+9:          {kind: NameRef, arg0: name1, arg1: inst+1, type: type1}
+// CHECK:STDOUT:     inst+10:         {kind: IntLiteral, arg0: int4, type: type1}
+// CHECK:STDOUT:     inst+11:         {kind: RealLiteral, arg0: real0, type: type3}
+// CHECK:STDOUT:     inst+12:         {kind: TupleLiteral, arg0: block5, type: type4}
+// CHECK:STDOUT:     inst+13:         {kind: TupleAccess, arg0: inst+6, arg1: element0, type: type1}
+// CHECK:STDOUT:     inst+14:         {kind: InitializeFrom, arg0: inst+9, arg1: inst+13, type: type1}
+// CHECK:STDOUT:     inst+15:         {kind: TupleAccess, arg0: inst+6, arg1: element1, type: type1}
+// CHECK:STDOUT:     inst+16:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+15, type: type1}
+// CHECK:STDOUT:     inst+17:         {kind: TupleAccess, arg0: inst+6, arg1: element2, type: type3}
+// CHECK:STDOUT:     inst+18:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+17, type: type3}
+// CHECK:STDOUT:     inst+19:         {kind: TupleInit, arg0: block6, arg1: inst+6, type: type4}
+// CHECK:STDOUT:     inst+20:         {kind: Converted, arg0: inst+12, arg1: inst+19, type: type4}
+// CHECK:STDOUT:     inst+21:         {kind: ReturnExpr, arg0: inst+20}
+// CHECK:STDOUT:   inst_blocks:
+// CHECK:STDOUT:     block0:          {}
+// CHECK:STDOUT:     block1:
+// CHECK:STDOUT:       0:               inst+1
+// CHECK:STDOUT:     block2:
+// CHECK:STDOUT:       0:               instIntType
+// CHECK:STDOUT:       1:               instIntType
+// CHECK:STDOUT:       2:               instFloatType
+// CHECK:STDOUT:     block3:
+// CHECK:STDOUT:       0:               inst+1
+// CHECK:STDOUT:       1:               inst+3
+// CHECK:STDOUT:       2:               inst+5
+// CHECK:STDOUT:       3:               inst+6
+// CHECK:STDOUT:     block4:
+// CHECK:STDOUT:       0:               inst+9
+// CHECK:STDOUT:       1:               inst+10
+// CHECK:STDOUT:       2:               inst+11
+// CHECK:STDOUT:       3:               inst+12
+// CHECK:STDOUT:       4:               inst+13
+// CHECK:STDOUT:       5:               inst+14
+// CHECK:STDOUT:       6:               inst+15
+// CHECK:STDOUT:       7:               inst+16
+// CHECK:STDOUT:       8:               inst+17
+// CHECK:STDOUT:       9:               inst+18
+// CHECK:STDOUT:       10:              inst+19
+// CHECK:STDOUT:       11:              inst+20
+// CHECK:STDOUT:       12:              inst+21
+// CHECK:STDOUT:     block5:
+// CHECK:STDOUT:       0:               inst+9
+// CHECK:STDOUT:       1:               inst+10
+// CHECK:STDOUT:       2:               inst+11
+// CHECK:STDOUT:     block6:
+// CHECK:STDOUT:       0:               inst+14
+// CHECK:STDOUT:       1:               inst+16
+// CHECK:STDOUT:       2:               inst+18
+// CHECK:STDOUT:     block7:
+// CHECK:STDOUT:       0:               inst+0
+// CHECK:STDOUT:       1:               inst+8
+// CHECK:STDOUT: ...
 // CHECK:STDOUT:
-// CHECK:STDOUT: file "raw_and_textual_ir.carbon" {
-// CHECK:STDOUT:   %Foo = fn_decl @Foo
+// CHECK:STDOUT: --- raw_and_textual_ir.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11_33.1: type = tuple_type (type, type, type)
+// CHECK:STDOUT:   %.loc11_33.2: type = tuple_type (i32, i32, f64)
+// CHECK:STDOUT:   %.loc11_33.3: type = ptr_type (i32, i32, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, f64) {
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo}
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, i32, f64) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_reference "n", %n
-// CHECK:STDOUT:   %.loc12_15: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc12_13: i32 = add %n.ref, %.loc12_15
-// CHECK:STDOUT:   %.loc12_18: f64 = real_literal 34e-1
-// CHECK:STDOUT:   %.loc12_21.1: (i32, f64) = tuple_literal (%.loc12_13, %.loc12_18)
-// CHECK:STDOUT:   %.loc12_21.2: ref i32 = tuple_access %return, member0
-// CHECK:STDOUT:   %.loc12_21.3: init i32 = initialize_from %.loc12_13 to %.loc12_21.2
-// CHECK:STDOUT:   %.loc12_21.4: ref f64 = tuple_access %return, member1
-// CHECK:STDOUT:   %.loc12_21.5: init f64 = initialize_from %.loc12_18 to %.loc12_21.4
-// CHECK:STDOUT:   %.loc12_21.6: init (i32, f64) = tuple_init %.loc12_21.1, (%.loc12_21.3, %.loc12_21.5)
-// CHECK:STDOUT:   return %.loc12_21.6
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc12_20.1: (i32, i32, f64) = tuple_literal (%n.ref, %.loc12_14, %.loc12_17)
+// CHECK:STDOUT:   %.loc12_20.2: ref i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc12_20.3: init i32 = initialize_from %n.ref to %.loc12_20.2
+// CHECK:STDOUT:   %.loc12_20.4: ref i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4
+// CHECK:STDOUT:   %.loc12_20.6: ref f64 = tuple_access %return, element2
+// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6
+// CHECK:STDOUT:   %.loc12_20.8: init (i32, i32, f64) = tuple_init (%.loc12_20.3, %.loc12_20.5, %.loc12_20.7) to %return
+// CHECK:STDOUT:   %.loc12_20.9: init (i32, i32, f64) = converted %.loc12_20.1, %.loc12_20.8
+// CHECK:STDOUT:   return %.loc12_20.9
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

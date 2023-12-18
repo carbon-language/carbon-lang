@@ -12,11 +12,15 @@
 // CHECK:STDERR:        ^
 fn Bar(a: i32, a: i32) {}
 
-// CHECK:STDOUT: file "fail_param_name_conflict.carbon" {
-// CHECK:STDOUT:   %Bar = fn_decl @Bar
+// CHECK:STDOUT: --- fail_param_name_conflict.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Bar = %Bar}
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.loc13_8: i32, %a.loc13_16: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

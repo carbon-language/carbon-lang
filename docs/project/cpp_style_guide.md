@@ -135,6 +135,8 @@ these.
     -   Use `{}` initialization without the `=` only if the above options don't
         compile.
     -   Never mix `{}` initialization and `auto`.
+-   Always mark constructors `explicit` unless there's a specific reason to
+    support implicit or `{}` initialization.
 -   Always use braces for conditional, `switch`, and loop statements, even when
     the body is a single statement.
     -   Within a `switch` statement, use braces after a `case` label when

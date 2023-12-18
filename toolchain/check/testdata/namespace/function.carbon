@@ -17,11 +17,18 @@ fn Bar() {
   Foo.Baz();
 }
 
-// CHECK:STDOUT: file "function.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %Baz.loc13}
-// CHECK:STDOUT:   %Baz.loc10 = fn_decl @Baz.1
-// CHECK:STDOUT:   %Baz.loc13 = fn_decl @Baz.2
-// CHECK:STDOUT:   %Bar = fn_decl @Bar
+// CHECK:STDOUT: --- function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc17: type = tuple_type ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7, .Baz = %Baz.loc10, .Bar = %Bar}
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc13}
+// CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1
+// CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {
@@ -36,8 +43,9 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref = name_reference_untyped "Foo", package.%.loc7
-// CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc17_10.2: init () = call @Baz.2()
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7
+// CHECK:STDOUT:   %Baz.ref: <function> = name_ref Baz, file.%Baz.loc13
+// CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

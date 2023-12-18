@@ -21,6 +21,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//toolchain/lex:token_kind",
     ],
 )
 
@@ -53,6 +54,7 @@ cc_library(
         "//common:ostream",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
@@ -70,8 +72,10 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
+        "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:yaml_test_helpers",
         "@com_google_googletest//:gtest",
@@ -87,9 +91,10 @@ cc_fuzz_test(
     deps = [
         ":tree",
         "//common:check",
+        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
-        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/lex",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -97,7 +102,11 @@ cc_fuzz_test(
 cc_library(
     name = "tree_node_location_translator",
     hdrs = ["tree_node_location_translator.h"],
-    deps = [":tree"],
+    deps = [
+        ":tree",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:tokenized_buffer",
+    ],
 )
 
 cc_library(

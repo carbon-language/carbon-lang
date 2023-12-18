@@ -17,6 +17,7 @@ cc_library(
 
 cc_test(
     name = "arena_test",
+    size = "small",
     srcs = ["arena_test.cpp"],
     deps = [
         ":arena",
@@ -35,6 +36,7 @@ cc_library(
 
 cc_test(
     name = "decompose_test",
+    size = "small",
     srcs = ["decompose_test.cpp"],
     deps = [
         ":decompose",
@@ -54,6 +56,7 @@ cc_library(
 
 cc_test(
     name = "error_builders_test",
+    size = "small",
     srcs = ["error_builders_test.cpp"],
     deps = [
         ":error_builders",
@@ -103,6 +106,7 @@ cc_library(
 
 cc_test(
     name = "set_program_phase_raii_test",
+    size = "small",
     srcs = ["set_program_phase_raii_test.cpp"],
     deps = [
         ":trace_stream",
@@ -113,6 +117,7 @@ cc_test(
 
 cc_test(
     name = "set_file_context_raii_test",
+    size = "small",
     srcs = ["set_file_context_raii_test.cpp"],
     deps = [
         ":source_location",

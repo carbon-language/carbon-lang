@@ -35,7 +35,7 @@ class AstRttiNodeKind : public CARBON_ENUM_BASE(AstRttiNodeKind) {
   // other enumerations to match, and to implement range checks.
   using EnumBase::AsInt;
 
-  CARBON_AST_FOR_EACH_FINAL_CLASS(CARBON_ENUM_CONSTANT_DECLARATION)
+  CARBON_AST_FOR_EACH_FINAL_CLASS(CARBON_ENUM_CONSTANT_DECL)
 };
 
 // Define the constant members for AstRttiNodeKind.

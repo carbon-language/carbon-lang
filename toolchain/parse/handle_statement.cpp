@@ -23,19 +23,29 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::For: {
       context.PushState(State::StatementForFinish);
       context.PushState(State::StatementForHeader);
-      ++context.position();
+      context.ConsumeAndDiscard();
       break;
     }
     case Lex::TokenKind::If: {
       context.PushState(State::StatementIf);
       break;
     }
+    case Lex::TokenKind::Let: {
+      context.PushState(State::Let);
+      context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
+      break;
+    }
     case Lex::TokenKind::Return: {
       context.PushState(State::StatementReturn);
       break;
     }
+    case Lex::TokenKind::Returned: {
+      context.PushState(State::VarAsReturned);
+      break;
+    }
     case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsSemicolon);
+      context.PushState(State::VarAsDecl);
+      context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
       break;
     }
     case Lex::TokenKind::While: {
@@ -43,8 +53,8 @@ auto HandleStatement(Context& context) -> void {
       break;
     }
     default: {
-      context.PushState(State::ExpressionStatementFinish);
-      context.PushStateForExpression(PrecedenceGroup::ForExpressionStatement());
+      context.PushState(State::ExprStatementFinish);
+      context.PushStateForExpr(PrecedenceGroup::ForExprStatement());
       break;
     }
   }
@@ -62,12 +72,8 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
     context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
-    // Recover to the next semicolon if possible, otherwise indicate the
-    // keyword for the error.
+    // Recover to the next semicolon if possible.
     semi = context.SkipPastLikelyEnd(state.token);
-    if (!semi) {
-      semi = state.token;
-    }
   }
   context.AddNode(node_kind, *semi, state.subtree_start, state.has_error);
 }
@@ -83,7 +89,7 @@ auto HandleStatementContinueFinish(Context& context) -> void {
 auto HandleStatementForHeader(Context& context) -> void {
   auto state = context.PopState();
 
-  std::optional<Lex::Token> open_paren =
+  std::optional<Lex::TokenIndex> open_paren =
       context.ConsumeAndAddOpenParen(state.token, NodeKind::ForHeaderStart);
   if (open_paren) {
     state.token = *open_paren;
@@ -93,14 +99,15 @@ auto HandleStatementForHeader(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Var)) {
     context.PushState(state);
     context.PushState(State::VarAsFor);
+    context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
   } else {
-    CARBON_DIAGNOSTIC(ExpectedVariableDeclaration, Error,
+    CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
                       "Expected `var` declaration.");
-    context.emitter().Emit(*context.position(), ExpectedVariableDeclaration);
+    context.emitter().Emit(*context.position(), ExpectedVariableDecl);
 
     if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
       context.SkipTo(*next_in);
-      ++context.position();
+      context.ConsumeAndDiscard();
     }
     state.has_error = true;
     context.PushState(state);
@@ -109,10 +116,8 @@ auto HandleStatementForHeader(Context& context) -> void {
 
 auto HandleStatementForHeaderIn(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::StatementForHeaderFinish;
-  context.PushState(state);
-  context.PushState(State::Expression);
+  context.PushState(state, State::StatementForHeaderFinish);
+  context.PushState(State::Expr);
 }
 
 auto HandleStatementForHeaderFinish(Context& context) -> void {
@@ -135,14 +140,12 @@ auto HandleStatementIf(Context& context) -> void {
 
   context.PushState(State::StatementIfConditionFinish);
   context.PushState(State::ParenConditionAsIf);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementIfConditionFinish(Context& context) -> void {
   auto state = context.PopState();
-
-  state.state = State::StatementIfThenBlockFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementIfThenBlockFinish);
   context.PushState(State::CodeBlock);
 }
 
@@ -151,8 +154,7 @@ auto HandleStatementIfThenBlockFinish(Context& context) -> void {
 
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Else,
                                       NodeKind::IfStatementElse)) {
-    state.state = State::StatementIfElseBlockFinish;
-    context.PushState(state);
+    context.PushState(state, State::StatementIfElseBlockFinish);
     // `else if` is permitted as a special case.
     context.PushState(context.PositionIs(Lex::TokenKind::If)
                           ? State::StatementIf
@@ -171,12 +173,18 @@ auto HandleStatementIfElseBlockFinish(Context& context) -> void {
 
 auto HandleStatementReturn(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::StatementReturnFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementReturnFinish);
 
   context.AddLeafNode(NodeKind::ReturnStatementStart, context.Consume());
-  if (!context.PositionIs(Lex::TokenKind::Semi)) {
-    context.PushState(State::Expression);
+
+  if (auto var_token = context.ConsumeIf(Lex::TokenKind::Var)) {
+    // `return var;`
+    context.AddLeafNode(NodeKind::ReturnVarModifier, *var_token);
+  } else if (!context.PositionIs(Lex::TokenKind::Semi)) {
+    // `return <expression>;`
+    context.PushState(State::Expr);
+  } else {
+    // `return;`
   }
 }
 
@@ -203,14 +211,13 @@ auto HandleStatementWhile(Context& context) -> void {
 
   context.PushState(State::StatementWhileConditionFinish);
   context.PushState(State::ParenConditionAsWhile);
-  ++context.position();
+  context.ConsumeAndDiscard();
 }
 
 auto HandleStatementWhileConditionFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::StatementWhileBlockFinish;
-  context.PushState(state);
+  context.PushState(state, State::StatementWhileBlockFinish);
   context.PushState(State::CodeBlock);
 }
 

@@ -21,7 +21,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Run() {
+// CHECK:STDOUT: define void @main() {
 // CHECK:STDOUT:   %t = alloca [2 x i32], align 4
 // CHECK:STDOUT:   %temp = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   call void @F(ptr %temp)

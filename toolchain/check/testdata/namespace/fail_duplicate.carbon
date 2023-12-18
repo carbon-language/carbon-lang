@@ -9,27 +9,29 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function Baz.
 // CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR:        ^
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Previous definition was here.
 // CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR: ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: file "fail_duplicate.carbon" {
-// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %Baz}
-// CHECK:STDOUT:   %Baz = fn_decl @Baz
-// CHECK:STDOUT:   %.loc18 = fn_decl @.1
+// CHECK:STDOUT: --- fail_duplicate.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7}
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc9}
+// CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz
+// CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
-// CHECK:STDOUT: !entry:
+// CHECK:STDOUT: !.loc19:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:

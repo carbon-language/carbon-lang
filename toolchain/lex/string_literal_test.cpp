@@ -25,13 +25,14 @@ class StringLiteralTest : public ::testing::Test {
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> std::string {
+  auto Parse(llvm::StringRef text) -> llvm::StringRef {
     StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticTranslator translator(text);
     DiagnosticEmitter<const char*> emitter(translator, error_tracker);
-    return token.ComputeValue(emitter);
+    return token.ComputeValue(allocator, emitter);
   }
 
+  llvm::BumpPtrAllocator allocator;
   ErrorTrackingDiagnosticConsumer error_tracker;
 };
 
@@ -311,7 +312,7 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
 
   for (llvm::StringLiteral test : testcases) {
     error_tracker.Reset();
-    auto value = Parse(test);
+    Parse(test);
     EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }

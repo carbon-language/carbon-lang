@@ -21,11 +21,12 @@ cc_library(
     deps = [
         "//common:command_line",
         "//common:vlog",
+        "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
-        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/lex",
         "//toolchain/lower",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
@@ -43,6 +44,7 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
+        "//common:all_llvm_targets",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -72,7 +74,9 @@ cc_binary(
     env = cc_env(),
     deps = [
         ":driver",
+        "//common:all_llvm_targets",
         "//common:bazel_working_dir",
+        "//common:init_llvm",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -4,17 +4,26 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:18: ERROR: Cannot initialize tuple of 1 element(s) from tuple with 0 element(s).
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:17: ERROR: Cannot initialize tuple of 1 element(s) from tuple with 0 element(s).
 // CHECK:STDERR: var x: (i32,) = ();
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:                 ^~
 var x: (i32,) = ();
 
-// CHECK:STDOUT: file "fail_assign_empty.carbon" {
+// CHECK:STDOUT: --- fail_assign_empty.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc10_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc10_13.2: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc10_13.3: type = tuple_type (i32)
-// CHECK:STDOUT:   %x: ref (i32,) = var "x"
-// CHECK:STDOUT:   %.loc10_18.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_18.2: () = tuple_literal ()
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   %.loc10_13.2: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc10_18: type = tuple_type ()
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
+// CHECK:STDOUT:   %.loc10_13.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc10_13.2: type = converted %.loc10_13.1, constants.%.loc10_13.2
+// CHECK:STDOUT:   %x.var: ref (i32,) = var x
+// CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc10_18: () = tuple_literal ()
+// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

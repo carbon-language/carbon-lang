@@ -9,16 +9,19 @@ package(default_visibility = ["//visibility:public"])
 
 file_test(
     name = "file_test",
+    size = "small",
     srcs = ["file_test.cpp"],
     tests = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
+        "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/lex:testdata",
         "//toolchain/lower:testdata",
         "//toolchain/parse:testdata",
     ],
     deps = [
+        "//common:all_llvm_targets",
         "//testing/file_test:file_test_base",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",

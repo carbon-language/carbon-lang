@@ -33,6 +33,7 @@ cc_library(
         ":autoupdate",
         "//common:check",
         "//common:error",
+        "//common:init_llvm",
         "//common:ostream",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
@@ -43,6 +44,7 @@ cc_library(
 
 file_test(
     name = "file_test_base_test",
+    size = "small",
     srcs = ["file_test_base_test.cpp"],
     tests = glob(["testdata/**"]),
     deps = [
