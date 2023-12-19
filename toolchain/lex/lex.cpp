@@ -998,13 +998,13 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
     return token;
   }
 
-  TokenIndex opening_token = open_groups_.back();
-  if (LLVM_UNLIKELY(buffer_.GetTokenInfo(opening_token).kind !=
+  if (LLVM_UNLIKELY(buffer_.GetTokenInfo(open_groups_.back()).kind !=
                     kind.opening_symbol())) {
     has_mismatched_brackets_ = true;
     return token;
   }
 
+  TokenIndex opening_token = open_groups_.pop_back_val();
   buffer_.GetTokenInfo(opening_token).closing_token = token;
   buffer_.GetTokenInfo(token).opening_token = opening_token;
   return token;
@@ -1247,6 +1247,8 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   llvm::SmallVector<std::pair<int, TokenizedBuffer::TokenInfo>> new_tokens;
 
+  bool fixed_anything = false;
+
   // Handle an opening token with no matching closing token.
   auto handle_missing_close = [&](TokenIndex opening_token,
                                   TokenIndex insert_before) {
@@ -1281,13 +1283,25 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
             .token_line = new_token_line,
             .column = new_token_column - 1}});
     }
+
+    fixed_anything = true;
   };
 
   // Look for mismatched brackets and decide where to add tokens to fix them.
   //
-  // TODO: For now, we use a greedy algorithm for this. In principle it should
-  // be possible to do better than this with a smart scan that tries to reduce
-  // the number of added brackets and takes indentation into account.
+  // TODO: For now, we use a greedy algorithm for this. We could do better by
+  // taking indentation into account. For example:
+  //
+  //     1  fn F() {
+  //     2    if (thing1)
+  //     3      thing2;
+  //     4    }
+  //     5  }
+  //
+  // Here, we'll match the `{` on line 1 with the `}` on line 4, and then
+  // report that the `}` on line 5 is unmatched. Instead, we should notice that
+  // line 1 matches better with line 5 due to indentation, and work out that
+  // the missing `{` was on line 2, also based on indentation.
   open_groups_.clear();
   for (auto token : buffer_.tokens()) {
     auto kind = buffer_.GetKind(token);
@@ -1311,6 +1325,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       auto& token_info = buffer_.GetTokenInfo(token);
       token_info.kind = TokenKind::Error;
       token_info.error_length = kind.fixed_spelling().size();
+      fixed_anything = true;
 
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,
@@ -1332,6 +1347,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   }
 
   // Merge the recovery tokens into the token list.
+  CARBON_CHECK(fixed_anything) << "Didn't find anything to fix";
   auto old_tokens = std::move(buffer_.token_infos_);
   buffer_.token_infos_.clear();
   buffer_.token_infos_.reserve(old_tokens.size() + new_tokens.size());
