@@ -71,6 +71,14 @@ use_repo(bazel_cc_toolchain, "bazel_cc_toolchain")
 
 register_toolchains("@bazel_cc_toolchain//:all")
 
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    # HEAD as of 2023-12-19.
+    commit = "af167878427c469db96444b65f026d064ec62a4f",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
+
 ###############################################################################
 # llvm-project
 ###############################################################################

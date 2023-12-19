@@ -22,7 +22,8 @@
 /user.bazelrc
 
 # Compilation database used by clangd
-compile_commands.json
+/compile_commands.json
+/external
 
 # Emacs temporary files
 *~
