@@ -40,8 +40,8 @@ for dep in deps:
     # These are stubs wrapping system libraries for LLVM. They aren't
     # distributed and so should be fine.
     if repo in (
-        "@@_main~_repo_rules~llvm_zlib",
-        "@@_main~_repo_rules~llvm_zstd",
+        "@@zlib~1.3",
+        "@@zstd~1.5.5",
     ):
         continue
     if repo == "@@_main~llvm_project~llvm-project":
