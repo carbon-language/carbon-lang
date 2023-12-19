@@ -270,7 +270,6 @@ struct Tree::Extractable {
     }
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    llvm::errs() << "FIXME: Extract simple aggregate\n";
     auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
     if (!tuple.has_value()) {
       if (trace) {

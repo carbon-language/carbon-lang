@@ -401,6 +401,9 @@ auto Tree::TryExtractNodeFromChildren(
   auto it = children.begin();
   auto result = Extractable<T>::ExtractImpl(this, it, children.end(), trace);
   if (it != children.end()) {
+    if (trace) {
+      *trace << "Error: " << node_kind(*it) << " node left unconsumed.";
+    }
     return std::nullopt;
   }
   return result;
