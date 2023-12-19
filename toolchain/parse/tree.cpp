@@ -221,12 +221,12 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "  ]\n";
 }
 
-static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind)
-    -> bool {
+static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind,
+                        ErrorBuilder* trace) -> bool {
   switch (kind) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case NodeKind::Name:               \
-    return tree->TryExtractAs<Name>(node_id).has_value();
+    return tree->TryExtractAs<Name>(node_id, trace).has_value();
 #include "toolchain/parse/node_kind.def"
   }
 }
@@ -248,9 +248,13 @@ auto Tree::Verify() const -> ErrorOr<Success> {
           "Node #{0} is a placeholder node that wasn't replaced.", n.index));
     }
     // Should extract successfully if node not marked as having an error.
-    if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind)) {
-      return Error(llvm::formatv("NodeId #{0} couldn't be extracted as a {1}.",
-                                 n, n_impl.kind));
+    if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind, nullptr)) {
+      ErrorBuilder trace;
+      trace << llvm::formatv(
+          "NodeId #{0} couldn't be extracted as a {1}. Trace:\n", n,
+          n_impl.kind);
+      TestExtract(this, n, n_impl.kind, &trace);
+      return trace;
     }
 
     int subtree_size = 1;

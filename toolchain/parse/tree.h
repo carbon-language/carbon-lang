@@ -72,9 +72,11 @@ class Tree : public Printable<Tree> {
   // interface Extractable {
   //   // Extract a value of this type from the sequence of nodes starting at
   //   // `it`, and increment `it` past this type. Returns `std::nullopt` if
-  //   // the tree is malformed.
+  //   // the tree is malformed. If `trace != nullptr`, writes what actions
+  //   // were taken to `*trace`.
   //   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
-  //                       Tree::SiblingIterator end) -> std::optional<Self>;
+  //                       Tree::SiblingIterator end,
+  //                       ErrorBuilder* trace) -> std::optional<Self>;
   // }
   // ```
   //
@@ -136,8 +138,8 @@ class Tree : public Printable<Tree> {
   // Like ExtractNodeFromChildren() but returns std::nullopt on error.
   template <typename T>
   auto TryExtractNodeFromChildren(
-      llvm::iterator_range<Tree::SiblingIterator> children) const
-      -> std::optional<T>;
+      llvm::iterator_range<Tree::SiblingIterator> children,
+      ErrorBuilder* trace) const -> std::optional<T>;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
   // node of that kind.
@@ -146,7 +148,8 @@ class Tree : public Printable<Tree> {
 
   // Like ExtractAs(), but malformed tree errors are not fatal.
   template <typename T>
-  auto TryExtractAs(NodeId node_id) const -> std::optional<T>;
+  auto TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
+      -> std::optional<T>;
 
   // Converts to a typed node, if it is not an error.
   template <typename IdT>
@@ -391,29 +394,12 @@ class Tree::SiblingIterator
   NodeId node_;
 };
 
-// FIXME: delete
-template <class T>
-static inline auto GetKind() {
-  return NodeKind(T::Kind);
-}
-
-struct File;
-
-template <>
-inline auto GetKind<File>() {
-  return "File";
-}
-
 template <typename T>
 auto Tree::TryExtractNodeFromChildren(
-    llvm::iterator_range<Tree::SiblingIterator> children) const
-    -> std::optional<T> {
+    llvm::iterator_range<Tree::SiblingIterator> children,
+    ErrorBuilder* trace) const -> std::optional<T> {
   auto it = children.begin();
-  llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
-               << " start\n";
-  auto result = Extractable<T>::ExtractImpl(this, it, children.end());
-  llvm::errs() << "FIXME: TryExtractNodeFromChildren " << GetKind<T>()
-               << " end\n";
+  auto result = Extractable<T>::ExtractImpl(this, it, children.end(), trace);
   if (it != children.end()) {
     return std::nullopt;
   }
@@ -423,9 +409,13 @@ auto Tree::TryExtractNodeFromChildren(
 template <typename T>
 auto Tree::ExtractNodeFromChildren(
     llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
-  auto result = TryExtractNodeFromChildren<T>(children);
-  // TODO: Print children on error.
-  CARBON_CHECK(result.has_value()) << "Malformed parse node";
+  auto result = TryExtractNodeFromChildren<T>(children, nullptr);
+  if (!result.has_value()) {
+    // On error try again, this time capturing a trace.
+    ErrorBuilder trace;
+    TryExtractNodeFromChildren<T>(children, &trace);
+    CARBON_FATAL() << "Malformed parse node:\n" << Error(trace).message();
+  }
   return *result;
 }
 
@@ -440,13 +430,14 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
 }
 
 template <typename T>
-auto Tree::TryExtractAs(NodeId node_id) const -> std::optional<T> {
+auto Tree::TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
+    -> std::optional<T> {
   static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {
     return std::nullopt;
   }
 
-  return TryExtractNodeFromChildren<T>(children(node_id));
+  return TryExtractNodeFromChildren<T>(children(node_id), trace);
 }
 
 template <typename IdT>
@@ -455,10 +446,8 @@ auto Tree::Extract(IdT id) const
   using T = typename NodeForId<IdT>::Kind;
   CARBON_DCHECK(node_kind(id) == T::Kind);
   if (node_has_error(id)) {
-    llvm::errs() << "FIXME: b " << T::Kind << " err\n";
     return std::nullopt;
   }
-  llvm::errs() << "FIXME: b " << T::Kind << " success\n";
 
   return ExtractNodeFromChildren<T>(children(id));
 }

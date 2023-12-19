@@ -8,6 +8,7 @@
 #include <tuple>
 #include <utility>
 
+#include "common/error.h"
 #include "common/struct_reflection.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -29,10 +30,17 @@ struct File {
 // Extract an `NodeId` as a single child.
 template <>
 struct Tree::Extractable<NodeId> {
-  static auto Extract(const Tree* /*tree*/, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<NodeId> {
+  static auto Extract(const Tree* tree, SiblingIterator& it,
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<NodeId> {
     if (it == end) {
+      if (trace) {
+        *trace << "NodeId error: no more children\n";
+      }
       return std::nullopt;
+    }
+    if (trace) {
+      *trace << "NodeId: " << tree->node_kind(*it) << " consumed\n";
     }
     return NodeId(*it++);
   }
@@ -43,13 +51,22 @@ struct Tree::Extractable<NodeId> {
 template <const NodeKind& Kind>
 struct Tree::Extractable<KindId<Kind>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<KindId<Kind>> {
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<KindId<Kind>> {
     if (it == end || tree->node_kind(*it) != Kind) {
-      llvm::errs() << "FIXME: Extract KindId " << tree->node_kind(*it)
-                   << " != " << Kind << " error\n";
+      if (trace) {
+        if (it == end) {
+          *trace << "KindId error: no more children, expected " << Kind << "\n";
+        } else {
+          *trace << "KindId error: wrong kind " << tree->node_kind(*it)
+                 << ", expected " << Kind << "\n";
+        }
+      }
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract KindId " << Kind << " success\n";
+    if (trace) {
+      *trace << "KindId: " << Kind << " consumed\n";
+    }
     return KindId<Kind>(*it++);
   }
 };
@@ -58,29 +75,40 @@ struct Tree::Extractable<KindId<Kind>> {
 template <NodeCategory Category>
 struct Tree::Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end)
+                      SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdInCategory<Category>> {
-    if (!Category) {
-      llvm::errs() << "FIXME NodeIdInCategory <none>\n";
-    }
-#define CARBON_NODE_CATEGORY(Name)                        \
-  if (!!(Category & NodeCategory::Name)) {                \
-    llvm::errs() << "FIXME NodeIdInCategory " #Name "\n"; \
+    if (trace) {
+      *trace << "NodeIdInCategory";
+      if (!Category) {
+        *trace << " <none>";
+      }
+#define CARBON_NODE_CATEGORY(Name)         \
+  if (!!(Category & NodeCategory::Name)) { \
+    *trace << " " #Name;                   \
   }
-    CARBON_NODE_CATEGORY(Decl)
-    CARBON_NODE_CATEGORY(Expr)
-    CARBON_NODE_CATEGORY(Modifier)
-    CARBON_NODE_CATEGORY(NameComponent)
-    CARBON_NODE_CATEGORY(Pattern)
-    CARBON_NODE_CATEGORY(Statement)
+      CARBON_NODE_CATEGORY(Decl);
+      CARBON_NODE_CATEGORY(Expr);
+      CARBON_NODE_CATEGORY(Modifier);
+      CARBON_NODE_CATEGORY(NameComponent);
+      CARBON_NODE_CATEGORY(Pattern);
+      CARBON_NODE_CATEGORY(Statement);
+#undef CARBON_NODE_CATEGORY
+    }
 
     if (it == end || !(tree->node_kind(*it).category() & Category)) {
-      llvm::errs() << "FIXME: Extract NodeIdInCategory " << tree->node_kind(*it)
-                   << " error\n";
+      if (trace) {
+        if (it == end) {
+          *trace << " error: no more children\n";
+        } else {
+          *trace << " error: kind " << tree->node_kind(*it)
+                 << " doesn't match\n";
+        }
+      }
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract NodeIdInCategory " << tree->node_kind(*it)
-                 << " success\n";
+    if (trace) {
+      *trace << ": kind " << tree->node_kind(*it) << " consumed\n";
+    }
     return NodeIdInCategory<Category>(*it++);
   }
 };
@@ -89,15 +117,25 @@ struct Tree::Extractable<NodeIdInCategory<Category>> {
 template <typename T, typename U>
 struct Tree::Extractable<NodeIdOneOf<T, U>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<NodeIdOneOf<T, U>> {
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<NodeIdOneOf<T, U>> {
     auto kind = tree->node_kind(*it);
-    llvm::errs() << "FIXME: Extract NodeIdOneOf " << kind << " ? " << T::Kind
-                 << " or " << U::Kind;
     if (it == end || (kind != T::Kind && kind != U::Kind)) {
-      llvm::errs() << " error\n";
+      if (trace) {
+        if (it == end) {
+          *trace << "NodeIdOneOf error: no more children, expected " << T::Kind
+                 << " or " << U::Kind << "\n";
+        } else {
+          *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
+                 << ", expected " << T::Kind << " or " << U::Kind << "\n";
+        }
+      }
       return std::nullopt;
     }
-    llvm::errs() << " success\n";
+    if (trace) {
+      *trace << "NodeIdOneOf " << T::Kind << " or " << U::Kind << ": "
+             << tree->node_kind(*it) << " consumed";
+    }
     return NodeIdOneOf<T, U>(*it++);
   }
 };
@@ -106,13 +144,22 @@ struct Tree::Extractable<NodeIdOneOf<T, U>> {
 template <typename T>
 struct Tree::Extractable<NodeIdNot<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<NodeIdNot<T>> {
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<NodeIdNot<T>> {
     if (it == end || tree->node_kind(*it) == T::Kind) {
-      llvm::errs() << "FIXME: Extract NodeIdNot " << T::Kind << " error\n";
+      if (trace) {
+        if (it == end) {
+          *trace << "NodeIdNot " << T::Kind << " error: no more children\n";
+        } else {
+          *trace << "NodeIdNot error: unexpected " << T::Kind << "\n";
+        }
+      }
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract NodeIdNot " << tree->node_kind(*it)
-                 << " != " << T::Kind << " success\n";
+    if (trace) {
+      *trace << "NodeIdNot " << T::Kind << ": " << tree->node_kind(*it)
+             << " consumed\n";
+    }
     return NodeIdNot<T>(*it++);
   }
 };
@@ -121,12 +168,15 @@ struct Tree::Extractable<NodeIdNot<T>> {
 template <typename T>
 struct Tree::Extractable<llvm::SmallVector<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end)
+                      SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<llvm::SmallVector<T>> {
+    if (trace) {
+      *trace << "Vector: begin\n";
+    }
     llvm::SmallVector<T> result;
     while (it != end) {
       auto old_it = it;
-      auto item = Extractable<T>::Extract(tree, it, end);
+      auto item = Extractable<T>::Extract(tree, it, end, trace);
       if (!item.has_value()) {
         it = old_it;
         break;
@@ -134,6 +184,9 @@ struct Tree::Extractable<llvm::SmallVector<T>> {
       result.push_back(*item);
     }
     std::reverse(result.begin(), result.end());
+    if (trace) {
+      *trace << "Vector: end\n";
+    }
     return result;
   }
 };
@@ -143,14 +196,22 @@ struct Tree::Extractable<llvm::SmallVector<T>> {
 template <typename T>
 struct Tree::Extractable<std::optional<T>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<std::optional<T>> {
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<std::optional<T>> {
+    if (trace) {
+      *trace << "Optional: begin\n";
+    }
     auto old_it = it;
-    std::optional<T> value = Extractable<T>::Extract(tree, it, end);
+    std::optional<T> value = Extractable<T>::Extract(tree, it, end, trace);
     if (value) {
-      llvm::errs() << "FIXME: Extract std::optional found\n";
+      if (trace) {
+        *trace << "Optional: found\n";
+      }
       return value;
     }
-    llvm::errs() << "FIXME: Extract std::optional missing\n";
+    if (trace) {
+      *trace << "Optional: missing\n";
+    }
     it = old_it;
     return value;
   }
@@ -162,29 +223,38 @@ template <typename... T>
 struct Tree::Extractable<std::tuple<T...>> {
   template <std::size_t... Index>
   static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
-                          SiblingIterator end, std::index_sequence<Index...>)
+                          SiblingIterator end, ErrorBuilder* trace,
+                          std::index_sequence<Index...>)
       -> std::optional<std::tuple<T...>> {
     std::tuple<std::optional<T>...> fields;
+    if (trace) {
+      *trace << "Tuple: begin\n";
+    }
 
-    llvm::errs() << "FIXME: Extract tuple\n";
     // Use a fold over the `=` operator to parse fields from right to left.
     [[maybe_unused]] int unused;
-    static_cast<void>(
-        ((std::get<Index>(fields) = Extractable<T>::Extract(tree, it, end),
-          unused) = ... = 0));
+    static_cast<void>(((std::get<Index>(fields) =
+                            Extractable<T>::Extract(tree, it, end, trace),
+                        unused) = ... = 0));
 
     if (!(std::get<Index>(fields).has_value() && ...)) {
-      llvm::errs() << "FIXME: Extract tuple error\n";
+      if (trace) {
+        *trace << "Tuple: error\n";
+      }
       return std::nullopt;
     }
 
-    llvm::errs() << "FIXME: Extract tuple success\n";
+    if (trace) {
+      *trace << "Tuple: success\n";
+    }
     return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
   }
 
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<std::tuple<T...>> {
-    return ExtractImpl(tree, it, end, std::make_index_sequence<sizeof...(T)>());
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<std::tuple<T...>> {
+    return ExtractImpl(tree, it, end, trace,
+                       std::make_index_sequence<sizeof...(T)>());
   }
 };
 
@@ -193,17 +263,25 @@ template <typename T>
 struct Tree::Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
   static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
-                          SiblingIterator end) -> std::optional<T> {
+                          SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<T> {
+    if (trace) {
+      *trace << "Aggregate: begin\n";
+    }
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
     llvm::errs() << "FIXME: Extract simple aggregate\n";
-    auto tuple = Extractable<TupleType>::Extract(tree, it, end);
+    auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
     if (!tuple.has_value()) {
-      llvm::errs() << "FIXME: Extract simple aggregate error\n";
+      if (trace) {
+        *trace << "Aggregate: error\n";
+      }
       return std::nullopt;
     }
-    llvm::errs() << "FIXME: Extract simple aggregate success\n";
 
+    if (trace) {
+      *trace << "Aggregate: success\n";
+    }
     // Convert the tuple to the struct type.
     return std::apply(
         [](auto&&... value) {
@@ -213,9 +291,10 @@ struct Tree::Extractable {
   }
 
   static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end) -> std::optional<T> {
+                      SiblingIterator end, ErrorBuilder* trace)
+      -> std::optional<T> {
     static_assert(!HasKindMember<T>, "Missing Id suffix");
-    return ExtractImpl(tree, it, end);
+    return ExtractImpl(tree, it, end, trace);
   }
 };
 
