@@ -1021,9 +1021,9 @@ class Formatter {
     out_ << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
-  auto FormatArg(StringLiteralId id) -> void {
+  auto FormatArg(StringLiteralValueId id) -> void {
     out_ << '"';
-    out_.write_escaped(sem_ir_.string_literals().Get(id),
+    out_.write_escaped(sem_ir_.string_literal_values().Get(id),
                        /*UseHexEscapes=*/true);
     out_ << '"';
   }

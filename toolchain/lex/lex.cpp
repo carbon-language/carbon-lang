@@ -946,7 +946,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   }
 
   if (literal->is_terminated()) {
-    auto string_id = buffer_.value_stores_->string_literals().Add(
+    auto string_id = buffer_.value_stores_->string_literal_values().Add(
         literal->ComputeValue(buffer_.allocator_, emitter_));
     auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
                                    .token_line = string_line,

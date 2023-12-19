@@ -69,7 +69,7 @@ class Tree : public Printable<Tree> {
   struct PackagingNames {
     NodeId node;
     IdentifierId package_id = IdentifierId::Invalid;
-    StringLiteralId library_id = StringLiteralId::Invalid;
+    StringLiteralValueId library_id = StringLiteralValueId::Invalid;
   };
 
   // The file's packaging.

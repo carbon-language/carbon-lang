@@ -405,7 +405,7 @@ class NodeStack {
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
-// Use x-macros to handle token cases.
+// Use x-macros to handle boilerplate cases.
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
   case Parse::NodeKind::InfixOperator##Name:             \
