@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "e8a2f5efac65139c3b118836a89540ef8e4e732d94856a015e2b6ff3a0199f66",
+  "moduleFileHash": "5cb759f7e2abec84831ab22dcb856f664769773f06ff92b21cb1838ca1ca45b5",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -55,7 +55,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 57,
+                "line": 59,
                 "column": 13
               }
             },
@@ -81,7 +81,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 89,
+                "line": 91,
                 "column": 13
               }
             }
@@ -95,7 +95,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 65,
+            "line": 67,
             "column": 35
           },
           "imports": {
@@ -112,7 +112,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 104,
+            "line": 106,
             "column": 29
           },
           "imports": {
@@ -129,7 +129,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 116,
+            "line": 118,
             "column": 23
           },
           "imports": {
@@ -145,7 +145,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 117,
+                "line": 119,
                 "column": 17
               }
             }
@@ -159,7 +159,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 123,
+            "line": 125,
             "column": 20
           },
           "imports": {
@@ -177,7 +177,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 124,
+                "line": 126,
                 "column": 10
               }
             }
