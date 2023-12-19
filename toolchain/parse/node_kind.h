@@ -129,16 +129,17 @@ struct NodeForId;
 // `<KindName>Id` is a typed version of `NodeId` that references a node of kind
 // `<KindName>`:
 template <const NodeKind&>
-struct KindId : public NodeId {
-  static const KindId Invalid;
+struct NodeIdForKind : public NodeId {
+  static const NodeIdForKind Invalid;
 
-  explicit KindId(NodeId node_id) : NodeId(node_id) {}
+  explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
 };
 template <const NodeKind& Kind>
-constexpr KindId<Kind> KindId<Kind>::Invalid = KindId(NodeId::Invalid.index);
+constexpr NodeIdForKind<Kind> NodeIdForKind<Kind>::Invalid =
+    NodeIdForKind(NodeId::Invalid.index);
 
 #define CARBON_PARSE_NODE_KIND(KindName) \
-  using KindName##Id = KindId<NodeKind::KindName>;
+  using KindName##Id = NodeIdForKind<NodeKind::KindName>;
 #include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Parse

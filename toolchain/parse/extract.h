@@ -46,28 +46,29 @@ struct Tree::Extractable<NodeId> {
   }
 };
 
-// Extract a `FooId`, which is the same as `KindId<NodeKind::Foo>`,
+// Extract a `FooId`, which is the same as `NodeIdForKind<NodeKind::Foo>`,
 // as a single required child.
 template <const NodeKind& Kind>
-struct Tree::Extractable<KindId<Kind>> {
+struct Tree::Extractable<NodeIdForKind<Kind>> {
   static auto Extract(const Tree* tree, SiblingIterator& it,
                       SiblingIterator end, ErrorBuilder* trace)
-      -> std::optional<KindId<Kind>> {
+      -> std::optional<NodeIdForKind<Kind>> {
     if (it == end || tree->node_kind(*it) != Kind) {
       if (trace) {
         if (it == end) {
-          *trace << "KindId error: no more children, expected " << Kind << "\n";
+          *trace << "NodeIdForKind error: no more children, expected " << Kind
+                 << "\n";
         } else {
-          *trace << "KindId error: wrong kind " << tree->node_kind(*it)
+          *trace << "NodeIdForKind error: wrong kind " << tree->node_kind(*it)
                  << ", expected " << Kind << "\n";
         }
       }
       return std::nullopt;
     }
     if (trace) {
-      *trace << "KindId: " << Kind << " consumed\n";
+      *trace << "NodeIdForKind: " << Kind << " consumed\n";
     }
-    return KindId<Kind>(*it++);
+    return NodeIdForKind<Kind>(*it++);
   }
 };
 
