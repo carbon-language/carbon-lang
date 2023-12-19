@@ -63,8 +63,20 @@ repos:
         files: |
           (?x)^(
             .*BUILD.*|
+            .*MODULE.bazel.*|
             .*WORKSPACE.*|
             .*\.bzl
+          )$
+      - id: check-bazel-mod-deps
+        # Check this after buildifier because buildifier may modify inputs, and
+        # MODULE.bazel.lock includes line/column details.
+        name: Check bazel mod deps
+        entry: scripts/bazel_mod_deps.py
+        language: python
+        files: |
+          (?x)^(
+            .*MODULE.bazel.*
+            .*WORKSPACE.*|
           )$
       - id: clang-format
         name: clang-format

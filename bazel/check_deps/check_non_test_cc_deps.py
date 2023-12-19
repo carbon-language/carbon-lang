@@ -37,13 +37,6 @@ for dep in deps:
     print("Checking dependency: " + dep)
     repo, _, rule = dep.partition("//")
 
-    # These are stubs wrapping system libraries for LLVM. They aren't
-    # distributed and so should be fine.
-    if repo in (
-        "@@_main~_repo_rules~llvm_zlib",
-        "@@_main~_repo_rules~llvm_zstd",
-    ):
-        continue
     if repo == "@@_main~llvm_project~llvm-project":
         package, _, rule = rule.partition(":")
 
@@ -65,23 +58,34 @@ for dep in deps:
         continue
 
     # Ignore the version, just use the repo name.
-    repo = repo.split("~")[0]
-    if repo == "" and not rule.startswith("third_party"):
-        # Carbon code is always allowed.
+    repo_base = repo.split("~")[0]
+
+    # Carbon code is always allowed.
+    if repo_base == "" and not rule.startswith("third_party"):
         continue
-    if repo == "@@rules_cc" and rule == ":link_extra_lib":
-        # An empty stub library added by rules_cc:
-        # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
+
+    # An empty stub library added by rules_cc:
+    # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
+    if repo_base == "@@rules_cc" and rule == ":link_extra_lib":
         continue
-    if repo in (
+
+    # These are stubs wrapping system libraries for LLVM. They aren't
+    # distributed and so should be fine.
+    if repo_base in (
+        "@@zlib",
+        "@@zstd",
+    ):
+        continue
+
+    # This should never be reached from non-test code, but these targets do
+    # exist. Specially diagnose them to try to provide a more helpful
+    # message.
+    if repo_base in (
         "@com_github_google_benchmark",
         "@com_github_protocolbuffers_protobuf",
         "@com_google_absl",
         "@com_google_googletest",
     ):
-        # This should never be reached from non-test code, but these targets do
-        # exist. Specially diagnose them to try to provide a more helpful
-        # message.
         sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
 
     # Conservatively fail if a dependency isn't explicitly allowed above.
