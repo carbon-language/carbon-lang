@@ -49,8 +49,7 @@ sudo apt install \
   gh \
   libc++-dev \
   lld \
-  python3 \
-  zlib1g-dev
+  python3
 
 # Install pre-commit.
 pip3 install pre-commit
@@ -145,8 +144,6 @@ These tools are essential for work on Carbon.
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
     -   [pre-commit](https://pre-commit.com): Validates and cleans up git
         commits.
--   Libraries
-    -   zlib1g-dev: Used as a library, but not installed on all Linux systems.
 
 #### Running pre-commit
 
