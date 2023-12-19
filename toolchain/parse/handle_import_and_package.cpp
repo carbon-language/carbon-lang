@@ -23,7 +23,7 @@ static auto HandleLibraryName(Context& context, bool accept_default)
   if (auto library_name_token =
           context.ConsumeIf(Lex::TokenKind::StringLiteral)) {
     context.AddLeafNode(NodeKind::LibraryName, *library_name_token);
-    return context.tokens().GetStringLiteral(*library_name_token);
+    return context.tokens().GetStringLiteralValue(*library_name_token);
   }
 
   if (accept_default) {

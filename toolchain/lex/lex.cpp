@@ -755,7 +755,7 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 }
 
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
-  CARBON_DCHECK(source_text.substr(position).startswith("//"));
+  CARBON_DCHECK(source_text.substr(position).starts_with("//"));
 
   // Any comment must be the only non-whitespace on the line.
   const auto* line_info = current_line_info();
@@ -952,7 +952,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   }
 
   if (literal->is_terminated()) {
-    auto string_id = buffer_.value_stores_->string_literals().Add(
+    auto string_id = buffer_.value_stores_->string_literal_values().Add(
         literal->ComputeValue(buffer_.allocator_, emitter_));
     auto token = buffer_.AddToken({.kind = TokenKind::StringLiteral,
                                    .token_line = string_line,

@@ -50,7 +50,7 @@ auto HandleStringLiteral(Context& context, Parse::NodeId parse_node) -> bool {
       parse_node,
       SemIR::StringLiteral{
           parse_node, context.GetBuiltinType(SemIR::BuiltinKind::StringType),
-          context.tokens().GetStringLiteral(
+          context.tokens().GetStringLiteralValue(
               context.parse_tree().node_token(parse_node))});
   return true;
 }

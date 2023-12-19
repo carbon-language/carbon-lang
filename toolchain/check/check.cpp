@@ -226,7 +226,7 @@ static auto GetImportKey(UnitInfo& unit_info, IdentifierId file_package_id,
                                    : "";
   llvm::StringRef library_name =
       names.library_id.is_valid()
-          ? stores->string_literals().Get(names.library_id)
+          ? stores->string_literal_values().Get(names.library_id)
           : "";
   return {package_name, library_name};
 }
