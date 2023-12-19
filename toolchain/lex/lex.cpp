@@ -1247,7 +1247,47 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   llvm::SmallVector<std::pair<int, TokenizedBuffer::TokenInfo>> new_tokens;
 
+  // Handle an opening token with no matching closing token.
+  auto handle_missing_close = [&](TokenIndex opening_token,
+                                  TokenIndex insert_before) {
+    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                      "Opening symbol without a corresponding closing symbol.");
+    token_emitter_.Emit(opening_token, UnmatchedOpening);
+
+    auto opening_kind = buffer_.GetKind(opening_token);
+
+    if (insert_before == TokenIndex::Invalid) {
+      // We don't have a good location to insert a close bracket. Convert the
+      // opening token from a bracket to an error.
+      auto& token_info = buffer_.GetTokenInfo(opening_token);
+      token_info.kind = TokenKind::Error;
+      token_info.error_length = opening_kind.fixed_spelling().size();
+    } else {
+      // We think we have an insertion position for the close bracket. Find the
+      // end of the previous token, and add a matching closing token there.
+      // Note that new_token_column is a 1-based column number.
+      // TODO: Indicate in the diagnostic that we did this, perhaps by
+      // annotating the snippet.
+      CARBON_CHECK(opening_token < insert_before)
+          << "Tried to insert close bracket before open bracket.";
+      auto insert_after = TokenIndex(insert_before.index - 1);
+      auto [new_token_line, new_token_column] =
+          buffer_.GetEndLocation(insert_after);
+      new_tokens.push_back(
+          {insert_before.index,
+           {.kind = opening_kind.closing_symbol(),
+            .has_trailing_space = buffer_.HasTrailingWhitespace(insert_after),
+            .is_recovery = true,
+            .token_line = new_token_line,
+            .column = new_token_column - 1}});
+    }
+  };
+
   // Look for mismatched brackets and decide where to add tokens to fix them.
+  //
+  // TODO: For now, we use a greedy algorithm for this. In principle it should
+  // be possible to do better than this with a smart scan that tries to reduce
+  // the number of added brackets and takes indentation into account.
   open_groups_.clear();
   for (auto token : buffer_.tokens()) {
     auto kind = buffer_.GetKind(token);
@@ -1260,59 +1300,35 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       continue;
     }
 
-    while (true) {
-      if (open_groups_.empty()) {
-        auto& token_info = buffer_.GetTokenInfo(token);
-        token_info.kind = TokenKind::Error;
-        token_info.error_length = kind.fixed_spelling().size();
-
-        CARBON_DIAGNOSTIC(
-            UnmatchedClosing, Error,
-            "Closing symbol without a corresponding opening symbol.");
-        token_emitter_.Emit(token, UnmatchedClosing);
-        break;
-      }
-
-      TokenIndex opening_token = open_groups_.pop_back_val();
-      TokenKind opening_kind = buffer_.GetTokenInfo(opening_token).kind;
-      if (kind == opening_kind.closing_symbol()) {
-        break;
-      }
+    // Find the innermost matching opening symbol.
+    auto opening_it = std::find_if(
+        open_groups_.rbegin(), open_groups_.rend(),
+        [&](TokenIndex opening_token) {
+          return buffer_.GetTokenInfo(opening_token).kind.closing_symbol() ==
+                 kind;
+        });
+    if (opening_it == open_groups_.rend()) {
+      auto& token_info = buffer_.GetTokenInfo(token);
+      token_info.kind = TokenKind::Error;
+      token_info.error_length = kind.fixed_spelling().size();
 
       CARBON_DIAGNOSTIC(
-          MismatchedClosing, Error,
-          "Closing symbol does not match most recent opening symbol.");
-      token_emitter_.Emit(opening_token, MismatchedClosing);
-
-      CARBON_CHECK(token.index != 0) << "Must have a prior opening token!";
-      auto prev_token = TokenIndex(token.index - 1);
-
-      // Find the end of the previous token, and add a matching closing token
-      // there. Note that new_token_column is a 1-based column number.
-      // TODO: Do a smarter scan for where to put the closing token, or
-      // whether to insert an opening token instead.
-      auto [new_token_line, new_token_column] =
-          buffer_.GetEndLocation(prev_token);
-      new_tokens.push_back(
-          {token.index,
-           {.kind = opening_kind.closing_symbol(),
-            .has_trailing_space = buffer_.HasTrailingWhitespace(prev_token),
-            .is_recovery = true,
-            .token_line = new_token_line,
-            .column = new_token_column - 1}});
+          UnmatchedClosing, Error,
+          "Closing symbol without a corresponding opening symbol.");
+      token_emitter_.Emit(token, UnmatchedClosing);
+      continue;
     }
+
+    // All intermediate open tokens have no matching close token.
+    for (auto it = open_groups_.rbegin(); it != opening_it; ++it) {
+      handle_missing_close(*it, token);
+    }
+    open_groups_.erase(opening_it.base() - 1, open_groups_.end());
   }
 
   // Diagnose any remaining unmatched opening symbols.
   for (auto token : open_groups_) {
-    auto kind = buffer_.GetKind(token);
-    auto& token_info = buffer_.GetTokenInfo(token);
-    token_info.kind = TokenKind::Error;
-    token_info.error_length = kind.fixed_spelling().size();
-
-    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                      "Opening symbol without a corresponding closing symbol.");
-    token_emitter_.Emit(token, UnmatchedOpening);
+    handle_missing_close(token, TokenIndex::Invalid);
   }
 
   // Merge the recovery tokens into the token list.
