@@ -140,7 +140,7 @@ using PackageIntroducer = LeafNode<NodeKind::PackageIntroducer>;
 using PackageApi = LeafNode<NodeKind::PackageApi>;
 using PackageImpl = LeafNode<NodeKind::PackageImpl>;
 
-// `library` in `package` or `import`:
+// `library` in `package` or `import`.
 struct LibrarySpecifier {
   static constexpr auto Kind = NodeKind::LibrarySpecifier.Define();
   NodeIdOneOf<LibraryName, DefaultLibrary> name;
@@ -165,7 +165,7 @@ struct ImportDirective {
   std::optional<LibrarySpecifierId> library;
 };
 
-// `library` as directive:
+// `library` as directive.
 using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
 struct LibraryDirective {
   static constexpr auto Kind = NodeKind::LibraryDirective.Define();
@@ -640,7 +640,7 @@ struct StructFieldType {
   AnyExprId type_expr;
 };
 
-// Struct literals, such as `{.a = 0}`:
+// Struct literals, such as `{.a = 0}`.
 struct StructLiteral {
   static constexpr auto Kind =
       NodeKind::StructLiteral.Define(NodeCategory::Expr);
@@ -648,7 +648,7 @@ struct StructLiteral {
   CommaSeparatedList<StructFieldValueId, StructCommaId> fields;
 };
 
-// Struct type literals, such as `{.a: i32}`:
+// Struct type literals, such as `{.a: i32}`.
 struct StructTypeLiteral {
   static constexpr auto Kind =
       NodeKind::StructTypeLiteral.Define(NodeCategory::Expr);
@@ -817,7 +817,7 @@ struct File {
   FileEndId end;
 };
 
-// Define `FooId` as the id for type `Foo`
+// Define `Foo` as the node type for the ID type `FooId`.
 #define CARBON_PARSE_NODE_KIND(KindName) \
   template <>                            \
   struct NodeForId<KindName##Id> {       \
