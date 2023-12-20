@@ -4,8 +4,7 @@
 
 """Bazel modules.
 
-If `MODULE.bazel.lock` changes locally, it means the host platform is not part
-of the GitHub supported set. Running `bazel mod deps` provides a canonical
+If `MODULE.bazel.lock` changes locally, it means the host platform hasn't yet been added to the lock file. Running `bazel mod deps` provides a canonical
 update to `MODULE.bazel.lock`; create a PR with those changes in order to
 include the host platform.
 
