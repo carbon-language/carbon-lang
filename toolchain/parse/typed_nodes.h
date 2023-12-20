@@ -31,6 +31,7 @@ struct LeafNode {
 // expected child structure of that parse node.
 
 // Error nodes
+// -----------
 
 // An invalid parse. Used to balance the parse tree. This type is here only to
 // ensure we have a type for each parse node kind. This node kind always has an
