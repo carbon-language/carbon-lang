@@ -12,7 +12,7 @@ namespace Carbon::Check {
 auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  auto self_param = context.insts().TryGetAs<SemIR::Param>(self_param_id);
+  auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
   if (self_param && self_param->name_id == SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
@@ -43,6 +43,12 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
 
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
+
+  auto make_bind_name = [name_node = name_node, name_id = name_id](
+                            SemIR::TypeId type_id,
+                            SemIR::InstId value_id) -> SemIR::Inst {
+    return SemIR::BindName{name_node, type_id, name_id, value_id};
+  };
 
   // A `self` binding can only appear in an implicit parameter list.
   if (name_id == SemIR::NameId::SelfValue &&
@@ -76,6 +82,8 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
       SemIR::InstId value_id = SemIR::InstId::Invalid;
       SemIR::TypeId value_type_id = cast_type_id;
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
+        // TODO: Should we check this for the `var` as a whole, rather than for
+        // the name binding?
         CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
         value_id =
             CheckReturnedVar(context, context.node_stack().PeekParseNode(),
@@ -100,8 +108,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
       }
-      auto bind_id = context.AddInst(
-          SemIR::BindName{name_node, value_type_id, name_id, value_id});
+      auto bind_id = context.AddInst(make_bind_name(value_type_id, value_id));
       context.node_stack().Push(parse_node, bind_id);
 
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
@@ -111,15 +118,17 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
     }
 
     case Parse::NodeKind::ImplicitParamListStart:
-    case Parse::NodeKind::TuplePatternStart:
+    case Parse::NodeKind::TuplePatternStart: {
       // Parameters can have incomplete types in a function declaration, but not
       // in a function definition. We don't know which kind we have here.
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
+      auto param_id =
+          context.AddInst(SemIR::Param{name_node, cast_type_id, name_id});
       context.AddInstAndPush(parse_node,
-                             SemIR::Param{name_node, cast_type_id, name_id});
-      // TODO: Create a `BindName` instruction.
+                             make_bind_name(cast_type_id, param_id));
       break;
+    }
 
     case Parse::NodeKind::LetIntroducer:
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
@@ -134,10 +143,9 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      context.node_stack().Push(
-          parse_node,
-          context.insts().AddInNoBlock(SemIR::BindName{
-              name_node, cast_type_id, name_id, SemIR::InstId::Invalid}));
+      context.node_stack().Push(parse_node,
+                                context.insts().AddInNoBlock(make_bind_name(
+                                    cast_type_id, SemIR::InstId::Invalid)));
       break;
 
     default:

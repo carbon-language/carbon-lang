@@ -59,6 +59,11 @@ struct Function : public Printable<Function> {
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
+
+  // Given a parameter reference instruction from `param_refs_id` or
+  // `implicit_param_refs_id`, returns the corresponding parameter instruction.
+  static auto GetParamIdFromParamRefId(const File& sem_ir, InstId param_ref_id)
+      -> InstId;
 };
 
 // A class.
