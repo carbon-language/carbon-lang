@@ -39,7 +39,7 @@ def _build_generated_files(bazel: str) -> None:
         ' kind("generated file", deps(//...))'
         ")"
         " union "
-        'kind("(cc_proto_library|tree_sitter_cc_library)", deps(//...))'
+        'kind("cc_proto_library", deps(//...))'
     )
     generated_file_labels = subprocess.check_output(
         [bazel, "query", "--keep_going", "--output=label", kinds_query],
