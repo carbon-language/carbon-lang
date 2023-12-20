@@ -237,8 +237,12 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
-  // All File instances must provide the 0th instruction block as empty.
+  // An empty block, reused to avoid allocating empty vectors. Always the
+  // 0-index block.
   static const InstBlockId Empty;
+
+  // Exported instructions. Always the 1-index block.
+  static const InstBlockId Exports;
 
   // An explicitly invalid ID.
   static const InstBlockId Invalid;
@@ -258,6 +262,7 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 };
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
+constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 constexpr InstBlockId InstBlockId::Invalid =
     InstBlockId(InstBlockId::InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable =

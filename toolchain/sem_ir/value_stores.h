@@ -330,7 +330,14 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
-  using BaseType::BaseType;
+
+  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
+      : BaseType(allocator) {
+    auto empty_id = AddDefaultValue();
+    CARBON_CHECK(empty_id == InstBlockId::Empty);
+    auto exports_id = AddDefaultValue();
+    CARBON_CHECK(exports_id == InstBlockId::Exports);
+  }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);

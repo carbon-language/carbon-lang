@@ -5,6 +5,7 @@
 #include "toolchain/check/decl_name_stack.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -83,6 +84,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                      QualifiedDeclOutsideScopeEntity);
           }
         }
+        context_->AddExport(target_id);
         auto [_, success] = name_scope.names.insert(
             {name_context.unresolved_name_id, target_id});
         CARBON_CHECK(success)
