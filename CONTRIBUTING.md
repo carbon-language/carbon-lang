@@ -16,7 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Comment on proposals](#comment-on-proposals)
         -   [Contribute design ideas to Carbon](#contribute-design-ideas-to-carbon)
     -   [Contributing to the language implementation](#contributing-to-the-language-implementation)
-        -   [Experiment with Carbon and report issues (no code)](#experiment-with-carbon-and-report-issues-no-code)
         -   [Review and comment on Pull Requests (no code)](#review-and-comment-on-pull-requests-no-code)
         -   [Implement Carbon's design](#implement-carbons-design)
         -   [Triage, analyze or address bugs](#triage-analyze-or-address-bugs)
