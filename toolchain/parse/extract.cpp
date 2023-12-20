@@ -242,11 +242,13 @@ struct Extractable<std::tuple<T...>> {
 
     // Use a fold over the `=` operator to parse fields from right to left.
     [[maybe_unused]] int unused;
-    static_cast<void>(((std::get<Index>(fields) =
-                            Extractable<T>::Extract(tree, it, end, trace),
+    bool ok = true;
+    static_cast<void>(((ok &&
+                        ok = (std::get<Index>(fields) =
+                              Extractable<T>::Extract(tree, it, end, trace)).has_value(),
                         unused) = ... = 0));
 
-    if (!(std::get<Index>(fields).has_value() && ...)) {
+    if (!ok) {
       if (trace) {
         *trace << "Tuple: error\n";
       }
