@@ -247,6 +247,9 @@ auto Tree::Verify() const -> ErrorOr<Success> {
           "Node #{0} is a placeholder node that wasn't replaced.", n.index));
     }
     // Should extract successfully if node not marked as having an error.
+    // Without this code, a 10 mloc test case of lex & parse takes
+    // 4.129 s ±  0.041 s. With this additional verification, it takes
+    // 5.768 s ±  0.036 s.
     if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind, nullptr)) {
       ErrorBuilder trace;
       trace << llvm::formatv(
