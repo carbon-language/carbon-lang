@@ -56,13 +56,13 @@ class TypedNodeTest : public ::testing::Test {
 
 TEST_F(TypedNodeTest, Empty) {
   auto* tree = &GetTree("");
-  auto file = File::Make(tree);
+  auto file = File::Extract(tree);
 
-  EXPECT_TRUE(tree->IsValid<FileStart>(file.start));
+  EXPECT_TRUE(tree->IsValid(file.start));
   EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
   EXPECT_TRUE(tree->Extract(file.start).has_value());
 
-  EXPECT_TRUE(tree->IsValid<FileEnd>(file.end));
+  EXPECT_TRUE(tree->IsValid(file.end));
   EXPECT_TRUE(tree->ExtractAs<FileEnd>(file.end).has_value());
   EXPECT_TRUE(tree->Extract(file.end).has_value());
 
@@ -75,7 +75,7 @@ TEST_F(TypedNodeTest, Function) {
     fn F() {}
     virtual fn G() -> i32;
   )carbon");
-  auto file = File::Make(tree);
+  auto file = File::Extract(tree);
 
   ASSERT_EQ(file.decls.size(), 2);
 
@@ -92,6 +92,26 @@ TEST_F(TypedNodeTest, Function) {
   EXPECT_FALSE(g_fn->modifiers.empty());
 }
 
+TEST_F(TypedNodeTest, ModifierOrder) {
+  auto* tree = &GetTree(R"carbon(
+    private abstract virtual default interface I;
+  )carbon");
+  auto file = File::Extract(tree);
+
+  ASSERT_EQ(file.decls.size(), 1);
+
+  auto decl = tree->ExtractAs<InterfaceDecl>(file.decls[0]);
+  ASSERT_TRUE(decl.has_value());
+  ASSERT_EQ(decl->modifiers.size(), 4);
+  // Note that the order here matches the source order, but is reversed from
+  // sibling iteration order.
+  ASSERT_TRUE(tree->ExtractAs<PrivateModifier>(decl->modifiers[0]).has_value());
+  ASSERT_TRUE(
+      tree->ExtractAs<AbstractModifier>(decl->modifiers[1]).has_value());
+  ASSERT_TRUE(tree->ExtractAs<VirtualModifier>(decl->modifiers[2]).has_value());
+  ASSERT_TRUE(tree->ExtractAs<DefaultModifier>(decl->modifiers[3]).has_value());
+}
+
 TEST_F(TypedNodeTest, For) {
   auto* tree = &GetTree(R"carbon(
     fn F(arr: [i32; 5]) {
@@ -100,7 +120,7 @@ TEST_F(TypedNodeTest, For) {
       }
     }
   )carbon");
-  auto file = File::Make(tree);
+  auto file = File::Extract(tree);
 
   ASSERT_EQ(file.decls.size(), 1);
   auto fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);

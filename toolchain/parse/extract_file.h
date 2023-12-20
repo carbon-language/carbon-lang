@@ -20,7 +20,7 @@ struct File {
   llvm::SmallVector<AnyDeclId> decls;
   FileEndId end;
 
-  static auto Make(const Tree* tree) -> File {
+  static auto Extract(const Tree* tree) -> File {
     return tree->ExtractNodeFromChildren<File>(tree->roots());
   }
 };

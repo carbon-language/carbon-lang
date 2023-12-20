@@ -7,6 +7,7 @@
 
 #include <iterator>
 
+#include "common/check.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
@@ -125,6 +126,13 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto IsValid(NodeId node_id) const -> bool {
     return node_kind(node_id) == T::Kind && !node_has_error(node_id);
+  }
+
+  template <typename IdT>
+  auto IsValid(IdT id) const -> bool {
+    using T = typename NodeForId<IdT>::Kind;
+    CARBON_DCHECK(node_kind(id) == T::Kind);
+    return !node_has_error(id);
   }
 
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
@@ -412,12 +420,11 @@ auto Tree::TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
 template <typename IdT>
 auto Tree::Extract(IdT id) const
     -> std::optional<typename NodeForId<IdT>::Kind> {
-  using T = typename NodeForId<IdT>::Kind;
-  CARBON_DCHECK(node_kind(id) == T::Kind);
-  if (node_has_error(id)) {
+  if (!IsValid(id)) {
     return std::nullopt;
   }
 
+  using T = typename NodeForId<IdT>::Kind;
   return ExtractNodeFromChildren<T>(children(id));
 }
 
