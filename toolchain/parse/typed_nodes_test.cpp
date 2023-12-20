@@ -12,7 +12,7 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/extract.h"
+#include "toolchain/parse/extract_file.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {

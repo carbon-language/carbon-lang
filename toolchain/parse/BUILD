@@ -17,7 +17,7 @@ cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
     hdrs = [
-        "node_id.h",
+        "node_ids.h",
         "node_kind.h",
         "typed_nodes.h",
     ],
@@ -60,6 +60,7 @@ cc_library(
     srcs = [
         "context.cpp",
         "context.h",
+        "extract.cpp",
         "tree.cpp",
     ] +
     # Glob handler files to avoid missing any.
@@ -67,7 +68,7 @@ cc_library(
         "handle_*.cpp",
     ]),
     hdrs = [
-        "extract.h",
+        "extract_file.h",
         "tree.h",
     ],
     deps = [

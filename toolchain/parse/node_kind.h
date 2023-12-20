@@ -10,7 +10,6 @@
 #include "common/enum_base.h"
 #include "llvm/ADT/BitmaskEnum.h"
 #include "toolchain/lex/token_kind.h"
-#include "toolchain/parse/node_id.h"
 
 namespace Carbon::Parse {
 
@@ -121,26 +120,6 @@ template <typename T, typename KindType = const NodeKind::Definition*>
 inline constexpr bool HasKindMember = false;
 template <typename T>
 inline constexpr bool HasKindMember<T, decltype(&T::Kind)> = true;
-
-// For looking up the type associated with a given id type.
-template <typename T>
-struct NodeForId;
-
-// `<KindName>Id` is a typed version of `NodeId` that references a node of kind
-// `<KindName>`:
-template <const NodeKind&>
-struct NodeIdForKind : public NodeId {
-  static const NodeIdForKind Invalid;
-
-  explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
-};
-template <const NodeKind& Kind>
-constexpr NodeIdForKind<Kind> NodeIdForKind<Kind>::Invalid =
-    NodeIdForKind(NodeId::Invalid.index);
-
-#define CARBON_PARSE_NODE_KIND(KindName) \
-  using KindName##Id = NodeIdForKind<NodeKind::KindName>;
-#include "toolchain/parse/node_kind.def"
 
 }  // namespace Carbon::Parse
 

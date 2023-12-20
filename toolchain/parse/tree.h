@@ -14,7 +14,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/node_id.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
@@ -65,28 +65,6 @@ class Tree : public Printable<Tree> {
     ApiOrImpl api_or_impl;
   };
 
-  // A trait type that should be specialized by types that can be extracted
-  // from a parse tree. A specialization should provide the following API:
-  //
-  // ```
-  // interface Extractable {
-  //   // Extract a value of this type from the sequence of nodes starting at
-  //   // `it`, and increment `it` past this type. Returns `std::nullopt` if
-  //   // the tree is malformed. If `trace != nullptr`, writes what actions
-  //   // were taken to `*trace`.
-  //   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
-  //                       Tree::SiblingIterator end,
-  //                       ErrorBuilder* trace) -> std::optional<Self>;
-  // }
-  // ```
-  //
-  // Note that `SiblingIterator`s iterate in reverse order through the children
-  // of a node.
-  //
-  // Specializations of this class are defined in extract.h.
-  template <typename T>
-  struct Extractable;
-
   // Parses the token buffer into a `Tree`.
   //
   // This is the factory function which is used to build parse trees.
@@ -128,18 +106,6 @@ class Tree : public Printable<Tree> {
   auto node_token(NodeId n) const -> Lex::TokenIndex;
 
   auto node_subtree_size(NodeId n) const -> int32_t;
-
-  // Extract a node of type `T` from a sibling range. This is expected to
-  // consume the complete sibling range. Malformed tree errors are fatal.
-  template <typename T>
-  auto ExtractNodeFromChildren(
-      llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
-
-  // Like ExtractNodeFromChildren() but returns std::nullopt on error.
-  template <typename T>
-  auto TryExtractNodeFromChildren(
-      llvm::iterator_range<Tree::SiblingIterator> children,
-      ErrorBuilder* trace) const -> std::optional<T>;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
   // node of that kind.
@@ -219,6 +185,7 @@ class Tree : public Printable<Tree> {
 
  private:
   friend class Context;
+  friend struct File;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -285,6 +252,20 @@ class Tree : public Printable<Tree> {
   // children.
   auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                  bool preorder) const -> bool;
+
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range. Malformed tree errors are written
+  // to `*trace`, if `trace != nullptr`.
+  template <typename T>
+  auto TryExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children,
+      ErrorBuilder* trace) const -> std::optional<T>;
+
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range. Malformed tree errors are fatal.
+  template <typename T>
+  auto ExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
 
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl> node_impls_;
@@ -393,21 +374,6 @@ class Tree::SiblingIterator
 
   NodeId node_;
 };
-
-template <typename T>
-auto Tree::TryExtractNodeFromChildren(
-    llvm::iterator_range<Tree::SiblingIterator> children,
-    ErrorBuilder* trace) const -> std::optional<T> {
-  auto it = children.begin();
-  auto result = Extractable<T>::ExtractImpl(this, it, children.end(), trace);
-  if (it != children.end()) {
-    if (trace) {
-      *trace << "Error: " << node_kind(*it) << " node left unconsumed.";
-    }
-    return std::nullopt;
-  }
-  return result;
-}
 
 template <typename T>
 auto Tree::ExtractNodeFromChildren(

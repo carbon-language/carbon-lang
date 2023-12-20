@@ -5,57 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 #define CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 
-#include "toolchain/parse/node_id.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
-
-// NodeId that matches any NodeKind whose `category()` overlaps with `Category`.
-template <NodeCategory Category>
-struct NodeIdInCategory : public NodeId {
-  // An explicitly invalid instance.
-  static const NodeIdInCategory<Category> Invalid;
-
-  explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
-};
-
-template <NodeCategory Category>
-constexpr NodeIdInCategory<Category> NodeIdInCategory<Category>::Invalid =
-    NodeIdInCategory<Category>(NodeId::InvalidIndex);
-
-// Aliases for `NodeIdInCategory` to describe particular categories of nodes.
-using AnyDecl = NodeIdInCategory<NodeCategory::Decl>;
-using AnyExpr = NodeIdInCategory<NodeCategory::Expr>;
-using AnyModifier = NodeIdInCategory<NodeCategory::Modifier>;
-using AnyNameComponent = NodeIdInCategory<NodeCategory::NameComponent>;
-using AnyPattern = NodeIdInCategory<NodeCategory::Pattern>;
-using AnyStatement = NodeIdInCategory<NodeCategory::Statement>;
-
-// NodeId with kind that matches either T::Kind or U::Kind.
-template <typename T, typename U>
-struct NodeIdOneOf : public NodeId {
-  // An explicitly invalid instance.
-  static const NodeIdOneOf<T, U> Invalid;
-
-  explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
-};
-
-template <typename T, typename U>
-constexpr NodeIdOneOf<T, U> NodeIdOneOf<T, U>::Invalid =
-    NodeIdOneOf<T, U>(NodeId::InvalidIndex);
-
-// NodeId with kind that is anything but T::Kind.
-template <typename T>
-struct NodeIdNot : public NodeId {
-  // An explicitly invalid instance.
-  static const NodeIdNot<T> Invalid;
-
-  explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
-};
-
-template <typename T>
-constexpr NodeIdNot<T> NodeIdNot<T>::Invalid =
-    NodeIdNot<T>(NodeId::InvalidIndex);
 
 // A pair of a list item and its optional following comma.
 template <typename Element, typename Comma>

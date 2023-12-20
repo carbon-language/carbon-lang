@@ -2,36 +2,44 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_PARSE_EXTRACT_H_
-#define CARBON_TOOLCHAIN_PARSE_EXTRACT_H_
-
 #include <tuple>
 #include <utility>
 
 #include "common/error.h"
 #include "common/struct_reflection.h"
+#include "toolchain/parse/extract_file.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
-// A complete source file. Note that there is no corresponding parse node for
-// the file. The file is instead the complete contents of the parse tree.
-struct File {
-  FileStartId start;
-  llvm::SmallVector<AnyDecl> decls;
-  FileEndId end;
-
-  static auto Make(const Tree* tree) -> File {
-    return tree->ExtractNodeFromChildren<File>(tree->roots());
-  }
-};
+// A trait type that should be specialized by types that can be extracted
+// from a parse tree. A specialization should provide the following API:
+//
+// ```
+// interface Extractable {
+//   // Extract a value of this type from the sequence of nodes starting at
+//   // `it`, and increment `it` past this type. Returns `std::nullopt` if
+//   // the tree is malformed. If `trace != nullptr`, writes what actions
+//   // were taken to `*trace`.
+//   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
+//                       Tree::SiblingIterator end,
+//                       ErrorBuilder* trace) -> std::optional<Self>;
+// }
+// ```
+//
+// Note that `Tree::SiblingIterator`s iterate in reverse order through the
+// children of a node.
+//
+// This class is only in this file.
+template <typename T>
+struct Extractable;
 
 // Extract an `NodeId` as a single child.
 template <>
-struct Tree::Extractable<NodeId> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<NodeId> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeId> {
     if (it == end) {
       if (trace) {
@@ -49,9 +57,9 @@ struct Tree::Extractable<NodeId> {
 // Extract a `FooId`, which is the same as `NodeIdForKind<NodeKind::Foo>`,
 // as a single required child.
 template <const NodeKind& Kind>
-struct Tree::Extractable<NodeIdForKind<Kind>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<NodeIdForKind<Kind>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdForKind<Kind>> {
     if (it == end || tree->node_kind(*it) != Kind) {
       if (trace) {
@@ -74,9 +82,9 @@ struct Tree::Extractable<NodeIdForKind<Kind>> {
 
 // Extract an `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory Category>
-struct Tree::Extractable<NodeIdInCategory<Category>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<NodeIdInCategory<Category>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdInCategory<Category>> {
     if (trace) {
       *trace << "NodeIdInCategory";
@@ -116,9 +124,9 @@ struct Tree::Extractable<NodeIdInCategory<Category>> {
 
 // Extract a `NodeIdOneOf<T, U>` as a single required child.
 template <typename T, typename U>
-struct Tree::Extractable<NodeIdOneOf<T, U>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<NodeIdOneOf<T, U>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdOneOf<T, U>> {
     auto kind = tree->node_kind(*it);
     if (it == end || (kind != T::Kind && kind != U::Kind)) {
@@ -143,9 +151,9 @@ struct Tree::Extractable<NodeIdOneOf<T, U>> {
 
 // Extract a `NodeIdNot<T>` as a single required child.
 template <typename T>
-struct Tree::Extractable<NodeIdNot<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<NodeIdNot<T>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdNot<T>> {
     if (it == end || tree->node_kind(*it) == T::Kind) {
       if (trace) {
@@ -167,9 +175,9 @@ struct Tree::Extractable<NodeIdNot<T>> {
 
 // Extract a `llvm::SmallVector<T>` by extracting `T`s until we can't.
 template <typename T>
-struct Tree::Extractable<llvm::SmallVector<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<llvm::SmallVector<T>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<llvm::SmallVector<T>> {
     if (trace) {
       *trace << "Vector: begin\n";
@@ -195,9 +203,9 @@ struct Tree::Extractable<llvm::SmallVector<T>> {
 // Extract an `optional<T>` from a list of child nodes by attempting to extract
 // a `T`, and extracting nothing if that fails.
 template <typename T>
-struct Tree::Extractable<std::optional<T>> {
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+struct Extractable<std::optional<T>> {
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<std::optional<T>> {
     if (trace) {
       *trace << "Optional: begin\n";
@@ -221,10 +229,10 @@ struct Tree::Extractable<std::optional<T>> {
 // Extract a `tuple<T...>` from a list of child nodes by extracting each `T` in
 // reverse order.
 template <typename... T>
-struct Tree::Extractable<std::tuple<T...>> {
+struct Extractable<std::tuple<T...>> {
   template <std::size_t... Index>
-  static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
-                          SiblingIterator end, ErrorBuilder* trace,
+  static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
+                          Tree::SiblingIterator end, ErrorBuilder* trace,
                           std::index_sequence<Index...>)
       -> std::optional<std::tuple<T...>> {
     std::tuple<std::optional<T>...> fields;
@@ -251,8 +259,8 @@ struct Tree::Extractable<std::tuple<T...>> {
     return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
   }
 
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<std::tuple<T...>> {
     return ExtractImpl(tree, it, end, trace,
                        std::make_index_sequence<sizeof...(T)>());
@@ -261,10 +269,10 @@ struct Tree::Extractable<std::tuple<T...>> {
 
 // Extract the fields of a simple aggregate type.
 template <typename T>
-struct Tree::Extractable {
+struct Extractable {
   static_assert(std::is_aggregate_v<T>, "Unsupported child type");
-  static auto ExtractImpl(const Tree* tree, SiblingIterator& it,
-                          SiblingIterator end, ErrorBuilder* trace)
+  static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
+                          Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
     if (trace) {
       *trace << "Aggregate: begin\n";
@@ -290,14 +298,37 @@ struct Tree::Extractable {
         *tuple);
   }
 
-  static auto Extract(const Tree* tree, SiblingIterator& it,
-                      SiblingIterator end, ErrorBuilder* trace)
+  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
+                      Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
     static_assert(!HasKindMember<T>, "Missing Id suffix");
     return ExtractImpl(tree, it, end, trace);
   }
 };
 
-}  // namespace Carbon::Parse
+template <typename T>
+auto Tree::TryExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children,
+    ErrorBuilder* trace) const -> std::optional<T> {
+  auto it = children.begin();
+  auto result = Extractable<T>::ExtractImpl(this, it, children.end(), trace);
+  if (it != children.end()) {
+    if (trace) {
+      *trace << "Error: " << node_kind(*it) << " node left unconsumed.";
+    }
+    return std::nullopt;
+  }
+  return result;
+}
 
-#endif  // CARBON_TOOLCHAIN_PARSE_EXTRACT_H_
+// Manually instantiate Tree::TryExtractNodeFromChildren
+#define CARBON_PARSE_NODE_KIND(KindName)                    \
+  template auto Tree::TryExtractNodeFromChildren<KindName>( \
+      llvm::iterator_range<Tree::SiblingIterator> children, \
+      ErrorBuilder * trace) const -> std::optional<KindName>;
+
+// Also instantiate for `File`, even though it isn't a parse node.
+CARBON_PARSE_NODE_KIND(File)
+#include "toolchain/parse/node_kind.def"
+
+}  // namespace Carbon::Parse
