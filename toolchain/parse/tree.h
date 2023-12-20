@@ -111,24 +111,6 @@ class Tree : public Printable<Tree> {
 
   auto node_subtree_size(NodeId n) const -> int32_t;
 
-  // Converts this node_id to a typed node of a specified type, if it is a valid
-  // node of that kind.
-  template <typename T>
-  auto ExtractAs(NodeId node_id) const -> std::optional<T>;
-
-  // Like ExtractAs(), but malformed tree errors are not fatal.
-  template <typename T>
-  auto TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
-      -> std::optional<T>;
-
-  // Converts to a typed node, if it is not an error.
-  template <typename IdT>
-  auto Extract(IdT id) const -> std::optional<typename NodeForId<IdT>::Kind>;
-
-  // Extract a `File` object representing the parse tree for the whole file.
-  // #include "toolchain/parse/file.h" to get the definition of `File`.
-  auto ExtractFile() -> File const;
-
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
   auto IsValid(NodeId node_id) const -> bool {
@@ -193,10 +175,35 @@ class Tree : public Printable<Tree> {
   // Verifies the parse tree structure. Checks invariants of the parse tree
   // structure and returns verification errors.
   //
-  // This is primarily intended to be used as a
-  // debugging aid. This routine doesn't directly CHECK so that it can be used
-  // within a debugger.
+  // This is fairly slow, and is primarily intended to be used as a debugging
+  // aid. This routine doesn't directly CHECK so that it can be used within a
+  // debugger.
   auto Verify() const -> ErrorOr<Success>;
+
+  // The following `Extract*` function provide an alternative way of accessing
+  // the nodes of a tree. It is intended to be more convenient and type-safe,
+  // but slower and can't be used on nodes that are marked as having an error.
+  // It is appropriate for uses that are less performance sensitive, like
+  // diagnostics.
+
+  // Extract a `File` object representing the parse tree for the whole file.
+  // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
+  // and the types representing its children nodes.
+  auto ExtractFile() -> File const;
+
+  // Converts this node_id to a typed node of a specified type, if it is a valid
+  // node of that kind.
+  template <typename T>
+  auto ExtractAs(NodeId node_id) const -> std::optional<T>;
+
+  // Like ExtractAs(), but malformed tree errors are not fatal.
+  template <typename T>
+  auto TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
+      -> std::optional<T>;
+
+  // Converts to a typed node, if it is not an error.
+  template <typename IdT>
+  auto Extract(IdT id) const -> std::optional<typename NodeForId<IdT>::Kind>;
 
  private:
   friend class Context;
