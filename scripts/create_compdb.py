@@ -33,21 +33,16 @@ def _build_generated_files(bazel: str) -> None:
 
     # Now collect the generated file labels. Include some rules which generate
     # files but aren't classified as "generated file".
+    kinds_query = (
+        "filter("
+        ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
+        ' kind("generated file", deps(//...))'
+        ")"
+        " union "
+        'kind("(cc_proto_library|tree_sitter_cc_library)", deps(//...))'
+    )
     generated_file_labels = subprocess.check_output(
-        [
-            bazel,
-            "query",
-            "--keep_going",
-            "--output=label",
-            (
-                'filter(".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
-                'kind("generated file", deps(//...)))'
-                " union "
-                'kind("cc_proto_library", deps(//...))'
-                " union "
-                'kind("tree_sitter_cc_library", deps(//...))'
-            ),
-        ],
+        [bazel, "query", "--keep_going", "--output=label", kinds_query],
         stderr=subprocess.DEVNULL,
         encoding="utf-8",
     ).splitlines()
