@@ -58,12 +58,12 @@ constexpr NodeIdInCategory<Category> NodeIdInCategory<Category>::Invalid =
     NodeIdInCategory<Category>(NodeId::InvalidIndex);
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
-using AnyDecl = NodeIdInCategory<NodeCategory::Decl>;
-using AnyExpr = NodeIdInCategory<NodeCategory::Expr>;
-using AnyModifier = NodeIdInCategory<NodeCategory::Modifier>;
-using AnyNameComponent = NodeIdInCategory<NodeCategory::NameComponent>;
-using AnyPattern = NodeIdInCategory<NodeCategory::Pattern>;
-using AnyStatement = NodeIdInCategory<NodeCategory::Statement>;
+using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
+using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
+using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
+using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
+using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
+using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
 
 // NodeId with kind that matches either T::Kind or U::Kind.
 template <typename T, typename U>

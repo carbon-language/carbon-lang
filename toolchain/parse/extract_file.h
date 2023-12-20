@@ -17,7 +17,7 @@ namespace Carbon::Parse {
 // the file. The file is instead the complete contents of the parse tree.
 struct File {
   FileStartId start;
-  llvm::SmallVector<AnyDecl> decls;
+  llvm::SmallVector<AnyDeclId> decls;
   FileEndId end;
 
   static auto Make(const Tree* tree) -> File {

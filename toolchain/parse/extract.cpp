@@ -88,6 +88,7 @@ struct Extractable<NodeIdInCategory<Category>> {
       -> std::optional<NodeIdInCategory<Category>> {
     if (trace) {
       *trace << "NodeIdInCategory";
+      // TODO: Make NodeCategory printable instead.
       if (!Category) {
         *trace << " <none>";
       }
@@ -208,18 +209,18 @@ struct Extractable<std::optional<T>> {
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<std::optional<T>> {
     if (trace) {
-      *trace << "Optional: begin\n";
+      *trace << "Optional" << typeid(T).name() << ": begin\n";
     }
     auto old_it = it;
     std::optional<T> value = Extractable<T>::Extract(tree, it, end, trace);
     if (value) {
       if (trace) {
-        *trace << "Optional: found\n";
+        *trace << "Optional" << typeid(T).name() << ": found\n";
       }
       return value;
     }
     if (trace) {
-      *trace << "Optional: missing\n";
+      *trace << "Optional" << typeid(T).name() << ": missing\n";
     }
     it = old_it;
     return value;
@@ -244,9 +245,9 @@ struct Extractable<std::tuple<T...>> {
     [[maybe_unused]] int unused;
     bool ok = true;
     static_cast<void>(
-        ((ok&& ok = (std::get<Index>(fields) =
-                         Extractable<T>::Extract(tree, it, end, trace))
-                        .has_value(),
+        ((ok && (ok = (std::get<Index>(fields) =
+                           Extractable<T>::Extract(tree, it, end, trace))
+                          .has_value()),
           unused) = ... = 0));
 
     if (!ok) {
@@ -278,20 +279,20 @@ struct Extractable {
                           Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
     if (trace) {
-      *trace << "Aggregate: begin\n";
+      *trace << "Aggregate " << typeid(T).name() << ": begin\n";
     }
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
     auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
     if (!tuple.has_value()) {
       if (trace) {
-        *trace << "Aggregate: error\n";
+        *trace << "Aggregate" << typeid(T).name() << ": error\n";
       }
       return std::nullopt;
     }
 
     if (trace) {
-      *trace << "Aggregate: success\n";
+      *trace << "Aggregate" << typeid(T).name() << ": success\n";
     }
     // Convert the tuple to the struct type.
     return std::apply(
