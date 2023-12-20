@@ -16,7 +16,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Comment on proposals](#comment-on-proposals)
         -   [Contribute design ideas to Carbon](#contribute-design-ideas-to-carbon)
     -   [Contributing to the language implementation](#contributing-to-the-language-implementation)
-        -   [Experiment with Carbon and report issues (no code)](#experiment-with-carbon-and-report-issues-no-code)
         -   [Review and comment on Pull Requests (no code)](#review-and-comment-on-pull-requests-no-code)
         -   [Implement Carbon's design](#implement-carbons-design)
         -   [Triage, analyze or address bugs](#triage-analyze-or-address-bugs)
@@ -94,17 +93,6 @@ early, before even writing a proposal, and the process explains how to do that.
 
 ### Contributing to the language implementation
 
-#### Experiment with Carbon and report issues (no code)
-
-You can experiment with the current implementation of the Carbon language using
-the [online version](https://carbon.compiler-explorer.com/) of Carbon Explorer.
-The state of the design implementation for Explorer is documented on the
-["Are we explorer yet"](https://github.com/carbon-language/carbon-lang/wiki/Are-we-explorer-yet%3F)
-wiki page.
-
-If you uncover a bug or implementation problem, you can
-[report an issue on GitHub](https://github.com/carbon-language/carbon-lang/issues/new/choose).
-
 #### Review and comment on Pull Requests (no code)
 
 Helping with
@@ -113,18 +101,11 @@ a good way to provide feedback, while getting a acquainted with the code base.
 
 #### Implement Carbon's design
 
-The implementation of the Carbon language design takes place in two distinct
-locations:
+The implementation of the Carbon language design is currently focused on the
+[Carbon toolchain](/toolchain/) (see Carbon
+[toolchain issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Atoolchain))
 
--   the [Carbon Explorer](/explorer/) (see Carbon
-    [Explorer issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Aexplorer)),
-    and
--   the [Carbon toolchain](/toolchain/) (see Carbon
-    [toolchain issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Atoolchain))
-
-The Carbon Explorer is generally simpler to contribute to, while the toolchain
-implements the compiler and tools needed for the language. **Some issues are
-also marked as
+**Some issues are also marked as
 ["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**.
 These are intended to be a good place to start contributing.
 

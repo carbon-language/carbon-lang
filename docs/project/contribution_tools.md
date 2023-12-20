@@ -38,7 +38,7 @@ These commands should help set up a development environment on your machine.
 
 ### Debian or Ubuntu
 
-```
+```shell
 # Update apt.
 sudo apt update
 
@@ -72,7 +72,7 @@ bazel test //...:all
 
 ### macOS
 
-```
+```shell
 # Install Hombrew.
 /bin/bash -c "$(curl -fsSL \
   https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
