@@ -136,7 +136,7 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.name_scopes().Add();
+    class_info.scope_id = context.name_scopes().Add(class_decl_id);
   }
 
   // Enter the class scope.

@@ -110,6 +110,9 @@ class DeclNameStack {
 
     State state = State::Empty;
 
+    // Whether there have been qualifiers in the name.
+    bool has_qualifiers = false;
+
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
@@ -182,7 +185,7 @@ class DeclNameStack {
 
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
-  auto CanResolveQualifier(NameContext& name_context, Parse::NodeId parse_node)
+  auto TryResolveQualifier(NameContext& name_context, Parse::NodeId parse_node)
       -> bool;
 
   // Updates the scope on name_context as needed. This is called after

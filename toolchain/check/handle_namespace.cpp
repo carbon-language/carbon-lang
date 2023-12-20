@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -21,9 +22,12 @@ auto HandleNamespace(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
   LimitModifiersOnDecl(context, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);
+  auto future_namespace_id = SemIR::InstId(context.insts().size());
+  auto name_scope_id = context.name_scopes().Add(future_namespace_id);
   auto namespace_id = context.AddInst(SemIR::Namespace{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      context.name_scopes().Add()});
+      name_scope_id});
+  CARBON_CHECK(future_namespace_id == namespace_id);
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
 
   context.decl_name_stack().PopScope();
