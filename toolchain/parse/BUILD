@@ -68,7 +68,6 @@ cc_library(
         "handle_*.cpp",
     ]),
     hdrs = [
-        "extract_file.h",
         "tree.h",
     ],
     deps = [

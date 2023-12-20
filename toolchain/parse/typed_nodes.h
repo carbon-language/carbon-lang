@@ -769,6 +769,16 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
 };
 
+// --------------------
+
+// A complete source file. Note that there is no corresponding parse node for
+// the file. The file is instead the complete contents of the parse tree.
+struct File {
+  FileStartId start;
+  llvm::SmallVector<AnyDeclId> decls;
+  FileEndId end;
+};
+
 // Define `FooId` as the id for type `Foo`
 #define CARBON_PARSE_NODE_KIND(KindName) \
   template <>                            \

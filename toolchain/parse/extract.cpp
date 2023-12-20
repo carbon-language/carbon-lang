@@ -7,7 +7,6 @@
 
 #include "common/error.h"
 #include "common/struct_reflection.h"
-#include "toolchain/parse/extract_file.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
 
@@ -334,5 +333,9 @@ auto Tree::TryExtractNodeFromChildren(
 // Also instantiate for `File`, even though it isn't a parse node.
 CARBON_PARSE_NODE_KIND(File)
 #include "toolchain/parse/node_kind.def"
+
+auto Tree::ExtractFile() -> File const {
+  return ExtractNodeFromChildren<File>(roots());
+}
 
 }  // namespace Carbon::Parse

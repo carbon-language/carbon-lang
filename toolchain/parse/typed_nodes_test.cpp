@@ -12,7 +12,6 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/extract_file.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
@@ -56,7 +55,7 @@ class TypedNodeTest : public ::testing::Test {
 
 TEST_F(TypedNodeTest, Empty) {
   auto* tree = &GetTree("");
-  auto file = File::Extract(tree);
+  auto file = tree->ExtractFile();
 
   EXPECT_TRUE(tree->IsValid(file.start));
   EXPECT_TRUE(tree->ExtractAs<FileStart>(file.start).has_value());
@@ -75,7 +74,7 @@ TEST_F(TypedNodeTest, Function) {
     fn F() {}
     virtual fn G() -> i32;
   )carbon");
-  auto file = File::Extract(tree);
+  auto file = tree->ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 2);
 
@@ -96,7 +95,7 @@ TEST_F(TypedNodeTest, ModifierOrder) {
   auto* tree = &GetTree(R"carbon(
     private abstract virtual default interface I;
   )carbon");
-  auto file = File::Extract(tree);
+  auto file = tree->ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
 
@@ -120,7 +119,7 @@ TEST_F(TypedNodeTest, For) {
       }
     }
   )carbon");
-  auto file = File::Extract(tree);
+  auto file = tree->ExtractFile();
 
   ASSERT_EQ(file.decls.size(), 1);
   auto fn = tree->ExtractAs<FunctionDefinition>(file.decls[0]);

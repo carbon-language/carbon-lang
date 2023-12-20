@@ -20,6 +20,9 @@
 
 namespace Carbon::Parse {
 
+// Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
+struct File;
+
 // A tree of parsed tokens based on the language grammar.
 //
 // This is a purely syntactic parse tree without any semantics yet attached. It
@@ -122,6 +125,10 @@ class Tree : public Printable<Tree> {
   template <typename IdT>
   auto Extract(IdT id) const -> std::optional<typename NodeForId<IdT>::Kind>;
 
+  // Extract a `File` object representing the parse tree for the whole file.
+  // #include "toolchain/parse/file.h" to get the definition of `File`.
+  auto ExtractFile() -> File const;
+
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
   auto IsValid(NodeId node_id) const -> bool {
@@ -193,7 +200,6 @@ class Tree : public Printable<Tree> {
 
  private:
   friend class Context;
-  friend struct File;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
