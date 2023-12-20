@@ -159,6 +159,8 @@ class [[clang::internal_linkage]] Lexer {
   auto Lex() && -> TokenizedBuffer;
 
  private:
+  class ErrorRecoveryBuffer;
+
   TokenizedBuffer buffer_;
 
   ssize_t line_index_;
@@ -992,21 +994,25 @@ auto Lexer::LexOpeningSymbolToken(llvm::StringRef source_text, TokenKind kind,
 auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                                   ssize_t& position) -> LexResult {
   TokenIndex token = LexOneCharSymbolToken(source_text, kind, position);
+  auto& token_info = buffer_.GetTokenInfo(token);
 
+  // If there's not a matching opening symbol, just track that we had an error.
+  // We will diagnose and recover when we reach the end of the file. See
+  // `DiagnoseAndFixMismatchedBrackets` for details.
   if (LLVM_UNLIKELY(open_groups_.empty())) {
     has_mismatched_brackets_ = true;
     return token;
   }
 
-  if (LLVM_UNLIKELY(buffer_.GetTokenInfo(open_groups_.back()).kind !=
-                    kind.opening_symbol())) {
+  TokenIndex opening_token = open_groups_.pop_back_val();
+  auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
+  if (LLVM_UNLIKELY(opening_token_info.kind != kind.opening_symbol())) {
     has_mismatched_brackets_ = true;
     return token;
   }
 
-  TokenIndex opening_token = open_groups_.pop_back_val();
-  buffer_.GetTokenInfo(opening_token).closing_token = token;
-  buffer_.GetTokenInfo(token).opening_token = opening_token;
+  opening_token_info.closing_token = token;
+  token_info.opening_token = opening_token;
   return token;
 }
 
@@ -1241,51 +1247,116 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   }
 }
 
+// A list of pending insertions to make into a tokenized buffer for error
+// recovery. These are buffered so that we can perform them in linear time.
+class Lexer::ErrorRecoveryBuffer {
+ public:
+  ErrorRecoveryBuffer(TokenizedBuffer& buffer) : buffer_(buffer) {}
+
+  auto empty() const -> bool {
+    return new_tokens_.empty() && !any_error_tokens_;
+  }
+
+  // Insert a recovery token of kind `kind` before `insert_before`. Note that we
+  // currently require insertions to be specified in source order, but this
+  // restriction would be easy to relax.
+  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
+    CARBON_CHECK(insert_before.index > 0)
+        << "Cannot insert before the start of file token.";
+    CARBON_CHECK(new_tokens_.empty() ||
+                 new_tokens_.back().first <= insert_before)
+        << "Insertions performed out of order.";
+
+    // Find the end of the token before the target token, and add the new token
+    // there. Note that new_token_column is a 1-based column number.
+    auto insert_after = TokenIndex(insert_before.index - 1);
+    auto [new_token_line, new_token_column] =
+        buffer_.GetEndLocation(insert_after);
+    new_tokens_.push_back(
+        {insert_before,
+         {.kind = kind,
+          .has_trailing_space = buffer_.HasTrailingWhitespace(insert_after),
+          .is_recovery = true,
+          .token_line = new_token_line,
+          .column = new_token_column - 1}});
+  }
+
+  // Replace the given token with an error token. We do this immediately,
+  // because we don't benefit from buffering it.
+  auto ReplaceWithError(TokenIndex token) -> void {
+    auto& token_info = buffer_.GetTokenInfo(token);
+    token_info.error_length = buffer_.GetTokenText(token).size();
+    token_info.kind = TokenKind::Error;
+    any_error_tokens_ = true;
+  }
+
+  // Merge the recovery tokens into the token list of the tokenized buffer.
+  auto Apply() -> void {
+    auto old_tokens = std::move(buffer_.token_infos_);
+    buffer_.token_infos_.clear();
+    buffer_.token_infos_.reserve(old_tokens.size() + new_tokens_.size());
+
+    int old_tokens_offset = 0;
+    for (auto [next_offset, info] : new_tokens_) {
+      buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                  old_tokens.begin() + next_offset.index);
+      buffer_.token_infos_.push_back(info);
+      old_tokens_offset = next_offset.index;
+    }
+    buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                old_tokens.end());
+  }
+
+  // Perform bracket matching to fix cross-references between tokens. This must
+  // be done after all recovery is performed and all brackets match, because
+  // recovery will change token indexes.
+  auto FixTokenCrossReferences() -> void {
+    llvm::SmallVector<TokenIndex> open_groups;
+    for (auto token : buffer_.tokens()) {
+      auto kind = buffer_.GetKind(token);
+      if (kind.is_opening_symbol()) {
+        open_groups.push_back(token);
+      } else if (kind.is_closing_symbol()) {
+        CARBON_CHECK(!open_groups.empty()) << "Failed to balance brackets";
+        auto opening_token = open_groups.pop_back_val();
+
+        CARBON_CHECK(kind ==
+                     buffer_.GetTokenInfo(opening_token).kind.closing_symbol())
+            << "Failed to balance brackets";
+        auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
+        auto& closing_token_info = buffer_.GetTokenInfo(token);
+        opening_token_info.closing_token = token;
+        closing_token_info.opening_token = opening_token;
+      }
+    }
+  }
+
+ private:
+  TokenizedBuffer& buffer_;
+
+  // A list of tokens to insert into the token stream to fix mismatched
+  // brackets. The first element in each pair is the original token index to
+  // insert the new token before.
+  llvm::SmallVector<std::pair<TokenIndex, TokenizedBuffer::TokenInfo>>
+      new_tokens_;
+
+  // Whether we have changed any tokens into error tokens.
+  bool any_error_tokens_ = false;
+};
+
+// Issue an UnmatchedOpening diagnostic.
+static auto DiagnoseUnmatchedOpening(TokenDiagnosticEmitter& emitter,
+                                     TokenIndex opening_token) -> void {
+  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                    "Opening symbol without a corresponding closing symbol.");
+  emitter.Emit(opening_token, UnmatchedOpening);
+}
+
 // If brackets didn't pair or nest properly, find a set of places to insert
 // brackets to fix the nesting, issue suitable diagnostics, and update the
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
-  llvm::SmallVector<std::pair<int, TokenizedBuffer::TokenInfo>> new_tokens;
-
-  bool fixed_anything = false;
-
-  // Handle an opening token with no matching closing token.
-  auto handle_missing_close = [&](TokenIndex opening_token,
-                                  TokenIndex insert_before) {
-    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                      "Opening symbol without a corresponding closing symbol.");
-    token_emitter_.Emit(opening_token, UnmatchedOpening);
-
-    auto opening_kind = buffer_.GetKind(opening_token);
-
-    if (insert_before == TokenIndex::Invalid) {
-      // We don't have a good location to insert a close bracket. Convert the
-      // opening token from a bracket to an error.
-      auto& token_info = buffer_.GetTokenInfo(opening_token);
-      token_info.kind = TokenKind::Error;
-      token_info.error_length = opening_kind.fixed_spelling().size();
-    } else {
-      // We think we have an insertion position for the close bracket. Find the
-      // end of the previous token, and add a matching closing token there.
-      // Note that new_token_column is a 1-based column number.
-      // TODO: Indicate in the diagnostic that we did this, perhaps by
-      // annotating the snippet.
-      CARBON_CHECK(opening_token < insert_before)
-          << "Tried to insert close bracket before open bracket.";
-      auto insert_after = TokenIndex(insert_before.index - 1);
-      auto [new_token_line, new_token_column] =
-          buffer_.GetEndLocation(insert_after);
-      new_tokens.push_back(
-          {insert_before.index,
-           {.kind = opening_kind.closing_symbol(),
-            .has_trailing_space = buffer_.HasTrailingWhitespace(insert_after),
-            .is_recovery = true,
-            .token_line = new_token_line,
-            .column = new_token_column - 1}});
-    }
-
-    fixed_anything = true;
-  };
+  ErrorRecoveryBuffer fixes(buffer_);
 
   // Look for mismatched brackets and decide where to add tokens to fix them.
   //
@@ -1322,67 +1393,40 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
                  kind;
         });
     if (opening_it == open_groups_.rend()) {
-      auto& token_info = buffer_.GetTokenInfo(token);
-      token_info.kind = TokenKind::Error;
-      token_info.error_length = kind.fixed_spelling().size();
-      fixed_anything = true;
-
       CARBON_DIAGNOSTIC(
           UnmatchedClosing, Error,
           "Closing symbol without a corresponding opening symbol.");
       token_emitter_.Emit(token, UnmatchedClosing);
+      fixes.ReplaceWithError(token);
       continue;
     }
 
     // All intermediate open tokens have no matching close token.
     for (auto it = open_groups_.rbegin(); it != opening_it; ++it) {
-      handle_missing_close(*it, token);
+      DiagnoseUnmatchedOpening(token_emitter_, *it);
+
+      // Add a closing bracket for the unclosed group here.
+      //
+      // TODO: Indicate in the diagnostic that we did this, perhaps by
+      // annotating the snippet.
+      auto opening_kind = buffer_.GetKind(*it);
+      fixes.InsertBefore(token, opening_kind.closing_symbol());
     }
+
     open_groups_.erase(opening_it.base() - 1, open_groups_.end());
   }
 
   // Diagnose any remaining unmatched opening symbols.
   for (auto token : open_groups_) {
-    handle_missing_close(token, TokenIndex::Invalid);
+    // We don't have a good location to insert a close bracket. Convert the
+    // opening token from a bracket to an error.
+    DiagnoseUnmatchedOpening(token_emitter_, token);
+    fixes.ReplaceWithError(token);
   }
 
-  // Merge the recovery tokens into the token list.
-  CARBON_CHECK(fixed_anything) << "Didn't find anything to fix";
-  auto old_tokens = std::move(buffer_.token_infos_);
-  buffer_.token_infos_.clear();
-  buffer_.token_infos_.reserve(old_tokens.size() + new_tokens.size());
-
-  int old_tokens_offset = 0;
-  for (auto [next_offset, info] : new_tokens) {
-    buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                old_tokens.begin() + next_offset);
-    buffer_.token_infos_.push_back(info);
-    old_tokens_offset = next_offset;
-  }
-  buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                              old_tokens.end());
-
-  // Update the token list with closing and opening tokens. Note that this
-  // must be done last, and must be redone for all tokens, because token
-  // indexes were changed in the previous step.
-  open_groups_.clear();
-  for (auto token : buffer_.tokens()) {
-    auto kind = buffer_.GetKind(token);
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-    } else if (kind.is_closing_symbol()) {
-      CARBON_CHECK(!open_groups_.empty()) << "Failed to balance brackets";
-      auto opening_token = open_groups_.pop_back_val();
-
-      CARBON_CHECK(kind ==
-                   buffer_.GetTokenInfo(opening_token).kind.closing_symbol())
-          << "Failed to balance brackets";
-      auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
-      auto& closing_token_info = buffer_.GetTokenInfo(token);
-      opening_token_info.closing_token = token;
-      closing_token_info.opening_token = opening_token;
-    }
-  }
+  CARBON_CHECK(!fixes.empty()) << "Didn't find anything to fix";
+  fixes.Apply();
+  fixes.FixTokenCrossReferences();
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
