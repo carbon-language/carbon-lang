@@ -67,6 +67,7 @@ def main() -> None:
 
     _build_generated_files(bazel)
 
+    print("Generating compile_commands.json (may take a few minutes)...")
     subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
 
 
