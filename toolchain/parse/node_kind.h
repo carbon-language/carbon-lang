@@ -87,11 +87,11 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
 
-// A definition of an parse node kind. This is an NodeKind value, plus
+// A definition of a parse node kind. This is a NodeKind value, plus
 // ancillary data such as the name to use for the node kind in LLVM IR. These
 // are not copyable, and only one instance of this type is expected to exist per
 // parse node kind, specifically `TypedNode::Kind`. Use `NodeKind` instead as a
-// thin wrapper around an parse node kind index.
+// thin wrapper around a parse node kind index.
 class NodeKind::Definition : public NodeKind {
  public:
   // Not copyable.
