@@ -28,9 +28,45 @@ import subprocess
 import scripts_utils
 
 
+def _build_generated_files(bazel: str) -> None:
+    print("Building the generated files so that tools can find them...")
+
+    # Now collect the generated file labels. Include some rules which generate
+    # files but aren't classified as "generated file".
+    generated_file_labels = subprocess.check_output(
+        [
+            bazel,
+            "query",
+            "--keep_going",
+            "--output=label",
+            (
+                'filter(".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
+                'kind("generated file", deps(//...)))'
+                " union "
+                'kind("cc_proto_library", deps(//...))'
+                " union "
+                'kind("tree_sitter_cc_library", deps(//...))'
+            ),
+        ],
+        stderr=subprocess.DEVNULL,
+        encoding="utf-8",
+    ).splitlines()
+    print(f"Found {len(generated_file_labels)} generated files...")
+
+    # Directly build these labels so that indexing can find them. Allow this to
+    # fail in case there are build errors in the client, and just warn the user
+    # that they may be missing generated files.
+    subprocess.check_call(
+        [bazel, "build", "--keep_going"] + generated_file_labels
+    )
+
+
 def main() -> None:
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
+
+    _build_generated_files(bazel)
+
     subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
 
 
