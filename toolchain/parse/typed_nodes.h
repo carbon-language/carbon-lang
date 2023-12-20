@@ -10,6 +10,9 @@
 
 namespace Carbon::Parse {
 
+// Helpers for defining different kinds of parse nodes.
+// ----------------------------------------------------
+
 // A pair of a list item and its optional following comma.
 template <typename Element, typename Comma>
 struct ListItem {
@@ -27,8 +30,26 @@ struct LeafNode {
   static constexpr auto Kind = KindT.Define(Category);
 };
 
+// ----------------------------------------------------------------------------
 // Each type defined below corresponds to a parse node kind, and describes the
-// expected child structure of that parse node.
+// expected child structure of that parse node. Each should have a
+// `static constexpr Kind` member initialized to calling `Define` on the
+// corresponding `NodeKind`, in order to set its `NodeCategory`.
+//
+// This should be followed by a field for each direct child. These may use any
+// of these patterns (many of these are defined in `node_ids.h`):
+// - `NodeId` to match any single child node,
+// - `FooId` to require that child to have kind `Foo`,
+// - `AnyFooId` to require that child to have a kind in category `Foo`,
+// - `NodeIdOneOf<T, U>` to require the child to have kind `T::Kind` or
+//   `U::Kind`,
+// - `NodeIdNot<T>` to match any single child that doesn't have kind `T::Kind`,
+// - `llvm::SmallVector<T>` to match any number of children matching `T`
+// - `std::optional<T>` to match 0 or 1 children matching `T`
+// - `std::tuple<T...>` to match children matching `T...`
+// - `Aggregate`, for simple aggregate type `struct Aggregate { T x; U y; }`,
+//   to match children with types `T` and `U`.
+// ----------------------------------------------------------------------------
 
 // Error nodes
 // -----------
@@ -53,6 +74,7 @@ struct InvalidParseSubtree {
 using Placeholder = LeafNode<NodeKind::Placeholder>;
 
 // File nodes
+// ----------
 
 // The start of the file.
 using FileStart = LeafNode<NodeKind::FileStart>;
@@ -61,6 +83,7 @@ using FileStart = LeafNode<NodeKind::FileStart>;
 using FileEnd = LeafNode<NodeKind::FileEnd>;
 
 // General-purpose nodes
+// ---------------------
 
 // An empty declaration, such as `;`.
 using EmptyDecl =
@@ -103,6 +126,7 @@ struct QualifiedDecl {
 };
 
 // Library, package, import
+// ------------------------
 
 // The `package` keyword in an expression.
 using PackageExpr = LeafNode<NodeKind::PackageExpr, NodeCategory::Expr>;
@@ -151,6 +175,7 @@ struct LibraryDirective {
 };
 
 // Namespace nodes
+// ---------------
 
 using NamespaceStart = LeafNode<NodeKind::NamespaceStart>;
 
@@ -163,6 +188,7 @@ struct Namespace {
 };
 
 // Function nodes
+// --------------
 
 using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
 
@@ -228,6 +254,7 @@ struct FunctionDefinition {
 };
 
 // Pattern nodes
+// -------------
 
 // A pattern binding, such as `name: Type`.
 struct BindingPattern {
@@ -260,6 +287,7 @@ struct Template {
 };
 
 // `let` nodes
+// -----------
 
 using LetIntroducer = LeafNode<NodeKind::LetIntroducer>;
 using LetInitializer = LeafNode<NodeKind::LetInitializer>;
@@ -276,6 +304,7 @@ struct LetDecl {
 };
 
 // `var` nodes
+// -----------
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
@@ -298,6 +327,7 @@ struct VariableDecl {
 };
 
 // Statement nodes
+// ---------------
 
 // An expression statement: `F(x);`.
 struct ExprStatement {
@@ -404,6 +434,7 @@ struct WhileStatement {
 };
 
 // Expression nodes
+// ----------------
 
 using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart, NodeCategory::Expr>;
 
@@ -534,7 +565,8 @@ struct PostfixOperator {
 // The first operand of a short-circuiting infix operator: `a and` or `a or`.
 // The complete operator expression will be an InfixOperator with this as the
 // `lhs`.
-// FIXME: should this be a template?
+// TODO: Make this be a template if we ever need to write generic code to cover
+// both cases at once, say in check.
 struct ShortCircuitOperandAnd {
   static constexpr auto Kind = NodeKind::ShortCircuitOperandAnd.Define();
   AnyExprId operand;
@@ -580,6 +612,7 @@ struct IfExprElse {
 };
 
 // Struct literals and struct type literals
+// ----------------------------------------
 
 // `{`
 using StructLiteralOrStructTypeLiteralStart =
@@ -624,6 +657,7 @@ struct StructTypeLiteral {
 };
 
 // `class` declarations and definitions
+// ------------------------------------
 
 // `class`
 using ClassIntroducer = LeafNode<NodeKind::ClassIntroducer>;
@@ -654,6 +688,7 @@ struct ClassDefinition {
 };
 
 // Base class declaration
+// ----------------------
 
 // `base`
 using BaseIntroducer = LeafNode<NodeKind::BaseIntroducer>;
@@ -668,6 +703,7 @@ struct BaseDecl {
 };
 
 // Interface declarations and definitions
+// --------------------------------------
 
 // `interface`
 using InterfaceIntroducer = LeafNode<NodeKind::InterfaceIntroducer>;
@@ -699,6 +735,7 @@ struct InterfaceDefinition {
 };
 
 // `impl`...`as` declarations and definitions
+// ------------------------------------------
 
 // `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer>;
@@ -738,6 +775,7 @@ struct ImplDefinition {
 };
 
 // Named constraint declarations and definitions
+// ---------------------------------------------
 
 // `constraint`
 using NamedConstraintIntroducer = LeafNode<NodeKind::NamedConstraintIntroducer>;
@@ -769,7 +807,7 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
 };
 
-// --------------------
+// ---------------------------------------------------------------------------
 
 // A complete source file. Note that there is no corresponding parse node for
 // the file. The file is instead the complete contents of the parse tree.

@@ -91,6 +91,9 @@ template <typename T>
 constexpr NodeIdNot<T> NodeIdNot<T>::Invalid =
     NodeIdNot<T>(NodeId::InvalidIndex);
 
+// Note that the support for extracting these types using the `Tree::Extract*`
+// functions is defined in `extract.cpp`.
+
 }  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSE_NODE_IDS_H_
