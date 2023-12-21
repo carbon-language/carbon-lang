@@ -73,7 +73,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     -> void {
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
-  auto package_scope_id = context.name_scopes().Add();
+  auto package_scope_id =
+      context.name_scopes().Add(SemIR::InstId::PackageNamespace);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst = context.AddInst(SemIR::Namespace{
