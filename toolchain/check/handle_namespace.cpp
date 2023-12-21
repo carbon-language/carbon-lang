@@ -22,12 +22,12 @@ auto HandleNamespace(Context& context, Parse::NodeId parse_node) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
   LimitModifiersOnDecl(context, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);
-  auto future_namespace_id = SemIR::InstId(context.insts().size());
-  auto name_scope_id = context.name_scopes().Add(future_namespace_id);
-  auto namespace_id = context.AddInst(SemIR::Namespace{
+  auto namespace_inst = SemIR::Namespace{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      name_scope_id});
-  CARBON_CHECK(future_namespace_id == namespace_id);
+      SemIR::NameScopeId::Invalid};
+  auto namespace_id = context.AddInst(namespace_inst);
+  namespace_inst.name_scope_id = context.name_scopes().Add(namespace_id);
+  context.insts().Set(namespace_id, namespace_inst);
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
 
   context.decl_name_stack().PopScope();
