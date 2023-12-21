@@ -109,7 +109,7 @@ auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
         .Emit();
   } else {
     interface_info.definition_id = interface_decl_id;
-    interface_info.scope_id = context.name_scopes().Add();
+    interface_info.scope_id = context.name_scopes().Add(interface_decl_id);
   }
 
   // Enter the interface scope.
