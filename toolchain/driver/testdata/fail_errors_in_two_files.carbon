@@ -8,7 +8,7 @@
 
 // --- file1.carbon
 
-// CHECK:STDERR: file1.carbon:[[@LINE+3]]:24: ERROR: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: file1.carbon:[[@LINE+3]]:24: ERROR: Opening symbol without a corresponding closing symbol.
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
 fn run(String program) {
