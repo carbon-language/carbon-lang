@@ -184,7 +184,22 @@ class Tree : public Printable<Tree> {
   // the nodes of a tree. It is intended to be more convenient and type-safe,
   // but slower and can't be used on nodes that are marked as having an error.
   // It is appropriate for uses that are less performance sensitive, like
-  // diagnostics.
+  // diagnostics. Example usage:
+  // ```
+  // auto file = tree->ExtractFile();
+  // for (AnyDeclId decl_id : file.decls) {
+  //   // `decl_id` is convertible to a `NodeId`.
+  //   if (std::optional<FunctionDecl> fn_decl =
+  //       tree->ExtractAs<FunctionDecl>(decl_id)) {
+  //     // fn_decl->params is a `TuplePatternId` (which extends `NodeId`)
+  //     // that is guaranteed to reference a `TuplePattern`.
+  //     std::optional<TuplePattern> params = tree->Extract(fn_decl->params);
+  //     // `params` has a value unless there was an error in that node.
+  //   } else if (auto class_def = tree->ExtractAs<ClassDefinition>(decl_id)) {
+  //     // ...
+  //   }
+  // }
+  // ```
 
   // Extract a `File` object representing the parse tree for the whole file.
   // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
