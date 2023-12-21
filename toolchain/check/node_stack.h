@@ -202,7 +202,7 @@ class NodeStack {
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
 
-  // TODO: Can we ad a `Pop<...>` that takes a parse node category? See
+  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
   // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
 
   // Pops the top of the stack and returns the ID.

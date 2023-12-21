@@ -204,14 +204,15 @@ class Tree : public Printable<Tree> {
   // Extract a `File` object representing the parse tree for the whole file.
   // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
   // and the types representing its children nodes.
-  auto ExtractFile() -> File const;
+  auto ExtractFile() const -> File;
 
   // Converts this node_id to a typed node of a specified type, if it is a valid
   // node of that kind.
   template <typename T>
   auto ExtractAs(NodeId node_id) const -> std::optional<T>;
 
-  // Like ExtractAs(), but malformed tree errors are not fatal.
+  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be used
+  // by `Verify()`.
   template <typename T>
   auto TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
       -> std::optional<T>;
