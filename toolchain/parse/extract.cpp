@@ -334,7 +334,7 @@ auto Tree::TryExtractNodeFromChildren(
 CARBON_PARSE_NODE_KIND(File)
 #include "toolchain/parse/node_kind.def"
 
-auto Tree::ExtractFile() -> File const {
+auto Tree::ExtractFile() const -> File {
   return ExtractNodeFromChildren<File>(roots());
 }
 
