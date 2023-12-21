@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "54dd3881f69c1741aa5508130129b2e828f36e808ee8bdd8324943efc9a5dfe2",
+  "moduleFileHash": "bd9d40db15930ff642c7b8a3449b04e7cb32b8ff7038b0d6c91cc44e9ad68cf5",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -55,7 +55,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 48,
+                "line": 58,
                 "column": 13
               }
             },
@@ -81,7 +81,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 80,
+                "line": 98,
                 "column": 13
               }
             }
@@ -95,7 +95,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 56,
+            "line": 66,
             "column": 35
           },
           "imports": {
@@ -112,7 +112,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 95,
+            "line": 113,
             "column": 29
           },
           "imports": {
@@ -129,7 +129,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 107,
+            "line": 125,
             "column": 23
           },
           "imports": {
@@ -145,7 +145,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 108,
+                "line": 126,
                 "column": 17
               }
             }
@@ -159,7 +159,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 114,
+            "line": 132,
             "column": 20
           },
           "imports": {
@@ -177,7 +177,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 115,
+                "line": 133,
                 "column": 10
               }
             }
@@ -198,6 +198,7 @@
         "rules_cc": "rules_cc@0.0.9",
         "rules_proto": "rules_proto@6.0.0-rc1",
         "com_google_protobuf": "protobuf@21.7",
+        "hedron_compile_commands": "hedron_compile_commands@_",
         "platforms": "platforms@0.0.8",
         "llvm_zlib": "zlib@1.3",
         "llvm_zstd": "zstd@1.5.5",
@@ -709,6 +710,35 @@
           },
           "remote_patch_strip": 1
         }
+      }
+    },
+    "hedron_compile_commands@_": {
+      "name": "hedron_compile_commands",
+      "version": "",
+      "key": "hedron_compile_commands@_",
+      "repoName": "hedron_compile_commands",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [
+        {
+          "extensionBzlFile": "@hedron_compile_commands//:workspace_setup.bzl",
+          "extensionName": "hedron_compile_commands_extension",
+          "usingModule": "hedron_compile_commands@_",
+          "location": {
+            "file": "@@hedron_compile_commands~override//:MODULE.bazel",
+            "line": 3,
+            "column": 14
+          },
+          "imports": {},
+          "devImports": [],
+          "tags": [],
+          "hasDevUseExtension": false,
+          "hasNonDevUseExtension": true
+        }
+      ],
+      "deps": {
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
       }
     },
     "platforms@0.0.8": {
@@ -1834,6 +1864,14 @@
             }
           }
         }
+      }
+    },
+    "@@hedron_compile_commands~override//:workspace_setup.bzl%hedron_compile_commands_extension": {
+      "general": {
+        "bzlTransitiveDigest": "VYsbf/V1v3V5TDFZ2riUvy3/is1118QpHOrxcytCrW0=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {}
       }
     },
     "@@pybind11_bazel~2.11.1//:python_configure.bzl%extension": {
