@@ -211,8 +211,8 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto ExtractAs(NodeId node_id) const -> std::optional<T>;
 
-  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be used
-  // by `Verify()`.
+  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
+  // used by `Verify()`.
   template <typename T>
   auto TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
       -> std::optional<T>;
