@@ -187,25 +187,43 @@ struct Namespace {
   NodeIdOneOf<IdentifierName, QualifiedDecl> name;
 };
 
-// Function nodes
-// --------------
+// Pattern nodes
+// -------------
 
-using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
-
-// A code block: `{ statement; statement; ... }`.
-struct CodeBlock {
-  static constexpr auto Kind = NodeKind::CodeBlock.Define();
-  CodeBlockStartId left_brace;
-  llvm::SmallVector<AnyStatementId> statements;
+// A pattern binding, such as `name: Type`.
+struct BindingPattern {
+  static constexpr auto Kind =
+      NodeKind::BindingPattern.Define(NodeCategory::Pattern);
+  NodeIdOneOf<IdentifierName, SelfValueName> name;
+  AnyExprId type;
 };
 
-using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
+// `name:! Type`
+struct GenericBindingPattern {
+  static constexpr auto Kind =
+      NodeKind::GenericBindingPattern.Define(NodeCategory::Pattern);
+  NodeIdOneOf<IdentifierName, SelfValueName> name;
+  AnyExprId type;
+};
+
+// An address-of binding: `addr self: Self*`.
+struct Address {
+  static constexpr auto Kind = NodeKind::Address.Define(NodeCategory::Pattern);
+  AnyPatternId inner;
+};
+
+// A template binding: `template T:! type`.
+struct Template {
+  static constexpr auto Kind = NodeKind::Template.Define(NodeCategory::Pattern);
+  // This is a GenericBindingPatternId in any valid program.
+  // TODO: Should the parser enforce that?
+  AnyPatternId inner;
+};
 
 using TuplePatternStart = LeafNode<NodeKind::TuplePatternStart>;
-using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart>;
 using PatternListComma = LeafNode<NodeKind::PatternListComma>;
 
-// A parameter list: `(a: i32, b: i32)`.
+// A parameter list or tuple pattern: `(a: i32, b: i32)`.
 struct TuplePattern {
   static constexpr auto Kind =
       NodeKind::TuplePattern.Define(NodeCategory::Pattern);
@@ -213,12 +231,17 @@ struct TuplePattern {
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
 };
 
+using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart>;
+
 // An implicit parameter list: `[T:! type, self: Self]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList.Define();
   ImplicitParamListStartId left_square;
   CommaSeparatedList<AnyPatternId, PatternListCommaId> params;
 };
+
+// Function nodes
+// --------------
 
 using FunctionIntroducer = LeafNode<NodeKind::FunctionIntroducer>;
 
@@ -251,39 +274,6 @@ struct FunctionDefinition {
       NodeKind::FunctionDefinition.Define(NodeCategory::Decl);
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
-};
-
-// Pattern nodes
-// -------------
-
-// A pattern binding, such as `name: Type`.
-struct BindingPattern {
-  static constexpr auto Kind =
-      NodeKind::BindingPattern.Define(NodeCategory::Pattern);
-  NodeIdOneOf<IdentifierName, SelfValueName> name;
-  AnyExprId type;
-};
-
-// `name:! Type`
-struct GenericBindingPattern {
-  static constexpr auto Kind =
-      NodeKind::GenericBindingPattern.Define(NodeCategory::Pattern);
-  NodeIdOneOf<IdentifierName, SelfValueName> name;
-  AnyExprId type;
-};
-
-// An address-of binding: `addr self: Self*`.
-struct Address {
-  static constexpr auto Kind = NodeKind::Address.Define(NodeCategory::Pattern);
-  AnyPatternId inner;
-};
-
-// A template binding: `template T:! type`.
-struct Template {
-  static constexpr auto Kind = NodeKind::Template.Define(NodeCategory::Pattern);
-  // This is a GenericBindingPatternId in any valid program.
-  // TODO: Should the parser enforce that?
-  AnyPatternId inner;
 };
 
 // `let` nodes
@@ -328,6 +318,15 @@ struct VariableDecl {
 
 // Statement nodes
 // ---------------
+
+using CodeBlockStart = LeafNode<NodeKind::CodeBlockStart>;
+
+// A code block: `{ statement; statement; ... }`.
+struct CodeBlock {
+  static constexpr auto Kind = NodeKind::CodeBlock.Define();
+  CodeBlockStartId left_brace;
+  llvm::SmallVector<AnyStatementId> statements;
+};
 
 // An expression statement: `F(x);`.
 struct ExprStatement {
