@@ -38,7 +38,7 @@ These commands should help set up a development environment on your machine.
 
 ### Debian or Ubuntu
 
-```
+```shell
 # Update apt.
 sudo apt update
 
@@ -72,7 +72,7 @@ bazel test //...:all
 
 ### macOS
 
-```
+```shell
 # Install Hombrew.
 /bin/bash -c "$(curl -fsSL \
   https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -251,13 +251,13 @@ Pass `-c dbg` to `bazel build` in order to compile with debugging enabled. For
 example:
 
 ```shell
-bazel build -c dbg //explorer
+bazel build -c dbg //toolchain/driver:carbon
 ```
 
 Then debugging works with GDB:
 
 ```shell
-gdb bazel-bin/explorer/explorer
+gdb bazel-bin/toolchain/driver/carbon
 ```
 
 Note that LLVM uses DWARF v5 debug symbols, which means that GDB version 10.1 or
@@ -279,7 +279,7 @@ for more information. To workaround, provide the `--spawn_strategy=local` option
 to Bazel for the debug build, like:
 
 ```shell
-bazel build --spawn_strategy=local -c dbg //explorer
+bazel build --spawn_strategy=local -c dbg //toolchain/driver:carbon
 ```
 
 You should then be able to debug with `lldb`.

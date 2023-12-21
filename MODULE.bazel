@@ -2,7 +2,17 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Bazel modules."""
+"""Bazel modules.
+
+If `MODULE.bazel.lock` changes locally, it means the host platform hasn't yet
+been added to the lock file. Running `bazel mod deps` provides a canonical
+update to `MODULE.bazel.lock`; create a PR with those changes in order to
+include the host platform.
+
+Platforms tested with GitHub actions are kept up-to-date. Other platforms may
+fall out of sync on dependency changes, and should be updated with a PR the same
+way a platform is added.
+"""
 
 module(name = "carbon")
 
