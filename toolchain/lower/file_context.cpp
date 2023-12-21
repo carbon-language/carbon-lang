@@ -73,14 +73,6 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
 }
 
-// Returns the parameter for the given instruction from a function parameter
-// list.
-static auto GetAsParam(const SemIR::File& sem_ir, SemIR::InstId pattern_id)
-    -> std::pair<SemIR::InstId, SemIR::Param> {
-  auto param_id = SemIR::Function::GetParamIdFromParamRefId(sem_ir, pattern_id);
-  return {param_id, sem_ir.insts().GetAs<SemIR::Param>(param_id)};
-}
-
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
@@ -111,7 +103,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_type_id = GetAsParam(sem_ir(), param_ref_id).second.type_id;
+    auto param_type_id =
+        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
+            .second.type_id;
     switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -162,7 +156,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else {
-      name_id = GetAsParam(sem_ir(), inst_id).second.name_id;
+      name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
+                    .second.name_id;
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -199,7 +194,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto [param_id, param] = GetAsParam(sem_ir(), param_ref_id);
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
 
     // Get the value of the parameter from the function argument.
     auto param_type_id = param.type_id;

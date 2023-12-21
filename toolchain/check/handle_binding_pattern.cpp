@@ -44,6 +44,9 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
+  // Create the appropriate kind of binding for this pattern.
+  //
+  // TODO: Update this to create a generic or template binding as needed.
   auto make_bind_name = [name_node = name_node, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {

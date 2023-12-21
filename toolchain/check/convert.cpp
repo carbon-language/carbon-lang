@@ -1148,9 +1148,9 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
   for (auto implicit_param_id : implicit_param_refs) {
     auto addr_pattern =
         context.insts().TryGetAs<SemIR::AddrPattern>(implicit_param_id);
-    auto param = context.insts().GetAs<SemIR::Param>(
-        SemIR::Function::GetParamIdFromParamRefId(context.sem_ir(),
-                                                  implicit_param_id));
+    auto param = SemIR::Function::GetParamFromParamRefId(context.sem_ir(),
+                                                         implicit_param_id)
+                     .second;
     if (param.name_id == SemIR::NameId::SelfValue) {
       auto converted_self_id =
           ConvertSelf(context, call_parse_node, callee_parse_node, addr_pattern,
