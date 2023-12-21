@@ -67,9 +67,7 @@ cc_library(
     glob([
         "handle_*.cpp",
     ]),
-    hdrs = [
-        "tree.h",
-    ],
+    hdrs = ["tree.h"],
     deps = [
         ":node_kind",
         ":precedence",
