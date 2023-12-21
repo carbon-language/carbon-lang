@@ -23,7 +23,6 @@
 
 # Compilation database used by clangd
 /compile_commands.json
-/external
 
 # Emacs temporary files
 *~

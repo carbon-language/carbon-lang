@@ -31,7 +31,7 @@ import scripts_utils
 def _build_generated_files(bazel: str) -> None:
     print("Building the generated files so that tools can find them...")
 
-    # Now collect the generated file labels. Include some rules which generate
+    # Collect the generated file labels. Include some rules which generate
     # files but aren't classified as "generated file".
     kinds_query = (
         "filter("
