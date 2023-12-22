@@ -15,16 +15,17 @@ namespace Carbon::Parse {
 // A trait type that should be specialized by types that can be extracted
 // from a parse tree. A specialization should provide the following API:
 //
-// ```
-// interface Extractable {
+// ```cpp
+// template<>
+// struct Extractable<T> {
 //   // Extract a value of this type from the sequence of nodes starting at
 //   // `it`, and increment `it` past this type. Returns `std::nullopt` if
 //   // the tree is malformed. If `trace != nullptr`, writes what actions
 //   // were taken to `*trace`.
 //   static auto Extract(Tree* tree, Tree::SiblingIterator& it,
 //                       Tree::SiblingIterator end,
-//                       ErrorBuilder* trace) -> std::optional<Self>;
-// }
+//                       ErrorBuilder* trace) -> std::optional<T>;
+// };
 // ```
 //
 // Note that `Tree::SiblingIterator`s iterate in reverse order through the
