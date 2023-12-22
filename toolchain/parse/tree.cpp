@@ -225,7 +225,7 @@ static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind,
   switch (kind) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case NodeKind::Name:               \
-    return tree->TryExtractAs<Name>(node_id, trace).has_value();
+    return tree->VerifyExtractAs<Name>(node_id, trace).has_value();
 #include "toolchain/parse/node_kind.def"
   }
 }

@@ -172,14 +172,6 @@ class Tree : public Printable<Tree> {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
-  // Verifies the parse tree structure. Checks invariants of the parse tree
-  // structure and returns verification errors.
-  //
-  // This is fairly slow, and is primarily intended to be used as a debugging
-  // aid. This routine doesn't directly CHECK so that it can be used within a
-  // debugger.
-  auto Verify() const -> ErrorOr<Success>;
-
   // The following `Extract*` function provide an alternative way of accessing
   // the nodes of a tree. It is intended to be more convenient and type-safe,
   // but slower and can't be used on nodes that are marked as having an error.
@@ -211,16 +203,24 @@ class Tree : public Printable<Tree> {
   template <typename T>
   auto ExtractAs(NodeId node_id) const -> std::optional<T>;
 
+  // Converts to a typed node, if it is not an error.
+  template <typename IdT>
+  auto Extract(IdT id) const
+      -> std::optional<typename NodeForId<IdT>::TypedNode>;
+
+  // Verifies the parse tree structure. Checks invariants of the parse tree
+  // structure and returns verification errors.
+  //
+  // This is fairly slow, and is primarily intended to be used as a debugging
+  // aid. This routine doesn't directly CHECK so that it can be used within a
+  // debugger.
+  auto Verify() const -> ErrorOr<Success>;
+
   // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
   // used by `Verify()`.
   template <typename T>
   auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
       -> std::optional<T>;
-
-  // Converts to a typed node, if it is not an error.
-  template <typename IdT>
-  auto Extract(IdT id) const
-      -> std::optional<typename NodeForId<IdT>::TypedNode>;
 
  private:
   friend class Context;
@@ -437,7 +437,7 @@ auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
 }
 
 template <typename T>
-auto Tree::TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
+auto Tree::VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
     -> std::optional<T> {
   static_assert(HasKindMember<T>, "Not a parse node type");
   if (!IsValid<T>(node_id)) {

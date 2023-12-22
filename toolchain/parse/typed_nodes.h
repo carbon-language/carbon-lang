@@ -34,11 +34,10 @@ struct LeafNode {
 // Each node kind (in node_kind.def) should have a corresponding type defined
 // here which describes the expected child structure of that parse node.
 //
-// Each of these types should start with a
-// `static constexpr Kind` member initialized by calling `Define` on the
-// corresponding `NodeKind`, and passing in the `NodeCategory` of that kind.
-// This will both associate the category with the node kind and create the
-// necessary kind object for the typed node.
+// Each of these types should start with a `static constexpr Kind` member
+// initialized by calling `Define` on the corresponding `NodeKind`, and passing
+// in the `NodeCategory` of that kind.  This will both associate the category
+// with the node kind and create the necessary kind object for the typed node.
 //
 // This should be followed by field declarations that describe the child nodes,
 // in order, that occur in the parse tree. The `Extract...` functions on the
