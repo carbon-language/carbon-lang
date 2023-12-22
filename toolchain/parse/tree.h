@@ -119,7 +119,7 @@ class Tree : public Printable<Tree> {
 
   template <typename IdT>
   auto IsValid(IdT id) const -> bool {
-    using T = typename NodeForId<IdT>::Kind;
+    using T = typename NodeForId<IdT>::TypedNode;
     CARBON_DCHECK(node_kind(id) == T::Kind);
     return !node_has_error(id);
   }
@@ -219,7 +219,8 @@ class Tree : public Printable<Tree> {
 
   // Converts to a typed node, if it is not an error.
   template <typename IdT>
-  auto Extract(IdT id) const -> std::optional<typename NodeForId<IdT>::Kind>;
+  auto Extract(IdT id) const
+      -> std::optional<typename NodeForId<IdT>::TypedNode>;
 
  private:
   friend class Context;
@@ -448,12 +449,12 @@ auto Tree::TryExtractAs(NodeId node_id, ErrorBuilder* trace) const
 
 template <typename IdT>
 auto Tree::Extract(IdT id) const
-    -> std::optional<typename NodeForId<IdT>::Kind> {
+    -> std::optional<typename NodeForId<IdT>::TypedNode> {
   if (!IsValid(id)) {
     return std::nullopt;
   }
 
-  using T = typename NodeForId<IdT>::Kind;
+  using T = typename NodeForId<IdT>::TypedNode;
   return ExtractNodeFromChildren<T>(children(id));
 }
 
