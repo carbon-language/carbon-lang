@@ -7,6 +7,7 @@
 
 #include <iterator>
 
+#include "common/check.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
@@ -14,23 +15,13 @@
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
 
-// A lightweight handle representing a node in the tree.
-//
-// Objects of this type are small and cheap to copy and store. They don't
-// contain any of the information about the node, and serve as a handle that
-// can be used with the underlying tree to query for detailed information.
-struct NodeId : public IdBase {
-  // An explicitly invalid instance.
-  static const NodeId Invalid;
-
-  using IdBase::IdBase;
-};
-
-constexpr NodeId NodeId::Invalid = NodeId(NodeId::InvalidIndex);
+// Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
+struct File;
 
 // A tree of parsed tokens based on the language grammar.
 //
@@ -120,6 +111,19 @@ class Tree : public Printable<Tree> {
 
   auto node_subtree_size(NodeId n) const -> int32_t;
 
+  // Returns whether this node is a valid node of the specified type.
+  template <typename T>
+  auto IsValid(NodeId node_id) const -> bool {
+    return node_kind(node_id) == T::Kind && !node_has_error(node_id);
+  }
+
+  template <typename IdT>
+  auto IsValid(IdT id) const -> bool {
+    using T = typename NodeForId<IdT>::TypedNode;
+    CARBON_DCHECK(node_kind(id) == T::Kind);
+    return !node_has_error(id);
+  }
+
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
   }
@@ -168,13 +172,55 @@ class Tree : public Printable<Tree> {
   // line-oriented shell tools from `grep` to `awk`.
   auto Print(llvm::raw_ostream& output, bool preorder) const -> void;
 
+  // The following `Extract*` function provide an alternative way of accessing
+  // the nodes of a tree. It is intended to be more convenient and type-safe,
+  // but slower and can't be used on nodes that are marked as having an error.
+  // It is appropriate for uses that are less performance sensitive, like
+  // diagnostics. Example usage:
+  // ```
+  // auto file = tree->ExtractFile();
+  // for (AnyDeclId decl_id : file.decls) {
+  //   // `decl_id` is convertible to a `NodeId`.
+  //   if (std::optional<FunctionDecl> fn_decl =
+  //       tree->ExtractAs<FunctionDecl>(decl_id)) {
+  //     // fn_decl->params is a `TuplePatternId` (which extends `NodeId`)
+  //     // that is guaranteed to reference a `TuplePattern`.
+  //     std::optional<TuplePattern> params = tree->Extract(fn_decl->params);
+  //     // `params` has a value unless there was an error in that node.
+  //   } else if (auto class_def = tree->ExtractAs<ClassDefinition>(decl_id)) {
+  //     // ...
+  //   }
+  // }
+  // ```
+
+  // Extract a `File` object representing the parse tree for the whole file.
+  // #include "toolchain/parse/typed_nodes.h" to get the definition of `File`
+  // and the types representing its children nodes.
+  auto ExtractFile() const -> File;
+
+  // Converts this node_id to a typed node of a specified type, if it is a valid
+  // node of that kind.
+  template <typename T>
+  auto ExtractAs(NodeId node_id) const -> std::optional<T>;
+
+  // Converts to a typed node, if it is not an error.
+  template <typename IdT>
+  auto Extract(IdT id) const
+      -> std::optional<typename NodeForId<IdT>::TypedNode>;
+
   // Verifies the parse tree structure. Checks invariants of the parse tree
   // structure and returns verification errors.
   //
-  // This is primarily intended to be used as a
-  // debugging aid. This routine doesn't directly CHECK so that it can be used
-  // within a debugger.
+  // This is fairly slow, and is primarily intended to be used as a debugging
+  // aid. This routine doesn't directly CHECK so that it can be used within a
+  // debugger.
   auto Verify() const -> ErrorOr<Success>;
+
+  // Like ExtractAs(), but malformed tree errors are not fatal. Should only be
+  // used by `Verify()`.
+  template <typename T>
+  auto VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
+      -> std::optional<T>;
 
  private:
   friend class Context;
@@ -245,6 +291,20 @@ class Tree : public Printable<Tree> {
   auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
                  bool preorder) const -> bool;
 
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range. Malformed tree errors are written
+  // to `*trace`, if `trace != nullptr`.
+  template <typename T>
+  auto TryExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children,
+      ErrorBuilder* trace) const -> std::optional<T>;
+
+  // Extract a node of type `T` from a sibling range. This is expected to
+  // consume the complete sibling range. Malformed tree errors are fatal.
+  template <typename T>
+  auto ExtractNodeFromChildren(
+      llvm::iterator_range<Tree::SiblingIterator> children) const -> T;
+
   // Depth-first postorder sequence of node implementation data.
   llvm::SmallVector<NodeImpl> node_impls_;
 
@@ -270,7 +330,7 @@ class Tree : public Printable<Tree> {
 class Tree::PostorderIterator
     : public llvm::iterator_facade_base<PostorderIterator,
                                         std::random_access_iterator_tag, NodeId,
-                                        int, NodeId*, NodeId>,
+                                        int, const NodeId*, NodeId>,
       public Printable<Tree::PostorderIterator> {
  public:
   PostorderIterator() = delete;
@@ -322,7 +382,7 @@ class Tree::PostorderIterator
 class Tree::SiblingIterator
     : public llvm::iterator_facade_base<SiblingIterator,
                                         std::forward_iterator_tag, NodeId, int,
-                                        NodeId*, NodeId>,
+                                        const NodeId*, NodeId>,
       public Printable<Tree::SiblingIterator> {
  public:
   explicit SiblingIterator() = delete;
@@ -352,6 +412,51 @@ class Tree::SiblingIterator
 
   NodeId node_;
 };
+
+template <typename T>
+auto Tree::ExtractNodeFromChildren(
+    llvm::iterator_range<Tree::SiblingIterator> children) const -> T {
+  auto result = TryExtractNodeFromChildren<T>(children, nullptr);
+  if (!result.has_value()) {
+    // On error try again, this time capturing a trace.
+    ErrorBuilder trace;
+    TryExtractNodeFromChildren<T>(children, &trace);
+    CARBON_FATAL() << "Malformed parse node:\n" << Error(trace).message();
+  }
+  return *result;
+}
+
+template <typename T>
+auto Tree::ExtractAs(NodeId node_id) const -> std::optional<T> {
+  static_assert(HasKindMember<T>, "Not a parse node type");
+  if (!IsValid<T>(node_id)) {
+    return std::nullopt;
+  }
+
+  return ExtractNodeFromChildren<T>(children(node_id));
+}
+
+template <typename T>
+auto Tree::VerifyExtractAs(NodeId node_id, ErrorBuilder* trace) const
+    -> std::optional<T> {
+  static_assert(HasKindMember<T>, "Not a parse node type");
+  if (!IsValid<T>(node_id)) {
+    return std::nullopt;
+  }
+
+  return TryExtractNodeFromChildren<T>(children(node_id), trace);
+}
+
+template <typename IdT>
+auto Tree::Extract(IdT id) const
+    -> std::optional<typename NodeForId<IdT>::TypedNode> {
+  if (!IsValid(id)) {
+    return std::nullopt;
+  }
+
+  using T = typename NodeForId<IdT>::TypedNode;
+  return ExtractNodeFromChildren<T>(children(id));
+}
 
 }  // namespace Carbon::Parse
 

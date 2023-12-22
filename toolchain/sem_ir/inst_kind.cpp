@@ -20,7 +20,7 @@ auto InstKind::ir_name() const -> llvm::StringLiteral {
 auto InstKind::value_kind() const -> InstValueKind {
   static constexpr InstValueKind Table[] = {
 #define CARBON_SEM_IR_INST_KIND(Name) \
-  HasTypeId<SemIR::Name> ? InstValueKind::Typed : InstValueKind::None,
+  HasTypeIdMember<SemIR::Name> ? InstValueKind::Typed : InstValueKind::None,
 #include "toolchain/sem_ir/inst_kind.def"
   };
   return Table[AsInt()];

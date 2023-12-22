@@ -92,6 +92,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the parse_node.
+  // TODO: return a parse::NodeIdForKind<RequiredParseKind> instead.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopForSoloParseNode() -> Parse::NodeId {
     Entry back = PopEntry<SemIR::InstId>();
@@ -102,6 +103,7 @@ class NodeStack {
 
   // Pops the top of the stack if it is the given kind, and returns the
   // parse_node. Otherwise, returns std::nullopt.
+  // TODO: Return a `Parse::NodeIdForKind<RequiredParseKind>` instead.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopForSoloParseNodeIf() -> std::optional<Parse::NodeId> {
     if (PeekIs<RequiredParseKind>()) {
@@ -199,6 +201,9 @@ class NodeStack {
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
+
+  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
+  // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
 
   // Pops the top of the stack and returns the ID.
   template <const Parse::NodeKind& RequiredParseKind>

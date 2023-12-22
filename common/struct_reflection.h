@@ -21,7 +21,7 @@
 // - Only simple aggregate structs are supported. Types with base classes,
 //   non-public data members, constructors, or virtual functions are not
 //   supported.
-// - Structs with more than 5 fields are not supported. This limit is easy to
+// - Structs with more than 6 fields are not supported. This limit is easy to
 //   increase if needed, but removing it entirely is hard.
 // - Structs containing a reference to the same type are not supported.
 
@@ -75,7 +75,8 @@ constexpr auto CountFields() -> int {
   if constexpr (CanListInitialize<T, Fields...>(0)) {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
-    static_assert(sizeof...(Fields) <= 5,
+    // Note: Compare against the maximum number of fields supported *PLUS 1*.
+    static_assert(sizeof...(Fields) <= 7,
                   "Unsupported: too many fields in struct");
     return sizeof...(Fields) - 1;
   } else if constexpr (sizeof...(Fields) > 32) {
@@ -147,6 +148,17 @@ struct FieldAccessor<5> {
     return std::tuple<decltype(field0), decltype(field1), decltype(field2),
                       decltype(field3), decltype(field4)>(
         field0, field1, field2, field3, field4);
+  }
+};
+
+template <>
+struct FieldAccessor<6> {
+  template <typename T>
+  static auto Get(T& value) -> auto {
+    auto& [field0, field1, field2, field3, field4, field5] = value;
+    return std::tuple<decltype(field0), decltype(field1), decltype(field2),
+                      decltype(field3), decltype(field4), decltype(field5)>(
+        field0, field1, field2, field3, field4, field5);
   }
 };
 

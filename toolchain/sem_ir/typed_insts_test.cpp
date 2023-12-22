@@ -43,10 +43,10 @@ template <typename TypedInst>
 auto CommonFieldOrder() -> void {
   Inst inst = MakeInstWithNumberedFields(TypedInst::Kind);
   auto typed = inst.As<TypedInst>();
-  if constexpr (HasParseNode<TypedInst>) {
+  if constexpr (HasParseNodeMember<TypedInst>) {
     EXPECT_EQ(typed.parse_node, Parse::NodeId(1));
   }
-  if constexpr (HasTypeId<TypedInst>) {
+  if constexpr (HasTypeIdMember<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));
   }
 }
@@ -77,7 +77,8 @@ auto RoundTrip() -> void {
   auto typed1 = inst1.As<TypedInst>();
   Inst inst2 = typed1;
 
-  ExpectEqInsts(inst1, inst2, HasParseNode<TypedInst>, HasTypeId<TypedInst>);
+  ExpectEqInsts(inst1, inst2, HasParseNodeMember<TypedInst>,
+                HasTypeIdMember<TypedInst>);
 
   // If the typed instruction has no padding, we should get exactly the same
   // thing if we convert back from an instruction.
@@ -129,8 +130,8 @@ auto StructLayout() -> void {
   if constexpr (std::has_unique_object_representations_v<TypedInst>) {
     auto typed =
         MakeInstWithNumberedFields(TypedInst::Kind).template As<TypedInst>();
-    StructLayoutHelper(&typed, sizeof(typed), HasParseNode<TypedInst>,
-                       HasTypeId<TypedInst>);
+    StructLayoutHelper(&typed, sizeof(typed), HasParseNodeMember<TypedInst>,
+                       HasTypeIdMember<TypedInst>);
   }
 }
 

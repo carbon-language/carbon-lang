@@ -12,6 +12,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
@@ -219,6 +220,16 @@ auto Tree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "  ]\n";
 }
 
+static auto TestExtract(const Tree* tree, NodeId node_id, NodeKind kind,
+                        ErrorBuilder* trace) -> bool {
+  switch (kind) {
+#define CARBON_PARSE_NODE_KIND(Name) \
+  case NodeKind::Name:               \
+    return tree->VerifyExtractAs<Name>(node_id, trace).has_value();
+#include "toolchain/parse/node_kind.def"
+  }
+}
+
 auto Tree::Verify() const -> ErrorOr<Success> {
   llvm::SmallVector<NodeId> nodes;
   // Traverse the tree in postorder.
@@ -234,6 +245,18 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     if (n_impl.kind == NodeKind::Placeholder) {
       return Error(llvm::formatv(
           "Node #{0} is a placeholder node that wasn't replaced.", n.index));
+    }
+    // Should extract successfully if node not marked as having an error.
+    // Without this code, a 10 mloc test case of lex & parse takes
+    // 4.129 s ±  0.041 s. With this additional verification, it takes
+    // 5.768 s ±  0.036 s.
+    if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind, nullptr)) {
+      ErrorBuilder trace;
+      trace << llvm::formatv(
+          "NodeId #{0} couldn't be extracted as a {1}. Trace:\n", n,
+          n_impl.kind);
+      TestExtract(this, n, n_impl.kind, &trace);
+      return trace;
     }
 
     int subtree_size = 1;
