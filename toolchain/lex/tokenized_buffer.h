@@ -144,6 +144,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the 1-based column number.
   auto GetColumnNumber(TokenIndex token) const -> int;
 
+  // Returns the line and 1-based column number of the first character after
+  // this token.
+  auto GetEndLocation(TokenIndex token) const -> std::pair<LineIndex, int>;
+
   // Returns the source text lexed into this token.
   auto GetTokenText(TokenIndex token) const -> llvm::StringRef;
 

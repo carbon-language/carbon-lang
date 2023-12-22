@@ -73,21 +73,6 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
 }
 
-// Returns the parameter for the given instruction from a function parameter
-// list.
-static auto GetAsParam(const SemIR::File& sem_ir, SemIR::InstId pattern_id)
-    -> std::pair<SemIR::InstId, SemIR::Param> {
-  auto pattern = sem_ir.insts().Get(pattern_id);
-
-  // Step over `addr`.
-  if (auto addr = pattern.TryAs<SemIR::AddrPattern>()) {
-    pattern_id = addr->inner_id;
-    pattern = sem_ir.insts().Get(pattern_id);
-  }
-
-  return {pattern_id, pattern.As<SemIR::Param>()};
-}
-
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
@@ -118,7 +103,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_type_id = GetAsParam(sem_ir(), param_ref_id).second.type_id;
+    auto param_type_id =
+        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id)
+            .second.type_id;
     switch (auto value_rep = SemIR::GetValueRepr(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
@@ -169,7 +156,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
     } else {
-      name_id = GetAsParam(sem_ir(), inst_id).second.name_id;
+      name_id = SemIR::Function::GetParamFromParamRefId(sem_ir(), inst_id)
+                    .second.name_id;
     }
     arg.setName(sem_ir().names().GetIRBaseName(name_id));
   }
@@ -206,16 +194,33 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto [param_id, param] = GetAsParam(sem_ir(), param_ref_id);
+    auto [param_id, param] =
+        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
+
+    // Get the value of the parameter from the function argument.
     auto param_type_id = param.type_id;
-    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind ==
+    llvm::Value* param_value = llvm::PoisonValue::get(GetType(param_type_id));
+    if (SemIR::GetValueRepr(sem_ir(), param_type_id).kind !=
         SemIR::ValueRepr::None) {
-      function_lowering.SetLocal(
-          param_id, llvm::PoisonValue::get(GetType(param_type_id)));
-    } else {
-      function_lowering.SetLocal(param_id, llvm_function->getArg(param_index));
+      param_value = llvm_function->getArg(param_index);
       ++param_index;
     }
+
+    // The value of the parameter is the value of the argument.
+    function_lowering.SetLocal(param_id, param_value);
+
+    // Match the portion of the pattern corresponding to the parameter against
+    // the parameter value. For now this is always a single name binding,
+    // possibly wrapped in `addr`.
+    //
+    // TODO: Support general patterns here.
+    auto bind_name_id = param_ref_id;
+    if (auto addr =
+            sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
+      bind_name_id = addr->inner_id;
+    }
+    CARBON_CHECK(sem_ir().insts().TryGetAs<SemIR::BindName>(bind_name_id));
+    function_lowering.SetLocal(bind_name_id, param_value);
   }
 
   // Lower all blocks.
