@@ -79,12 +79,9 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
        sem_ir.inst_blocks().Get(function.implicit_param_refs_id)) {
-    auto inst = sem_ir.insts().Get(param_id);
-    if (auto addr = inst.TryAs<SemIR::AddrPattern>()) {
-      inst = sem_ir.insts().Get(addr->inner_id);
-    }
-    if (auto param = inst.TryAs<SemIR::Param>();
-        param && param->name_id == SemIR::NameId::SelfValue) {
+    auto param =
+        SemIR::Function::GetParamFromParamRefId(sem_ir, param_id).second;
+    if (param.name_id == SemIR::NameId::SelfValue) {
       return true;
     }
   }

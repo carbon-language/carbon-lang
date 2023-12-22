@@ -1146,16 +1146,15 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
 
   // Check implicit parameters.
   for (auto implicit_param_id : implicit_param_refs) {
-    auto pattern = context.insts().Get(implicit_param_id);
-    auto addr_pattern = pattern.TryAs<SemIR::AddrPattern>();
-    if (addr_pattern) {
-      pattern = context.insts().Get(addr_pattern->inner_id);
-    }
-    if (auto param = pattern.TryAs<SemIR::Param>();
-        param && param->name_id == SemIR::NameId::SelfValue) {
+    auto addr_pattern =
+        context.insts().TryGetAs<SemIR::AddrPattern>(implicit_param_id);
+    auto param = SemIR::Function::GetParamFromParamRefId(context.sem_ir(),
+                                                         implicit_param_id)
+                     .second;
+    if (param.name_id == SemIR::NameId::SelfValue) {
       auto converted_self_id =
           ConvertSelf(context, call_parse_node, callee_parse_node, addr_pattern,
-                      *param, self_id);
+                      param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
       }

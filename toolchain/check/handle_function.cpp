@@ -258,7 +258,7 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
           context.sem_ir().StringifyType(param.type_id()));
     });
 
-    if (auto fn_param = param.TryAs<SemIR::Param>()) {
+    if (auto fn_param = param.TryAs<SemIR::BindName>()) {
       context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
                               param_id);
     } else {
