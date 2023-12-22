@@ -35,6 +35,25 @@ auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   return GetTokenInfo(token).column + 1;
 }
 
+auto TokenizedBuffer::GetEndLocation(TokenIndex token) const
+    -> std::pair<LineIndex, int> {
+  auto line = GetLine(token);
+  int column = GetColumnNumber(token);
+  auto token_text = GetTokenText(token);
+
+  if (auto [before_newline, after_newline] = token_text.rsplit('\n');
+      before_newline.size() == token_text.size()) {
+    // Token fits on one line, advance the column number.
+    column += before_newline.size();
+  } else {
+    // Token contains newlines.
+    line.index += before_newline.count('\n') + 1;
+    column = 1 + after_newline.size();
+  }
+
+  return {line, column};
+}
+
 auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();

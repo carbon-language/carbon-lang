@@ -508,13 +508,11 @@ TEST_F(LexerTest, MatchingGroups) {
 TEST_F(LexerTest, MismatchedGroups) {
   auto buffer = Lex("{");
   EXPECT_TRUE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {TokenKind::FileStart},
-                  {TokenKind::OpenCurlyBrace},
-                  {.kind = TokenKind::CloseCurlyBrace, .recovery = true},
-                  {TokenKind::FileEnd},
-              }));
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {TokenKind::FileStart},
+                          {.kind = TokenKind::Error, .text = "{"},
+                          {TokenKind::FileEnd},
+                      }));
 
   buffer = Lex("}");
   EXPECT_TRUE(buffer.has_errors());
@@ -567,13 +565,9 @@ TEST_F(LexerTest, Whitespace) {
                   true,
                   // }
                   true,
-                  // {
+                  // error {
                   false,
-                  // (
-                  true,
-                  // inserted )
-                  true,
-                  // inserted }
+                  // error (
                   true,
                   // EOF
                   false};
