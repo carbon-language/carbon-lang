@@ -103,7 +103,7 @@ class NodeStack {
 
   // Pops the top of the stack if it is the given kind, and returns the
   // parse_node. Otherwise, returns std::nullopt.
-  // TODO: return a parse::NodeIdForKind<RequiredParseKind> instead.
+  // TODO: Return a `Parse::NodeIdForKind<RequiredParseKind>` instead.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopForSoloParseNodeIf() -> std::optional<Parse::NodeId> {
     if (PeekIs<RequiredParseKind>()) {

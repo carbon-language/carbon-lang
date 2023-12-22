@@ -31,23 +31,31 @@ struct LeafNode {
 };
 
 // ----------------------------------------------------------------------------
-// Each type defined below corresponds to a parse node kind, and describes the
-// expected child structure of that parse node. Each should have a
-// `static constexpr Kind` member initialized to calling `Define` on the
-// corresponding `NodeKind`, in order to set its `NodeCategory`.
+// Each node kind (in node_kind.def) should have a corresponding type defined here
+// which describes the expected child structure of that parse node.
 //
-// This should be followed by a field for each direct child. These may use any
-// of these patterns (many of these are defined in `node_ids.h`):
-// - `NodeId` to match any single child node,
-// - `FooId` to require that child to have kind `Foo`,
-// - `AnyFooId` to require that child to have a kind in category `Foo`,
-// - `NodeIdOneOf<T, U>` to require the child to have kind `T::Kind` or
-//   `U::Kind`,
-// - `NodeIdNot<T>` to match any single child that doesn't have kind `T::Kind`,
+// Each of these types should start with a
+// `static constexpr Kind` member initialized by calling `Define` on the
+// corresponding `NodeKind`, and passing in the `NodeCategory` of that kind.
+// This will both associate the category with the node kind and create the
+// necessary kind object for the typed node.
+//
+// This should be followed by field declarations that describe the child nodes, in order, that occur in the parse tree. The `Extract...` functions on the parse tree use struct reflection on these fields to guide the extraction of the child nodes from the tree into an object of this type with these fields for convenient access.
+//
+// The types of these fields are special and describe the specific child node structure of the parse node. Many of these types are defined in `node_ids.h`.
+//
+// Valid primitive types here are:
+// - `NodeId` to match any single child node
+// - `FooId` to require that child to have kind `NodeKind::Foo`
+// - `AnyCatId` to require that child to have a kind in category `Cat`
+// - `NodeIdOneOf<A, B>` to require the child to have kind `NodeKind::A` or `NodeKind::B`
+// - `NodeIdNot<A>` to match any single child whose kind is not `NodeKind::A`
+//
+// There a few, restricted composite field types allowed that compose types in various ways, where all of the `T`s and `U`s below are themselves valid field types:
 // - `llvm::SmallVector<T>` to match any number of children matching `T`
 // - `std::optional<T>` to match 0 or 1 children matching `T`
 // - `std::tuple<T...>` to match children matching `T...`
-// - `Aggregate`, for simple aggregate type `struct Aggregate { T x; U y; }`,
+// - Any provided `Aggregate` type that is a simple aggregate type such as `struct Aggregate { T x; U y; }`,
 //   to match children with types `T` and `U`.
 // ----------------------------------------------------------------------------
 

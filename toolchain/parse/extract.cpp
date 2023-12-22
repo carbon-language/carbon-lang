@@ -34,7 +34,7 @@ namespace Carbon::Parse {
 template <typename T>
 struct Extractable;
 
-// Extract an `NodeId` as a single child.
+// Extract a `NodeId` as a single child.
 template <>
 struct Extractable<NodeId> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
@@ -79,7 +79,7 @@ struct Extractable<NodeIdForKind<Kind>> {
   }
 };
 
-// Extract an `NodeIdInCategory<Category>` as a single child.
+// Extract a `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory Category>
 struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
@@ -173,7 +173,7 @@ struct Extractable<NodeIdNot<T>> {
   }
 };
 
-// Extract a `llvm::SmallVector<T>` by extracting `T`s until we can't.
+// Extract an `llvm::SmallVector<T>` by extracting `T`s until we can't.
 template <typename T>
 struct Extractable<llvm::SmallVector<T>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
