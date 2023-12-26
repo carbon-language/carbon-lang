@@ -28,8 +28,8 @@ auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
   if (context_->node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedDecl>()) {
-    // Any parts from a QualifiedDecl will already have been processed
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedName>()) {
+    // Any parts from a QualifiedName will already have been processed
     // into the name.
   } else {
     // The name had no qualifiers, so we need to process the node now.
@@ -76,11 +76,11 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
           if (!inst.Is<SemIR::Namespace>()) {
             // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
-                QualifiedDeclOutsideScopeEntity, Error,
+                QualifiedNameOutsideScopeEntity, Error,
                 "Out-of-line declaration requires a declaration in "
                 "scoped entity.");
             context_->emitter().Emit(name_context.parse_node,
-                                     QualifiedDeclOutsideScopeEntity);
+                                     QualifiedNameOutsideScopeEntity);
           }
         }
         auto [_, success] = name_scope.names.insert(
@@ -188,25 +188,24 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
       if (auto class_decl = context_->insts()
                                 .Get(name_context.resolved_inst_id)
                                 .TryAs<SemIR::ClassDecl>()) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
+        CARBON_DIAGNOSTIC(QualifiedNameInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",
                           std::string);
         auto builder = context_->emitter().Build(
-            name_context.parse_node, QualifiedDeclInIncompleteClassScope,
+            name_context.parse_node, QualifiedNameInIncompleteClassScope,
             context_->sem_ir().StringifyType(
                 context_->classes().Get(class_decl->class_id).self_type_id));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {
-        CARBON_DIAGNOSTIC(
-            QualifiedDeclInNonScope, Error,
-            "Declaration qualifiers are only allowed for entities "
-            "that provide a scope.");
-        CARBON_DIAGNOSTIC(QualifiedDeclNonScopeEntity, Note,
+        CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
+                          "Name qualifiers are only allowed for entities that "
+                          "provide a scope.");
+        CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
                           "Non-scope entity referenced here.");
         context_->emitter()
-            .Build(parse_node, QualifiedDeclInNonScope)
-            .Note(name_context.parse_node, QualifiedDeclNonScopeEntity)
+            .Build(parse_node, QualifiedNameInNonScope)
+            .Note(name_context.parse_node, QualifiedNameNonScopeEntity)
             .Emit();
       }
       name_context.state = NameContext::State::Error;

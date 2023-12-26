@@ -128,13 +128,11 @@ using SelfTypeNameExpr =
 using BaseName = LeafNode<NodeKind::BaseName>;
 
 // A qualified name: `A.B`.
-//
-// TODO: This is not a declaration. Rename this parse node.
-struct QualifiedDecl {
+struct QualifiedName {
   static constexpr auto Kind =
-      NodeKind::QualifiedDecl.Define(NodeCategory::NameComponent);
+      NodeKind::QualifiedName.Define(NodeCategory::NameComponent);
 
-  // For now, this is either an IdentifierName or a QualifiedDecl.
+  // For now, this is either an IdentifierName or a QualifiedName.
   AnyNameComponentId lhs;
 
   // TODO: This will eventually need to support more general expressions, for
@@ -206,7 +204,7 @@ struct Namespace {
 
   NamespaceStartId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  NodeIdOneOf<IdentifierName, QualifiedDecl> name;
+  NodeIdOneOf<IdentifierName, QualifiedName> name;
 };
 
 // Pattern nodes
@@ -287,7 +285,7 @@ struct FunctionSignature {
 
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  // For now, this is either an IdentifierName or a QualifiedDecl.
+  // For now, this is either an IdentifierName or a QualifiedName.
   AnyNameComponentId name;
   std::optional<ImplicitParamListId> implicit_params;
   TuplePatternId params;

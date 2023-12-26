@@ -401,7 +401,7 @@ class NodeStack {
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::QualifiedDecl:
+      case Parse::NodeKind::QualifiedName:
       case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::ReturnVarModifier:
