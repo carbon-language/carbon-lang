@@ -706,7 +706,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
                                NamedConstraintDefinitionStart, CloseCurlyBrace)
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
-                               Semi)
+                               CARBON_IF_VALID(Semi))
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
