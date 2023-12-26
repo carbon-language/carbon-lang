@@ -315,24 +315,24 @@ auto HandleSelfValueNameExpr(Context& context, Parse::NodeId parse_node)
   return HandleNameAsExpr(context, parse_node, SemIR::NameId::SelfValue);
 }
 
-auto HandleQualifiedDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleQualifiedName(Context& context, Parse::NodeId parse_node) -> bool {
   auto [parse_node2, name_id2] = context.node_stack().PopNameWithParseNode();
 
   Parse::NodeId parse_node1 = context.node_stack().PeekParseNode();
   switch (context.parse_tree().node_kind(parse_node1)) {
-    case Parse::NodeKind::QualifiedDecl:
-      // This is the second or subsequent QualifiedDecl in a chain.
-      // Nothing to do: the first QualifiedDecl remains as a
-      // bracketing node for later QualifiedDecls.
+    case Parse::NodeKind::QualifiedName:
+      // This is the second or subsequent QualifiedName in a chain.
+      // Nothing to do: the first QualifiedName remains as a
+      // bracketing node for later QualifiedNames.
       break;
 
     case Parse::NodeKind::IdentifierName: {
-      // This is the first QualifiedDecl in a chain, and starts with an
+      // This is the first QualifiedName in a chain, and starts with an
       // identifier name.
       auto name_id =
           context.node_stack().Pop<Parse::NodeKind::IdentifierName>();
       context.decl_name_stack().ApplyNameQualifier(parse_node1, name_id);
-      // Add the QualifiedDecl so that it can be used for bracketing.
+      // Add the QualifiedName so that it can be used for bracketing.
       context.node_stack().Push(parse_node);
       break;
     }

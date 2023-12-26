@@ -218,7 +218,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
 // `namespace`:
 //   NamespaceStart
 //   _repeated_ _external_: modifier
-//   _external_: IdentifierName or QualifiedDecl
+//   _external_: IdentifierName or QualifiedName
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, Namespace)
 CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart, CARBON_IF_VALID(Semi))
@@ -235,7 +235,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
 // `fn`:
 //     FunctionIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: IdentifierName or QualifiedName
 //     _optional_ _external_: ImplicitParamList
 //     _external_: TuplePattern
 //       _external_: type expression
@@ -448,13 +448,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, Comma)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart, CloseParen)
 
 // A qualified declaration, such as `a.b`:
-//   _external_: IdentifierName or QualifiedDecl
+//   _external_: IdentifierName or QualifiedName
 //   _external_: IdentifierName
-// QualifiedDecl
+// QualifiedName
 //
 // TODO: This will eventually more general expressions, for example with
 // `GenericType(type_args).ChildType(child_type_args).Name`.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDecl, 2, Period)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedName, 2, Period)
 
 // A member access expression, such as `a.b` or
 // `GetObject().(Interface.member)`:
@@ -611,7 +611,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
 // `class`:
 //     ClassIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: IdentifierName or QualifiedName
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   ClassDefinitionStart
@@ -642,7 +642,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer, CARBON_IF_VALID(Semi))
 // `interface`:
 //     InterfaceIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: IdentifierName or QualifiedName
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   InterfaceDefinitionStart
@@ -690,7 +690,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
 // `constraint`:
 //     NamedConstraintIntroducer
 //     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedDecl
+//     _external_: IdentifierName or QualifiedName
 //     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: TuplePattern
 //   NamedConstraintDefinitionStart

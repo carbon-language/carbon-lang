@@ -28,8 +28,8 @@ auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
   if (context_->node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedDecl>()) {
-    // Any parts from a QualifiedDecl will already have been processed
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedName>()) {
+    // Any parts from a QualifiedName will already have been processed
     // into the name.
   } else {
     // The name had no qualifiers, so we need to process the node now.
@@ -198,15 +198,14 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {
-        CARBON_DIAGNOSTIC(
-            QualifiedDeclInNonScope, Error,
-            "Declaration qualifiers are only allowed for entities "
-            "that provide a scope.");
-        CARBON_DIAGNOSTIC(QualifiedDeclNonScopeEntity, Note,
+        CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
+                          "Name qualifiers are only allowed for entities that "
+                          "provide a scope.");
+        CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
                           "Non-scope entity referenced here.");
         context_->emitter()
-            .Build(parse_node, QualifiedDeclInNonScope)
-            .Note(name_context.parse_node, QualifiedDeclNonScopeEntity)
+            .Build(parse_node, QualifiedNameInNonScope)
+            .Note(name_context.parse_node, QualifiedNameNonScopeEntity)
             .Emit();
       }
       name_context.state = NameContext::State::Error;
