@@ -76,11 +76,11 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
           if (!inst.Is<SemIR::Namespace>()) {
             // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
-                QualifiedNameOutsideScopeEntity, Error,
+                QualifiedDeclOutsideScopeEntity, Error,
                 "Out-of-line declaration requires a declaration in "
                 "scoped entity.");
             context_->emitter().Emit(name_context.parse_node,
-                                     QualifiedNameOutsideScopeEntity);
+                                     QualifiedDeclOutsideScopeEntity);
           }
         }
         auto [_, success] = name_scope.names.insert(
