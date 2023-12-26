@@ -8,6 +8,8 @@ constraint Foo {
   fn Baz();
 }
 
+constraint ForwardDeclared;
+
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -20,5 +22,8 @@ constraint Foo {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 9},
+// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'ForwardDeclared'},
+// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
