@@ -137,6 +137,149 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_var_name.has_value());
 }
 
+TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
+  auto* tree = &GetTree(R"carbon(
+    library default impl;
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+  ErrorBuilder trace;
+  auto library = tree->VerifyExtractAs<LibraryDirective>(file.decls[0], &trace);
+  EXPECT_TRUE(library.has_value());
+  Error err = trace;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                 R"Trace(Aggregate [^:]*: begin
+3-tuple: begin
+NodeIdOneOf PackageApi or PackageImpl: PackageImpl consumed
+NodeIdOneOf LibraryName or DefaultLibrary: DefaultLibrary consumed
+NodeIdForKind: LibraryIntroducer consumed
+3-tuple: success
+Aggregate [^:]*: success
+)Trace"));
+}
+
+TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
+  auto* tree = &GetTree(R"carbon(
+    var x: bool;
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+  ErrorBuilder trace;
+  auto var = tree->VerifyExtractAs<VariableDecl>(file.decls[0], &trace);
+  ASSERT_TRUE(var.has_value());
+  Error err = trace;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                 R"Trace(Aggregate [^:]*: begin
+5-tuple: begin
+Optional [^:]*: begin
+Aggregate [^:]*: begin
+2-tuple: begin
+NodeIdInCategory Expr error: kind BindingPattern doesn't match
+2-tuple: error
+Aggregate [^:]*: error
+Optional [^:]*: missing
+NodeIdInCategory Pattern: kind BindingPattern consumed
+Optional [^:]*: begin
+NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
+Optional [^:]*: missing
+Vector: begin
+NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
+Vector: end
+NodeIdForKind: VariableIntroducer consumed
+5-tuple: success
+Aggregate [^:]*: success
+)Trace"));
+}
+
+TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
+  auto* tree = &GetTree(R"carbon(
+    var x: i32 = p->q.r;
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+  ErrorBuilder trace1;
+  auto var = tree->VerifyExtractAs<VariableDecl>(file.decls[0], &trace1);
+  ASSERT_TRUE(var.has_value());
+  Error err1 = trace1;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err1.message(), testing::MatchesRegex(
+                                  R"Trace(Aggregate [^:]*: begin
+5-tuple: begin
+Optional [^:]*leDecl11InitializerE: begin
+Aggregate [^:]*: begin
+2-tuple: begin
+NodeIdInCategory Expr: kind MemberAccessExpr consumed
+NodeIdForKind: VariableInitializer consumed
+2-tuple: success
+Aggregate [^:]*: success
+Optional [^:]*: found
+NodeIdInCategory Pattern: kind BindingPattern consumed
+Optional [^:]*: begin
+NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
+Optional [^:]*: missing
+Vector: begin
+NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
+Vector: end
+NodeIdForKind: VariableIntroducer consumed
+5-tuple: success
+Aggregate [^:]*: success
+)Trace"));
+
+  ASSERT_TRUE(var->initializer.has_value());
+  ErrorBuilder trace2;
+  auto value =
+      tree->VerifyExtractAs<MemberAccessExpr>(var->initializer->value, &trace2);
+  ASSERT_TRUE(value.has_value());
+  Error err2 = trace2;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err2.message(), testing::MatchesRegex(
+                                  R"Trace(Aggregate [^:]*: begin
+2-tuple: begin
+NodeId: IdentifierName consumed
+NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
+2-tuple: success
+Aggregate [^:]*: success
+)Trace"));
+}
+
+TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
+  auto* tree = &GetTree(R"carbon(
+    private abstract class N.C(T:! type);
+  )carbon");
+  auto file = tree->ExtractFile();
+
+  ASSERT_EQ(file.decls.size(), 1);
+  ErrorBuilder trace;
+  auto class_decl = tree->VerifyExtractAs<ClassDecl>(file.decls[0], &trace);
+  EXPECT_TRUE(class_decl.has_value());
+  Error err = trace;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err.message(), testing::MatchesRegex(
+                                 R"Trace(Aggregate [^:]*: begin
+5-tuple: begin
+Optional [^:]*: begin
+NodeIdForKind: TuplePattern consumed
+Optional [^:]*: found
+Optional [^:]*: begin
+NodeIdForKind error: wrong kind QualifiedName, expected ImplicitParamList
+Optional [^:]*: missing
+NodeIdInCategory NameComponent: kind QualifiedName consumed
+Vector: begin
+NodeIdInCategory Modifier: kind AbstractModifier consumed
+NodeIdInCategory Modifier: kind PrivateModifier consumed
+NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
+Vector: end
+NodeIdForKind: ClassIntroducer consumed
+5-tuple: success
+Aggregate [^:]*: success
+)Trace"));
+}
+
 auto CategoryMatches(const NodeKind::Definition& def, NodeKind kind,
                      const char* name) {
   EXPECT_EQ(def.category(), kind.category()) << name;

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <tuple>
+#include <typeinfo>
 #include <utility>
 
 #include "common/error.h"
@@ -144,7 +145,7 @@ struct Extractable<NodeIdOneOf<T, U>> {
     }
     if (trace) {
       *trace << "NodeIdOneOf " << T::Kind << " or " << U::Kind << ": "
-             << tree->node_kind(*it) << " consumed";
+             << tree->node_kind(*it) << " consumed\n";
     }
     return NodeIdOneOf<T, U>(*it++);
   }
@@ -209,18 +210,18 @@ struct Extractable<std::optional<T>> {
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<std::optional<T>> {
     if (trace) {
-      *trace << "Optional" << typeid(T).name() << ": begin\n";
+      *trace << "Optional " << typeid(T).name() << ": begin\n";
     }
     auto old_it = it;
     std::optional<T> value = Extractable<T>::Extract(tree, it, end, trace);
     if (value) {
       if (trace) {
-        *trace << "Optional" << typeid(T).name() << ": found\n";
+        *trace << "Optional " << typeid(T).name() << ": found\n";
       }
       return value;
     }
     if (trace) {
-      *trace << "Optional" << typeid(T).name() << ": missing\n";
+      *trace << "Optional " << typeid(T).name() << ": missing\n";
     }
     it = old_it;
     return value;
@@ -238,7 +239,7 @@ struct Extractable<std::tuple<T...>> {
       -> std::optional<std::tuple<T...>> {
     std::tuple<std::optional<T>...> fields;
     if (trace) {
-      *trace << "Tuple: begin\n";
+      *trace << sizeof...(T) << "-tuple: begin\n";
     }
 
     // Use a fold over the `=` operator to parse fields from right to left.
@@ -252,13 +253,13 @@ struct Extractable<std::tuple<T...>> {
 
     if (!ok) {
       if (trace) {
-        *trace << "Tuple: error\n";
+        *trace << sizeof...(T) << "-tuple: error\n";
       }
       return std::nullopt;
     }
 
     if (trace) {
-      *trace << "Tuple: success\n";
+      *trace << sizeof...(T) << "-tuple: success\n";
     }
     return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
   }
@@ -286,13 +287,13 @@ struct Extractable {
     auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
     if (!tuple.has_value()) {
       if (trace) {
-        *trace << "Aggregate" << typeid(T).name() << ": error\n";
+        *trace << "Aggregate " << typeid(T).name() << ": error\n";
       }
       return std::nullopt;
     }
 
     if (trace) {
-      *trace << "Aggregate" << typeid(T).name() << ": success\n";
+      *trace << "Aggregate " << typeid(T).name() << ": success\n";
     }
     // Convert the tuple to the struct type.
     return std::apply(
