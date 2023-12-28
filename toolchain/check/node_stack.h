@@ -92,20 +92,19 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the parse_node.
-  // TODO: return a parse::NodeIdForKind<RequiredParseKind> instead.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNode() -> Parse::NodeId {
+  auto PopForSoloParseNode() -> Parse::NodeIdForKind<RequiredParseKind> {
     Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(RequiredParseKind, IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
-    return back.parse_node;
+    return Parse::NodeIdForKind<RequiredParseKind>(back.parse_node);
   }
 
   // Pops the top of the stack if it is the given kind, and returns the
   // parse_node. Otherwise, returns std::nullopt.
-  // TODO: Return a `Parse::NodeIdForKind<RequiredParseKind>` instead.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNodeIf() -> std::optional<Parse::NodeId> {
+  auto PopForSoloParseNodeIf()
+      -> std::optional<Parse::NodeIdForKind<RequiredParseKind>> {
     if (PeekIs<RequiredParseKind>()) {
       return PopForSoloParseNode<RequiredParseKind>();
     }

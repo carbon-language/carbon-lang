@@ -16,7 +16,8 @@ auto HandleCodeBlockStart(Context& context, Parse::CodeBlockStartId parse_node)
 auto HandleCodeBlock(Context& context, Parse::CodeBlockId /*parse_node*/)
     -> bool {
   context.PopScope();
-  context.node_stack().PopForSoloParseNode<Parse::NodeKind::CodeBlockStart>();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<Parse::NodeKind::CodeBlockStart>();
   return true;
 }
 
