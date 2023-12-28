@@ -50,6 +50,9 @@ struct NodeIdInCategory : public NodeId {
   // An explicitly invalid instance.
   static const NodeIdInCategory<Category> Invalid;
 
+  // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind::category()`
+  // overlaps with `Category.
+
   explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
 };
 
@@ -70,6 +73,9 @@ template <typename T, typename U>
 struct NodeIdOneOf : public NodeId {
   // An explicitly invalid instance.
   static const NodeIdOneOf<T, U> Invalid;
+
+  // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind` is
+  // `T::Kind` or `U::Kind`.
 
   explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
 };
