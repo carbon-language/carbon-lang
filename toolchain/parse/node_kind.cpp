@@ -23,6 +23,7 @@ auto operator<<(llvm::raw_ostream& output, NodeCategory category)
   }
     CARBON_NODE_CATEGORY(Decl);
     CARBON_NODE_CATEGORY(Expr);
+    CARBON_NODE_CATEGORY(MemberName);
     CARBON_NODE_CATEGORY(Modifier);
     CARBON_NODE_CATEGORY(NameComponent);
     CARBON_NODE_CATEGORY(Pattern);
