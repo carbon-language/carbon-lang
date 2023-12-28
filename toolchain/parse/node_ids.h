@@ -51,7 +51,7 @@ struct NodeIdInCategory : public NodeId {
   static const NodeIdInCategory<Category> Invalid;
 
   // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind::category()`
-  // overlaps with `Category.
+  // overlaps with `Category`.
 
   explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
 };
