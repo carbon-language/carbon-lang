@@ -36,6 +36,9 @@ inline auto operator!(NodeCategory k) -> bool {
   return !static_cast<uint32_t>(k);
 }
 
+auto operator<<(llvm::raw_ostream& output, NodeCategory category)
+    -> llvm::raw_ostream&;
+
 CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parse/node_kind.def"
