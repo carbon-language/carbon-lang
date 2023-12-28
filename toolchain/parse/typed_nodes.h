@@ -165,7 +165,8 @@ struct LibrarySpecifier {
 // First line of the file, such as:
 //   `package MyPackage library "MyLibrary" impl;`
 struct PackageDirective {
-  static constexpr auto Kind = NodeKind::PackageDirective.Define();
+  static constexpr auto Kind =
+      NodeKind::PackageDirective.Define(NodeCategory::Decl);
 
   PackageIntroducerId introducer;
   std::optional<PackageNameId> name;
@@ -176,7 +177,8 @@ struct PackageDirective {
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
 struct ImportDirective {
-  static constexpr auto Kind = NodeKind::ImportDirective.Define();
+  static constexpr auto Kind =
+      NodeKind::ImportDirective.Define(NodeCategory::Decl);
 
   ImportIntroducerId introducer;
   std::optional<PackageNameId> name;
@@ -186,7 +188,8 @@ struct ImportDirective {
 // `library` as directive.
 using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
 struct LibraryDirective {
-  static constexpr auto Kind = NodeKind::LibraryDirective.Define();
+  static constexpr auto Kind =
+      NodeKind::LibraryDirective.Define(NodeCategory::Decl);
 
   LibraryIntroducerId introducer;
   NodeIdOneOf<LibraryName, DefaultLibrary> library_name;

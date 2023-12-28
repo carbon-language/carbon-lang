@@ -248,8 +248,8 @@ auto Tree::Verify() const -> ErrorOr<Success> {
     }
     // Should extract successfully if node not marked as having an error.
     // Without this code, a 10 mloc test case of lex & parse takes
-    // 4.129 s ±  0.041 s. With this additional verification, it takes
-    // 5.768 s ±  0.036 s.
+    // 4.129 s ± 0.041 s. With this additional verification, it takes
+    // 5.768 s ± 0.036 s.
     if (!n_impl.has_error && !TestExtract(this, n, n_impl.kind, nullptr)) {
       ErrorBuilder trace;
       trace << llvm::formatv(
@@ -309,6 +309,14 @@ auto Tree::Verify() const -> ErrorOr<Success> {
                         n, n_impl.kind, n_impl.subtree_size, prev_index));
     }
     prev_index = n.index;
+  }
+
+  // Validate the roots, ensures Tree::ExtractFile() doesn't CHECK-fail.
+  if (!TryExtractNodeFromChildren<File>(roots(), nullptr)) {
+    ErrorBuilder trace;
+    trace << "Roots of tree couldn't be extracted as a `File`. Trace:\n";
+    TryExtractNodeFromChildren<File>(roots(), &trace);
+    return trace;
   }
 
   if (!has_errors_ && static_cast<int32_t>(node_impls_.size()) !=
