@@ -108,7 +108,8 @@ using EmptyDecl =
 
 // A name in a non-expression context, such as a declaration.
 using IdentifierName =
-    LeafNode<NodeKind::IdentifierName, NodeCategory::NameComponent>;
+    LeafNode<NodeKind::IdentifierName,
+             NodeCategory::NameComponent | NodeCategory::MemberName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -125,7 +126,7 @@ using SelfTypeNameExpr =
 // The `base` value keyword, introduced by `base: B`. Typically referenced in
 // an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
 // declared name, as in `{.base: partial B}`.
-using BaseName = LeafNode<NodeKind::BaseName>;
+using BaseName = LeafNode<NodeKind::BaseName, NodeCategory::MemberName>;
 
 // A qualified name: `A.B`.
 struct QualifiedName {
@@ -564,8 +565,7 @@ struct MemberAccessExpr {
       NodeKind::MemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  // TODO: Figure out which nodes can appear here
-  NodeId rhs;
+  AnyMemberNameId rhs;
 };
 
 // A simple indirect member access expression: `a->b`.
@@ -574,8 +574,7 @@ struct PointerMemberAccessExpr {
       NodeKind::PointerMemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  // TODO: Figure out which nodes can appear here
-  NodeId rhs;
+  AnyMemberNameId rhs;
 };
 
 // A prefix operator expression.

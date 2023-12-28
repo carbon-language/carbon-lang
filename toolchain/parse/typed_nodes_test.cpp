@@ -240,7 +240,7 @@ Aggregate [^:]*: success
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
 2-tuple: begin
-NodeId: IdentifierName consumed
+NodeIdInCategory MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 2-tuple: success
 Aggregate [^:]*: success
