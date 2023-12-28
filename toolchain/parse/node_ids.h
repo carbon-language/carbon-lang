@@ -60,6 +60,7 @@ constexpr NodeIdInCategory<Category> NodeIdInCategory<Category>::Invalid =
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
+using AnyMemberNameId = NodeIdInCategory<NodeCategory::MemberName>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
