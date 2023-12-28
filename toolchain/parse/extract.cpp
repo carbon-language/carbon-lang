@@ -87,38 +87,20 @@ struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdInCategory<Category>> {
-    if (trace) {
-      *trace << "NodeIdInCategory";
-      // TODO: Make NodeCategory printable instead.
-      if (!Category) {
-        *trace << " <none>";
-      }
-#define CARBON_NODE_CATEGORY(Name)         \
-  if (!!(Category & NodeCategory::Name)) { \
-    *trace << " " #Name;                   \
-  }
-      CARBON_NODE_CATEGORY(Decl);
-      CARBON_NODE_CATEGORY(Expr);
-      CARBON_NODE_CATEGORY(Modifier);
-      CARBON_NODE_CATEGORY(NameComponent);
-      CARBON_NODE_CATEGORY(Pattern);
-      CARBON_NODE_CATEGORY(Statement);
-#undef CARBON_NODE_CATEGORY
-    }
-
     if (it == end || !(tree->node_kind(*it).category() & Category)) {
       if (trace) {
+        *trace << "NodeIdInCategory " << Category << " error: ";
         if (it == end) {
-          *trace << " error: no more children\n";
+          *trace << "no more children\n";
         } else {
-          *trace << " error: kind " << tree->node_kind(*it)
-                 << " doesn't match\n";
+          *trace << "kind " << tree->node_kind(*it) << " doesn't match\n";
         }
       }
       return std::nullopt;
     }
     if (trace) {
-      *trace << ": kind " << tree->node_kind(*it) << " consumed\n";
+      *trace << "NodeIdInCategory " << Category << ": kind "
+             << tree->node_kind(*it) << " consumed\n";
     }
     return NodeIdInCategory<Category>(*it++);
   }
