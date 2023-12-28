@@ -18,6 +18,7 @@
 //   associated location. Almost all instructions should have this, with
 //   exceptions being things that are generated internally, without any relation
 //   to source syntax, such as predeclared builtins.
+//   TODO: Make these typed parse node id types.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
