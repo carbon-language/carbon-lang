@@ -43,12 +43,12 @@ struct Extractable<NodeId> {
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeId> {
     if (it == end) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         *trace << "NodeId error: no more children\n";
       }
       return std::nullopt;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "NodeId: " << tree->node_kind(*it) << " consumed\n";
     }
     return NodeId(*it++);
@@ -63,7 +63,7 @@ struct Extractable<NodeIdForKind<Kind>> {
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdForKind<Kind>> {
     if (it == end || tree->node_kind(*it) != Kind) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         if (it == end) {
           *trace << "NodeIdForKind error: no more children, expected " << Kind
                  << "\n";
@@ -74,7 +74,7 @@ struct Extractable<NodeIdForKind<Kind>> {
       }
       return std::nullopt;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "NodeIdForKind: " << Kind << " consumed\n";
     }
     return NodeIdForKind<Kind>(*it++);
@@ -87,7 +87,7 @@ struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdInCategory<Category>> {
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "NodeIdInCategory";
       // TODO: Make NodeCategory printable instead.
       if (!Category) {
@@ -107,7 +107,7 @@ struct Extractable<NodeIdInCategory<Category>> {
     }
 
     if (it == end || !(tree->node_kind(*it).category() & Category)) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         if (it == end) {
           *trace << " error: no more children\n";
         } else {
@@ -117,7 +117,7 @@ struct Extractable<NodeIdInCategory<Category>> {
       }
       return std::nullopt;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << ": kind " << tree->node_kind(*it) << " consumed\n";
     }
     return NodeIdInCategory<Category>(*it++);
@@ -132,7 +132,7 @@ struct Extractable<NodeIdOneOf<T, U>> {
       -> std::optional<NodeIdOneOf<T, U>> {
     auto kind = tree->node_kind(*it);
     if (it == end || (kind != T::Kind && kind != U::Kind)) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         if (it == end) {
           *trace << "NodeIdOneOf error: no more children, expected " << T::Kind
                  << " or " << U::Kind << "\n";
@@ -143,7 +143,7 @@ struct Extractable<NodeIdOneOf<T, U>> {
       }
       return std::nullopt;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "NodeIdOneOf " << T::Kind << " or " << U::Kind << ": "
              << tree->node_kind(*it) << " consumed\n";
     }
@@ -158,7 +158,7 @@ struct Extractable<NodeIdNot<T>> {
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdNot<T>> {
     if (it == end || tree->node_kind(*it) == T::Kind) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         if (it == end) {
           *trace << "NodeIdNot " << T::Kind << " error: no more children\n";
         } else {
@@ -167,7 +167,7 @@ struct Extractable<NodeIdNot<T>> {
       }
       return std::nullopt;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "NodeIdNot " << T::Kind << ": " << tree->node_kind(*it)
              << " consumed\n";
     }
@@ -181,7 +181,7 @@ struct Extractable<llvm::SmallVector<T>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<llvm::SmallVector<T>> {
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Vector: begin\n";
     }
     llvm::SmallVector<T> result;
@@ -195,7 +195,7 @@ struct Extractable<llvm::SmallVector<T>> {
       result.push_back(*item);
     }
     std::reverse(result.begin(), result.end());
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Vector: end\n";
     }
     return result;
@@ -209,18 +209,18 @@ struct Extractable<std::optional<T>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<std::optional<T>> {
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Optional " << typeid(T).name() << ": begin\n";
     }
     auto old_it = it;
     std::optional<T> value = Extractable<T>::Extract(tree, it, end, trace);
     if (value) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         *trace << "Optional " << typeid(T).name() << ": found\n";
       }
       return value;
     }
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Optional " << typeid(T).name() << ": missing\n";
     }
     it = old_it;
@@ -238,7 +238,7 @@ struct Extractable<std::tuple<T...>> {
                           std::index_sequence<Index...>)
       -> std::optional<std::tuple<T...>> {
     std::tuple<std::optional<T>...> fields;
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << sizeof...(T) << "-tuple: begin\n";
     }
 
@@ -252,13 +252,13 @@ struct Extractable<std::tuple<T...>> {
           unused) = ... = 0));
 
     if (!ok) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         *trace << sizeof...(T) << "-tuple: error\n";
       }
       return std::nullopt;
     }
 
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << sizeof...(T) << "-tuple: success\n";
     }
     return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
@@ -279,20 +279,20 @@ struct Extractable {
   static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
                           Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Aggregate " << typeid(T).name() << ": begin\n";
     }
     // Extract the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
     auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
     if (!tuple.has_value()) {
-      if (trace) {
+      if (LLVM_UNLIKELY(trace)) {
         *trace << "Aggregate " << typeid(T).name() << ": error\n";
       }
       return std::nullopt;
     }
 
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Aggregate " << typeid(T).name() << ": success\n";
     }
     // Convert the tuple to the struct type.
@@ -318,7 +318,7 @@ auto Tree::TryExtractNodeFromChildren(
   auto it = children.begin();
   auto result = Extractable<T>::ExtractImpl(this, it, children.end(), trace);
   if (it != children.end()) {
-    if (trace) {
+    if (LLVM_UNLIKELY(trace)) {
       *trace << "Error: " << node_kind(*it) << " node left unconsumed.";
     }
     return std::nullopt;
