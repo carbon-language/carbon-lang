@@ -9,17 +9,18 @@
 
 namespace Carbon::Check {
 
-auto HandleArrayExprStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleArrayExprStart(Context& /*context*/,
+                          Parse::ArrayExprStartId /*parse_node*/) -> bool {
   return true;
 }
 
-auto HandleArrayExprSemi(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleArrayExprSemi(Context& context, Parse::ArrayExprSemiId parse_node)
+    -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleArrayExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
   // TODO: Handle array type with undefined bound.
   if (context.node_stack()
           .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ArrayExprSemi>()) {

@@ -9,29 +9,31 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleVariableIntroducer(Context& context,
+                              Parse::VariableIntroducerId parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   context.decl_state_stack().Push(DeclState::Var);
   return true;
 }
 
-auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
+auto HandleReturnedModifier(Context& context,
+                            Parse::ReturnedModifierId parse_node) -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleVariableInitializer(Context& context,
+                               Parse::VariableInitializerId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
+auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
     -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();

@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
   auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
@@ -28,12 +28,14 @@ auto HandleAddress(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericBindingPattern(Context& context, Parse::NodeId parse_node)
+auto HandleGenericBindingPattern(Context& context,
+                                 Parse::GenericBindingPatternId parse_node)
     -> bool {
   return context.TODO(parse_node, "GenericBindingPattern");
 }
 
-auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
+    -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
@@ -158,7 +160,7 @@ auto HandleBindingPattern(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {
   // TODO: diagnose if this occurs in a `var` context.
   return context.TODO(parse_node, "HandleTemplate");
 }
