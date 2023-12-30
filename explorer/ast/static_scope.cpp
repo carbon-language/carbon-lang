@@ -35,43 +35,43 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
   return Success();
 }
 
-void StaticScope::Print(llvm::raw_ostream& out) const {
+template<typename Action>
+void StaticScope::PrintCommon(Action action) const {
   if (ast_node_) {
-    ast_node_.value()->Print(out);
+    action(ast_node_.value());
   } else {
     *trace_stream_ << "package";
   }
 }
 
+void StaticScope::Print(llvm::raw_ostream& out) const {
+  PrintCommon([&out](auto node) { node->Print(out); });
+}
+
 void StaticScope::PrintID(llvm::raw_ostream& out) const {
-  if (ast_node_) {
-    ast_node_.value()->PrintID(out);
-  } else {
-    *trace_stream_ << "package";
+  PrintCommon([&out](auto node) { node->PrintID(out); });
+}
+
+void StaticScope::UpdateNameStatus(std::string_view name, NameStatus new_status, 
+                                   const std::string& trace_message) {
+    auto it = declared_names_.find(name);
+  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  it->second.status = new_status;
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Result() << trace_message << "\n";
   }
 }
 
 void StaticScope::MarkDeclared(std::string_view name) {
-  auto it = declared_names_.find(name);
-  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  if (it->second.status == NameStatus::KnownButNotDeclared) {
-    it->second.status = NameStatus::DeclaredButNotUsable;
-    if (trace_stream_->is_enabled()) {
-      trace_stream_->Result()
-          << "marked `" << name << "` declared but not usable in `"
-          << PrintAsID(*this) << "`\n";
-    }
-  }
+  UpdateNameStatus(name, NameStatus::DeclaredButNotUsable, 
+                   "marked `" + std::string(name) + 
+                   "` declared but not usable in `" + PrintAsID(*this) + "`");
 }
 
 void StaticScope::MarkUsable(std::string_view name) {
-  auto it = declared_names_.find(name);
-  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  it->second.status = NameStatus::Usable;
-  if (trace_stream_->is_enabled()) {
-    trace_stream_->Result()
-        << "marked `" << name << "` usable in `" << PrintAsID(*this) << "`\n";
-  }
+  UpdateNameStatus(name, NameStatus::Usable, 
+                   "marked `" + std::string(name) + 
+                   "` usable in `" + PrintAsID(*this) + "`");
 }
 
 auto StaticScope::Resolve(std::string_view name,
@@ -136,20 +136,14 @@ auto StaticScope::TryResolveHere(std::string_view name,
     }
   });
 
-  if (allow_undeclared) {
+  if (allow_undeclared || it->second.status == NameStatus::Usable) {
     return {it->second.entity};
   }
-  switch (it->second.status) {
-    case NameStatus::KnownButNotDeclared:
-      return ProgramError(source_loc)
-             << "'" << name << "' has not been declared yet";
-    case NameStatus::DeclaredButNotUsable:
-      return ProgramError(source_loc) << "'" << name
-                                      << "' is not usable until after it "
-                                         "has been completely declared";
-    case NameStatus::Usable:
-      return {it->second.entity};
-  }
+  return ProgramError(source_loc)
+         << "'" << name
+         << (it->second.status == NameStatus::KnownButNotDeclared
+                 ? "' has not been declared yet"
+                 : "' is not usable until after it has been completely declared");
 }
 
 auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
