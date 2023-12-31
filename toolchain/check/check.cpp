@@ -78,7 +78,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst = context.AddInst(SemIR::Namespace{
-      Parse::NodeId::Invalid,
+      Parse::NamespaceId::Invalid,
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       SemIR::NameScopeId::Package});
   CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);

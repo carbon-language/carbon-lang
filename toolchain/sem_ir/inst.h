@@ -101,7 +101,8 @@ class Inst : public Printable<Inst> {
                                   << " to wrong kind " << TypedInst::Kind;
     auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
       if constexpr (HasParseNodeMember<TypedInst>) {
-        return TypedInst{parse_node(), type_id_and_args...};
+        return TypedInst{decltype(TypedInst::parse_node)(parse_node()),
+                         type_id_and_args...};
       } else {
         return TypedInst{type_id_and_args...};
       }

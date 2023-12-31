@@ -377,7 +377,7 @@ struct NameRef {
 struct Namespace {
   static constexpr auto Kind = InstKind::Namespace.Define("namespace");
 
-  Parse::NodeId parse_node;
+  Parse::NamespaceId parse_node;
   TypeId type_id;
   NameScopeId name_scope_id;
 };
@@ -617,11 +617,13 @@ struct VarStorage {
   NameId name_id;
 };
 
-// HasParseNodeMember<T> is true if T has a `Parse::NodeId parse_node` field.
-template <typename T, typename ParseNodeType = Parse::NodeId T::*>
+// HasParseNodeMember<T> is true if T has a `U parse_node` field,
+// where `U` extends `Parse::NodeId`.
+template <typename T, typename NodeIdType = Parse::NodeId>
 inline constexpr bool HasParseNodeMember = false;
 template <typename T>
-inline constexpr bool HasParseNodeMember<T, decltype(&T::parse_node)> = true;
+inline constexpr bool HasParseNodeMember<
+    T, decltype(Parse::NodeId((static_cast<T*>(nullptr))->parse_node))> = true;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
