@@ -34,11 +34,11 @@ template <const NodeKind&>
 struct NodeIdForKind : public NodeId {
   static const NodeIdForKind Invalid;
 
-  explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
+  constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
 };
 template <const NodeKind& Kind>
 constexpr NodeIdForKind<Kind> NodeIdForKind<Kind>::Invalid =
-    NodeIdForKind(NodeId::Invalid.index);
+    NodeIdForKind(NodeId::Invalid);
 
 #define CARBON_PARSE_NODE_KIND(KindName) \
   using KindName##Id = NodeIdForKind<NodeKind::KindName>;
@@ -53,12 +53,12 @@ struct NodeIdInCategory : public NodeId {
   // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind::category()`
   // overlaps with `Category`.
 
-  explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
+  constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
 };
 
 template <NodeCategory Category>
 constexpr NodeIdInCategory<Category> NodeIdInCategory<Category>::Invalid =
-    NodeIdInCategory<Category>(NodeId::InvalidIndex);
+    NodeIdInCategory<Category>(NodeId::Invalid);
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
@@ -75,15 +75,21 @@ struct NodeIdOneOf : public NodeId {
   // An explicitly invalid instance.
   static const NodeIdOneOf<T, U> Invalid;
 
-  // TODO: Support conversion from `NodeIdForKind<Kind>` if `Kind` is
-  // `T::Kind` or `U::Kind`.
-
-  explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+  constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
+  template <const NodeKind& Kind>
+  NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
+    static_assert(T::Kind == Kind || U::Kind == Kind);
+  }
+  /* FIXME: Gets error "conversion from 'const Definition' to 'const NodeKind &'
+  is not allowed in a converted constant expression"
+  NodeIdOneOf(NodeIdForKind<T::Kind> node_id) : NodeId(node_id) {}
+  NodeIdOneOf(NodeIdForKind<U::Kind> node_id) : NodeId(node_id) {}
+  */
 };
 
 template <typename T, typename U>
 constexpr NodeIdOneOf<T, U> NodeIdOneOf<T, U>::Invalid =
-    NodeIdOneOf<T, U>(NodeId::InvalidIndex);
+    NodeIdOneOf<T, U>(NodeId::Invalid);
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
@@ -91,12 +97,11 @@ struct NodeIdNot : public NodeId {
   // An explicitly invalid instance.
   static const NodeIdNot<T> Invalid;
 
-  explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
+  constexpr explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
 };
 
 template <typename T>
-constexpr NodeIdNot<T> NodeIdNot<T>::Invalid =
-    NodeIdNot<T>(NodeId::InvalidIndex);
+constexpr NodeIdNot<T> NodeIdNot<T>::Invalid = NodeIdNot<T>(NodeId::Invalid);
 
 // Note that the support for extracting these types using the `Tree::Extract*`
 // functions is defined in `extract.cpp`.

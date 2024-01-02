@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -40,6 +41,7 @@ namespace Carbon::SemIR {
 struct AddressOf {
   static constexpr auto Kind = InstKind::AddressOf.Define("address_of");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId lvalue_id;
@@ -48,7 +50,7 @@ struct AddressOf {
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define("addr_pattern");
 
-  Parse::NodeId parse_node;
+  Parse::AddressId parse_node;
   TypeId type_id;
   // The `self` parameter.
   InstId inner_id;
@@ -57,6 +59,7 @@ struct AddrPattern {
 struct ArrayIndex {
   static constexpr auto Kind = InstKind::ArrayIndex.Define("array_index");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId array_id;
@@ -69,6 +72,7 @@ struct ArrayIndex {
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define("array_init");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId inits_id;
@@ -78,7 +82,7 @@ struct ArrayInit {
 struct ArrayType {
   static constexpr auto Kind = InstKind::ArrayType.Define("array_type");
 
-  Parse::NodeId parse_node;
+  Parse::ArrayExprId parse_node;
   TypeId type_id;
   InstId bound_id;
   TypeId element_type_id;
@@ -90,7 +94,7 @@ struct ArrayType {
 struct Assign {
   static constexpr auto Kind = InstKind::Assign.Define("assign");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::InfixOperatorEqual, Parse::VariableDecl> parse_node;
   // Assignments are statements, and so have no type.
   InstId lhs_id;
   InstId rhs_id;
@@ -102,7 +106,7 @@ struct Assign {
 struct BaseDecl {
   static constexpr auto Kind = InstKind::BaseDecl.Define("base_decl");
 
-  Parse::NodeId parse_node;
+  Parse::BaseDeclId parse_node;
   TypeId type_id;
   TypeId base_type_id;
   ElementIndex index;
@@ -111,6 +115,7 @@ struct BaseDecl {
 struct BindName {
   static constexpr auto Kind = InstKind::BindName.Define("bind_name");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   NameId name_id;
@@ -120,6 +125,7 @@ struct BindName {
 struct BindValue {
   static constexpr auto Kind = InstKind::BindValue.Define("bind_value");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId value_id;
@@ -128,6 +134,7 @@ struct BindValue {
 struct BlockArg {
   static constexpr auto Kind = InstKind::BlockArg.Define("block_arg");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId block_id;
@@ -136,6 +143,7 @@ struct BlockArg {
 struct BoolLiteral {
   static constexpr auto Kind = InstKind::BoolLiteral.Define("bool_literal");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   BoolValue value;
@@ -178,6 +186,7 @@ struct BranchWithArg {
   static constexpr auto Kind =
       InstKind::BranchWithArg.Define("br", TerminatorKind::Terminator);
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   // Branches don't produce a value, so have no type.
   InstBlockId target_id;
@@ -223,6 +232,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define("class_element_access");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId base_id;
@@ -232,6 +242,7 @@ struct ClassElementAccess {
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define("class_init");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
@@ -250,7 +261,7 @@ struct ClassType {
 struct ConstType {
   static constexpr auto Kind = InstKind::ConstType.Define("const_type");
 
-  Parse::NodeId parse_node;
+  Parse::PrefixOperatorConstId parse_node;
   TypeId type_id;
   TypeId inner_id;
 };
@@ -258,6 +269,7 @@ struct ConstType {
 struct Converted {
   static constexpr auto Kind = InstKind::Converted.Define("converted");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId original_id;
@@ -279,6 +291,7 @@ struct CrossRef {
 struct Deref {
   static constexpr auto Kind = InstKind::Deref.Define("deref");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId pointer_id;
@@ -289,7 +302,7 @@ struct Deref {
 struct FieldDecl {
   static constexpr auto Kind = InstKind::FieldDecl.Define("field_decl");
 
-  Parse::NodeId parse_node;
+  Parse::BindingPatternId parse_node;
   TypeId type_id;
   NameId name_id;
   ElementIndex index;
@@ -323,6 +336,7 @@ struct InitializeFrom {
   static constexpr auto Kind =
       InstKind::InitializeFrom.Define("initialize_from");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId src_id;
@@ -346,6 +360,7 @@ struct InterfaceDecl {
 struct IntLiteral {
   static constexpr auto Kind = InstKind::IntLiteral.Define("int_literal");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   IntId int_id;
@@ -392,6 +407,7 @@ struct NoOp {
 struct Param {
   static constexpr auto Kind = InstKind::Param.Define("param");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   NameId name_id;
@@ -400,6 +416,7 @@ struct Param {
 struct PointerType {
   static constexpr auto Kind = InstKind::PointerType.Define("ptr_type");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   TypeId pointee_id;
@@ -450,6 +467,7 @@ struct StringLiteral {
 struct StructAccess {
   static constexpr auto Kind = InstKind::StructAccess.Define("struct_access");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId struct_id;
@@ -459,6 +477,7 @@ struct StructAccess {
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define("struct_init");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
@@ -496,6 +515,7 @@ struct StructTypeField {
 struct StructValue {
   static constexpr auto Kind = InstKind::StructValue.Define("struct_value");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
@@ -504,6 +524,7 @@ struct StructValue {
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define("temporary");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId storage_id;
@@ -514,6 +535,7 @@ struct TemporaryStorage {
   static constexpr auto Kind =
       InstKind::TemporaryStorage.Define("temporary_storage");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
 };
@@ -521,6 +543,7 @@ struct TemporaryStorage {
 struct TupleAccess {
   static constexpr auto Kind = InstKind::TupleAccess.Define("tuple_access");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId tuple_id;
@@ -530,7 +553,7 @@ struct TupleAccess {
 struct TupleIndex {
   static constexpr auto Kind = InstKind::TupleIndex.Define("tuple_index");
 
-  Parse::NodeId parse_node;
+  Parse::IndexExprId parse_node;
   TypeId type_id;
   InstId tuple_id;
   InstId index_id;
@@ -539,6 +562,7 @@ struct TupleIndex {
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define("tuple_init");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
@@ -564,6 +588,7 @@ struct TupleType {
 struct TupleValue {
   static constexpr auto Kind = InstKind::TupleValue.Define("tuple_value");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
@@ -572,6 +597,7 @@ struct TupleValue {
 struct UnaryOperatorNot {
   static constexpr auto Kind = InstKind::UnaryOperatorNot.Define("not");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId operand_id;
@@ -584,7 +610,7 @@ struct UnboundElementType {
   static constexpr auto Kind =
       InstKind::UnboundElementType.Define("unbound_element_type");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::BaseDecl, Parse::BindingPattern> parse_node;
   TypeId type_id;
   // The class that a value of this type is an element of.
   TypeId class_type_id;
@@ -595,7 +621,7 @@ struct UnboundElementType {
 struct ValueAsRef {
   static constexpr auto Kind = InstKind::ValueAsRef.Define("value_as_ref");
 
-  Parse::NodeId parse_node;
+  Parse::IndexExprId parse_node;
   TypeId type_id;
   InstId value_id;
 };
@@ -604,6 +630,7 @@ struct ValueOfInitializer {
   static constexpr auto Kind =
       InstKind::ValueOfInitializer.Define("value_of_initializer");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   InstId init_id;
@@ -612,6 +639,7 @@ struct ValueOfInitializer {
 struct VarStorage {
   static constexpr auto Kind = InstKind::VarStorage.Define("var");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   NameId name_id;
@@ -623,7 +651,7 @@ template <typename T, typename NodeIdType = Parse::NodeId>
 inline constexpr bool HasParseNodeMember = false;
 template <typename T>
 inline constexpr bool HasParseNodeMember<
-    T, decltype(Parse::NodeId((static_cast<T*>(nullptr))->parse_node))> = true;
+    T, decltype(Parse::NodeId(std::declval<T>().parse_node))> = true;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
