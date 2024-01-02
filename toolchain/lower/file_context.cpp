@@ -219,7 +219,10 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
             sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
       bind_name_id = addr->inner_id;
     }
-    CARBON_CHECK(sem_ir().insts().TryGetAs<SemIR::BindName>(bind_name_id));
+    auto bind_name = sem_ir().insts().Get(bind_name_id);
+    // TODO: Should we stop passing generic bindings at runtime?
+    CARBON_CHECK(bind_name.Is<SemIR::BindName>() ||
+                 bind_name.Is<SemIR::BindGenericName>());
     function_lowering.SetLocal(bind_name_id, param_value);
   }
 

@@ -1007,6 +1007,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
+      case SemIR::BindGenericName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);

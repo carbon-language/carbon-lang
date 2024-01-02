@@ -475,6 +475,10 @@ class InstNamer {
           add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
+        case BindGenericName::Kind: {
+          add_inst_name_id(inst.As<BindGenericName>().name_id);
+          continue;
+        }
         case FunctionDecl::Kind: {
           add_inst_name_id(sem_ir_.functions()
                                .Get(inst.As<FunctionDecl>().function_id)

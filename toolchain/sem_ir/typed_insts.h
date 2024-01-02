@@ -50,7 +50,7 @@ struct AddrPattern {
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  // The `self` parameter.
+  // The `self` binding.
   InstId inner_id;
 };
 
@@ -106,6 +106,16 @@ struct BaseDecl {
   TypeId type_id;
   TypeId base_type_id;
   ElementIndex index;
+};
+
+struct BindGenericName {
+  static constexpr auto Kind =
+      InstKind::BindGenericName.Define("bind_generic_name");
+
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  NameId name_id;
+  InstId value_id;
 };
 
 struct BindName {

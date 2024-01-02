@@ -65,6 +65,11 @@ auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
+auto HandleBindGenericName(FunctionContext& context, SemIR::InstId inst_id,
+                           SemIR::BindGenericName inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
 auto HandleBlockArg(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BlockArg inst) -> void {
   context.SetLocal(inst_id, context.GetBlockArg(inst.block_id, inst.type_id));

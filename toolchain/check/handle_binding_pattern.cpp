@@ -9,16 +9,26 @@
 
 namespace Carbon::Check {
 
+static auto GetBindingName(SemIR::Inst inst) -> SemIR::NameId {
+  if (auto bind = inst.TryAs<SemIR::BindName>()) {
+    return bind->name_id;
+  }
+  if (auto bind = inst.TryAs<SemIR::BindGenericName>()) {
+    return bind->name_id;
+  }
+  return SemIR::NameId::Invalid;
+}
+
 auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
-  if (self_param && self_param->name_id == SemIR::NameId::SelfValue) {
+  auto self_param = context.insts().Get(self_param_id);
+  if (GetBindingName(self_param) == SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
         parse_node,
-        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
+        SemIR::AddrPattern{parse_node, self_param.type_id(), self_param_id});
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");
@@ -28,14 +38,8 @@ auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericBindingPattern(Context& context,
-                                 Parse::GenericBindingPatternId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "GenericBindingPattern");
-}
-
-auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
-    -> bool {
+auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
+                             bool is_generic) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
@@ -47,12 +51,14 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Create the appropriate kind of binding for this pattern.
-  //
-  // TODO: Update this to create a generic or template binding as needed.
-  auto make_bind_name = [name_node = name_node, name_id = name_id](
+  auto make_bind_name = [name_node = name_node, name_id = name_id, is_generic](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
-    return SemIR::BindName{name_node, type_id, name_id, value_id};
+    if (is_generic) {
+      return SemIR::BindGenericName{name_node, type_id, name_id, value_id};
+    } else {
+      return SemIR::BindName{name_node, type_id, name_id, value_id};
+    }
   };
 
   // A `self` binding can only appear in an implicit parameter list.
@@ -158,6 +164,17 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
                      << context_parse_node_kind;
   }
   return true;
+}
+
+auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
+    -> bool {
+  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/false);
+}
+
+auto HandleGenericBindingPattern(Context& context,
+                                 Parse::GenericBindingPatternId parse_node)
+    -> bool {
+  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
 }
 
 auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {
