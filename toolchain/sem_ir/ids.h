@@ -241,7 +241,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   // 0-index block.
   static const InstBlockId Empty;
 
-  // Exported instructions. Always the 1-index block.
+  // Exported instructions. Always the 1-index block. Empty until the File is
+  // fully checked; intermediate state is in the Check::Context.
   static const InstBlockId Exports;
 
   // An explicitly invalid ID.

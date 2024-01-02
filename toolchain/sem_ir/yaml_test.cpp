@@ -76,7 +76,7 @@ TEST(SemIRTest, YAML) {
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("block0", Yaml::Mapping(IsEmpty())),
-               Pair("block1", Yaml::Mapping(IsEmpty())),
+               Pair("block1", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("block2", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("block3", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
