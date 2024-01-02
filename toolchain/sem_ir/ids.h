@@ -137,15 +137,12 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    switch (index) {
-      case 0:
-        out << "false";
-        break;
-      case 1:
-        out << "true";
-        break;
-      default:
-        CARBON_FATAL() << "Invalid bool value " << index;
+    if (*this == False) {
+      out << "false";
+    } else if (*this == True) {
+      out << "true";
+    } else {
+      CARBON_FATAL() << "Invalid bool value " << index;
     }
   }
 };
@@ -253,8 +250,12 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (index == Unreachable.index) {
+    if (*this == Unreachable) {
       out << "unreachable";
+    } else if (*this == Empty) {
+      out << "empty";
+    } else if (*this == Exports) {
+      out << "exports";
     } else {
       out << "block";
       IdBase::Print(out);
@@ -285,9 +286,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
-    if (index == TypeType.index) {
+    if (*this == TypeType) {
       out << "TypeType";
-    } else if (index == Error.index) {
+    } else if (*this == Error) {
       out << "Error";
     } else {
       IdBase::Print(out);

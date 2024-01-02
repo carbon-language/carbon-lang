@@ -27,8 +27,8 @@
 // CHECK:STDOUT:     instNamespaceType: {kind: CrossRef, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
 // CHECK:STDOUT:   inst_blocks:
-// CHECK:STDOUT:     block0:          {}
-// CHECK:STDOUT:     block1:          {}
+// CHECK:STDOUT:     empty:           {}
+// CHECK:STDOUT:     exports:         {}
 // CHECK:STDOUT:     block2:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
