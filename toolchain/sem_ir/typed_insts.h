@@ -154,7 +154,7 @@ struct BoolLiteral {
 struct BoundMethod {
   static constexpr auto Kind = InstKind::BoundMethod.Define("bound_method");
 
-  Parse::NodeId parse_node;
+  Parse::MemberAccessExprId parse_node;
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize
   // `self`, or whose address will be used to initialize `self` for an `addr
@@ -167,6 +167,7 @@ struct Branch {
   static constexpr auto Kind =
       InstKind::Branch.Define("br", TerminatorKind::Terminator);
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   // Branches don't produce a value, so have no type.
   InstBlockId target_id;
@@ -176,6 +177,7 @@ struct BranchIf {
   static constexpr auto Kind =
       InstKind::BranchIf.Define("br", TerminatorKind::TerminatorSequence);
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   // Branches don't produce a value, so have no type.
   InstBlockId target_id;
@@ -204,7 +206,7 @@ struct Builtin {
 struct Call {
   static constexpr auto Kind = InstKind::Call.Define("call");
 
-  Parse::NodeId parse_node;
+  Parse::CallExprStartId parse_node;
   TypeId type_id;
   InstId callee_id;
   // The arguments block contains IDs for the following arguments, in order:
@@ -217,7 +219,7 @@ struct Call {
 struct ClassDecl {
   static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::ClassDecl, Parse::ClassDefinitionStart> parse_node;
   // No type: a class declaration is not itself a value. The name of a class
   // declaration becomes a class type value.
   // TODO: For a generic class declaration, the name of the class declaration
@@ -252,7 +254,7 @@ struct ClassInit {
 struct ClassType {
   static constexpr auto Kind = InstKind::ClassType.Define("class_type");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::ClassDecl, Parse::ClassDefinitionStart> parse_node;
   TypeId type_id;
   ClassId class_id;
   // TODO: Once we support generic classes, include the class's arguments here.
@@ -383,6 +385,7 @@ struct LazyImportRef {
 struct NameRef {
   static constexpr auto Kind = InstKind::NameRef.Define("name_ref");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   NameId name_id;
@@ -504,6 +507,7 @@ struct StructTypeField {
   static constexpr auto Kind =
       InstKind::StructTypeField.Define("struct_type_field");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   // This instruction is an implementation detail of `StructType`, and doesn't
   // produce a value, so has no type, even though it declares a field with a
