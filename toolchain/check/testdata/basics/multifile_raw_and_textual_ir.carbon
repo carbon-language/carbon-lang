@@ -23,7 +23,7 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -36,8 +36,10 @@ fn B() {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     block2:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
@@ -59,7 +61,7 @@ fn B() {}
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -72,8 +74,10 @@ fn B() {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     block0:          {}
 // CHECK:STDOUT:     block1:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     block2:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
