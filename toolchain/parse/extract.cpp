@@ -171,6 +171,7 @@ struct Extractable<NodeIdOneOf<T, U>> {
 };
 
 // Extract a `NodeIdNot<T>` as a single required child.
+// Note: this is only instantiated once, so no need to create a helper function.
 template <typename T>
 struct Extractable<NodeIdNot<T>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
