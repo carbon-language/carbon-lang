@@ -406,6 +406,7 @@ struct Namespace {
 struct NoOp {
   static constexpr auto Kind = InstKind::NoOp.Define("no_op");
 
+  // TODO: Delete since now unused.
   Parse::NodeId parse_node;
   // This instruction doesn't produce a value, so has no type.
 };
@@ -431,7 +432,7 @@ struct PointerType {
 struct RealLiteral {
   static constexpr auto Kind = InstKind::RealLiteral.Define("real_literal");
 
-  Parse::NodeId parse_node;
+  Parse::RealLiteralId parse_node;
   TypeId type_id;
   RealId real_id;
 };
@@ -466,7 +467,7 @@ struct SpliceBlock {
 struct StringLiteral {
   static constexpr auto Kind = InstKind::StringLiteral.Define("string_literal");
 
-  Parse::NodeId parse_node;
+  Parse::StringLiteralId parse_node;
   TypeId type_id;
   StringLiteralValueId string_literal_id;
 };
