@@ -23,7 +23,7 @@ auto HandleClassIntroducer(Context& context,
 
 static auto BuildClassDecl(
     Context& context,
-    Parse::NodeIdOneOf<Parse::ClassDecl, Parse::ClassDefinitionStart>
+    Parse::NodeIdOneOf<Parse::ClassDeclId, Parse::ClassDefinitionStartId>
         parse_node) -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()

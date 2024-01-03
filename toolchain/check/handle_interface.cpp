@@ -22,9 +22,10 @@ auto HandleInterfaceIntroducer(Context& context,
 }
 
 static auto BuildInterfaceDecl(
-    Context& context,
-    Parse::NodeIdOneOf<Parse::InterfaceDecl, Parse::InterfaceDefinitionStart>
-        parse_node) -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
+    Context& context, Parse::NodeIdOneOf<Parse::InterfaceDeclId,
+                                         Parse::InterfaceDefinitionStartId>
+                          parse_node)
+    -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::InterfaceIntroducer>();

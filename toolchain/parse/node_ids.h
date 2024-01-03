@@ -32,11 +32,14 @@ struct NodeForId;
 
 // `<KindName>Id` is a typed version of `NodeId` that references a node of kind
 // `<KindName>`:
-template <const NodeKind&>
+template <const NodeKind& K>
 struct NodeIdForKind : public NodeId {
+  static const NodeKind& Kind;
   constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
   constexpr NodeIdForKind(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
 };
+template <const NodeKind& K>
+const NodeKind& NodeIdForKind<K>::Kind = K;
 
 #define CARBON_PARSE_NODE_KIND(KindName) \
   using KindName##Id = NodeIdForKind<NodeKind::KindName>;

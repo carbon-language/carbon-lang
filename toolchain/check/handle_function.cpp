@@ -45,7 +45,7 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // definition syntax.
 static auto BuildFunctionDecl(
     Context& context,
-    Parse::NodeIdOneOf<Parse::FunctionDecl, Parse::FunctionDefinitionStart>
+    Parse::NodeIdOneOf<Parse::FunctionDeclId, Parse::FunctionDefinitionStartId>
         parse_node,
     bool is_definition) -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At

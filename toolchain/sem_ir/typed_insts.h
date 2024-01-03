@@ -5,8 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -94,7 +94,8 @@ struct ArrayType {
 struct Assign {
   static constexpr auto Kind = InstKind::Assign.Define("assign");
 
-  Parse::NodeIdOneOf<Parse::InfixOperatorEqual, Parse::VariableDecl> parse_node;
+  Parse::NodeIdOneOf<Parse::InfixOperatorEqualId, Parse::VariableDeclId>
+      parse_node;
   // Assignments are statements, and so have no type.
   InstId lhs_id;
   InstId rhs_id;
@@ -219,7 +220,8 @@ struct Call {
 struct ClassDecl {
   static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
-  Parse::NodeIdOneOf<Parse::ClassDecl, Parse::ClassDefinitionStart> parse_node;
+  Parse::NodeIdOneOf<Parse::ClassDeclId, Parse::ClassDefinitionStartId>
+      parse_node;
   // No type: a class declaration is not itself a value. The name of a class
   // declaration becomes a class type value.
   // TODO: For a generic class declaration, the name of the class declaration
@@ -254,7 +256,8 @@ struct ClassInit {
 struct ClassType {
   static constexpr auto Kind = InstKind::ClassType.Define("class_type");
 
-  Parse::NodeIdOneOf<Parse::ClassDecl, Parse::ClassDefinitionStart> parse_node;
+  Parse::NodeIdOneOf<Parse::ClassDeclId, Parse::ClassDefinitionStartId>
+      parse_node;
   TypeId type_id;
   ClassId class_id;
   // TODO: Once we support generic classes, include the class's arguments here.
@@ -313,7 +316,7 @@ struct FieldDecl {
 struct FunctionDecl {
   static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
-  Parse::NodeIdOneOf<Parse::FunctionDecl, Parse::FunctionDefinitionStart>
+  Parse::NodeIdOneOf<Parse::FunctionDeclId, Parse::FunctionDefinitionStartId>
       parse_node;
   TypeId type_id;
   FunctionId function_id;
@@ -350,7 +353,7 @@ struct InitializeFrom {
 struct InterfaceDecl {
   static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
 
-  Parse::NodeIdOneOf<Parse::InterfaceDecl, Parse::InterfaceDefinitionStart>
+  Parse::NodeIdOneOf<Parse::InterfaceDeclId, Parse::InterfaceDefinitionStartId>
       parse_node;
   // No type: an interface declaration is not itself a value. The name of an
   // interface declaration becomes a facet type value.
@@ -441,7 +444,7 @@ struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define("return", TerminatorKind::Terminator);
 
-  Parse::NodeIdOneOf<Parse::FunctionDefinition, Parse::ReturnStatement>
+  Parse::NodeIdOneOf<Parse::FunctionDefinitionId, Parse::ReturnStatementId>
       parse_node;
   // This is a statement, so has no type.
 };
@@ -458,6 +461,7 @@ struct ReturnExpr {
 struct SpliceBlock {
   static constexpr auto Kind = InstKind::SpliceBlock.Define("splice_block");
 
+  // TODO: Can we make this more specific?
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId block_id;
@@ -495,7 +499,7 @@ struct StructInit {
 struct StructLiteral {
   static constexpr auto Kind = InstKind::StructLiteral.Define("struct_literal");
 
-  Parse::NodeId parse_node;
+  Parse::StructLiteralId parse_node;
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -503,6 +507,8 @@ struct StructLiteral {
 struct StructType {
   static constexpr auto Kind = InstKind::StructType.Define("struct_type");
 
+  // TODO: Make this more specific. It can be one of: ClassDefinitionId,
+  // StructLiteralId, StructTypeLiteralId
   Parse::NodeId parse_node;
   TypeId type_id;
   InstBlockId fields_id;
@@ -619,7 +625,7 @@ struct UnboundElementType {
   static constexpr auto Kind =
       InstKind::UnboundElementType.Define("unbound_element_type");
 
-  Parse::NodeIdOneOf<Parse::BaseDecl, Parse::BindingPattern> parse_node;
+  Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::BindingPatternId> parse_node;
   TypeId type_id;
   // The class that a value of this type is an element of.
   TypeId class_type_id;
