@@ -61,8 +61,8 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+21:         {kind: Converted, arg0: inst+13, arg1: inst+20, type: type4}
 // CHECK:STDOUT:     inst+22:         {kind: ReturnExpr, arg0: inst+21}
 // CHECK:STDOUT:   inst_blocks:
-// CHECK:STDOUT:     block0:          {}
-// CHECK:STDOUT:     block1:
+// CHECK:STDOUT:     empty:           {}
+// CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+9
 // CHECK:STDOUT:     block2:
 // CHECK:STDOUT:       0:               inst+2
