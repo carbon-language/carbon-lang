@@ -43,10 +43,10 @@ using DispatchFunctionT = auto(FunctionContext& context, SemIR::InstId inst_id,
 
 // Transforms a parse node ID to a typed parse node, which is then passed to the
 // handler.
-#define CARBON_SEM_IR_INST_KIND(Name)                                  \
-  auto Dispatch##Name(FunctionContext& context, SemIR::InstId inst_id, \
-                      SemIR::Inst inst) -> void {                      \
-    return Handle##Name(context, inst_id, inst.As<SemIR::Name>());     \
+#define CARBON_SEM_IR_INST_KIND(Name)                                         \
+  static auto Dispatch##Name(FunctionContext& context, SemIR::InstId inst_id, \
+                             SemIR::Inst inst) -> void {                      \
+    return Handle##Name(context, inst_id, inst.As<SemIR::Name>());            \
   }
 #include "toolchain/sem_ir/inst_kind.def"
 
