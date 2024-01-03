@@ -326,6 +326,7 @@ struct FunctionDecl {
 struct Import {
   static constexpr auto Kind = InstKind::Import.Define("import");
 
+  // TODO: Should always be an ImportDirectiveId?
   Parse::NodeId parse_node;
   TypeId type_id;
   CrossRefIRId first_cross_ref_ir_id;
@@ -349,7 +350,8 @@ struct InitializeFrom {
 struct InterfaceDecl {
   static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::InterfaceDecl, Parse::InterfaceDefinitionStart>
+      parse_node;
   // No type: an interface declaration is not itself a value. The name of an
   // interface declaration becomes a facet type value.
   // TODO: For a generic interface declaration, the name of the interface
