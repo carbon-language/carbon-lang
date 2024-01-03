@@ -40,8 +40,6 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 // Structure for the core handler dispatch.
 using DispatchFunctionT = auto(FunctionContext& context, SemIR::InstId inst_id,
                                SemIR::Inst inst) -> void;
-using DispatchTableT =
-    std::array<DispatchFunctionT*, SemIR::InstKind::EnumCount>;
 
 // Transforms a parse node ID to a typed parse node, which is then passed to the
 // handler.
@@ -54,7 +52,7 @@ using DispatchTableT =
 
 // The main dispatch table. This is used instead of a switch in order to
 // optimize for common functionality.
-static constexpr DispatchTableT DispatchTable = {
+static constexpr std::array DispatchTable = {
 #define CARBON_SEM_IR_INST_KIND(Name) &Dispatch##Name,
 #include "toolchain/sem_ir/inst_kind.def"
 };

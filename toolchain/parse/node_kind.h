@@ -53,13 +53,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 
   class Definition;
 
-  // Provide the size of the enum, for use in array sizing.
-  static constexpr UnderlyingType EnumCount = 0
-  // NOLINTNEXTLINE(bugprone-macro-parentheses)
-#define CARBON_PARSE_NODE_KIND(Name) +1
-#include "toolchain/parse/node_kind.def"
-      ;
-
   using EnumBase::Create;
 
   // Support use as array indices.

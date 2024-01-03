@@ -17,11 +17,10 @@ auto HandleInvalid(Context& context) -> void {
 
 // Structure for the core handler dispatch.
 using DispatchFunctionT = auto(Context& context) -> void;
-using DispatchTableT = std::array<DispatchFunctionT*, State::EnumCount>;
 
 // The main dispatch table. This is used instead of a switch in order to
 // optimize for common functionality.
-static constexpr DispatchTableT DispatchTable = {
+static constexpr std::array DispatchTable = {
 #define CARBON_PARSE_STATE(Name) &Handle##Name,
 #include "toolchain/parse/state.def"
 };

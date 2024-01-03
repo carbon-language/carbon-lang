@@ -181,8 +181,6 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 // Structure for the core handler dispatch.
 using DispatchFunctionT = auto(Context& context, Parse::NodeId parse_node)
     -> bool;
-using DispatchTableT =
-    std::array<DispatchFunctionT*, Parse::NodeKind::EnumCount>;
 
 // Transforms a parse node ID to a typed parse node, which is then passed to the
 // handler.
@@ -194,7 +192,7 @@ using DispatchTableT =
 
 // The main dispatch table. This is used instead of a switch in order to
 // optimize for common functionality.
-static constexpr DispatchTableT DispatchTable = {
+static constexpr std::array DispatchTable = {
 #define CARBON_PARSE_NODE_KIND(Name) &Dispatch##Name,
 #include "toolchain/parse/node_kind.def"
 };
