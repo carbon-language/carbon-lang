@@ -24,9 +24,6 @@ class BuiltinKind : public CARBON_ENUM_BASE(BuiltinKind) {
   auto label() -> llvm::StringRef;
 
   // The count of enum values excluding Invalid.
-  //
-  // Note that we *define* this as `constexpr` making it a true compile-time
-  // constant.
   static const uint8_t ValidCount;
 
   // Support conversion to and from an int32_t for SemIR instruction storage.

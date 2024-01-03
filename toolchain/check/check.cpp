@@ -178,25 +178,39 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   }
 }
 
+// Structure for the core handler dispatch.
+using DispatchFunctionT = auto(Context& context, Parse::NodeId parse_node)
+    -> bool;
+using DispatchTableT =
+    std::array<DispatchFunctionT*, Parse::NodeKind::EnumCount>;
+
+// Transforms a parse node ID to a typed parse node, which is then passed to the
+// handler.
+#define CARBON_PARSE_NODE_KIND(Name)                                        \
+  auto Dispatch##Name(Context& context, Parse::NodeId parse_node) -> bool { \
+    return Handle##Name(context, Parse::Name##Id(parse_node));              \
+  }
+#include "toolchain/parse/node_kind.def"
+
+// The main dispatch table. This is used instead of a switch in order to
+// optimize for common functionality.
+static constexpr DispatchTableT DispatchTable = {
+#define CARBON_PARSE_NODE_KIND(Name) &Dispatch##Name,
+#include "toolchain/parse/node_kind.def"
+};
+
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 static auto ProcessParseNodes(Context& context,
                               ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
   for (auto parse_node : context.parse_tree().postorder()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
-#define CARBON_PARSE_NODE_KIND(Name)                                         \
-  case Parse::NodeKind::Name: {                                              \
-    if (!Check::Handle##Name(context, Parse::Name##Id(parse_node))) {        \
-      CARBON_CHECK(err_tracker.seen_error())                                 \
-          << "Handle" #Name " returned false without printing a diagnostic"; \
-      return false;                                                          \
-    }                                                                        \
-    break;                                                                   \
-  }
-#include "toolchain/parse/node_kind.def"
+    auto node_kind = context.parse_tree().node_kind(parse_node);
+    if (!DispatchTable[node_kind.AsInt()](context, parse_node)) {
+      CARBON_CHECK(err_tracker.seen_error())
+          << "Handle" << node_kind
+          << " returned false without printing a diagnostic";
+      return false;
     }
   }
   return true;

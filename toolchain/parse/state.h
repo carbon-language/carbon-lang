@@ -20,6 +20,16 @@ class State : public CARBON_ENUM_BASE(State) {
  public:
 #define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/state.def"
+
+  // Provide the size of the enum, for use in array sizing.
+  static constexpr UnderlyingType EnumCount = 0
+  // NOLINTNEXTLINE(bugprone-macro-parentheses)
+#define CARBON_PARSE_STATE(Name) +1
+#include "toolchain/parse/state.def"
+      ;
+
+  // Support use as array indices.
+  using EnumBase::AsInt;
 };
 
 #define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DEFINITION(State, Name)

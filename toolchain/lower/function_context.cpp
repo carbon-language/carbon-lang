@@ -37,19 +37,33 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
   return true;
 }
 
+// Structure for the core handler dispatch.
+using DispatchFunctionT = auto(FunctionContext& context, SemIR::InstId inst_id,
+                               SemIR::Inst inst) -> void;
+using DispatchTableT =
+    std::array<DispatchFunctionT*, SemIR::InstKind::EnumCount>;
+
+// Transforms a parse node ID to a typed parse node, which is then passed to the
+// handler.
+#define CARBON_SEM_IR_INST_KIND(Name)                                  \
+  auto Dispatch##Name(FunctionContext& context, SemIR::InstId inst_id, \
+                      SemIR::Inst inst) -> void {                      \
+    return Handle##Name(context, inst_id, inst.As<SemIR::Name>());     \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
+
+// The main dispatch table. This is used instead of a switch in order to
+// optimize for common functionality.
+static constexpr DispatchTableT DispatchTable = {
+#define CARBON_SEM_IR_INST_KIND(Name) &Dispatch##Name,
+#include "toolchain/sem_ir/inst_kind.def"
+};
+
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
     auto inst = sem_ir().insts().Get(inst_id);
     CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (inst.kind()) {
-#define CARBON_SEM_IR_INST_KIND(Name)                     \
-  case SemIR::Name::Kind:                                 \
-    Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
-    break;
-#include "toolchain/sem_ir/inst_kind.def"
-    }
+    DispatchTable[inst.kind().AsInt()](*this, inst_id, inst);
   }
 }
 

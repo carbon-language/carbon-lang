@@ -15,6 +15,17 @@ auto HandleInvalid(Context& context) -> void {
                  << context.PopState();
 }
 
+// Structure for the core handler dispatch.
+using DispatchFunctionT = auto(Context& context) -> void;
+using DispatchTableT = std::array<DispatchFunctionT*, State::EnumCount>;
+
+// The main dispatch table. This is used instead of a switch in order to
+// optimize for common functionality.
+static constexpr DispatchTableT DispatchTable = {
+#define CARBON_PARSE_STATE(Name) &Handle##Name,
+#include "toolchain/parse/state.def"
+};
+
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
   Lex::TokenLocationTranslator translator(&tokens);
@@ -32,15 +43,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.PushState(State::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (context.state_stack().back().state) {
-#define CARBON_PARSE_STATE(Name) \
-  case State::Name:              \
-    Handle##Name(context);       \
-    break;
-#include "toolchain/parse/state.def"
-    }
+    DispatchTable[context.state_stack().back().state.AsInt()](context);
   }
 
   context.AddLeafNode(NodeKind::FileEnd, *context.position());

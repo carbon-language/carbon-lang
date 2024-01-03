@@ -51,6 +51,20 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/node_kind.def"
 
+  class Definition;
+
+  // Provide the size of the enum, for use in array sizing.
+  static constexpr UnderlyingType EnumCount = 0
+  // NOLINTNEXTLINE(bugprone-macro-parentheses)
+#define CARBON_PARSE_NODE_KIND(Name) +1
+#include "toolchain/parse/node_kind.def"
+      ;
+
+  using EnumBase::Create;
+
+  // Support use as array indices.
+  using EnumBase::AsInt;
+
   // Validates that a `parse_node_kind` parser node can be generated for a
   // `lex_token_kind` lexer token.
   auto CheckMatchesTokenKind(Lex::TokenKind lex_token_kind, bool has_error)
@@ -69,10 +83,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 
   // Returns which categories this node kind is in.
   auto category() const -> NodeCategory;
-
-  using EnumBase::Create;
-
-  class Definition;
 
   // Provides a definition for this parse node kind. Should only be called
   // once, to construct the kind as part of defining it in `typed_nodes.h`.

@@ -48,7 +48,17 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
+  // Provide the size of the enum, for use in array sizing.
+  static constexpr UnderlyingType EnumCount = 0
+  // NOLINTNEXTLINE(bugprone-macro-parentheses)
+#define CARBON_SEM_IR_INST_KIND(Name) +1
+#include "toolchain/sem_ir/inst_kind.def"
+      ;
+
   using EnumBase::Create;
+
+  // Support use as array indices.
+  using EnumBase::AsInt;
 
   // Returns the name to use for this instruction kind in Semantics IR.
   auto ir_name() const -> llvm::StringLiteral;
