@@ -131,29 +131,42 @@ struct Extractable<NodeIdInCategory<Category>> {
 };
 
 // Extract a `NodeIdOneOf<T, U>` as a single required child.
+
+static auto NodeIdForKindAccept(NodeKind kind1, NodeKind kind2,
+                                const Tree* tree,
+                                const Tree::SiblingIterator& it,
+                                Tree::SiblingIterator end, ErrorBuilder* trace)
+    -> bool {
+  auto kind = tree->node_kind(*it);
+  if (it == end || (kind != kind1 && kind != kind2)) {
+    if (trace) {
+      if (it == end) {
+        *trace << "NodeIdOneOf error: no more children, expected " << kind1
+               << " or " << kind2 << "\n";
+      } else {
+        *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
+               << ", expected " << kind1 << " or " << kind2 << "\n";
+      }
+    }
+    return false;
+  }
+  if (trace) {
+    *trace << "NodeIdOneOf " << kind1 << " or " << kind2 << ": "
+           << tree->node_kind(*it) << " consumed\n";
+  }
+  return true;
+}
+
 template <typename T, typename U>
 struct Extractable<NodeIdOneOf<T, U>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdOneOf<T, U>> {
-    auto kind = tree->node_kind(*it);
-    if (it == end || (kind != T::Kind && kind != U::Kind)) {
-      if (trace) {
-        if (it == end) {
-          *trace << "NodeIdOneOf error: no more children, expected " << T::Kind
-                 << " or " << U::Kind << "\n";
-        } else {
-          *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
-                 << ", expected " << T::Kind << " or " << U::Kind << "\n";
-        }
-      }
+    if (NodeIdForKindAccept(T::Kind, U::Kind, tree, it, end, trace)) {
+      return NodeIdOneOf<T, U>(*it++);
+    } else {
       return std::nullopt;
     }
-    if (trace) {
-      *trace << "NodeIdOneOf " << T::Kind << " or " << U::Kind << ": "
-             << tree->node_kind(*it) << " consumed\n";
-    }
-    return NodeIdOneOf<T, U>(*it++);
   }
 };
 
