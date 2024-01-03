@@ -667,7 +667,7 @@ template <typename T, typename NodeIdType = Parse::NodeId>
 inline constexpr bool HasParseNodeMember = false;
 template <typename T>
 inline constexpr bool HasParseNodeMember<
-    T, decltype(Parse::NodeId(std::declval<T>().parse_node))> = true;
+    T, std::is_base_of_v<Parse::NodeId, decltype(T::parse_node)>> = true;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
