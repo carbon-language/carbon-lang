@@ -97,14 +97,13 @@ struct InstLikeTypeInfo<
 // kind of instruction:
 //
 // - Use `inst.kind()` or `Is<InstLikeType>` to determine what kind of
-// instruction it is.
+//   instruction it is.
 // - Cast to a specific type using `inst.As<InstLikeType>()`
 //   - Using the wrong kind in `inst.As<InstLikeType>()` is a programming error,
 //     and will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
 // - Use `inst.TryAs<InstLikeType>()` to safely access type-specific instruction
-// data
-//   where the instruction's kind is not known.
+//   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
   template <typename TypedInst,
@@ -242,9 +241,8 @@ class Inst : public Printable<Inst> {
 };
 
 // TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
-// pair of Insts. However, InstKind is 1 byte; if args
-// were 3.5 bytes, we could potentially shrink Inst by 4 bytes. This
-// may be worth investigating further.
+// pair of Insts. However, InstKind is 1 byte; if args were 3.5 bytes, we could
+// potentially shrink Inst by 4 bytes. This may be worth investigating further.
 static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
 // Instruction-like types can be printed by converting them to instructions.
