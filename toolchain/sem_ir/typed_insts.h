@@ -450,7 +450,7 @@ struct ReturnExpr {
   static constexpr auto Kind =
       InstKind::ReturnExpr.Define("return", TerminatorKind::Terminator);
 
-  Parse::NodeId parse_node;
+  Parse::ReturnStatementId parse_node;
   // This is a statement, so has no type.
   InstId expr_id;
 };
