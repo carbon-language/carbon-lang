@@ -21,7 +21,10 @@ auto HandleInterfaceIntroducer(Context& context,
   return true;
 }
 
-static auto BuildInterfaceDecl(Context& context, Parse::NodeId parse_node)
+static auto BuildInterfaceDecl(
+    Context& context, Parse::NodeIdOneOf<Parse::InterfaceDeclId,
+                                         Parse::InterfaceDefinitionStartId>
+                          parse_node)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()

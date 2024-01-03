@@ -16,6 +16,9 @@ class NodeLocation {
   NodeLocation(NodeId node_id) : NodeLocation(node_id, false) {}
   NodeLocation(NodeId node_id, bool token_only)
       : node_id_(node_id), token_only_(token_only) {}
+  // TODO: Have some other way of representing diagnostic that applies to a file
+  // as a whole.
+  NodeLocation(InvalidNodeId node_id) : NodeLocation(node_id, false) {}
 
   auto node_id() const -> NodeId { return node_id_; }
   auto token_only() const -> bool { return token_only_; }
