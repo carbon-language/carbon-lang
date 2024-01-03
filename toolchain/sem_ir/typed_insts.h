@@ -595,6 +595,7 @@ struct TupleLiteral {
 struct TupleType {
   static constexpr auto Kind = InstKind::TupleType.Define("tuple_type");
 
+  // TODO: make this more specific
   Parse::NodeId parse_node;
   TypeId type_id;
   TypeBlockId elements_id;
