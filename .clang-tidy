@@ -5,6 +5,12 @@
 ---
 # - bugprone-exception-escape finds issues like out-of-memory in main(). We
 #   don't use exceptions, so it's unlikely to find real issues.
+# - bugprone-unchecked-optional-access in clang-tidy 16 has false positives on
+#   code like:
+#     while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
+#       inst_id = name_ref->value_id;
+#                 ^ unchecked access to optional value
+#     }
 # - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-nodiscard is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.
@@ -12,7 +18,8 @@
 #   modernize-pass-by-value.
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
-  -bugprone-exception-escape, -bugprone-narrowing-conversions, google-*,
+  -bugprone-exception-escape, -bugprone-narrowing-conversions,
+  -bugprone-unchecked-optional-access, google-*,
   -google-readability-function-size, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,

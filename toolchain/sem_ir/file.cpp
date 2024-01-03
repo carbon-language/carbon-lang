@@ -69,9 +69,6 @@ File::File(SharedValueStores& value_stores)
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR, even if self-referential";
 
-  // Default entry for InstBlockId::Empty.
-  inst_blocks_.AddDefaultValue();
-
   insts_.Reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
@@ -99,9 +96,6 @@ File::File(SharedValueStores& value_stores, std::string filename,
   auto builtins_id = cross_ref_irs_.Add(builtins);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR";
-
-  // Default entry for InstBlockId::Empty.
-  inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
   insts_.Reserve(BuiltinKind::ValidCount);
