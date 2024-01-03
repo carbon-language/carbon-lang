@@ -543,11 +543,6 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 };
 
-// Parse node handlers. Returns false for unrecoverable errors.
-#define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
-#include "toolchain/parse/node_kind.def"
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
