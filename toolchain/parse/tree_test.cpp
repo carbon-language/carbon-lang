@@ -15,6 +15,7 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/parse.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::Parse {
@@ -51,13 +52,13 @@ class TreeTest : public ::testing::Test {
 
 TEST_F(TreeTest, IsValid) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("");
-  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
+  Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
 TEST_F(TreeTest, PrintPostorderAsYAML) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
-  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
+  Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream);
@@ -85,7 +86,7 @@ TEST_F(TreeTest, PrintPostorderAsYAML) {
 
 TEST_F(TreeTest, PrintPreorderAsYAML) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
-  Tree tree = Tree::Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
+  Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
   TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
@@ -131,7 +132,7 @@ TEST_F(TreeTest, HighRecursion) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  Tree tree = Tree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Tree tree = Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
 }
 

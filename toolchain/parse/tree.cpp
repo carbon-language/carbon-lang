@@ -10,59 +10,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
-
-auto HandleInvalid(Context& context) -> void {
-  CARBON_FATAL() << "The Invalid state shouldn't be on the stack: "
-                 << context.PopState();
-}
-
-auto Tree::Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
-                 llvm::raw_ostream* vlog_stream) -> Tree {
-  Lex::TokenLocationTranslator translator(&tokens);
-  Lex::TokenDiagnosticEmitter emitter(translator, consumer);
-
-  // Delegate to the parser.
-  Tree tree(tokens);
-  Context context(tree, tokens, emitter, vlog_stream);
-  PrettyStackTraceFunction context_dumper(
-      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
-
-  context.AddLeafNode(NodeKind::FileStart,
-                      context.ConsumeChecked(Lex::TokenKind::FileStart));
-
-  context.PushState(State::DeclScopeLoop);
-
-  while (!context.state_stack().empty()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (context.state_stack().back().state) {
-#define CARBON_PARSE_STATE(Name) \
-  case State::Name:              \
-    Handle##Name(context);       \
-    break;
-#include "toolchain/parse/state.def"
-    }
-  }
-
-  context.AddLeafNode(NodeKind::FileEnd, *context.position());
-
-  if (auto verify = tree.Verify(); !verify.ok()) {
-    // TODO: This is temporarily printing to stderr directly during development.
-    // If we can, restrict this to a subtree with the error and add it to the
-    // stack trace (such as with PrettyStackTraceFunction). Otherwise, switch
-    // back to vlog_stream prior to broader distribution so that end users are
-    // hopefully comfortable copy-pasting stderr when there are bugs in tree
-    // construction.
-    tree.Print(llvm::errs());
-    CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
-  }
-  return tree;
-}
 
 auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
   return {PostorderIterator(NodeId(0)),

@@ -137,15 +137,12 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    switch (index) {
-      case 0:
-        out << "false";
-        break;
-      case 1:
-        out << "true";
-        break;
-      default:
-        CARBON_FATAL() << "Invalid bool value " << index;
+    if (*this == False) {
+      out << "false";
+    } else if (*this == True) {
+      out << "true";
+    } else {
+      CARBON_FATAL() << "Invalid bool value " << index;
     }
   }
 };
@@ -237,8 +234,13 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
-  // All File instances must provide the 0th instruction block as empty.
+  // An empty block, reused to avoid allocating empty vectors. Always the
+  // 0-index block.
   static const InstBlockId Empty;
+
+  // Exported instructions. Always the 1-index block. Empty until the File is
+  // fully checked; intermediate state is in the Check::Context.
+  static const InstBlockId Exports;
 
   // An explicitly invalid ID.
   static const InstBlockId Invalid;
@@ -248,8 +250,12 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (index == Unreachable.index) {
+    if (*this == Unreachable) {
       out << "unreachable";
+    } else if (*this == Empty) {
+      out << "empty";
+    } else if (*this == Exports) {
+      out << "exports";
     } else {
       out << "block";
       IdBase::Print(out);
@@ -258,6 +264,7 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 };
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
+constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 constexpr InstBlockId InstBlockId::Invalid =
     InstBlockId(InstBlockId::InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable =
@@ -279,9 +286,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "type";
-    if (index == TypeType.index) {
+    if (*this == TypeType) {
       out << "TypeType";
-    } else if (index == Error.index) {
+    } else if (*this == Error) {
       out << "Error";
     } else {
       IdBase::Print(out);

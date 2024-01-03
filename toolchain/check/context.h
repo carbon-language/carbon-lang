@@ -294,6 +294,14 @@ class Context {
     params_or_args_stack_.AddInstId(inst_id);
   }
 
+  // Adds an exported name.
+  auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
+
+  // Finalizes the list of exports on the IR.
+  auto FinalizeExports() -> void {
+    inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -530,6 +538,9 @@ class Context {
   // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
   // that FoldingSet can have stable pointers.
   llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
+
+  // The list which will form NodeBlockId::Exports.
+  llvm::SmallVector<SemIR::InstId> exports_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.
