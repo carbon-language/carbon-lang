@@ -26,12 +26,7 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     ref = sem_ir.insts().Get(param_ref_id);
   }
 
-  if (auto bind_name = ref.TryAs<SemIR::BindGenericName>()) {
-    param_ref_id = bind_name->value_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  }
-
-  if (auto bind_name = ref.TryAs<SemIR::BindName>()) {
+  if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }

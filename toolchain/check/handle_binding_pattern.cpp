@@ -9,26 +9,17 @@
 
 namespace Carbon::Check {
 
-static auto GetBindingName(SemIR::Inst inst) -> SemIR::NameId {
-  if (auto bind = inst.TryAs<SemIR::BindName>()) {
-    return bind->name_id;
-  }
-  if (auto bind = inst.TryAs<SemIR::BindGenericName>()) {
-    return bind->name_id;
-  }
-  return SemIR::NameId::Invalid;
-}
-
 auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  auto self_param = context.insts().Get(self_param_id);
-  if (GetBindingName(self_param) == SemIR::NameId::SelfValue) {
+  if (auto self_param =
+          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
+      self_param && self_param->name_id == SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
         parse_node,
-        SemIR::AddrPattern{parse_node, self_param.type_id(), self_param_id});
+        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");

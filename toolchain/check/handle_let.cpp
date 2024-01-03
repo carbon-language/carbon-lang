@@ -44,24 +44,15 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
   // TODO: Support other kinds of pattern here.
-  auto name_id = SemIR::NameId::Invalid;
-  if (auto bind_name = pattern.TryAs<SemIR::BindName>()) {
-    CARBON_CHECK(!bind_name->value_id.is_valid())
-        << "Binding should not already have a value!";
-    name_id = bind_name->name_id;
-    bind_name->value_id = value_id;
-    context.insts().Set(pattern_id, *bind_name);
-  } else if (auto generic_name = pattern.TryAs<SemIR::BindGenericName>()) {
-    CARBON_CHECK(!generic_name->value_id.is_valid())
-        << "Binding should not already have a value!";
-    name_id = generic_name->name_id;
-    generic_name->value_id = value_id;
-    context.insts().Set(pattern_id, *generic_name);
-  }
+  auto bind_name = pattern.As<SemIR::AnyBindName>();
+  CARBON_CHECK(!bind_name.value_id.is_valid())
+      << "Binding should not already have a value!";
+  bind_name.value_id = value_id;
+  context.insts().Set(pattern_id, bind_name);
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
-  context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
+  context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);
   return true;
 }
 
