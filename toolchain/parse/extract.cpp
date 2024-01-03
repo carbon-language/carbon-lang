@@ -210,49 +210,35 @@ struct Extractable<std::optional<T>> {
   }
 };
 
-// Extract a `tuple<T...>` from a list of child nodes by extracting each `T` in
-// reverse order.
-template <typename... T>
-struct Extractable<std::tuple<T...>> {
-  template <std::size_t... Index>
-  static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
-                          Tree::SiblingIterator end, ErrorBuilder* trace,
-                          std::index_sequence<Index...>)
-      -> std::optional<std::tuple<T...>> {
-    std::tuple<std::optional<T>...> fields;
+template <typename T, typename... U, std::size_t... Index>
+static auto ExtractTupleLikeType(const Tree* tree, Tree::SiblingIterator& it,
+                                 Tree::SiblingIterator end, ErrorBuilder* trace,
+                                 std::index_sequence<Index...>,
+                                 std::tuple<U...>*) -> std::optional<T> {
+  std::tuple<std::optional<U>...> fields;
+  if (trace) {
+    *trace << typeid(T).name() << ": begin\n";
+  }
+  // Use a fold over the `=` operator to parse fields from right to left.
+  [[maybe_unused]] int unused;
+  bool ok = true;
+  static_cast<void>(
+      ((ok && (ok = (std::get<Index>(fields) =
+                         Extractable<U>::Extract(tree, it, end, trace))
+                        .has_value()),
+        unused) = ... = 0));
+  if (!ok) {
     if (trace) {
-      *trace << sizeof...(T) << "-tuple: begin\n";
+      *trace << typeid(T).name() << ": error\n";
     }
-
-    // Use a fold over the `=` operator to parse fields from right to left.
-    [[maybe_unused]] int unused;
-    bool ok = true;
-    static_cast<void>(
-        ((ok && (ok = (std::get<Index>(fields) =
-                           Extractable<T>::Extract(tree, it, end, trace))
-                          .has_value()),
-          unused) = ... = 0));
-
-    if (!ok) {
-      if (trace) {
-        *trace << sizeof...(T) << "-tuple: error\n";
-      }
-      return std::nullopt;
-    }
-
-    if (trace) {
-      *trace << sizeof...(T) << "-tuple: success\n";
-    }
-    return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
+    return std::nullopt;
   }
 
-  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
-                      Tree::SiblingIterator end, ErrorBuilder* trace)
-      -> std::optional<std::tuple<T...>> {
-    return ExtractImpl(tree, it, end, trace,
-                       std::make_index_sequence<sizeof...(T)>());
+  if (trace) {
+    *trace << typeid(T).name() << ": success\n";
   }
-};
+  return T{std::move(std::get<Index>(fields).value())...};
+}
 
 // Extract the fields of a simple aggregate type.
 template <typename T>
@@ -261,28 +247,12 @@ struct Extractable {
   static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
                           Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
-    if (trace) {
-      *trace << "Aggregate " << typeid(T).name() << ": begin\n";
-    }
-    // Extract the corresponding tuple type.
+    // Compute the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
-    if (!tuple.has_value()) {
-      if (trace) {
-        *trace << "Aggregate " << typeid(T).name() << ": error\n";
-      }
-      return std::nullopt;
-    }
-
-    if (trace) {
-      *trace << "Aggregate " << typeid(T).name() << ": success\n";
-    }
-    // Convert the tuple to the struct type.
-    return std::apply(
-        [](auto&&... value) {
-          return T{std::forward<decltype(value)>(value)...};
-        },
-        *tuple);
+    return ExtractTupleLikeType<T>(
+        tree, it, end, trace,
+        std::make_index_sequence<std::tuple_size_v<TupleType>>(),
+        (TupleType*)nullptr);
   }
 
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
