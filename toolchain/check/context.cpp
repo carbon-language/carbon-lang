@@ -1125,6 +1125,11 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
               .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
               .index);
       break;
+    case SemIR::BindGenericName::Kind:
+      // TODO: Use de Bruijn levels or similar to identify equivalent type
+      // bindings across redeclarations.
+      canonical_id.AddInteger(inst.As<SemIR::BindGenericName>().name_id.index);
+      break;
     case SemIR::PointerType::Kind:
       canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);
       break;
