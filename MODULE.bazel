@@ -63,6 +63,15 @@ http_archive(
     urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
+clang_tidy_version = "d2aecc583d14c9554febeab185833c1e8cce5384"
+
+http_archive(
+    name = "bazel_clang_tidy",
+    sha256 = "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+    strip_prefix = "bazel_clang_tidy-{0}".format(clang_tidy_version),
+    urls = ["https://github.com/erenon/bazel_clang_tidy/archive/{0}.tar.gz".format(clang_tidy_version)],
+)
+
 bazel_cc_toolchain = use_extension(
     "//bazel/cc_toolchains:clang_configuration.bzl",
     "clang_toolchain_extension",

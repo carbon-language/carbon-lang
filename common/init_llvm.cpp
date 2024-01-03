@@ -21,7 +21,7 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
   argv = args_.data();
 
   // `argv[argc]` is expected to be a null pointer.
-  args_.push_back(0);
+  args_.push_back(nullptr);
 
   llvm::setBugReportMsg(
       "Please report issues to "

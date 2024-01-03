@@ -3,6 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ---
+# Get colors when outputting through `bazel build --config=clang-tidy`.
+UseColor: true
+# This is necessary for `--config=clang-tidy` to catch errors.
+WarningsAsErrors: '*'
+
 # - bugprone-exception-escape finds issues like out-of-memory in main(). We
 #   don't use exceptions, so it's unlikely to find real issues.
 # - bugprone-unchecked-optional-access in clang-tidy 16 has false positives on
@@ -33,7 +38,6 @@ Checks:
   -readability-magic-numbers, -readability-make-member-function-const,
   -readability-static-definition-in-anonymous-namespace,
   -readability-suspicious-call-argument, -readability-use-anyofallof
-WarningsAsErrors: true
 CheckOptions:
   - { key: readability-identifier-naming.ClassCase, value: CamelCase }
   - { key: readability-identifier-naming.ClassConstantCase, value: CamelCase }

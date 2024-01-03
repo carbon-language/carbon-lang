@@ -185,6 +185,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
+// NOLINTNEXTLINE(readability-function-size)
 static auto ProcessParseNodes(Context& context,
                               ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
