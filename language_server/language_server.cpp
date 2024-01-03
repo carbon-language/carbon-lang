@@ -9,7 +9,7 @@
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/parse.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LS {
@@ -101,7 +101,7 @@ void LanguageServer::OnDocumentSymbol(
 
   auto buf = SourceBuffer::CreateFromFile(vfs, file, NullDiagnosticConsumer());
   auto lexed = Lex::Lex(value_stores, *buf, NullDiagnosticConsumer());
-  auto parsed = Parse::Tree::Parse(lexed, NullDiagnosticConsumer(), nullptr);
+  auto parsed = Parse::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;
   for (const auto& node : parsed.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
