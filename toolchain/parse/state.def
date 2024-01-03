@@ -1214,12 +1214,6 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 
 // Handles the start of a `let`.
 //
-// let (...)
-//    ^
-//   1. Pattern
-//   2. LetAfterPattern
-//   3. LetFinish
-//
 // let ...
 //    ^
 //   1. Pattern
