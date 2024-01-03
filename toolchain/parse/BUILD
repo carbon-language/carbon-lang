@@ -49,17 +49,9 @@ cc_test(
 )
 
 cc_library(
-    name = "parse",
-    srcs = [
-        "context.cpp",
-        "context.h",
-        "parse.cpp",
-    ] +
-    # Glob handler files to avoid missing any.
-    glob([
-        "handle_*.cpp",
-    ]),
-    hdrs = ["parse.h"],
+    name = "context",
+    srcs = ["context.cpp"],
+    hdrs = ["context.h"],
     deps = [
         ":node_kind",
         ":precedence",
@@ -68,12 +60,32 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "parse",
+    srcs = ["parse.cpp"] +
+    # Glob handler files to avoid missing any.
+    glob([
+        "handle_*.cpp",
+    ]),
+    hdrs = ["parse.h"],
+    deps = [
+        ":context",
+        ":node_kind",
+        ":state",
+        ":tree",
+        "//common:check",
+        "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
-        "@llvm-project//llvm:Support",
     ],
 )
 

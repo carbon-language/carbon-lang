@@ -365,9 +365,6 @@ class Context {
   Lex::TokenIndex first_non_packaging_token_ = Lex::TokenIndex::Invalid;
 };
 
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
-#include "toolchain/parse/state.def"
-
 }  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSE_CONTEXT_H_
