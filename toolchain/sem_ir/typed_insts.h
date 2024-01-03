@@ -313,7 +313,8 @@ struct FieldDecl {
 struct FunctionDecl {
   static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::FunctionDecl, Parse::FunctionDefinitionStart>
+      parse_node;
   TypeId type_id;
   FunctionId function_id;
 };
@@ -437,7 +438,8 @@ struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define("return", TerminatorKind::Terminator);
 
-  Parse::NodeId parse_node;
+  Parse::NodeIdOneOf<Parse::FunctionDefinition, Parse::ReturnStatement>
+      parse_node;
   // This is a statement, so has no type.
 };
 
