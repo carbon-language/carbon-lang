@@ -827,7 +827,7 @@ class Formatter {
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
-    using Info = TypedInstArgsInfo<InstT>;
+    using Info = InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
       FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
