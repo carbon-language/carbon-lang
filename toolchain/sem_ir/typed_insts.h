@@ -663,11 +663,11 @@ struct VarStorage {
 
 // HasParseNodeMember<T> is true if T has a `U parse_node` field,
 // where `U` extends `Parse::NodeId`.
-template <typename T, typename NodeIdType = Parse::NodeId>
+template <typename T, bool Enabled = true>
 inline constexpr bool HasParseNodeMember = false;
 template <typename T>
 inline constexpr bool HasParseNodeMember<
-    T, std::is_base_of_v<Parse::NodeId, decltype(T::parse_node)>> = true;
+    T, bool(std::is_base_of_v<Parse::NodeId, decltype(T::parse_node)>)> = true;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
