@@ -75,6 +75,12 @@ struct NodeIdOneOf : public NodeId {
   constexpr NodeIdOneOf(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
 };
 
+using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
+using AnyFunctionDeclId =
+    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId>;
+using AnyInterfaceDeclId =
+    NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
 struct NodeIdNot : public NodeId {
