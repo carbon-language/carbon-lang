@@ -55,9 +55,6 @@ struct Extractable<NodeId> {
   }
 };
 
-// Extract a `FooId`, which is the same as `NodeIdForKind<NodeKind::Foo>`,
-// as a single required child.
-
 static auto NodeIdForKindAccept(const NodeKind& kind, const Tree* tree,
                                 const Tree::SiblingIterator& it,
                                 Tree::SiblingIterator end, ErrorBuilder* trace)
@@ -80,6 +77,8 @@ static auto NodeIdForKindAccept(const NodeKind& kind, const Tree* tree,
   return true;
 }
 
+// Extract a `FooId`, which is the same as `NodeIdForKind<NodeKind::Foo>`,
+// as a single required child.
 template <const NodeKind& Kind>
 struct Extractable<NodeIdForKind<Kind>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
@@ -92,8 +91,6 @@ struct Extractable<NodeIdForKind<Kind>> {
     }
   }
 };
-
-// Extract a `NodeIdInCategory<Category>` as a single child.
 
 static auto NodeIdInCategoryAccept(NodeCategory category, const Tree* tree,
                                    const Tree::SiblingIterator& it,
@@ -117,6 +114,7 @@ static auto NodeIdInCategoryAccept(NodeCategory category, const Tree* tree,
   return true;
 }
 
+// Extract a `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory Category>
 struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
@@ -129,8 +127,6 @@ struct Extractable<NodeIdInCategory<Category>> {
     }
   }
 };
-
-// Extract a `NodeIdOneOf<T, U>` as a single required child.
 
 static auto NodeIdForKindAccept(NodeKind kind1, NodeKind kind2,
                                 const Tree* tree,
@@ -157,6 +153,7 @@ static auto NodeIdForKindAccept(NodeKind kind1, NodeKind kind2,
   return true;
 }
 
+// Extract a `NodeIdOneOf<T, U>` as a single required child.
 template <typename T, typename U>
 struct Extractable<NodeIdOneOf<T, U>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
