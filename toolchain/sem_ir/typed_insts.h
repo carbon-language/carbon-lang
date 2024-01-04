@@ -178,7 +178,6 @@ struct BoundMethod {
 
 // Common representation for all kinds of `Branch*` node.
 struct AnyBranch {
-  // TODO: Also handle BindTemplateName once it exists.
   static constexpr InstKind Kinds[] = {InstKind::Branch, InstKind::BranchIf,
                                        InstKind::BranchWithArg};
 
