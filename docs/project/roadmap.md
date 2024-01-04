@@ -70,7 +70,7 @@ toolchain. This doesn't include supporting everything or even moderately complex
 builds, only the simplest of builds using these build systems need to work at
 first.
 
-### Carbon's has a design and toolchain implementation of basic C++ interop
+### Carbon has a design and toolchain implementation of basic C++ interop
 
 Our end goal is to compile a minimal but non-trivial example of bi-directionally
 mixing C++ and Carbon code such as our main example and run it successfully.
