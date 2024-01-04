@@ -326,8 +326,9 @@ jobs:
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
-          bazelisk build --target_pattern_file=$TARGETS_FILE \
-            --config=clang-tidy -k
+          bazelisk build --config=clang-tidy -k \
+            --target_pattern_file=$TARGETS_FILE
+            
 
       # See "Disk space before build".
       - name: Disk space after build
