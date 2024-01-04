@@ -24,106 +24,94 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Objective for 2023: get ready to evaluate the Carbon Language.
+## Objective for 2024: a working toolchain that supports C++ interop
 
-Our focus throughout 2023 will be to get the Carbon Language and project ready
-for serious evaluation of the experiment. There are two aspects to this
-evaluation:
+Our focus for 2024 will be to get the Carbon toolchain working, including C++
+interop. We see three key criteria:
 
-1. The language and tools need to be complete enough to evaluate.
-2. The users and communities we are targeting need both context and awareness of
-   the technical ideas and design principles on which Carbon is built.
+-   Building realistic Carbon code for interesting interop with C++.
+-   Building realistic C++ code for interesting interop with Carbon.
+-   The interop itself to allow a single program mixing the two languages.
 
-## Key results in 2023
+This will both allow folks to explore Carbon using a more traditional and
+realistic compiler model, and allow that exploratory Carbon to lean on C++ for
+libraries and other functionality that doesn't exist in Carbon yet. It will also
+demonstrate how the interop will work in practice.
 
-### A concrete definition of our Minimum Viable Product for evaluation, the 0.1 language
+This objective and focus are oriented around the toolchain and implementation of
+Carbon. We still expect some work on language design, but for its priority to be
+driven largely as a function of being in the critical path of some aspect of our
+implementation work.
 
-While we have talked about our 0.1 language, or our Minimum Viable Product (MVP)
-for evaluation purposes, we need to pin down exactly what this includes. We need
-concrete milestones that need to be reached for us to have confidence in
-potential users and communities being able to evaluate Carbon as a successor to
-C++.
+## Key results in 2024
 
-We expect this to include a reasonably precise set of requirements across:
+### Carbon's toolchain implements the language enough to support interop with C++
 
--   Necessary language features
--   Nice-to-have features
--   Features we can omit and reasonably expect to not obstruct credible
-    evaluation
--   Implementation coverage of those features in the Carbon Explorer to validate
-    the design
--   Implementation coverage of those features in the toolchain
--   Quality of implementation in the toolchain, both in general and for specific
-    features
--   Necessary documentation, strategy, or other supporting material
+Some example language features that we think are key to success here but far
+from an exhaustive list:
 
-We expect this to also include at least enough of Carbon's features and C++
-interop to support [our basic example](/docs/images/snippets.md#mixed).
+-   Imports
+-   Operator overloading and dispatch for expressions
+-   Generic types and functions
+-   Templates (at least enough for interop)
 
-Note that we don't expect to finish implementing the 0.1 design in 2023. Our
-goal is to make sufficient progress that we can complete the implementation in
-2024, but there are still many things that can go wrong and cause significant
-delays.
+### Carbon's toolchain can build C++ code
 
-### Complete design coverage of the 0.1 language's necessary features
+We need the toolchain to be able to build C++ code as-if it were Clang in order
+to build the C++ code that Carbon is interoperating with. This isn't about
+building anything new or novel, but about packaging and exposing Clang for this
+purpose.
 
-This year we plan to finish the design of the necessary feature-set that we
-define above for the 0.1 language.
+### Carbon's toolchain works with existing, simple C++ build systems
 
-### Complete 0.1 language implementation coverage in the Carbon Explorer
+We should be able to drop Carbon's toolchain into at least simple `Makefile` or
+CMake build systems as a replacement for the C++ toolchain and provide a Carbon
+toolchain. This doesn't include supporting everything or even moderately complex
+builds, only the simplest of builds using these build systems need to work at
+first.
 
-We expect to complete the level of Carbon Explorer validation of the design
-needed for 0.1 in 2023 so that we have high confidence in the design's cohesion
-and behavior.
-
-### A toolchain that can build a minimal mixed C++ and Carbon program
+### Carbon's has a design and toolchain implementation of basic C++ interop
 
 Our end goal is to compile a minimal but non-trivial example of bi-directionally
-mixing C++ and Carbon code such as our main
-[example](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/images/snippets.md#mixed)
-and run it successfully. However, completing everything involved in this example
-isn't expected to be realistic by the end of the year. We expect to work towards
-this example and in rough priority order across the following interop features
-and all the Carbon features they depend on:
+mixing C++ and Carbon code such as our main example and run it successfully.
+However, completing everything involved in this example isn't expected to be
+realistic by the end of the year. We expect to work towards this example and in
+rough priority order across the following interop features and all the Carbon
+features they depend on:
 
 -   Calling C++ functions from Carbon.
 -   Importing concrete C++ types as Carbon types.
--   Using Carbon generics with a C++ type in Carbon.
+-   (stretch) Using Carbon generics with a C++ type in Carbon.
 -   (stretch) Calling Carbon functions from C++.
 -   (stretch) Importing concrete Carbon types into C++.
 
 ### Give talks at 2-3 conferences covering 3-4 different Carbon topics
 
-We want to engage both more broadly and in more depth with the C++ community as
-the Carbon 0.1 language becomes increasingly concrete. This should help set the
-stage for evaluations of Carbon when 0.1 is finished and available. To broaden
-our engagement, we want to give talks at 2-3 conferences spanning 2-3 geographic
-regions.
+We want to continue to engage with the external C++ community as the Carbon
+toolchain becomes a more real and working toolchain. We specifically want to
+share as interop becomes something people can experiment with and explore.
 
-We also want these talks to provide the C++ community a deeper understanding of
-the Carbon language and project, spanning 3-4 different topics. For example, we
-might share the details of the language design, governance, and implementation.
-
-## Beyond 2023
+## Beyond 2024
 
 Longer term goals are hard to pin down and always subject to change, but we want
 to give an idea of what kinds of things are expected at a high level further out
-in order to illustrate how the goals and priorities we have in 2023 feed into
+in order to illustrate how the goals and priorities we have in 2024 feed into
 subsequent years.
 
-### Potential 2024 goals: ship a working 0.1 language for evaluation
+### Potential 2025 goals: ship a working 0.1 language for evaluation
 
 As we adjust our schedule and roadmap to reflect the realistic rate of progress,
 the _earliest_ it seems feasible to have everything we need to evaluate the 0.1
-language is 2024. However, this is just a lower bound. We may discover as we
-progress things that further push out the schedule here. That is the nature of
-an experimental project like Carbon.
+language is 2025. We're starting to be optimistic in 2024 that we'll be able to
+hit this in 2025, but ultimately this remains a lower bound. We may discover as
+we progress things that further push out the schedule here. That is the nature
+of an experimental project like Carbon.
 
 We expect that once we reach this milestone the community will be able to start
 realistically evaluating Carbon as a C++ successor language. Of course, this
 evaluation will take some time.
 
-### Potential 2025-2026 goals: finish 0.2 language, stop experimenting
+### Potential 2026-2027 goals: finish 0.2 language, stop experimenting
 
 Once Carbon is moving quickly and getting public feedback, we should be able to
 conclude the experiment. We should know if this is the right direction for
@@ -146,7 +134,7 @@ Some concrete goals that might show up in this time frame:
 -   Create a foundation or similar organization to manage the Carbon project,
     separate from any corporate entities that fund work on Carbon.
 
-### Potential goals _beyond_ 2026: ship 1.0 language & organization
+### Potential goals _beyond_ 2027: ship 1.0 language & organization
 
 A major milestone will be the first version of a production language. We also
 plan to finish transferring all governance of Carbon to an independent open
