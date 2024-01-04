@@ -402,14 +402,6 @@ struct Namespace {
   NameScopeId name_scope_id;
 };
 
-struct NoOp {
-  static constexpr auto Kind = InstKind::NoOp.Define("no_op");
-
-  // TODO: Delete since now unused.
-  Parse::NodeId parse_node;
-  // This instruction doesn't produce a value, so has no type.
-};
-
 struct Param {
   static constexpr auto Kind = InstKind::Param.Define("param");
 
