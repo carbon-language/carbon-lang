@@ -10,8 +10,7 @@
 namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
-  auto self_param_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
+  auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
       self_param && self_param->name_id == SemIR::NameId::SelfValue) {
@@ -69,6 +68,13 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
               context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
+      if (is_generic) {
+        CARBON_DIAGNOSTIC(
+            GenericBindingInVarDecl, Error,
+            "`var` declaration cannot declare a generic binding.");
+        context.emitter().Emit(type_node, GenericBindingInVarDecl);
+      }
+
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {

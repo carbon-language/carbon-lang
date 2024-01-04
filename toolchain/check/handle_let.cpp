@@ -14,8 +14,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in let");
   }
-  SemIR::InstId pattern_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
+  SemIR::InstId pattern_id = context.node_stack().PopPattern();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
