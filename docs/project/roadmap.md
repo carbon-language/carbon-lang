@@ -10,17 +10,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Objective for 2023: get ready to evaluate the Carbon Language.](#objective-for-2023-get-ready-to-evaluate-the-carbon-language)
--   [Key results in 2023](#key-results-in-2023)
-    -   [A concrete definition of our Minimum Viable Product for evaluation, the 0.1 language](#a-concrete-definition-of-our-minimum-viable-product-for-evaluation-the-01-language)
-    -   [Complete design coverage of the 0.1 language's necessary features](#complete-design-coverage-of-the-01-languages-necessary-features)
-    -   [Complete 0.1 language implementation coverage in the Carbon Explorer](#complete-01-language-implementation-coverage-in-the-carbon-explorer)
-    -   [A toolchain that can build a minimal mixed C++ and Carbon program](#a-toolchain-that-can-build-a-minimal-mixed-c-and-carbon-program)
+-   [Objective for 2024: a working toolchain that supports C++ interop](#objective-for-2024-a-working-toolchain-that-supports-c-interop)
+-   [Key results in 2024](#key-results-in-2024)
+    -   [Carbon's toolchain implements the language enough to support interop with C++](#carbons-toolchain-implements-the-language-enough-to-support-interop-with-c)
+    -   [Carbon's toolchain can build C++ code](#carbons-toolchain-can-build-c-code)
+    -   [Carbon's toolchain works with existing, simple C++ build systems](#carbons-toolchain-works-with-existing-simple-c-build-systems)
+    -   [Carbon's has a design and toolchain implementation of basic C++ interop](#carbons-has-a-design-and-toolchain-implementation-of-basic-c-interop)
     -   [Give talks at 2-3 conferences covering 3-4 different Carbon topics](#give-talks-at-2-3-conferences-covering-3-4-different-carbon-topics)
--   [Beyond 2023](#beyond-2023)
-    -   [Potential 2024 goals: ship a working 0.1 language for evaluation](#potential-2024-goals-ship-a-working-01-language-for-evaluation)
-    -   [Potential 2025-2026 goals: finish 0.2 language, stop experimenting](#potential-2025-2026-goals-finish-02-language-stop-experimenting)
-    -   [Potential goals _beyond_ 2026: ship 1.0 language & organization](#potential-goals-beyond-2026-ship-10-language--organization)
+-   [Beyond 2024](#beyond-2024)
+    -   [Potential 2025 goals: ship a working 0.1 language for evaluation](#potential-2025-goals-ship-a-working-01-language-for-evaluation)
+    -   [Potential 2026-2027 goals: finish 0.2 language, stop experimenting](#potential-2026-2027-goals-finish-02-language-stop-experimenting)
+    -   [Potential goals _beyond_ 2027: ship 1.0 language & organization](#potential-goals-beyond-2027-ship-10-language--organization)
 
 <!-- tocstop -->
 
