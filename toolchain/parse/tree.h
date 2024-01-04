@@ -125,7 +125,7 @@ class Tree : public Printable<Tree> {
     return !node_has_error(id);
   }
 
-  // Converts to `n` to a constrained node id `T` if the `node_kind(n)` matches
+  // Converts `n` to a constrained node id `T` if the `node_kind(n)` matches
   // the constraint on `T`.
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
