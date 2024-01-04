@@ -8,12 +8,13 @@
 
 namespace Carbon::Check {
 
-auto HandleIfConditionStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleIfConditionStart(Context& /*context*/,
+                            Parse::IfConditionStartId /*parse_node*/) -> bool {
   return true;
 }
 
-auto HandleIfCondition(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleIfCondition(Context& context, Parse::IfConditionId parse_node)
+    -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpr();
   cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
@@ -34,7 +35,8 @@ auto HandleIfCondition(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleIfStatementElse(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleIfStatementElse(Context& context,
+                           Parse::IfStatementElseId parse_node) -> bool {
   auto else_block_id = context.node_stack().Pop<Parse::NodeKind::IfCondition>();
 
   // Switch to emitting the `else` block.
@@ -45,7 +47,8 @@ auto HandleIfStatementElse(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleIfStatement(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleIfStatement(Context& context, Parse::IfStatementId parse_node)
+    -> bool {
   switch (auto kind = context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::IfCondition: {
       // Branch from then block to else block, and start emitting the else

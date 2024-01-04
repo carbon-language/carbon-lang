@@ -19,7 +19,7 @@ var x: {.a:} = {};
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '}', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},

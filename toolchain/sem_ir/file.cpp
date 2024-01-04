@@ -13,8 +13,26 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
+
+auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
+    -> std::pair<InstId, Param> {
+  auto ref = sem_ir.insts().Get(param_ref_id);
+
+  if (auto addr_pattern = ref.TryAs<SemIR::AddrPattern>()) {
+    param_ref_id = addr_pattern->inner_id;
+    ref = sem_ir.insts().Get(param_ref_id);
+  }
+
+  if (auto bind_name = ref.TryAs<SemIR::BindName>()) {
+    param_ref_id = bind_name->value_id;
+    ref = sem_ir.insts().Get(param_ref_id);
+  }
+
+  return {param_ref_id, ref.As<SemIR::Param>()};
+}
 
 auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: ";
@@ -51,9 +69,6 @@ File::File(SharedValueStores& value_stores)
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR, even if self-referential";
 
-  // Default entry for InstBlockId::Empty.
-  inst_blocks_.AddDefaultValue();
-
   insts_.Reserve(BuiltinKind::ValidCount);
 
   // Error uses a self-referential type so that it's not accidentally treated as
@@ -81,9 +96,6 @@ File::File(SharedValueStores& value_stores, std::string filename,
   auto builtins_id = cross_ref_irs_.Add(builtins);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR";
-
-  // Default entry for InstBlockId::Empty.
-  inst_blocks_.AddDefaultValue();
 
   // Copy builtins over.
   insts_.Reserve(BuiltinKind::ValidCount);

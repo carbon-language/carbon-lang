@@ -20,6 +20,15 @@ struct TwoFields {
   int y;
 };
 
+struct SixFields {
+  int one;
+  int two;
+  int three;
+  int four;
+  int five;
+  int six;
+};
+
 struct ReferenceField {
   int& ref;
 };
@@ -60,6 +69,7 @@ TEST(StructReflectionTest, CountFields) {
   static_assert(Internal::CountFields<ZeroFields>() == 0);
   static_assert(Internal::CountFields<OneField>() == 1);
   static_assert(Internal::CountFields<TwoFields>() == 2);
+  static_assert(Internal::CountFields<SixFields>() == 6);
   static_assert(Internal::CountFields<ReferenceField>() == 1);
   static_assert(Internal::CountFields<OneFieldNoDefaultConstructor>() == 1);
 }
@@ -74,10 +84,21 @@ TEST(StructReflectionTest, OneField) {
   EXPECT_EQ(std::get<0>(fields), 1);
 }
 
-TEST(StructReflectionTest, TwoField) {
+TEST(StructReflectionTest, TwoFields) {
   std::tuple<int, int> fields = AsTuple(TwoFields{.x = 1, .y = 2});
   EXPECT_EQ(std::get<0>(fields), 1);
   EXPECT_EQ(std::get<1>(fields), 2);
+}
+
+TEST(StructReflectionTest, SixFields) {
+  std::tuple<int, int, int, int, int, int> fields = AsTuple(SixFields{
+      .one = 1, .two = 2, .three = 3, .four = 4, .five = 5, .six = 6});
+  EXPECT_EQ(std::get<0>(fields), 1);
+  EXPECT_EQ(std::get<1>(fields), 2);
+  EXPECT_EQ(std::get<2>(fields), 3);
+  EXPECT_EQ(std::get<3>(fields), 4);
+  EXPECT_EQ(std::get<4>(fields), 5);
+  EXPECT_EQ(std::get<5>(fields), 6);
 }
 
 TEST(StructReflectionTest, NoDefaultConstructor) {

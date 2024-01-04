@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in let");
@@ -56,15 +56,16 @@ auto HandleLetDecl(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleLetIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
+    -> bool {
   context.decl_state_stack().Push(DeclState::Let);
   // Push a bracketing node to establish the pattern context.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleLetInitializer(Context& /*context*/, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleLetInitializer(Context& /*context*/,
+                          Parse::LetInitializerId /*parse_node*/) -> bool {
   return true;
 }
 

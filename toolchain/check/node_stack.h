@@ -93,17 +93,18 @@ class NodeStack {
 
   // Pops the top of the stack and returns the parse_node.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNode() -> Parse::NodeId {
+  auto PopForSoloParseNode() -> Parse::NodeIdForKind<RequiredParseKind> {
     Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(RequiredParseKind, IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
-    return back.parse_node;
+    return Parse::NodeIdForKind<RequiredParseKind>(back.parse_node);
   }
 
   // Pops the top of the stack if it is the given kind, and returns the
   // parse_node. Otherwise, returns std::nullopt.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNodeIf() -> std::optional<Parse::NodeId> {
+  auto PopForSoloParseNodeIf()
+      -> std::optional<Parse::NodeIdForKind<RequiredParseKind>> {
     if (PeekIs<RequiredParseKind>()) {
       return PopForSoloParseNode<RequiredParseKind>();
     }
@@ -199,6 +200,9 @@ class NodeStack {
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
+
+  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
+  // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
 
   // Pops the top of the stack and returns the ID.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -397,7 +401,7 @@ class NodeStack {
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::QualifiedDecl:
+      case Parse::NodeKind::QualifiedName:
       case Parse::NodeKind::ReturnedModifier:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::ReturnVarModifier:
@@ -405,7 +409,7 @@ class NodeStack {
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
-// Use x-macros to handle token cases.
+// Use x-macros to handle boilerplate cases.
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
   case Parse::NodeKind::InfixOperator##Name:             \

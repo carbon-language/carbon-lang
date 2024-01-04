@@ -16,12 +16,64 @@ filegroup(
 cc_library(
     name = "node_kind",
     srcs = ["node_kind.cpp"],
-    hdrs = ["node_kind.h"],
+    hdrs = [
+        "node_ids.h",
+        "node_kind.h",
+        "typed_nodes.h",
+    ],
     textual_hdrs = ["node_kind.def"],
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//toolchain/base:index_base",
         "//toolchain/lex:token_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "typed_nodes_test",
+    size = "small",
+    srcs = ["typed_nodes_test.cpp"],
+    deps = [
+        ":node_kind",
+        ":parse",
+        ":tree",
+        "//testing/base:gtest_main",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:mocks",
+        "//toolchain/lex",
+        "//toolchain/lex:tokenized_buffer",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "parse",
+    srcs = [
+        "context.cpp",
+        "context.h",
+        "parse.cpp",
+    ] +
+    # Glob handler files to avoid missing any.
+    glob([
+        "handle_*.cpp",
+    ]),
+    hdrs = ["parse.h"],
+    deps = [
+        ":node_kind",
+        ":precedence",
+        ":state",
+        ":tree",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/base:pretty_stack_trace_function",
+        "//toolchain/base:value_store",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -36,27 +88,18 @@ cc_library(
 cc_library(
     name = "tree",
     srcs = [
-        "context.cpp",
-        "context.h",
+        "extract.cpp",
         "tree.cpp",
-    ] +
-    # Glob handler files to avoid missing any.
-    glob([
-        "handle_*.cpp",
-    ]),
+    ],
     hdrs = ["tree.h"],
     deps = [
         ":node_kind",
-        ":precedence",
-        ":state",
         "//common:check",
         "//common:error",
         "//common:ostream",
-        "//common:vlog",
+        "//common:struct_reflection",
         "//toolchain/base:pretty_stack_trace_function",
-        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -68,6 +111,7 @@ cc_test(
     srcs = ["tree_test.cpp"],
     deps = [
         ":node_kind",
+        ":parse",
         ":tree",
         "//common:ostream",
         "//testing/base:gtest_main",
@@ -89,7 +133,7 @@ cc_fuzz_test(
     srcs = ["parse_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
-        ":tree",
+        ":parse",
         "//common:check",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",

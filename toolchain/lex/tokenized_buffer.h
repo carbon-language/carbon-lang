@@ -144,6 +144,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the 1-based column number.
   auto GetColumnNumber(TokenIndex token) const -> int;
 
+  // Returns the line and 1-based column number of the first character after
+  // this token.
+  auto GetEndLocation(TokenIndex token) const -> std::pair<LineIndex, int>;
+
   // Returns the source text lexed into this token.
   auto GetTokenText(TokenIndex token) const -> llvm::StringRef;
 
@@ -158,7 +162,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetRealLiteral(TokenIndex token) const -> RealId;
 
   // Returns the value of a `StringLiteral()` token.
-  auto GetStringLiteral(TokenIndex token) const -> StringLiteralId;
+  auto GetStringLiteralValue(TokenIndex token) const -> StringLiteralValueId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
   auto GetTypeLiteralSize(TokenIndex token) const -> const llvm::APInt&;
@@ -293,7 +297,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
           "Unable to pack token and identifier index into the same space!");
 
       IdentifierId ident_id = IdentifierId::Invalid;
-      StringLiteralId string_literal_id;
+      StringLiteralValueId string_literal_id;
       IntId int_id;
       RealId real_id;
       TokenIndex closing_token;

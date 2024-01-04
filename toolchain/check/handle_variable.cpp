@@ -9,29 +9,31 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleVariableIntroducer(Context& context,
+                              Parse::VariableIntroducerId parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   context.decl_state_stack().Push(DeclState::Var);
   return true;
 }
 
-auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleReturnedModifier(Context& context,
+                            Parse::ReturnedModifierId parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
+auto HandleVariableInitializer(Context& context,
+                               Parse::VariableInitializerId parse_node)
     -> bool {
   SemIR::InstId init_id = context.node_stack().PopExpr();
   context.node_stack().Push(parse_node, init_id);
   return true;
 }
 
-auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
+    -> bool {
   // Handle the optional initializer.
   std::optional<SemIR::InstId> init_id =
       context.node_stack().PopIf<Parse::NodeKind::VariableInitializer>();

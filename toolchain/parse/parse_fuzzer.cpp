@@ -9,7 +9,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/lex.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/parse.h"
 
 namespace Carbon::Testing {
 
@@ -40,7 +40,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  Parse::Tree::Parse(tokens, NullDiagnosticConsumer(), /*vlog_stream=*/nullptr);
+  Parse::Parse(tokens, NullDiagnosticConsumer(), /*vlog_stream=*/nullptr);
   return 0;
 }
 

@@ -9,8 +9,8 @@
 
 namespace Carbon::Check {
 
-auto HandleIndexExprStart(Context& /*context*/, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleIndexExprStart(Context& /*context*/,
+                          Parse::IndexExprStartId /*parse_node*/) -> bool {
   // Leave the expression on the stack for IndexExpr.
   return true;
 }
@@ -35,7 +35,7 @@ static auto ValidateIntLiteralBound(Context& context, Parse::NodeId parse_node,
   return &index_val;
 }
 
-auto HandleIndexExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto index_inst = context.insts().Get(index_inst_id);
   auto operand_inst_id = context.node_stack().PopExpr();

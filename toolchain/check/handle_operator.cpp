@@ -7,17 +7,19 @@
 
 namespace Carbon::Check {
 
-auto HandleInfixOperatorAmp(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorAmp(Context& context,
+                            Parse::InfixOperatorAmpId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorAmp");
 }
 
-auto HandleInfixOperatorAmpEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorAmpEqual(Context& context,
+                                 Parse::InfixOperatorAmpEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorAmpEqual");
 }
 
-auto HandleInfixOperatorAs(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleInfixOperatorAs(Context& context,
+                           Parse::InfixOperatorAsId parse_node) -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithParseNode();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithParseNode();
 
@@ -28,18 +30,19 @@ auto HandleInfixOperatorAs(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleInfixOperatorCaret(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorCaret(Context& context,
+                              Parse::InfixOperatorCaretId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorCaret");
 }
 
-auto HandleInfixOperatorCaretEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorCaretEqual(Context& context,
+                                   Parse::InfixOperatorCaretEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorCaretEqual");
 }
 
-auto HandleInfixOperatorEqual(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorEqual(Context& context,
+                              Parse::InfixOperatorEqualId parse_node) -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithParseNode();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithParseNode();
 
@@ -63,122 +66,135 @@ auto HandleInfixOperatorEqual(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleInfixOperatorEqualEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorEqualEqual(Context& context,
+                                   Parse::InfixOperatorEqualEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorEqualEqual");
 }
 
-auto HandleInfixOperatorExclaimEqual(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorExclaimEqual(
+    Context& context, Parse::InfixOperatorExclaimEqualId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorExclaimEqual");
 }
 
-auto HandleInfixOperatorGreater(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorGreater(Context& context,
+                                Parse::InfixOperatorGreaterId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorGreater");
 }
 
-auto HandleInfixOperatorGreaterEqual(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorGreaterEqual(
+    Context& context, Parse::InfixOperatorGreaterEqualId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorGreaterEqual");
 }
 
-auto HandleInfixOperatorGreaterGreater(Context& context,
-                                       Parse::NodeId parse_node) -> bool {
+auto HandleInfixOperatorGreaterGreater(
+    Context& context, Parse::InfixOperatorGreaterGreaterId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorGreaterGreater");
 }
 
-auto HandleInfixOperatorGreaterGreaterEqual(Context& context,
-                                            Parse::NodeId parse_node) -> bool {
+auto HandleInfixOperatorGreaterGreaterEqual(
+    Context& context, Parse::InfixOperatorGreaterGreaterEqualId parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorGreaterGreaterEqual");
 }
 
-auto HandleInfixOperatorLess(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorLess(Context& context,
+                             Parse::InfixOperatorLessId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorLess");
 }
 
-auto HandleInfixOperatorLessEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorLessEqual(Context& context,
+                                  Parse::InfixOperatorLessEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorLessEqual");
 }
 
-auto HandleInfixOperatorLessEqualGreater(Context& context,
-                                         Parse::NodeId parse_node) -> bool {
+auto HandleInfixOperatorLessEqualGreater(
+    Context& context, Parse::InfixOperatorLessEqualGreaterId parse_node)
+    -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorLessEqualGreater");
 }
 
-auto HandleInfixOperatorLessLess(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorLessLess(Context& context,
+                                 Parse::InfixOperatorLessLessId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorLessLess");
 }
 
-auto HandleInfixOperatorLessLessEqual(Context& context,
-                                      Parse::NodeId parse_node) -> bool {
+auto HandleInfixOperatorLessLessEqual(
+    Context& context, Parse::InfixOperatorLessLessEqualId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorLessLessEqual");
 }
 
-auto HandleInfixOperatorMinus(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorMinus(Context& context,
+                              Parse::InfixOperatorMinusId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorMinus");
 }
 
-auto HandleInfixOperatorMinusEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorMinusEqual(Context& context,
+                                   Parse::InfixOperatorMinusEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorMinusEqual");
 }
 
-auto HandleInfixOperatorPercent(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorPercent(Context& context,
+                                Parse::InfixOperatorPercentId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPercent");
 }
 
-auto HandleInfixOperatorPercentEqual(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorPercentEqual(
+    Context& context, Parse::InfixOperatorPercentEqualId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPercentEqual");
 }
 
-auto HandleInfixOperatorPipe(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorPipe(Context& context,
+                             Parse::InfixOperatorPipeId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPipe");
 }
 
-auto HandleInfixOperatorPipeEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorPipeEqual(Context& context,
+                                  Parse::InfixOperatorPipeEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPipeEqual");
 }
 
-auto HandleInfixOperatorPlus(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorPlus(Context& context,
+                             Parse::InfixOperatorPlusId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPlus");
 }
 
-auto HandleInfixOperatorPlusEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorPlusEqual(Context& context,
+                                  Parse::InfixOperatorPlusEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorPlusEqual");
 }
 
-auto HandleInfixOperatorSlash(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorSlash(Context& context,
+                              Parse::InfixOperatorSlashId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorSlash");
 }
 
-auto HandleInfixOperatorSlashEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorSlashEqual(Context& context,
+                                   Parse::InfixOperatorSlashEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorSlashEqual");
 }
 
-auto HandleInfixOperatorStar(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInfixOperatorStar(Context& context,
+                             Parse::InfixOperatorStarId parse_node) -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorStar");
 }
 
-auto HandleInfixOperatorStarEqual(Context& context, Parse::NodeId parse_node)
+auto HandleInfixOperatorStarEqual(Context& context,
+                                  Parse::InfixOperatorStarEqualId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleInfixOperatorStarEqual");
 }
 
-auto HandlePostfixOperatorStar(Context& context, Parse::NodeId parse_node)
+auto HandlePostfixOperatorStar(Context& context,
+                               Parse::PostfixOperatorStarId parse_node)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, parse_node, value_id);
@@ -188,8 +204,8 @@ auto HandlePostfixOperatorStar(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandlePrefixOperatorAmp(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandlePrefixOperatorAmp(Context& context,
+                             Parse::PrefixOperatorAmpId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   // Only durable reference expressions can have their address taken.
   switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
@@ -216,12 +232,14 @@ auto HandlePrefixOperatorAmp(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandlePrefixOperatorCaret(Context& context, Parse::NodeId parse_node)
+auto HandlePrefixOperatorCaret(Context& context,
+                               Parse::PrefixOperatorCaretId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandlePrefixOperatorCaret");
 }
 
-auto HandlePrefixOperatorConst(Context& context, Parse::NodeId parse_node)
+auto HandlePrefixOperatorConst(Context& context,
+                               Parse::PrefixOperatorConstId parse_node)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
 
@@ -241,18 +259,19 @@ auto HandlePrefixOperatorConst(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandlePrefixOperatorMinus(Context& context, Parse::NodeId parse_node)
+auto HandlePrefixOperatorMinus(Context& context,
+                               Parse::PrefixOperatorMinusId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandlePrefixOperatorMinus");
 }
 
-auto HandlePrefixOperatorMinusMinus(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandlePrefixOperatorMinusMinus(
+    Context& context, Parse::PrefixOperatorMinusMinusId parse_node) -> bool {
   return context.TODO(parse_node, "HandlePrefixOperatorMinusMinus");
 }
 
-auto HandlePrefixOperatorNot(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandlePrefixOperatorNot(Context& context,
+                             Parse::PrefixOperatorNotId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToBoolValue(context, parse_node, value_id);
   context.AddInstAndPush(
@@ -262,18 +281,14 @@ auto HandlePrefixOperatorNot(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandlePrefixOperatorPlus(Context& context, Parse::NodeId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandlePrefixOperatorPlus");
-}
-
-auto HandlePrefixOperatorPlusPlus(Context& context, Parse::NodeId parse_node)
+auto HandlePrefixOperatorPlusPlus(Context& context,
+                                  Parse::PrefixOperatorPlusPlusId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandlePrefixOperatorPlusPlus");
 }
 
-auto HandlePrefixOperatorStar(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandlePrefixOperatorStar(Context& context,
+                              Parse::PrefixOperatorStarId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToValueExpr(context, value_id);
   auto type_id =
@@ -339,12 +354,14 @@ static auto HandleShortCircuitOperand(Context& context,
   return true;
 }
 
-auto HandleShortCircuitOperandAnd(Context& context, Parse::NodeId parse_node)
+auto HandleShortCircuitOperandAnd(Context& context,
+                                  Parse::ShortCircuitOperandAndId parse_node)
     -> bool {
   return HandleShortCircuitOperand(context, parse_node, /*is_or=*/false);
 }
 
-auto HandleShortCircuitOperandOr(Context& context, Parse::NodeId parse_node)
+auto HandleShortCircuitOperandOr(Context& context,
+                                 Parse::ShortCircuitOperandOrId parse_node)
     -> bool {
   return HandleShortCircuitOperand(context, parse_node, /*is_or=*/true);
 }
@@ -375,12 +392,14 @@ static auto HandleShortCircuitOperator(Context& context,
   return true;
 }
 
-auto HandleShortCircuitOperatorAnd(Context& context, Parse::NodeId parse_node)
+auto HandleShortCircuitOperatorAnd(Context& context,
+                                   Parse::ShortCircuitOperatorAndId parse_node)
     -> bool {
   return HandleShortCircuitOperator(context, parse_node);
 }
 
-auto HandleShortCircuitOperatorOr(Context& context, Parse::NodeId parse_node)
+auto HandleShortCircuitOperatorOr(Context& context,
+                                  Parse::ShortCircuitOperatorOrId parse_node)
     -> bool {
   return HandleShortCircuitOperator(context, parse_node);
 }

@@ -5,6 +5,7 @@
 #include "toolchain/check/decl_name_stack.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -28,8 +29,8 @@ auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
   if (context_->node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedDecl>()) {
-    // Any parts from a QualifiedDecl will already have been processed
+          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedName>()) {
+    // Any parts from a QualifiedName will already have been processed
     // into the name.
   } else {
     // The name had no qualifiers, so we need to process the node now.
@@ -69,11 +70,23 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
         context_->AddNameToLookup(name_context.parse_node,
                                   name_context.unresolved_name_id, target_id);
       } else {
-        // TODO: Reject unless the scope is a namespace scope or the name is
-        // unqualified.
-        bool success = context_->name_scopes().AddEntry(
-            name_context.target_scope_id, name_context.unresolved_name_id,
-            target_id);
+        auto& name_scope =
+            context_->name_scopes().Get(name_context.target_scope_id);
+        if (name_context.has_qualifiers) {
+          auto inst = context_->insts().Get(name_scope.inst_id);
+          if (!inst.Is<SemIR::Namespace>()) {
+            // TODO: Point at the declaration for the scoped entity.
+            CARBON_DIAGNOSTIC(
+                QualifiedDeclOutsideScopeEntity, Error,
+                "Out-of-line declaration requires a declaration in "
+                "scoped entity.");
+            context_->emitter().Emit(name_context.parse_node,
+                                     QualifiedDeclOutsideScopeEntity);
+          }
+        }
+        context_->AddExport(target_id);
+        auto [_, success] = name_scope.names.insert(
+            {name_context.unresolved_name_id, target_id});
         CARBON_CHECK(success)
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "
@@ -102,7 +115,7 @@ auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                          Parse::NodeId parse_node,
                                          SemIR::NameId name_id) -> void {
-  if (CanResolveQualifier(name_context, parse_node)) {
+  if (TryResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDecl(
         name_context.parse_node, name_id, name_context.target_scope_id);
@@ -152,8 +165,12 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
   }
 }
 
-auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
+auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
                                         Parse::NodeId parse_node) -> bool {
+  // Update has_qualifiers based on the state before any possible changes. If
+  // this is the first qualifier, it may just be the name.
+  name_context.has_qualifiers = name_context.state != NameContext::State::Empty;
+
   switch (name_context.state) {
     case NameContext::State::Error:
       // Already in an error state, so return without examining.
@@ -183,15 +200,14 @@ auto DeclNameStack::CanResolveQualifier(NameContext& name_context,
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {
-        CARBON_DIAGNOSTIC(
-            QualifiedDeclInNonScope, Error,
-            "Declaration qualifiers are only allowed for entities "
-            "that provide a scope.");
-        CARBON_DIAGNOSTIC(QualifiedDeclNonScopeEntity, Note,
+        CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
+                          "Name qualifiers are only allowed for entities that "
+                          "provide a scope.");
+        CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
                           "Non-scope entity referenced here.");
         context_->emitter()
-            .Build(parse_node, QualifiedDeclInNonScope)
-            .Note(name_context.parse_node, QualifiedDeclNonScopeEntity)
+            .Build(parse_node, QualifiedNameInNonScope)
+            .Note(name_context.parse_node, QualifiedNameNonScopeEntity)
             .Emit();
       }
       name_context.state = NameContext::State::Error;

@@ -173,7 +173,7 @@ class NameStoreWrapper {
 
 struct NameScope {
   // Names in the scope.
-  llvm::DenseMap<NameId, InstId> names;
+  llvm::DenseMap<NameId, InstId> names = llvm::DenseMap<NameId, InstId>();
 
   // Scopes extended by this scope.
   //
@@ -193,6 +193,9 @@ struct NameScope {
   // TODO: Consider using something like `TinyPtrVector` for this.
   llvm::SmallVector<NameScopeId, 1> extended_scopes;
 
+  // The instructioning which owns the scope.
+  InstId inst_id;
+
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
   // an `extend` declaration was ill-formed. If true, the `names` map is
@@ -205,7 +208,9 @@ struct NameScope {
 class NameScopeStore {
  public:
   // Adds a name scope, returning an ID to reference it.
-  auto Add() -> NameScopeId { return values_.AddDefaultValue(); }
+  auto Add(InstId inst_id) -> NameScopeId {
+    return values_.Add({.inst_id = inst_id});
+  }
 
   // Adds an entry to a name scope. Returns true on success, false on
   // duplicates.
@@ -325,7 +330,14 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   using BaseType::AddDefaultValue;
   using BaseType::AddUninitialized;
-  using BaseType::BaseType;
+
+  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
+      : BaseType(allocator) {
+    auto empty_id = AddDefaultValue();
+    CARBON_CHECK(empty_id == InstBlockId::Empty);
+    auto exports_id = AddDefaultValue();
+    CARBON_CHECK(exports_id == InstBlockId::Exports);
+  }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);

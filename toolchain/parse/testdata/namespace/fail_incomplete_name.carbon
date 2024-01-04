@@ -15,7 +15,7 @@ namespace Foo.;
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'QualifiedDecl', text: '.', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'QualifiedName', text: '.', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

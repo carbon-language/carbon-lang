@@ -149,6 +149,7 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
   if (state.has_error) {
     context.AddLeafNode(NodeKind::InvalidParse, state.token,
                         /*has_error=*/true);
+    context.ReturnErrorOnState();
   } else {
     context.AddNode(node_kind, state.token, state.subtree_start,
                     /*has_error=*/false);

@@ -18,6 +18,7 @@
 //   associated location. Almost all instructions should have this, with
 //   exceptions being things that are generated internally, without any relation
 //   to source syntax, such as predeclared builtins.
+//   TODO: Make these typed parse node id types.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -443,7 +444,7 @@ struct StringLiteral {
 
   Parse::NodeId parse_node;
   TypeId type_id;
-  StringLiteralId string_literal_id;
+  StringLiteralValueId string_literal_id;
 };
 
 struct StructAccess {
@@ -616,17 +617,17 @@ struct VarStorage {
   NameId name_id;
 };
 
-// HasParseNode<T> is true if T has a `Parse::NodeId parse_node` field.
+// HasParseNodeMember<T> is true if T has a `Parse::NodeId parse_node` field.
 template <typename T, typename ParseNodeType = Parse::NodeId T::*>
-inline constexpr bool HasParseNode = false;
+inline constexpr bool HasParseNodeMember = false;
 template <typename T>
-inline constexpr bool HasParseNode<T, decltype(&T::parse_node)> = true;
+inline constexpr bool HasParseNodeMember<T, decltype(&T::parse_node)> = true;
 
-// HasTypeId<T> is true if T has a `TypeId type_id` field.
+// HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T, typename TypeIdType = TypeId T::*>
-inline constexpr bool HasTypeId = false;
+inline constexpr bool HasTypeIdMember = false;
 template <typename T>
-inline constexpr bool HasTypeId<T, decltype(&T::type_id)> = true;
+inline constexpr bool HasTypeIdMember<T, decltype(&T::type_id)> = true;
 
 }  // namespace Carbon::SemIR
 

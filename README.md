@@ -149,11 +149,14 @@ and the language:
 -   A prototype interpreter demo that can both run isolated examples and gives a
     detailed analysis of the specific semantic model and abstract machine of
     Carbon. We call this the [Carbon Explorer](/explorer/).
+-   Early components of a full [compiler and toolchain](/toolchain/) that can
+    compile Carbon (and eventually C++ code as well) into standard executable
+    code. This is where most of our current implementation efforts are directed.
 
 If you're interested in contributing, we would love help
 [completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
 and
-[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer).
+[completing the Carbon Toolchain implementation of this design](/docs/project/roadmap.md#a-toolchain-that-can-build-a-minimal-mixed-c-and-carbon-program).
 We are also currently working to get more broad feedback and participation from
 the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
 realistic toolchain that implements the 0.1 language and can be used to evaluate
@@ -266,23 +269,54 @@ semantics onto C++ such as Rust-inspired
 
 ## Getting started
 
-As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
-to interpret Carbon code and print its output. You can try it out immediately at
+To try out Carbon, you can use the Carbon explorer to interpret Carbon code and
+print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-To build the Carbon explorer yourself, you'll need to install dependencies
-(Bazel, Clang, libc++), and then you can run:
+Because Carbon is an early, experimental project we don't yet have releases you
+can download and try out locally, you'll instead need to build any tools
+yourself from source. We expect to have packaged releases you can try out when
+we reach our
+[0.1 milestone](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation).
+
+If you do want to try out Carbon locally, you'll need to install our
+[build dependencies](/docs/project/contribution_tools.md#setup-commands) (Bazel,
+Clang, LLD, libc++) and check out the Carbon repository, for example on Debian
+or Ubuntu:
 
 ```shell
+# Update apt.
+sudo apt update
+
+# Install tools.
+sudo apt install \
+  bazel \
+  clang \
+  libc++-dev \
+  lld
+
 # Download Carbon's code.
 $ git clone https://github.com/carbon-language/carbon-lang
 $ cd carbon-lang
+```
 
+Then you can build and run the explorer:
+
+```shell
 # Build and run the explorer.
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-For complete instructions, including installing dependencies, see our
+And you can try out our toolchain which has a very early-stage compiler for
+Carbon:
+
+```shell
+# Build and run the toolchain's help to get documentation on the command line.
+$ bazel run //toolchain/driver:carbon -- help
+```
+
+For complete instructions, including installing dependencies on various
+different platforms, see our
 [contribution tools documentation](/docs/project/contribution_tools.md).
 
 Learn more about the Carbon project:
@@ -290,6 +324,7 @@ Learn more about the Carbon project:
 -   [Project goals](/docs/project/goals.md)
 -   [Language design overview](/docs/design)
 -   [Carbon Explorer](/explorer)
+-   [Carbon Toolchain](/toolchain)
 -   [FAQ](/docs/project/faq.md)
 
 ## Conference talks
@@ -337,8 +372,6 @@ You can also directly:
 -   [Contribute to the language design](CONTRIBUTING.md#contributing-to-the-language-design):
     feedback on design, new design proposal
 -   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
-    -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature
-        implementation
     -   [Carbon Toolchain](/toolchain/), and project infrastructure
 
 You can **check out some

@@ -16,7 +16,9 @@ class D {
   extend base: B;
 }
 
-// TODO: This should be rejected.
+// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+3]]:6: ERROR: Out-of-line declaration requires a declaration in scoped entity.
+// CHECK:STDERR: fn D.F() {}
+// CHECK:STDERR:      ^
 fn D.F() {}
 
 // CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+3]]:6: ERROR: Name `C` not found.
@@ -40,7 +42,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
 // CHECK:STDOUT:   %D: type = class_type @D
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3
-// CHECK:STDOUT:   %.loc25: <function> = fn_decl @.1
+// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

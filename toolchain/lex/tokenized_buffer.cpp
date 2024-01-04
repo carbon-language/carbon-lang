@@ -35,6 +35,25 @@ auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
   return GetTokenInfo(token).column + 1;
 }
 
+auto TokenizedBuffer::GetEndLocation(TokenIndex token) const
+    -> std::pair<LineIndex, int> {
+  auto line = GetLine(token);
+  int column = GetColumnNumber(token);
+  auto token_text = GetTokenText(token);
+
+  if (auto [before_newline, after_newline] = token_text.rsplit('\n');
+      before_newline.size() == token_text.size()) {
+    // Token fits on one line, advance the column number.
+    column += before_newline.size();
+  } else {
+    // Token contains newlines.
+    line.index += before_newline.count('\n') + 1;
+    column = 1 + after_newline.size();
+  }
+
+  return {line, column};
+}
+
 auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   const auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.fixed_spelling();
@@ -108,8 +127,8 @@ auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
   return token_info.real_id;
 }
 
-auto TokenizedBuffer::GetStringLiteral(TokenIndex token) const
-    -> StringLiteralId {
+auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
+    -> StringLiteralValueId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind == TokenKind::StringLiteral) << token_info.kind;
   return token_info.string_literal_id;
@@ -270,8 +289,8 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       break;
     case TokenKind::StringLiteral:
       output_stream << ", value: `"
-                    << value_stores_->string_literals().Get(
-                           GetStringLiteral(token))
+                    << value_stores_->string_literal_values().Get(
+                           GetStringLiteralValue(token))
                     << "`";
       break;
     default:

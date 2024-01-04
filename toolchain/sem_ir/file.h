@@ -36,6 +36,12 @@ struct Function : public Printable<Function> {
     out << "}";
   }
 
+  // Given a parameter reference instruction from `param_refs_id` or
+  // `implicit_param_refs_id`, returns the corresponding `Param` instruction
+  // and its ID.
+  static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
+      -> std::pair<InstId, Param>;
+
   // The function name.
   NameId name_id;
   // The first declaration of the function. This is a FunctionDecl.
@@ -225,11 +231,12 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto string_literals() -> StringStoreWrapper<StringLiteralId>& {
-    return value_stores_->string_literals();
+  auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
+    return value_stores_->string_literal_values();
   }
-  auto string_literals() const -> const StringStoreWrapper<StringLiteralId>& {
-    return value_stores_->string_literals();
+  auto string_literal_values() const
+      -> const StringStoreWrapper<StringLiteralValueId>& {
+    return value_stores_->string_literal_values();
   }
 
   auto functions() -> ValueStore<FunctionId>& { return functions_; }

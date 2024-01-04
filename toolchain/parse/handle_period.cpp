@@ -20,7 +20,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
                                       NodeKind::IdentifierName)) {
     // OK, `.` identifier.
-  } else if (node_kind != NodeKind::QualifiedDecl &&
+  } else if (node_kind != NodeKind::QualifiedName &&
              context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Base,
                                              NodeKind::BaseName)) {
     // OK, `.base`. This is allowed in any name context other than declaring a
@@ -49,7 +49,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
 }
 
 auto HandlePeriodAsDecl(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedDecl,
+  HandlePeriodOrArrow(context, NodeKind::QualifiedName,
                       /*is_arrow=*/false);
 }
 

@@ -17,7 +17,7 @@ var x: {,} = {};
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ',', has_error: yes},
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 6},
 // CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
