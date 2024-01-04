@@ -129,6 +129,7 @@ class Tree : public Printable<Tree> {
   // the constraint on `T`.
   template <typename T>
   auto TryAs(NodeId n) const -> std::optional<T> {
+    CARBON_DCHECK(n.is_valid());
     if (ConvertTo<T>::AllowedFor(node_kind(n))) {
       return T(n);
     } else {
