@@ -28,7 +28,7 @@ void LanguageServer::OnDidChangeTextDocument(
 }
 
 void LanguageServer::OnInitialize(
-    clang::clangd::NoParams const& client_capabilities,
+    clang::clangd::NoParams const& /*client_capabilities*/,
     clang::clangd::Callback<llvm::json::Object> cb) {
   llvm::json::Object capabilities{{"documentSymbolProvider", true},
                                   {"textDocumentSync", /*Full=*/1}};

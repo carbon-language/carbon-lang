@@ -51,7 +51,7 @@ struct Extractable<NodeId> {
     if (trace) {
       *trace << "NodeId: " << tree->node_kind(*it) << " consumed\n";
     }
-    return NodeId(*it++);
+    return *it++;
   }
 };
 
@@ -288,7 +288,7 @@ struct Extractable {
     return ExtractTupleLikeType<T>(
         tree, it, end, trace,
         std::make_index_sequence<std::tuple_size_v<TupleType>>(),
-        (TupleType*)nullptr);
+        static_cast<TupleType*>(nullptr));
   }
 
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
