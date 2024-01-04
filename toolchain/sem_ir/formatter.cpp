@@ -475,8 +475,8 @@ class InstNamer {
           add_inst_name_id(inst.As<BindName>().name_id);
           continue;
         }
-        case BindGenericName::Kind: {
-          add_inst_name_id(inst.As<BindGenericName>().name_id);
+        case BindSymbolicName::Kind: {
+          add_inst_name_id(inst.As<BindSymbolicName>().name_id);
           continue;
         }
         case FunctionDecl::Kind: {

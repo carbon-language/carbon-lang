@@ -129,7 +129,7 @@ struct BaseDecl {
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
   static constexpr InstKind Kinds[] = {InstKind::BindName,
-                                       InstKind::BindGenericName};
+                                       InstKind::BindSymbolicName};
 
   InstKind kind;
   Parse::NodeId parse_node;
@@ -138,9 +138,9 @@ struct AnyBindName {
   InstId value_id;
 };
 
-struct BindGenericName {
+struct BindSymbolicName {
   static constexpr auto Kind =
-      InstKind::BindGenericName.Define("bind_generic_name");
+      InstKind::BindSymbolicName.Define("bind_symbolic_name");
 
   Parse::NodeId parse_node;
   TypeId type_id;

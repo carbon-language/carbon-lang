@@ -45,7 +45,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
     if (is_generic) {
-      return SemIR::BindGenericName{name_node, type_id, name_id, value_id};
+      // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
+      return SemIR::BindSymbolicName{name_node, type_id, name_id, value_id};
     } else {
       return SemIR::BindName{name_node, type_id, name_id, value_id};
     }
@@ -177,7 +178,6 @@ auto HandleGenericBindingPattern(Context& context,
 }
 
 auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {
-  // TODO: diagnose if this occurs in a `var` context.
   return context.TODO(parse_node, "HandleTemplate");
 }
 

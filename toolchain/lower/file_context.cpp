@@ -274,7 +274,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
-    case SemIR::BindGenericName::Kind:
+    case SemIR::BindSymbolicName::Kind:
       // Treat non-monomorphized type bindings as opaque.
       return llvm::StructType::get(*llvm_context_);
     case SemIR::ClassType::Kind: {

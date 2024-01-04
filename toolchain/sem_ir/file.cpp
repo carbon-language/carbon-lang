@@ -177,7 +177,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
-    case BindGenericName::Kind:
+    case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
     case NameRef::Kind:
@@ -300,8 +300,8 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
-      case BindGenericName::Kind: {
-        auto name_id = inst.As<BindGenericName>().name_id;
+      case BindSymbolicName::Kind: {
+        auto name_id = inst.As<BindSymbolicName>().name_id;
         out << names().GetFormatted(name_id);
         break;
       }
@@ -514,7 +514,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddressOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
-      case BindGenericName::Kind:
+      case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:

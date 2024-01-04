@@ -65,8 +65,8 @@ auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
-auto HandleBindGenericName(FunctionContext& context, SemIR::InstId inst_id,
-                           SemIR::BindGenericName inst) -> void {
+auto HandleBindSymbolicName(FunctionContext& context, SemIR::InstId inst_id,
+                            SemIR::BindSymbolicName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 

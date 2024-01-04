@@ -21,7 +21,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
-// CHECK:STDOUT:   %x: i32 = bind_generic_name x, %x.var
+// CHECK:STDOUT:   %x: i32 = bind_symbolic_name x, %x.var
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x.var, %.loc11
 // CHECK:STDOUT:   return

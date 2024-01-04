@@ -1007,7 +1007,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
-      case SemIR::BindGenericName::Kind:
+      case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);
@@ -1125,10 +1125,10 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
               .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
               .index);
       break;
-    case SemIR::BindGenericName::Kind:
+    case SemIR::BindSymbolicName::Kind:
       // TODO: Use de Bruijn levels or similar to identify equivalent type
       // bindings across redeclarations.
-      canonical_id.AddInteger(inst.As<SemIR::BindGenericName>().name_id.index);
+      canonical_id.AddInteger(inst.As<SemIR::BindSymbolicName>().name_id.index);
       break;
     case SemIR::PointerType::Kind:
       canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);
