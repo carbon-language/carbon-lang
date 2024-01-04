@@ -39,7 +39,7 @@ struct Function : public Printable<Function> {
   // Given a parameter reference instruction from `param_refs_id` or
   // `implicit_param_refs_id`, returns the corresponding `Param` instruction
   // and its ID.
-  static auto GetParamFromParamRefId(const File& semir, InstId param_ref_id)
+  static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
   // The function name.

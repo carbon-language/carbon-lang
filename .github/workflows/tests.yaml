@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk, action-test]
+    branches: [trunk]
   pull_request:
   merge_group:
 
@@ -314,9 +314,7 @@ jobs:
           exit $bazel_exit
 
       # Run in the clang-tidy config. This is done as part of tests so that we
-      # aren't duplicating bazel/llvm setup, but afterwards because test
-      # failures will generally be more helpful (and we want to run clang-tidy
-      # as a separate step so that output is clearly delineated).
+      # aren't duplicating bazel/llvm setup.
       #
       # The `-k` flag is used to print all clang-tidy errors.
       - name: clang-tidy
@@ -328,7 +326,6 @@ jobs:
         run: |
           bazelisk build --config=clang-tidy -k \
             --target_pattern_file=$TARGETS_FILE
-            
 
       # See "Disk space before build".
       - name: Disk space after build
