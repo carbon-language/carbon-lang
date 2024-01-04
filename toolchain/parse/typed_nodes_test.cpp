@@ -151,11 +151,9 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-3-tuple: begin
 NodeIdOneOf PackageApi or PackageImpl: PackageImpl consumed
 NodeIdOneOf LibraryName or DefaultLibrary: DefaultLibrary consumed
 NodeIdForKind: LibraryIntroducer consumed
-3-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -174,7 +172,6 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind BindingPattern, expected VariableInitializer
 Optional [^:]*: missing
@@ -186,7 +183,6 @@ Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -205,7 +201,6 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*: begin
 NodeIdForKind: VariableInitializer consumed
 Optional [^:]*: found
@@ -217,7 +212,6 @@ Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 
@@ -228,13 +222,10 @@ Aggregate [^:]*: success
   ASSERT_TRUE(initializer.has_value());
   Error err2 = trace2;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
-  EXPECT_THAT(err2.message(),
-              testing::MatchesRegex(
-                  R"Trace(Aggregate N6Carbon5Parse19VariableInitializerE: begin
-1-tuple: begin
+  EXPECT_THAT(err2.message(), testing::MatchesRegex(
+                                  R"Trace(Aggregate [^:]*: begin
 NodeIdInCategory Expr: kind MemberAccessExpr consumed
-1-tuple: success
-Aggregate N6Carbon5Parse19VariableInitializerE: success
+Aggregate [^:]*: success
 )Trace"));
 
   ErrorBuilder trace3;
@@ -245,10 +236,8 @@ Aggregate N6Carbon5Parse19VariableInitializerE: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err3.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-2-tuple: begin
 NodeIdInCategory MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
-2-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -267,7 +256,6 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*: begin
 NodeIdForKind: TuplePattern consumed
 Optional [^:]*: found
@@ -281,7 +269,6 @@ NodeIdInCategory Modifier: kind PrivateModifier consumed
 NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
 Vector: end
 NodeIdForKind: ClassIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
