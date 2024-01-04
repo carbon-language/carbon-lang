@@ -220,8 +220,7 @@ struct Call {
 struct ClassDecl {
   static constexpr auto Kind = InstKind::ClassDecl.Define("class_decl");
 
-  Parse::NodeIdOneOf<Parse::ClassDeclId, Parse::ClassDefinitionStartId>
-      parse_node;
+  Parse::AnyClassDeclId parse_node;
   // No type: a class declaration is not itself a value. The name of a class
   // declaration becomes a class type value.
   // TODO: For a generic class declaration, the name of the class declaration
@@ -256,8 +255,7 @@ struct ClassInit {
 struct ClassType {
   static constexpr auto Kind = InstKind::ClassType.Define("class_type");
 
-  Parse::NodeIdOneOf<Parse::ClassDeclId, Parse::ClassDefinitionStartId>
-      parse_node;
+  Parse::AnyClassDeclId parse_node;
   TypeId type_id;
   ClassId class_id;
   // TODO: Once we support generic classes, include the class's arguments here.
@@ -316,8 +314,7 @@ struct FieldDecl {
 struct FunctionDecl {
   static constexpr auto Kind = InstKind::FunctionDecl.Define("fn_decl");
 
-  Parse::NodeIdOneOf<Parse::FunctionDeclId, Parse::FunctionDefinitionStartId>
-      parse_node;
+  Parse::AnyFunctionDeclId parse_node;
   TypeId type_id;
   FunctionId function_id;
 };
@@ -353,8 +350,7 @@ struct InitializeFrom {
 struct InterfaceDecl {
   static constexpr auto Kind = InstKind::InterfaceDecl.Define("interface_decl");
 
-  Parse::NodeIdOneOf<Parse::InterfaceDeclId, Parse::InterfaceDefinitionStartId>
-      parse_node;
+  Parse::AnyInterfaceDeclId parse_node;
   // No type: an interface declaration is not itself a value. The name of an
   // interface declaration becomes a facet type value.
   // TODO: For a generic interface declaration, the name of the interface
