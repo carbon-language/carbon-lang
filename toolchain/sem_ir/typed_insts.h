@@ -13,8 +13,10 @@
 
 // Representations for specific kinds of instructions.
 //
-// Each type should be a struct with up to four members:
+// Each type should be a struct with the following members, in this order:
 //
+// - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
+//   member. These are described below.
 // - Optionally, a `Parse::NodeId parse_node;` member, for instructions with an
 //   associated location. Almost all instructions should have this, with
 //   exceptions being things that are generated internally, without any relation
@@ -25,17 +27,27 @@
 //   `Namespace`, for which a placeholder type should be used.
 // - Up to two `[...]Id` members describing the contents of the struct.
 //
-// The field names here matter -- the first two fields must have the names
-// specified above, when present. When converting to a `SemIR::Inst`, they will
-// become the parse node and type associated with the type-erased instruction.
+// The field names here matter -- the fields must have the names specified
+// above, when present. When converting to a `SemIR::Inst`, the `kind`,
+// `parse_node`, and `type_id` fields will become the kind, parse node, and
+// type associated with the type-erased instruction.
 //
-// In addition, each type provides a constant `Kind` that associates the type
-// with a particular member of the `InstKind` enumeration. This `Kind`
-// declaration also defines the instruction kind by calling `InstKind::Define`
-// and specifying additional information about the instruction kind. This
-// information is available through the member functions of the `InstKind` value
-// declared in `inst_kind.h`, and includes the name used in textual IR and
-// whether the instruction is a terminator instruction.
+// Each type that describes a single kind of instructions provides a constant
+// `Kind` that associates the type with a particular member of the `InstKind`
+// enumeration. This `Kind` declaration also defines the instruction kind by
+// calling `InstKind::Define` and specifying additional information about the
+// instruction kind. This information is available through the member functions
+// of the `InstKind` value declared in `inst_kind.h`, and includes the name
+// used in textual IR and whether the instruction is a terminator instruction.
+//
+// Struct types can also be provided for categories of instructions with a
+// common representation, to allow the common representation to be accessed
+// conveniently. In this case, instead of providing a constant `Kind` member,
+// the struct should have a constant `InstKind Kinds[];` member that lists the
+// kinds of instructions in the category, and an `InstKind kind;` member that
+// is used to identify the specific kind of the instruction. Separate struct
+// types still need to be defined for each instruction kind in the category.
+
 namespace Carbon::SemIR {
 
 struct AddressOf {
@@ -162,6 +174,19 @@ struct BoundMethod {
   // self` parameter.
   InstId object_id;
   InstId function_id;
+};
+
+// Common representation for all kinds of `Branch*` node.
+struct AnyBranch {
+  static constexpr InstKind Kinds[] = {InstKind::Branch, InstKind::BranchIf,
+                                       InstKind::BranchWithArg};
+
+  InstKind kind;
+  Parse::NodeId parse_node;
+  // Branches don't produce a value, so have no type.
+  InstBlockId target_id;
+  // Kind-specific data.
+  int32_t arg1;
 };
 
 struct Branch {
@@ -656,6 +681,13 @@ struct VarStorage {
   TypeId type_id;
   NameId name_id;
 };
+
+// HasKindMemberAsField<T> is true if T has a `InstKind kind` field, as opposed
+// to a `static constexpr InstKind::Definition Kind` member or no kind at all.
+template <typename T, typename KindType = InstKind T::*>
+inline constexpr bool HasKindMemberAsField = false;
+template <typename T>
+inline constexpr bool HasKindMemberAsField<T, decltype(&T::kind)> = true;
 
 // HasParseNodeMember<T> is true if T has a `U parse_node` field,
 // where `U` extends `Parse::NodeId`.

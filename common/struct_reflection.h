@@ -75,10 +75,9 @@ constexpr auto CountFields() -> int {
   if constexpr (CanListInitialize<T, Fields...>(0)) {
     return CountFields<T, true, Fields..., AnyField<T>>();
   } else if constexpr (AnyWorkedSoFar) {
-    // Note: Compare against the maximum number of fields supported *PLUS 1*.
-    static_assert(sizeof...(Fields) <= 7,
-                  "Unsupported: too many fields in struct");
-    return sizeof...(Fields) - 1;
+    constexpr int NumFields = sizeof...(Fields) - 1;
+    static_assert(NumFields <= 6, "Unsupported: too many fields in struct");
+    return NumFields;
   } else if constexpr (sizeof...(Fields) > 32) {
     // If we go too far without finding a working initializer, something
     // probably went wrong with our calculation. Bail out before we recurse too
