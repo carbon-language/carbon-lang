@@ -137,8 +137,8 @@ class Tree : public Printable<Tree> {
     }
   }
 
-  // Converts to `n` to a constrained node id `T`. Checks that the `node_kind(n)`
-  // matches the constraint on `T`.
+  // Converts to `n` to a constrained node id `T`. Checks that the
+  // `node_kind(n)` matches the constraint on `T`.
   template <typename T>
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.is_valid());
