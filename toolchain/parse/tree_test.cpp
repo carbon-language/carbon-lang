@@ -56,7 +56,7 @@ TEST_F(TreeTest, IsValid) {
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
-TEST_F(TreeTest, TryAs) {
+TEST_F(TreeTest, AsAndTryAs) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
   ASSERT_FALSE(tree.has_errors());
@@ -79,11 +79,22 @@ TEST_F(TreeTest, TryAs) {
   n = *it;
   // A FunctionDecl node, so will match.
   fn_decl_id = tree.TryAs<FunctionDeclId>(n);
-  EXPECT_TRUE(fn_decl_id.has_value());
+  ASSERT_TRUE(fn_decl_id.has_value());
+  EXPECT_TRUE(*fn_decl_id == n);
+  FunctionDeclId fn_decl_id2 = tree.As<FunctionDeclId>(n);
+  EXPECT_TRUE(*fn_decl_id == fn_decl_id2);
+
   any_fn_decl_id = tree.TryAs<AnyFunctionDeclId>(n);
-  EXPECT_TRUE(any_fn_decl_id.has_value());
+  ASSERT_TRUE(any_fn_decl_id.has_value());
+  EXPECT_TRUE(*any_fn_decl_id == n);
+  AnyFunctionDeclId any_fn_decl_id2 = tree.As<AnyFunctionDeclId>(n);
+  EXPECT_TRUE(*any_fn_decl_id == any_fn_decl_id2);
+
   any_decl_id = tree.TryAs<AnyDeclId>(n);
-  EXPECT_TRUE(any_decl_id.has_value());
+  ASSERT_TRUE(any_decl_id.has_value());
+  EXPECT_TRUE(*any_decl_id == n);
+  AnyDeclId any_decl_id2 = tree.As<AnyDeclId>(n);
+  EXPECT_TRUE(*any_decl_id == any_decl_id2);
 }
 
 TEST_F(TreeTest, PrintPostorderAsYAML) {
