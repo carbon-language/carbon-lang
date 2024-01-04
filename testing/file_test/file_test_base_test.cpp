@@ -135,7 +135,7 @@ class FileTestBaseTest : public FileTestBase {
       -> llvm::SmallVector<LineNumberReplacement> override {
     auto replacements = FileTestBase::GetLineNumberReplacements(filenames);
     auto filename = std::filesystem::path(test_name().str()).filename();
-    if (llvm::StringRef(filename).startswith("file_only_re_")) {
+    if (llvm::StringRef(filename).starts_with("file_only_re_")) {
       replacements.push_back({.has_file = false,
                               .re = std::make_shared<RE2>(R"(line: (\d+))"),
                               .line_formatv = "{0}"});
