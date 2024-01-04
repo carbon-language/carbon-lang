@@ -44,7 +44,8 @@ auto CommonFieldOrder() -> void {
   Inst inst = MakeInstWithNumberedFields(TypedInst::Kind);
   auto typed = inst.As<TypedInst>();
   if constexpr (HasParseNodeMember<TypedInst>) {
-    EXPECT_EQ(typed.parse_node, Parse::NodeId(1));
+    EXPECT_EQ(typed.parse_node,
+              decltype(TypedInst::parse_node)(Parse::NodeId(1)));
   }
   if constexpr (HasTypeIdMember<TypedInst>) {
     EXPECT_EQ(typed.type_id, TypeId(2));
