@@ -21,7 +21,7 @@ auto HandleClassIntroducer(Context& context,
   return true;
 }
 
-static auto BuildClassDecl(Context& context, Parse::NodeId parse_node)
+static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
