@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "bd9d40db15930ff642c7b8a3449b04e7cb32b8ff7038b0d6c91cc44e9ad68cf5",
+  "moduleFileHash": "5f71efedda279a9c13889001d008f8d4e66e61a9a386c9f4b5b13d35275a0da3",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -37,6 +37,7 @@
           },
           "imports": {
             "com_google_libprotobuf_mutator": "com_google_libprotobuf_mutator",
+            "bazel_clang_tidy": "bazel_clang_tidy",
             "llvm-raw": "llvm-raw"
           },
           "devImports": [],
@@ -62,6 +63,23 @@
             {
               "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
               "attributeValues": {
+                "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+                "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+                "urls": [
+                  "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
+                ],
+                "name": "bazel_clang_tidy"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 68,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
                 "build_file_content": "# empty",
                 "patch_args": [
                   "-p1"
@@ -81,7 +99,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 98,
+                "line": 107,
                 "column": 13
               }
             }
@@ -95,7 +113,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 66,
+            "line": 75,
             "column": 35
           },
           "imports": {
@@ -112,7 +130,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 113,
+            "line": 122,
             "column": 29
           },
           "imports": {
@@ -129,7 +147,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 125,
+            "line": 134,
             "column": 23
           },
           "imports": {
@@ -145,7 +163,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 126,
+                "line": 135,
                 "column": 17
               }
             }
@@ -159,7 +177,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 132,
+            "line": 141,
             "column": 20
           },
           "imports": {
@@ -177,7 +195,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 133,
+                "line": 142,
                 "column": 10
               }
             }
@@ -1649,6 +1667,18 @@
                 "https://github.com/google/libprotobuf-mutator/archive/v1.1.tar.gz"
               ],
               "name": "_main~_repo_rules~com_google_libprotobuf_mutator"
+            }
+          },
+          "bazel_clang_tidy": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+              "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+              "urls": [
+                "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
+              ],
+              "name": "_main~_repo_rules~bazel_clang_tidy"
             }
           },
           "llvm-raw": {

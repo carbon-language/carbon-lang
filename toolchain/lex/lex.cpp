@@ -1251,7 +1251,7 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 // recovery. These are buffered so that we can perform them in linear time.
 class Lexer::ErrorRecoveryBuffer {
  public:
-  ErrorRecoveryBuffer(TokenizedBuffer& buffer) : buffer_(buffer) {}
+  explicit ErrorRecoveryBuffer(TokenizedBuffer& buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
     return new_tokens_.empty() && !any_error_tokens_;

@@ -38,8 +38,8 @@ class LanguageServer : public clang::clangd::Transport::MessageHandler,
   // LSPBinder::RawOutgoing
 
   // Send method call to client
-  void callMethod(llvm::StringRef Method, llvm::json::Value Params,
-                  clang::clangd::Callback<llvm::json::Value> Reply) override {
+  void callMethod(llvm::StringRef method, llvm::json::Value params,
+                  clang::clangd::Callback<llvm::json::Value> reply) override {
     // TODO: implement when needed
   }
 
