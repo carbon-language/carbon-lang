@@ -15,7 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Carbon's toolchain implements the language enough to support interop with C++](#carbons-toolchain-implements-the-language-enough-to-support-interop-with-c)
     -   [Carbon's toolchain can build C++ code](#carbons-toolchain-can-build-c-code)
     -   [Carbon's toolchain works with existing, simple C++ build systems](#carbons-toolchain-works-with-existing-simple-c-build-systems)
-    -   [Carbon's has a design and toolchain implementation of basic C++ interop](#carbons-has-a-design-and-toolchain-implementation-of-basic-c-interop)
+    -   [Carbon has a design and toolchain implementation of basic C++ interop](#carbon-has-a-design-and-toolchain-implementation-of-basic-c-interop)
     -   [Give talks at 2-3 conferences covering 3-4 different Carbon topics](#give-talks-at-2-3-conferences-covering-3-4-different-carbon-topics)
 -   [Beyond 2024](#beyond-2024)
     -   [Potential 2025 goals: ship a working 0.1 language for evaluation](#potential-2025-goals-ship-a-working-01-language-for-evaluation)
