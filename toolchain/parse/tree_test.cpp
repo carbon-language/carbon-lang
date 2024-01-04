@@ -56,6 +56,36 @@ TEST_F(TreeTest, IsValid) {
   EXPECT_TRUE((*tree.postorder().begin()).is_valid());
 }
 
+TEST_F(TreeTest, TryAs) {
+  Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
+  Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
+  ASSERT_FALSE(tree.has_errors());
+  auto it = tree.roots().begin();
+  // A FileEnd node, so won't match.
+  NodeId n = *it;
+
+  // NodeIdForKind
+  std::optional<FunctionDeclId> fn_decl_id = tree.TryAs<FunctionDeclId>(n);
+  EXPECT_FALSE(fn_decl_id.has_value());
+  // NodeIdOneOf
+  std::optional<AnyFunctionDeclId> any_fn_decl_id =
+      tree.TryAs<AnyFunctionDeclId>(n);
+  EXPECT_FALSE(any_fn_decl_id.has_value());
+  // NodeIdInCategory
+  std::optional<AnyDeclId> any_decl_id = tree.TryAs<AnyDeclId>(n);
+  EXPECT_FALSE(any_decl_id.has_value());
+
+  ++it;
+  n = *it;
+  // A FunctionDecl node, so will match.
+  fn_decl_id = tree.TryAs<FunctionDeclId>(n);
+  EXPECT_TRUE(fn_decl_id.has_value());
+  any_fn_decl_id = tree.TryAs<AnyFunctionDeclId>(n);
+  EXPECT_TRUE(any_fn_decl_id.has_value());
+  any_decl_id = tree.TryAs<AnyDeclId>(n);
+  EXPECT_TRUE(any_decl_id.has_value());
+}
+
 TEST_F(TreeTest, PrintPostorderAsYAML) {
   Lex::TokenizedBuffer& tokens = GetTokenizedBuffer("fn F();");
   Tree tree = Parse(tokens, consumer_, /*vlog_stream=*/nullptr);
