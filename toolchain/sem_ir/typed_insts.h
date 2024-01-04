@@ -119,7 +119,9 @@ struct BindName {
   // TODO: Make this more specific.
   Parse::NodeId parse_node;
   TypeId type_id;
-  NameId name_id;
+  BindNameId bind_name_id;
+  // The value is inline in the inst so that value access doesn't require an
+  // indirection.
   InstId value_id;
 };
 

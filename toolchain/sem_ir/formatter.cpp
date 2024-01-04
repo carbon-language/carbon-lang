@@ -472,7 +472,9 @@ class InstNamer {
           break;
         }
         case BindName::Kind: {
-          add_inst_name_id(inst.As<BindName>().name_id);
+          add_inst_name_id(sem_ir_.bind_names()
+                               .Get(inst.As<BindName>().bind_name_id)
+                               .name_id);
           continue;
         }
         case FunctionDecl::Kind: {
@@ -981,6 +983,10 @@ class Formatter {
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
   auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
+
+  auto FormatArg(BindNameId id) -> void {
+    FormatName(sem_ir_.bind_names().Get(id).name_id);
+  }
 
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 

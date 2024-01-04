@@ -13,7 +13,9 @@ auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   auto self_param_id =
       context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
   auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
-  if (self_param && self_param->name_id == SemIR::NameId::SelfValue) {
+  if (self_param &&
+      context.bind_names().Get(self_param->bind_name_id).name_id ==
+          SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
@@ -49,10 +51,14 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
   // Create the appropriate kind of binding for this pattern.
   //
   // TODO: Update this to create a generic or template binding as needed.
-  auto make_bind_name = [name_node = name_node, name_id = name_id](
+  auto make_bind_name = [&, name_node = name_node, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
-    return SemIR::BindName{name_node, type_id, name_id, value_id};
+    // TODO: Set the correct enclosing_scope_id.
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = name_id,
+         .enclosing_scope_id = SemIR::NameScopeId::Invalid});
+    return SemIR::BindName{name_node, type_id, bind_name_id, value_id};
   };
 
   // A `self` binding can only appear in an implicit parameter list.

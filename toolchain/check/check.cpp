@@ -84,7 +84,7 @@ static auto GetImportNameId(Parse::NodeId parse_node, Context& context,
   switch (import_inst.kind()) {
     case SemIR::InstKind::BindName: {
       auto bind_name = import_inst.As<SemIR::BindName>();
-      return bind_name.name_id;
+      return import_sem_ir.bind_names().Get(bind_name.bind_name_id).name_id;
     }
 
     case SemIR::InstKind::FunctionDecl: {

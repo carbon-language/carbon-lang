@@ -150,6 +150,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("cross_ref_irs_size",
                       Yaml::OutputScalar(cross_ref_irs_.size()));
+              map.Add("bind_names", bind_names_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
