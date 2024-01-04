@@ -29,23 +29,16 @@ cc_library(
 )
 
 cc_library(
-    name = "check",
+    name = "context",
     srcs = [
-        "check.cpp",
         "context.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
         "inst_block_stack.cpp",
         "modifiers.cpp",
         "return.cpp",
-        "return.h",
-    ] +
-    # Glob handler files to avoid missing any.
-    glob([
-        "handle*.cpp",
-    ]),
+    ],
     hdrs = [
-        "check.h",
         "context.h",
         "convert.h",
         "decl_name_stack.h",
@@ -53,22 +46,44 @@ cc_library(
         "inst_block_stack.h",
         "modifiers.h",
         "pending_block.h",
+        "return.h",
     ],
     deps = [
         ":node_stack",
         "//common:check",
-        "//common:ostream",
         "//common:vlog",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
+        "//toolchain/parse:tree_node_location_translator",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "check",
+    srcs = ["check.cpp"] +
+    # Glob handler files to avoid missing any.
+    glob([
+        "handle_*.cpp",
+    ]),
+    hdrs = ["check.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_location_translator",
-        "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",

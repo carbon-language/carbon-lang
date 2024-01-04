@@ -69,11 +69,12 @@ class Tree : public Printable<Tree> {
     ApiOrImpl api_or_impl;
   };
 
-  // Parses the token buffer into a `Tree`.
-  //
-  // This is the factory function which is used to build parse trees.
-  static auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
-                    llvm::raw_ostream* vlog_stream) -> Tree;
+  // Wires up the reference to the tokenized buffer. The `Parse` function should
+  // be used to actually parse the tokens into a tree.
+  explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
+    // If the tree is valid, there will be one node per token, so reserve once.
+    node_impls_.reserve(tokens_->expected_parse_tree_size());
+  }
 
   // Tests whether there are any errors in the parse tree.
   auto has_errors() const -> bool { return has_errors_; }
@@ -278,13 +279,6 @@ class Tree : public Printable<Tree> {
 
   static_assert(sizeof(NodeImpl) == 12,
                 "Unexpected size of node implementation!");
-
-  // Wires up the reference to the tokenized buffer. The `Parse` function should
-  // be used to actually parse the tokens into a tree.
-  explicit Tree(Lex::TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
-    // If the tree is valid, there will be one node per token, so reserve once.
-    node_impls_.reserve(tokens_->expected_parse_tree_size());
-  }
 
   // Prints a single node for Print(). Returns true when preorder and there are
   // children.

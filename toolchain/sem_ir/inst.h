@@ -148,6 +148,7 @@ class Inst : public Printable<Inst> {
     CARBON_CHECK(Is<TypedInst>())
         << "Casting inst of kind " << kind() << " to wrong kind "
         << typeid(TypedInst).name();
+
     auto build_with_parse_node_onwards = [&](auto... parse_node_onwards) {
       if constexpr (HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), parse_node_onwards...};
@@ -158,7 +159,8 @@ class Inst : public Printable<Inst> {
 
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
       if constexpr (HasParseNodeMember<TypedInst>) {
-        return build_with_parse_node_onwards(parse_node(), type_id_onwards...);
+        return build_with_parse_node_onwards(
+            decltype(TypedInst::parse_node)(parse_node()), type_id_onwards...);
       } else {
         return build_with_parse_node_onwards(type_id_onwards...);
       }

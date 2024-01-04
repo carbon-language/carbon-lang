@@ -28,7 +28,7 @@ cc_library(
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/lex",
         "//toolchain/lower",
-        "//toolchain/parse:tree",
+        "//toolchain/parse",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/source:source_buffer",

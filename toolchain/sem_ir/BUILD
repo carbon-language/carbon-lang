@@ -36,6 +36,7 @@ cc_library(
     textual_hdrs = ["inst_kind.def"],
     deps = [
         "//common:enum_base",
+        "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:ids",

@@ -12,7 +12,7 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/parse.h"
 
 namespace Carbon::Parse {
 namespace {
@@ -40,8 +40,8 @@ class TypedNodeTest : public ::testing::Test {
   }
 
   auto GetTree(llvm::StringRef t) -> Tree& {
-    tree_storage_.push_front(Tree::Parse(GetTokenizedBuffer(t), consumer_,
-                                         /*vlog_stream=*/nullptr));
+    tree_storage_.push_front(Parse(GetTokenizedBuffer(t), consumer_,
+                                   /*vlog_stream=*/nullptr));
     return tree_storage_.front();
   }
 

@@ -43,7 +43,8 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
+static auto BuildFunctionDecl(Context& context,
+                              Parse::AnyFunctionDeclId parse_node,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At
