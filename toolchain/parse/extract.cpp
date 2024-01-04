@@ -249,7 +249,8 @@ template <typename T, typename... U, std::size_t... Index>
 static auto ExtractTupleLikeType(const Tree* tree, Tree::SiblingIterator& it,
                                  Tree::SiblingIterator end, ErrorBuilder* trace,
                                  std::index_sequence<Index...> /*indices*/,
-                                 std::tuple<U...>* /*type*/) -> std::optional<T> {
+                                 std::tuple<U...>* /*type*/)
+    -> std::optional<T> {
   std::tuple<std::optional<U>...> fields;
   if (trace) {
     *trace << typeid(T).name() << ": begin\n";
