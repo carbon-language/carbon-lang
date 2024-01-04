@@ -253,7 +253,7 @@ static auto ExtractTupleLikeType(const Tree* tree, Tree::SiblingIterator& it,
     -> std::optional<T> {
   std::tuple<std::optional<U>...> fields;
   if (trace) {
-    *trace << typeid(T).name() << ": begin\n";
+    *trace << "Aggregate " << typeid(T).name() << ": begin\n";
   }
   // Use a fold over the `=` operator to parse fields from right to left.
   [[maybe_unused]] int unused;
@@ -265,13 +265,13 @@ static auto ExtractTupleLikeType(const Tree* tree, Tree::SiblingIterator& it,
         unused) = ... = 0));
   if (!ok) {
     if (trace) {
-      *trace << typeid(T).name() << ": error\n";
+      *trace << "Aggregate " << typeid(T).name() << ": error\n";
     }
     return std::nullopt;
   }
 
   if (trace) {
-    *trace << typeid(T).name() << ": success\n";
+    *trace << "Aggregate " << typeid(T).name() << ": success\n";
   }
   return T{std::move(std::get<Index>(fields).value())...};
 }
