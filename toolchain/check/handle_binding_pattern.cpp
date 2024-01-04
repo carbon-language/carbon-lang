@@ -74,6 +74,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
             "`var` declaration cannot declare a generic binding.");
         context.emitter().Emit(type_node, GenericBindingInVarDecl);
       }
+      auto binding_id = is_generic ? Parse::NodeId::Invalid
+                                   : Parse::BindingPatternId(parse_node);
 
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
@@ -100,18 +102,18 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
-            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            binding_id, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::FieldDecl{parse_node, value_type_id, name_id,
+            SemIR::FieldDecl{binding_id, value_type_id, name_id,
                              SemIR::ElementIndex(context.args_type_info_stack()
                                                      .PeekCurrentBlockContents()
                                                      .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
-            SemIR::StructTypeField{parse_node, name_id, cast_type_id});
+            SemIR::StructTypeField{binding_id, name_id, cast_type_id});
       } else {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
