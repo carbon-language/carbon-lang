@@ -71,9 +71,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
     case Parse::NodeKind::VariableIntroducer: {
       if (is_generic) {
         CARBON_DIAGNOSTIC(
-            GenericBindingInVarDecl, Error,
-            "`var` declaration cannot declare a generic binding.");
-        context.emitter().Emit(type_node, GenericBindingInVarDecl);
+            CompileTimeBindingInVarDecl, Error,
+            "`var` declaration cannot declare a compile-time binding.");
+        context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
       }
       auto binding_id =
           is_generic
