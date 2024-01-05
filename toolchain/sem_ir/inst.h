@@ -64,6 +64,8 @@ struct InstLikeTypeInfo<
                 "Instruction type should not have a kind field");
   static auto GetKind(TypedInst) -> InstKind { return TypedInst::Kind; }
   static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
+  // A name that can be streamed to an llvm::raw_ostream.
+  static auto DebugName() -> InstKind { return TypedInst::Kind; }
 };
 
 // An instruction category is instruction-like.
@@ -81,6 +83,18 @@ struct InstLikeTypeInfo<
       }
     }
     return false;
+  }
+  // A name that can be streamed to an llvm::raw_ostream.
+  static auto DebugName() -> std::string {
+    std::string str;
+    llvm::raw_string_ostream out(str);
+    out << "{";
+    llvm::ListSeparator sep;
+    for (auto kind : InstCat::Kinds) {
+      out << sep << kind;
+    }
+    out << "}";
+    return out.str();
   }
 };
 
@@ -145,10 +159,8 @@ class Inst : public Printable<Inst> {
   // instruction's kind, and returns the typed instruction.
   template <typename TypedInst, typename Info = InstLikeTypeInfo<TypedInst>>
   auto As() const -> TypedInst {
-    CARBON_CHECK(Is<TypedInst>())
-        << "Casting inst of kind " << kind() << " to wrong kind "
-        << typeid(TypedInst).name();
-
+    CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
+                                  << " to wrong kind " << Info::DebugName();
     auto build_with_parse_node_onwards = [&](auto... parse_node_onwards) {
       if constexpr (HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), parse_node_onwards...};

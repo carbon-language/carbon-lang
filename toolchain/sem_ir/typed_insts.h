@@ -199,6 +199,19 @@ struct BoundMethod {
   InstId function_id;
 };
 
+// Common representation for all kinds of `Branch*` node.
+struct AnyBranch {
+  static constexpr InstKind Kinds[] = {InstKind::Branch, InstKind::BranchIf,
+                                       InstKind::BranchWithArg};
+
+  InstKind kind;
+  Parse::NodeId parse_node;
+  // Branches don't produce a value, so have no type.
+  InstBlockId target_id;
+  // Kind-specific data.
+  int32_t arg1;
+};
+
 struct Branch {
   static constexpr auto Kind =
       InstKind::Branch.Define("br", TerminatorKind::Terminator);

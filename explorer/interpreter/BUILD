@@ -14,6 +14,9 @@ cc_library(
     hdrs = [
         "action.h",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":dictionary",
         ":heap_allocation_interface",
@@ -116,6 +119,9 @@ cc_library(
     hdrs = [
         "interpreter.h",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":action",
         ":action_stack",
@@ -205,6 +211,9 @@ cc_library(
         "matching_impl_set.h",
         "type_checker.h",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     textual_hdrs = [
         "builtins.def",
     ],
@@ -272,6 +281,9 @@ cc_library(
     hdrs = [
         "type_structure.h",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//common:ostream",
         "//explorer/ast",
