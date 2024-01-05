@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "5f71efedda279a9c13889001d008f8d4e66e61a9a386c9f4b5b13d35275a0da3",
+  "moduleFileHash": "1eff193166261836db74ff270f9bc0ef7d800107c1593383d78cd652d685bb6d",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -89,17 +89,17 @@
                   "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                   "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch"
                 ],
-                "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
-                "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+                "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
+                "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
                 "urls": [
-                  "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+                  "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
                 ],
                 "name": "llvm-raw"
               },
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 107,
+                "line": 106,
                 "column": 13
               }
             }
@@ -130,7 +130,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 122,
+            "line": 121,
             "column": 29
           },
           "imports": {
@@ -147,7 +147,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 134,
+            "line": 133,
             "column": 23
           },
           "imports": {
@@ -163,7 +163,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 135,
+                "line": 134,
                 "column": 17
               }
             }
@@ -177,7 +177,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 141,
+            "line": 140,
             "column": 20
           },
           "imports": {
@@ -195,7 +195,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 142,
+                "line": 141,
                 "column": 10
               }
             }
@@ -1694,10 +1694,10 @@
                 "@@//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                 "@@//bazel/llvm_project:0003_Add_library_for_clangd.patch"
               ],
-              "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
-              "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+              "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
+              "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
               "urls": [
-                "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+                "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
               ],
               "name": "_main~_repo_rules~llvm-raw"
             }

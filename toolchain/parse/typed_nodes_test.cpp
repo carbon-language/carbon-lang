@@ -173,9 +173,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
 Optional [^:]*: begin
-Aggregate [^:]*: begin
-NodeIdInCategory Expr error: kind BindingPattern doesn't match
-Aggregate [^:]*: error
+NodeIdForKind error: wrong kind BindingPattern, expected VariableInitializer
 Optional [^:]*: missing
 NodeIdInCategory Pattern: kind BindingPattern consumed
 Optional [^:]*: begin
@@ -203,11 +201,8 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-Optional [^:]*leDecl11InitializerE: begin
-Aggregate [^:]*: begin
-NodeIdInCategory Expr: kind MemberAccessExpr consumed
+Optional [^:]*: begin
 NodeIdForKind: VariableInitializer consumed
-Aggregate [^:]*: success
 Optional [^:]*: found
 NodeIdInCategory Pattern: kind BindingPattern consumed
 Optional [^:]*: begin
@@ -222,12 +217,24 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto value =
-      tree->VerifyExtractAs<MemberAccessExpr>(var->initializer->value, &trace2);
-  ASSERT_TRUE(value.has_value());
+  auto initializer =
+      tree->VerifyExtractAs<VariableInitializer>(*var->initializer, &trace2);
+  ASSERT_TRUE(initializer.has_value());
   Error err2 = trace2;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
+                                  R"Trace(Aggregate [^:]*: begin
+NodeIdInCategory Expr: kind MemberAccessExpr consumed
+Aggregate [^:]*: success
+)Trace"));
+
+  ErrorBuilder trace3;
+  auto value =
+      tree->VerifyExtractAs<MemberAccessExpr>(initializer->value, &trace3);
+  ASSERT_TRUE(value.has_value());
+  Error err3 = trace3;
+  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  EXPECT_THAT(err3.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
 NodeIdInCategory MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed

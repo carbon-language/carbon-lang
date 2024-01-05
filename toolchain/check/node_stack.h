@@ -134,6 +134,12 @@ class NodeStack {
     return PopWithParseNode<SemIR::InstId>();
   }
 
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
   // Pops a name from the top of the stack and returns the parse_node and
   // the ID.
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
@@ -202,6 +208,12 @@ class NodeStack {
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
+
+  // Pops a pattern from the top of the stack and returns the ID.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  auto PopPattern() -> SemIR::InstId {
+    return PopPatternWithParseNode().second;
+  }
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
@@ -359,6 +371,7 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::GenericBindingPattern:
       case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
@@ -378,6 +391,7 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
+      case Parse::NodeKind::VariableInitializer:
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
@@ -411,7 +425,6 @@ class NodeStack {
       case Parse::NodeKind::ReturnVarModifier:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
-      case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
 // Use x-macros to handle boilerplate cases.

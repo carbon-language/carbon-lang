@@ -262,9 +262,10 @@ auto HandleFunctionDefinitionStart(Context& context,
           context.sem_ir().StringifyType(param.type_id()));
     });
 
-    if (auto fn_param = param.TryAs<SemIR::BindName>()) {
-      context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
-                              param_id);
+    if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
+      context.AddNameToLookup(
+          fn_param->parse_node,
+          context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;

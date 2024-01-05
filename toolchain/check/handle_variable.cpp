@@ -27,58 +27,50 @@ auto HandleReturnedModifier(Context& context,
 auto HandleVariableInitializer(Context& context,
                                Parse::VariableInitializerId parse_node)
     -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
+  SemIR::InstId init_id = context.node_stack().PopExpr();
+  context.node_stack().Push(parse_node, init_id);
   return true;
 }
 
 auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
     -> bool {
   // Handle the optional initializer.
-  auto init_id = SemIR::InstId::Invalid;
-  Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();
-  if (next_kind == Parse::NodeKind::TuplePattern) {
-    return context.TODO(parse_node, "tuple pattern in var");
-  }
-  // TODO: find a more robust way to determine if there was an initializer.
-  bool has_init = next_kind != Parse::NodeKind::BindingPattern;
-  if (has_init) {
-    init_id = context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
-  }
+  std::optional<SemIR::InstId> init_id =
+      context.node_stack().PopIf<Parse::NodeKind::VariableInitializer>();
 
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in var");
   }
 
   // Extract the name binding.
-  auto value_id = context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
+  auto value_id = context.node_stack().PopPattern();
+  if (auto bind_name =
+          context.insts().Get(value_id).TryAs<SemIR::AnyBindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
-    context.decl_name_stack().AddNameToLookup(
-        context.decl_name_stack().MakeUnqualifiedName(bind_name->parse_node,
-                                                      bind_name->name_id),
-        value_id);
+    auto name_context = context.decl_name_stack().MakeUnqualifiedName(
+        bind_name->parse_node,
+        context.bind_names().Get(bind_name->bind_name_id).name_id);
+    context.decl_name_stack().AddNameToLookup(name_context, value_id);
     value_id = bind_name->value_id;
   }
+  // TODO: Handle other kinds of pattern.
 
   // Pop the `returned` specifier if present.
   context.node_stack()
       .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedModifier>();
 
   // If there was an initializer, assign it to the storage.
-  if (has_init) {
+  if (init_id.has_value()) {
     if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
       context.TODO(parse_node, "Field initializer");
     } else {
-      init_id = Initialize(context, parse_node, value_id, init_id);
+      init_id = Initialize(context, parse_node, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst(SemIR::Assign{parse_node, value_id, init_id});
+      context.AddInst(SemIR::Assign{parse_node, value_id, *init_id});
     }
   }
 
