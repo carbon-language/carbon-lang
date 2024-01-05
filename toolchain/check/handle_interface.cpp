@@ -7,7 +7,8 @@
 
 namespace Carbon::Check {
 
-auto HandleInterfaceIntroducer(Context& context, Parse::NodeId parse_node)
+auto HandleInterfaceIntroducer(Context& context,
+                               Parse::InterfaceIntroducerId parse_node)
     -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // interface signature, such as generic parameters.
@@ -20,8 +21,13 @@ auto HandleInterfaceIntroducer(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-static auto BuildInterfaceDecl(Context& context, Parse::NodeId parse_node)
+static auto BuildInterfaceDecl(Context& context,
+                               Parse::AnyInterfaceDeclId parse_node)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
+  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
+    context.TODO(parse_node, "generic interface");
+  }
+
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::InterfaceIntroducer>();
@@ -83,14 +89,15 @@ static auto BuildInterfaceDecl(Context& context, Parse::NodeId parse_node)
   return {interface_decl.interface_id, interface_decl_id};
 }
 
-auto HandleInterfaceDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleInterfaceDecl(Context& context, Parse::InterfaceDeclId parse_node)
+    -> bool {
   BuildInterfaceDecl(context, parse_node);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleInterfaceDefinitionStart(
+    Context& context, Parse::InterfaceDefinitionStartId parse_node) -> bool {
   auto [interface_id, interface_decl_id] =
       BuildInterfaceDecl(context, parse_node);
   auto& interface_info = context.interfaces().Get(interface_id);
@@ -134,7 +141,8 @@ auto HandleInterfaceDefinitionStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleInterfaceDefinition(Context& context, Parse::NodeId /*parse_node*/)
+auto HandleInterfaceDefinition(Context& context,
+                               Parse::InterfaceDefinitionId /*parse_node*/)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();

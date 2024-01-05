@@ -298,6 +298,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi, CloseSquareBracket)
 //     [Generic]BindingPattern
 //   _optional_ Address
 // _optional_ Template
+//
+// TODO: Rename GenericBindingPattern to CompileTimeBindingPattern.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BindingPattern, 2, CARBON_IF_VALID(Colon))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericBindingPattern, 2, ColonExclaim)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1, Addr)

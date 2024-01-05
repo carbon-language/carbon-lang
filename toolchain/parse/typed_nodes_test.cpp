@@ -12,7 +12,7 @@
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/parse.h"
 
 namespace Carbon::Parse {
 namespace {
@@ -40,8 +40,8 @@ class TypedNodeTest : public ::testing::Test {
   }
 
   auto GetTree(llvm::StringRef t) -> Tree& {
-    tree_storage_.push_front(Tree::Parse(GetTokenizedBuffer(t), consumer_,
-                                         /*vlog_stream=*/nullptr));
+    tree_storage_.push_front(Parse(GetTokenizedBuffer(t), consumer_,
+                                   /*vlog_stream=*/nullptr));
     return tree_storage_.front();
   }
 
@@ -151,11 +151,9 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-3-tuple: begin
 NodeIdOneOf PackageApi or PackageImpl: PackageImpl consumed
 NodeIdOneOf LibraryName or DefaultLibrary: DefaultLibrary consumed
 NodeIdForKind: LibraryIntroducer consumed
-3-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -174,12 +172,9 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*: begin
 Aggregate [^:]*: begin
-2-tuple: begin
 NodeIdInCategory Expr error: kind BindingPattern doesn't match
-2-tuple: error
 Aggregate [^:]*: error
 Optional [^:]*: missing
 NodeIdInCategory Pattern: kind BindingPattern consumed
@@ -190,7 +185,6 @@ Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -209,13 +203,10 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*leDecl11InitializerE: begin
 Aggregate [^:]*: begin
-2-tuple: begin
 NodeIdInCategory Expr: kind MemberAccessExpr consumed
 NodeIdForKind: VariableInitializer consumed
-2-tuple: success
 Aggregate [^:]*: success
 Optional [^:]*: found
 NodeIdInCategory Pattern: kind BindingPattern consumed
@@ -226,7 +217,6 @@ Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 
@@ -239,10 +229,8 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-2-tuple: begin
-NodeId: IdentifierName consumed
+NodeIdInCategory MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
-2-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }
@@ -261,7 +249,6 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-5-tuple: begin
 Optional [^:]*: begin
 NodeIdForKind: TuplePattern consumed
 Optional [^:]*: found
@@ -275,7 +262,6 @@ NodeIdInCategory Modifier: kind PrivateModifier consumed
 NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
 Vector: end
 NodeIdForKind: ClassIntroducer consumed
-5-tuple: success
 Aggregate [^:]*: success
 )Trace"));
 }

@@ -6,8 +6,8 @@
 
 namespace Carbon::Check {
 
-auto HandleImplicitParamList(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleImplicitParamList(Context& context,
+                             Parse::ImplicitParamListId parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ImplicitParamListStart);
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplicitParamListStart>();
@@ -17,7 +17,8 @@ auto HandleImplicitParamList(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleImplicitParamListStart(Context& context, Parse::NodeId parse_node)
+auto HandleImplicitParamListStart(Context& context,
+                                  Parse::ImplicitParamListStartId parse_node)
     -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
@@ -25,7 +26,8 @@ auto HandleImplicitParamListStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleTuplePattern(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleTuplePattern(Context& context, Parse::TuplePatternId parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::TuplePatternStart);
   context.PopScope();
   context.node_stack()
@@ -34,14 +36,14 @@ auto HandleTuplePattern(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandlePatternListComma(Context& context, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandlePatternListComma(Context& context,
+                            Parse::PatternListCommaId /*parse_node*/) -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleTuplePatternStart(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleTuplePatternStart(Context& context,
+                             Parse::TuplePatternStartId parse_node) -> bool {
   // A tuple pattern following an implicit parameter list shares the same
   // scope.
   //

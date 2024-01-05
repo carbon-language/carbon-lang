@@ -92,20 +92,19 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the parse_node.
-  // TODO: return a parse::NodeIdForKind<RequiredParseKind> instead.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNode() -> Parse::NodeId {
+  auto PopForSoloParseNode() -> Parse::NodeIdForKind<RequiredParseKind> {
     Entry back = PopEntry<SemIR::InstId>();
     RequireIdKind(RequiredParseKind, IdKind::SoloParseNode);
     RequireParseKind<RequiredParseKind>(back.parse_node);
-    return back.parse_node;
+    return Parse::NodeIdForKind<RequiredParseKind>(back.parse_node);
   }
 
   // Pops the top of the stack if it is the given kind, and returns the
   // parse_node. Otherwise, returns std::nullopt.
-  // TODO: Return a `Parse::NodeIdForKind<RequiredParseKind>` instead.
   template <const Parse::NodeKind& RequiredParseKind>
-  auto PopForSoloParseNodeIf() -> std::optional<Parse::NodeId> {
+  auto PopForSoloParseNodeIf()
+      -> std::optional<Parse::NodeIdForKind<RequiredParseKind>> {
     if (PeekIs<RequiredParseKind>()) {
       return PopForSoloParseNode<RequiredParseKind>();
     }
@@ -135,6 +134,12 @@ class NodeStack {
     return PopWithParseNode<SemIR::InstId>();
   }
 
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
   // Pops a name from the top of the stack and returns the parse_node and
   // the ID.
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
@@ -145,40 +150,45 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithParseNode() -> auto {
     constexpr IdKind RequiredIdKind = ParseNodeKindToIdKind(RequiredParseKind);
+    auto NodeIdCast = [&](auto back) {
+      using NodeIdT = Parse::NodeIdForKind<RequiredParseKind>;
+      return std::pair<NodeIdT, decltype(back.second)>(back);
+    };
+
     if constexpr (RequiredIdKind == IdKind::InstId) {
       auto back = PopWithParseNode<SemIR::InstId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InstBlockId) {
       auto back = PopWithParseNode<SemIR::InstBlockId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
       auto back = PopWithParseNode<SemIR::FunctionId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       auto back = PopWithParseNode<SemIR::ClassId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InterfaceId) {
       auto back = PopWithParseNode<SemIR::InterfaceId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::NameId) {
       auto back = PopWithParseNode<SemIR::NameId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       auto back = PopWithParseNode<SemIR::TypeId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return NodeIdCast(back);
     }
     CARBON_FATAL() << "Unpoppable IdKind for parse kind: " << RequiredParseKind
                    << "; see value in ParseNodeKindToIdKind";
@@ -198,6 +208,12 @@ class NodeStack {
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
+
+  // Pops a pattern from the top of the stack and returns the ID.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  auto PopPattern() -> SemIR::InstId {
+    return PopPatternWithParseNode().second;
+  }
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
@@ -355,6 +371,7 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::GenericBindingPattern:
       case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:

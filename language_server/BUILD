@@ -25,6 +25,7 @@ cc_binary(
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",

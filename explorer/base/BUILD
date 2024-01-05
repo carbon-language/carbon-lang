@@ -19,6 +19,9 @@ cc_test(
     name = "arena_test",
     size = "small",
     srcs = ["arena_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":arena",
         "//testing/base:gtest_main",

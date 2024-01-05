@@ -14,7 +14,7 @@
 #include <vector>
 
 extern "C" {
-TSLanguage* tree_sitter_carbon();
+auto tree_sitter_carbon() -> TSLanguage*;
 }
 
 // Reads a file to string.

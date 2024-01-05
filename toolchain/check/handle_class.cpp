@@ -8,7 +8,8 @@
 
 namespace Carbon::Check {
 
-auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleClassIntroducer(Context& context,
+                           Parse::ClassIntroducerId parse_node) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -20,8 +21,12 @@ auto HandleClassIntroducer(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-static auto BuildClassDecl(Context& context, Parse::NodeId parse_node)
+static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
+    context.TODO(parse_node, "generic class");
+  }
+
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
@@ -111,13 +116,14 @@ static auto BuildClassDecl(Context& context, Parse::NodeId parse_node)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleClassDecl(Context& context, Parse::ClassDeclId parse_node) -> bool {
   BuildClassDecl(context, parse_node);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
+auto HandleClassDefinitionStart(Context& context,
+                                Parse::ClassDefinitionStartId parse_node)
     -> bool {
   auto [class_id, class_decl_id] = BuildClassDecl(context, parse_node);
   auto& class_info = context.classes().Get(class_id);
@@ -163,13 +169,13 @@ auto HandleClassDefinitionStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleBaseIntroducer(Context& context, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleBaseIntroducer(Context& context,
+                          Parse::BaseIntroducerId /*parse_node*/) -> bool {
   context.decl_state_stack().Push(DeclState::Base);
   return true;
 }
 
-auto HandleBaseColon(Context& /*context*/, Parse::NodeId /*parse_node*/)
+auto HandleBaseColon(Context& /*context*/, Parse::BaseColonId /*parse_node*/)
     -> bool {
   return true;
 }
@@ -245,7 +251,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
   return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
 }
 
-auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   auto base_type_expr_id = context.node_stack().PopExpr();
 
   // Process modifiers. `extend` is required, none others are allowed.
@@ -318,7 +324,8 @@ auto HandleBaseDecl(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleClassDefinition(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleClassDefinition(Context& context,
+                           Parse::ClassDefinitionId parse_node) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();

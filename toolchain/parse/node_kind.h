@@ -22,10 +22,11 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 enum class NodeCategory : uint32_t {
   Decl = 1 << 0,
   Expr = 1 << 1,
-  Modifier = 1 << 2,
-  NameComponent = 1 << 3,
-  Pattern = 1 << 4,
-  Statement = 1 << 5,
+  MemberName = 1 << 2,
+  Modifier = 1 << 3,
+  NameComponent = 1 << 4,
+  Pattern = 1 << 5,
+  Statement = 1 << 6,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)
@@ -34,6 +35,9 @@ enum class NodeCategory : uint32_t {
 inline auto operator!(NodeCategory k) -> bool {
   return !static_cast<uint32_t>(k);
 }
+
+auto operator<<(llvm::raw_ostream& output, NodeCategory category)
+    -> llvm::raw_ostream&;
 
 CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)

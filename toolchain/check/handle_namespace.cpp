@@ -10,15 +10,15 @@
 
 namespace Carbon::Check {
 
-auto HandleNamespaceStart(Context& context, Parse::NodeId /*parse_node*/)
-    -> bool {
+auto HandleNamespaceStart(Context& context,
+                          Parse::NamespaceStartId /*parse_node*/) -> bool {
   // Optional modifiers and the name follow.
   context.decl_state_stack().Push(DeclState::Namespace);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleNamespace(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleNamespace(Context& context, Parse::NamespaceId parse_node) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
   LimitModifiersOnDecl(context, KeywordModifierSet::None,
                        Lex::TokenKind::Namespace);

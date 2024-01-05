@@ -23,7 +23,7 @@
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/parse.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/source/source_buffer.h"
 
@@ -438,8 +438,8 @@ class Driver::CompilationUnit {
   auto RunParse() -> bool {
     CARBON_CHECK(tokens_);
 
-    LogCall("Parse::Tree::Parse", [&] {
-      parse_tree_ = Parse::Tree::Parse(*tokens_, *consumer_, vlog_stream_);
+    LogCall("Parse::Parse", [&] {
+      parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
     });
     if (options_.dump_parse_tree) {
       consumer_->Flush();

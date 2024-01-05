@@ -76,7 +76,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 // an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
-  auto& function = sem_ir.functions().Get(function_id);
+  const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
        sem_ir.inst_blocks().Get(function.implicit_param_refs_id)) {
     auto param =
@@ -89,8 +89,8 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleMemberAccessExpr(Context& context,
+                            Parse::MemberAccessExprId parse_node) -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
   auto base_id = context.node_stack().PopExpr();
 
@@ -246,7 +246,8 @@ auto HandleMemberAccessExpr(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandlePointerMemberAccessExpr(Context& context, Parse::NodeId parse_node)
+auto HandlePointerMemberAccessExpr(Context& context,
+                                   Parse::PointerMemberAccessExprId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
 }
@@ -276,7 +277,8 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
   return true;
 }
 
-auto HandleIdentifierName(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleIdentifierName(Context& context, Parse::IdentifierNameId parse_node)
+    -> bool {
   // The parent is responsible for binding the name.
   auto name_id = GetIdentifierAsName(context, parse_node);
   if (!name_id) {
@@ -286,8 +288,8 @@ auto HandleIdentifierName(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleIdentifierNameExpr(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleIdentifierNameExpr(Context& context,
+                              Parse::IdentifierNameExprId parse_node) -> bool {
   auto name_id = GetIdentifierAsName(context, parse_node);
   if (!name_id) {
     return context.TODO(parse_node, "Error recovery from keyword name.");
@@ -295,27 +297,29 @@ auto HandleIdentifierNameExpr(Context& context, Parse::NodeId parse_node)
   return HandleNameAsExpr(context, parse_node, *name_id);
 }
 
-auto HandleBaseName(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleBaseName(Context& context, Parse::BaseNameId parse_node) -> bool {
   context.node_stack().Push(parse_node, SemIR::NameId::Base);
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleSelfTypeNameExpr(Context& context,
+                            Parse::SelfTypeNameExprId parse_node) -> bool {
   return HandleNameAsExpr(context, parse_node, SemIR::NameId::SelfType);
 }
 
-auto HandleSelfValueName(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleSelfValueName(Context& context, Parse::SelfValueNameId parse_node)
+    -> bool {
   context.node_stack().Push(parse_node, SemIR::NameId::SelfValue);
   return true;
 }
 
-auto HandleSelfValueNameExpr(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleSelfValueNameExpr(Context& context,
+                             Parse::SelfValueNameExprId parse_node) -> bool {
   return HandleNameAsExpr(context, parse_node, SemIR::NameId::SelfValue);
 }
 
-auto HandleQualifiedName(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
+    -> bool {
   auto [parse_node2, name_id2] = context.node_stack().PopNameWithParseNode();
 
   Parse::NodeId parse_node1 = context.node_stack().PeekParseNode();
@@ -346,7 +350,8 @@ auto HandleQualifiedName(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandlePackageExpr(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandlePackageExpr(Context& context, Parse::PackageExprId parse_node)
+    -> bool {
   context.AddInstAndPush(
       parse_node,
       SemIR::NameRef{

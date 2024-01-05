@@ -9,29 +9,31 @@
 
 namespace Carbon::Check {
 
-auto HandleVariableIntroducer(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleVariableIntroducer(Context& context,
+                              Parse::VariableIntroducerId parse_node) -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   context.decl_state_stack().Push(DeclState::Var);
   return true;
 }
 
-auto HandleReturnedModifier(Context& context, Parse::NodeId parse_node)
+auto HandleReturnedModifier(Context& context,
+                            Parse::ReturnedModifierId parse_node) -> bool {
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleVariableInitializer(Context& context,
+                               Parse::VariableInitializerId parse_node)
     -> bool {
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
 }
 
-auto HandleVariableInitializer(Context& context, Parse::NodeId parse_node)
+auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
     -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   // Handle the optional initializer.
   auto init_id = SemIR::InstId::Invalid;
   Parse::NodeKind next_kind = context.node_stack().PeekParseNodeKind();
@@ -51,16 +53,18 @@ auto HandleVariableDecl(Context& context, Parse::NodeId parse_node) -> bool {
   }
 
   // Extract the name binding.
-  auto value_id = context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
+  auto value_id = context.node_stack().PopPattern();
+  if (auto bind_name =
+          context.insts().Get(value_id).TryAs<SemIR::AnyBindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
-    context.decl_name_stack().AddNameToLookup(
-        context.decl_name_stack().MakeUnqualifiedName(bind_name->parse_node,
-                                                      bind_name->name_id),
-        value_id);
+    auto name_context = context.decl_name_stack().MakeUnqualifiedName(
+        bind_name->parse_node,
+        context.bind_names().Get(bind_name->bind_name_id).name_id);
+    context.decl_name_stack().AddNameToLookup(name_context, value_id);
     value_id = bind_name->value_id;
   }
+  // TODO: Handle other kinds of pattern.
 
   // Pop the `returned` specifier if present.
   context.node_stack()

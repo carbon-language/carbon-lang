@@ -43,7 +43,8 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
+static auto BuildFunctionDecl(Context& context,
+                              Parse::AnyFunctionDeclId parse_node,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At
@@ -174,14 +175,15 @@ static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
   return {function_decl.function_id, function_decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId parse_node)
+    -> bool {
   BuildFunctionDecl(context, parse_node, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleFunctionDefinition(Context& context,
+                              Parse::FunctionDefinitionId parse_node) -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
@@ -205,7 +207,8 @@ auto HandleFunctionDefinition(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
+auto HandleFunctionDefinitionStart(Context& context,
+                                   Parse::FunctionDefinitionStartId parse_node)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -258,9 +261,10 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
           context.sem_ir().StringifyType(param.type_id()));
     });
 
-    if (auto fn_param = param.TryAs<SemIR::BindName>()) {
-      context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
-                              param_id);
+    if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
+      context.AddNameToLookup(
+          fn_param->parse_node,
+          context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;
@@ -271,8 +275,8 @@ auto HandleFunctionDefinitionStart(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleFunctionIntroducer(Context& context,
+                              Parse::FunctionIntroducerId parse_node) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -284,7 +288,8 @@ auto HandleFunctionIntroducer(Context& context, Parse::NodeId parse_node)
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
+    -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_inst_id] =
       context.node_stack().PopExprWithParseNode();

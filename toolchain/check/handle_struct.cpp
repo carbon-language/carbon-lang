@@ -7,19 +7,22 @@
 
 namespace Carbon::Check {
 
-auto HandleStructComma(Context& context, Parse::NodeId /*parse_node*/) -> bool {
+auto HandleStructComma(Context& context, Parse::StructCommaId /*parse_node*/)
+    -> bool {
   context.ParamOrArgComma();
   return true;
 }
 
-auto HandleStructFieldDesignator(Context& context, Parse::NodeId /*parse_node*/)
+auto HandleStructFieldDesignator(Context& context,
+                                 Parse::StructFieldDesignatorId /*parse_node*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(context.node_stack().PeekIsName());
   return true;
 }
 
-auto HandleStructFieldType(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleStructFieldType(Context& context,
+                           Parse::StructFieldTypeId parse_node) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
 
@@ -30,8 +33,8 @@ auto HandleStructFieldType(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleStructFieldValue(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleStructFieldValue(Context& context,
+                            Parse::StructFieldValueId parse_node) -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
@@ -72,7 +75,8 @@ static auto DiagnoseDuplicateNames(Context& context,
   return false;
 }
 
-auto HandleStructLiteral(Context& context, Parse::NodeId parse_node) -> bool {
+auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
+    -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
@@ -94,8 +98,8 @@ auto HandleStructLiteral(Context& context, Parse::NodeId parse_node) -> bool {
   return true;
 }
 
-auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
-                                                 Parse::NodeId parse_node)
+auto HandleStructLiteralOrStructTypeLiteralStart(
+    Context& context, Parse::StructLiteralOrStructTypeLiteralStartId parse_node)
     -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
@@ -107,8 +111,8 @@ auto HandleStructLiteralOrStructTypeLiteralStart(Context& context,
   return true;
 }
 
-auto HandleStructTypeLiteral(Context& context, Parse::NodeId parse_node)
-    -> bool {
+auto HandleStructTypeLiteral(Context& context,
+                             Parse::StructTypeLiteralId parse_node) -> bool {
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
