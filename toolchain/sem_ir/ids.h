@@ -16,6 +16,7 @@ namespace Carbon::SemIR {
 // Forward declare indexed types, for integration with ValueStore.
 class File;
 class Inst;
+struct BindNameInfo;
 struct Class;
 struct Function;
 struct Interface;
@@ -66,6 +67,22 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
+
+// The ID of a bind name.
+struct BindNameId : public IdBase, public Printable<BindNameId> {
+  using ValueType = BindNameInfo;
+
+  // An explicitly invalid function ID.
+  static const BindNameId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "bindName";
+    IdBase::Print(out);
+  }
+};
+
+constexpr BindNameId BindNameId::Invalid = BindNameId(BindNameId::InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {

@@ -13,7 +13,9 @@ auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
-      self_param && self_param->name_id == SemIR::NameId::SelfValue) {
+      self_param &&
+      context.bind_names().Get(self_param->bind_name_id).name_id ==
+          SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
@@ -41,14 +43,19 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Create the appropriate kind of binding for this pattern.
-  auto make_bind_name = [name_node = name_node, name_id = name_id, is_generic](
+  auto make_bind_name = [&, name_node = name_node, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
+    // TODO: Set the correct enclosing_scope_id.
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = name_id,
+         .enclosing_scope_id = SemIR::NameScopeId::Invalid});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
-      return SemIR::BindSymbolicName{name_node, type_id, name_id, value_id};
+      return SemIR::BindSymbolicName{name_node, type_id, bind_name_id,
+                                     value_id};
     } else {
-      return SemIR::BindName{name_node, type_id, name_id, value_id};
+      return SemIR::BindName{name_node, type_id, bind_name_id, value_id};
     }
   };
 

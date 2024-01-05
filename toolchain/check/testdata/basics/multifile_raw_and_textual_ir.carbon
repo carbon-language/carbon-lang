@@ -22,6 +22,7 @@ fn B() {}
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
@@ -60,6 +61,7 @@ fn B() {}
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}

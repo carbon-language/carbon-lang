@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn Main() {
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:11: ERROR: `var` declaration cannot declare a generic binding.
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:11: ERROR: `var` declaration cannot declare a compile-time binding.
   // CHECK:STDERR:   var x:! i32 = 0;
   // CHECK:STDERR:           ^~~
   var x:! i32 = 0;

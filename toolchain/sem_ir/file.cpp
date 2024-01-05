@@ -150,6 +150,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("cross_ref_irs_size",
                       Yaml::OutputScalar(cross_ref_irs_.size()));
+              map.Add("bind_names", bind_names_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
@@ -301,8 +302,8 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         break;
       }
       case BindSymbolicName::Kind: {
-        auto name_id = inst.As<BindSymbolicName>().name_id;
-        out << names().GetFormatted(name_id);
+        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
+        out << names().GetFormatted(bind_names().Get(name_id).name_id);
         break;
       }
       case ClassType::Kind: {

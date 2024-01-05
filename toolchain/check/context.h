@@ -351,6 +351,9 @@ class Context {
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
+  auto bind_names() -> ValueStore<SemIR::BindNameId>& {
+    return sem_ir().bind_names();
+  }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }
