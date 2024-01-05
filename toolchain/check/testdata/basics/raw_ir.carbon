@@ -16,6 +16,8 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: filename:        raw_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:
+// CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, param_refs: block2, return_type: type4, return_slot: inst+7, body: [block5]}
 // CHECK:STDOUT:   classes:         {}
@@ -39,7 +41,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
-// CHECK:STDOUT:     inst+2:          {kind: BindName, arg0: name1, arg1: inst+1, type: type1}
+// CHECK:STDOUT:     inst+2:          {kind: BindName, arg0: bindName0, arg1: inst+1, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
 // CHECK:STDOUT:     inst+4:          {kind: TupleLiteral, arg0: block3, type: type2}
 // CHECK:STDOUT:     inst+5:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}

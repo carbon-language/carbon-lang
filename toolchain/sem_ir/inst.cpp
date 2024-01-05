@@ -22,9 +22,9 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind_) {
-#define CARBON_SEM_IR_INST_KIND(Name)      \
-  case Name::Kind:                         \
-    print_args(TypedInstArgsInfo<Name>()); \
+#define CARBON_SEM_IR_INST_KIND(Name)     \
+  case Name::Kind:                        \
+    print_args(InstLikeTypeInfo<Name>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
   }

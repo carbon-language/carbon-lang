@@ -10,6 +10,7 @@
 // CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:

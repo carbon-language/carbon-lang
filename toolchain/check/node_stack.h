@@ -134,6 +134,12 @@ class NodeStack {
     return PopWithParseNode<SemIR::InstId>();
   }
 
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
   // Pops a name from the top of the stack and returns the parse_node and
   // the ID.
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
@@ -202,6 +208,12 @@ class NodeStack {
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
+
+  // Pops a pattern from the top of the stack and returns the ID.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  auto PopPattern() -> SemIR::InstId {
+    return PopPatternWithParseNode().second;
+  }
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
@@ -359,6 +371,7 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::GenericBindingPattern:
       case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
