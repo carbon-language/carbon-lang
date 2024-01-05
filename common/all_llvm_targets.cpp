@@ -17,6 +17,7 @@ static auto InitLLVMTargets() -> void {
 
 // On program startup, set `InitLLVM::InitializeTargets` to be our
 // initialization function so that `InitLLVM` can call it at the right moment.
-char InitLLVM::register_targets = (initialize_targets = &InitLLVMTargets, 0);
+const char InitLLVM::RegisterTargets =
+    (InitializeTargets = &InitLLVMTargets, 0);
 
 }  // namespace Carbon

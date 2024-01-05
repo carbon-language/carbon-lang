@@ -24,17 +24,20 @@ class InitLLVM {
   ~InitLLVM() = default;
 
  private:
+  using InitializeTargetsFn = auto() -> void;
+
   llvm::InitLLVM init_llvm_;
   llvm::SmallVector<char*> args_;
 
   // A pointer to the LLVM target initialization function, if :all_llvm_targets
   // is linked in. Otherwise nullptr.
-  static auto (*initialize_targets)() -> void;
+  // NOLINTNEXTLINE(readability-identifier-naming): Constant after static init.
+  static InitializeTargetsFn* InitializeTargets;
 
   // The initializer of this static data member populates `InitializeTargets`.
   // Defined only if :all_llvm_targets is linked in. This is a member so that
   // it has access to `InitializeTargets`.
-  static char register_targets;
+  static const char RegisterTargets;
 };
 
 }  // namespace Carbon
