@@ -12,7 +12,7 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT: --- fail_not_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {}
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 2
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>

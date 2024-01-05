@@ -47,4 +47,32 @@ auto NameStoreWrapper::GetIRBaseName(NameId name_id) const -> llvm::StringRef {
   return GetSpecialName(name_id, /*for_ir=*/true);
 }
 
+auto NameScope::Print(llvm::raw_ostream& out) const -> void {
+  out << "{inst: " << inst_id << ", enclosing_scope: " << enclosing_scope_id
+      << ", has_error: " << (has_error ? "true" : "false");
+
+  out << ", extended_scopes: [";
+  llvm::ListSeparator scope_sep;
+  for (auto id : extended_scopes) {
+    out << scope_sep << id;
+  }
+  out << "]";
+
+  out << ", names: {";
+  // Sort name keys to get stable output.
+  llvm::SmallVector<NameId> keys;
+  for (auto [key, _] : names) {
+    keys.push_back(key);
+  }
+  llvm::sort(keys,
+             [](NameId lhs, NameId rhs) { return lhs.index < rhs.index; });
+  llvm::ListSeparator key_sep;
+  for (auto key : keys) {
+    out << key_sep << key << ": " << names.find(key)->second;
+  }
+  out << "}";
+
+  out << "}";
+}
+
 }  // namespace Carbon::SemIR

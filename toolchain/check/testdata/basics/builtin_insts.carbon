@@ -10,6 +10,8 @@
 // CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   name_scopes:
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
@@ -26,7 +28,7 @@
 // CHECK:STDOUT:     instFunctionType: {kind: CrossRef, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: CrossRef, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: CrossRef, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}

@@ -17,7 +17,7 @@ package Implicit impl;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,7 +26,7 @@ package Implicit impl;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %lazy_import_ref}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %lazy_import_ref}
 // CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

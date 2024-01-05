@@ -19,7 +19,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_duplicate_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

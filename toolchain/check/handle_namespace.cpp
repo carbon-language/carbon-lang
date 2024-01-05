@@ -24,9 +24,10 @@ auto HandleNamespace(Context& context, Parse::NamespaceId parse_node) -> bool {
                        Lex::TokenKind::Namespace);
   auto namespace_inst = SemIR::Namespace{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      SemIR::NameScopeId::Invalid};
+      name_context.name_id_for_new_inst(), SemIR::NameScopeId::Invalid};
   auto namespace_id = context.AddInst(namespace_inst);
-  namespace_inst.name_scope_id = context.name_scopes().Add(namespace_id);
+  namespace_inst.name_scope_id = context.name_scopes().Add(
+      namespace_id, name_context.enclosing_scope_id_for_new_inst());
   context.insts().Set(namespace_id, namespace_inst);
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
 

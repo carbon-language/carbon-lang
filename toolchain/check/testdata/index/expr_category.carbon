@@ -32,7 +32,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .ValueBinding = %ValueBinding}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G, .ValueBinding = %ValueBinding}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding

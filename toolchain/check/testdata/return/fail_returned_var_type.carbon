@@ -18,7 +18,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Mismatch = %Mismatch}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Mismatch = %Mismatch}
 // CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

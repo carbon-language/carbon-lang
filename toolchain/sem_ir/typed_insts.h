@@ -449,6 +449,7 @@ struct Namespace {
 
   Parse::NamespaceId parse_node;
   TypeId type_id;
+  NameId name_id;
   NameScopeId name_scope_id;
 };
 
