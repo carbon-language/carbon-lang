@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "bc8c4f4f56101dd09d1b0bb816677cdb5c0d240d8f859cfaf55cf6050e8f7954",
+  "moduleFileHash": "5704ebd75cf3cb5f4ab56ba2939bb74d98752cd7eed0ea9357a9ed39ca41640e",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -63,16 +63,16 @@
             {
               "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
               "attributeValues": {
-                "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
-                "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
-                "urls": [
-                  "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
-                ],
                 "patch_args": [
                   "-p1"
                 ],
                 "patches": [
-                  "@carbon//bazel/clang_tidy:0001_Add_hdrs.patch"
+                  "@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+                ],
+                "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+                "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+                "urls": [
+                  "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
                 ],
                 "name": "bazel_clang_tidy"
               },
@@ -1679,16 +1679,16 @@
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
-              "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
-              "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
-              "urls": [
-                "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
-              ],
               "patch_args": [
                 "-p1"
               ],
               "patches": [
-                "@@//bazel/clang_tidy:0001_Add_hdrs.patch"
+                "@@//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+              ],
+              "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+              "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+              "urls": [
+                "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
               ],
               "name": "_main~_repo_rules~bazel_clang_tidy"
             }

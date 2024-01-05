@@ -232,7 +232,7 @@ repos:
 exclude: |
   (?x)^(
       MODULE.bazel.lock|
-      bazel/clang_tidy/.*\.patch|
+      bazel/bazel_clang_tidy/.*\.patch|
       bazel/llvm_project/.*\.patch|
       third_party/examples/.*/carbon/.*|
   )$
