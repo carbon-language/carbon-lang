@@ -23,6 +23,10 @@ auto HandleClassIntroducer(Context& context,
 
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
+    context.TODO(parse_node, "generic class");
+  }
+
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();

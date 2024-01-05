@@ -53,8 +53,9 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   }
 
   // Extract the name binding.
-  auto value_id = context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
+  auto value_id = context.node_stack().PopPattern();
+  if (auto bind_name =
+          context.insts().Get(value_id).TryAs<SemIR::AnyBindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
@@ -63,6 +64,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
     context.decl_name_stack().AddNameToLookup(name_context, value_id);
     value_id = bind_name->value_id;
   }
+  // TODO: Handle other kinds of pattern.
 
   // Pop the `returned` specifier if present.
   context.node_stack()

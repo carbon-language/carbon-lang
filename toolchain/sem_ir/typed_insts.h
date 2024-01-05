@@ -64,7 +64,7 @@ struct AddrPattern {
 
   Parse::AddressId parse_node;
   TypeId type_id;
-  // The `self` parameter.
+  // The `self` binding.
   InstId inner_id;
 };
 
@@ -123,6 +123,29 @@ struct BaseDecl {
   TypeId type_id;
   TypeId base_type_id;
   ElementIndex index;
+};
+
+// Common representation for both kinds of `bind*name` node.
+struct AnyBindName {
+  // TODO: Also handle BindTemplateName once it exists.
+  static constexpr InstKind Kinds[] = {InstKind::BindName,
+                                       InstKind::BindSymbolicName};
+
+  InstKind kind;
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
+};
+
+struct BindSymbolicName {
+  static constexpr auto Kind =
+      InstKind::BindSymbolicName.Define("bind_symbolic_name");
+
+  Parse::NodeId parse_node;
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
 };
 
 struct BindName {

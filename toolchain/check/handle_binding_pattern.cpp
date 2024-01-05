@@ -10,10 +10,10 @@
 namespace Carbon::Check {
 
 auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
-  auto self_param_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
-  if (self_param &&
+  auto self_param_id = context.node_stack().PopPattern();
+  if (auto self_param =
+          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
+      self_param &&
       context.bind_names().Get(self_param->bind_name_id).name_id ==
           SemIR::NameId::SelfValue) {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
@@ -30,14 +30,8 @@ auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
   return true;
 }
 
-auto HandleGenericBindingPattern(Context& context,
-                                 Parse::GenericBindingPatternId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "GenericBindingPattern");
-}
-
-auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
-    -> bool {
+auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
+                             bool is_generic) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
   auto type_node_copy = type_node;
@@ -49,8 +43,6 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Create the appropriate kind of binding for this pattern.
-  //
-  // TODO: Update this to create a generic or template binding as needed.
   auto make_bind_name = [&, name_node = name_node, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
@@ -58,7 +50,13 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
          .enclosing_scope_id = SemIR::NameScopeId::Invalid});
-    return SemIR::BindName{name_node, type_id, bind_name_id, value_id};
+    if (is_generic) {
+      // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
+      return SemIR::BindSymbolicName{name_node, type_id, bind_name_id,
+                                     value_id};
+    } else {
+      return SemIR::BindName{name_node, type_id, bind_name_id, value_id};
+    }
   };
 
   // A `self` binding can only appear in an implicit parameter list.
@@ -78,6 +76,17 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
               context.node_stack().PeekParseNodeKind()) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
+      if (is_generic) {
+        CARBON_DIAGNOSTIC(
+            CompileTimeBindingInVarDecl, Error,
+            "`var` declaration cannot declare a compile-time binding.");
+        context.emitter().Emit(type_node, CompileTimeBindingInVarDecl);
+      }
+      auto binding_id =
+          is_generic
+              ? Parse::NodeId::Invalid
+              : context.parse_tree().As<Parse::BindingPatternId>(parse_node);
+
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
@@ -103,18 +112,18 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
-            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+            binding_id, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::FieldDecl{parse_node, value_type_id, name_id,
+            SemIR::FieldDecl{binding_id, value_type_id, name_id,
                              SemIR::ElementIndex(context.args_type_info_stack()
                                                      .PeekCurrentBlockContents()
                                                      .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
-            SemIR::StructTypeField{parse_node, name_id, cast_type_id});
+            SemIR::StructTypeField{binding_id, name_id, cast_type_id});
       } else {
         value_id = context.AddInst(
             SemIR::VarStorage{name_node, value_type_id, name_id});
@@ -166,8 +175,18 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
   return true;
 }
 
+auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
+    -> bool {
+  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/false);
+}
+
+auto HandleGenericBindingPattern(Context& context,
+                                 Parse::GenericBindingPatternId parse_node)
+    -> bool {
+  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
+}
+
 auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {
-  // TODO: diagnose if this occurs in a `var` context.
   return context.TODO(parse_node, "HandleTemplate");
 }
 

@@ -255,9 +255,8 @@ class Inst : public Printable<Inst> {
 };
 
 // TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
-// pair of Insts. However, InstKind is 1 byte; if args
-// were 3.5 bytes, we could potentially shrink Inst by 4 bytes. This
-// may be worth investigating further.
+// pair of Insts. However, InstKind is 1 byte; if args were 3.5 bytes, we could
+// potentially shrink Inst by 4 bytes. This may be worth investigating further.
 static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
 // Instruction-like types can be printed by converting them to instructions.

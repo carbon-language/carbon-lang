@@ -14,8 +14,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in let");
   }
-  SemIR::InstId pattern_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
+  SemIR::InstId pattern_id = context.node_stack().PopPattern();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
@@ -44,7 +43,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
   // TODO: Support other kinds of pattern here.
-  auto bind_name = pattern.As<SemIR::BindName>();
+  auto bind_name = pattern.As<SemIR::AnyBindName>();
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;

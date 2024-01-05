@@ -26,7 +26,7 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     ref = sem_ir.insts().Get(param_ref_id);
   }
 
-  if (auto bind_name = ref.TryAs<SemIR::BindName>()) {
+  if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }
@@ -178,6 +178,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
+    case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
     case NameRef::Kind:
@@ -298,6 +299,11 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         } else if (step.index == 1) {
           out << "; " << GetArrayBoundValue(array.bound_id) << "]";
         }
+        break;
+      }
+      case BindSymbolicName::Kind: {
+        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
+        out << names().GetFormatted(bind_names().Get(name_id).name_id);
         break;
       }
       case ClassType::Kind: {
@@ -509,6 +515,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddressOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
+      case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
