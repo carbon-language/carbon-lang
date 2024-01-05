@@ -50,8 +50,7 @@ auto HandleVarAsFor(Context& context) -> void {
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var`.
-  state.state = State::VarFinishAsFor;
-  context.PushState(state);
+  context.PushState(state, State::VarFinishAsFor);
 
   context.PushState(State::Pattern);
 }
