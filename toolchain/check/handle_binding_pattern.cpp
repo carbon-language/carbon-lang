@@ -9,25 +9,6 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
-  auto self_param_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
-  auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
-  if (self_param && self_param->name_id == SemIR::NameId::SelfValue) {
-    // TODO: The type of an `addr_pattern` should probably be the non-pointer
-    // type, because that's the type that the pattern matches.
-    context.AddInstAndPush(
-        parse_node,
-        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
-  } else {
-    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
-                      "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
-    context.node_stack().Push(parse_node, self_param_id);
-  }
-  return true;
-}
-
 auto HandleGenericBindingPattern(Context& context,
                                  Parse::GenericBindingPatternId parse_node)
     -> bool {
@@ -156,6 +137,25 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "
                      << context_parse_node_kind;
+  }
+  return true;
+}
+
+auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
+  auto self_param_id =
+      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
+  auto self_param = context.insts().TryGetAs<SemIR::BindName>(self_param_id);
+  if (self_param && self_param->name_id == SemIR::NameId::SelfValue) {
+    // TODO: The type of an `addr_pattern` should probably be the non-pointer
+    // type, because that's the type that the pattern matches.
+    context.AddInstAndPush(
+        parse_node,
+        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
+  } else {
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
+                      "`addr` can only be applied to a `self` parameter.");
+    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
+    context.node_stack().Push(parse_node, self_param_id);
   }
   return true;
 }

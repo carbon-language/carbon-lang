@@ -10,6 +10,32 @@
 
 namespace Carbon::Check {
 
+auto HandleFunctionIntroducer(Context& context,
+                              Parse::FunctionIntroducerId parse_node) -> bool {
+  // Create an instruction block to hold the instructions created as part of the
+  // function signature, such as parameter and return types.
+  context.inst_block_stack().Push();
+  // Push the bracketing node.
+  context.node_stack().Push(parse_node);
+  // Optional modifiers and the name follow.
+  context.decl_state_stack().Push(DeclState::Fn);
+  context.decl_name_stack().PushScopeAndStartName();
+  return true;
+}
+
+auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
+    -> bool {
+  // Propagate the type expression.
+  auto [type_parse_node, type_inst_id] =
+      context.node_stack().PopExprWithParseNode();
+  auto type_id = ExprAsType(context, type_parse_node, type_inst_id);
+  // TODO: Use a dedicated instruction rather than VarStorage here.
+  context.AddInstAndPush(
+      parse_node,
+      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
+  return true;
+}
+
 static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
   Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
   CheckAccessModifiersOnDecl(context, decl_kind);
@@ -182,31 +208,6 @@ auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId parse_node)
   return true;
 }
 
-auto HandleFunctionDefinition(Context& context,
-                              Parse::FunctionDefinitionId parse_node) -> bool {
-  SemIR::FunctionId function_id =
-      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
-
-  // If the `}` of the function is reachable, reject if we need a return value
-  // and otherwise add an implicit `return;`.
-  if (context.is_current_position_reachable()) {
-    if (context.functions().Get(function_id).return_type_id.is_valid()) {
-      CARBON_DIAGNOSTIC(
-          MissingReturnStatement, Error,
-          "Missing `return` at end of function with declared return type.");
-      context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
-    } else {
-      context.AddInst(SemIR::Return{parse_node});
-    }
-  }
-
-  context.PopScope();
-  context.inst_block_stack().Pop();
-  context.return_scope_stack().pop_back();
-  context.decl_name_stack().PopScope();
-  return true;
-}
-
 auto HandleFunctionDefinitionStart(Context& context,
                                    Parse::FunctionDefinitionStartId parse_node)
     -> bool {
@@ -274,29 +275,28 @@ auto HandleFunctionDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleFunctionIntroducer(Context& context,
-                              Parse::FunctionIntroducerId parse_node) -> bool {
-  // Create an instruction block to hold the instructions created as part of the
-  // function signature, such as parameter and return types.
-  context.inst_block_stack().Push();
-  // Push the bracketing node.
-  context.node_stack().Push(parse_node);
-  // Optional modifiers and the name follow.
-  context.decl_state_stack().Push(DeclState::Fn);
-  context.decl_name_stack().PushScopeAndStartName();
-  return true;
-}
+auto HandleFunctionDefinition(Context& context,
+                              Parse::FunctionDefinitionId parse_node) -> bool {
+  SemIR::FunctionId function_id =
+      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
-auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
-    -> bool {
-  // Propagate the type expression.
-  auto [type_parse_node, type_inst_id] =
-      context.node_stack().PopExprWithParseNode();
-  auto type_id = ExprAsType(context, type_parse_node, type_inst_id);
-  // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush(
-      parse_node,
-      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
+  // If the `}` of the function is reachable, reject if we need a return value
+  // and otherwise add an implicit `return;`.
+  if (context.is_current_position_reachable()) {
+    if (context.functions().Get(function_id).return_type_id.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          MissingReturnStatement, Error,
+          "Missing `return` at end of function with declared return type.");
+      context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
+    } else {
+      context.AddInst(SemIR::Return{parse_node});
+    }
+  }
+
+  context.PopScope();
+  context.inst_block_stack().Pop();
+  context.return_scope_stack().pop_back();
+  context.decl_name_stack().PopScope();
   return true;
 }
 
