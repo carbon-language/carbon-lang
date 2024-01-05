@@ -57,10 +57,10 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   if (auto bind_name = context.insts().Get(value_id).TryAs<SemIR::BindName>()) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
-    context.decl_name_stack().AddNameToLookup(
-        context.decl_name_stack().MakeUnqualifiedName(bind_name->parse_node,
-                                                      bind_name->name_id),
-        value_id);
+    auto name_context = context.decl_name_stack().MakeUnqualifiedName(
+        bind_name->parse_node,
+        context.bind_names().Get(bind_name->bind_name_id).name_id);
+    context.decl_name_stack().AddNameToLookup(name_context, value_id);
     value_id = bind_name->value_id;
   }
 

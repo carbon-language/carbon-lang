@@ -52,7 +52,8 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
-  context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);
+  auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
+  context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
   return true;
 }
 
