@@ -78,7 +78,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       auto binding_id =
           is_generic
               ? Parse::NodeId::Invalid
-              : context.parse_tree()->As<Parse::BindingPatternId>(parse_node);
+              : context.parse_tree().As<Parse::BindingPatternId>(parse_node);
 
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
