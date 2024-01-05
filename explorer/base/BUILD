@@ -9,6 +9,9 @@ package(default_visibility = ["//explorer:__subpackages__"])
 cc_library(
     name = "arena",
     hdrs = ["arena.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":nonnull",
         "@llvm-project//llvm:Support",

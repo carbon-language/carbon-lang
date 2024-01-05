@@ -34,6 +34,6 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
   }
 }
 
-auto (*InitLLVM::InitializeTargets)() -> void = nullptr;
+InitLLVM::InitializeTargetsFn* InitLLVM::InitializeTargets = nullptr;
 
 }  // namespace Carbon

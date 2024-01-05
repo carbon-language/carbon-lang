@@ -1,0 +1,25 @@
+From c2b1cfb7ec8ba667218382b97a986a3ef2f7ff56 Mon Sep 17 00:00:00 2001
+From: jonmeow <jperkins@google.com>
+Date: Fri, 5 Jan 2024 10:35:19 -0800
+Subject: [PATCH] Add hdrs so that clang-tidy runs on them directly.
+
+---
+ clang_tidy/clang_tidy.bzl | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/clang_tidy/clang_tidy.bzl b/clang_tidy/clang_tidy.bzl
+index 4d515fc..1af7ee4 100644
+--- a/clang_tidy/clang_tidy.bzl
++++ b/clang_tidy/clang_tidy.bzl
+@@ -94,6 +94,9 @@ def _rule_sources(ctx):
+     if hasattr(ctx.rule.attr, "srcs"):
+         for src in ctx.rule.attr.srcs:
+             srcs += [src for src in src.files.to_list() if src.is_source and check_valid_file_type(src)]
++    if hasattr(ctx.rule.attr, "hdrs"):
++        for src in ctx.rule.attr.hdrs:
++            srcs += [src for src in src.files.to_list() if src.is_source and check_valid_file_type(src)]
+     return srcs
+
+ def _toolchain_flags(ctx, action_name = ACTION_NAMES.cpp_compile):
+--
+2.43.0.472.g3155946c3a-goog

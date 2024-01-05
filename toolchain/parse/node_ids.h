@@ -23,7 +23,8 @@ struct NodeId : public IdBase {
   static constexpr InvalidNodeId Invalid;
 
   using IdBase::IdBase;
-  constexpr NodeId(InvalidNodeId) : IdBase(NodeId::InvalidIndex) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeId(InvalidNodeId /*invalid*/) : IdBase(NodeId::InvalidIndex) {}
 };
 
 // For looking up the type associated with a given id type.
@@ -34,9 +35,12 @@ struct NodeForId;
 // `<KindName>`:
 template <const NodeKind& K>
 struct NodeIdForKind : public NodeId {
+  // NOLINTNEXTLINE(readability-identifier-naming)
   static const NodeKind& Kind;
   constexpr explicit NodeIdForKind(NodeId node_id) : NodeId(node_id) {}
-  constexpr NodeIdForKind(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeIdForKind(InvalidNodeId /*invalid*/)
+      : NodeId(NodeId::InvalidIndex) {}
 };
 template <const NodeKind& K>
 const NodeKind& NodeIdForKind<K>::Kind = K;
@@ -52,7 +56,9 @@ struct NodeIdInCategory : public NodeId {
   // overlaps with `Category`.
 
   constexpr explicit NodeIdInCategory(NodeId node_id) : NodeId(node_id) {}
-  constexpr NodeIdInCategory(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeIdInCategory(InvalidNodeId /*invalid*/)
+      : NodeId(NodeId::InvalidIndex) {}
 };
 
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
@@ -69,10 +75,13 @@ template <typename T, typename U>
 struct NodeIdOneOf : public NodeId {
   constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
   template <const NodeKind& Kind>
+  // NOLINTNEXTLINE(google-explicit-constructor)
   NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
     static_assert(T::Kind == Kind || U::Kind == Kind);
   }
-  constexpr NodeIdOneOf(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeIdOneOf(InvalidNodeId /*invalid*/)
+      : NodeId(NodeId::InvalidIndex) {}
 };
 
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
@@ -85,7 +94,9 @@ using AnyInterfaceDeclId =
 template <typename T>
 struct NodeIdNot : public NodeId {
   constexpr explicit NodeIdNot(NodeId node_id) : NodeId(node_id) {}
-  constexpr NodeIdNot(InvalidNodeId) : NodeId(NodeId::InvalidIndex) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr NodeIdNot(InvalidNodeId /*invalid*/)
+      : NodeId(NodeId::InvalidIndex) {}
 };
 
 // Note that the support for extracting these types using the `Tree::Extract*`

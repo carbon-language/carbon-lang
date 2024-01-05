@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "1eff193166261836db74ff270f9bc0ef7d800107c1593383d78cd652d685bb6d",
+  "moduleFileHash": "5704ebd75cf3cb5f4ab56ba2939bb74d98752cd7eed0ea9357a9ed39ca41640e",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -63,6 +63,12 @@
             {
               "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
               "attributeValues": {
+                "patch_args": [
+                  "-p1"
+                ],
+                "patches": [
+                  "@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+                ],
                 "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
                 "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
                 "urls": [
@@ -99,7 +105,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 106,
+                "line": 108,
                 "column": 13
               }
             }
@@ -113,7 +119,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 75,
+            "line": 77,
             "column": 35
           },
           "imports": {
@@ -130,7 +136,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 121,
+            "line": 123,
             "column": 29
           },
           "imports": {
@@ -147,7 +153,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 133,
+            "line": 135,
             "column": 23
           },
           "imports": {
@@ -163,7 +169,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 134,
+                "line": 136,
                 "column": 17
               }
             }
@@ -177,7 +183,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 140,
+            "line": 142,
             "column": 20
           },
           "imports": {
@@ -195,7 +201,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 141,
+                "line": 143,
                 "column": 10
               }
             }
@@ -1673,6 +1679,12 @@
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
+              "patch_args": [
+                "-p1"
+              ],
+              "patches": [
+                "@@//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+              ],
               "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
               "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
               "urls": [

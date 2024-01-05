@@ -13,11 +13,13 @@ namespace Carbon::Parse {
 
 class NodeLocation {
  public:
+  // NOLINTNEXTLINE(google-explicit-constructor)
   NodeLocation(NodeId node_id) : NodeLocation(node_id, false) {}
   NodeLocation(NodeId node_id, bool token_only)
       : node_id_(node_id), token_only_(token_only) {}
   // TODO: Have some other way of representing diagnostic that applies to a file
   // as a whole.
+  // NOLINTNEXTLINE(google-explicit-constructor)
   NodeLocation(InvalidNodeId node_id) : NodeLocation(node_id, false) {}
 
   auto node_id() const -> NodeId { return node_id_; }
