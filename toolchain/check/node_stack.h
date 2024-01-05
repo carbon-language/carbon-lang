@@ -150,7 +150,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithParseNode() -> auto {
     constexpr IdKind RequiredIdKind = ParseNodeKindToIdKind(RequiredParseKind);
-    auto NodeIdCast = [&](auto back) {
+    auto node_id_cast = [&](auto back) {
       using NodeIdT = Parse::NodeIdForKind<RequiredParseKind>;
       return std::pair<NodeIdT, decltype(back.second)>(back);
     };
@@ -158,37 +158,37 @@ class NodeStack {
     if constexpr (RequiredIdKind == IdKind::InstId) {
       auto back = PopWithParseNode<SemIR::InstId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InstBlockId) {
       auto back = PopWithParseNode<SemIR::InstBlockId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
       auto back = PopWithParseNode<SemIR::FunctionId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       auto back = PopWithParseNode<SemIR::ClassId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InterfaceId) {
       auto back = PopWithParseNode<SemIR::InterfaceId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::NameId) {
       auto back = PopWithParseNode<SemIR::NameId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       auto back = PopWithParseNode<SemIR::TypeId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return NodeIdCast(back);
+      return node_id_cast(back);
     }
     CARBON_FATAL() << "Unpoppable IdKind for parse kind: " << RequiredParseKind
                    << "; see value in ParseNodeKindToIdKind";

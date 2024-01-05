@@ -67,6 +67,8 @@ clang_tidy_version = "d2aecc583d14c9554febeab185833c1e8cce5384"
 
 http_archive(
     name = "bazel_clang_tidy",
+    patch_args = ["-p1"],
+    patches = ["@carbon//bazel/clang_tidy:0001_Add_hdrs.patch"],
     sha256 = "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
     strip_prefix = "bazel_clang_tidy-{0}".format(clang_tidy_version),
     urls = ["https://github.com/erenon/bazel_clang_tidy/archive/{0}.tar.gz".format(clang_tidy_version)],

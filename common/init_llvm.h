@@ -29,12 +29,12 @@ class InitLLVM {
 
   // A pointer to the LLVM target initialization function, if :all_llvm_targets
   // is linked in. Otherwise nullptr.
-  static auto (*InitializeTargets)() -> void;
+  static auto (*initialize_targets)() -> void;
 
   // The initializer of this static data member populates `InitializeTargets`.
   // Defined only if :all_llvm_targets is linked in. This is a member so that
   // it has access to `InitializeTargets`.
-  static char RegisterTargets;
+  static char register_targets;
 };
 
 }  // namespace Carbon

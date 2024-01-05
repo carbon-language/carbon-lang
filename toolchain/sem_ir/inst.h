@@ -57,12 +57,14 @@ struct InstLikeTypeInfoBase {
 // A particular type of instruction is instruction-like.
 template <typename TypedInst>
 struct InstLikeTypeInfo<
-    TypedInst,
-    (bool)std::is_same_v<const InstKind::Definition, decltype(TypedInst::Kind)>>
+    TypedInst, static_cast<bool>(std::is_same_v<const InstKind::Definition,
+                                                decltype(TypedInst::Kind)>)>
     : InstLikeTypeInfoBase<TypedInst> {
   static_assert(!HasKindMemberAsField<TypedInst>,
                 "Instruction type should not have a kind field");
-  static auto GetKind(TypedInst) -> InstKind { return TypedInst::Kind; }
+  static auto GetKind(TypedInst /*inst*/) -> InstKind {
+    return TypedInst::Kind;
+  }
   static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> InstKind { return TypedInst::Kind; }
@@ -71,7 +73,8 @@ struct InstLikeTypeInfo<
 // An instruction category is instruction-like.
 template <typename InstCat>
 struct InstLikeTypeInfo<
-    InstCat, (bool)std::is_same_v<const InstKind&, decltype(InstCat::Kinds[0])>>
+    InstCat, static_cast<bool>(
+                 std::is_same_v<const InstKind&, decltype(InstCat::Kinds[0])>)>
     : InstLikeTypeInfoBase<InstCat> {
   static_assert(HasKindMemberAsField<InstCat>,
                 "Instruction category should have a kind field");

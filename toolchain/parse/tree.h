@@ -439,7 +439,8 @@ auto Tree::ExtractNodeFromChildren(
     // On error try again, this time capturing a trace.
     ErrorBuilder trace;
     TryExtractNodeFromChildren<T>(children, &trace);
-    CARBON_FATAL() << "Malformed parse node:\n" << Error(trace).message();
+    CARBON_FATAL() << "Malformed parse node:\n"
+                   << static_cast<Error>(trace).message();
   }
   return *result;
 }

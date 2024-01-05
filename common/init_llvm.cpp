@@ -29,11 +29,11 @@ InitLLVM::InitLLVM(int& argc, char**& argv)
       "crash backtrace.\n");
 
   // Initialize LLVM targets if //common:all_llvm_targets was linked in.
-  if (InitializeTargets) {
-    InitializeTargets();
+  if (initialize_targets) {
+    initialize_targets();
   }
 }
 
-auto (*InitLLVM::InitializeTargets)() -> void = nullptr;
+auto (*InitLLVM::initialize_targets)() -> void = nullptr;
 
 }  // namespace Carbon

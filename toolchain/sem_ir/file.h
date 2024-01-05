@@ -178,7 +178,7 @@ class File : public Printable<File> {
                 const File* builtins);
 
   File(const File&) = delete;
-  File& operator=(const File&) = delete;
+  auto operator=(const File&) -> File& = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
