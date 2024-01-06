@@ -42,6 +42,7 @@ class PendingBlock {
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
     auto inst_id = context_.insts().AddInNoBlock(inst);
     insts_.push_back(inst_id);
+    // TODO: What if the instruction is a constant?
     return inst_id;
   }
 

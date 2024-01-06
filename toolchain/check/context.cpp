@@ -60,22 +60,222 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
+static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
+    -> std::optional<SemIR::InstId> {
+  auto inst = context.insts().Get(inst_id);
+  switch (inst.kind()) {
+    case SemIR::ReifyConstant::Kind:
+      return inst.As<SemIR::ReifyConstant>().constant_id;
+
+    case SemIR::BaseDecl::Kind:
+    case SemIR::FieldDecl::Kind:
+    case SemIR::FunctionDecl::Kind:
+      return inst_id;
+
+    default:
+      return std::nullopt;
+  }
+}
+
+static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
+    -> std::optional<SemIR::InstBlockId> {
+  auto insts = context.inst_blocks().Get(inst_block_id);
+  llvm::SmallVector<SemIR::InstId> const_insts;
+  for (auto inst_id : insts) {
+    auto const_inst_id = UnwrapIfConstant(context, inst_id);
+    if (!const_inst_id) {
+      return std::nullopt;
+    }
+
+    // Once we leave the small buffer, we know the first few elements are all
+    // constant, so it's likely that the entire block is constant. Resize to the
+    // target size given that we're going to allocate memory now anyway.
+    if (const_insts.size() == const_insts.capacity()) {
+      const_insts.reserve(insts.size());
+    }
+
+    const_insts.push_back(*const_inst_id);
+  }
+  return context.sem_ir().inst_blocks().Add(const_insts);
+}
+
+template <typename InstT, typename... SpecificNodeId>
+static auto TryRebuildIfConstOperands(Context& context, SemIR::Inst inst,
+                                      SpecificNodeId InstT::*... each_op_id)
+    -> std::optional<SemIR::InstId> {
+  // Build a constant instruction by replacing each non-constant operand with
+  // its constant value.
+  auto typed_inst = inst.As<InstT>();
+  if (([&] {
+        auto unwrapped = UnwrapIfConstant(context, typed_inst.*each_op_id);
+        if (!unwrapped) {
+          return false;
+        }
+        typed_inst.*each_op_id = *unwrapped;
+        return true;
+      }() &&
+       ...)) {
+    return context.AddConstantInst(typed_inst);
+  }
+  return std::nullopt;
+}
+
+static auto TryEvalInst(Context& context, SemIR::InstId inst_id,
+                        SemIR::Inst inst) -> std::optional<SemIR::InstId> {
+  // clang warns on unhandled enum values; clang-tidy is incorrect here.
+  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+  switch (inst.kind()) {
+    // These cases are constants if their operands are.
+    case SemIR::AddressOf::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::AddressOf::lvalue_id);
+    case SemIR::ArrayIndex::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::ArrayIndex::array_id,
+                                       &SemIR::ArrayIndex::index_id);
+    case SemIR::ArrayType::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::ArrayType::bound_id);
+    case SemIR::BoundMethod::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::BoundMethod::object_id,
+                                       &SemIR::BoundMethod::function_id);
+    case SemIR::StructValue::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::StructValue::elements_id);
+    case SemIR::Temporary::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::Temporary::init_id);
+    case SemIR::TupleValue::Kind:
+      return TryRebuildIfConstOperands(context, inst,
+                                       &SemIR::TupleValue::elements_id);
+
+    // These cases are constants already.
+    case SemIR::BaseDecl::Kind:
+    case SemIR::BoolLiteral::Kind:
+    case SemIR::Builtin::Kind:
+    case SemIR::ClassType::Kind:
+    case SemIR::ConstType::Kind:
+    case SemIR::FieldDecl::Kind:
+    case SemIR::FunctionDecl::Kind:
+    case SemIR::IntLiteral::Kind:
+    case SemIR::PointerType::Kind:
+    case SemIR::RealLiteral::Kind:
+    case SemIR::StringLiteral::Kind:
+    case SemIR::StructType::Kind:
+    case SemIR::TupleType::Kind:
+    case SemIR::UnboundElementType::Kind:
+      return inst_id;
+
+    // TODO: These need special handling.
+    case SemIR::StructInit::Kind:
+    case SemIR::ArrayInit::Kind:
+    case SemIR::BindValue::Kind:
+    case SemIR::Call::Kind:
+    case SemIR::ClassElementAccess::Kind:
+    case SemIR::ClassInit::Kind:
+    case SemIR::Converted::Kind:
+    case SemIR::CrossRef::Kind:
+    case SemIR::Deref::Kind:
+    case SemIR::InitializeFrom::Kind:
+    case SemIR::SpliceBlock::Kind:
+    case SemIR::StructAccess::Kind:
+    case SemIR::TemporaryStorage::Kind:
+    case SemIR::TupleAccess::Kind:
+    case SemIR::TupleIndex::Kind:
+    case SemIR::TupleInit::Kind:
+    case SemIR::ValueAsRef::Kind:
+    case SemIR::ValueOfInitializer::Kind:
+      break;
+
+    case SemIR::BindName::Kind: {
+      // TODO: Should we really be looking through runtime `let` bindings?
+      return UnwrapIfConstant(context, inst.As<SemIR::BindName>().value_id);
+    }
+
+    case SemIR::NameRef::Kind: {
+      return UnwrapIfConstant(context, inst.As<SemIR::NameRef>().value_id);
+    }
+
+    case SemIR::UnaryOperatorNot::Kind: {
+      auto const_id = UnwrapIfConstant(
+          context, inst.As<SemIR::UnaryOperatorNot>().operand_id);
+      if (!const_id) {
+        break;
+      }
+      auto value = context.insts().TryGetAs<SemIR::BoolLiteral>(*const_id);
+      if (!value) {
+        // TODO: Can we CHECK this instead?
+        break;
+      }
+      value->value =
+          (value->value == SemIR::BoolValue::False ? SemIR::BoolValue::True
+                                                   : SemIR::BoolValue::False);
+      return context.AddConstantInst(*value);
+    }
+
+    // These cases are either not expressions or not constant.
+    case SemIR::AddrPattern::Kind:
+    case SemIR::Assign::Kind:
+    case SemIR::BlockArg::Kind:
+    case SemIR::Branch::Kind:
+    case SemIR::BranchIf::Kind:
+    case SemIR::BranchWithArg::Kind:
+    case SemIR::ClassDecl::Kind:
+    case SemIR::Import::Kind:
+    case SemIR::InterfaceDecl::Kind:
+    case SemIR::LazyImportRef::Kind:
+    case SemIR::Namespace::Kind:
+    case SemIR::NoOp::Kind:
+    case SemIR::Param::Kind:
+    case SemIR::ReifyConstant::Kind:
+    case SemIR::ReturnExpr::Kind:
+    case SemIR::Return::Kind:
+    case SemIR::StructLiteral::Kind:
+    case SemIR::StructTypeField::Kind:
+    case SemIR::TupleLiteral::Kind:
+    case SemIR::VarStorage::Kind:
+      break;
+  }
+  return std::nullopt;
+}
+
 auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
   auto inst_id = inst_block_stack_.AddInst(inst);
   CARBON_VLOG() << "AddInst: " << inst << "\n";
   return inst_id;
 }
 
+auto Context::AddExpr(SemIR::Inst inst) -> SemIR::InstId {
+  auto inst_id = AddInst(inst);
+
+  if (auto const_inst_id = TryEvalInst(*this, inst_id, inst)) {
+    CARBON_VLOG() << "ConstInst: " << inst << " -> " << *const_inst_id << "\n";
+    return AddInst(SemIR::ReifyConstant{.type_id = inst.type_id(),
+                                        .expr_id = inst_id,
+                                        .constant_id = *const_inst_id});
+  }
+
+  return inst_id;
+}
+
 auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
+  // TODO: Deduplicate constants.
   auto inst_id = insts().AddInNoBlock(inst);
   constants().Add(inst_id);
   CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
   return inst_id;
 }
 
-auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
-    -> void {
+auto Context::AddInstAndPush(Parse::NodeId parse_node,
+                             SemIR::Inst inst) -> void {
   auto inst_id = AddInst(inst);
+  node_stack_.Push(parse_node, inst_id);
+}
+
+auto Context::AddExprAndPush(Parse::NodeId parse_node,
+                             SemIR::Inst inst) -> void {
+  auto inst_id = AddExpr(inst);
   node_stack_.Push(parse_node, inst_id);
 }
 
@@ -303,9 +503,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupNameInExactScope(SemIR::NameId name_id,
-                                     const SemIR::NameScope& scope)
-    -> SemIR::InstId {
+auto Context::LookupNameInExactScope(
+    SemIR::NameId name_id, const SemIR::NameScope& scope) -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
     ResolveIfLazyImportRef(it->second);
     return it->second;
@@ -315,8 +514,8 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
 
 auto Context::LookupQualifiedName(Parse::NodeId parse_node,
                                   SemIR::NameId name_id,
-                                  SemIR::NameScopeId scope_id, bool required)
-    -> SemIR::InstId {
+                                  SemIR::NameScopeId scope_id,
+                                  bool required) -> SemIR::InstId {
   llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
   auto result_id = SemIR::InstId::Invalid;
   bool has_error = false;
@@ -445,29 +644,7 @@ auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
 }
 
 auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  // TODO: The constant value of an instruction should be computed as we build
-  // the instruction, or at least cached once computed.
-  while (true) {
-    auto inst = insts().Get(inst_id);
-    switch (inst.kind()) {
-      case SemIR::NameRef::Kind:
-        inst_id = inst.As<SemIR::NameRef>().value_id;
-        break;
-
-      case SemIR::BindName::Kind:
-        inst_id = inst.As<SemIR::BindName>().value_id;
-        break;
-
-      case SemIR::BaseDecl::Kind:
-      case SemIR::FieldDecl::Kind:
-      case SemIR::FunctionDecl::Kind:
-        return inst_id;
-
-      default:
-        // TODO: Handle the remaining cases.
-        return SemIR::InstId::Invalid;
-    }
-  }
+  return UnwrapIfConstant(*this, inst_id).value_or(SemIR::InstId::Invalid);
 }
 
 template <typename BranchNode, typename... Args>
@@ -487,16 +664,14 @@ auto Context::AddDominatedBlockAndBranch(Parse::NodeId parse_node)
   return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
-                                                SemIR::InstId arg_id)
-    -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchWithArg(
+    Parse::NodeId parse_node, SemIR::InstId arg_id) -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
-                                           SemIR::InstId cond_id)
-    -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchIf(
+    Parse::NodeId parse_node, SemIR::InstId cond_id) -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
                                                          cond_id);
 }
@@ -519,8 +694,8 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
-    -> SemIR::InstId {
+    Parse::NodeId parse_node,
+    std::initializer_list<SemIR::InstId> block_args) -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -788,8 +963,8 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
-      -> SemIR::ValueRepr {
+  auto BuildCrossRefValueRepr(SemIR::TypeId type_id,
+                              SemIR::CrossRef xref) const -> SemIR::ValueRepr {
     auto xref_inst =
         context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
 
@@ -823,11 +998,10 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepr(Parse::NodeId parse_node,
-                                   std::size_t num_elements,
-                                   SemIR::TypeId elementwise_rep,
-                                   bool same_as_object_rep) const
-      -> SemIR::ValueRepr {
+  auto BuildStructOrTupleValueRepr(
+      Parse::NodeId parse_node, std::size_t num_elements,
+      SemIR::TypeId elementwise_rep,
+      bool same_as_object_rep) const -> SemIR::ValueRepr {
     SemIR::ValueRepr::AggregateKind aggregate_kind =
         same_as_object_rep ? SemIR::ValueRepr::ValueAndObjectAggregate
                            : SemIR::ValueRepr::ValueAggregate;
@@ -911,8 +1085,8 @@ class TypeCompleter {
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
-      -> SemIR::ValueRepr {
+  auto BuildValueRepr(SemIR::TypeId type_id,
+                      SemIR::Inst inst) const -> SemIR::ValueRepr {
     // TODO: This can emit new SemIR instructions. Consider emitting them into a
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
@@ -1169,6 +1343,9 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
+  if (auto constant = insts().Get(inst_id).TryAs<SemIR::ReifyConstant>()) {
+    inst_id = constant->constant_id;
+  }
   while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
     inst_id = converted->result_id;
   }
@@ -1187,9 +1364,8 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
-auto Context::CanonicalizeStructType(Parse::NodeId parse_node,
-                                     SemIR::InstBlockId refs_id)
-    -> SemIR::TypeId {
+auto Context::CanonicalizeStructType(
+    Parse::NodeId parse_node, SemIR::InstBlockId refs_id) -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }

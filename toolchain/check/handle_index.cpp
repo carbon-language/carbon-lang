@@ -64,10 +64,10 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
       if (array_cat == SemIR::ExprCategory::Value) {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = context.AddInst(
+        operand_inst_id = context.AddExpr(
             SemIR::ValueAsRef{parse_node, operand_type_id, operand_inst_id});
       }
-      auto elem_id = context.AddInst(
+      auto elem_id = context.AddExpr(
           SemIR::ArrayIndex{parse_node, array_type.element_type_id,
                             operand_inst_id, cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
@@ -98,7 +98,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         context.emitter().Emit(parse_node, TupleIndexIntLiteral);
         index_inst_id = SemIR::InstId::BuiltinError;
       }
-      context.AddInstAndPush(parse_node,
+      context.AddExprAndPush(parse_node,
                              SemIR::TupleIndex{parse_node, element_type_id,
                                                operand_inst_id, index_inst_id});
       return true;

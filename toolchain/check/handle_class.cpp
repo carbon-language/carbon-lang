@@ -101,7 +101,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id =
-        context.CanonicalizeType(context.AddInst(SemIR::ClassType{
+        context.CanonicalizeType(context.AddExpr(SemIR::ClassType{
             parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
             class_decl.class_id}));
   }
@@ -288,7 +288,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
+  auto field_type_inst_id = context.AddExpr(SemIR::UnboundElementType{
       parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
       class_info.self_type_id, base_info.type_id});
   auto field_type_id = context.CanonicalizeType(field_type_inst_id);

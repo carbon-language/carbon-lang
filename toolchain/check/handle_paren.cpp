@@ -46,7 +46,7 @@ auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId parse_node)
   auto type_id = context.CanonicalizeTupleType(parse_node, type_ids);
 
   auto value_id =
-      context.AddInst(SemIR::TupleLiteral{parse_node, type_id, refs_id});
+      context.AddExpr(SemIR::TupleLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
   return true;
 }

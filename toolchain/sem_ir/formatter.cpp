@@ -476,9 +476,10 @@ class InstNamer {
           continue;
         }
         case FunctionDecl::Kind: {
-          add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDecl>().function_id)
-                               .name_id);
+          if (auto function_id = inst.As<FunctionDecl>().function_id;
+              function_id.is_valid()) {
+            add_inst_name_id(sem_ir_.functions().Get(function_id).name_id);
+          }
           continue;
         }
         case ClassDecl::Kind: {

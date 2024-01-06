@@ -58,12 +58,21 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
 
+  // Adds an expression instruction to the current block, returning the produced
+  // ID. If the instruction is a constant, it is evaluated, and the result of
+  // evaluation is returned instead.
+  auto AddExpr(SemIR::Inst inst) -> SemIR::InstId;
+
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstantInst(SemIR::Inst inst) -> SemIR::InstId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   auto AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst) -> void;
+
+  // Pushes a parse tree node representing an expression onto the stack, storing
+  // the SemIR::Inst or its constant value as the result.
+  auto AddExprAndPush(Parse::NodeId parse_node, SemIR::Inst inst) -> void;
 
   // Adds a package's imports to name lookup, with all libraries together.
   // sem_irs will all be non-null; has_load_error must be used for any errors.

@@ -198,7 +198,7 @@ auto HandlePostfixOperatorStar(Context& context,
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, parse_node, value_id);
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::PointerType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
   return true;
@@ -223,7 +223,7 @@ auto HandlePrefixOperatorAmp(Context& context,
       context.emitter().Emit(TokenOnly(parse_node), AddressOfNonRef);
       break;
   }
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::AddressOf{parse_node,
                        context.GetPointerType(
@@ -253,7 +253,7 @@ auto HandlePrefixOperatorConst(Context& context,
     context.emitter().Emit(parse_node, RepeatedConst);
   }
   auto inner_type_id = ExprAsType(context, parse_node, value_id);
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::ConstType{parse_node, SemIR::TypeId::TypeType, inner_type_id});
   return true;
@@ -274,7 +274,7 @@ auto HandlePrefixOperatorNot(Context& context,
                              Parse::PrefixOperatorNotId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   value_id = ConvertToBoolValue(context, parse_node, value_id);
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::UnaryOperatorNot{
           parse_node, context.insts().Get(value_id).type_id(), value_id});
@@ -313,7 +313,7 @@ auto HandlePrefixOperatorStar(Context& context,
     }
     builder.Emit();
   }
-  context.AddInstAndPush(parse_node,
+  context.AddExprAndPush(parse_node,
                          SemIR::Deref{parse_node, result_type_id, value_id});
   return true;
 }
@@ -329,10 +329,10 @@ static auto HandleShortCircuitOperand(Context& context,
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   SemIR::InstId branch_value_id =
-      is_or ? context.AddInst(SemIR::UnaryOperatorNot{parse_node, bool_type_id,
+      is_or ? context.AddExpr(SemIR::UnaryOperatorNot{parse_node, bool_type_id,
                                                       cond_value_id})
             : cond_value_id;
-  auto short_circuit_result_id = context.AddInst(SemIR::BoolLiteral{
+  auto short_circuit_result_id = context.AddExpr(SemIR::BoolLiteral{
       parse_node, bool_type_id,
       is_or ? SemIR::BoolValue::True : SemIR::BoolValue::False});
 
@@ -385,7 +385,7 @@ static auto HandleShortCircuitOperator(Context& context,
   context.AddCurrentCodeBlockToFunction();
 
   // Collect the result from either the first or second operand.
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::BlockArg{parse_node, context.insts().Get(rhs_id).type_id(),
                       resume_block_id});

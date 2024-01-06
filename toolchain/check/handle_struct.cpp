@@ -93,7 +93,7 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id =
-      context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
+      context.AddExpr(SemIR::StructLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
@@ -130,7 +130,7 @@ auto HandleStructTypeLiteral(Context& context,
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
   return true;

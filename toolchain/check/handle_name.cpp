@@ -107,7 +107,7 @@ auto HandleMemberAccessExpr(Context& context,
     }
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
-    context.AddInstAndPush(
+    context.AddExprAndPush(
         parse_node,
         SemIR::NameRef{parse_node, inst.type_id(), name_id, inst_id});
     return true;
@@ -159,7 +159,7 @@ auto HandleMemberAccessExpr(Context& context,
             << "Non-constant value " << context.insts().Get(member_id)
             << " of unbound element type";
         auto index = GetClassElementIndex(context, element_id);
-        auto access_id = context.AddInst(SemIR::ClassElementAccess{
+        auto access_id = context.AddExpr(SemIR::ClassElementAccess{
             parse_node, unbound_element_type->element_type_id, base_id, index});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
@@ -188,7 +188,7 @@ auto HandleMemberAccessExpr(Context& context,
             << "Unexpected value " << context.insts().Get(function_name_id)
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
-          context.AddInstAndPush(
+          context.AddExprAndPush(
               parse_node,
               SemIR::BoundMethod{
                   parse_node,
@@ -200,7 +200,7 @@ auto HandleMemberAccessExpr(Context& context,
 
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.
-      context.AddInstAndPush(
+      context.AddExprAndPush(
           parse_node,
           SemIR::NameRef{parse_node, member_type_id, name_id, member_id});
       return true;
@@ -212,7 +212,7 @@ auto HandleMemberAccessExpr(Context& context,
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
-          context.AddInstAndPush(
+          context.AddExprAndPush(
               parse_node, SemIR::StructAccess{parse_node, field.field_type_id,
                                               base_id, SemIR::ElementIndex(i)});
           return true;
@@ -272,7 +272,7 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
     return context.TODO(parse_node, "Unimplemented use of interface");
   }
   auto value = context.insts().Get(value_id);
-  context.AddInstAndPush(parse_node, SemIR::NameRef{parse_node, value.type_id(),
+  context.AddExprAndPush(parse_node, SemIR::NameRef{parse_node, value.type_id(),
                                                     name_id, value_id});
   return true;
 }
@@ -352,7 +352,7 @@ auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
 
 auto HandlePackageExpr(Context& context, Parse::PackageExprId parse_node)
     -> bool {
-  context.AddInstAndPush(
+  context.AddExprAndPush(
       parse_node,
       SemIR::NameRef{
           parse_node, context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
