@@ -217,8 +217,8 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleLazyImportRef(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
-    -> void {
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::LazyImportRef inst) -> void {
   FatalErrorIfEncountered(inst);
 }
 
@@ -259,6 +259,12 @@ auto HandleRealLiteral(FunctionContext& context, SemIR::InstId inst_id,
                                 context.builder().getDoubleTy(), llvm_val));
 }
 
+auto HandleReifyConstant(FunctionContext& context, SemIR::InstId inst_id,
+                         SemIR::ReifyConstant inst) -> void {
+  // TODO: Build the constant value here?
+  context.SetLocal(inst_id, context.GetValue(inst.constant_id));
+}
+
 auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Return /*inst*/) -> void {
   context.builder().CreateRetVoid();
@@ -289,8 +295,8 @@ auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleStringLiteral(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::StringLiteral inst)
-    -> void {
+                         SemIR::InstId /*inst_id*/,
+                         SemIR::StringLiteral inst) -> void {
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 

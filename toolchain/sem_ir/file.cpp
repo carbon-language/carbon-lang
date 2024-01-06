@@ -14,6 +14,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
+#include "typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -226,6 +227,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case NoOp::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
+    case ReifyConstant::Kind:
     case Return::Kind:
     case ReturnExpr::Kind:
     case SpliceBlock::Kind:
@@ -428,6 +430,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case NoOp::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
+      case ReifyConstant::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case SpliceBlock::Kind:
@@ -502,6 +505,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case Converted::Kind: {
         inst_id = inst.As<Converted>().result_id;
+        continue;
+      }
+
+      case ReifyConstant::Kind: {
+        inst_id = inst.As<ReifyConstant>().constant_id;
         continue;
       }
 

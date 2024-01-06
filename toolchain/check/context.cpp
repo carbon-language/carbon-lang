@@ -953,6 +953,7 @@ class TypeCompleter {
       case SemIR::NoOp::Kind:
       case SemIR::Param::Kind:
       case SemIR::RealLiteral::Kind:
+      case SemIR::ReifyConstant::Kind:
       case SemIR::Return::Kind:
       case SemIR::ReturnExpr::Kind:
       case SemIR::SpliceBlock::Kind:

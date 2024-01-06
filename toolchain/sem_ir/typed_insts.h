@@ -436,6 +436,13 @@ struct RealLiteral {
   RealId real_id;
 };
 
+struct ReifyConstant {
+  static constexpr auto Kind = InstKind::ReifyConstant.Define("reify_constant");
+
+  TypeId type_id;
+  InstId constant_id;
+};
+
 struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define("return", TerminatorKind::Terminator);
