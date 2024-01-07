@@ -58,14 +58,8 @@ auto HandleChoiceAlternative(Context& context) -> void {
     return;
   }
 
-  context.AddNode(NodeKind::IdentifierName, context.Consume(),
-                  state.subtree_start, state.has_error);
   context.PushState(State::ChoiceAlternativeFinish);
-  if (context.PositionIs(Lex::TokenKind::OpenParen)) {
-    state.has_error = false;
-    state.state = State::PatternListAsTuple;
-    context.PushState(state);
-  }
+  context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
 auto HandleChoiceAlternativeFinish(Context& context) -> void {
