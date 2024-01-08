@@ -52,26 +52,27 @@ void StaticScope::PrintID(llvm::raw_ostream& out) const {
   PrintCommon([&out](auto node) { node->PrintID(out); });
 }
 
-void StaticScope::UpdateNameStatus(std::string_view name, NameStatus new_status, 
-                                   const std::string& trace_message) {
-    auto it = declared_names_.find(name);
+void StaticScope::MarkDeclared(std::string_view name) {
+  auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
-  it->second.status = new_status;
-  if (trace_stream_->is_enabled()) {
-    trace_stream_->Result() << trace_message << "\n";
+  if (it->second.status == NameStatus::KnownButNotDeclared) {
+    it->second.status = NameStatus::DeclaredButNotUsable;
+    if (trace_stream_->is_enabled()) {
+      trace_stream_->Result()
+          << "marked `" << name << "` declared but not usable in `"
+          << PrintAsID(*this) << "`\n";
+    }
   }
 }
 
-void StaticScope::MarkDeclared(std::string_view name) {
-  UpdateNameStatus(name, NameStatus::DeclaredButNotUsable, 
-                   "marked `" + std::string(name) + 
-                   "` declared but not usable in `" + PrintAsID(*this) + "`");
-}
-
 void StaticScope::MarkUsable(std::string_view name) {
-  UpdateNameStatus(name, NameStatus::Usable, 
-                   "marked `" + std::string(name) + 
-                   "` usable in `" + PrintAsID(*this) + "`");
+  auto it = declared_names_.find(name);
+  CARBON_CHECK(it != declared_names_.end()) << name << " not found";
+  it->second.status = NameStatus::Usable;
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Result()
+        << "marked `" << name << "` usable in `" << PrintAsID(*this) << "`\n";
+  }
 }
 
 auto StaticScope::Resolve(std::string_view name,
