@@ -134,6 +134,12 @@ class NodeStack {
     return PopWithParseNode<SemIR::InstId>();
   }
 
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
   // Pops a name from the top of the stack and returns the parse_node and
   // the ID.
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
@@ -144,40 +150,45 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithParseNode() -> auto {
     constexpr IdKind RequiredIdKind = ParseNodeKindToIdKind(RequiredParseKind);
+    auto node_id_cast = [&](auto back) {
+      using NodeIdT = Parse::NodeIdForKind<RequiredParseKind>;
+      return std::pair<NodeIdT, decltype(back.second)>(back);
+    };
+
     if constexpr (RequiredIdKind == IdKind::InstId) {
       auto back = PopWithParseNode<SemIR::InstId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InstBlockId) {
       auto back = PopWithParseNode<SemIR::InstBlockId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::FunctionId) {
       auto back = PopWithParseNode<SemIR::FunctionId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::ClassId) {
       auto back = PopWithParseNode<SemIR::ClassId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::InterfaceId) {
       auto back = PopWithParseNode<SemIR::InterfaceId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::NameId) {
       auto back = PopWithParseNode<SemIR::NameId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     if constexpr (RequiredIdKind == IdKind::TypeId) {
       auto back = PopWithParseNode<SemIR::TypeId>();
       RequireParseKind<RequiredParseKind>(back.first);
-      return back;
+      return node_id_cast(back);
     }
     CARBON_FATAL() << "Unpoppable IdKind for parse kind: " << RequiredParseKind
                    << "; see value in ParseNodeKindToIdKind";
@@ -197,6 +208,12 @@ class NodeStack {
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
+
+  // Pops a pattern from the top of the stack and returns the ID.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  auto PopPattern() -> SemIR::InstId {
+    return PopPatternWithParseNode().second;
+  }
 
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
@@ -354,6 +371,7 @@ class NodeStack {
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::GenericBindingPattern:
       case Parse::NodeKind::IdentifierNameExpr:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::IfExprElse:
@@ -373,6 +391,7 @@ class NodeStack {
       case Parse::NodeKind::StructFieldType:
       case Parse::NodeKind::StructTypeLiteral:
       case Parse::NodeKind::TupleLiteral:
+      case Parse::NodeKind::VariableInitializer:
         return IdKind::InstId;
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
@@ -406,7 +425,6 @@ class NodeStack {
       case Parse::NodeKind::ReturnVarModifier:
       case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
-      case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
 // Use x-macros to handle boilerplate cases.

@@ -51,9 +51,31 @@ struct Extractable<NodeId> {
     if (trace) {
       *trace << "NodeId: " << tree->node_kind(*it) << " consumed\n";
     }
-    return NodeId(*it++);
+    return *it++;
   }
 };
+
+static auto NodeIdForKindAccept(const NodeKind& kind, const Tree* tree,
+                                const Tree::SiblingIterator& it,
+                                Tree::SiblingIterator end, ErrorBuilder* trace)
+    -> bool {
+  if (it == end || tree->node_kind(*it) != kind) {
+    if (trace) {
+      if (it == end) {
+        *trace << "NodeIdForKind error: no more children, expected " << kind
+               << "\n";
+      } else {
+        *trace << "NodeIdForKind error: wrong kind " << tree->node_kind(*it)
+               << ", expected " << kind << "\n";
+      }
+    }
+    return false;
+  }
+  if (trace) {
+    *trace << "NodeIdForKind: " << kind << " consumed\n";
+  }
+  return true;
+}
 
 // Extract a `FooId`, which is the same as `NodeIdForKind<NodeKind::Foo>`,
 // as a single required child.
@@ -62,24 +84,35 @@ struct Extractable<NodeIdForKind<Kind>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdForKind<Kind>> {
-    if (it == end || tree->node_kind(*it) != Kind) {
-      if (trace) {
-        if (it == end) {
-          *trace << "NodeIdForKind error: no more children, expected " << Kind
-                 << "\n";
-        } else {
-          *trace << "NodeIdForKind error: wrong kind " << tree->node_kind(*it)
-                 << ", expected " << Kind << "\n";
-        }
-      }
+    if (NodeIdForKindAccept(Kind, tree, it, end, trace)) {
+      return NodeIdForKind<Kind>(*it++);
+    } else {
       return std::nullopt;
     }
-    if (trace) {
-      *trace << "NodeIdForKind: " << Kind << " consumed\n";
-    }
-    return NodeIdForKind<Kind>(*it++);
   }
 };
+
+static auto NodeIdInCategoryAccept(NodeCategory category, const Tree* tree,
+                                   const Tree::SiblingIterator& it,
+                                   Tree::SiblingIterator end,
+                                   ErrorBuilder* trace) -> bool {
+  if (it == end || !(tree->node_kind(*it).category() & category)) {
+    if (trace) {
+      *trace << "NodeIdInCategory " << category << " error: ";
+      if (it == end) {
+        *trace << "no more children\n";
+      } else {
+        *trace << "kind " << tree->node_kind(*it) << " doesn't match\n";
+      }
+    }
+    return false;
+  }
+  if (trace) {
+    *trace << "NodeIdInCategory " << category << ": kind "
+           << tree->node_kind(*it) << " consumed\n";
+  }
+  return true;
+}
 
 // Extract a `NodeIdInCategory<Category>` as a single child.
 template <NodeCategory Category>
@@ -87,24 +120,38 @@ struct Extractable<NodeIdInCategory<Category>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdInCategory<Category>> {
-    if (it == end || !(tree->node_kind(*it).category() & Category)) {
-      if (trace) {
-        *trace << "NodeIdInCategory " << Category << " error: ";
-        if (it == end) {
-          *trace << "no more children\n";
-        } else {
-          *trace << "kind " << tree->node_kind(*it) << " doesn't match\n";
-        }
-      }
+    if (NodeIdInCategoryAccept(Category, tree, it, end, trace)) {
+      return NodeIdInCategory<Category>(*it++);
+    } else {
       return std::nullopt;
     }
-    if (trace) {
-      *trace << "NodeIdInCategory " << Category << ": kind "
-             << tree->node_kind(*it) << " consumed\n";
-    }
-    return NodeIdInCategory<Category>(*it++);
   }
 };
+
+static auto NodeIdForKindAccept(NodeKind kind1, NodeKind kind2,
+                                const Tree* tree,
+                                const Tree::SiblingIterator& it,
+                                Tree::SiblingIterator end, ErrorBuilder* trace)
+    -> bool {
+  auto kind = tree->node_kind(*it);
+  if (it == end || (kind != kind1 && kind != kind2)) {
+    if (trace) {
+      if (it == end) {
+        *trace << "NodeIdOneOf error: no more children, expected " << kind1
+               << " or " << kind2 << "\n";
+      } else {
+        *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
+               << ", expected " << kind1 << " or " << kind2 << "\n";
+      }
+    }
+    return false;
+  }
+  if (trace) {
+    *trace << "NodeIdOneOf " << kind1 << " or " << kind2 << ": "
+           << tree->node_kind(*it) << " consumed\n";
+  }
+  return true;
+}
 
 // Extract a `NodeIdOneOf<T, U>` as a single required child.
 template <typename T, typename U>
@@ -112,28 +159,16 @@ struct Extractable<NodeIdOneOf<T, U>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<NodeIdOneOf<T, U>> {
-    auto kind = tree->node_kind(*it);
-    if (it == end || (kind != T::Kind && kind != U::Kind)) {
-      if (trace) {
-        if (it == end) {
-          *trace << "NodeIdOneOf error: no more children, expected " << T::Kind
-                 << " or " << U::Kind << "\n";
-        } else {
-          *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
-                 << ", expected " << T::Kind << " or " << U::Kind << "\n";
-        }
-      }
+    if (NodeIdForKindAccept(T::Kind, U::Kind, tree, it, end, trace)) {
+      return NodeIdOneOf<T, U>(*it++);
+    } else {
       return std::nullopt;
     }
-    if (trace) {
-      *trace << "NodeIdOneOf " << T::Kind << " or " << U::Kind << ": "
-             << tree->node_kind(*it) << " consumed\n";
-    }
-    return NodeIdOneOf<T, U>(*it++);
   }
 };
 
 // Extract a `NodeIdNot<T>` as a single required child.
+// Note: this is only instantiated once, so no need to create a helper function.
 template <typename T>
 struct Extractable<NodeIdNot<T>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
@@ -210,49 +245,36 @@ struct Extractable<std::optional<T>> {
   }
 };
 
-// Extract a `tuple<T...>` from a list of child nodes by extracting each `T` in
-// reverse order.
-template <typename... T>
-struct Extractable<std::tuple<T...>> {
-  template <std::size_t... Index>
-  static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
-                          Tree::SiblingIterator end, ErrorBuilder* trace,
-                          std::index_sequence<Index...>)
-      -> std::optional<std::tuple<T...>> {
-    std::tuple<std::optional<T>...> fields;
+template <typename T, typename... U, std::size_t... Index>
+static auto ExtractTupleLikeType(const Tree* tree, Tree::SiblingIterator& it,
+                                 Tree::SiblingIterator end, ErrorBuilder* trace,
+                                 std::index_sequence<Index...> /*indices*/,
+                                 std::tuple<U...>* /*type*/)
+    -> std::optional<T> {
+  std::tuple<std::optional<U>...> fields;
+  if (trace) {
+    *trace << "Aggregate " << typeid(T).name() << ": begin\n";
+  }
+  // Use a fold over the `=` operator to parse fields from right to left.
+  [[maybe_unused]] int unused;
+  bool ok = true;
+  static_cast<void>(
+      ((ok && (ok = (std::get<Index>(fields) =
+                         Extractable<U>::Extract(tree, it, end, trace))
+                        .has_value()),
+        unused) = ... = 0));
+  if (!ok) {
     if (trace) {
-      *trace << sizeof...(T) << "-tuple: begin\n";
+      *trace << "Aggregate " << typeid(T).name() << ": error\n";
     }
-
-    // Use a fold over the `=` operator to parse fields from right to left.
-    [[maybe_unused]] int unused;
-    bool ok = true;
-    static_cast<void>(
-        ((ok && (ok = (std::get<Index>(fields) =
-                           Extractable<T>::Extract(tree, it, end, trace))
-                          .has_value()),
-          unused) = ... = 0));
-
-    if (!ok) {
-      if (trace) {
-        *trace << sizeof...(T) << "-tuple: error\n";
-      }
-      return std::nullopt;
-    }
-
-    if (trace) {
-      *trace << sizeof...(T) << "-tuple: success\n";
-    }
-    return std::tuple<T...>{std::move(std::get<Index>(fields).value())...};
+    return std::nullopt;
   }
 
-  static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
-                      Tree::SiblingIterator end, ErrorBuilder* trace)
-      -> std::optional<std::tuple<T...>> {
-    return ExtractImpl(tree, it, end, trace,
-                       std::make_index_sequence<sizeof...(T)>());
+  if (trace) {
+    *trace << "Aggregate " << typeid(T).name() << ": success\n";
   }
-};
+  return T{std::move(std::get<Index>(fields).value())...};
+}
 
 // Extract the fields of a simple aggregate type.
 template <typename T>
@@ -261,28 +283,12 @@ struct Extractable {
   static auto ExtractImpl(const Tree* tree, Tree::SiblingIterator& it,
                           Tree::SiblingIterator end, ErrorBuilder* trace)
       -> std::optional<T> {
-    if (trace) {
-      *trace << "Aggregate " << typeid(T).name() << ": begin\n";
-    }
-    // Extract the corresponding tuple type.
+    // Compute the corresponding tuple type.
     using TupleType = decltype(StructReflection::AsTuple(std::declval<T>()));
-    auto tuple = Extractable<TupleType>::Extract(tree, it, end, trace);
-    if (!tuple.has_value()) {
-      if (trace) {
-        *trace << "Aggregate " << typeid(T).name() << ": error\n";
-      }
-      return std::nullopt;
-    }
-
-    if (trace) {
-      *trace << "Aggregate " << typeid(T).name() << ": success\n";
-    }
-    // Convert the tuple to the struct type.
-    return std::apply(
-        [](auto&&... value) {
-          return T{std::forward<decltype(value)>(value)...};
-        },
-        *tuple);
+    return ExtractTupleLikeType<T>(
+        tree, it, end, trace,
+        std::make_index_sequence<std::tuple_size_v<TupleType>>(),
+        static_cast<TupleType*>(nullptr));
   }
 
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,

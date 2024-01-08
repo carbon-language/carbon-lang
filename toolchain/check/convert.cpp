@@ -51,6 +51,10 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         if (!SemIR::GetInitRepr(sem_ir, call.type_id).has_return_slot()) {
           return SemIR::InstId::Invalid;
         }
+        if (!call.args_id.is_valid()) {
+          // Argument initialization failed, so we have no return slot.
+          return SemIR::InstId::Invalid;
+        }
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
     }

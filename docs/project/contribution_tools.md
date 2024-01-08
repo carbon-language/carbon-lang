@@ -49,10 +49,11 @@ sudo apt install \
   gh \
   libc++-dev \
   lld \
-  python3
+  python3 \
+  pipx
 
 # Install pre-commit.
-pip3 install pre-commit
+pipx install pre-commit
 
 # Set up git.
 # If you don't already have a fork:

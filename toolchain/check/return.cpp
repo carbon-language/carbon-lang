@@ -108,7 +108,8 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
   }
 }
 
-auto BuildReturnWithNoExpr(Context& context, Parse::NodeId parse_node) -> void {
+auto BuildReturnWithNoExpr(Context& context,
+                           Parse::ReturnStatementId parse_node) -> void {
   const auto& function = GetCurrentFunction(context);
 
   if (function.return_type_id.is_valid()) {
@@ -122,7 +123,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::NodeId parse_node) -> void {
   context.AddInst(SemIR::Return{parse_node});
 }
 
-auto BuildReturnWithExpr(Context& context, Parse::NodeId parse_node,
+auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
@@ -154,7 +155,8 @@ auto BuildReturnWithExpr(Context& context, Parse::NodeId parse_node,
   context.AddInst(SemIR::ReturnExpr{parse_node, expr_id});
 }
 
-auto BuildReturnVar(Context& context, Parse::NodeId parse_node) -> void {
+auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
+    -> void {
   const auto& function = GetCurrentFunction(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 

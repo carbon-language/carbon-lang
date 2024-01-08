@@ -219,7 +219,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
             sem_ir().insts().TryGetAs<SemIR::AddrPattern>(param_ref_id)) {
       bind_name_id = addr->inner_id;
     }
-    CARBON_CHECK(sem_ir().insts().TryGetAs<SemIR::BindName>(bind_name_id));
+    auto bind_name = sem_ir().insts().Get(bind_name_id);
+    // TODO: Should we stop passing compile-time bindings at runtime?
+    CARBON_CHECK(bind_name.Is<SemIR::AnyBindName>());
     function_lowering.SetLocal(bind_name_id, param_value);
   }
 
@@ -272,6 +274,9 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
+    case SemIR::BindSymbolicName::Kind:
+      // Treat non-monomorphized type bindings as opaque.
+      return llvm::StructType::get(*llvm_context_);
     case SemIR::ClassType::Kind: {
       auto object_repr_id = sem_ir_->classes()
                                 .Get(inst.As<SemIR::ClassType>().class_id)

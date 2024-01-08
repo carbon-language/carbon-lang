@@ -144,9 +144,11 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
   // Add a name for formatted output. This isn't used in name lookup in order
   // to reduce indirection, but it's separate from the Import because it
   // otherwise fits in an Inst.
+  auto bind_name_id = bind_names().Add(
+      {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
   AddInst(SemIR::BindName{.parse_node = import_node,
                           .type_id = type_id,
-                          .name_id = name_id,
+                          .bind_name_id = bind_name_id,
                           .value_id = inst_id});
 }
 
@@ -1007,6 +1009,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
+      case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);
@@ -1123,6 +1126,12 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
           semantics_context
               .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
               .index);
+      break;
+    case SemIR::BindSymbolicName::Kind:
+      // TODO: Use de Bruijn levels or similar to identify equivalent type
+      // bindings across redeclarations.
+      canonical_id.AddInteger(
+          inst.As<SemIR::BindSymbolicName>().bind_name_id.index);
       break;
     case SemIR::PointerType::Kind:
       canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);

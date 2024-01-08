@@ -43,7 +43,8 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
-static auto BuildFunctionDecl(Context& context, Parse::NodeId parse_node,
+static auto BuildFunctionDecl(Context& context,
+                              Parse::AnyFunctionDeclId parse_node,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   // TODO: This contains the IR block for the parameters and return type. At
@@ -260,9 +261,10 @@ auto HandleFunctionDefinitionStart(Context& context,
           context.sem_ir().StringifyType(param.type_id()));
     });
 
-    if (auto fn_param = param.TryAs<SemIR::BindName>()) {
-      context.AddNameToLookup(fn_param->parse_node, fn_param->name_id,
-                              param_id);
+    if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
+      context.AddNameToLookup(
+          fn_param->parse_node,
+          context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
                      << param;

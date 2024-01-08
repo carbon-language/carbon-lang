@@ -22,8 +22,9 @@ fn B() {}
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -34,10 +35,12 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:
-// CHECK:STDOUT:     block0:          {}
-// CHECK:STDOUT:     block1:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     empty:           {}
+// CHECK:STDOUT:     exports:
+// CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     block2:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
@@ -45,8 +48,9 @@ fn B() {}
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: block0, body: [block1]}
+// CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -57,10 +61,12 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   inst_blocks:
-// CHECK:STDOUT:     block0:          {}
-// CHECK:STDOUT:     block1:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     empty:           {}
+// CHECK:STDOUT:     exports:
+// CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     block2:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...

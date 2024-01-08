@@ -294,6 +294,14 @@ class Context {
     params_or_args_stack_.AddInstId(inst_id);
   }
 
+  // Adds an exported name.
+  auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
+
+  // Finalizes the list of exports on the IR.
+  auto FinalizeExports() -> void {
+    inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -342,6 +350,9 @@ class Context {
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
+  }
+  auto bind_names() -> ValueStore<SemIR::BindNameId>& {
+    return sem_ir().bind_names();
   }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
@@ -530,12 +541,10 @@ class Context {
   // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
   // that FoldingSet can have stable pointers.
   llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
-};
 
-// Parse node handlers. Returns false for unrecoverable errors.
-#define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
-#include "toolchain/parse/node_kind.def"
+  // The list which will form NodeBlockId::Exports.
+  llvm::SmallVector<SemIR::InstId> exports_;
+};
 
 }  // namespace Carbon::Check
 

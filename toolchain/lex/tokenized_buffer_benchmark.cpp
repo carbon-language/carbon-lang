@@ -854,6 +854,7 @@ constexpr DispatchTableT DispatchTable = []() {
   for (int i = 0; i < 256; ++i) {
     tmp_table[i] = &BasicDispatch<DispatchTable<NumDispatchTargets>>;
   }
+  // NOLINTNEXTLINE(readability-braces-around-statements): False positive.
   if constexpr (NumDispatchTargets > 1) {
     // Add additional dispatch targets from our specializable array.
     SpecializeDispatchTable<DispatchTable<NumDispatchTargets>>(

@@ -66,6 +66,40 @@ auto operator!=(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index != rhs.index;
 }
 
+template <
+    typename IndexType, typename RHSType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
+    typename std::enable_if_t<std::is_convertible_v<RHSType, IndexType>>* =
+        nullptr>
+auto operator==(IndexType lhs, RHSType rhs) -> bool {
+  return lhs.index == IndexType(rhs).index;
+}
+template <
+    typename IndexType, typename RHSType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
+    typename std::enable_if_t<std::is_convertible_v<RHSType, IndexType>>* =
+        nullptr>
+auto operator!=(IndexType lhs, RHSType rhs) -> bool {
+  return lhs.index != IndexType(rhs).index;
+}
+
+template <
+    typename LHSType, typename IndexType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
+    typename std::enable_if_t<std::is_convertible_v<LHSType, IndexType>>* =
+        nullptr>
+auto operator==(LHSType lhs, IndexType rhs) -> bool {
+  return IndexType(lhs).index == rhs.index;
+}
+template <
+    typename LHSType, typename IndexType,
+    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
+    typename std::enable_if_t<std::is_convertible_v<LHSType, IndexType>>* =
+        nullptr>
+auto operator!=(LHSType lhs, IndexType rhs) -> bool {
+  return IndexType(lhs).index != rhs.index;
+}
+
 // The < and > comparisons for only IndexBase.
 template <typename IndexType,
           typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =

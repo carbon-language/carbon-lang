@@ -17,6 +17,16 @@
 
 namespace Carbon::SemIR {
 
+struct BindNameInfo : public Printable<BindNameInfo> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+        << "}";
+  }
+
+  NameId name_id;
+  NameScopeId enclosing_scope_id;
+};
+
 // A function.
 struct Function : public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -168,7 +178,7 @@ class File : public Printable<File> {
                 const File* builtins);
 
   File(const File&) = delete;
-  File& operator=(const File&) = delete;
+  auto operator=(const File&) -> File& = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -239,6 +249,10 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
+  auto bind_names() -> ValueStore<BindNameId>& { return bind_names_; }
+  auto bind_names() const -> const ValueStore<BindNameId>& {
+    return bind_names_;
+  }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -299,6 +313,9 @@ class File : public Printable<File> {
   // The associated filename.
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
   std::string filename_;
+
+  // Storage for bind names.
+  ValueStore<BindNameId> bind_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;
