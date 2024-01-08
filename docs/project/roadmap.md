@@ -57,7 +57,7 @@ from an exhaustive list:
 
 ### Carbon's toolchain can build C++ code
 
-We need the toolchain to be able to build C++ code as-if it were Clang in order
+We need the toolchain to be able to build C++ code as if it were Clang in order
 to build the C++ code that Carbon is interoperating with. This isn't about
 building anything new or novel, but about packaging and exposing Clang for this
 purpose.
@@ -67,7 +67,7 @@ purpose.
 We should be able to drop Carbon's toolchain into at least simple `Makefile` or
 CMake build systems as a replacement for the C++ toolchain and provide a Carbon
 toolchain. This doesn't include supporting everything or even moderately complex
-builds, only the simplest of builds using these build systems need to work at
+builds; only the simplest of builds using these build systems need to work at
 first.
 
 ### Carbon has a design and toolchain implementation of basic C++ interop
@@ -88,8 +88,8 @@ features they depend on:
 ### Give talks at 2-3 conferences covering 3-4 different Carbon topics
 
 We want to continue to engage with the external C++ community as the Carbon
-toolchain becomes a more real and working toolchain. We specifically want to
-share as interop becomes something people can experiment with and explore.
+toolchain becomes a more real and complete toolchain. We specifically want to
+share when interop becomes something people can experiment with and explore.
 
 ## Beyond 2024
 
