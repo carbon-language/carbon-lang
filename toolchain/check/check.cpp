@@ -85,20 +85,20 @@ static auto GetImportName(Parse::NodeId parse_node, Context& context,
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   switch (import_inst.kind()) {
     case SemIR::InstKind::BindName: {
-      auto bind_name = import_sem_ir.bind_names().Get(
+      const auto& bind_name = import_sem_ir.bind_names().Get(
           import_inst.As<SemIR::BindName>().bind_name_id);
       return {bind_name.name_id, bind_name.enclosing_scope_id};
     }
 
     case SemIR::InstKind::FunctionDecl: {
-      auto& function = import_sem_ir.functions().Get(
+      const auto& function = import_sem_ir.functions().Get(
           import_inst.As<SemIR::FunctionDecl>().function_id);
       return {function.name_id, function.enclosing_scope_id};
     }
 
     case SemIR::InstKind::Namespace: {
       auto namespace_inst = import_inst.As<SemIR::Namespace>();
-      auto& scope =
+      const auto& scope =
           import_sem_ir.name_scopes().Get(namespace_inst.name_scope_id);
       return {namespace_inst.name_id, scope.enclosing_scope_id};
     }
@@ -136,7 +136,6 @@ static auto AddNamespace(Context& context,
   auto id = context.AddInst(inst);
   inst.name_scope_id = context.name_scopes().Add(id, enclosing_scope_id);
   context.insts().Set(id, inst);
-  context.name_scopes().AddEntry(enclosing_scope_id, name_id, id);
   return {id, inst.name_scope_id};
 }
 
@@ -182,7 +181,8 @@ static auto CopyEnclosingNameScopeFromImportIR(
     }
 
     // The namespace hasn't been copied yet, so add it to our list.
-    auto& scope = import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
+    const auto& scope =
+        import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
     auto scope_inst =
         import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id);
     new_namespaces.push_back({scope_inst.name_scope_id, scope_inst.name_id});
@@ -193,7 +193,7 @@ static auto CopyEnclosingNameScopeFromImportIR(
   for (auto import_namespace : llvm::reverse(new_namespaces)) {
     auto name_id =
         CopyNameFromImportIR(context, import_sem_ir, import_namespace.second);
-    auto scope = context.name_scopes().Get(scope_cursor);
+    auto& scope = context.name_scopes().Get(scope_cursor);
     auto [it, success] = scope.names.insert({name_id, SemIR::InstId::Invalid});
     if (!success) {
       auto inst = context.insts().Get(it->second);
@@ -284,6 +284,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
           // qualifiers, and the type is simple.
           auto [namespace_id, name_scope_id] = AddNamespace(
               context, enclosing_scope_id, name_id, namespace_type_id);
+          context.name_scopes().AddEntry(enclosing_scope_id, name_id,
+                                         namespace_id);
           CacheCopiedNamespace(copied_namespaces,
                                import_namespace_inst->name_scope_id,
                                name_scope_id);

@@ -187,7 +187,7 @@ struct NameId : public IdBase, public Printable<NameId> {
   static auto ForIdentifier(IdentifierId id) -> NameId {
     // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
     static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
-    CARBON_CHECK(id.index >= 0 || !id.is_valid())
+    CARBON_CHECK(!id.is_valid() || id.index >= 0)
         << "Unexpected identifier ID " << id.index;
     return NameId(id.index);
   }
@@ -213,7 +213,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (*this == Base) {
       out << "Base";
     } else {
-      CARBON_CHECK(index >= 0 || !is_valid()) << "Unknown index " << index;
+      CARBON_CHECK(!is_valid() || index >= 0) << "Unknown index " << index;
       IdBase::Print(out);
     }
   }
