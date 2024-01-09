@@ -45,7 +45,12 @@ implementation work.
 
 ## Key results in 2024
 
-### Carbon's toolchain implements the language enough to support interop with C++
+### Carbon's toolchain implements enough of the language to build realistic code
+
+This goal is not necessarily about complete support for the entire language
+design, but rather enough of it to support building the realistic and
+interesting Carbon code that interoperates with C++. This does include
+prerequisites like the prelude.
 
 Some example language features that we think are key to success here but far
 from an exhaustive list:
@@ -53,7 +58,7 @@ from an exhaustive list:
 -   Imports
 -   Operator overloading and dispatch for expressions
 -   Generic types and functions
--   Templates (at least enough for interop)
+-   Templates (likely only partial support and focused on interop use cases)
 
 ### Carbon's toolchain can build C++ code
 
@@ -98,7 +103,9 @@ to give an idea of what kinds of things are expected at a high level further out
 in order to illustrate how the goals and priorities we have in 2024 feed into
 subsequent years.
 
-### Potential 2025 goals: ship a working 0.1 language for evaluation
+### Potential 2025 goals: ship a working [0.1 language] for evaluation
+
+[0.1 language]: /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
 
 As we adjust our schedule and roadmap to reflect the realistic rate of progress,
 the _earliest_ it seems feasible to have everything we need to evaluate the 0.1
@@ -111,7 +118,9 @@ We expect that once we reach this milestone the community will be able to start
 realistically evaluating Carbon as a C++ successor language. Of course, this
 evaluation will take some time.
 
-### Potential 2026-2027 goals: finish 0.2 language, stop experimenting
+### Potential 2026-2027 goals: finish [0.2 language], stop experimenting
+
+[0.2 language]: /docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
 
 Once Carbon is moving quickly and getting public feedback, we should be able to
 conclude the experiment. We should know if this is the right direction for
@@ -134,7 +143,9 @@ Some concrete goals that might show up in this time frame:
 -   Create a foundation or similar organization to manage the Carbon project,
     separate from any corporate entities that fund work on Carbon.
 
-### Potential goals _beyond_ 2027: ship 1.0 language & organization
+### Potential goals _beyond_ 2027: ship [1.0 language] & organization
+
+[1.0 language]: /docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
 
 A major milestone will be the first version of a production language. We also
 plan to finish transferring all governance of Carbon to an independent open
