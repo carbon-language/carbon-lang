@@ -34,7 +34,8 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
-      decl_name_stack_(this) {
+      decl_name_stack_(this),
+      lexical_lookup_(sem_ir_->identifiers()) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert({SemIR::InstId::BuiltinError, SemIR::TypeId::Error});
@@ -54,7 +55,6 @@ auto Context::VerifyOnFinish() -> void {
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
   // node_stack_ will still contain top-level entities.
-  CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
   CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
@@ -157,14 +157,15 @@ auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
     // this scope or a scope nested within it.
-    auto& lexical_results = name_lookup_[name_id];
+    auto& lexical_results = lexical_lookup_.Get(name_id);
     CARBON_CHECK(lexical_results.empty() ||
                  lexical_results.back().scope_index < current_scope_index())
         << "Failed to clean up after scope nested within the current scope";
     lexical_results.push_back(
         {.inst_id = target_id, .scope_index = current_scope_index()});
   } else {
-    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back().inst_id);
+    DiagnoseDuplicateName(name_node,
+                          lexical_lookup_.Get(name_id).back().inst_id);
   }
 }
 
@@ -235,11 +236,9 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    if (auto name_it = name_lookup_.find(name_id);
-        name_it != name_lookup_.end()) {
-      CARBON_CHECK(!name_it->second.empty())
-          << "Should have been erased: " << names().GetFormatted(name_id);
-      auto result = name_it->second.back();
+    auto& lexical_results = lexical_lookup_.Get(name_id);
+    if (!lexical_results.empty()) {
+      auto result = lexical_results.back();
       if (result.scope_index == current_scope_index()) {
         ResolveIfLazyImportRef(result.inst_id);
         return result.inst_id;
@@ -266,13 +265,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
 
   // Find the results from enclosing lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
-  llvm::ArrayRef<LexicalLookupResult> lexical_results;
-  if (auto name_it = name_lookup_.find(name_id);
-      name_it != name_lookup_.end()) {
-    lexical_results = name_it->second;
-    CARBON_CHECK(!lexical_results.empty())
-        << "Should have been erased: " << names().GetFormatted(name_id);
-  }
+  llvm::ArrayRef<LexicalLookup::Result> lexical_results =
+      lexical_lookup_.Get(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scope_stack_)) {
@@ -391,15 +385,10 @@ auto Context::PopScope() -> void {
   name_lookup_has_load_error_ = scope.prev_name_lookup_has_load_error;
 
   for (const auto& str_id : scope.names) {
-    auto it = name_lookup_.find(str_id);
-    CARBON_CHECK(it->second.back().scope_index == scope.index)
+    auto& lexical_results = lexical_lookup_.Get(str_id);
+    CARBON_CHECK(lexical_results.back().scope_index == scope.index)
         << "Inconsistent scope index for name " << names().GetFormatted(str_id);
-    if (it->second.size() == 1) {
-      // Erase names that no longer resolve.
-      name_lookup_.erase(it);
-    } else {
-      it->second.pop_back();
-    }
+    lexical_results.pop_back();
   }
 
   if (scope.scope_id.is_valid()) {

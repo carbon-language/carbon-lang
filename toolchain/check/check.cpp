@@ -22,7 +22,7 @@ namespace Carbon::Check {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
+  auto Handle##Name(Context& context, Parse::Name##Id parse_node)->bool;
 #include "toolchain/parse/node_kind.def"
 
 struct UnitInfo {

@@ -57,7 +57,8 @@ static auto CopyNameFromImportIR(Context& context,
   if (auto import_identifier_id = import_name_id.AsIdentifierId();
       import_identifier_id.is_valid()) {
     auto name = import_sem_ir.identifiers().Get(import_identifier_id);
-    return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
+    return SemIR::NameId::ForIdentifier(
+        context.lexical_lookup().AddIdentifier(name));
   }
   return import_name_id;
 }
