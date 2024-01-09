@@ -375,6 +375,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
                                Parse::NodeId::Invalid,
                                GetBuiltinType(SemIR::BuiltinKind::FunctionType),
                                function_id});
+      constant_values().Set(inst_id, inst_id);
       break;
     }
 

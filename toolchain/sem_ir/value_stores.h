@@ -55,7 +55,7 @@ class InstStore {
 
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
-class ConstantValueStore : Yaml::Printable<ConstantValueStore> {
+class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
  public:
   // Returns the constant value of the requested instruction, or InstId::Invalid
   // if it is not constant.

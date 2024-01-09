@@ -34,6 +34,8 @@ fn B() {}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+1:          inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -60,6 +62,8 @@ fn B() {}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+1:          inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:

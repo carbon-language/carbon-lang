@@ -25,6 +25,7 @@ using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
 using ::testing::SizeIs;
+using ::testing::Value;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
@@ -73,6 +74,8 @@ TEST(SemIRTest, YAML) {
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
                                                 Pair("arg0", inst_id),
                                                 Pair("arg1", inst_id)))))))),
+      Pair("constant_values",
+           Yaml::Mapping(AllOf(Each(Pair(inst_id, inst_id))))),
       // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(

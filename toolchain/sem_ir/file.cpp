@@ -165,6 +165,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                                   Yaml::OutputScalar(insts_.Get(id)));
                         }
                       }));
+              map.Add("constant_values", constant_values_.OutputYaml());
               map.Add("inst_blocks", inst_blocks_.OutputYaml());
             }));
   });
