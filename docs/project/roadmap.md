@@ -49,13 +49,12 @@ implementation work.
 
 This goal is not necessarily about complete support for the entire language
 design, but rather enough of it to support building the realistic and
-interesting Carbon code that interoperates with C++. This does include
-prerequisites like the prelude.
+interesting Carbon code that interoperates with C++.
 
 Some example language features that we think are key to success here but far
 from an exhaustive list:
 
--   Imports
+-   Imports and a working prelude
 -   Operator overloading and dispatch for expressions
 -   Generic types and functions
 -   Templates (likely only partial support and focused on interop use cases)
