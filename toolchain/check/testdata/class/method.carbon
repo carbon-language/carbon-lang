@@ -105,7 +105,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc26_11: <bound method> = bound_method %c.ref, @Class.%G
-// CHECK:STDOUT:   %.loc26_10: Class* = address_of %c.ref
+// CHECK:STDOUT:   %.loc26_10: Class* = addr_of %c.ref
 // CHECK:STDOUT:   %.loc26_13: init i32 = call %.loc26_11(%.loc26_10)
 // CHECK:STDOUT:   %.loc26_15.1: i32 = value_of_initializer %.loc26_13
 // CHECK:STDOUT:   %.loc26_15.2: i32 = converted %.loc26_13, %.loc26_15.1
@@ -129,7 +129,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc34_11.1: ref Class = deref %p.ref
 // CHECK:STDOUT:   %.loc34_14: <bound method> = bound_method %.loc34_11.1, @Class.%G
-// CHECK:STDOUT:   %.loc34_11.2: Class* = address_of %.loc34_11.1
+// CHECK:STDOUT:   %.loc34_11.2: Class* = addr_of %.loc34_11.1
 // CHECK:STDOUT:   %.loc34_16: init i32 = call %.loc34_14(%.loc34_11.2)
 // CHECK:STDOUT:   %.loc34_18.1: i32 = value_of_initializer %.loc34_16
 // CHECK:STDOUT:   %.loc34_18.2: i32 = converted %.loc34_16, %.loc34_18.1
@@ -159,7 +159,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc44_14.2: init Class = call %Make.ref() to %.loc44_14.1
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2
 // CHECK:STDOUT:   %.loc44_16: <bound method> = bound_method %.loc44_14.3, @Class.%G
-// CHECK:STDOUT:   %.loc44_14.4: Class* = address_of %.loc44_14.3
+// CHECK:STDOUT:   %.loc44_14.4: Class* = addr_of %.loc44_14.3
 // CHECK:STDOUT:   %.loc44_18: init i32 = call %.loc44_16(%.loc44_14.4)
 // CHECK:STDOUT:   %.loc44_20.1: i32 = value_of_initializer %.loc44_18
 // CHECK:STDOUT:   %.loc44_20.2: i32 = converted %.loc44_18, %.loc44_20.1

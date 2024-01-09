@@ -38,7 +38,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, %s
-// CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
+// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

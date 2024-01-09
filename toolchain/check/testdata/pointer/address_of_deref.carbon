@@ -27,9 +27,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n.var, %.loc8
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc9_13: i32* = address_of %n.ref
+// CHECK:STDOUT:   %.loc9_13: i32* = addr_of %n.ref
 // CHECK:STDOUT:   %.loc9_12: ref i32 = deref %.loc9_13
-// CHECK:STDOUT:   %.loc9_11: i32* = address_of %.loc9_12
+// CHECK:STDOUT:   %.loc9_11: i32* = addr_of %.loc9_12
 // CHECK:STDOUT:   %.loc9_10.1: ref i32 = deref %.loc9_11
 // CHECK:STDOUT:   %.loc9_10.2: i32 = bind_value %.loc9_10.1
 // CHECK:STDOUT:   return %.loc9_10.2

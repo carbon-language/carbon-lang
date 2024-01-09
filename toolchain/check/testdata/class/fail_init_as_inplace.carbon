@@ -74,7 +74,7 @@ fn F() {
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc22_5: Class* = address_of %c.ref
+// CHECK:STDOUT:   %.loc22_5: Class* = addr_of %c.ref
 // CHECK:STDOUT:   %.loc22_4: init () = call %G.ref(%.loc22_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

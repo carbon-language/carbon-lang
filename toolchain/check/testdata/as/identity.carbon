@@ -63,7 +63,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %p.ref: X* = name_ref p, %p
 // CHECK:STDOUT:   %.loc18_17: ref X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc18_23: type = name_ref X, file.%X
-// CHECK:STDOUT:   %.loc18_15: X* = address_of %.loc18_17
+// CHECK:STDOUT:   %.loc18_15: X* = addr_of %.loc18_17
 // CHECK:STDOUT:   %q: X* = bind_name q, %.loc18_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -77,12 +77,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %p.ref.loc30: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc30_4.1: ref Class = deref %p.ref.loc30
 // CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, @Class.%F
-// CHECK:STDOUT:   %.loc30_4.2: Class* = address_of %.loc30_4.1
+// CHECK:STDOUT:   %.loc30_4.2: Class* = addr_of %.loc30_4.1
 // CHECK:STDOUT:   %.loc30_9: init () = call %.loc30_7(%.loc30_4.2)
 // CHECK:STDOUT:   %p.ref.loc38: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc38_4.1: ref Class = deref %p.ref.loc38
 // CHECK:STDOUT:   %.loc38_7: <bound method> = bound_method %.loc38_4.1, @Class.%G
-// CHECK:STDOUT:   %.loc38_4.2: Class* = address_of %.loc38_4.1
+// CHECK:STDOUT:   %.loc38_4.2: Class* = addr_of %.loc38_4.1
 // CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
