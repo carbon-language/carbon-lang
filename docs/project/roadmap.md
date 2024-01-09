@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Objective for 2024: a working toolchain that supports C++ interop](#objective-for-2024-a-working-toolchain-that-supports-c-interop)
 -   [Key results in 2024](#key-results-in-2024)
-    -   [Carbon's toolchain implements the language enough to support interop with C++](#carbons-toolchain-implements-the-language-enough-to-support-interop-with-c)
+    -   [Carbon's toolchain implements enough of the language to build realistic code](#carbons-toolchain-implements-enough-of-the-language-to-build-realistic-code)
     -   [Carbon's toolchain can build C++ code](#carbons-toolchain-can-build-c-code)
     -   [Carbon's toolchain works with existing, simple C++ build systems](#carbons-toolchain-works-with-existing-simple-c-build-systems)
     -   [Carbon has a design and toolchain implementation of basic C++ interop](#carbon-has-a-design-and-toolchain-implementation-of-basic-c-interop)
@@ -105,7 +105,8 @@ subsequent years.
 
 ### Potential 2025 goals: ship a working [0.1 language] for evaluation
 
-[0.1 language]: /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
+[0.1 language]:
+    /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
 
 As we adjust our schedule and roadmap to reflect the realistic rate of progress,
 the _earliest_ it seems feasible to have everything we need to evaluate the 0.1
@@ -120,7 +121,8 @@ evaluation will take some time.
 
 ### Potential 2026-2027 goals: finish [0.2 language], stop experimenting
 
-[0.2 language]: /docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
+[0.2 language]:
+    /docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
 
 Once Carbon is moving quickly and getting public feedback, we should be able to
 conclude the experiment. We should know if this is the right direction for
@@ -145,7 +147,8 @@ Some concrete goals that might show up in this time frame:
 
 ### Potential goals _beyond_ 2027: ship [1.0 language] & organization
 
-[1.0 language]: /docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
+[1.0 language]:
+    /docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
 
 A major milestone will be the first version of a production language. We also
 plan to finish transferring all governance of Carbon to an independent open
