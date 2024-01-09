@@ -13,7 +13,7 @@ fn Main() {
 // CHECK:STDOUT: --- params_zero.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -20,7 +20,7 @@ fn If(b: bool) {
 // CHECK:STDOUT: --- else.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc13: type = tuple_type ()
+// CHECK:STDOUT:   %.loc13: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

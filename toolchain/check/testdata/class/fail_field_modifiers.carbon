@@ -30,7 +30,9 @@ class Class {
 // CHECK:STDOUT: --- fail_field_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc28: type = struct_type {.j: i32, .k: i32}
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc27: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc28: type = struct_type {.j: i32, .k: i32}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,9 +48,9 @@ class Class {
 // CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32, const
 // CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1, const
 // CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2, const = %.loc17_14.2
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0, const = constants.%.loc22
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc27: i32 = int_literal 1, const = constants.%.loc27
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

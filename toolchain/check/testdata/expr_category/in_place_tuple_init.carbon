@@ -19,9 +19,10 @@ fn H() -> i32 {
 // CHECK:STDOUT: --- in_place_tuple_init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_20.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc7_20.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_20.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_20.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc7_20.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc7_20.3: type = ptr_type (i32, i32), const
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 0, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,7 +60,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
 // CHECK:STDOUT:   %.loc16_11.1: ref (i32, i32) = temporary_storage
 // CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call %G.ref() to %.loc16_11.1
-// CHECK:STDOUT:   %.loc16_14: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc16_14: i32 = int_literal 0, const = constants.%.loc16
 // CHECK:STDOUT:   %.loc16_11.3: ref (i32, i32) = temporary %.loc16_11.1, %.loc16_11.2
 // CHECK:STDOUT:   %.loc16_15.1: ref i32 = tuple_index %.loc16_11.3, %.loc16_14
 // CHECK:STDOUT:   %.loc16_15.2: i32 = bind_value %.loc16_15.1

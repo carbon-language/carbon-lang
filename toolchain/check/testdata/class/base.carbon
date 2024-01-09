@@ -25,16 +25,18 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.b: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.b: i32}
-// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Base, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.b: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.b: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base, .d: i32}
-// CHECK:STDOUT:   %.loc18: type = struct_type {.base: {.b: i32}, .d: i32}
-// CHECK:STDOUT:   %.loc21_35.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc21_35.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc21_35.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc9: type = struct_type {.b: i32}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.b: i32}, const
+// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Base, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.b: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.b: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base, .d: i32}, const
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc18_35: type = struct_type {.base: {.b: i32}, .d: i32}, const
+// CHECK:STDOUT:   %.loc21_35.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc21_35.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc21_35.3: type = ptr_type (i32, i32), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,9 +74,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4, const = constants.%.loc18_25
 // CHECK:STDOUT:   %.loc18_26.1: {.b: i32} = struct_literal (%.loc18_25)
-// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7, const = constants.%.loc18_34
 // CHECK:STDOUT:   %.loc18_35.1: {.base: {.b: i32}, .d: i32} = struct_literal (%.loc18_26.1, %.loc18_34)
 // CHECK:STDOUT:   %.loc18_35.2: ref Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0

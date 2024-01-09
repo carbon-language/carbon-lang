@@ -12,10 +12,10 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: --- fail_assign_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_14.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc10_14.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: ()}
-// CHECK:STDOUT:   %.loc10_27: type = struct_type {.b: {}}
+// CHECK:STDOUT:   %.loc10_14.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc10_14.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: ()}, const
+// CHECK:STDOUT:   %.loc10_27: type = struct_type {.b: {}}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

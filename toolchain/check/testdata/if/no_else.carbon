@@ -17,7 +17,7 @@ fn If(b: bool) {
 // CHECK:STDOUT: --- no_else.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = tuple_type ()
+// CHECK:STDOUT:   %.loc12: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

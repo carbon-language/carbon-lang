@@ -12,7 +12,7 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT: --- fail_assign_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {}
+// CHECK:STDOUT:   %.loc10: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

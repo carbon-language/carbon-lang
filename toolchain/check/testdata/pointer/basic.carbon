@@ -13,6 +13,10 @@ fn F() -> i32 {
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
@@ -22,7 +26,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
 // CHECK:STDOUT:   assign %n.var, %.loc8
 // CHECK:STDOUT:   %.loc9_13: type = ptr_type i32, const
 // CHECK:STDOUT:   %p.var: ref i32* = var p

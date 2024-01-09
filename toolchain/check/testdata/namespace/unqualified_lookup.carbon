@@ -29,7 +29,7 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT: --- unqualified_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = tuple_type ()
+// CHECK:STDOUT:   %.loc15: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

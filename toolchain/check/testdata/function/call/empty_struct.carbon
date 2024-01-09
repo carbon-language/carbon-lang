@@ -15,9 +15,9 @@ fn Main() {
 // CHECK:STDOUT: --- empty_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_13.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc12: {} = struct_value ()
+// CHECK:STDOUT:   %.loc7_13.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc12: {} = struct_value (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

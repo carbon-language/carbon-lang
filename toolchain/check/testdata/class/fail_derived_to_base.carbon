@@ -32,12 +32,12 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: --- fail_derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.a: i32}
-// CHECK:STDOUT:   %.loc18_1.1: type = struct_type {.base: A2, .b: i32}
-// CHECK:STDOUT:   %.loc18_1.2: type = struct_type {.base: {.a: i32}*, .b: i32}
-// CHECK:STDOUT:   %.loc18_1.3: type = ptr_type {.base: {.a: i32}*, .b: i32}
-// CHECK:STDOUT:   %.loc15: type = ptr_type {.base: A2, .b: i32}
+// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc18_1.1: type = struct_type {.base: A2, .b: i32}, const
+// CHECK:STDOUT:   %.loc18_1.2: type = struct_type {.base: {.a: i32}*, .b: i32}, const
+// CHECK:STDOUT:   %.loc18_1.3: type = ptr_type {.base: {.a: i32}*, .b: i32}, const
+// CHECK:STDOUT:   %.loc15: type = ptr_type {.base: A2, .b: i32}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -10,9 +10,11 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT: --- tuple_as_element.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_27.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_27.2: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc7_28: type = ptr_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc7_27.1: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc7_27.2: type = tuple_type (i32), const
+// CHECK:STDOUT:   %.loc7_28: type = ptr_type {.a: i32, .b: (i32,)}, const
+// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7_47: i32 = int_literal 2, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -22,8 +24,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)}, const
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: (i32,)} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: (i32,)} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc7_47: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 1, const = constants.%.loc7_38
+// CHECK:STDOUT:   %.loc7_47: i32 = int_literal 2, const = constants.%.loc7_47
 // CHECK:STDOUT:   %.loc7_49.1: (i32,) = tuple_literal (%.loc7_47)
 // CHECK:STDOUT:   %.loc7_50.1: {.a: i32, .b: (i32,)} = struct_literal (%.loc7_38, %.loc7_49.1)
 // CHECK:STDOUT:   %.loc7_50.2: ref i32 = struct_access %x.var, element0

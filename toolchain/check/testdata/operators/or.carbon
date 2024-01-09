@@ -13,6 +13,12 @@ fn Or() -> bool {
 
 // CHECK:STDOUT: --- or.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc11: bool = bool_literal true, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .Or = %Or}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
@@ -22,13 +28,13 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true, const = constants.%.loc7
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const = constants.%.loc8
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,7 +45,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = not %.loc11_14.2
-// CHECK:STDOUT:   %.loc11_14.4: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc11_14.4: bool = bool_literal true, const = constants.%.loc11
 // CHECK:STDOUT:   if %.loc11_14.3 br !or.rhs else br !or.result(%.loc11_14.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:

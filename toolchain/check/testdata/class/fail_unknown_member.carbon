@@ -19,8 +19,8 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: --- fail_unknown_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
+// CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

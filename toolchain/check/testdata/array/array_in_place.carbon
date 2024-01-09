@@ -13,12 +13,13 @@ fn G() {
 // CHECK:STDOUT: --- array_in_place.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_29.1: type = array_type @G.%.loc10_28, (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_29.2: type = ptr_type [(i32, i32, i32); 2]
-// CHECK:STDOUT:   %.loc10_42: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type), const
+// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc10_28: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc10_29.1: type = array_type %.loc10_28, (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc10_29.2: type = ptr_type [(i32, i32, i32); 2], const
+// CHECK:STDOUT:   %.loc10_42: type = tuple_type ((i32, i32, i32), (i32, i32, i32)), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,7 +33,7 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_25: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_28: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc10_28: i32 = int_literal 2, const = constants.%.loc10_28
 // CHECK:STDOUT:   %.loc7: type = converted %.loc10_25, constants.%.loc7_25.2
 // CHECK:STDOUT:   %.loc10_29: type = array_type %.loc10_28, (i32, i32, i32), const = constants.%.loc10_29.1
 // CHECK:STDOUT:   %v.var: ref [(i32, i32, i32); 2] = var v

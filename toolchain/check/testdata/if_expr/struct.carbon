@@ -14,8 +14,10 @@ fn F(cond: bool) {
 // CHECK:STDOUT: --- struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_45: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc11: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,8 +33,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}, const
 // CHECK:STDOUT:   %a.var: ref {.a: i32, .b: i32} = var a
 // CHECK:STDOUT:   %a: ref {.a: i32, .b: i32} = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_45: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const = constants.%.loc10_37
+// CHECK:STDOUT:   %.loc10_45: i32 = int_literal 2, const = constants.%.loc10_45
 // CHECK:STDOUT:   %.loc10_46.1: {.a: i32, .b: i32} = struct_literal (%.loc10_37, %.loc10_45)
 // CHECK:STDOUT:   %.loc10_46.2: ref i32 = struct_access %a.var, element0
 // CHECK:STDOUT:   %.loc10_46.3: init i32 = initialize_from %.loc10_37 to %.loc10_46.2

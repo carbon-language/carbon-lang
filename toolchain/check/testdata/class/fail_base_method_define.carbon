@@ -29,10 +29,10 @@ fn D.C.F() {}
 // CHECK:STDOUT: --- fail_base_method_define.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12_3.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc12_3.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %.loc17: type = struct_type {.base: B}
+// CHECK:STDOUT:   %.loc12_3.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc12_3.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}, const
+// CHECK:STDOUT:   %.loc17: type = struct_type {.base: B}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

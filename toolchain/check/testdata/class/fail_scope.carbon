@@ -20,7 +20,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- fail_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc11: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,7 +40,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const = constants.%.loc9
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

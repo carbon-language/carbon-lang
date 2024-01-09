@@ -33,10 +33,10 @@ class D {
 // CHECK:STDOUT: --- fail_base_repeated.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_16.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_15: type = ptr_type {}
-// CHECK:STDOUT:   %.loc19: type = struct_type {.base: B1}
+// CHECK:STDOUT:   %.loc7_16.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc7_15: type = ptr_type {}, const
+// CHECK:STDOUT:   %.loc19: type = struct_type {.base: B1}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

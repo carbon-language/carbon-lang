@@ -120,20 +120,21 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: --- fail_base_bad_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_18.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc17: type = struct_type {.base: <error>}
-// CHECK:STDOUT:   %.loc12: type = ptr_type {.base: <error>}
-// CHECK:STDOUT:   %.loc51_22: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc51_23.1: type = tuple_type (Base)
-// CHECK:STDOUT:   %.loc7_18.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_17: type = ptr_type {}
-// CHECK:STDOUT:   %.loc51_23.2: type = tuple_type ({}*)
-// CHECK:STDOUT:   %.loc67: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32}
-// CHECK:STDOUT:   %.loc102_1.1: type = struct_type {.base: Final}
-// CHECK:STDOUT:   %.loc102_1.2: type = struct_type {.base: {.a: i32}*}
-// CHECK:STDOUT:   %.loc97: type = ptr_type {.base: Final}
+// CHECK:STDOUT:   %.loc7_18.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc17: type = struct_type {.base: <error>}, const
+// CHECK:STDOUT:   %.loc12: type = ptr_type {.base: <error>}, const
+// CHECK:STDOUT:   %.loc26: i32 = int_literal 32, const
+// CHECK:STDOUT:   %.loc51_22: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc51_23.1: type = tuple_type (Base), const
+// CHECK:STDOUT:   %.loc7_18.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc7_17: type = ptr_type {}, const
+// CHECK:STDOUT:   %.loc51_23.2: type = tuple_type ({}*), const
+// CHECK:STDOUT:   %.loc67: type = ptr_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc102_1.1: type = struct_type {.base: Final}, const
+// CHECK:STDOUT:   %.loc102_1.2: type = struct_type {.base: {.a: i32}*}, const
+// CHECK:STDOUT:   %.loc97: type = ptr_type {.base: Final}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -198,7 +199,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromNonType {
-// CHECK:STDOUT:   %.loc26_16: i32 = int_literal 32, const
+// CHECK:STDOUT:   %.loc26_16: i32 = int_literal 32, const = constants.%.loc26
 // CHECK:STDOUT:   %.loc26_18.1: type = unbound_element_type DeriveFromNonType, <error>, const
 // CHECK:STDOUT:   %.loc26_18.2: <unbound element of class DeriveFromNonType> = base_decl <error>, element0, const
 // CHECK:STDOUT:

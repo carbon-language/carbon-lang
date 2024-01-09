@@ -20,7 +20,7 @@ fn Bar() {
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc17: type = tuple_type ()
+// CHECK:STDOUT:   %.loc17: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

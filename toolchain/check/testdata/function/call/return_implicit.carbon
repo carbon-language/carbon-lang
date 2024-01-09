@@ -14,7 +14,7 @@ fn Main() {
 // CHECK:STDOUT: --- return_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT:   %.loc11: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

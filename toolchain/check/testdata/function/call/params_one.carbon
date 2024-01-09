@@ -13,7 +13,8 @@ fn Main() {
 // CHECK:STDOUT: --- params_one.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_6: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,7 +31,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo, const = file.%Foo
-// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1, const = constants.%.loc10_7
 // CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref(%.loc10_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

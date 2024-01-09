@@ -25,9 +25,11 @@ fn F() {
 // CHECK:STDOUT: --- fail_init_as_inplace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc22: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc21_32: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc22: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,8 +60,8 @@ fn F() {
 // CHECK:STDOUT:   %Class.ref.loc21_10: type = name_ref Class, file.%Class, const = file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc21_32: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1, const = constants.%.loc21_24
+// CHECK:STDOUT:   %.loc21_32: i32 = int_literal 2, const = constants.%.loc21_32
 // CHECK:STDOUT:   %.loc21_33.1: {.a: i32, .b: i32} = struct_literal (%.loc21_24, %.loc21_32)
 // CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, file.%Class, const = file.%Class
 // CHECK:STDOUT:   %.loc21_33.2: ref Class = temporary_storage

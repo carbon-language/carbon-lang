@@ -17,7 +17,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT:   %.loc14: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

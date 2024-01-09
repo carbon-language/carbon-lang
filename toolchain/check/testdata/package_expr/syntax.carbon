@@ -44,11 +44,16 @@ fn Main() {
 
 // CHECK:STDOUT: --- global.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Main = %Main}
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const = constants.%.loc4
 // CHECK:STDOUT:   assign %x.var, %.loc4
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
@@ -57,7 +62,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
@@ -70,11 +75,16 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inside_fn.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Main = %Main}
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const = constants.%.loc4
 // CHECK:STDOUT:   assign %x.var, %.loc4
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
@@ -83,7 +93,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
@@ -97,8 +107,8 @@ fn Main() {
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8: type = struct_type {}
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT:   %.loc8: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc11: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

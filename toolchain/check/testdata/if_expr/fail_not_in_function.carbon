@@ -36,7 +36,11 @@ class C {
 // CHECK:STDOUT: --- fail_not_in_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc34: type = struct_type {.n: <error>}
+// CHECK:STDOUT:   %.loc17_17: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc17_27: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc17_34: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc34: type = struct_type {.n: <error>}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,10 +51,10 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const = constants.%.loc33
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = <unexpected instref inst+21>
+// CHECK:STDOUT:   .n = <unexpected instref inst+25>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -139,21 +139,27 @@ static auto TryEvalInst(Context& context, SemIR::InstId inst_id,
                                        &SemIR::TupleValue::elements_id);
 
     // These cases are constants already.
-    case SemIR::BaseDecl::Kind:
-    case SemIR::BoolLiteral::Kind:
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
-    case SemIR::FieldDecl::Kind:
-    case SemIR::FunctionDecl::Kind:
-    case SemIR::IntLiteral::Kind:
     case SemIR::PointerType::Kind:
-    case SemIR::RealLiteral::Kind:
-    case SemIR::StringLiteral::Kind:
     case SemIR::StructType::Kind:
     case SemIR::TupleType::Kind:
     case SemIR::UnboundElementType::Kind:
       return inst_id;
+
+    case SemIR::BaseDecl::Kind:
+    case SemIR::FieldDecl::Kind:
+    case SemIR::FunctionDecl::Kind:
+      // TODO: Consider adding a corresponding `Value` inst.
+      return inst_id;
+
+    case SemIR::BoolLiteral::Kind:
+    case SemIR::IntLiteral::Kind:
+    case SemIR::RealLiteral::Kind:
+    case SemIR::StringLiteral::Kind:
+      // Promote literals to the constant block.
+      return context.AddConstantInst(inst);
 
     // TODO: These need special handling.
     case SemIR::StructInit::Kind:
@@ -247,6 +253,7 @@ auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
   // TODO: Deduplicate constants.
   auto inst_id = insts().AddInNoBlock(inst);
   constants().Add(inst_id);
+  constant_values().Set(inst_id, inst_id);
   CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
   return inst_id;
 }

@@ -33,9 +33,15 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: --- fail_invalid_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_value (file.%.loc26_20, file.%.loc26_28)
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc26_29.1: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc26_29.2: type = ptr_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = struct_value (%.loc26_20, %.loc26_28), const
+// CHECK:STDOUT:   %.loc31: i32 = int_literal 0, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,27 +50,27 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %.loc11
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 0, const = constants.%.loc15
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F, const = %F
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1, const = constants.%.loc21
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1, const = constants.%.loc26_20
+// CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2, const = constants.%.loc26_28
 // CHECK:STDOUT:   %.loc26_29.1: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
-// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0, const = constants.%.loc26_31
 // CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_value (%.loc26_20, %.loc26_28), const = constants.%.loc26_29.3
 // CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = converted %.loc26_29.1, %.loc26_29.2
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %d.var: ref i32 = var d
 // CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
 // CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}, const
-// CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0, const = constants.%.loc31
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -36,6 +36,18 @@ fn DifferentScopes() -> i32 {
 
 // CHECK:STDOUT: --- fail_returned_var_shadow.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc22: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc24: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc31: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc34: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.SameScope = %SameScope, .DifferentScopes = %DifferentScopes}
 // CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope, const
@@ -44,42 +56,42 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SameScope() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const = constants.%.loc8
 // CHECK:STDOUT:   if %.loc8 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0, const = constants.%.loc9
 // CHECK:STDOUT:   assign %v.var, %.loc9
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 1, const = constants.%.loc16
 // CHECK:STDOUT:   assign %w.var, %.loc16
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 0, const = constants.%.loc18
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DifferentScopes() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc22: bool = bool_literal true, const = constants.%.loc22
 // CHECK:STDOUT:   if %.loc22 br !if.then.loc22 else br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc22:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 0, const = constants.%.loc23
 // CHECK:STDOUT:   assign %v.var, %.loc23
-// CHECK:STDOUT:   %.loc24: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc24: bool = bool_literal true, const = constants.%.loc24
 // CHECK:STDOUT:   if %.loc24 br !if.then.loc24 else br !if.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc24:
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc31: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc31: i32 = int_literal 1, const = constants.%.loc31
 // CHECK:STDOUT:   assign %w.var, %.loc31
 // CHECK:STDOUT:   br !if.else.loc24
 // CHECK:STDOUT:
@@ -87,7 +99,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc22:
-// CHECK:STDOUT:   %.loc34: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc34: i32 = int_literal 0, const = constants.%.loc34
 // CHECK:STDOUT:   return %.loc34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

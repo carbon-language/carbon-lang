@@ -30,8 +30,12 @@ fn G() -> C {
 // CHECK:STDOUT: --- fail_return_with_returned_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc18_35.1: type = struct_type {.a: i32, .b: i32}
-// CHECK:STDOUT:   %.loc18_35.2: type = ptr_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc18_35.1: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc18_35.2: type = ptr_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,9 +63,9 @@ fn G() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
 // CHECK:STDOUT:   assign %v.var, %.loc8
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const = constants.%.loc15
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,8 +73,8 @@ fn G() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C, const = file.%C
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
-// CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1, const = constants.%.loc20_29
+// CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2, const = constants.%.loc20_37
 // CHECK:STDOUT:   %.loc20_38.1: {.a: i32, .b: i32} = struct_literal (%.loc20_29, %.loc20_37)
 // CHECK:STDOUT:   %.loc20_38.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2

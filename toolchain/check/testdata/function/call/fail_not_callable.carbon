@@ -14,7 +14,8 @@ fn Run() {
 // CHECK:STDOUT: --- fail_not_callable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT:   %.1: type = ptr_type String, const
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +27,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const = constants.%.loc11
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -17,6 +17,11 @@ fn Main() {
 
 // CHECK:STDOUT: --- fail_assignment_to_error.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 42, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 42, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
@@ -25,11 +30,11 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error>
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 42, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 42, const = constants.%.loc11
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error>
 // CHECK:STDOUT:   %.loc15_3: ref <error> = deref <error>
-// CHECK:STDOUT:   %.loc15_22: i32 = int_literal 42, const
+// CHECK:STDOUT:   %.loc15_22: i32 = int_literal 42, const = constants.%.loc15
 // CHECK:STDOUT:   assign %.loc15_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

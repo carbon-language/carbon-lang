@@ -61,8 +61,8 @@ abstract class Abstract {
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc28: type = struct_type {.k: i32, .l: i32}
-// CHECK:STDOUT:   %.loc41: type = struct_type {}
+// CHECK:STDOUT:   %.loc28: type = struct_type {.k: i32, .l: i32}, const
+// CHECK:STDOUT:   %.loc41: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

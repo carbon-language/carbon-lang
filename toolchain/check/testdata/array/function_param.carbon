@@ -15,9 +15,14 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- function_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_18.1: type = array_type <unexpected instref inst+1>, i32
-// CHECK:STDOUT:   %.loc7_18.2: type = ptr_type [i32; 3]
-// CHECK:STDOUT:   %.loc12: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_17: i32 = int_literal 3, const
+// CHECK:STDOUT:   %.loc7_18.1: type = array_type %.loc7_17, i32, const
+// CHECK:STDOUT:   %.loc7_18.2: type = ptr_type [i32; 3], const
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3, const
+// CHECK:STDOUT:   %.loc12_20: type = tuple_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,11 +44,11 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
-// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3, const
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1, const = constants.%.loc12_13
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2, const = constants.%.loc12_16
+// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3, const = constants.%.loc12_19
 // CHECK:STDOUT:   %.loc12_20.1: (i32, i32, i32) = tuple_literal (%.loc12_13, %.loc12_16, %.loc12_19)
-// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1, const = constants.%.loc12_23
 // CHECK:STDOUT:   %.loc12_20.2: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc12_20.3: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_20.4: ref i32 = array_index %.loc12_20.2, %.loc12_20.3

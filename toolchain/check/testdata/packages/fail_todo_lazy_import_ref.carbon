@@ -22,18 +22,22 @@ var a: () = a_ref;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref}
 // CHECK:STDOUT:   %a_ref.var: ref i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref i32 = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const = constants.%.loc4
 // CHECK:STDOUT:   assign %a_ref.var, %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc4: type = tuple_type ()
+// CHECK:STDOUT:   %.loc4: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -13,11 +13,11 @@ fn G() {
 // CHECK:STDOUT: --- nested_struct_in_place.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
-// CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}
+// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type), const
+// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}, const
+// CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

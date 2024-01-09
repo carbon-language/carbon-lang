@@ -77,7 +77,7 @@ base class G;
 // CHECK:STDOUT: --- fail_redeclaration_introducer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = struct_type {}
+// CHECK:STDOUT:   %.loc14: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

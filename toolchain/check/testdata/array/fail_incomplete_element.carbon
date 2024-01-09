@@ -22,8 +22,10 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: --- fail_incomplete_element.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = array_type file.%.loc15_21, Incomplete
-// CHECK:STDOUT:   %.loc20: type = ptr_type <error>
+// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete, const
+// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc20_22: type = ptr_type <error>, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,8 +33,8 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete, const
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete, const = %Incomplete
-// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete, const = constants.%.loc15
+// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1, const = constants.%.loc15_21
+// CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete, const = constants.%.loc15_22
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete, const = %Incomplete
@@ -40,7 +42,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, %a
-// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 0, const = constants.%.loc20_25
 // CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }

@@ -13,6 +13,10 @@ fn Main() {
 
 // CHECK:STDOUT: --- fail_name_not_found.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
@@ -23,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const = constants.%.loc11
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

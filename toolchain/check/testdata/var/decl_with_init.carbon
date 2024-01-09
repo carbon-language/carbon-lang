@@ -10,6 +10,10 @@ fn Main() {
 
 // CHECK:STDOUT: --- decl_with_init.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
@@ -19,7 +23,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
 // CHECK:STDOUT:   assign %x.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

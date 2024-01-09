@@ -15,6 +15,10 @@ fn Run() {
 
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Run = %Run}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
@@ -23,7 +27,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1, const
+// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1, const = constants.%.loc7
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

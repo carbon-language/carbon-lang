@@ -12,7 +12,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: --- address_of_deref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = ptr_type i32
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc9: type = ptr_type i32, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -24,7 +25,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
 // CHECK:STDOUT:   assign %n.var, %.loc8
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc9_13: i32* = address_of %n.ref

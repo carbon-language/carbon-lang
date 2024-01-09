@@ -16,7 +16,8 @@ fn Run() {
 // CHECK:STDOUT: --- fail_empty_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc13: type = tuple_type ()
+// CHECK:STDOUT:   %.loc13_4: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,7 +35,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
 // CHECK:STDOUT:   %.loc13_4.1: init () = call %F.ref()
-// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0, const = constants.%.loc13_7
 // CHECK:STDOUT:   %.loc13_4.2: ref () = temporary_storage
 // CHECK:STDOUT:   %.loc13_4.3: ref () = temporary %.loc13_4.2, %.loc13_4.1
 // CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.3, <error>

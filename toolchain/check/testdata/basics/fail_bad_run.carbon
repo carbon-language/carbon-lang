@@ -15,8 +15,8 @@ fn Run() -> String {}
 // CHECK:STDOUT: --- fail_bad_run.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
-// CHECK:STDOUT:   %.loc13: type = tuple_type ()
+// CHECK:STDOUT:   %.1: type = ptr_type String, const
+// CHECK:STDOUT:   %.loc13: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

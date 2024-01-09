@@ -118,8 +118,8 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: --- fail_incomplete.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc41: type = struct_type {}
-// CHECK:STDOUT:   %.loc100: type = tuple_type ()
+// CHECK:STDOUT:   %.loc41: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc100: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -24,7 +24,7 @@ class Y {
 // CHECK:STDOUT: --- fail_redeclaration_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT:   %.loc11: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

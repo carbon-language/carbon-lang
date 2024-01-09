@@ -22,9 +22,10 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: --- fail_nested_incomplete.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15_24.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc15_24.2: type = tuple_type (i32, Incomplete)
-// CHECK:STDOUT:   %.loc20: type = ptr_type <error>
+// CHECK:STDOUT:   %.loc15_24.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc15_24.2: type = tuple_type (i32, Incomplete), const
+// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc20_22: type = ptr_type <error>, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -41,7 +42,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, %t
-// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1, const = constants.%.loc20_25
 // CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }

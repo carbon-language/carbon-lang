@@ -28,7 +28,8 @@ class Class {
 // CHECK:STDOUT: --- fail_reorder.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc26: type = struct_type {}
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc26: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -55,7 +56,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const = constants.%.loc24
 // CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

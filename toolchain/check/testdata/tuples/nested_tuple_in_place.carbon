@@ -17,17 +17,19 @@ fn H() {
 // CHECK:STDOUT: --- nested_tuple_in_place.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_43.1: type = tuple_type ((type, type, type), (type, type, type))
-// CHECK:STDOUT:   %.loc10_43.2: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
-// CHECK:STDOUT:   %.loc10_43.3: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*)
-// CHECK:STDOUT:   %.loc10_43.4: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*)
-// CHECK:STDOUT:   %.loc14_36.1: type = tuple_type (type, (type, type, type), type)
-// CHECK:STDOUT:   %.loc14_36.2: type = tuple_type (i32, (i32, i32, i32), i32)
-// CHECK:STDOUT:   %.loc14_36.3: type = tuple_type (i32, (i32, i32, i32)*, i32)
-// CHECK:STDOUT:   %.loc14_36.4: type = ptr_type (i32, (i32, i32, i32)*, i32)
+// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type), const
+// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32), const
+// CHECK:STDOUT:   %.loc10_43.1: type = tuple_type ((type, type, type), (type, type, type)), const
+// CHECK:STDOUT:   %.loc10_43.2: type = tuple_type ((i32, i32, i32), (i32, i32, i32)), const
+// CHECK:STDOUT:   %.loc10_43.3: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*), const
+// CHECK:STDOUT:   %.loc10_43.4: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*), const
+// CHECK:STDOUT:   %.loc14_36.1: type = tuple_type (type, (type, type, type), type), const
+// CHECK:STDOUT:   %.loc14_36.2: type = tuple_type (i32, (i32, i32, i32), i32), const
+// CHECK:STDOUT:   %.loc14_36.3: type = tuple_type (i32, (i32, i32, i32)*, i32), const
+// CHECK:STDOUT:   %.loc14_36.4: type = ptr_type (i32, (i32, i32, i32)*, i32), const
+// CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,11 +72,11 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_36.2: type = converted %.loc14_36.1, constants.%.loc14_36.2
 // CHECK:STDOUT:   %v.var: ref (i32, (i32, i32, i32), i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1, const = constants.%.loc14_41
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
 // CHECK:STDOUT:   %.loc14_50.1: ref (i32, i32, i32) = tuple_access %v.var, element1
 // CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call %F.ref() to %.loc14_50.1
-// CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2, const = constants.%.loc14_49
 // CHECK:STDOUT:   %.loc14_50.2: (i32, (i32, i32, i32), i32) = tuple_literal (%.loc14_41, %.loc14_45, %.loc14_49)
 // CHECK:STDOUT:   %.loc14_50.3: ref i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc14_50.4: init i32 = initialize_from %.loc14_41 to %.loc14_50.3

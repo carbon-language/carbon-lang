@@ -14,8 +14,10 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT: --- fail_tuple_large_index.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32), const
+// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12, const
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 295147905179352825855, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -24,7 +26,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a
 // CHECK:STDOUT:   %a: ref (i32,) = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12, const
+// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12, const = constants.%.loc7_18
 // CHECK:STDOUT:   %.loc7_21.1: (i32,) = tuple_literal (%.loc7_18)
 // CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init (%.loc7_18) to %a.var
 // CHECK:STDOUT:   %.loc7_21.3: init (i32,) = converted %.loc7_21.1, %.loc7_21.2
@@ -42,7 +44,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %b.ref: ref (i32,) = name_ref b, %b
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855, const
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855, const = constants.%.loc12
 // CHECK:STDOUT:   %.loc12_35: ref <error> = tuple_index %b.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }

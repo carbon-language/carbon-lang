@@ -17,6 +17,13 @@ fn G() -> i32 {
 
 // CHECK:STDOUT: --- constant_condition.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc11: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc15: bool = bool_literal false, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .F = %F, .G = %G}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A, const
@@ -27,19 +34,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const = constants.%.loc8
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_13: bool = bool_literal true, const
+// CHECK:STDOUT:   %.loc11_13: bool = bool_literal true, const = constants.%.loc11
 // CHECK:STDOUT:   if %.loc11_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -63,7 +70,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13: bool = bool_literal false, const
+// CHECK:STDOUT:   %.loc15_13: bool = bool_literal false, const = constants.%.loc15
 // CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

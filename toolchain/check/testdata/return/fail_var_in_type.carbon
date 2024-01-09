@@ -12,6 +12,10 @@ fn Six() -> x { return 6; }
 
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Six = %Six}
 // CHECK:STDOUT:   %x.var: ref type = var x
@@ -22,7 +26,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6, const = constants.%.loc11
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

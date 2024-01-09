@@ -12,9 +12,11 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: --- tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc8_23.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc8_23.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc8_23.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc8_23.3: type = ptr_type (i32, i32), const
+// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15, const
+// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -24,8 +26,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15, const
-// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35, const
+// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15, const = constants.%.loc9_11
+// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35, const = constants.%.loc9_15
 // CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_literal (%.loc9_11, %.loc9_15)
 // CHECK:STDOUT:   %.loc9_17.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc9_17.3: init i32 = initialize_from %.loc9_11 to %.loc9_17.2

@@ -20,9 +20,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}
-// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}, const
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}, const
+// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -14,6 +14,10 @@ fn Six() -> ReturnType() { return 6; }
 
 // CHECK:STDOUT: --- fail_call_in_type.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 6, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.ReturnType = %ReturnType, .Six = %Six}
 // CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType, const
@@ -27,7 +31,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 6, const
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 6, const = constants.%.loc13
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

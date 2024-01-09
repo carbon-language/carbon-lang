@@ -47,8 +47,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: --- method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}
+// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -22,10 +22,10 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: --- fail_deref_not_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()
-// CHECK:STDOUT:   %.loc19_5.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value ()
+// CHECK:STDOUT:   %.loc15_5.1: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value (), const
+// CHECK:STDOUT:   %.loc19_5.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

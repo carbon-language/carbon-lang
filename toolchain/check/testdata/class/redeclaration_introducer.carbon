@@ -15,7 +15,7 @@ abstract class C {}
 // CHECK:STDOUT: --- redeclaration_introducer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {}
+// CHECK:STDOUT:   %.loc11: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

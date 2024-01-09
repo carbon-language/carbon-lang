@@ -16,7 +16,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: --- reenter_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {}
+// CHECK:STDOUT:   %.loc10: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -19,8 +19,8 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT: --- self_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {.p: Class*}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.p: Class*}
+// CHECK:STDOUT:   %.loc10: type = struct_type {.p: Class*}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.p: Class*}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

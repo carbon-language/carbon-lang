@@ -13,11 +13,13 @@ fn Run() {
 // CHECK:STDOUT: --- assign_return_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (@F.%.loc7_28)
-// CHECK:STDOUT:   %.loc10_17.1: type = array_type @Run.%.loc10_16, i32
-// CHECK:STDOUT:   %.loc10_17.2: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc7_16.2: type = tuple_type (i32), const
+// CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28), const
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_17.1: type = array_type %.loc10_16, i32, const
+// CHECK:STDOUT:   %.loc10_17.2: type = ptr_type [i32; 1], const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,7 +30,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc7_28: i32 = int_literal 0, const = constants.%.loc7_28
 // CHECK:STDOUT:   %.loc7_30.1: (i32,) = tuple_literal (%.loc7_28)
 // CHECK:STDOUT:   %.loc7_30.2: (i32,) = tuple_value (%.loc7_28), const = constants.%.loc7_30
 // CHECK:STDOUT:   %.loc7_30.3: (i32,) = converted %.loc7_30.1, %.loc7_30.2
@@ -37,7 +39,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1, const = constants.%.loc10_16
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32, const = constants.%.loc10_17.1
 // CHECK:STDOUT:   %t.var: ref [i32; 1] = var t
 // CHECK:STDOUT:   %t: ref [i32; 1] = bind_name t, %t.var

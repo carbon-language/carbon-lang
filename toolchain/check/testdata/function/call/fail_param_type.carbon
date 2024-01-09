@@ -19,7 +19,8 @@ fn F() {
 // CHECK:STDOUT: --- fail_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc16: type = tuple_type ()
+// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1, const
+// CHECK:STDOUT:   %.loc16_4: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,7 +37,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
-// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1, const
+// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1, const = constants.%.loc16_5
 // CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

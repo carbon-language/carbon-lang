@@ -15,6 +15,11 @@ fn If(b: bool) -> i32 {
 
 // CHECK:STDOUT: --- unreachable_fallthrough.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 2, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.If = %If}
 // CHECK:STDOUT:   %If: <function> = fn_decl @If, const
@@ -26,11 +31,11 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1, const = constants.%.loc9
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 2, const = constants.%.loc11
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

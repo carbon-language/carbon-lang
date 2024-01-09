@@ -29,16 +29,18 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: --- fail_abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32}
-// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Abstract, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.a: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.a: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Abstract, .d: i32}
-// CHECK:STDOUT:   %.loc22: type = struct_type {.base: {.a: i32}, .d: i32}
-// CHECK:STDOUT:   %.loc25_35.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc25_35.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc25_35.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Abstract, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.a: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.a: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Abstract, .d: i32}, const
+// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc22_35: type = struct_type {.base: {.a: i32}, .d: i32}, const
+// CHECK:STDOUT:   %.loc25_35.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc25_35.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc25_35.3: type = ptr_type (i32, i32), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,9 +78,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1, const = constants.%.loc22_25
 // CHECK:STDOUT:   %.loc22_26: {.a: i32} = struct_literal (%.loc22_25)
-// CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7, const = constants.%.loc22_34
 // CHECK:STDOUT:   %.loc22_35: {.base: {.a: i32}, .d: i32} = struct_literal (%.loc22_26, %.loc22_34)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

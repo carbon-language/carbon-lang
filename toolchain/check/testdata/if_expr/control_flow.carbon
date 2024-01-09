@@ -13,6 +13,11 @@ fn F(b: bool) -> i32 {
 
 // CHECK:STDOUT: --- control_flow.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .F = %F}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A, const
@@ -22,13 +27,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const = constants.%.loc8
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

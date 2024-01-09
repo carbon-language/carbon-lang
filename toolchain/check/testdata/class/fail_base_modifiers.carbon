@@ -46,10 +46,10 @@ class C4 {
 // CHECK:STDOUT: --- fail_base_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc7_15.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7_14: type = ptr_type {}
-// CHECK:STDOUT:   %.loc14: type = struct_type {.base: B}
+// CHECK:STDOUT:   %.loc7_15.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc7_15.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc7_14: type = ptr_type {}, const
+// CHECK:STDOUT:   %.loc14: type = struct_type {.base: B}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -10,9 +10,11 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT: --- two_elements.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32), const
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc7_25: i32 = int_literal 102, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -21,8 +23,8 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2
 // CHECK:STDOUT:   %x.var: ref (i32, i32) = var x
 // CHECK:STDOUT:   %x: ref (i32, i32) = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 4, const
-// CHECK:STDOUT:   %.loc7_25: i32 = int_literal 102, const
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 4, const = constants.%.loc7_22
+// CHECK:STDOUT:   %.loc7_25: i32 = int_literal 102, const = constants.%.loc7_25
 // CHECK:STDOUT:   %.loc7_28.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_25)
 // CHECK:STDOUT:   %.loc7_28.2: ref i32 = tuple_access %x.var, element0
 // CHECK:STDOUT:   %.loc7_28.3: init i32 = initialize_from %.loc7_22 to %.loc7_28.2
