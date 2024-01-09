@@ -50,8 +50,8 @@
 
 namespace Carbon::SemIR {
 
-struct AddressOf {
-  static constexpr auto Kind = InstKind::AddressOf.Define("address_of");
+struct AddrOf {
+  static constexpr auto Kind = InstKind::AddrOf.Define("addr_of");
 
   // TODO: Make this more specific.
   Parse::NodeId parse_node;
@@ -62,7 +62,7 @@ struct AddressOf {
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define("addr_pattern");
 
-  Parse::AddressId parse_node;
+  Parse::AddrId parse_node;
   TypeId type_id;
   // The `self` binding.
   InstId inner_id;

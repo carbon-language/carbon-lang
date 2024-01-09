@@ -42,7 +42,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, %t
 // CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
+// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

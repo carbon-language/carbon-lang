@@ -25,8 +25,8 @@ static auto FatalErrorIfEncountered(InstT inst) -> void {
       << inst;
 }
 
-auto HandleAddressOf(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::AddressOf inst) -> void {
+auto HandleAddrOf(FunctionContext& context, SemIR::InstId inst_id,
+                  SemIR::AddrOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 

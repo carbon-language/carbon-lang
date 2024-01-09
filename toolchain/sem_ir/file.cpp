@@ -197,7 +197,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
-    case AddressOf::Kind:
+    case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
@@ -402,7 +402,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
@@ -512,7 +512,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
       case BindSymbolicName::Kind:

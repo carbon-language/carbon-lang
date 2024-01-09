@@ -165,7 +165,7 @@ auto HandleGenericBindingPattern(Context& context,
   return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
 }
 
-auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
+auto HandleAddr(Context& context, Parse::AddrId parse_node) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
