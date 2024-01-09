@@ -33,6 +33,7 @@ fn Run() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F, .Run = %Run}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -55,7 +56,8 @@ fn Run() {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
-// CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_12: <function> = reify_constant %F.ref, @Class.%F
+// CHECK:STDOUT:   %.loc13_13: init i32 = call @Class.%F()
 // CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
 // CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
 // CHECK:STDOUT:   return %.loc13_15.2
@@ -72,14 +74,16 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref.loc22: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc22: init i32 = call %F.ref.loc22()
-// CHECK:STDOUT:   assign %a.var, %.loc22
+// CHECK:STDOUT:   %.loc22_16: <function> = reify_constant %F.ref.loc22, file.%F
+// CHECK:STDOUT:   %.loc22_17: init i32 = call file.%F()
+// CHECK:STDOUT:   assign %a.var, %.loc22_17
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @Class.%F
-// CHECK:STDOUT:   %.loc23: init i32 = call %F.ref.loc23()
-// CHECK:STDOUT:   assign %b.var, %.loc23
+// CHECK:STDOUT:   %.loc23_21: <function> = reify_constant %F.ref.loc23, @Class.%F
+// CHECK:STDOUT:   %.loc23_23: init i32 = call @Class.%F()
+// CHECK:STDOUT:   assign %b.var, %.loc23_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

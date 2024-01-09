@@ -28,6 +28,7 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1

@@ -17,7 +17,8 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
-// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc10_16.1: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc10_16.2: type = reify_constant %.loc10_16.1, %.loc10_16.1
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_21: {} = struct_literal ()

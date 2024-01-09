@@ -31,8 +31,9 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo
+// CHECK:STDOUT:   %.loc12_16: <function> = reify_constant %Echo.ref, file.%Echo
 // CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
+// CHECK:STDOUT:   %.loc12_20: init i32 = call file.%Echo(%.loc12_21)
 // CHECK:STDOUT:   assign %b.var, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

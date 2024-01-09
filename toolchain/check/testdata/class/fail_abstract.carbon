@@ -45,8 +45,10 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access}
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Abstract, %Abstract
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
 // CHECK:STDOUT:   %Derived: type = class_type @Derived
+// CHECK:STDOUT:   %.loc11: type = reify_constant %Derived, %Derived
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access
 // CHECK:STDOUT: }
@@ -63,13 +65,14 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract
 // CHECK:STDOUT:   %.loc12_24.1: type = unbound_element_type Derived, Abstract
-// CHECK:STDOUT:   %.loc12_24.2: <unbound element of class Derived> = base_decl Abstract, element0
+// CHECK:STDOUT:   %.loc12_24.2: type = reify_constant %.loc12_24.1, %.loc12_24.1
+// CHECK:STDOUT:   %.loc12_24.3: <unbound element of class Derived> = base_decl Abstract, element0
 // CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Derived, i32
 // CHECK:STDOUT:   %.loc14_8.2: <unbound element of class Derived> = field_decl d, element1
 // CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc14_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_24.2
+// CHECK:STDOUT:   .base = %.loc12_24.3
 // CHECK:STDOUT:   .d = %d
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }

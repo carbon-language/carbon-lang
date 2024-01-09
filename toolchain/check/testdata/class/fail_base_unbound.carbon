@@ -28,11 +28,14 @@ let b: B = C.base;
 // CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C = %C.decl}
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc7: type = reify_constant %B, %B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc9: type = reify_constant %C, %C
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C
-// CHECK:STDOUT:   %base.ref: <unbound element of class C> = name_ref base, @C.%.loc10_17.2
+// CHECK:STDOUT:   %base.ref: <unbound element of class C> = name_ref base, @C.%.loc10_17.3
+// CHECK:STDOUT:   %.loc16: <unbound element of class C> = reify_constant %base.ref, @C.%.loc10_17.3
 // CHECK:STDOUT:   %b: B = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,10 +47,11 @@ let b: B = C.base;
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc10_17.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc10_17.2: <unbound element of class C> = base_decl B, element0
+// CHECK:STDOUT:   %.loc10_17.2: type = reify_constant %.loc10_17.1, %.loc10_17.1
+// CHECK:STDOUT:   %.loc10_17.3: <unbound element of class C> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc10_17.2
+// CHECK:STDOUT:   .base = %.loc10_17.3
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

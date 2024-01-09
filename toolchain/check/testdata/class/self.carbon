@@ -30,6 +30,7 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }

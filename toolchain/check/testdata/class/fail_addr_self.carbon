@@ -50,6 +50,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

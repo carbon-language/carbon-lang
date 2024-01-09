@@ -22,7 +22,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
 // CHECK:STDOUT:   %.loc10_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_14.2: type = converted %.loc10_14.1, constants.%.loc10_14.1
-// CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %.loc10_15.1: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %.loc10_15.2: type = reify_constant %.loc10_15.1, %.loc10_15.1
 // CHECK:STDOUT:   %x.var: ref {.a: {}} = var x
 // CHECK:STDOUT:   %x: ref {.a: {}} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_26: {} = struct_literal ()

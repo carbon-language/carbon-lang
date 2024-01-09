@@ -57,7 +57,8 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, %.2
-// CHECK:STDOUT:   %.loc4_14: init () = call %A.ref.loc4()
+// CHECK:STDOUT:   %.loc4_13: <function> = reify_constant %A.ref.loc4, %.2
+// CHECK:STDOUT:   %.loc4_14: init () = call %.2()
 // CHECK:STDOUT:   assign %a.var, %.loc4_14
 // CHECK:STDOUT:   %.loc6_17: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.3: type = converted %.loc6_17, constants.%.loc4
@@ -65,7 +66,8 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
 // CHECK:STDOUT:   %A.ref.loc6: <function> = name_ref A, %.2
-// CHECK:STDOUT:   %.loc6_30: init () = call %A.ref.loc6()
+// CHECK:STDOUT:   %.loc6_28: <function> = reify_constant %A.ref.loc6, %.2
+// CHECK:STDOUT:   %.loc6_30: init () = call %.2()
 // CHECK:STDOUT:   assign %package_a.var, %.loc6_30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +96,8 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %B.ref.loc6: <function> = name_ref B, %.2
-// CHECK:STDOUT:   %.loc6_14: init () = call %B.ref.loc6()
+// CHECK:STDOUT:   %.loc6_13: <function> = reify_constant %B.ref.loc6, %.2
+// CHECK:STDOUT:   %.loc6_14: init () = call %.2()
 // CHECK:STDOUT:   assign %b.var, %.loc6_14
 // CHECK:STDOUT:   %.loc8_17: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.3: type = converted %.loc8_17, constants.%.loc6
@@ -102,7 +105,8 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
 // CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, %.2
-// CHECK:STDOUT:   %.loc8_30: init () = call %B.ref.loc8()
+// CHECK:STDOUT:   %.loc8_28: <function> = reify_constant %B.ref.loc8, %.2
+// CHECK:STDOUT:   %.loc8_30: init () = call %.2()
 // CHECK:STDOUT:   assign %package_b.var, %.loc8_30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,7 +69,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_6: ref i32 = tuple_index %b.ref.loc13, %.loc13_5
 // CHECK:STDOUT:   %.loc13_10: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc13_6, %.loc13_10
-// CHECK:STDOUT:   %.loc15_27: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc15_27.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc15_27.2: type = reify_constant %.loc15_27.1, %.loc15_27.1
 // CHECK:STDOUT:   %c.var: ref {.a: i32, .b: i32} = var c
 // CHECK:STDOUT:   %c: ref {.a: i32, .b: i32} = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc15_37: i32 = int_literal 1
@@ -90,7 +91,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc17_4: ref i32 = struct_access %c.ref.loc17, element1
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 4
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
-// CHECK:STDOUT:   %.loc19_13: type = ptr_type i32
+// CHECK:STDOUT:   %.loc19_13.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc19_13.2: type = reify_constant %.loc19_13.1, %.loc19_13.1
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc19: ref i32 = name_ref a, %a

@@ -45,7 +45,8 @@ fn Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7
 // CHECK:STDOUT:   %Baz.ref: <function> = name_ref Baz, file.%Baz.loc13
-// CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
+// CHECK:STDOUT:   %.loc17_6: <function> = reify_constant %Baz.ref, file.%Baz.loc13
+// CHECK:STDOUT:   %.loc17_10: init () = call file.%Baz.loc13()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

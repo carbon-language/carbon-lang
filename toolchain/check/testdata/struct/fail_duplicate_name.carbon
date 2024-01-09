@@ -60,13 +60,15 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2
 // CHECK:STDOUT:   %w: i32 = bind_name w, <error>
-// CHECK:STDOUT:   %.loc37_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc37_16.1: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc37_16.2: type = reify_constant %.loc37_16.1, %.loc37_16.1
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc45_25: type = struct_type {.b: i32, .c: i32}
+// CHECK:STDOUT:   %.loc45_25.1: type = struct_type {.b: i32, .c: i32}
+// CHECK:STDOUT:   %.loc45_25.2: type = reify_constant %.loc45_25.1, %.loc45_25.1
 // CHECK:STDOUT:   %y.var: ref {.b: i32, .c: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32, .c: i32} = bind_name y, %y.var
 // CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3

@@ -261,8 +261,8 @@ auto HandleRealLiteral(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleReifyConstant(FunctionContext& context, SemIR::InstId inst_id,
                          SemIR::ReifyConstant inst) -> void {
-  // TODO: Build the constant value here?
-  context.SetLocal(inst_id, context.GetValue(inst.constant_id));
+  // TODO: Emit the constant value instead, once we are able to lower it.
+  context.SetLocal(inst_id, context.GetValue(inst.expr_id));
 }
 
 auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,

@@ -68,7 +68,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc17_4: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc17_3: <function> = reify_constant %F.ref, file.%F
+// CHECK:STDOUT:   %.loc17_4: init i32 = call file.%F()
 // CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
 // CHECK:STDOUT:   %.loc21_4: i32 = int_literal 1
@@ -107,8 +108,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc26_7: i32 = bind_value %n.ref.loc26_7
 // CHECK:STDOUT:   %.loc26_8.2: (i32, i32) = tuple_value (%.loc26_4, %.loc26_7)
 // CHECK:STDOUT:   %.loc26_8.3: (i32, i32) = converted %.loc26_8.1, %.loc26_8.2
-// CHECK:STDOUT:   %.loc30: type = ptr_type i32
-// CHECK:STDOUT:   assign i32, %.loc30
+// CHECK:STDOUT:   %.loc30_12.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc30_12.2: type = reify_constant %.loc30_12.1, %.loc30_12.1
+// CHECK:STDOUT:   assign i32, %.loc30_12.2
 // CHECK:STDOUT:   %.loc34_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc34_17: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc34_18.1: {.x: i32, .y: i32} = struct_literal (%.loc34_9, %.loc34_17)

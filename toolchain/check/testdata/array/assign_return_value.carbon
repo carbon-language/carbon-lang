@@ -40,7 +40,8 @@ fn Run() {
 // CHECK:STDOUT:   %t.var: ref [i32; 1] = var t
 // CHECK:STDOUT:   %t: ref [i32; 1] = bind_name t, %t.var
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call %F.ref()
+// CHECK:STDOUT:   %.loc10_21: <function> = reify_constant %F.ref, file.%F
+// CHECK:STDOUT:   %.loc10_22.1: init (i32,) = call file.%F()
 // CHECK:STDOUT:   %.loc10_22.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, element0

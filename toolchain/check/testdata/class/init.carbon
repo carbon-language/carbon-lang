@@ -29,6 +29,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder
 // CHECK:STDOUT: }
@@ -38,7 +39,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0
 // CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
-// CHECK:STDOUT:   %.loc9_18: type = ptr_type Class
+// CHECK:STDOUT:   %.loc9_18.1: type = ptr_type Class
+// CHECK:STDOUT:   %.loc9_18.2: type = reify_constant %.loc9_18.1, %.loc9_18.1
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Class, Class*
 // CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Class> = field_decl next, element1
 // CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11.2

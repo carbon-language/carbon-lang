@@ -36,8 +36,9 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %.loc16_3: <function> = reify_constant %G.ref, file.%G
 // CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
+// CHECK:STDOUT:   %.loc16_4: init () = call file.%G(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

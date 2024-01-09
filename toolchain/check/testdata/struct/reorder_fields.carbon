@@ -34,11 +34,14 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: {.a: i32, .b: f64} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_27: type = struct_type {.a: i32, .b: f64}
+// CHECK:STDOUT:   %.loc11_27.1: type = struct_type {.a: i32, .b: f64}
+// CHECK:STDOUT:   %.loc11_27.2: type = reify_constant %.loc11_27.1, %.loc11_27.1
 // CHECK:STDOUT:   %MakeF64.ref: <function> = name_ref MakeF64, file.%MakeF64
-// CHECK:STDOUT:   %.loc11_44: init f64 = call %MakeF64.ref()
+// CHECK:STDOUT:   %.loc11_37: <function> = reify_constant %MakeF64.ref, file.%MakeF64
+// CHECK:STDOUT:   %.loc11_44: init f64 = call file.%MakeF64()
 // CHECK:STDOUT:   %MakeI32.ref: <function> = name_ref MakeI32, file.%MakeI32
-// CHECK:STDOUT:   %.loc11_60: init i32 = call %MakeI32.ref()
+// CHECK:STDOUT:   %.loc11_53: <function> = reify_constant %MakeI32.ref, file.%MakeI32
+// CHECK:STDOUT:   %.loc11_60: init i32 = call file.%MakeI32()
 // CHECK:STDOUT:   %.loc11_62.1: {.b: f64, .a: i32} = struct_literal (%.loc11_44, %.loc11_60)
 // CHECK:STDOUT:   %.loc11_62.2: i32 = value_of_initializer %.loc11_60
 // CHECK:STDOUT:   %.loc11_62.3: i32 = converted %.loc11_60, %.loc11_62.2
@@ -47,7 +50,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc11_62.6: {.a: i32, .b: f64} = struct_value (%.loc11_62.3, %.loc11_62.5)
 // CHECK:STDOUT:   %.loc11_62.7: {.a: i32, .b: f64} = converted %.loc11_62.1, %.loc11_62.6
 // CHECK:STDOUT:   %x: {.a: i32, .b: f64} = bind_name x, %.loc11_62.7
-// CHECK:STDOUT:   %.loc12_27: type = struct_type {.b: f64, .a: i32}
+// CHECK:STDOUT:   %.loc12_27.1: type = struct_type {.b: f64, .a: i32}
+// CHECK:STDOUT:   %.loc12_27.2: type = reify_constant %.loc12_27.1, %.loc12_27.1
 // CHECK:STDOUT:   %x.ref: {.a: i32, .b: f64} = name_ref x, %x
 // CHECK:STDOUT:   %.loc12_31.1: f64 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc12_31.2: i32 = struct_access %x.ref, element0

@@ -43,12 +43,13 @@ fn Main() {
 // CHECK:STDOUT:   %.loc10_22.3: init (i32,) = converted %.loc10_22.1, %.loc10_22.2
 // CHECK:STDOUT:   assign %x.var, %.loc10_22.3
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
+// CHECK:STDOUT:   %.loc12_3: <function> = reify_constant %Foo.ref, file.%Foo
 // CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
 // CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_10.1: ref i32 = tuple_index %x.ref, %.loc12_9
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc12_10.2: i32 = bind_value %.loc12_10.1
-// CHECK:STDOUT:   %.loc12_6: init () = call %Foo.ref(%.loc12_10.2, %.loc12_13)
+// CHECK:STDOUT:   %.loc12_6: init () = call file.%Foo(%.loc12_10.2, %.loc12_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

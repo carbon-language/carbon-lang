@@ -28,7 +28,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%cond: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_27.2: type = reify_constant %.loc10_27.1, %.loc10_27.1
 // CHECK:STDOUT:   %a.var: ref {.a: i32, .b: i32} = var a
 // CHECK:STDOUT:   %a: ref {.a: i32, .b: i32} = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1
@@ -42,6 +43,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc10_46.7: init {.a: i32, .b: i32} = converted %.loc10_46.1, %.loc10_46.6
 // CHECK:STDOUT:   assign %a.var, %.loc10_46.7
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %.loc11_3: <function> = reify_constant %G.ref, file.%G
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
@@ -67,7 +69,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_5: {.a: i32, .b: i32} = block_arg !if.expr.result
-// CHECK:STDOUT:   %.loc11_4: init () = call %G.ref(%.loc11_5)
+// CHECK:STDOUT:   %.loc11_4: init () = call file.%G(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

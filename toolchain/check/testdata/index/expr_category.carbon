@@ -62,7 +62,8 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_29.11: init [i32; 3] = array_init (%.loc10_29.4, %.loc10_29.7, %.loc10_29.10) to %a.var
 // CHECK:STDOUT:   %.loc10_29.12: init [i32; 3] = converted %.loc10_29.1, %.loc10_29.11
 // CHECK:STDOUT:   assign %a.var, %.loc10_29.12
-// CHECK:STDOUT:   %.loc13_14: type = ptr_type i32
+// CHECK:STDOUT:   %.loc13_14.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc13_14.2: type = reify_constant %.loc13_14.1, %.loc13_14.1
 // CHECK:STDOUT:   %pa.var: ref i32* = var pa
 // CHECK:STDOUT:   %pa: ref i32* = bind_name pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc13: ref [i32; 3] = name_ref a, %a
@@ -109,8 +110,9 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc23_6.2: ref i32 = array_index %.loc23_6.1, %.loc23_5
 // CHECK:STDOUT:   %.loc23_6.3: i32 = bind_value %.loc23_6.2
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc24_3: <function> = reify_constant %F.ref, file.%F
 // CHECK:STDOUT:   %.loc24_4.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %.loc24_4.2: init [i32; 3] = call %F.ref() to %.loc24_4.1
+// CHECK:STDOUT:   %.loc24_4.2: init [i32; 3] = call file.%F() to %.loc24_4.1
 // CHECK:STDOUT:   %.loc24_7: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc24_4.3: ref [i32; 3] = temporary %.loc24_4.1, %.loc24_4.2
 // CHECK:STDOUT:   %.loc24_8.1: ref i32 = array_index %.loc24_4.3, %.loc24_7

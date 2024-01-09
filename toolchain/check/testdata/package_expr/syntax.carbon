@@ -106,6 +106,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace {.C = %C.decl}
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc6: type = reify_constant %C, %C
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,7 +128,8 @@ fn Main() {
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc4
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, @C.%Foo
-// CHECK:STDOUT:   %.loc11: init () = call %Foo.ref()
+// CHECK:STDOUT:   %.loc11_15: <function> = reify_constant %Foo.ref, @C.%Foo
+// CHECK:STDOUT:   %.loc11_19: init () = call @C.%Foo()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

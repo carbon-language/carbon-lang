@@ -55,10 +55,13 @@ fn ConvertInit() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .ConvertCToB = %ConvertCToB, .ConvertBToA = %ConvertBToA, .ConvertCToA = %ConvertCToA, .ConvertValue = %ConvertValue, .ConvertRef = %ConvertRef, .ConvertInit = %ConvertInit}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
+// CHECK:STDOUT:   %.loc7: type = reify_constant %A, %A
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc11: type = reify_constant %B, %B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc16: type = reify_constant %C, %C
 // CHECK:STDOUT:   %ConvertCToB: <function> = fn_decl @ConvertCToB
 // CHECK:STDOUT:   %ConvertBToA: <function> = fn_decl @ConvertBToA
 // CHECK:STDOUT:   %ConvertCToA: <function> = fn_decl @ConvertCToA
@@ -79,13 +82,14 @@ fn ConvertInit() {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0
+// CHECK:STDOUT:   %.loc12_17.2: type = reify_constant %.loc12_17.1, %.loc12_17.1
+// CHECK:STDOUT:   %.loc12_17.3: <unbound element of class B> = base_decl A, element0
 // CHECK:STDOUT:   %.loc13_8.1: type = unbound_element_type B, i32
 // CHECK:STDOUT:   %.loc13_8.2: <unbound element of class B> = field_decl b, element1
 // CHECK:STDOUT:   %b: <unbound element of class B> = bind_name b, %.loc13_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_17.2
+// CHECK:STDOUT:   .base = %.loc12_17.3
 // CHECK:STDOUT:   .b = %b
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -93,13 +97,14 @@ fn ConvertInit() {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0
+// CHECK:STDOUT:   %.loc17_17.2: type = reify_constant %.loc17_17.1, %.loc17_17.1
+// CHECK:STDOUT:   %.loc17_17.3: <unbound element of class C> = base_decl B, element0
 // CHECK:STDOUT:   %.loc18_8.1: type = unbound_element_type C, i32
 // CHECK:STDOUT:   %.loc18_8.2: <unbound element of class C> = field_decl c, element1
 // CHECK:STDOUT:   %c: <unbound element of class C> = bind_name c, %.loc18_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc17_17.2
+// CHECK:STDOUT:   .base = %.loc17_17.3
 // CHECK:STDOUT:   .c = %c
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }

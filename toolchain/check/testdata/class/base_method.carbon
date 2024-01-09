@@ -37,9 +37,11 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Base, %Base
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
 // CHECK:STDOUT:   %Derived: type = class_type @Derived
+// CHECK:STDOUT:   %.loc17: type = reify_constant %Derived, %Derived
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,10 +59,11 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
 // CHECK:STDOUT:   %.loc18_20.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc18_20.2: <unbound element of class Derived> = base_decl Base, element0
+// CHECK:STDOUT:   %.loc18_20.2: type = reify_constant %.loc18_20.1, %.loc18_20.1
+// CHECK:STDOUT:   %.loc18_20.3: <unbound element of class Derived> = base_decl Base, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc18_20.2
+// CHECK:STDOUT:   .base = %.loc18_20.3
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

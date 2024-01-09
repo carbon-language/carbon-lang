@@ -74,16 +74,22 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:   package: <namespace> = namespace {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl}
 // CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
 // CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate
+// CHECK:STDOUT:   %.loc16: type = reify_constant %DuplicatePrivate, %DuplicatePrivate
 // CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
 // CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess
+// CHECK:STDOUT:   %.loc27: type = reify_constant %TwoAccess, %TwoAccess
 // CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()
 // CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract
+// CHECK:STDOUT:   %.loc35: type = reify_constant %TwoAbstract, %TwoAbstract
 // CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, ()
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual
+// CHECK:STDOUT:   %.loc49: type = reify_constant %Virtual, %Virtual
 // CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, ()
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder
+// CHECK:STDOUT:   %.loc57: type = reify_constant %WrongOrder, %WrongOrder
 // CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, ()
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase
+// CHECK:STDOUT:   %.loc65: type = reify_constant %AbstractAndBase, %AbstractAndBase
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;

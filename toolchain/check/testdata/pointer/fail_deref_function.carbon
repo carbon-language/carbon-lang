@@ -21,7 +21,8 @@ fn A() {
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
+// CHECK:STDOUT:   %.loc11_4: <function> = reify_constant %A.ref, file.%A
+// CHECK:STDOUT:   %.loc11_3: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -43,8 +43,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Base, %Base
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
 // CHECK:STDOUT:   %Derived: type = class_type @Derived
+// CHECK:STDOUT:   %.loc11: type = reify_constant %Derived, %Derived
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
@@ -62,12 +64,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
 // CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0
+// CHECK:STDOUT:   %.loc12_20.2: type = reify_constant %.loc12_20.1, %.loc12_20.1
+// CHECK:STDOUT:   %.loc12_20.3: <unbound element of class Derived> = base_decl Base, element0
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_20.2
+// CHECK:STDOUT:   .base = %.loc12_20.3
 // CHECK:STDOUT:   .SelfBase = %SelfBase
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase
 // CHECK:STDOUT:   extend name_scope1

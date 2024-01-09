@@ -44,14 +44,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc11_24.1: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc11_23: <function> = reify_constant %A.ref, file.%A
+// CHECK:STDOUT:   %.loc11_24.1: init i32 = call file.%A()
 // CHECK:STDOUT:   %.loc11_24.2: i32 = value_of_initializer %.loc11_24.1
 // CHECK:STDOUT:   %.loc11_24.3: i32 = converted %.loc11_24.1, %.loc11_24.2
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_24.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc11_33: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_32: <function> = reify_constant %B.ref, file.%B
+// CHECK:STDOUT:   %.loc11_33: init i32 = call file.%B()
 // CHECK:STDOUT:   %.loc11_27.1: i32 = value_of_initializer %.loc11_33
 // CHECK:STDOUT:   %.loc11_27.2: i32 = converted %.loc11_33, %.loc11_27.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_27.2)
@@ -68,14 +70,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc15_25.1: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc15_24: <function> = reify_constant %A.ref, file.%A
+// CHECK:STDOUT:   %.loc15_25.1: init i32 = call file.%A()
 // CHECK:STDOUT:   %.loc15_25.2: i32 = value_of_initializer %.loc15_25.1
 // CHECK:STDOUT:   %.loc15_25.3: i32 = converted %.loc15_25.1, %.loc15_25.2
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_25.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc15_34: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc15_33: <function> = reify_constant %B.ref, file.%B
+// CHECK:STDOUT:   %.loc15_34: init i32 = call file.%B()
 // CHECK:STDOUT:   %.loc15_28.1: i32 = value_of_initializer %.loc15_34
 // CHECK:STDOUT:   %.loc15_28.2: i32 = converted %.loc15_34, %.loc15_28.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_28.2)

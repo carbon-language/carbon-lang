@@ -38,6 +38,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc12_10: <function> = reify_constant %F.ref, file.%F
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3
@@ -57,7 +58,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_20.13: init [i32; 3] = converted %.loc12_20.1, %.loc12_20.12
 // CHECK:STDOUT:   %.loc12_20.14: ref [i32; 3] = temporary %.loc12_20.2, %.loc12_20.13
 // CHECK:STDOUT:   %.loc12_20.15: [i32; 3] = bind_value %.loc12_20.14
-// CHECK:STDOUT:   %.loc12_11: init i32 = call %F.ref(%.loc12_20.15, %.loc12_23)
+// CHECK:STDOUT:   %.loc12_11: init i32 = call file.%F(%.loc12_20.15, %.loc12_23)
 // CHECK:STDOUT:   %.loc12_25.1: i32 = value_of_initializer %.loc12_11
 // CHECK:STDOUT:   %.loc12_25.2: i32 = converted %.loc12_11, %.loc12_25.1
 // CHECK:STDOUT:   return %.loc12_25.2

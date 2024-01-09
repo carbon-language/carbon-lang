@@ -36,6 +36,7 @@ fn Var() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .Make = %Make, .Let = %Let, .Var = %Var}
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
+// CHECK:STDOUT:   %.loc7: type = reify_constant %X, %X
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
 // CHECK:STDOUT:   %Let: <function> = fn_decl @Let
 // CHECK:STDOUT:   %Var: <function> = fn_decl @Var
@@ -55,11 +56,13 @@ fn Var() {
 // CHECK:STDOUT:   %.loc15_15.1: (type, type) = tuple_literal (%X.ref.loc15_11, %X.ref.loc15_14)
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %.loc15_15.1, constants.%.loc15_15.2
 // CHECK:STDOUT:   %Make.ref.loc15_20: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc15_20: <function> = reify_constant %Make.ref.loc15_20, file.%Make
 // CHECK:STDOUT:   %.loc15_24.1: ref X = temporary_storage
-// CHECK:STDOUT:   %.loc15_24.2: init X = call %Make.ref.loc15_20() to %.loc15_24.1
+// CHECK:STDOUT:   %.loc15_24.2: init X = call file.%Make() to %.loc15_24.1
 // CHECK:STDOUT:   %Make.ref.loc15_28: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc15_28: <function> = reify_constant %Make.ref.loc15_28, file.%Make
 // CHECK:STDOUT:   %.loc15_32.1: ref X = temporary_storage
-// CHECK:STDOUT:   %.loc15_32.2: init X = call %Make.ref.loc15_28() to %.loc15_32.1
+// CHECK:STDOUT:   %.loc15_32.2: init X = call file.%Make() to %.loc15_32.1
 // CHECK:STDOUT:   %.loc15_34.1: (X, X) = tuple_literal (%.loc15_24.2, %.loc15_32.2)
 // CHECK:STDOUT:   %X.ref.loc15_40: type = name_ref X, file.%X
 // CHECK:STDOUT:   %X.ref.loc15_43: type = name_ref X, file.%X
@@ -84,11 +87,13 @@ fn Var() {
 // CHECK:STDOUT:   %b.var: ref (X, X) = var b
 // CHECK:STDOUT:   %b: ref (X, X) = bind_name b, %b.var
 // CHECK:STDOUT:   %Make.ref.loc20_20: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc20_20: <function> = reify_constant %Make.ref.loc20_20, file.%Make
 // CHECK:STDOUT:   %.loc20_34.1: ref X = tuple_access %b.var, element0
-// CHECK:STDOUT:   %.loc20_24: init X = call %Make.ref.loc20_20() to %.loc20_34.1
+// CHECK:STDOUT:   %.loc20_24: init X = call file.%Make() to %.loc20_34.1
 // CHECK:STDOUT:   %Make.ref.loc20_28: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc20_28: <function> = reify_constant %Make.ref.loc20_28, file.%Make
 // CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, element1
-// CHECK:STDOUT:   %.loc20_32: init X = call %Make.ref.loc20_28() to %.loc20_34.2
+// CHECK:STDOUT:   %.loc20_32: init X = call file.%Make() to %.loc20_34.2
 // CHECK:STDOUT:   %.loc20_34.3: (X, X) = tuple_literal (%.loc20_24, %.loc20_32)
 // CHECK:STDOUT:   %X.ref.loc20_40: type = name_ref X, file.%X
 // CHECK:STDOUT:   %X.ref.loc20_43: type = name_ref X, file.%X

@@ -32,8 +32,10 @@ fn Derived.H() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Base, %Base
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
 // CHECK:STDOUT:   %Derived: type = class_type @Derived
+// CHECK:STDOUT:   %.loc11: type = reify_constant %Derived, %Derived
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -47,12 +49,13 @@ fn Derived.H() {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
 // CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0
+// CHECK:STDOUT:   %.loc12_20.2: type = reify_constant %.loc12_20.1, %.loc12_20.1
+// CHECK:STDOUT:   %.loc12_20.3: <unbound element of class Derived> = base_decl Base, element0
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %H: <function> = fn_decl @H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_20.2
+// CHECK:STDOUT:   .base = %.loc12_20.3
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .H = %H
 // CHECK:STDOUT:   extend name_scope1
@@ -63,14 +66,16 @@ fn Derived.H() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Base.%F
-// CHECK:STDOUT:   %.loc14: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc14_12: <function> = reify_constant %F.ref, @Base.%F
+// CHECK:STDOUT:   %.loc14_13: init () = call @Base.%F()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Base.%F
-// CHECK:STDOUT:   %.loc19: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc19_3: <function> = reify_constant %F.ref, @Base.%F
+// CHECK:STDOUT:   %.loc19_4: init () = call @Base.%F()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

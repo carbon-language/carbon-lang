@@ -45,7 +45,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A.loc10
-// CHECK:STDOUT:   %.loc16: init () = call %A.ref.loc16()
+// CHECK:STDOUT:   %.loc16_3: <function> = reify_constant %A.ref.loc16, file.%A.loc10
+// CHECK:STDOUT:   %.loc16_4: init () = call file.%A.loc10()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:

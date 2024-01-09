@@ -32,6 +32,8 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower all types that were required to be complete. Note that this may
   // leave some entries in `types_` null, if those types were mentioned but not
   // used.
+  // TODO: Lower other constants too. We will need to interleave this lowering,
+  // because constants can be used in array types and vice versa.
   types_.resize(sem_ir_->types().size());
   for (auto type_id : sem_ir_->complete_types()) {
     types_[type_id.index] = BuildType(sem_ir_->types().Get(type_id).inst_id);

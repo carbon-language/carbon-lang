@@ -23,6 +23,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -38,7 +39,8 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G
-// CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc13_10: <function> = reify_constant %G.ref, @Class.%G
+// CHECK:STDOUT:   %.loc13_11: init i32 = call @Class.%G()
 // CHECK:STDOUT:   %.loc13_13.1: i32 = value_of_initializer %.loc13_11
 // CHECK:STDOUT:   %.loc13_13.2: i32 = converted %.loc13_11, %.loc13_13.1
 // CHECK:STDOUT:   return %.loc13_13.2

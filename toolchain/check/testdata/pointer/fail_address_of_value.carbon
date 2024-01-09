@@ -93,6 +93,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc31_3: type = ptr_type (i32, i32)
 // CHECK:STDOUT:   %.loc35: type = ptr_type {.a: i32}
 // CHECK:STDOUT:   %.loc64: type = ptr_type type
+// CHECK:STDOUT:   %.loc68: type* = address_of @AddressOfType.%.loc68_14.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -135,17 +136,19 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc42_5: bool = bool_literal true
 // CHECK:STDOUT:   %.loc42_10.1: bool = bool_literal false
-// CHECK:STDOUT:   if %.loc42_5 br !and.rhs else br !and.result(%.loc42_10.1)
+// CHECK:STDOUT:   %.loc42_10.2: bool = reify_constant %.loc42_10.1, %.loc42_10.1
+// CHECK:STDOUT:   if %.loc42_5 br !and.rhs else br !and.result(%.loc42_10.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %.loc42_14: bool = bool_literal false
 // CHECK:STDOUT:   br !and.result(%.loc42_14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc42_10.2: bool = block_arg !and.result
-// CHECK:STDOUT:   %.loc42_3: bool* = address_of %.loc42_10.2
+// CHECK:STDOUT:   %.loc42_10.3: bool = block_arg !and.result
+// CHECK:STDOUT:   %.loc42_3: bool* = address_of %.loc42_10.3
 // CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H
-// CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call %H.ref()
+// CHECK:STDOUT:   %.loc46_4: <function> = reify_constant %H.ref, file.%H
+// CHECK:STDOUT:   %.loc46_5.1: init {.a: i32} = call file.%H()
 // CHECK:STDOUT:   %.loc46_5.2: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc46_5.3: ref {.a: i32} = temporary %.loc46_5.2, %.loc46_5.1
 // CHECK:STDOUT:   %.loc46_7: ref i32 = struct_access %.loc46_5.3, element0
@@ -159,7 +162,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
-// CHECK:STDOUT:   %.loc57_5: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc57_4: <function> = reify_constant %G.ref, file.%G
+// CHECK:STDOUT:   %.loc57_5: init i32 = call file.%G()
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -167,9 +171,12 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc64: type* = address_of i32
-// CHECK:STDOUT:   %.loc68_5: type = const_type i32
-// CHECK:STDOUT:   %.loc68_14: type = ptr_type const i32
-// CHECK:STDOUT:   %.loc68_3: type* = address_of %.loc68_14
+// CHECK:STDOUT:   %.loc68_5.1: type = const_type i32
+// CHECK:STDOUT:   %.loc68_5.2: type = reify_constant %.loc68_5.1, %.loc68_5.1
+// CHECK:STDOUT:   %.loc68_14.1: type = ptr_type const i32
+// CHECK:STDOUT:   %.loc68_14.2: type = reify_constant %.loc68_14.1, %.loc68_14.1
+// CHECK:STDOUT:   %.loc68_3.1: type* = address_of %.loc68_14.2
+// CHECK:STDOUT:   %.loc68_3.2: type* = reify_constant %.loc68_3.1, constants.%.loc68
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,7 +195,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfParam(%param: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc82_22: type = ptr_type i32
+// CHECK:STDOUT:   %.loc82_22.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc82_22.2: type = reify_constant %.loc82_22.1, %.loc82_22.1
 // CHECK:STDOUT:   %param_addr.var: ref i32* = var param_addr
 // CHECK:STDOUT:   %param_addr: ref i32* = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param

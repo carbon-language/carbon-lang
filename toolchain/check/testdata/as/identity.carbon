@@ -36,6 +36,7 @@ fn Initializing() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .Value = %Value, .Reference = %Reference, .Make = %Make, .Initializing = %Initializing}
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
+// CHECK:STDOUT:   %.loc9: type = reify_constant %X, %X
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value
 // CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make
@@ -59,7 +60,8 @@ fn Initializing() {
 // CHECK:STDOUT: fn @Reference(%p: X*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X
-// CHECK:STDOUT:   %.loc18_11: type = ptr_type X
+// CHECK:STDOUT:   %.loc18_11.1: type = ptr_type X
+// CHECK:STDOUT:   %.loc18_11.2: type = reify_constant %.loc18_11.1, %.loc18_11.1
 // CHECK:STDOUT:   %p.ref: X* = name_ref p, %p
 // CHECK:STDOUT:   %.loc18_17: ref X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc18_23: type = name_ref X, file.%X
@@ -76,8 +78,9 @@ fn Initializing() {
 // CHECK:STDOUT:   %x.var: ref X = var x
 // CHECK:STDOUT:   %x: ref X = bind_name x, %x.var
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc24_15: <function> = reify_constant %Make.ref, file.%Make
 // CHECK:STDOUT:   %.loc24_7: ref X = splice_block %x.var {}
-// CHECK:STDOUT:   %.loc24_19: init X = call %Make.ref() to %.loc24_7
+// CHECK:STDOUT:   %.loc24_19: init X = call file.%Make() to %.loc24_7
 // CHECK:STDOUT:   %X.ref.loc24_25: type = name_ref X, file.%X
 // CHECK:STDOUT:   assign %x.var, %.loc24_19
 // CHECK:STDOUT:   return

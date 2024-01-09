@@ -35,9 +35,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Inner = %Inner.decl, .MakeInner = %MakeInner, .Outer = %Outer.decl, .MakeOuter = %MakeOuter}
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
 // CHECK:STDOUT:   %Inner: type = class_type @Inner
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Inner, %Inner
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %Outer: type = class_type @Outer
+// CHECK:STDOUT:   %.loc14: type = reify_constant %Outer, %Outer
 // CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,11 +76,13 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: fn @MakeOuter() -> %return: Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc20_16: <function> = name_ref MakeInner, file.%MakeInner
+// CHECK:STDOUT:   %.loc20_16: <function> = reify_constant %MakeInner.ref.loc20_16, file.%MakeInner
 // CHECK:STDOUT:   %.loc20_45.1: ref Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc20_25: init Inner = call %MakeInner.ref.loc20_16() to %.loc20_45.1
+// CHECK:STDOUT:   %.loc20_25: init Inner = call file.%MakeInner() to %.loc20_45.1
 // CHECK:STDOUT:   %MakeInner.ref.loc20_34: <function> = name_ref MakeInner, file.%MakeInner
+// CHECK:STDOUT:   %.loc20_34: <function> = reify_constant %MakeInner.ref.loc20_34, file.%MakeInner
 // CHECK:STDOUT:   %.loc20_45.2: ref Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
+// CHECK:STDOUT:   %.loc20_43: init Inner = call file.%MakeInner() to %.loc20_45.2
 // CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%.loc20_25, %.loc20_43)
 // CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%.loc20_25, %.loc20_43), %return
 // CHECK:STDOUT:   %.loc20_45.5: init Outer = converted %.loc20_45.3, %.loc20_45.4

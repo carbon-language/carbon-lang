@@ -49,7 +49,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc21_14: <function> = reify_constant %F.ref, %F
+// CHECK:STDOUT:   %.loc21_16: i32 = int_literal 1
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
@@ -62,7 +63,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %d.var: ref i32 = var d
 // CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc31_31.1: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc31_31.2: type = reify_constant %.loc31_31.1, %.loc31_31.1
 // CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }

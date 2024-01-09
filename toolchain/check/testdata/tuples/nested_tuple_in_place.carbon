@@ -50,11 +50,13 @@ fn H() {
 // CHECK:STDOUT:   %v.var: ref ((i32, i32, i32), (i32, i32, i32)) = var v
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc10_48: <function> = reify_constant %F.ref.loc10_48, file.%F
 // CHECK:STDOUT:   %.loc10_56.1: ref (i32, i32, i32) = tuple_access %v.var, element0
-// CHECK:STDOUT:   %.loc10_49: init (i32, i32, i32) = call %F.ref.loc10_48() to %.loc10_56.1
+// CHECK:STDOUT:   %.loc10_49: init (i32, i32, i32) = call file.%F() to %.loc10_56.1
 // CHECK:STDOUT:   %F.ref.loc10_53: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc10_53: <function> = reify_constant %F.ref.loc10_53, file.%F
 // CHECK:STDOUT:   %.loc10_56.2: ref (i32, i32, i32) = tuple_access %v.var, element1
-// CHECK:STDOUT:   %.loc10_54: init (i32, i32, i32) = call %F.ref.loc10_53() to %.loc10_56.2
+// CHECK:STDOUT:   %.loc10_54: init (i32, i32, i32) = call file.%F() to %.loc10_56.2
 // CHECK:STDOUT:   %.loc10_56.3: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_49, %.loc10_54)
 // CHECK:STDOUT:   %.loc10_56.4: init ((i32, i32, i32), (i32, i32, i32)) = tuple_init (%.loc10_49, %.loc10_54) to %v.var
 // CHECK:STDOUT:   %.loc10_56.5: init ((i32, i32, i32), (i32, i32, i32)) = converted %.loc10_56.3, %.loc10_56.4
@@ -72,8 +74,9 @@ fn H() {
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc14_44: <function> = reify_constant %F.ref, file.%F
 // CHECK:STDOUT:   %.loc14_50.1: ref (i32, i32, i32) = tuple_access %v.var, element1
-// CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call %F.ref() to %.loc14_50.1
+// CHECK:STDOUT:   %.loc14_45: init (i32, i32, i32) = call file.%F() to %.loc14_50.1
 // CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc14_50.2: (i32, (i32, i32, i32), i32) = tuple_literal (%.loc14_41, %.loc14_45, %.loc14_49)
 // CHECK:STDOUT:   %.loc14_50.3: ref i32 = tuple_access %v.var, element0

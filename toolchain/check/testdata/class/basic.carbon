@@ -32,6 +32,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run
 // CHECK:STDOUT: }
@@ -65,8 +66,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F
+// CHECK:STDOUT:   %.loc22_15: <function> = reify_constant %F.ref, @Class.%F
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)
+// CHECK:STDOUT:   %.loc22_17: init i32 = call @Class.%F(%.loc22_18)
 // CHECK:STDOUT:   %.loc22_20.1: i32 = value_of_initializer %.loc22_17
 // CHECK:STDOUT:   %.loc22_20.2: i32 = converted %.loc22_17, %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2

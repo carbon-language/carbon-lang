@@ -39,14 +39,16 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc11_21.1: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc11_20: <function> = reify_constant %A.ref, file.%A
+// CHECK:STDOUT:   %.loc11_21.1: init i32 = call file.%A()
 // CHECK:STDOUT:   %.loc11_21.2: i32 = value_of_initializer %.loc11_21.1
 // CHECK:STDOUT:   %.loc11_21.3: i32 = converted %.loc11_21.1, %.loc11_21.2
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc11_30: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_29: <function> = reify_constant %B.ref, file.%B
+// CHECK:STDOUT:   %.loc11_30: init i32 = call file.%B()
 // CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %.loc11_30
 // CHECK:STDOUT:   %.loc11_24.2: i32 = converted %.loc11_30, %.loc11_24.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)

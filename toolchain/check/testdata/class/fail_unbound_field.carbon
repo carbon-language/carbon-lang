@@ -31,6 +31,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .G = %G}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,6 +49,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field
+// CHECK:STDOUT:   %.loc13: <unbound element of class Class> = reify_constant %field.ref, @Class.%.loc8_12.2
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,6 +57,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
 // CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field
+// CHECK:STDOUT:   %.loc21: <unbound element of class Class> = reify_constant %field.ref, @Class.%.loc8_12.2
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

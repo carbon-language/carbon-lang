@@ -56,14 +56,19 @@ class C4 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C1 = %C1.decl, .C2 = %C2.decl, .C3 = %C3.decl, .C4 = %C4.decl}
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc7: type = reify_constant %B, %B
 // CHECK:STDOUT:   %C1.decl = class_decl @C1, ()
 // CHECK:STDOUT:   %C1: type = class_type @C1
+// CHECK:STDOUT:   %.loc9: type = reify_constant %C1, %C1
 // CHECK:STDOUT:   %C2.decl = class_decl @C2, ()
 // CHECK:STDOUT:   %C2: type = class_type @C2
+// CHECK:STDOUT:   %.loc16: type = reify_constant %C2, %C2
 // CHECK:STDOUT:   %C3.decl = class_decl @C3, ()
 // CHECK:STDOUT:   %C3: type = class_type @C3
+// CHECK:STDOUT:   %.loc26: type = reify_constant %C3, %C3
 // CHECK:STDOUT:   %C4.decl = class_decl @C4, ()
 // CHECK:STDOUT:   %C4: type = class_type @C4
+// CHECK:STDOUT:   %.loc36: type = reify_constant %C4, %C4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -74,39 +79,43 @@ class C4 {
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc13_25.1: type = unbound_element_type C1, B
-// CHECK:STDOUT:   %.loc13_25.2: <unbound element of class C1> = base_decl B, element0
+// CHECK:STDOUT:   %.loc13_25.2: type = reify_constant %.loc13_25.1, %.loc13_25.1
+// CHECK:STDOUT:   %.loc13_25.3: <unbound element of class C1> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc13_25.2
+// CHECK:STDOUT:   .base = %.loc13_25.3
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc23_19.1: type = unbound_element_type C2, B
-// CHECK:STDOUT:   %.loc23_19.2: <unbound element of class C2> = base_decl B, element0
+// CHECK:STDOUT:   %.loc23_19.2: type = reify_constant %.loc23_19.1, %.loc23_19.1
+// CHECK:STDOUT:   %.loc23_19.3: <unbound element of class C2> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc23_19.2
+// CHECK:STDOUT:   .base = %.loc23_19.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc33_25.1: type = unbound_element_type C3, B
-// CHECK:STDOUT:   %.loc33_25.2: <unbound element of class C3> = base_decl B, element0
+// CHECK:STDOUT:   %.loc33_25.2: type = reify_constant %.loc33_25.1, %.loc33_25.1
+// CHECK:STDOUT:   %.loc33_25.3: <unbound element of class C3> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc33_25.2
+// CHECK:STDOUT:   .base = %.loc33_25.3
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc43_24.1: type = unbound_element_type C4, B
-// CHECK:STDOUT:   %.loc43_24.2: <unbound element of class C4> = base_decl B, element0
+// CHECK:STDOUT:   %.loc43_24.2: type = reify_constant %.loc43_24.1, %.loc43_24.1
+// CHECK:STDOUT:   %.loc43_24.3: <unbound element of class C4> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc43_24.2
+// CHECK:STDOUT:   .base = %.loc43_24.3
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

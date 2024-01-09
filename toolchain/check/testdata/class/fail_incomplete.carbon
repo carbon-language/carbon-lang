@@ -126,6 +126,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .CallClassFunction = %CallClassFunction, .global_var = %global_var, .ConvertFromStruct = %ConvertFromStruct, .MemberAccess = %MemberAccess, .Copy = %Copy, .Let = %Let, .TakeIncomplete = %TakeIncomplete, .ReturnIncomplete = %ReturnIncomplete, .CallTakeIncomplete = %CallTakeIncomplete, .CallReturnIncomplete = %CallReturnIncomplete}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class
@@ -191,19 +192,22 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc100: <function> = name_ref TakeIncomplete, file.%TakeIncomplete
+// CHECK:STDOUT:   %.loc100_3: <function> = reify_constant %TakeIncomplete.ref.loc100, file.%TakeIncomplete
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc100_18: ref Class = deref %p.ref
-// CHECK:STDOUT:   %.loc100_17: init () = call %TakeIncomplete.ref.loc100(<invalid>)
+// CHECK:STDOUT:   %.loc100_17: init () = call file.%TakeIncomplete(<invalid>)
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc111: <function> = name_ref TakeIncomplete, file.%TakeIncomplete
+// CHECK:STDOUT:   %.loc111_3: <function> = reify_constant %TakeIncomplete.ref.loc111, file.%TakeIncomplete
 // CHECK:STDOUT:   %.loc111_19: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc111_17: init () = call %TakeIncomplete.ref.loc111(<invalid>)
+// CHECK:STDOUT:   %.loc111_17: init () = call file.%TakeIncomplete(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_ref ReturnIncomplete, file.%ReturnIncomplete
-// CHECK:STDOUT:   %.loc115: init <error> = call %ReturnIncomplete.ref()
+// CHECK:STDOUT:   %.loc115_3: <function> = reify_constant %ReturnIncomplete.ref, file.%ReturnIncomplete
+// CHECK:STDOUT:   %.loc115_19: init <error> = call file.%ReturnIncomplete()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

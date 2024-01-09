@@ -24,7 +24,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n.var, %.loc8
-// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32
+// CHECK:STDOUT:   %.loc9_13.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc9_13.2: type = reify_constant %.loc9_13.1, %.loc9_13.1
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n

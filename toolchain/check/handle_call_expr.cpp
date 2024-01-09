@@ -32,22 +32,25 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
     return true;
   };
 
-  // For a method call, pick out the `self` value.
-  auto function_callee_id = callee_id;
+  // For a method call, pick out the function and the `self` value.
+  auto function_callee_id = context.GetConstantValue(callee_id);
+  if (function_callee_id.is_valid()) {
+    callee_id = function_callee_id;
+  }
   SemIR::InstId self_id = SemIR::InstId::Invalid;
   if (auto bound_method =
           context.insts().Get(callee_id).TryAs<SemIR::BoundMethod>()) {
     self_id = bound_method->object_id;
-    function_callee_id = bound_method->function_id;
+    function_callee_id = context.GetConstantValue(bound_method->function_id);
   }
 
-  // Identify the function we're calling.
-  auto function_decl_id = context.GetConstantValue(function_callee_id);
-  if (!function_decl_id.is_valid()) {
+  // Identify the function we're calling. The callee expression should be a
+  // constant value.
+  if (!function_callee_id.is_valid()) {
     return diagnose_not_callable();
   }
   auto function_decl =
-      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDecl>();
+      context.insts().Get(function_callee_id).TryAs<SemIR::FunctionDecl>();
   if (!function_decl) {
     return diagnose_not_callable();
   }

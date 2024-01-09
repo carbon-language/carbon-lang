@@ -35,7 +35,8 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple
-// CHECK:STDOUT:   %.loc11_37: init () = call %MakeImplicitEmptyTuple.ref()
+// CHECK:STDOUT:   %.loc11_15: <function> = reify_constant %MakeImplicitEmptyTuple.ref, file.%MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %.loc11_37: init () = call file.%MakeImplicitEmptyTuple()
 // CHECK:STDOUT:   assign %b.var, %.loc11_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

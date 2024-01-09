@@ -69,10 +69,13 @@ abstract class Abstract {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl}
 // CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
 // CHECK:STDOUT:   %Access: type = class_type @Access
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Access, %Access
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %.loc30: type = reify_constant %Base, %Base
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract
+// CHECK:STDOUT:   %.loc43: type = reify_constant %Abstract, %Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {

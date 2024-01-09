@@ -21,6 +21,7 @@ fn C.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {.C = %C.decl}
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc7: type = reify_constant %C, %C
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

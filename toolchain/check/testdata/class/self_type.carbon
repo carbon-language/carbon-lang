@@ -27,13 +27,15 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class
-// CHECK:STDOUT:   %.loc9_14: type = ptr_type Class
+// CHECK:STDOUT:   %.loc9_14.1: type = ptr_type Class
+// CHECK:STDOUT:   %.loc9_14.2: type = reify_constant %.loc9_14.1, %.loc9_14.1
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, Class*
 // CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl p, element0
 // CHECK:STDOUT:   %p: <unbound element of class Class> = bind_name p, %.loc9_8.2

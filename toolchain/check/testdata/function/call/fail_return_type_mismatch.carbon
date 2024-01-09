@@ -32,7 +32,8 @@ fn Run() {
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
-// CHECK:STDOUT:   %.loc13: init f64 = call %Foo.ref()
+// CHECK:STDOUT:   %.loc13_16: <function> = reify_constant %Foo.ref, file.%Foo
+// CHECK:STDOUT:   %.loc13_19: init f64 = call file.%Foo()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

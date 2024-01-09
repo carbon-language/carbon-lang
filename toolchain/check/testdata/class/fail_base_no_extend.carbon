@@ -26,8 +26,10 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C = %C.decl}
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc7: type = reify_constant %B, %B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc9: type = reify_constant %C, %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -38,9 +40,10 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc13_10.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc13_10.2: <unbound element of class C> = base_decl B, element0
+// CHECK:STDOUT:   %.loc13_10.2: type = reify_constant %.loc13_10.1, %.loc13_10.1
+// CHECK:STDOUT:   %.loc13_10.3: <unbound element of class C> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc13_10.2
+// CHECK:STDOUT:   .base = %.loc13_10.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -30,7 +30,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
-// CHECK:STDOUT:   %.loc10: init () = call %Foo.ref()
+// CHECK:STDOUT:   %.loc10_3: <function> = reify_constant %Foo.ref, file.%Foo
+// CHECK:STDOUT:   %.loc10_6: init () = call file.%Foo()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

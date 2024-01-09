@@ -47,12 +47,16 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
+// CHECK:STDOUT:   %.loc7: type = reify_constant %A, %A
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc11: type = reify_constant %B, %B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc16: type = reify_constant %C, %C
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
 // CHECK:STDOUT:   %D: type = class_type @D
+// CHECK:STDOUT:   %.loc21: type = reify_constant %D, %D
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,11 +70,12 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
 // CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0
+// CHECK:STDOUT:   %.loc12_17.2: type = reify_constant %.loc12_17.1, %.loc12_17.1
+// CHECK:STDOUT:   %.loc12_17.3: <unbound element of class B> = base_decl A, element0
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_17.2
+// CHECK:STDOUT:   .base = %.loc12_17.3
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -78,11 +83,12 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0
+// CHECK:STDOUT:   %.loc17_17.2: type = reify_constant %.loc17_17.1, %.loc17_17.1
+// CHECK:STDOUT:   %.loc17_17.3: <unbound element of class C> = base_decl B, element0
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc17_17.2
+// CHECK:STDOUT:   .base = %.loc17_17.3
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
@@ -90,10 +96,11 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
 // CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B
-// CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0
+// CHECK:STDOUT:   %.loc22_17.2: type = reify_constant %.loc22_17.1, %.loc22_17.1
+// CHECK:STDOUT:   %.loc22_17.3: <unbound element of class D> = base_decl B, element0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc22_17.2
+// CHECK:STDOUT:   .base = %.loc22_17.3
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

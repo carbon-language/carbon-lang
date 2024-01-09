@@ -62,19 +62,10 @@ auto Context::VerifyOnFinish() -> void {
 
 static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
     -> std::optional<SemIR::InstId> {
-  auto inst = context.insts().Get(inst_id);
-  switch (inst.kind()) {
-    case SemIR::ReifyConstant::Kind:
-      return inst.As<SemIR::ReifyConstant>().constant_id;
-
-    case SemIR::BaseDecl::Kind:
-    case SemIR::FieldDecl::Kind:
-    case SemIR::FunctionDecl::Kind:
-      return inst_id;
-
-    default:
-      return std::nullopt;
+  if (auto reify_const = context.insts().TryGetAs<SemIR::ReifyConstant>(inst_id)) {
+    return reify_const->constant_id;
   }
+  return std::nullopt;
 }
 
 static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
@@ -194,7 +185,12 @@ static auto TryEvalInst(Context& context, SemIR::InstId inst_id,
     }
 
     case SemIR::NameRef::Kind: {
-      return UnwrapIfConstant(context, inst.As<SemIR::NameRef>().value_id);
+      if (auto const_id =
+              context.GetConstantValue(inst.As<SemIR::NameRef>().value_id);
+          const_id.is_valid()) {
+        return const_id;
+      }
+      return std::nullopt;
     }
 
     case SemIR::UnaryOperatorNot::Kind: {
@@ -251,7 +247,8 @@ auto Context::AddExpr(SemIR::Inst inst) -> SemIR::InstId {
 
   if (auto const_inst_id = TryEvalInst(*this, inst_id, inst)) {
     CARBON_VLOG() << "ConstInst: " << inst << " -> " << *const_inst_id << "\n";
-    return AddInst(SemIR::ReifyConstant{.type_id = inst.type_id(),
+    return AddInst(SemIR::ReifyConstant{.parse_node = inst.parse_node(),
+                                        .type_id = inst.type_id(),
                                         .expr_id = inst_id,
                                         .constant_id = *const_inst_id});
   }
@@ -644,7 +641,27 @@ auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
 }
 
 auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  return UnwrapIfConstant(*this, inst_id).value_or(SemIR::InstId::Invalid);
+  // TODO: This is checking to see whether a lookup result is a constant.
+  // Rationalize this with the new approach to constants.
+  while (true) {
+    auto inst = insts().Get(inst_id);
+    switch (inst.kind()) {
+      case SemIR::ReifyConstant::Kind:
+        return inst.As<SemIR::ReifyConstant>().constant_id;
+
+      case SemIR::BindName::Kind:
+        inst_id = inst.As<SemIR::BindName>().value_id;
+        break;
+
+      case SemIR::BaseDecl::Kind:
+      case SemIR::FieldDecl::Kind:
+      case SemIR::FunctionDecl::Kind:
+        return inst_id;
+
+      default:
+        return SemIR::InstId::Invalid;
+    }
+  }
 }
 
 template <typename BranchNode, typename... Args>

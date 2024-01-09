@@ -17,6 +17,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.loc7_13.1: type = struct_type {}
 // CHECK:STDOUT:   %.loc7_13.2: type = tuple_type ()
+// CHECK:STDOUT:   %.loc12: {} = struct_value ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,10 +35,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo
+// CHECK:STDOUT:   %.loc12_3: <function> = reify_constant %Echo.ref, file.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = struct_value ()
-// CHECK:STDOUT:   %.loc12_9.3: {} = converted %.loc12_9.1, %.loc12_9.2
-// CHECK:STDOUT:   %.loc12_7: init {} = call %Echo.ref(%.loc12_9.3)
+// CHECK:STDOUT:   %.loc12_9.3: {} = reify_constant %.loc12_9.2, constants.%.loc12
+// CHECK:STDOUT:   %.loc12_9.4: {} = converted %.loc12_9.1, %.loc12_9.3
+// CHECK:STDOUT:   %.loc12_7: init {} = call file.%Echo(%.loc12_9.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

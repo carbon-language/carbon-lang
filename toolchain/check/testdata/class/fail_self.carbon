@@ -62,10 +62,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .WrongSelf = %WrongSelf.decl, .CallWrongSelf = %CallWrongSelf}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, ()
 // CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
+// CHECK:STDOUT:   %.loc39: type = reify_constant %WrongSelf, %WrongSelf
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

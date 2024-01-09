@@ -55,6 +55,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc7: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call
 // CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr
@@ -141,8 +142,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc40_10: <function> = reify_constant %Make.ref, file.%Make
 // CHECK:STDOUT:   %.loc40_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc40_14.2: init Class = call %Make.ref() to %.loc40_14.1
+// CHECK:STDOUT:   %.loc40_14.2: init Class = call file.%Make() to %.loc40_14.1
 // CHECK:STDOUT:   %.loc40_14.3: ref Class = temporary %.loc40_14.1, %.loc40_14.2
 // CHECK:STDOUT:   %.loc40_16: <bound method> = bound_method %.loc40_14.3, @Class.%F
 // CHECK:STDOUT:   %.loc40_14.4: Class = bind_value %.loc40_14.3
@@ -155,8 +157,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %.loc44_10: <function> = reify_constant %Make.ref, file.%Make
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc44_14.2: init Class = call %Make.ref() to %.loc44_14.1
+// CHECK:STDOUT:   %.loc44_14.2: init Class = call file.%Make() to %.loc44_14.1
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2
 // CHECK:STDOUT:   %.loc44_16: <bound method> = bound_method %.loc44_14.3, @Class.%G
 // CHECK:STDOUT:   %.loc44_14.4: Class* = address_of %.loc44_14.3

@@ -46,6 +46,7 @@ interface Class { }
 // CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, ()
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %.loc29: type = reify_constant %Class, %Class
 // CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -44,12 +44,14 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc12: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc12_5: <function> = reify_constant %F.ref, file.%F
+// CHECK:STDOUT:   %.loc12_6: init () = call file.%F()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
-// CHECK:STDOUT:   %.loc14: init () = call %G.ref()
+// CHECK:STDOUT:   %.loc14_3: <function> = reify_constant %G.ref, file.%G
+// CHECK:STDOUT:   %.loc14_4: init () = call file.%G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

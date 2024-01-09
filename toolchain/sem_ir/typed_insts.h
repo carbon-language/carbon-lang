@@ -439,6 +439,7 @@ struct RealLiteral {
 struct ReifyConstant {
   static constexpr auto Kind = InstKind::ReifyConstant.Define("reify_constant");
 
+  Parse::NodeId parse_node;
   TypeId type_id;
   InstId expr_id;
   InstId constant_id;

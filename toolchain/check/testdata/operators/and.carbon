@@ -35,21 +35,24 @@ fn And() -> bool {
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
+// CHECK:STDOUT:   %.loc11_10: <function> = reify_constant %F.ref, file.%F
+// CHECK:STDOUT:   %.loc11_11: init bool = call file.%F()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false
-// CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
+// CHECK:STDOUT:   %.loc11_14.4: bool = reify_constant %.loc11_14.3, %.loc11_14.3
+// CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
-// CHECK:STDOUT:   %.loc11_19: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %.loc11_19
-// CHECK:STDOUT:   %.loc11_14.5: bool = converted %.loc11_19, %.loc11_14.4
-// CHECK:STDOUT:   br !and.result(%.loc11_14.5)
+// CHECK:STDOUT:   %.loc11_18: <function> = reify_constant %G.ref, file.%G
+// CHECK:STDOUT:   %.loc11_19: init bool = call file.%G()
+// CHECK:STDOUT:   %.loc11_14.5: bool = value_of_initializer %.loc11_19
+// CHECK:STDOUT:   %.loc11_14.6: bool = converted %.loc11_19, %.loc11_14.5
+// CHECK:STDOUT:   br !and.result(%.loc11_14.6)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc11_14.6: bool = block_arg !and.result
-// CHECK:STDOUT:   return %.loc11_14.6
+// CHECK:STDOUT:   %.loc11_14.7: bool = block_arg !and.result
+// CHECK:STDOUT:   return %.loc11_14.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

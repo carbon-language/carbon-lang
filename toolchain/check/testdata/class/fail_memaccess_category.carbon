@@ -48,8 +48,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A
+// CHECK:STDOUT:   %.loc7: type = reify_constant %A, %A
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %.loc11: type = reify_constant %B, %B
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -33,7 +33,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
-// CHECK:STDOUT:   %.loc13_4.1: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc13_3: <function> = reify_constant %F.ref, file.%F
+// CHECK:STDOUT:   %.loc13_4.1: init () = call file.%F()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc13_4.2: ref () = temporary_storage
 // CHECK:STDOUT:   %.loc13_4.3: ref () = temporary %.loc13_4.2, %.loc13_4.1

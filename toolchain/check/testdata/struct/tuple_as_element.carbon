@@ -19,7 +19,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
 // CHECK:STDOUT:   %.loc7_27.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%.loc7_27.2
-// CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc7_28.1: type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc7_28.2: type = reify_constant %.loc7_28.1, %.loc7_28.1
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: (i32,)} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: (i32,)} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_38: i32 = int_literal 1
@@ -37,7 +38,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   assign %x.var, %.loc7_50.7
 // CHECK:STDOUT:   %.loc8_27: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_27.3: type = converted %.loc8_27, constants.%.loc7_27.2
-// CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc8_28.1: type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc8_28.2: type = reify_constant %.loc8_28.1, %.loc8_28.1
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: (i32,)} = var y
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: (i32,)} = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: (i32,)} = name_ref x, %x

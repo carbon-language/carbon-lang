@@ -40,25 +40,29 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %v.var: ref (i32, i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, i32) = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc10_23: <function> = reify_constant %F.ref.loc10, file.%F
 // CHECK:STDOUT:   %.loc10_7: ref (i32, i32) = splice_block %v.var {}
-// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call %F.ref.loc10() to %.loc10_7
+// CHECK:STDOUT:   %.loc10_24: init (i32, i32) = call file.%F() to %.loc10_7
 // CHECK:STDOUT:   assign %v.var, %.loc10_24
 // CHECK:STDOUT:   %v.ref: ref (i32, i32) = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc11: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc11_7: <function> = reify_constant %F.ref.loc11, file.%F
 // CHECK:STDOUT:   %.loc11_3: ref (i32, i32) = splice_block %v.ref {}
-// CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call %F.ref.loc11() to %.loc11_3
+// CHECK:STDOUT:   %.loc11_8: init (i32, i32) = call file.%F() to %.loc11_3
 // CHECK:STDOUT:   assign %v.ref, %.loc11_8
 // CHECK:STDOUT:   %F.ref.loc12: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %.loc12_10: <function> = reify_constant %F.ref.loc12, file.%F
 // CHECK:STDOUT:   %.loc9: ref (i32, i32) = splice_block %return {}
-// CHECK:STDOUT:   %.loc12: init (i32, i32) = call %F.ref.loc12() to %.loc9
-// CHECK:STDOUT:   return %.loc12
+// CHECK:STDOUT:   %.loc12_11: init (i32, i32) = call file.%F() to %.loc9
+// CHECK:STDOUT:   return %.loc12_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %.loc16_10: <function> = reify_constant %G.ref, file.%G
 // CHECK:STDOUT:   %.loc16_11.1: ref (i32, i32) = temporary_storage
-// CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call %G.ref() to %.loc16_11.1
+// CHECK:STDOUT:   %.loc16_11.2: init (i32, i32) = call file.%G() to %.loc16_11.1
 // CHECK:STDOUT:   %.loc16_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_11.3: ref (i32, i32) = temporary %.loc16_11.1, %.loc16_11.2
 // CHECK:STDOUT:   %.loc16_15.1: ref i32 = tuple_index %.loc16_11.3, %.loc16_14

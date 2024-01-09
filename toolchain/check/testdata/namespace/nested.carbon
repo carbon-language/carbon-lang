@@ -38,7 +38,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7
 // CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%.loc8
 // CHECK:STDOUT:   %Wiz.ref: <function> = name_ref Wiz, file.%Wiz
-// CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
+// CHECK:STDOUT:   %.loc14_10: <function> = reify_constant %Wiz.ref, file.%Wiz
+// CHECK:STDOUT:   %.loc14_14: init () = call file.%Wiz()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

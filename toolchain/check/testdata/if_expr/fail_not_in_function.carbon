@@ -44,6 +44,7 @@ class C {
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %.loc19: type = reify_constant %C, %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -51,6 +52,6 @@ class C {
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = <unexpected instref inst+21>
+// CHECK:STDOUT:   .n = <unexpected instref inst+22>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
