@@ -296,13 +296,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi, CloseSquareBracket)
 //       IdentifierName or SelfValueName
 //       _external_: type expression
 //     [Generic]BindingPattern
-//   _optional_ Address
+//   _optional_ Addr
 // _optional_ Template
 //
 // TODO: Rename GenericBindingPattern to CompileTimeBindingPattern.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BindingPattern, 2, CARBON_IF_VALID(Colon))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericBindingPattern, 2, ColonExclaim)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1, Addr)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Addr, 1, Addr)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, Template)
 
 // `let`:
@@ -404,8 +404,10 @@ CARBON_PARSE_NODE_KIND_BRACKET(IfStatement, IfCondition, If)
 //   WhileCondition
 //   _external_: CodeBlock
 // WhileStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0, OpenParen)
-CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart, CloseParen)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart,
+                               CARBON_IF_VALID(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2, While)
 
 // Index expressions, such as `a[1]`:

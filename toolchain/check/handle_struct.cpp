@@ -7,9 +7,16 @@
 
 namespace Carbon::Check {
 
-auto HandleStructComma(Context& context, Parse::StructCommaId /*parse_node*/)
+auto HandleStructLiteralOrStructTypeLiteralStart(
+    Context& context, Parse::StructLiteralOrStructTypeLiteralStartId parse_node)
     -> bool {
-  context.ParamOrArgComma();
+  context.PushScope();
+  context.node_stack().Push(parse_node);
+  // At this point we aren't sure whether this will be a value or type literal,
+  // so we push onto args irrespective. It just won't be used for a type
+  // literal.
+  context.args_type_info_stack().Push();
+  context.ParamOrArgStart();
   return true;
 }
 
@@ -21,15 +28,9 @@ auto HandleStructFieldDesignator(Context& context,
   return true;
 }
 
-auto HandleStructFieldType(Context& context,
-                           Parse::StructFieldTypeId parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
-  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
-
-  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
-
-  context.AddInstAndPush(
-      parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
+auto HandleStructComma(Context& context, Parse::StructCommaId /*parse_node*/)
+    -> bool {
+  context.ParamOrArgComma();
   return true;
 }
 
@@ -44,6 +45,18 @@ auto HandleStructFieldValue(Context& context,
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_inst_id);
+  return true;
+}
+
+auto HandleStructFieldType(Context& context,
+                           Parse::StructFieldTypeId parse_node) -> bool {
+  auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
+  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
+
+  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
+
+  context.AddInstAndPush(
+      parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
   return true;
 }
 
@@ -95,19 +108,6 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
   auto value_id =
       context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
   context.node_stack().Push(parse_node, value_id);
-  return true;
-}
-
-auto HandleStructLiteralOrStructTypeLiteralStart(
-    Context& context, Parse::StructLiteralOrStructTypeLiteralStartId parse_node)
-    -> bool {
-  context.PushScope();
-  context.node_stack().Push(parse_node);
-  // At this point we aren't sure whether this will be a value or type literal,
-  // so we push onto args irrespective. It just won't be used for a type
-  // literal.
-  context.args_type_info_stack().Push();
-  context.ParamOrArgStart();
   return true;
 }
 

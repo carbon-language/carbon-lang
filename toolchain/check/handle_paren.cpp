@@ -6,6 +6,13 @@
 
 namespace Carbon::Check {
 
+auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId parse_node)
+    -> bool {
+  context.node_stack().Push(parse_node);
+  context.ParamOrArgStart();
+  return true;
+}
+
 auto HandleParenExpr(Context& context, Parse::ParenExprId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
@@ -14,13 +21,6 @@ auto HandleParenExpr(Context& context, Parse::ParenExprId parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
   context.node_stack().Push(parse_node, value_id);
-  return true;
-}
-
-auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId parse_node)
-    -> bool {
-  context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
   return true;
 }
 

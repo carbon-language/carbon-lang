@@ -79,10 +79,10 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_4.1: ref Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc22_7: <bound method> = bound_method %.loc22_4.1, @Base.%F
-// CHECK:STDOUT:   %.loc22_4.2: Derived* = address_of %.loc22_4.1
+// CHECK:STDOUT:   %.loc22_4.2: Derived* = addr_of %.loc22_4.1
 // CHECK:STDOUT:   %.loc22_9.1: ref Derived = deref %.loc22_4.2
 // CHECK:STDOUT:   %.loc22_9.2: ref Base = class_element_access %.loc22_9.1, element0
-// CHECK:STDOUT:   %.loc22_9.3: Base* = address_of %.loc22_9.2
+// CHECK:STDOUT:   %.loc22_9.3: Base* = addr_of %.loc22_9.2
 // CHECK:STDOUT:   %.loc22_9.4: Base* = converted %.loc22_4.2, %.loc22_9.3
 // CHECK:STDOUT:   %.loc22_9.5: init () = call %.loc22_7(%.loc22_9.4)
 // CHECK:STDOUT:   return

@@ -832,7 +832,7 @@ CARBON_PARSE_STATE(Pattern)
 //
 // addr        (variant is not Variable)
 // ^~~~
-//   3. BindingPatternAddress
+//   3. BindingPatternAddr
 //
 // THEN
 //
@@ -860,7 +860,7 @@ CARBON_PARSE_STATE(BindingPattern)
 // addr name: type
 //                ^
 //   (state done)
-CARBON_PARSE_STATE(BindingPatternAddress)
+CARBON_PARSE_STATE(BindingPatternAddr)
 
 // Handles `template` in a binding pattern.
 //

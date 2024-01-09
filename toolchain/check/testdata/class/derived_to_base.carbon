@@ -109,7 +109,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %p.ref: C* = name_ref p, %p
 // CHECK:STDOUT:   %.loc21_39.1: ref C = deref %p.ref
 // CHECK:STDOUT:   %.loc21_39.2: ref B = class_element_access %.loc21_39.1, element0
-// CHECK:STDOUT:   %.loc21_39.3: B* = address_of %.loc21_39.2
+// CHECK:STDOUT:   %.loc21_39.3: B* = addr_of %.loc21_39.2
 // CHECK:STDOUT:   %.loc21_39.4: B* = converted %p.ref, %.loc21_39.3
 // CHECK:STDOUT:   return %.loc21_39.4
 // CHECK:STDOUT: }
@@ -119,7 +119,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %p.ref: B* = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_39.1: ref B = deref %p.ref
 // CHECK:STDOUT:   %.loc22_39.2: ref A = class_element_access %.loc22_39.1, element0
-// CHECK:STDOUT:   %.loc22_39.3: A* = address_of %.loc22_39.2
+// CHECK:STDOUT:   %.loc22_39.3: A* = addr_of %.loc22_39.2
 // CHECK:STDOUT:   %.loc22_39.4: A* = converted %p.ref, %.loc22_39.3
 // CHECK:STDOUT:   return %.loc22_39.4
 // CHECK:STDOUT: }
@@ -130,7 +130,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc23_39.1: ref C = deref %p.ref
 // CHECK:STDOUT:   %.loc23_39.2: ref B = class_element_access %.loc23_39.1, element0
 // CHECK:STDOUT:   %.loc23_39.3: ref A = class_element_access %.loc23_39.2, element0
-// CHECK:STDOUT:   %.loc23_39.4: A* = address_of %.loc23_39.3
+// CHECK:STDOUT:   %.loc23_39.4: A* = addr_of %.loc23_39.3
 // CHECK:STDOUT:   %.loc23_39.5: A* = converted %p.ref, %.loc23_39.4
 // CHECK:STDOUT:   return %.loc23_39.5
 // CHECK:STDOUT: }
@@ -155,7 +155,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
 // CHECK:STDOUT:   %.loc30_15.3: ref A = converted %.loc30_12, %.loc30_15.2
-// CHECK:STDOUT:   %.loc30_10: A* = address_of %.loc30_15.3
+// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_15.3
 // CHECK:STDOUT:   return %.loc30_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

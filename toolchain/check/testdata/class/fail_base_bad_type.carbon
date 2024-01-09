@@ -337,7 +337,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %p.ref: DeriveFromFinal* = name_ref p, %p
 // CHECK:STDOUT:   %.loc106_11.1: ref DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %.loc106_11.2: ref Final = class_element_access %.loc106_11.1, element0
-// CHECK:STDOUT:   %.loc106_11.3: Final* = address_of %.loc106_11.2
+// CHECK:STDOUT:   %.loc106_11.3: Final* = addr_of %.loc106_11.2
 // CHECK:STDOUT:   %.loc106_11.4: Final* = converted %p.ref, %.loc106_11.3
 // CHECK:STDOUT:   return %.loc106_11.4
 // CHECK:STDOUT: }

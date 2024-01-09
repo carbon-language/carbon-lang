@@ -9,6 +9,20 @@
 
 namespace Carbon::Check {
 
+auto HandleCallExprStart(Context& context, Parse::CallExprStartId parse_node)
+    -> bool {
+  auto name_id = context.node_stack().PopExpr();
+  context.node_stack().Push(parse_node, name_id);
+  context.ParamOrArgStart();
+  return true;
+}
+
+auto HandleCallExprComma(Context& context,
+                         Parse::CallExprCommaId /*parse_node*/) -> bool {
+  context.ParamOrArgComma();
+  return true;
+}
+
 auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
@@ -80,20 +94,6 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
       SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
 
   context.node_stack().Push(parse_node, call_inst_id);
-  return true;
-}
-
-auto HandleCallExprComma(Context& context,
-                         Parse::CallExprCommaId /*parse_node*/) -> bool {
-  context.ParamOrArgComma();
-  return true;
-}
-
-auto HandleCallExprStart(Context& context, Parse::CallExprStartId parse_node)
-    -> bool {
-  auto name_id = context.node_stack().PopExpr();
-  context.node_stack().Push(parse_node, name_id);
-  context.ParamOrArgStart();
   return true;
 }
 
