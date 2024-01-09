@@ -36,12 +36,12 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.OuterN = %.loc7, .A = %A, .CallA = %CallA}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace {.C = %C, .CallABC = %CallABC}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A
-// CHECK:STDOUT:   %B: <function> = fn_decl @B
-// CHECK:STDOUT:   %C: <function> = fn_decl @C
-// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA
-// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB
-// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC
+// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
+// CHECK:STDOUT:   %B: <function> = fn_decl @B, const
+// CHECK:STDOUT:   %C: <function> = fn_decl @C, const
+// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA, const
+// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB, const
+// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -52,27 +52,27 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallA() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A, const = file.%A
 // CHECK:STDOUT:   %.loc15: init () = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAB() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A, const = file.%A
 // CHECK:STDOUT:   %.loc19: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B, const = file.%B
 // CHECK:STDOUT:   %.loc20: init () = call %B.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallABC() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A, const = file.%A
 // CHECK:STDOUT:   %.loc24: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B, const = file.%B
 // CHECK:STDOUT:   %.loc25: init () = call %B.ref()
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C, const = file.%C
 // CHECK:STDOUT:   %.loc26: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

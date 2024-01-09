@@ -28,28 +28,30 @@ fn F() {
 // CHECK:STDOUT: --- numeric_literals.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = ptr_type [i32; 5]
+// CHECK:STDOUT:   %.loc10_20.1: type = array_type @F.%.loc10_19, i32
+// CHECK:STDOUT:   %.loc10_20.2: type = ptr_type [i32; 5]
 // CHECK:STDOUT:   %.loc16: type = tuple_type (i32, i32, i32, i32, i32)
-// CHECK:STDOUT:   %.loc17: type = ptr_type [f64; 7]
+// CHECK:STDOUT:   %.loc17_22.1: type = array_type @F.%.loc17_21, f64
+// CHECK:STDOUT:   %.loc17_22.2: type = ptr_type [f64; 7]
 // CHECK:STDOUT:   %.loc25: type = tuple_type (f64, f64, f64, f64, f64, f64, f64)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5
-// CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5, const
+// CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32, const = constants.%.loc10_20.1
 // CHECK:STDOUT:   %ints.var: ref [i32; 5] = var ints
 // CHECK:STDOUT:   %ints: ref [i32; 5] = bind_name ints, %ints.var
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 9
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 39999999999999999993
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 8, const
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 9, const
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 8, const
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 8, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 39999999999999999993, const
 // CHECK:STDOUT:   %.loc16_3.1: (i32, i32, i32, i32, i32) = tuple_literal (%.loc11, %.loc12, %.loc13, %.loc14, %.loc15)
 // CHECK:STDOUT:   %.loc16_3.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_3.3: ref i32 = array_index %ints.var, %.loc16_3.2
@@ -69,17 +71,17 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_3.17: init [i32; 5] = array_init (%.loc16_3.4, %.loc16_3.7, %.loc16_3.10, %.loc16_3.13, %.loc16_3.16) to %ints.var
 // CHECK:STDOUT:   %.loc16_3.18: init [i32; 5] = converted %.loc16_3.1, %.loc16_3.17
 // CHECK:STDOUT:   assign %ints.var, %.loc16_3.18
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7
-// CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64
+// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64, const = constants.%.loc17_22.1
 // CHECK:STDOUT:   %floats.var: ref [f64; 7] = var floats
 // CHECK:STDOUT:   %floats: ref [f64; 7] = bind_name floats, %floats.var
-// CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1
-// CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1
-// CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1
-// CHECK:STDOUT:   %.loc21: f64 = real_literal 10e6
-// CHECK:STDOUT:   %.loc22: f64 = real_literal 10e7
-// CHECK:STDOUT:   %.loc23: f64 = real_literal 10e-9
-// CHECK:STDOUT:   %.loc24: f64 = real_literal 399999999999999999930e39999999999999999992
+// CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1, const
+// CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1, const
+// CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1, const
+// CHECK:STDOUT:   %.loc21: f64 = real_literal 10e6, const
+// CHECK:STDOUT:   %.loc22: f64 = real_literal 10e7, const
+// CHECK:STDOUT:   %.loc23: f64 = real_literal 10e-9, const
+// CHECK:STDOUT:   %.loc24: f64 = real_literal 399999999999999999930e39999999999999999992, const
 // CHECK:STDOUT:   %.loc25_3.1: (f64, f64, f64, f64, f64, f64, f64) = tuple_literal (%.loc18, %.loc19, %.loc20, %.loc21, %.loc22, %.loc23, %.loc24)
 // CHECK:STDOUT:   %.loc25_3.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_3.3: ref f64 = array_index %floats.var, %.loc25_3.2

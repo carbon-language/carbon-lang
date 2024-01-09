@@ -36,19 +36,19 @@ class Class {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12_16.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc12_16.2: <unbound element of class Class> = field_decl j, element0
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12_16.2
-// CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc12_16.1: type = unbound_element_type Class, i32, const
+// CHECK:STDOUT:   %.loc12_16.2: <unbound element of class Class> = field_decl j, element0, const
+// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12_16.2, const = %.loc12_16.2
+// CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32, const
+// CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1, const
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2, const = %.loc17_14.2
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0, const
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc27: i32 = int_literal 1, const
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

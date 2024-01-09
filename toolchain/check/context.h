@@ -373,6 +373,9 @@ class Context {
     return sem_ir().type_blocks();
   }
   auto insts() -> SemIR::InstStore& { return sem_ir().insts(); }
+  auto constant_values() -> SemIR::ConstantValueStore& {
+    return sem_ir().constant_values();
+  }
   auto inst_blocks() -> SemIR::InstBlockStore& {
     return sem_ir().inst_blocks();
   }

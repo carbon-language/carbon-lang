@@ -11,8 +11,8 @@ fn Bar(a: i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Bar = %Bar}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

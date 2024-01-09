@@ -21,19 +21,19 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: {.x: i32, .y: i32, .z: i32};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
-// CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3, const
 // CHECK:STDOUT:   %.loc10_35.1: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_literal (%.loc10_16, %.loc10_25.2, %.loc10_34)
 // CHECK:STDOUT:   %.loc10_25.3: ref {.x: i32, .y: i32, .z: i32} = temporary %.loc10_25.1, %.loc10_25.2
 // CHECK:STDOUT:   %.loc10_25.4: ref i32 = struct_access %.loc10_25.3, element0

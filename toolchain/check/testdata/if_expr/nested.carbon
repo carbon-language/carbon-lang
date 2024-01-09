@@ -12,7 +12,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
@@ -25,11 +25,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then.loc8_20 else br !if.expr.else.loc8_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_20:
-// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1, const
 // CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_20:
-// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2, const
 // CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_37)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_20:
@@ -41,11 +41,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %c.ref br !if.expr.then.loc8_44 else br !if.expr.else.loc8_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_44:
-// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3, const
 // CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_54)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_44:
-// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4, const
 // CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_61)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_44:

@@ -18,10 +18,10 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
-// CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32}, const
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc10_36: {.a: i32} = struct_literal (%.loc10_35)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

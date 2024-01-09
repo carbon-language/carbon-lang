@@ -19,14 +19,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello"
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -15,7 +15,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -23,7 +23,7 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

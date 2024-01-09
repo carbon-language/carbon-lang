@@ -15,16 +15,16 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
 // CHECK:STDOUT:   assign %n.var, %.loc8
-// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32
+// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32, const
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n

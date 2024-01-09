@@ -19,13 +19,13 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Mismatch = %Mismatch}
-// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch
+// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1
+// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1, const
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

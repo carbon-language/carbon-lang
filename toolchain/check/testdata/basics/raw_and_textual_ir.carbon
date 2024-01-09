@@ -115,14 +115,14 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, i32, f64) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1, const
 // CHECK:STDOUT:   %.loc12_20.1: (i32, i32, f64) = tuple_literal (%n.ref, %.loc12_14, %.loc12_17)
 // CHECK:STDOUT:   %.loc12_20.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc12_20.3: init i32 = initialize_from %n.ref to %.loc12_20.2

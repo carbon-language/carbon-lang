@@ -54,23 +54,23 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call
-// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr
-// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer
-// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make
-// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr
-// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr
+// CHECK:STDOUT:   %Class: type = class_type @Class, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call, const
+// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr, const
+// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer, const
+// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer, const
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make, const
+// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr, const
+// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc11_8.2: <unbound element of class Class> = field_decl k, element0
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11_8.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32, const
+// CHECK:STDOUT:   %.loc11_8.2: <unbound element of class Class> = field_decl k, element0, const
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11_8.2, const = %.loc11_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -100,7 +100,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
@@ -140,7 +140,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make, const = file.%Make
 // CHECK:STDOUT:   %.loc40_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc40_14.2: init Class = call %Make.ref() to %.loc40_14.1
 // CHECK:STDOUT:   %.loc40_14.3: ref Class = temporary %.loc40_14.1, %.loc40_14.2
@@ -154,7 +154,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make, const = file.%Make
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc44_14.2: init Class = call %Make.ref() to %.loc44_14.1
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2

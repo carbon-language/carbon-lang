@@ -16,8 +16,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Echo = %Echo, .Main = %Main}
-// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo
-// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1
+// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo, const = file.%Echo
+// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
 // CHECK:STDOUT:   assign %b.var, %.loc12_20
 // CHECK:STDOUT:   return

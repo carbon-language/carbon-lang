@@ -10,12 +10,12 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0, const
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

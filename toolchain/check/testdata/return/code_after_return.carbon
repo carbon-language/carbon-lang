@@ -13,7 +13,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

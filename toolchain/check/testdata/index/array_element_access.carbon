@@ -12,18 +12,19 @@ var d: i32 = a[b];
 // CHECK:STDOUT: --- array_element_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 2]
+// CHECK:STDOUT:   %.loc7_15.1: type = array_type file.%.loc7_14, i32
+// CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 2]
 // CHECK:STDOUT:   %.loc7_26: type = tuple_type (i32, i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b, .c = %c, .d = %d}
-// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
+// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32, const = constants.%.loc7_15.1
 // CHECK:STDOUT:   %a.var: ref [i32; 2] = var a
 // CHECK:STDOUT:   %a: ref [i32; 2] = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12
-// CHECK:STDOUT:   %.loc7_24: i32 = int_literal 24
+// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12, const
+// CHECK:STDOUT:   %.loc7_24: i32 = int_literal 24, const
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_literal (%.loc7_20, %.loc7_24)
 // CHECK:STDOUT:   %.loc7_26.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_26.3: ref i32 = array_index %a.var, %.loc7_26.2
@@ -36,12 +37,12 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   assign %a.var, %.loc7_26.9
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 1, const
 // CHECK:STDOUT:   assign %b.var, %.loc8
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %a.ref.loc9: ref [i32; 2] = name_ref a, %a
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0, const
 // CHECK:STDOUT:   %.loc9_17.1: ref i32 = array_index %a.ref.loc9, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = bind_value %.loc9_17.1
 // CHECK:STDOUT:   assign %c.var, %.loc9_17.2

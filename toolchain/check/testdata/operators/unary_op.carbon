@@ -12,7 +12,7 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Not = %Not}
-// CHECK:STDOUT:   %Not: <function> = fn_decl @Not
+// CHECK:STDOUT:   %Not: <function> = fn_decl @Not, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {

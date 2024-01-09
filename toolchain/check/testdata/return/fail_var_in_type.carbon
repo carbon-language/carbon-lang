@@ -17,12 +17,12 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT:   assign %x.var, i32
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6, const
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

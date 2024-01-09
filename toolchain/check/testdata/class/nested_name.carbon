@@ -31,23 +31,23 @@ fn G(o: Outer) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F, .G = %G}
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %Outer: type = class_type @Outer, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner: type = class_type @Inner
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc9_10.1: type = unbound_element_type Inner, i32
-// CHECK:STDOUT:   %.loc9_10.2: <unbound element of class Inner> = field_decl n, element0
-// CHECK:STDOUT:   %n: <unbound element of class Inner> = bind_name n, %.loc9_10.2
+// CHECK:STDOUT:   %.loc9_10.1: type = unbound_element_type Inner, i32, const
+// CHECK:STDOUT:   %.loc9_10.2: <unbound element of class Inner> = field_decl n, element0, const
+// CHECK:STDOUT:   %n: <unbound element of class Inner> = bind_name n, %.loc9_10.2, const = %.loc9_10.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n
@@ -64,7 +64,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o: Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: Outer = name_ref o, %o
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner, const = @Outer.%Inner
 // CHECK:STDOUT:   %i.var: ref Inner = var i
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return

@@ -43,11 +43,11 @@ class C {
 // CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block5>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %C: type = class_type @C, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc33: bool = bool_literal true
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -15,7 +15,7 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Procedure = %Procedure}
-// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
+// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() -> i32 {

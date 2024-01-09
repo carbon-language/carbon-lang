@@ -16,13 +16,13 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T
-// CHECK:STDOUT:   %.loc8: type = ptr_type T
+// CHECK:STDOUT:   %.loc8: type = ptr_type T, const
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
 // CHECK:STDOUT:   %U.ref: type = name_ref U, %U

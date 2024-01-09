@@ -17,13 +17,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Run = %Run}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1
+// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1, const
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -31,7 +31,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
+// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo, const = file.%Foo
 // CHECK:STDOUT:   %.loc13: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return

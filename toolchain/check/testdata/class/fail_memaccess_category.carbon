@@ -47,24 +47,24 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A
+// CHECK:STDOUT:   %A: type = class_type @A, const
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT:   %B: type = class_type @B, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0
-// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A, const = file.%A
+// CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A, const
+// CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0, const
+// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2, const = %.loc12_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

@@ -30,18 +30,18 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .t = %t, .p = %p}
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete, const
+// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete, const = %Incomplete
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
 // CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.loc15_24.2
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
-// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete
-// CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete
+// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete, const = %Incomplete
+// CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete, const
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, %t
-// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc20_22: <error>* = address_of <error>
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }

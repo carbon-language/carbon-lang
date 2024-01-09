@@ -26,7 +26,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref}
 // CHECK:STDOUT:   %a_ref.var: ref i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref i32 = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0, const
 // CHECK:STDOUT:   assign %a_ref.var, %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

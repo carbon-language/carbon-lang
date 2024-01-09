@@ -14,10 +14,10 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
-// CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}, const
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4, const
 // CHECK:STDOUT:   %.loc7_27.1: {.a: i32} = struct_literal (%.loc7_26)
 // CHECK:STDOUT:   %.loc7_27.2: init {.a: i32} = struct_init (%.loc7_26) to %x.var
 // CHECK:STDOUT:   %.loc7_27.3: init {.a: i32} = converted %.loc7_27.1, %.loc7_27.2

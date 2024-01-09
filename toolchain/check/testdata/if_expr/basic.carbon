@@ -12,22 +12,23 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_17: type = ptr_type [i32; 1]
+// CHECK:STDOUT:   %.loc8_17.1: type = array_type @F.%.loc8_16, i32
+// CHECK:STDOUT:   %.loc8_17.2: type = ptr_type [i32; 1]
 // CHECK:STDOUT:   %.loc8_24: type = tuple_type (i32)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc8_17: type = array_type %.loc8_16, i32
+// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc8_17: type = array_type %.loc8_16, i32, const = constants.%.loc8_17.1
 // CHECK:STDOUT:   %x.var: ref [i32; 1] = var x
 // CHECK:STDOUT:   %x: ref [i32; 1] = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0, const
 // CHECK:STDOUT:   %.loc8_24.1: (i32,) = tuple_literal (%.loc8_22)
 // CHECK:STDOUT:   %.loc8_24.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc8_24.3: ref i32 = array_index %x.var, %.loc8_24.2

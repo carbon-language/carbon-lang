@@ -34,12 +34,12 @@ class Class {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G
@@ -48,14 +48,14 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const
 // CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

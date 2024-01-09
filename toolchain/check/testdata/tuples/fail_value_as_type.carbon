@@ -18,7 +18,7 @@ var x: (1, );
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc10_12.1: (i32,) = tuple_literal (%.loc10_9)
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%.loc10_12.2
 // CHECK:STDOUT:   %x.var: ref (<error>,) = var x

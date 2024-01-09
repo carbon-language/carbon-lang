@@ -42,15 +42,15 @@ interface Class { }
 // CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl}
 // CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface, ()
 // CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface, ()
-// CHECK:STDOUT:   %Function: <function> = fn_decl @Function
+// CHECK:STDOUT:   %Function: <function> = fn_decl @Function, const
 // CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, ()
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
+// CHECK:STDOUT:   %Class: type = class_type @Class, const
 // CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

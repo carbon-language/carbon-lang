@@ -13,7 +13,7 @@ var y: i32 = x;
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0, const
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var

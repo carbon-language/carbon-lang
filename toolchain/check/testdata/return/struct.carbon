@@ -10,16 +10,20 @@ fn Main() -> {.a: i32} {
 
 // CHECK:STDOUT: --- struct.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc8: {.a: i32} = struct_value (@Main.%.loc8_16)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3, const
 // CHECK:STDOUT:   %.loc8_17.1: {.a: i32} = struct_literal (%.loc8_16)
-// CHECK:STDOUT:   %.loc8_17.2: {.a: i32} = struct_value (%.loc8_16)
+// CHECK:STDOUT:   %.loc8_17.2: {.a: i32} = struct_value (%.loc8_16), const = constants.%.loc8
 // CHECK:STDOUT:   %.loc8_17.3: {.a: i32} = converted %.loc8_17.1, %.loc8_17.2
 // CHECK:STDOUT:   return %.loc8_17.3
 // CHECK:STDOUT: }

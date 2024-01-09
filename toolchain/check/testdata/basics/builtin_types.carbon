@@ -19,13 +19,13 @@ var test_type: type = i32;
 // CHECK:STDOUT:   package: <namespace> = namespace {.test_i32 = %test_i32, .test_f64 = %test_f64, .test_type = %test_type}
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0, const
 // CHECK:STDOUT:   assign %test_i32.var, %.loc7
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
-// CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1
+// CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1, const
 // CHECK:STDOUT:   assign %test_f64.var, %.loc8
-// CHECK:STDOUT:   %.loc9: String = string_literal "Test"
+// CHECK:STDOUT:   %.loc9: String = string_literal "Test", const
 // CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc9
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var

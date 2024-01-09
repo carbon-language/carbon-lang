@@ -13,8 +13,8 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {}
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 2, const
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

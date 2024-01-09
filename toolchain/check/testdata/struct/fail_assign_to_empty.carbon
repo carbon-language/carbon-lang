@@ -23,7 +23,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10_9.1
 // CHECK:STDOUT:   %x.var: ref {} = var x
 // CHECK:STDOUT:   %x: ref {} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc10_20: {.a: i32} = struct_literal (%.loc10_19)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

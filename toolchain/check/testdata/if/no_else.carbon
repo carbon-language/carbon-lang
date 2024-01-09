@@ -22,9 +22,9 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .If = %If}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %If: <function> = fn_decl @If
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %If: <function> = fn_decl @If, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -43,12 +43,12 @@ fn If(b: bool) {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
 // CHECK:STDOUT:   %.loc12: init () = call %F.ref()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
 // CHECK:STDOUT:   %.loc14: init () = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

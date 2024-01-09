@@ -19,7 +19,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.ConstMismatch = %ConstMismatch}
-// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {

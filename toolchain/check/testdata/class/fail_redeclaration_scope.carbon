@@ -30,17 +30,17 @@ class Y {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl.loc7, .X = %X.decl, .Y = %Y.decl}
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1, ()
-// CHECK:STDOUT:   %A: type = class_type @A.1
+// CHECK:STDOUT:   %A: type = class_type @A.1, const
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X
+// CHECK:STDOUT:   %X: type = class_type @X, const
 // CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1, ()
 // CHECK:STDOUT:   %Y.decl = class_decl @Y, ()
-// CHECK:STDOUT:   %Y: type = class_type @Y
+// CHECK:STDOUT:   %Y: type = class_type @Y, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
 // CHECK:STDOUT:   %B.decl = class_decl @B.2, ()
-// CHECK:STDOUT:   %B: type = class_type @B.2
+// CHECK:STDOUT:   %B: type = class_type @B.2, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %B.decl
@@ -48,7 +48,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   %A.decl = class_decl @A.2, ()
-// CHECK:STDOUT:   %A: type = class_type @A.2
+// CHECK:STDOUT:   %A: type = class_type @A.2, const
 // CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -57,7 +57,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
 // CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
-// CHECK:STDOUT:   %B: type = class_type @B.1
+// CHECK:STDOUT:   %B: type = class_type @B.1, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %B.decl
@@ -72,7 +72,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
 // CHECK:STDOUT:   %.decl = class_decl @.1, ()
-// CHECK:STDOUT:   %.loc21: type = class_type @.1
+// CHECK:STDOUT:   %.loc21: type = class_type @.1, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }

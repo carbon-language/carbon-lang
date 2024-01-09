@@ -19,7 +19,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.VarScope = %VarScope}
-// CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope
+// CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
@@ -30,7 +30,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 2, const
 // CHECK:STDOUT:   assign %n.var, %.loc9
 // CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc10: i32 = bind_value %n.ref.loc10

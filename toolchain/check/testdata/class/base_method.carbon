@@ -36,18 +36,18 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %Base: type = class_type @Base, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, const
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0
-// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32, const
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0, const
+// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2, const = %.loc8_8.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -55,9 +55,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
-// CHECK:STDOUT:   %.loc18_20.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc18_20.2: <unbound element of class Derived> = base_decl Base, element0
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base, const = file.%Base
+// CHECK:STDOUT:   %.loc18_20.1: type = unbound_element_type Derived, Base, const
+// CHECK:STDOUT:   %.loc18_20.2: <unbound element of class Derived> = base_decl Base, element0, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc18_20.2
@@ -69,7 +69,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc14_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
-// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1, const
 // CHECK:STDOUT:   assign %.loc14_10, %.loc14_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -14,14 +14,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32
 // CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T
-// CHECK:STDOUT:   %.loc9: type = ptr_type T
+// CHECK:STDOUT:   %.loc9: type = ptr_type T, const
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
 // CHECK:STDOUT:   %T.ref.loc10: type = name_ref T, %T

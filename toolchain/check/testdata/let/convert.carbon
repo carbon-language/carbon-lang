@@ -21,7 +21,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
@@ -30,9 +30,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_24.2: type = converted %.loc8_24.1, constants.%.loc8_24.2
 // CHECK:STDOUT:   %v.var: ref (i32, i32, i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, i32, i32) = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3, const
 // CHECK:STDOUT:   %.loc8_36.1: (i32, i32, i32) = tuple_literal (%.loc8_29, %.loc8_32, %.loc8_35)
 // CHECK:STDOUT:   %.loc8_36.2: ref i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_36.3: init i32 = initialize_from %.loc8_29 to %.loc8_36.2
@@ -56,7 +56,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_28.8: (i32, i32, i32) = converted %v.ref, %.loc10_28.7
 // CHECK:STDOUT:   %w: (i32, i32, i32) = bind_name w, %.loc10_28.8
 // CHECK:STDOUT:   %w.ref: (i32, i32, i32) = name_ref w, %w
-// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1, const
 // CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w.ref, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }

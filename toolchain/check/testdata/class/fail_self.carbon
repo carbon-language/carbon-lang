@@ -61,17 +61,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .WrongSelf = %WrongSelf.decl, .CallWrongSelf = %CallWrongSelf}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %Class: type = class_type @Class, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
 // CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, ()
-// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf
-// CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf
+// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf, const
+// CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -79,7 +79,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongSelf {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -92,7 +92,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
 // CHECK:STDOUT:   %self.var: ref Class = var self
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self

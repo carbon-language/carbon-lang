@@ -768,6 +768,13 @@ class Formatter {
     FormatInstructionLHS(inst_id, inst);
     out_ << InstT::Kind.ir_name();
     FormatInstructionRHS(inst);
+    if (auto const_id = sem_ir_.constant_values().Get(inst_id); const_id.is_valid()) {
+      out_ << ", const";
+      if (const_id != inst_id) {
+        out_ << " = ";
+        FormatInstName(const_id);
+      }
+    }
     out_ << "\n";
   }
 
