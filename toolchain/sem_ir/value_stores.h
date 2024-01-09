@@ -61,8 +61,9 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
   // if it is not constant.
   auto Get(InstId inst_id) const -> InstId {
     CARBON_CHECK(inst_id.index >= 0);
-    return static_cast<size_t>(inst_id.index) >= values_.size() ? InstId::Invalid
-                                                   : values_[inst_id.index];
+    return static_cast<size_t>(inst_id.index) >= values_.size()
+               ? InstId::Invalid
+               : values_[inst_id.index];
   }
 
   // Sets the constant value of the given instruction.

@@ -60,8 +60,8 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
-static auto UnwrapIfConstant(Context& context,
-                             SemIR::InstId inst_id) -> SemIR::InstId {
+static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
   return context.constant_values().Get(inst_id);
 }
 
