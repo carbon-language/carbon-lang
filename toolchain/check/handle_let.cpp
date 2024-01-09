@@ -9,6 +9,19 @@
 
 namespace Carbon::Check {
 
+auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
+    -> bool {
+  context.decl_state_stack().Push(DeclState::Let);
+  // Push a bracketing node to establish the pattern context.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleLetInitializer(Context& /*context*/,
+                          Parse::LetInitializerId /*parse_node*/) -> bool {
+  return true;
+}
+
 auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
@@ -53,19 +66,6 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
   context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
-  return true;
-}
-
-auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
-    -> bool {
-  context.decl_state_stack().Push(DeclState::Let);
-  // Push a bracketing node to establish the pattern context.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleLetInitializer(Context& /*context*/,
-                          Parse::LetInitializerId /*parse_node*/) -> bool {
   return true;
 }
 

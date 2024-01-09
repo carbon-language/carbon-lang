@@ -9,27 +9,6 @@
 
 namespace Carbon::Check {
 
-auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
-  auto self_param_id = context.node_stack().PopPattern();
-  if (auto self_param =
-          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
-      self_param &&
-      context.bind_names().Get(self_param->bind_name_id).name_id ==
-          SemIR::NameId::SelfValue) {
-    // TODO: The type of an `addr_pattern` should probably be the non-pointer
-    // type, because that's the type that the pattern matches.
-    context.AddInstAndPush(
-        parse_node,
-        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
-  } else {
-    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
-                      "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
-    context.node_stack().Push(parse_node, self_param_id);
-  }
-  return true;
-}
-
 auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                              bool is_generic) -> bool {
   auto [type_node, parsed_type_id] =
@@ -184,6 +163,27 @@ auto HandleGenericBindingPattern(Context& context,
                                  Parse::GenericBindingPatternId parse_node)
     -> bool {
   return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
+}
+
+auto HandleAddress(Context& context, Parse::AddressId parse_node) -> bool {
+  auto self_param_id = context.node_stack().PopPattern();
+  if (auto self_param =
+          context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
+      self_param &&
+      context.bind_names().Get(self_param->bind_name_id).name_id ==
+          SemIR::NameId::SelfValue) {
+    // TODO: The type of an `addr_pattern` should probably be the non-pointer
+    // type, because that's the type that the pattern matches.
+    context.AddInstAndPush(
+        parse_node,
+        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
+  } else {
+    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
+                      "`addr` can only be applied to a `self` parameter.");
+    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
+    context.node_stack().Push(parse_node, self_param_id);
+  }
+  return true;
 }
 
 auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {

@@ -7,69 +7,8 @@
 
 namespace Carbon::Check {
 
-auto HandleBreakStatement(Context& /*context*/,
-                          Parse::BreakStatementId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleBreakStatementStart(Context& context,
-                               Parse::BreakStatementStartId parse_node)
-    -> bool {
-  auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
-    CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
-                      "`break` can only be used in a loop.");
-    context.emitter().Emit(parse_node, BreakOutsideLoop);
-  } else {
-    context.AddInst(SemIR::Branch{parse_node, stack.back().break_target});
-  }
-
-  context.inst_block_stack().Pop();
-  context.inst_block_stack().PushUnreachable();
-  return true;
-}
-
-auto HandleContinueStatement(Context& /*context*/,
-                             Parse::ContinueStatementId /*parse_node*/)
-    -> bool {
-  return true;
-}
-
-auto HandleContinueStatementStart(Context& context,
-                                  Parse::ContinueStatementStartId parse_node)
-    -> bool {
-  auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
-    CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
-                      "`continue` can only be used in a loop.");
-    context.emitter().Emit(parse_node, ContinueOutsideLoop);
-  } else {
-    context.AddInst(SemIR::Branch{parse_node, stack.back().continue_target});
-  }
-
-  context.inst_block_stack().Pop();
-  context.inst_block_stack().PushUnreachable();
-  return true;
-}
-
-auto HandleForHeader(Context& context, Parse::ForHeaderId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleForHeader");
-}
-
-auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleForHeaderStart");
-}
-
-auto HandleForIn(Context& context, Parse::ForInId parse_node) -> bool {
-  context.decl_state_stack().Pop(DeclState::Var);
-  return context.TODO(parse_node, "HandleForIn");
-}
-
-auto HandleForStatement(Context& context, Parse::ForStatementId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleForStatement");
-}
+// `while`
+// -------
 
 auto HandleWhileConditionStart(Context& context,
                                Parse::WhileConditionStartId parse_node)
@@ -126,6 +65,79 @@ auto HandleWhileStatement(Context& context, Parse::WhileStatementId parse_node)
   // Start emitting the loop exit block.
   context.inst_block_stack().Push(loop_exit_id);
   context.AddCurrentCodeBlockToFunction();
+  return true;
+}
+
+// `for`
+// -----
+
+auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleForHeaderStart");
+}
+
+auto HandleForIn(Context& context, Parse::ForInId parse_node) -> bool {
+  context.decl_state_stack().Pop(DeclState::Var);
+  return context.TODO(parse_node, "HandleForIn");
+}
+
+auto HandleForHeader(Context& context, Parse::ForHeaderId parse_node) -> bool {
+  return context.TODO(parse_node, "HandleForHeader");
+}
+
+auto HandleForStatement(Context& context, Parse::ForStatementId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleForStatement");
+}
+
+// `break`
+// -------
+
+auto HandleBreakStatementStart(Context& context,
+                               Parse::BreakStatementStartId parse_node)
+    -> bool {
+  auto& stack = context.break_continue_stack();
+  if (stack.empty()) {
+    CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
+                      "`break` can only be used in a loop.");
+    context.emitter().Emit(parse_node, BreakOutsideLoop);
+  } else {
+    context.AddInst(SemIR::Branch{parse_node, stack.back().break_target});
+  }
+
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
+  return true;
+}
+
+auto HandleBreakStatement(Context& /*context*/,
+                          Parse::BreakStatementId /*parse_node*/) -> bool {
+  return true;
+}
+
+// `continue`
+// ----------
+
+auto HandleContinueStatementStart(Context& context,
+                                  Parse::ContinueStatementStartId parse_node)
+    -> bool {
+  auto& stack = context.break_continue_stack();
+  if (stack.empty()) {
+    CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
+                      "`continue` can only be used in a loop.");
+    context.emitter().Emit(parse_node, ContinueOutsideLoop);
+  } else {
+    context.AddInst(SemIR::Branch{parse_node, stack.back().continue_target});
+  }
+
+  context.inst_block_stack().Pop();
+  context.inst_block_stack().PushUnreachable();
+  return true;
+}
+
+auto HandleContinueStatement(Context& /*context*/,
+                             Parse::ContinueStatementId /*parse_node*/)
+    -> bool {
   return true;
 }
 
