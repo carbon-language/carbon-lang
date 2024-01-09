@@ -185,8 +185,6 @@ struct NameId : public IdBase, public Printable<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
-    // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
-    static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
     CARBON_CHECK(!id.is_valid() || id.index >= 0)
         << "Unexpected identifier ID " << id.index;
     return NameId(id.index);
@@ -219,7 +217,10 @@ struct NameId : public IdBase, public Printable<NameId> {
   }
 };
 
+// NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
+static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
 constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
+
 constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
 constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
