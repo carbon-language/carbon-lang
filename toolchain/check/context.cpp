@@ -62,7 +62,8 @@ auto Context::VerifyOnFinish() -> void {
 
 static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
     -> std::optional<SemIR::InstId> {
-  if (auto reify_const = context.insts().TryGetAs<SemIR::ReifyConstant>(inst_id)) {
+  if (auto reify_const =
+          context.insts().TryGetAs<SemIR::ReifyConstant>(inst_id)) {
     return reify_const->constant_id;
   }
   return std::nullopt;
@@ -264,14 +265,14 @@ auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
   return inst_id;
 }
 
-auto Context::AddInstAndPush(Parse::NodeId parse_node,
-                             SemIR::Inst inst) -> void {
+auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
+    -> void {
   auto inst_id = AddInst(inst);
   node_stack_.Push(parse_node, inst_id);
 }
 
-auto Context::AddExprAndPush(Parse::NodeId parse_node,
-                             SemIR::Inst inst) -> void {
+auto Context::AddExprAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
+    -> void {
   auto inst_id = AddExpr(inst);
   node_stack_.Push(parse_node, inst_id);
 }
@@ -500,8 +501,9 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupNameInExactScope(
-    SemIR::NameId name_id, const SemIR::NameScope& scope) -> SemIR::InstId {
+auto Context::LookupNameInExactScope(SemIR::NameId name_id,
+                                     const SemIR::NameScope& scope)
+    -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
     ResolveIfLazyImportRef(it->second);
     return it->second;
@@ -511,8 +513,8 @@ auto Context::LookupNameInExactScope(
 
 auto Context::LookupQualifiedName(Parse::NodeId parse_node,
                                   SemIR::NameId name_id,
-                                  SemIR::NameScopeId scope_id,
-                                  bool required) -> SemIR::InstId {
+                                  SemIR::NameScopeId scope_id, bool required)
+    -> SemIR::InstId {
   llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
   auto result_id = SemIR::InstId::Invalid;
   bool has_error = false;
@@ -681,14 +683,16 @@ auto Context::AddDominatedBlockAndBranch(Parse::NodeId parse_node)
   return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(
-    Parse::NodeId parse_node, SemIR::InstId arg_id) -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+                                                SemIR::InstId arg_id)
+    -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(
-    Parse::NodeId parse_node, SemIR::InstId cond_id) -> SemIR::InstBlockId {
+auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+                                           SemIR::InstId cond_id)
+    -> SemIR::InstBlockId {
   return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
                                                          cond_id);
 }
@@ -711,8 +715,8 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId parse_node,
-    std::initializer_list<SemIR::InstId> block_args) -> SemIR::InstId {
+    Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+    -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -980,8 +984,8 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepr(SemIR::TypeId type_id,
-                              SemIR::CrossRef xref) const -> SemIR::ValueRepr {
+  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
+      -> SemIR::ValueRepr {
     auto xref_inst =
         context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
 
@@ -1015,10 +1019,11 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepr(
-      Parse::NodeId parse_node, std::size_t num_elements,
-      SemIR::TypeId elementwise_rep,
-      bool same_as_object_rep) const -> SemIR::ValueRepr {
+  auto BuildStructOrTupleValueRepr(Parse::NodeId parse_node,
+                                   std::size_t num_elements,
+                                   SemIR::TypeId elementwise_rep,
+                                   bool same_as_object_rep) const
+      -> SemIR::ValueRepr {
     SemIR::ValueRepr::AggregateKind aggregate_kind =
         same_as_object_rep ? SemIR::ValueRepr::ValueAndObjectAggregate
                            : SemIR::ValueRepr::ValueAggregate;
@@ -1102,8 +1107,8 @@ class TypeCompleter {
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  auto BuildValueRepr(SemIR::TypeId type_id,
-                      SemIR::Inst inst) const -> SemIR::ValueRepr {
+  auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
+      -> SemIR::ValueRepr {
     // TODO: This can emit new SemIR instructions. Consider emitting them into a
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
@@ -1381,8 +1386,9 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
-auto Context::CanonicalizeStructType(
-    Parse::NodeId parse_node, SemIR::InstBlockId refs_id) -> SemIR::TypeId {
+auto Context::CanonicalizeStructType(Parse::NodeId parse_node,
+                                     SemIR::InstBlockId refs_id)
+    -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
       SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
 }

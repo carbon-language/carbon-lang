@@ -217,8 +217,8 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleLazyImportRef(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::LazyImportRef inst) -> void {
+                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
+    -> void {
   FatalErrorIfEncountered(inst);
 }
 
@@ -295,8 +295,8 @@ auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleStringLiteral(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::StringLiteral inst) -> void {
+                         SemIR::InstId /*inst_id*/, SemIR::StringLiteral inst)
+    -> void {
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
