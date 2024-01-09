@@ -77,7 +77,7 @@ class TypeStore : public ValueStore<TypeId> {
       return InstId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
       return InstId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
+    } else if (!type_id.is_valid()) {
       return InstId::Invalid;
     } else {
       return Get(type_id).inst_id;
