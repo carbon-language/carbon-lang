@@ -91,14 +91,14 @@ static auto GetImportName(Parse::NodeId parse_node, Context& context,
     }
 
     case SemIR::InstKind::FunctionDecl: {
-      auto function = import_sem_ir.functions().Get(
+      auto& function = import_sem_ir.functions().Get(
           import_inst.As<SemIR::FunctionDecl>().function_id);
       return {function.name_id, function.enclosing_scope_id};
     }
 
     case SemIR::InstKind::Namespace: {
       auto namespace_inst = import_inst.As<SemIR::Namespace>();
-      auto scope =
+      auto& scope =
           import_sem_ir.name_scopes().Get(namespace_inst.name_scope_id);
       return {namespace_inst.name_id, scope.enclosing_scope_id};
     }
@@ -182,7 +182,7 @@ static auto CopyEnclosingNameScopeFromImportIR(
     }
 
     // The namespace hasn't been copied yet, so add it to our list.
-    auto scope = import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
+    auto& scope = import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
     auto scope_inst =
         import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id);
     new_namespaces.push_back({scope_inst.name_scope_id, scope_inst.name_id});
