@@ -16,8 +16,8 @@ namespace Carbon::Check {
 // `SemIR::InstId::Invalid`.
 //
 // TODO: Support symbolic phase.
-auto TryEvalInst(Context& context, SemIR::InstId inst_id,
-                 SemIR::Inst inst) -> SemIR::InstId;
+auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

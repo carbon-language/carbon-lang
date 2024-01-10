@@ -1167,7 +1167,7 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
-while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
+  while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
     inst_id = converted->result_id;
   }
   inst_id = FollowNameRefs(inst_id);

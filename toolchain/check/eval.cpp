@@ -8,11 +8,14 @@
 
 namespace Carbon::Check {
 
+// If the given instruction is constant, returns its constant value.
 static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   return context.constant_values().Get(inst_id);
 }
 
+// If the given instruction block contains only constants, returns a
+// corresponding block of those values.
 static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
     -> SemIR::InstBlockId {
   auto insts = context.inst_blocks().Get(inst_block_id);
@@ -32,9 +35,14 @@ static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
 
     const_insts.push_back(const_inst_id);
   }
+  // TODO: If the new block is identical to the original block, return the
+  // original ID.
   return context.inst_blocks().Add(const_insts);
 }
 
+// If the specified operands of the given instruction have constant values,
+// replaces the operands with their constant values and builds a corresponding
+// constant value. Otherwise returns `SemIR::InstId::Invalid`.
 template <typename InstT, typename... SpecificNodeId>
 static auto TryRebuildIfConstOperands(Context& context, SemIR::Inst inst,
                                       SpecificNodeId InstT::*... each_op_id)
@@ -56,8 +64,8 @@ static auto TryRebuildIfConstOperands(Context& context, SemIR::Inst inst,
   return SemIR::InstId::Invalid;
 }
 
-auto TryEvalInst(Context& context, SemIR::InstId inst_id,
-                        SemIR::Inst inst) -> SemIR::InstId {
+auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::InstId {
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
