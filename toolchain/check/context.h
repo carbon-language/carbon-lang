@@ -111,14 +111,15 @@ class Context {
       -> void;
 
   // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
-  // scopes. name_lookup_has_load_error is used to limit diagnostics when a
+  // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
   // imports.
   auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
                  SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-                 bool name_lookup_has_load_error = false) -> void;
+                 bool lexical_lookup_has_load_error = false) -> void;
 
-  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
+  // Pops the top scope from scope_stack_, cleaning up names from
+  // lexical_lookup_.
   auto PopScope() -> void;
 
   // Pops scopes until we return to the specified scope index.
@@ -415,10 +416,10 @@ class Context {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
-    // The previous state of name_lookup_has_load_error_, restored on pop.
-    bool prev_name_lookup_has_load_error;
+    // The previous state of lexical_lookup_has_load_error_, restored on pop.
+    bool prev_lexical_lookup_has_load_error;
 
-    // Names which are registered with name_lookup_, and will need to be
+    // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
 
@@ -518,9 +519,9 @@ class Context {
   // Tracks lexical lookup results.
   LexicalLookup lexical_lookup_;
 
-  // Whether name_lookup_ has load errors, updated whenever scope_stack_ is
+  // Whether lexical_lookup_ has load errors, updated whenever scope_stack_ is
   // pushed or popped.
-  bool name_lookup_has_load_error_ = false;
+  bool lexical_lookup_has_load_error_ = false;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

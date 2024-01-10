@@ -294,7 +294,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   // We didn't find anything at all.
-  if (!name_lookup_has_load_error_) {
+  if (!lexical_lookup_has_load_error_) {
     DiagnoseNameNotFound(parse_node, name_id);
   }
   return SemIR::InstId::BuiltinError;
@@ -361,17 +361,17 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
 auto Context::PushScope(SemIR::InstId scope_inst_id,
                         SemIR::NameScopeId scope_id,
-                        bool name_lookup_has_load_error) -> void {
+                        bool lexical_lookup_has_load_error) -> void {
   scope_stack_.push_back(
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
-       .prev_name_lookup_has_load_error = name_lookup_has_load_error_});
+       .prev_lexical_lookup_has_load_error = lexical_lookup_has_load_error_});
   if (scope_id.is_valid()) {
     non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
   }
 
-  name_lookup_has_load_error_ |= name_lookup_has_load_error;
+  lexical_lookup_has_load_error_ |= lexical_lookup_has_load_error;
 
   // TODO: Handle this case more gracefully.
   CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
@@ -382,7 +382,7 @@ auto Context::PushScope(SemIR::InstId scope_inst_id,
 auto Context::PopScope() -> void {
   auto scope = scope_stack_.pop_back_val();
 
-  name_lookup_has_load_error_ = scope.prev_name_lookup_has_load_error;
+  lexical_lookup_has_load_error_ = scope.prev_lexical_lookup_has_load_error;
 
   for (const auto& str_id : scope.names) {
     auto& lexical_results = lexical_lookup_.Get(str_id);
