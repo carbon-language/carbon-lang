@@ -30,13 +30,15 @@ class LexicalLookup {
   };
 
   explicit LexicalLookup(StringStoreWrapper<IdentifierId>& identifiers)
-      : identifiers_(&identifiers), lookup_(identifiers_->size() + Offset) {}
+      : identifiers_(&identifiers),
+        lookup_(identifiers_->size() + SemIR::NameId::NonIndexValueCount) {}
 
   ~LexicalLookup() {
-    CARBON_CHECK(lookup_.size() == identifiers_->size() + Offset)
+    CARBON_CHECK(lookup_.size() ==
+                 identifiers_->size() + SemIR::NameId::NonIndexValueCount)
         << lookup_.size() << " must match " << identifiers_->size() << " + "
-        << SemIR::NameId::SpecialValueCount
-        << " + 1 (for Invalid); something may have been added incorrectly";
+        << SemIR::NameId::NonIndexValueCount
+        << "; something may have been added incorrectly";
   }
 
   // Handles both adding the identifier and resizing lookup_ to accommodate the
@@ -45,24 +47,22 @@ class LexicalLookup {
   auto AddIdentifier(llvm::StringRef name) -> IdentifierId {
     auto id = identifiers_->Add(name);
     // Bear in mind that Add was not guaranteed to actually change the size.
-    lookup_.resize(identifiers_->size() + Offset);
+    lookup_.resize(identifiers_->size() + SemIR::NameId::NonIndexValueCount);
     return id;
   }
 
   // Returns the lexical lookup results for a name.
-  auto Get(SemIR::NameId name_id) -> llvm::SmallVector<Result>& {
-    return lookup_[name_id.index + Offset];
+  auto Get(SemIR::NameId name_id) -> llvm::SmallVector<Result, 2>& {
+    return lookup_[name_id.index + SemIR::NameId::NonIndexValueCount];
   }
 
  private:
-  // The offset used when accessing lookup_ with NameId::index.
-  static constexpr int Offset = SemIR::NameId::SpecialValueCount + 1;
-
   StringStoreWrapper<IdentifierId>* identifiers_;
 
   // Maps identifiers to name lookup results.
-  // TODO: Consider TinyPtrVector<Result> or similar.
-  llvm::SmallVector<llvm::SmallVector<Result>> lookup_;
+  // TODO: Consider TinyPtrVector<Result> or similar. For now, use a small size
+  // of 2 to cover the common case.
+  llvm::SmallVector<llvm::SmallVector<Result, 2>> lookup_;
 };
 
 }  // namespace Carbon::Check
