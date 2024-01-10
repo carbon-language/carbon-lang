@@ -19,7 +19,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %.loc10_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_14.2: type = converted %.loc10_14.1, constants.%.loc10_14.1
 // CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}

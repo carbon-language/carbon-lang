@@ -181,6 +181,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
       // TODO: Fill this in better.
       auto function_id =
           functions().Add({.name_id = SemIR::NameId::Invalid,
+                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
                            .decl_id = inst_id,
                            .implicit_param_refs_id = SemIR::InstBlockId::Empty,
                            .param_refs_id = SemIR::InstBlockId::Empty,

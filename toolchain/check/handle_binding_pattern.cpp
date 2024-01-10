@@ -25,10 +25,10 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
   auto make_bind_name = [&, name_node = name_node, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
-    // TODO: Set the correct enclosing_scope_id.
+    // TODO: Eventually the name will need to support associations with other
+    // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(
-        {.name_id = name_id,
-         .enclosing_scope_id = SemIR::NameScopeId::Invalid});
+        {.name_id = name_id, .enclosing_scope_id = context.current_scope_id()});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       return SemIR::BindSymbolicName{name_node, type_id, bind_name_id,
