@@ -953,7 +953,6 @@ class TypeCompleter {
       case SemIR::LazyImportRef::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
-      case SemIR::NoOp::Kind:
       case SemIR::Param::Kind:
       case SemIR::RealLiteral::Kind:
       case SemIR::Return::Kind:
