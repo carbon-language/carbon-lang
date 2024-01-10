@@ -55,7 +55,7 @@ auto HandleIfStatement(Context& context, Parse::IfStatementId parse_node)
       // block.
       auto else_block_id =
           context.node_stack().Pop<Parse::NodeKind::IfCondition>();
-      context.AddInst(SemIR::Branch{parse_node, else_block_id});
+      context.AddInst(parse_node, SemIR::Branch{else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
       break;

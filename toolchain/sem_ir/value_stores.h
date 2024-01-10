@@ -8,6 +8,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type_info.h"
 
@@ -21,7 +22,11 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(Inst inst) -> InstId { return values_.Add(inst); }
+  auto AddInNoBlock(Parse::NodeId parse_node, Inst inst) -> InstId {
+    // TODO: CARBON_CHECK the parse node kind against the instruction kind.
+    parse_nodes_.push_back(parse_node);
+    return values_.Add(inst);
+  }
 
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
@@ -43,13 +48,25 @@ class InstStore {
   // Overwrites a given instruction with a new value.
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
+  auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
+    return parse_nodes_[inst_id.index];
+  }
+
+  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
+    parse_nodes_[inst_id.index] = parse_node;
+  }
+
   // Reserves space.
-  auto Reserve(size_t size) -> void { values_.Reserve(size); }
+  auto Reserve(size_t size) -> void {
+    parse_nodes_.reserve(size);
+    values_.Reserve(size);
+  }
 
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 
  private:
+  llvm::SmallVector<Parse::NodeId> parse_nodes_;
   ValueStore<InstId> values_;
 };
 

@@ -22,7 +22,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Create the appropriate kind of binding for this pattern.
-  auto make_bind_name = [&, name_node = name_node, name_id = name_id](
+  auto make_bind_name = [&, name_id = name_id](
                             SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::Inst {
     // TODO: Eventually the name will need to support associations with other
@@ -31,10 +31,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         {.name_id = name_id, .enclosing_scope_id = context.current_scope_id()});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
-      return SemIR::BindSymbolicName{name_node, type_id, bind_name_id,
-                                     value_id};
+      return SemIR::BindSymbolicName{type_id, bind_name_id, value_id};
     } else {
-      return SemIR::BindName{name_node, type_id, bind_name_id, value_id};
+      return SemIR::BindName{type_id, bind_name_id, value_id};
     }
   };
 
@@ -90,24 +89,28 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       } else if (enclosing_class_decl) {
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
-        auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
-            binding_id, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
-            class_info.self_type_id, cast_type_id});
+        auto field_type_inst_id = context.AddInst(
+            binding_id,
+            SemIR::UnboundElementType{
+                context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+                class_info.self_type_id, cast_type_id});
         value_type_id = context.CanonicalizeType(field_type_inst_id);
         value_id = context.AddInst(
-            SemIR::FieldDecl{binding_id, value_type_id, name_id,
+            binding_id,
+            SemIR::FieldDecl{value_type_id, name_id,
                              SemIR::ElementIndex(context.args_type_info_stack()
                                                      .PeekCurrentBlockContents()
                                                      .size())});
 
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInst(
-            SemIR::StructTypeField{binding_id, name_id, cast_type_id});
+            binding_id, SemIR::StructTypeField{name_id, cast_type_id});
       } else {
-        value_id = context.AddInst(
-            SemIR::VarStorage{name_node, value_type_id, name_id});
+        value_id = context.AddInst(name_node,
+                                   SemIR::VarStorage{value_type_id, name_id});
       }
-      auto bind_id = context.AddInst(make_bind_name(value_type_id, value_id));
+      auto bind_id =
+          context.AddInst(name_node, make_bind_name(value_type_id, value_id));
       context.node_stack().Push(parse_node, bind_id);
 
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
@@ -123,9 +126,10 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       // TODO: A tuple pattern can appear in other places than function
       // parameters.
       auto param_id =
-          context.AddInst(SemIR::Param{name_node, cast_type_id, name_id});
-      context.AddInstAndPush(parse_node,
-                             make_bind_name(cast_type_id, param_id));
+          context.AddInst(name_node, SemIR::Param{cast_type_id, name_id});
+      auto bind_id =
+          context.AddInst(name_node, make_bind_name(cast_type_id, param_id));
+      context.node_stack().Push(parse_node, bind_id);
       break;
     }
 
@@ -142,9 +146,10 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      context.node_stack().Push(parse_node,
-                                context.insts().AddInNoBlock(make_bind_name(
-                                    cast_type_id, SemIR::InstId::Invalid)));
+      context.node_stack().Push(
+          parse_node,
+          context.insts().AddInNoBlock(
+              name_node, make_bind_name(cast_type_id, SemIR::InstId::Invalid)));
       break;
 
     default:
@@ -175,8 +180,7 @@ auto HandleAddr(Context& context, Parse::AddrId parse_node) -> bool {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
-        parse_node,
-        SemIR::AddrPattern{parse_node, self_param->type_id, self_param_id});
+        parse_node, SemIR::AddrPattern{self_param->type_id, self_param_id});
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");

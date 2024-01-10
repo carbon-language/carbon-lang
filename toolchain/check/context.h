@@ -57,10 +57,11 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
+  auto AddInst(Parse::NodeId parse_node, SemIR::Inst inst) -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
+  auto AddConstant(Parse::NodeId parse_node, SemIR::Inst inst, bool is_symbolic)
+      -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
@@ -133,6 +134,14 @@ class Context {
   // Returns the name scope associated with the current lexical scope, if any.
   auto current_scope_id() const -> SemIR::NameScopeId {
     return current_scope().scope_id;
+  }
+
+  auto GetCurrentScopeParseNode() const -> Parse::NodeId {
+    auto current_scope_inst_id = current_scope().scope_inst_id;
+    if (!current_scope_inst_id.is_valid()) {
+      return Parse::NodeId::Invalid;
+    }
+    return sem_ir_->insts().GetParseNode(current_scope_inst_id);
   }
 
   // Returns true if currently at file scope.
@@ -449,7 +458,8 @@ class Context {
 
   // Forms a canonical type ID for a type. If the type is new, adds the
   // instruction to the current block.
-  auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
+  auto CanonicalizeTypeAndAddInstIfNew(Parse::NodeId parse_node,
+                                       SemIR::Inst inst) -> SemIR::TypeId;
 
   // If the passed in instruction ID is a LazyImportRef, resolves it for use.
   // Called when name lookup intends to return an inst_id.

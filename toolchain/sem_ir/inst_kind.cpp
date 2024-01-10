@@ -14,7 +14,11 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(InstKind) = {
 };
 
 auto InstKind::ir_name() const -> llvm::StringLiteral {
-  return definition().ir_name();
+  static constexpr const llvm::StringLiteral Table[] = {
+#define CARBON_SEM_IR_INST_KIND(Name) SemIR::Name::Kind.ir_name(),
+#include "toolchain/sem_ir/inst_kind.def"
+  };
+  return Table[AsInt()];
 }
 
 auto InstKind::value_kind() const -> InstValueKind {
@@ -27,15 +31,11 @@ auto InstKind::value_kind() const -> InstValueKind {
 }
 
 auto InstKind::terminator_kind() const -> TerminatorKind {
-  return definition().terminator_kind();
-}
-
-auto InstKind::definition() const -> const Definition& {
-  static constexpr const Definition* Table[] = {
-#define CARBON_SEM_IR_INST_KIND(Name) &SemIR::Name::Kind,
+  static constexpr const TerminatorKind Table[] = {
+#define CARBON_SEM_IR_INST_KIND(Name) SemIR::Name::Kind.terminator_kind(),
 #include "toolchain/sem_ir/inst_kind.def"
   };
-  return *Table[AsInt()];
+  return Table[AsInt()];
 }
 
 }  // namespace Carbon::SemIR

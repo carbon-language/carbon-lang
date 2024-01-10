@@ -47,6 +47,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
   switch (operand_type_inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = operand_type_inst.As<SemIR::ArrayType>();
+      auto index_parse_node = context.insts().GetParseNode(index_inst_id);
       // We can check whether integers are in-bounds, although it doesn't affect
       // the IR for an array.
       if (auto index_literal = index_inst.TryAs<SemIR::IntLiteral>();
@@ -57,7 +58,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         index_inst_id = SemIR::InstId::BuiltinError;
       }
       auto cast_index_id = ConvertToValueOfType(
-          context, index_inst.parse_node(), index_inst_id,
+          context, index_parse_node, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
@@ -65,11 +66,11 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
         operand_inst_id = context.AddInst(
-            SemIR::ValueAsRef{parse_node, operand_type_id, operand_inst_id});
+            parse_node, SemIR::ValueAsRef{operand_type_id, operand_inst_id});
       }
       auto elem_id = context.AddInst(
-          SemIR::ArrayIndex{parse_node, array_type.element_type_id,
-                            operand_inst_id, cast_index_id});
+          parse_node, SemIR::ArrayIndex{array_type.element_type_id,
+                                        operand_inst_id, cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -98,9 +99,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         context.emitter().Emit(parse_node, TupleIndexIntLiteral);
         index_inst_id = SemIR::InstId::BuiltinError;
       }
-      context.AddInstAndPush(parse_node,
-                             SemIR::TupleIndex{parse_node, element_type_id,
-                                               operand_inst_id, index_inst_id});
+      context.AddInstAndPush(
+          parse_node,
+          SemIR::TupleIndex{element_type_id, operand_inst_id, index_inst_id});
       return true;
     }
     default: {

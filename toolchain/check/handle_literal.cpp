@@ -10,8 +10,7 @@ auto HandleBoolLiteralFalse(Context& context,
                             Parse::BoolLiteralFalseId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
-      SemIR::BoolLiteral{parse_node,
-                         context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
+      SemIR::BoolLiteral{context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
                          SemIR::BoolValue::False});
   return true;
 }
@@ -20,8 +19,7 @@ auto HandleBoolLiteralTrue(Context& context,
                            Parse::BoolLiteralTrueId parse_node) -> bool {
   context.AddInstAndPush(
       parse_node,
-      SemIR::BoolLiteral{parse_node,
-                         context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
+      SemIR::BoolLiteral{context.GetBuiltinType(SemIR::BuiltinKind::BoolType),
                          SemIR::BoolValue::True});
   return true;
 }
@@ -30,8 +28,7 @@ auto HandleIntLiteral(Context& context, Parse::IntLiteralId parse_node)
     -> bool {
   context.AddInstAndPush(
       parse_node,
-      SemIR::IntLiteral{parse_node,
-                        context.GetBuiltinType(SemIR::BuiltinKind::IntType),
+      SemIR::IntLiteral{context.GetBuiltinType(SemIR::BuiltinKind::IntType),
                         context.tokens().GetIntLiteral(
                             context.parse_tree().node_token(parse_node))});
   return true;
@@ -41,8 +38,7 @@ auto HandleRealLiteral(Context& context, Parse::RealLiteralId parse_node)
     -> bool {
   context.AddInstAndPush(
       parse_node,
-      SemIR::RealLiteral{parse_node,
-                         context.GetBuiltinType(SemIR::BuiltinKind::FloatType),
+      SemIR::RealLiteral{context.GetBuiltinType(SemIR::BuiltinKind::FloatType),
                          context.tokens().GetRealLiteral(
                              context.parse_tree().node_token(parse_node))});
   return true;
@@ -51,11 +47,10 @@ auto HandleRealLiteral(Context& context, Parse::RealLiteralId parse_node)
 auto HandleStringLiteral(Context& context, Parse::StringLiteralId parse_node)
     -> bool {
   context.AddInstAndPush(
-      parse_node,
-      SemIR::StringLiteral{
-          parse_node, context.GetBuiltinType(SemIR::BuiltinKind::StringType),
-          context.tokens().GetStringLiteralValue(
-              context.parse_tree().node_token(parse_node))});
+      parse_node, SemIR::StringLiteral{
+                      context.GetBuiltinType(SemIR::BuiltinKind::StringType),
+                      context.tokens().GetStringLiteralValue(
+                          context.parse_tree().node_token(parse_node))});
   return true;
 }
 

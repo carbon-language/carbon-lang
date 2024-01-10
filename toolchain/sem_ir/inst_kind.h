@@ -48,6 +48,17 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
+  template <typename TypedNode>
+  class Definition;
+
+  // Provides a definition for this instruction kind. Should only be called
+  // once, to construct the kind as part of defining it in `typed_insts.h`.
+  template <typename TypedNode>
+  constexpr auto Define(
+      llvm::StringLiteral ir_name,
+      TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
+      -> Definition<TypedNode>;
+
   using EnumBase::Create;
 
   // Returns the name to use for this instruction kind in Semantics IR.
@@ -66,18 +77,6 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Compute a fingerprint for this instruction kind, allowing its use as part
   // of the key in a `FoldingSet`.
   void Profile(llvm::FoldingSetNodeID& id) { id.AddInteger(AsInt()); }
-
-  class Definition;
-
-  // Provides a definition for this instruction kind. Should only be called
-  // once, to construct the kind as part of defining it in `typed_insts.h`.
-  constexpr auto Define(llvm::StringLiteral ir_name,
-                        TerminatorKind terminator_kind =
-                            TerminatorKind::NotTerminator) const -> Definition;
-
- private:
-  // Looks up the definition for this instruction kind.
-  auto definition() const -> const Definition&;
 };
 
 #define CARBON_SEM_IR_INST_KIND(Name) \
@@ -92,8 +91,11 @@ static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 // are not copyable, and only one instance of this type is expected to exist per
 // instruction kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a
 // thin wrapper around an instruction kind index.
+template <typename TypedNodeArg>
 class InstKind::Definition : public InstKind {
  public:
+  using TypedNode = TypedNodeArg;
+
   // Not copyable.
   Definition(const Definition&) = delete;
   auto operator=(const Definition&) -> Definition& = delete;
@@ -118,10 +120,11 @@ class InstKind::Definition : public InstKind {
   TerminatorKind terminator_kind_;
 };
 
+template <typename TypedNode>
 constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
                                 TerminatorKind terminator_kind) const
-    -> Definition {
-  return Definition(*this, ir_name, terminator_kind);
+    -> Definition<TypedNode> {
+  return Definition<TypedNode>(*this, ir_name, terminator_kind);
 }
 
 }  // namespace Carbon::SemIR

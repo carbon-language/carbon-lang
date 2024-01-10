@@ -39,8 +39,8 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddInst(SemIR::Inst inst) -> SemIR::InstId {
-    auto inst_id = context_.insts().AddInNoBlock(inst);
+  auto AddInst(Parse::NodeId parse_node, SemIR::Inst inst) -> SemIR::InstId {
+    auto inst_id = context_.insts().AddInNoBlock(parse_node, inst);
     insts_.push_back(inst_id);
     return inst_id;
   }
@@ -64,7 +64,7 @@ class PendingBlock {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
       context_.insts().Set(
-          target_id, SemIR::SpliceBlock{value.parse_node(), value.type_id(),
+          target_id, SemIR::SpliceBlock{value.type_id(),
                                         SemIR::InstBlockId::Empty, value_id});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
@@ -74,9 +74,11 @@ class PendingBlock {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
       context_.insts().Set(
           target_id,
-          SemIR::SpliceBlock{value.parse_node(), value.type_id(),
+          SemIR::SpliceBlock{value.type_id(),
                              context_.inst_blocks().Add(insts_), value_id});
     }
+    context_.insts().SetParseNode(target_id,
+                                  context_.insts().GetParseNode(value_id));
 
     // Prepare to stash more pending instructions.
     insts_.clear();
