@@ -13,7 +13,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: --- fail_qualifier_unsupported.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y}
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %y.var: ref i32 = var y

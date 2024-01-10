@@ -42,7 +42,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access}
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()

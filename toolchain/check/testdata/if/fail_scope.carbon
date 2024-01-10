@@ -18,7 +18,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: --- fail_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.VarScope = %VarScope}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.VarScope = %VarScope}
 // CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

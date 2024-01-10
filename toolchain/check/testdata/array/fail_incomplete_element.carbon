@@ -26,7 +26,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .a = %a, .p = %p}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .a = %a, .p = %p}
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete

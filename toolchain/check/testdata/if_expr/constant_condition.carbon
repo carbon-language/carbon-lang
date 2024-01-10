@@ -18,7 +18,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .F = %F, .G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .F = %F, .G = %G}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT:   %F: <function> = fn_decl @F

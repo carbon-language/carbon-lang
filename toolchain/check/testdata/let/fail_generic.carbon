@@ -20,7 +20,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

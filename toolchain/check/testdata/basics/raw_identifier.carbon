@@ -23,7 +23,7 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT: --- raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .C = %C}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT:   %C: <function> = fn_decl @C
