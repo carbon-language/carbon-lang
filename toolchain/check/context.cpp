@@ -210,7 +210,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
                                SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
-  if (scope_id == SemIR::NameScopeId::Invalid) {
+  if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
     //

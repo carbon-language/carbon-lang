@@ -338,7 +338,7 @@ class InstNamer {
       return;
     }
 
-    if (parse_node == Parse::NodeId::Invalid) {
+    if (!parse_node.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.insts().Get(block.front()).parse_node();
