@@ -66,7 +66,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
       return name_context.resolved_inst_id;
 
     case NameContext::State::Unresolved:
-      if (name_context.target_scope_id == SemIR::NameScopeId::Invalid) {
+      if (!name_context.target_scope_id.is_valid()) {
         context_->AddNameToLookup(name_context.parse_node,
                                   name_context.unresolved_name_id, target_id);
       } else {

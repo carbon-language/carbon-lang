@@ -17,7 +17,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: --- fail_collapse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

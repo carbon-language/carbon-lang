@@ -233,8 +233,8 @@ struct GenericBindingPattern {
 };
 
 // An address-of binding: `addr self: Self*`.
-struct Address {
-  static constexpr auto Kind = NodeKind::Address.Define(NodeCategory::Pattern);
+struct Addr {
+  static constexpr auto Kind = NodeKind::Addr.Define(NodeCategory::Pattern);
 
   AnyPatternId inner;
 };

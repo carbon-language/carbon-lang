@@ -23,7 +23,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C = %C.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .C = %C.decl}
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()

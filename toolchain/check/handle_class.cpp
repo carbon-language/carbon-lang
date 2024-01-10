@@ -93,10 +93,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
     class_decl.class_id = context.classes().Add(
-        {.name_id =
-             name_context.state == DeclNameStack::NameContext::State::Unresolved
-                 ? name_context.unresolved_name_id
-                 : SemIR::NameId::Invalid,
+        {.name_id = name_context.name_id_for_new_inst(),
+         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
          // `.self_type_id` depends on `class_id`, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .decl_id = class_decl_id,
@@ -142,7 +140,8 @@ auto HandleClassDefinitionStart(Context& context,
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.name_scopes().Add(class_decl_id);
+    class_info.scope_id =
+        context.name_scopes().Add(class_decl_id, class_info.enclosing_scope_id);
   }
 
   // Enter the class scope.

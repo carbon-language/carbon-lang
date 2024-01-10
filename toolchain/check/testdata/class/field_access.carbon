@@ -25,7 +25,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Run = %Run}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run

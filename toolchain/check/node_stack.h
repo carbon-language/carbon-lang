@@ -366,7 +366,7 @@ class NodeStack {
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
     switch (kind) {
-      case Parse::NodeKind::Address:
+      case Parse::NodeKind::Addr:
       case Parse::NodeKind::ArrayExpr:
       case Parse::NodeKind::BindingPattern:
       case Parse::NodeKind::CallExpr:

@@ -77,7 +77,7 @@ class TypeStore : public ValueStore<TypeId> {
       return InstId::BuiltinTypeType;
     } else if (type_id == TypeId::Error) {
       return InstId::BuiltinError;
-    } else if (type_id == TypeId::Invalid) {
+    } else if (!type_id.is_valid()) {
       return InstId::Invalid;
     } else {
       return Get(type_id).inst_id;
@@ -171,7 +171,9 @@ class NameStoreWrapper {
   const StringStoreWrapper<IdentifierId>* identifiers_;
 };
 
-struct NameScope {
+struct NameScope : Printable<NameScope> {
+  auto Print(llvm::raw_ostream& out) const -> void;
+
   // Names in the scope.
   llvm::DenseMap<NameId, InstId> names = llvm::DenseMap<NameId, InstId>();
 
@@ -193,8 +195,11 @@ struct NameScope {
   // TODO: Consider using something like `TinyPtrVector` for this.
   llvm::SmallVector<NameScopeId, 1> extended_scopes;
 
-  // The instructioning which owns the scope.
+  // The instruction which owns the scope.
   InstId inst_id;
+
+  // The scope enclosing this one.
+  NameScopeId enclosing_scope_id;
 
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
@@ -208,8 +213,9 @@ struct NameScope {
 class NameScopeStore {
  public:
   // Adds a name scope, returning an ID to reference it.
-  auto Add(InstId inst_id) -> NameScopeId {
-    return values_.Add({.inst_id = inst_id});
+  auto Add(InstId inst_id, NameScopeId enclosing_scope_id) -> NameScopeId {
+    return values_.Add(
+        {.inst_id = inst_id, .enclosing_scope_id = enclosing_scope_id});
   }
 
   // Adds an entry to a name scope. Returns true on success, false on
@@ -225,6 +231,10 @@ class NameScopeStore {
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) const -> const NameScope& {
     return values_.Get(scope_id);
+  }
+
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return values_.OutputYaml();
   }
 
  private:

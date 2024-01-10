@@ -50,6 +50,7 @@ TEST(SemIRTest, YAML) {
 
   auto file = Yaml::Mapping(ElementsAre(
       Pair("cross_ref_irs_size", "1"),
+      Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("bind_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),

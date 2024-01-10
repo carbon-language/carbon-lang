@@ -18,7 +18,7 @@ auto HandleBindingPattern(Context& context) -> void {
   }
 
   if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
-    context.PushState({.state = State::BindingPatternAddress,
+    context.PushState({.state = State::BindingPatternAddr,
                        .token = *token,
                        .subtree_start = state.subtree_start});
   }
@@ -92,10 +92,10 @@ auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
   HandleBindingPatternFinish(context, NodeKind::BindingPattern);
 }
 
-auto HandleBindingPatternAddress(Context& context) -> void {
+auto HandleBindingPatternAddr(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::Address, state.token, state.subtree_start,
+  context.AddNode(NodeKind::Addr, state.token, state.subtree_start,
                   state.has_error);
 
   // If an error was encountered, propagate it while adding a node.

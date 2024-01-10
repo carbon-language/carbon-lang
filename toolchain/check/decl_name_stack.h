@@ -104,6 +104,22 @@ class DeclNameStack {
       Error,
     };
 
+    // Returns the name_id for a new instruction. This is invalid when the name
+    // resolved.
+    auto name_id_for_new_inst() -> SemIR::NameId {
+      return state == State::Unresolved ? unresolved_name_id
+                                        : SemIR::NameId::Invalid;
+    }
+
+    // Returns the enclosing_scope_id for a new instruction. This is invalid
+    // when the name resolved. Note this is distinct from the enclosing_scope of
+    // the NameContext, which refers to the scope of the introducer rather than
+    // the scope of the name.
+    auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
+      return state == State::Unresolved ? target_scope_id
+                                        : SemIR::NameScopeId::Invalid;
+    }
+
     // The current scope when this name began. This is the scope that we will
     // return to at the end of the declaration.
     ScopeIndex enclosing_scope;

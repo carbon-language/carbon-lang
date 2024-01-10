@@ -181,6 +181,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
       // TODO: Fill this in better.
       auto function_id =
           functions().Add({.name_id = SemIR::NameId::Invalid,
+                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
                            .decl_id = inst_id,
                            .implicit_param_refs_id = SemIR::InstBlockId::Empty,
                            .param_refs_id = SemIR::InstBlockId::Empty,
@@ -210,7 +211,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
                                SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
-  if (scope_id == SemIR::NameScopeId::Invalid) {
+  if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
     //
@@ -923,7 +924,7 @@ class TypeCompleter {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
-      case SemIR::AddressOf::Kind:
+      case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:

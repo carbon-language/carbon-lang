@@ -17,7 +17,7 @@ fn B() {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -29,7 +29,7 @@ fn B() {}
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -46,7 +46,7 @@ jobs:
         if: steps.filter.outputs.toolchain == 'true'
         uses: hkusu/review-assign-action@v1.3.0
         with:
-          reviewers: chandlerc, jonmeow, zygoloid
+          reviewers: chandlerc, geoffromer, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-fallback
