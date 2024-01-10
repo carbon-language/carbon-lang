@@ -183,6 +183,10 @@ struct NameId : public IdBase, public Printable<NameId> {
   // The name of `base`.
   static const NameId Base;
 
+  // The number of non-index (<0) that exist, and will need storage in name
+  // lookup.
+  static const int NonIndexValueCount;
+
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
     if (id.index >= 0) {
@@ -227,6 +231,9 @@ constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
 constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
+constexpr int NameId::NonIndexValueCount = 6;
+// Enforce the link between SpecialValueCount and the last special value.
+static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
