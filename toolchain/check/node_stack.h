@@ -443,7 +443,7 @@ class NodeStack {
     return IdKind::InstId;
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
   case Parse::NodeKind::Name##Modifier:                  \
-    return IdKind::SoloParseNode;
+    return IdKind::Unused;
 #include "toolchain/parse/node_kind.def"
       default:
         return IdKind::Unused;
