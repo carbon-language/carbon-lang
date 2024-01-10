@@ -348,12 +348,9 @@ class Context {
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
-  // Use `lexical_lookup().AddIdentifier` to add entries. `identifiers()` is
-  // const to discourage misuse.
-  auto identifiers() -> const StringStoreWrapper<IdentifierId>& {
+  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
-
   auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
