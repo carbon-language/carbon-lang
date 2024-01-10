@@ -32,7 +32,7 @@ fn F(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.X = %X.decl, .F = %F}
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %X: type = class_type @X
 // CHECK:STDOUT:   %F: <function> = fn_decl @F

@@ -66,7 +66,7 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl}
 // CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
 // CHECK:STDOUT:   %Access: type = class_type @Access
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()

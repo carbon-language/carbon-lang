@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +94,7 @@ fn Main() {
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc19: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19_17: i32* = address_of %a.ref.loc19
+// CHECK:STDOUT:   %.loc19_17: i32* = addr_of %a.ref.loc19
 // CHECK:STDOUT:   assign %p.var, %.loc19_17
 // CHECK:STDOUT:   %p.ref.loc20: ref i32* = name_ref p, %p
 // CHECK:STDOUT:   %.loc20_4: i32* = bind_value %p.ref.loc20
@@ -111,7 +111,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %a.ref.loc22: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc22_25: i32* = address_of %a.ref.loc22
+// CHECK:STDOUT:   %.loc22_25: i32* = addr_of %a.ref.loc22
 // CHECK:STDOUT:   br !if.expr.result(%.loc22_25)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:

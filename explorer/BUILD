@@ -46,6 +46,9 @@ cc_binary(
     name = "file_test",
     testonly = 1,
     srcs = ["file_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":main",
         "//common:check",

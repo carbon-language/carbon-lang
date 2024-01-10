@@ -26,7 +26,7 @@ auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
     ref = sem_ir.insts().Get(param_ref_id);
   }
 
-  if (auto bind_name = ref.TryAs<SemIR::BindName>()) {
+  if (auto bind_name = ref.TryAs<SemIR::AnyBindName>()) {
     param_ref_id = bind_name->value_id;
     ref = sem_ir.insts().Get(param_ref_id);
   }
@@ -150,6 +150,8 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("cross_ref_irs_size",
                       Yaml::OutputScalar(cross_ref_irs_.size()));
+              map.Add("name_scopes", name_scopes_.OutputYaml());
+              map.Add("bind_names", bind_names_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("types", types_.OutputYaml());
@@ -177,6 +179,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
+    case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
     case NameRef::Kind:
@@ -195,7 +198,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
-    case AddressOf::Kind:
+    case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
@@ -298,6 +301,11 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
+      case BindSymbolicName::Kind: {
+        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
+        out << names().GetFormatted(bind_names().Get(name_id).name_id);
+        break;
+      }
       case ClassType::Kind: {
         auto class_name_id =
             classes().Get(inst.As<ClassType>().class_id).name_id;
@@ -394,7 +402,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
@@ -502,9 +510,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
+      case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:

@@ -296,11 +296,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi, CloseSquareBracket)
 //       IdentifierName or SelfValueName
 //       _external_: type expression
 //     [Generic]BindingPattern
-//   _optional_ Address
+//   _optional_ Addr
 // _optional_ Template
+//
+// TODO: Rename GenericBindingPattern to CompileTimeBindingPattern.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(BindingPattern, 2, CARBON_IF_VALID(Colon))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericBindingPattern, 2, ColonExclaim)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1, Addr)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Addr, 1, Addr)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, Template)
 
 // `let`:
@@ -321,9 +323,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer, CARBON_IF_VALID(Semi))
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
 //   _external_: BindingPattern or TuplePattern
-//     VariableInitializer
 //     _external_: expression
-//   _optional_
+//   _optional_ VariableInitializer
 // VariableDecl
 //
 // Access and declaration modifier keywords only appear for `var` declarations,
@@ -332,7 +333,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer, CARBON_IF_VALID(Semi))
 // be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_IF_VALID(Var))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, Returned)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1, Equal)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_IF_VALID(Semi))
 
@@ -403,8 +404,10 @@ CARBON_PARSE_NODE_KIND_BRACKET(IfStatement, IfCondition, If)
 //   WhileCondition
 //   _external_: CodeBlock
 // WhileStatement
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0, OpenParen)
-CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart, CloseParen)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart,
+                               CARBON_IF_VALID(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2, While)
 
 // Index expressions, such as `a[1]`:

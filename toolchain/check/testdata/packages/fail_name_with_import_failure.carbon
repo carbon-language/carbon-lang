@@ -20,7 +20,7 @@ var a: () = A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, has_error}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, has_error}
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.loc7
 // CHECK:STDOUT:   %a.var: ref () = var a

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INST_H_
 
 #include <cstdint>
+#include <type_traits>
 
 #include "common/check.h"
 #include "common/ostream.h"
@@ -18,16 +19,27 @@
 
 namespace Carbon::SemIR {
 
-// Data about the arguments of a typed instruction, to aid in type erasure. The
-// `KindT` parameter is used to check that `TypedInst` is a typed instruction.
-template <typename TypedInst,
-          const InstKind::Definition& KindT = TypedInst::Kind>
-struct TypedInstArgsInfo {
-  // A corresponding std::tuple<...> type.
-  using Tuple = decltype(StructReflection::AsTuple(std::declval<TypedInst>()));
+// Information about an instruction-like type, which is a type that an Inst can
+// be converted to and from. The `Enabled` parameter is used to check
+// requirements on the type in the specializations of this template.
+template <typename InstLikeType, bool Enabled = true>
+struct InstLikeTypeInfo;
 
-  static constexpr int FirstArgField =
-      HasParseNodeMember<TypedInst> + HasTypeIdMember<TypedInst>;
+// A helper base class for instruction-like types that are structs.
+template <typename InstLikeType>
+struct InstLikeTypeInfoBase {
+  // The derived class. Useful to allow SFINAE on whether a type is
+  // instruction-like: `typename InstLikeTypeInfo<T>::Self` is valid only if `T`
+  // is instruction-like.
+  using Self = InstLikeTypeInfo<InstLikeType>;
+
+  // A corresponding std::tuple<...> type.
+  using Tuple =
+      decltype(StructReflection::AsTuple(std::declval<InstLikeType>()));
+
+  static constexpr int FirstArgField = HasKindMemberAsField<InstLikeType> +
+                                       HasParseNodeMember<InstLikeType> +
+                                       HasTypeIdMember<InstLikeType>;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
@@ -37,8 +49,55 @@ struct TypedInstArgsInfo {
   using ArgType = std::tuple_element_t<FirstArgField + N, Tuple>;
 
   template <int N>
-  static auto Get(TypedInst inst) -> ArgType<N> {
+  static auto Get(InstLikeType inst) -> ArgType<N> {
     return std::get<FirstArgField + N>(StructReflection::AsTuple(inst));
+  }
+};
+
+// A particular type of instruction is instruction-like.
+template <typename TypedInst>
+struct InstLikeTypeInfo<
+    TypedInst, static_cast<bool>(std::is_same_v<const InstKind::Definition,
+                                                decltype(TypedInst::Kind)>)>
+    : InstLikeTypeInfoBase<TypedInst> {
+  static_assert(!HasKindMemberAsField<TypedInst>,
+                "Instruction type should not have a kind field");
+  static auto GetKind(TypedInst /*inst*/) -> InstKind {
+    return TypedInst::Kind;
+  }
+  static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
+  // A name that can be streamed to an llvm::raw_ostream.
+  static auto DebugName() -> InstKind { return TypedInst::Kind; }
+};
+
+// An instruction category is instruction-like.
+template <typename InstCat>
+struct InstLikeTypeInfo<
+    InstCat, static_cast<bool>(
+                 std::is_same_v<const InstKind&, decltype(InstCat::Kinds[0])>)>
+    : InstLikeTypeInfoBase<InstCat> {
+  static_assert(HasKindMemberAsField<InstCat>,
+                "Instruction category should have a kind field");
+  static auto GetKind(InstCat cat) -> InstKind { return cat.kind; }
+  static auto IsKind(InstKind kind) -> bool {
+    for (InstKind k : InstCat::Kinds) {
+      if (k == kind) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // A name that can be streamed to an llvm::raw_ostream.
+  static auto DebugName() -> std::string {
+    std::string str;
+    llvm::raw_string_ostream out(str);
+    out << "{";
+    llvm::ListSeparator sep;
+    for (auto kind : InstCat::Kinds) {
+      out << sep << kind;
+    }
+    out << "}";
+    return out.str();
   }
 };
 
@@ -54,27 +113,33 @@ struct TypedInstArgsInfo {
 // In addition, kind-specific data can be accessed by casting to the specific
 // kind of instruction:
 //
-// - Use `inst.kind()` or `Is<TypedInst>` to determine what kind of instruction
-// it is.
-// - Cast to a specific type using `inst.As<TypedInst>()`
-//   - Using the wrong kind in `inst.As<TypedInst>()` is a programming error,
+// - Use `inst.kind()` or `Is<InstLikeType>` to determine what kind of
+//   instruction it is.
+// - Cast to a specific type using `inst.As<InstLikeType>()`
+//   - Using the wrong kind in `inst.As<InstLikeType>()` is a programming error,
 //     and will CHECK-fail in debug modes (opt may too, but it's not an API
 //     guarantee).
-// - Use `inst.TryAs<TypedInst>()` to safely access type-specific instruction
-// data
-//   where the instruction's kind is not known.
+// - Use `inst.TryAs<InstLikeType>()` to safely access type-specific instruction
+//   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
+  template <typename TypedInst,
+            typename Info = typename InstLikeTypeInfo<TypedInst>::Self>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
       : parse_node_(Parse::NodeId::Invalid),
-        kind_(TypedInst::Kind),
+        // Always overwritten below.
+        kind_(InstKind::Create({})),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
     if constexpr (HasParseNodeMember<TypedInst>) {
       parse_node_ = typed_inst.parse_node;
+    }
+    if constexpr (HasKindMemberAsField<TypedInst>) {
+      kind_ = typed_inst.kind;
+    } else {
+      kind_ = TypedInst::Kind;
     }
     if constexpr (HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
@@ -88,31 +153,39 @@ class Inst : public Printable<Inst> {
   }
 
   // Returns whether this instruction has the specified type.
-  template <typename TypedInst>
+  template <typename TypedInst, typename Info = InstLikeTypeInfo<TypedInst>>
   auto Is() const -> bool {
-    return kind() == TypedInst::Kind;
+    return Info::IsKind(kind());
   }
 
   // Casts this instruction to the given typed instruction, which must match the
   // instruction's kind, and returns the typed instruction.
-  template <typename TypedInst, typename Info = TypedInstArgsInfo<TypedInst>>
+  template <typename TypedInst, typename Info = InstLikeTypeInfo<TypedInst>>
   auto As() const -> TypedInst {
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
-                                  << " to wrong kind " << TypedInst::Kind;
-    auto build_with_type_id_and_args = [&](auto... type_id_and_args) {
-      if constexpr (HasParseNodeMember<TypedInst>) {
-        return TypedInst{decltype(TypedInst::parse_node)(parse_node()),
-                         type_id_and_args...};
+                                  << " to wrong kind " << Info::DebugName();
+    auto build_with_parse_node_onwards = [&](auto... parse_node_onwards) {
+      if constexpr (HasKindMemberAsField<TypedInst>) {
+        return TypedInst{kind(), parse_node_onwards...};
       } else {
-        return TypedInst{type_id_and_args...};
+        return TypedInst{parse_node_onwards...};
+      }
+    };
+
+    auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
+      if constexpr (HasParseNodeMember<TypedInst>) {
+        return build_with_parse_node_onwards(
+            decltype(TypedInst::parse_node)(parse_node()), type_id_onwards...);
+      } else {
+        return build_with_parse_node_onwards(type_id_onwards...);
       }
     };
 
     auto build_with_args = [&](auto... args) {
       if constexpr (HasTypeIdMember<TypedInst>) {
-        return build_with_type_id_and_args(type_id(), args...);
+        return build_with_type_id_onwards(type_id(), args...);
       } else {
-        return build_with_type_id_and_args(args...);
+        return build_with_type_id_onwards(args...);
       }
     };
 
@@ -185,13 +258,13 @@ class Inst : public Printable<Inst> {
 };
 
 // TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
-// pair of Insts. However, InstKind is 1 byte; if args
-// were 3.5 bytes, we could potentially shrink Inst by 4 bytes. This
-// may be worth investigating further.
+// pair of Insts. However, InstKind is 1 byte; if args were 3.5 bytes, we could
+// potentially shrink Inst by 4 bytes. This may be worth investigating further.
 static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
 
-// Typed instructions can be printed by converting them to instructions.
-template <typename TypedInst, typename = TypedInstArgsInfo<TypedInst>>
+// Instruction-like types can be printed by converting them to instructions.
+template <typename TypedInst,
+          typename = typename InstLikeTypeInfo<TypedInst>::Self>
 inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
     -> llvm::raw_ostream& {
   Inst(inst).Print(out);

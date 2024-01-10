@@ -814,7 +814,7 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //
 //  ( ... )
 // ^
-//   1. ParamListAsRegular
+//   1. PatternListAsTuple
 //
 //  ...
 // ^
@@ -832,7 +832,7 @@ CARBON_PARSE_STATE(Pattern)
 //
 // addr        (variant is not Variable)
 // ^~~~
-//   3. BindingPatternAddress
+//   3. BindingPatternAddr
 //
 // THEN
 //
@@ -860,7 +860,7 @@ CARBON_PARSE_STATE(BindingPattern)
 // addr name: type
 //                ^
 //   (state done)
-CARBON_PARSE_STATE(BindingPatternAddress)
+CARBON_PARSE_STATE(BindingPatternAddr)
 
 // Handles `template` in a binding pattern.
 //
@@ -1154,27 +1154,20 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles the start of a `var` or `returned var`.
 //
-// var ...             (variant is not Returned)
+// var ...             (variant is Decl)
 //    ^
-//   1. BindingPattern
-//   2. VarAfterPattern
-//   3. VarFinishAs(Decl|For)
-//
-// var (...)
-//    ^
-//   1. ParamListAsRegular
-//   2. VarAfterPattern
-//   3. VarFinishAs(Decl|For)
-//
-// returned var ...    (variant is Returned)
-// ^~~~~~~~~~~~
-//   1. BindingPattern
+//   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
+// var ...             (variant is For)
+//    ^
+//   1. Pattern
+//   2. VarFinishAsFor
+//
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
-//   1. ParamListAsRegular
+//   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinishAsDecl
 //
@@ -1191,11 +1184,18 @@ CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
 // var ... ??? = ...
 //         ^~~~~
 //   1. Expr
+//   2. VarInitializer
 //
 // var ... ...
 //        ^
 //   (state done)
 CARBON_PARSE_STATE(VarAfterPattern)
+
+// var ... = ... ;
+//              ^
+//
+//   (state done)
+CARBON_PARSE_STATE(VarInitializer)
 
 // Handles `var` parsing at the end.
 //
@@ -1214,15 +1214,9 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 
 // Handles the start of a `let`.
 //
-// let (...)
-// ^~~
-//   1. ParamListAsRegular
-//   2. LetAfterPattern
-//   3. LetFinish
-//
 // let ...
 //    ^
-//   1. BindingPattern
+//   1. Pattern
 //   2. LetAfterPattern
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)

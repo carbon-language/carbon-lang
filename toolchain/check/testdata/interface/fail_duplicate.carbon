@@ -39,7 +39,7 @@ interface Class { }
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl}
 // CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface, ()
 // CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface, ()
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function

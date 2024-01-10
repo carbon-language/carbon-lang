@@ -12,7 +12,7 @@ private let a: i32 = 1;
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {}
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc10
 // CHECK:STDOUT: }

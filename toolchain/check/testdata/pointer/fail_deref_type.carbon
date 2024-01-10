@@ -15,7 +15,7 @@ var p: *i32;
 // CHECK:STDOUT: --- fail_deref_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.p = %p}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.p = %p}
 // CHECK:STDOUT:   %.loc13: ref <error> = deref i32
 // CHECK:STDOUT:   %p.var: ref <error> = var p
 // CHECK:STDOUT:   %p: ref <error> = bind_name p, %p.var

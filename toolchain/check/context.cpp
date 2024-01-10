@@ -144,9 +144,11 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
   // Add a name for formatted output. This isn't used in name lookup in order
   // to reduce indirection, but it's separate from the Import because it
   // otherwise fits in an Inst.
+  auto bind_name_id = bind_names().Add(
+      {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
   AddInst(SemIR::BindName{.parse_node = import_node,
                           .type_id = type_id,
-                          .name_id = name_id,
+                          .bind_name_id = bind_name_id,
                           .value_id = inst_id});
 }
 
@@ -179,6 +181,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
       // TODO: Fill this in better.
       auto function_id =
           functions().Add({.name_id = SemIR::NameId::Invalid,
+                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
                            .decl_id = inst_id,
                            .implicit_param_refs_id = SemIR::InstBlockId::Empty,
                            .param_refs_id = SemIR::InstBlockId::Empty,
@@ -208,7 +211,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
                                SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
-  if (scope_id == SemIR::NameScopeId::Invalid) {
+  if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
     //
@@ -921,7 +924,7 @@ class TypeCompleter {
     // clang warns on unhandled enum values; clang-tidy is incorrect here.
     // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
-      case SemIR::AddressOf::Kind:
+      case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
@@ -1006,6 +1009,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as cross-references";
 
+      case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);
@@ -1122,6 +1126,12 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
           semantics_context
               .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
               .index);
+      break;
+    case SemIR::BindSymbolicName::Kind:
+      // TODO: Use de Bruijn levels or similar to identify equivalent type
+      // bindings across redeclarations.
+      canonical_id.AddInteger(
+          inst.As<SemIR::BindSymbolicName>().bind_name_id.index);
       break;
     case SemIR::PointerType::Kind:
       canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);

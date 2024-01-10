@@ -338,7 +338,7 @@ class InstNamer {
       return;
     }
 
-    if (parse_node == Parse::NodeId::Invalid) {
+    if (!parse_node.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
         parse_node = sem_ir_.insts().Get(block.front()).parse_node();
@@ -352,12 +352,11 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id, Inst inst)
-      -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, AnyBranch branch) -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(inst.parse_node())) {
+    switch (parse_tree_.node_kind(branch.parse_node)) {
       case Parse::NodeKind::IfExprIf:
-        switch (inst.kind()) {
+        switch (branch.kind) {
           case BranchIf::Kind:
             name = "if.expr.then";
             break;
@@ -373,7 +372,7 @@ class InstNamer {
         break;
 
       case Parse::NodeKind::IfCondition:
-        switch (inst.kind()) {
+        switch (branch.kind) {
           case BranchIf::Kind:
             name = "if.then";
             break;
@@ -390,10 +389,10 @@ class InstNamer {
         break;
 
       case Parse::NodeKind::ShortCircuitOperandAnd:
-        name = inst.Is<BranchIf>() ? "and.rhs" : "and.result";
+        name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
         break;
       case Parse::NodeKind::ShortCircuitOperandOr:
-        name = inst.Is<BranchIf>() ? "or.rhs" : "or.result";
+        name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
         break;
 
       case Parse::NodeKind::WhileConditionStart:
@@ -401,7 +400,7 @@ class InstNamer {
         break;
 
       case Parse::NodeKind::WhileCondition:
-        switch (inst.kind()) {
+        switch (branch.kind) {
           case InstKind::BranchIf:
             name = "while.body";
             break;
@@ -417,7 +416,7 @@ class InstNamer {
         break;
     }
 
-    AddBlockLabel(scope_idx, block_id, name.str(), inst.parse_node());
+    AddBlockLabel(scope_idx, branch.target_id, name.str(), branch.parse_node);
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
@@ -446,6 +445,10 @@ class InstNamer {
             (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
       };
 
+      if (auto branch = inst.TryAs<AnyBranch>()) {
+        AddBlockLabel(scope_idx, *branch);
+      }
+
       switch (inst.kind()) {
         case AddrPattern::Kind: {
           // TODO: We need to assign names to parameters that appear in
@@ -455,24 +458,15 @@ class InstNamer {
           CollectNamesInBlock(scope_idx, inst.As<AddrPattern>().inner_id);
           break;
         }
-        case Branch::Kind: {
-          AddBlockLabel(scope_idx, inst.As<Branch>().target_id, inst);
-          break;
-        }
-        case BranchIf::Kind: {
-          AddBlockLabel(scope_idx, inst.As<BranchIf>().target_id, inst);
-          break;
-        }
-        case BranchWithArg::Kind: {
-          AddBlockLabel(scope_idx, inst.As<BranchWithArg>().target_id, inst);
-          break;
-        }
         case SpliceBlock::Kind: {
           CollectNamesInBlock(scope_idx, inst.As<SpliceBlock>().block_id);
           break;
         }
-        case BindName::Kind: {
-          add_inst_name_id(inst.As<BindName>().name_id);
+        case BindName::Kind:
+        case BindSymbolicName::Kind: {
+          add_inst_name_id(sem_ir_.bind_names()
+                               .Get(inst.As<AnyBindName>().bind_name_id)
+                               .name_id);
           continue;
         }
         case FunctionDecl::Kind: {
@@ -827,7 +821,7 @@ class Formatter {
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
-    using Info = TypedInstArgsInfo<InstT>;
+    using Info = InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
       FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
@@ -981,6 +975,10 @@ class Formatter {
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
   auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
+
+  auto FormatArg(BindNameId id) -> void {
+    FormatName(sem_ir_.bind_names().Get(id).name_id);
+  }
 
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }
 

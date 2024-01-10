@@ -63,6 +63,17 @@ http_archive(
     urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
+clang_tidy_version = "d2aecc583d14c9554febeab185833c1e8cce5384"
+
+http_archive(
+    name = "bazel_clang_tidy",
+    patch_args = ["-p1"],
+    patches = ["@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"],
+    sha256 = "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+    strip_prefix = "bazel_clang_tidy-{0}".format(clang_tidy_version),
+    urls = ["https://github.com/erenon/bazel_clang_tidy/archive/{0}.tar.gz".format(clang_tidy_version)],
+)
+
 bazel_cc_toolchain = use_extension(
     "//bazel/cc_toolchains:clang_configuration.bzl",
     "clang_toolchain_extension",
@@ -79,20 +90,19 @@ git_override(
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
+# Required for llvm-project.
+bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "zlib", version = "1.3", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
+
 ###############################################################################
 # llvm-project
 ###############################################################################
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-llvm_project_version = "3d51010a3350660160981c6b8e624dcc87c208a3"
-
-# Required for llvm-project.
-bazel_dep(name = "platforms", version = "0.0.8")
-
-# zlib and zstd dependencies are copied from
-bazel_dep(name = "zlib", version = "1.3", repo_name = "llvm_zlib")
-bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
+# HEAD as of 2024-01-03.
+llvm_project_version = "82e33d6203f62c0be16f8da8d4178e7fa9e790ea"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
@@ -104,7 +114,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch",
     ],
-    sha256 = "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
+    sha256 = "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )

@@ -17,11 +17,23 @@
 
 namespace Carbon::SemIR {
 
+struct BindNameInfo : public Printable<BindNameInfo> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+        << "}";
+  }
+
+  // The name.
+  NameId name_id;
+  // The enclosing scope.
+  NameScopeId enclosing_scope_id;
+};
+
 // A function.
 struct Function : public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", "
-        << "param_refs: " << param_refs_id;
+    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+        << ", param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
@@ -44,6 +56,8 @@ struct Function : public Printable<Function> {
 
   // The function name.
   NameId name_id;
+  // The enclosing scope.
+  NameScopeId enclosing_scope_id;
   // The first declaration of the function. This is a FunctionDecl.
   InstId decl_id = InstId::Invalid;
   // The definition, if the function has been defined or is currently being
@@ -79,8 +93,8 @@ struct Class : public Printable<Class> {
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id;
-    out << "}";
+    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+        << "}";
   }
 
   // Determines whether this class has been fully defined. This is false until
@@ -92,6 +106,8 @@ struct Class : public Printable<Class> {
 
   // The class name.
   NameId name_id;
+  // The enclosing scope.
+  NameScopeId enclosing_scope_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.
@@ -126,8 +142,8 @@ struct Class : public Printable<Class> {
 // An interface.
 struct Interface : public Printable<Interface> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id;
-    out << "}";
+    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
+        << "}";
   }
 
   // Determines whether this interface has been fully defined. This is false
@@ -139,6 +155,8 @@ struct Interface : public Printable<Interface> {
 
   // The interface name.
   NameId name_id;
+  // The enclosing scope.
+  NameScopeId enclosing_scope_id;
   // TODO: TypeId self_type_id;
   // The first declaration of the interface. This is a InterfaceDecl.
   InstId decl_id = InstId::Invalid;
@@ -168,7 +186,7 @@ class File : public Printable<File> {
                 const File* builtins);
 
   File(const File&) = delete;
-  File& operator=(const File&) = delete;
+  auto operator=(const File&) -> File& = delete;
 
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
@@ -239,6 +257,10 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
+  auto bind_names() -> ValueStore<BindNameId>& { return bind_names_; }
+  auto bind_names() const -> const ValueStore<BindNameId>& {
+    return bind_names_;
+  }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -299,6 +321,9 @@ class File : public Printable<File> {
   // The associated filename.
   // TODO: If SemIR starts linking back to tokens, reuse its filename.
   std::string filename_;
+
+  // Storage for bind names.
+  ValueStore<BindNameId> bind_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;

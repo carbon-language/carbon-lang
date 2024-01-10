@@ -16,6 +16,7 @@ namespace Carbon::SemIR {
 // Forward declare indexed types, for integration with ValueStore.
 class File;
 class Inst;
+struct BindNameInfo;
 struct Class;
 struct Function;
 struct Interface;
@@ -66,6 +67,22 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
+
+// The ID of a bind name.
+struct BindNameId : public IdBase, public Printable<BindNameId> {
+  using ValueType = BindNameInfo;
+
+  // An explicitly invalid function ID.
+  static const BindNameId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "bindName";
+    IdBase::Print(out);
+  }
+};
+
+constexpr BindNameId BindNameId::Invalid = BindNameId(BindNameId::InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -168,11 +185,13 @@ struct NameId : public IdBase, public Printable<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
-    // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
-    static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
-    CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
-        << "Unexpected identifier ID";
-    return NameId(id.index);
+    if (id.index >= 0) {
+      return NameId(id.index);
+    } else if (!id.is_valid()) {
+      return NameId::Invalid;
+    } else {
+      CARBON_FATAL() << "Unexpected identifier ID " << id;
+    }
   }
 
   using IdBase::IdBase;
@@ -196,7 +215,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (*this == Base) {
       out << "Base";
     } else {
-      CARBON_CHECK(index >= 0) << "Unknown index";
+      CARBON_CHECK(!is_valid() || index >= 0) << "Unknown index " << index;
       IdBase::Print(out);
     }
   }
@@ -330,5 +349,8 @@ struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

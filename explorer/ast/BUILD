@@ -41,6 +41,9 @@ cc_library(
         "value_node.h",
         "value_transform.h",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     textual_hdrs = [
         "value_kinds.def",
     ],
@@ -95,6 +98,9 @@ cc_test(
     name = "expression_test",
     size = "small",
     srcs = ["expression_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         ":paren_contents",
@@ -137,6 +143,9 @@ cc_test(
     name = "pattern_test",
     size = "small",
     srcs = ["pattern_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         ":paren_contents",

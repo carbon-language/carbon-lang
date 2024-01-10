@@ -40,7 +40,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
 // CHECK:STDOUT:   %Base: type = class_type @Base
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
@@ -96,10 +96,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %p.ref.loc27: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc27_4.1: ref Derived = deref %p.ref.loc27
 // CHECK:STDOUT:   %.loc27_7: <bound method> = bound_method %.loc27_4.1, @Derived.%AddrSelfBase
-// CHECK:STDOUT:   %.loc27_4.2: Derived* = address_of %.loc27_4.1
+// CHECK:STDOUT:   %.loc27_4.2: Derived* = addr_of %.loc27_4.1
 // CHECK:STDOUT:   %.loc27_20.1: ref Derived = deref %.loc27_4.2
 // CHECK:STDOUT:   %.loc27_20.2: ref Base = class_element_access %.loc27_20.1, element0
-// CHECK:STDOUT:   %.loc27_20.3: Base* = address_of %.loc27_20.2
+// CHECK:STDOUT:   %.loc27_20.3: Base* = addr_of %.loc27_20.2
 // CHECK:STDOUT:   %.loc27_20.4: Base* = converted %.loc27_4.2, %.loc27_20.3
 // CHECK:STDOUT:   %.loc27_20.5: init () = call %.loc27_7(%.loc27_20.4)
 // CHECK:STDOUT:   %p.ref.loc28: Derived* = name_ref p, %p

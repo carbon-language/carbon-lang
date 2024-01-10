@@ -233,8 +233,8 @@ struct GenericBindingPattern {
 };
 
 // An address-of binding: `addr self: Self*`.
-struct Address {
-  static constexpr auto Kind = NodeKind::Address.Define(NodeCategory::Pattern);
+struct Addr {
+  static constexpr auto Kind = NodeKind::Addr.Define(NodeCategory::Pattern);
 
   AnyPatternId inner;
 };
@@ -332,7 +332,13 @@ struct LetDecl {
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
-using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
+
+// The initializer part of a `var` declaration.
+struct VariableInitializer {
+  static constexpr auto Kind = NodeKind::VariableInitializer.Define();
+
+  AnyExprId value;
+};
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
@@ -344,11 +350,7 @@ struct VariableDecl {
   std::optional<ReturnedModifierId> returned;
   AnyPatternId pattern;
 
-  struct Initializer {
-    VariableInitializerId equals;
-    AnyExprId value;
-  };
-  std::optional<Initializer> initializer;
+  std::optional<VariableInitializerId> initializer;
 };
 
 // Statement nodes

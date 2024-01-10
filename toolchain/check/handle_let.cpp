@@ -9,13 +9,25 @@
 
 namespace Carbon::Check {
 
+auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
+    -> bool {
+  context.decl_state_stack().Push(DeclState::Let);
+  // Push a bracketing node to establish the pattern context.
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto HandleLetInitializer(Context& /*context*/,
+                          Parse::LetInitializerId /*parse_node*/) -> bool {
+  return true;
+}
+
 auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
     return context.TODO(parse_node, "tuple pattern in let");
   }
-  SemIR::InstId pattern_id =
-      context.node_stack().Pop<Parse::NodeKind::BindingPattern>();
+  SemIR::InstId pattern_id = context.node_stack().PopPattern();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
@@ -44,7 +56,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
   // TODO: Support other kinds of pattern here.
-  auto bind_name = pattern.As<SemIR::BindName>();
+  auto bind_name = pattern.As<SemIR::AnyBindName>();
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;
@@ -52,20 +64,8 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
-  context.AddNameToLookup(pattern.parse_node(), bind_name.name_id, pattern_id);
-  return true;
-}
-
-auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
-    -> bool {
-  context.decl_state_stack().Push(DeclState::Let);
-  // Push a bracketing node to establish the pattern context.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
-auto HandleLetInitializer(Context& /*context*/,
-                          Parse::LetInitializerId /*parse_node*/) -> bool {
+  auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
+  context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
   return true;
 }
 

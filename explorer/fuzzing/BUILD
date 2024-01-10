@@ -97,7 +97,12 @@ cc_fuzz_test(
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     shard_count = 8,
-    tags = ["proto-fuzzer"],
+    tags = [
+        "proto-fuzzer",
+        # Running clang-tidy is slow, and explorer is currently feature frozen,
+        # so don't spend time linting it.
+        "no-clang-tidy",
+    ],
     deps = [
         ":fuzzer_util",
         "//common:error",

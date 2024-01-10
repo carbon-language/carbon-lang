@@ -146,13 +146,13 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> ValueType& {
-    CARBON_CHECK(id.index >= 0) << id.index;
+    CARBON_CHECK(id.index >= 0) << id;
     return values_[id.index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> const ValueType& {
-    CARBON_CHECK(id.index >= 0) << id.index;
+    CARBON_CHECK(id.index >= 0) << id;
     return values_[id.index];
   }
 

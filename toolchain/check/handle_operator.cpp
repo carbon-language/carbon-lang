@@ -213,22 +213,22 @@ auto HandlePrefixOperatorAmp(Context& context,
     case SemIR::ExprCategory::Error:
       break;
     case SemIR::ExprCategory::EphemeralRef:
-      CARBON_DIAGNOSTIC(AddressOfEphemeralRef, Error,
+      CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
                         "Cannot take the address of a temporary object.");
-      context.emitter().Emit(TokenOnly(parse_node), AddressOfEphemeralRef);
+      context.emitter().Emit(TokenOnly(parse_node), AddrOfEphemeralRef);
       break;
     default:
-      CARBON_DIAGNOSTIC(AddressOfNonRef, Error,
+      CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "Cannot take the address of non-reference expression.");
-      context.emitter().Emit(TokenOnly(parse_node), AddressOfNonRef);
+      context.emitter().Emit(TokenOnly(parse_node), AddrOfNonRef);
       break;
   }
   context.AddInstAndPush(
       parse_node,
-      SemIR::AddressOf{parse_node,
-                       context.GetPointerType(
-                           parse_node, context.insts().Get(value_id).type_id()),
-                       value_id});
+      SemIR::AddrOf{parse_node,
+                    context.GetPointerType(
+                        parse_node, context.insts().Get(value_id).type_id()),
+                    value_id});
   return true;
 }
 

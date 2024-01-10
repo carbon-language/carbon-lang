@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "bd9d40db15930ff642c7b8a3449b04e7cb32b8ff7038b0d6c91cc44e9ad68cf5",
+  "moduleFileHash": "5704ebd75cf3cb5f4ab56ba2939bb74d98752cd7eed0ea9357a9ed39ca41640e",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -37,6 +37,7 @@
           },
           "imports": {
             "com_google_libprotobuf_mutator": "com_google_libprotobuf_mutator",
+            "bazel_clang_tidy": "bazel_clang_tidy",
             "llvm-raw": "llvm-raw"
           },
           "devImports": [],
@@ -62,6 +63,29 @@
             {
               "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
               "attributeValues": {
+                "patch_args": [
+                  "-p1"
+                ],
+                "patches": [
+                  "@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+                ],
+                "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+                "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+                "urls": [
+                  "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
+                ],
+                "name": "bazel_clang_tidy"
+              },
+              "devDependency": false,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 68,
+                "column": 13
+              }
+            },
+            {
+              "tagName": "@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+              "attributeValues": {
                 "build_file_content": "# empty",
                 "patch_args": [
                   "-p1"
@@ -71,17 +95,17 @@
                   "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                   "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch"
                 ],
-                "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
-                "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+                "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
+                "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
                 "urls": [
-                  "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+                  "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
                 ],
                 "name": "llvm-raw"
               },
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 98,
+                "line": 108,
                 "column": 13
               }
             }
@@ -95,7 +119,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 66,
+            "line": 77,
             "column": 35
           },
           "imports": {
@@ -112,7 +136,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 113,
+            "line": 123,
             "column": 29
           },
           "imports": {
@@ -129,7 +153,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 125,
+            "line": 135,
             "column": 23
           },
           "imports": {
@@ -145,7 +169,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 126,
+                "line": 136,
                 "column": 17
               }
             }
@@ -159,7 +183,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 132,
+            "line": 142,
             "column": 20
           },
           "imports": {
@@ -177,7 +201,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 133,
+                "line": 143,
                 "column": 10
               }
             }
@@ -1651,6 +1675,24 @@
               "name": "_main~_repo_rules~com_google_libprotobuf_mutator"
             }
           },
+          "bazel_clang_tidy": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "patch_args": [
+                "-p1"
+              ],
+              "patches": [
+                "@@//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+              ],
+              "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
+              "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
+              "urls": [
+                "https://github.com/erenon/bazel_clang_tidy/archive/d2aecc583d14c9554febeab185833c1e8cce5384.tar.gz"
+              ],
+              "name": "_main~_repo_rules~bazel_clang_tidy"
+            }
+          },
           "llvm-raw": {
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
@@ -1664,10 +1706,10 @@
                 "@@//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                 "@@//bazel/llvm_project:0003_Add_library_for_clangd.patch"
               ],
-              "sha256": "efbca707a6eb1c714b849de120309070eef282660c0f4be5b68efef62cc95cf5",
-              "strip_prefix": "llvm-project-3d51010a3350660160981c6b8e624dcc87c208a3",
+              "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
+              "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
               "urls": [
-                "https://github.com/llvm/llvm-project/archive/3d51010a3350660160981c6b8e624dcc87c208a3.tar.gz"
+                "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
               ],
               "name": "_main~_repo_rules~llvm-raw"
             }

@@ -125,6 +125,27 @@ class Tree : public Printable<Tree> {
     return !node_has_error(id);
   }
 
+  // Converts `n` to a constrained node id `T` if the `node_kind(n)` matches
+  // the constraint on `T`.
+  template <typename T>
+  auto TryAs(NodeId n) const -> std::optional<T> {
+    CARBON_DCHECK(n.is_valid());
+    if (ConvertTo<T>::AllowedFor(node_kind(n))) {
+      return T(n);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  // Converts to `n` to a constrained node id `T`. Checks that the
+  // `node_kind(n)` matches the constraint on `T`.
+  template <typename T>
+  auto As(NodeId n) const -> T {
+    CARBON_DCHECK(n.is_valid());
+    CARBON_CHECK(ConvertTo<T>::AllowedFor(node_kind(n)));
+    return T(n);
+  }
+
   auto packaging_directive() const -> const std::optional<PackagingDirective>& {
     return packaging_directive_;
   }
@@ -225,6 +246,9 @@ class Tree : public Printable<Tree> {
 
  private:
   friend class Context;
+
+  template <typename T>
+  struct ConvertTo;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -415,7 +439,8 @@ auto Tree::ExtractNodeFromChildren(
     // On error try again, this time capturing a trace.
     ErrorBuilder trace;
     TryExtractNodeFromChildren<T>(children, &trace);
-    CARBON_FATAL() << "Malformed parse node:\n" << Error(trace).message();
+    CARBON_FATAL() << "Malformed parse node:\n"
+                   << static_cast<Error>(trace).message();
   }
   return *result;
 }
@@ -451,6 +476,25 @@ auto Tree::Extract(IdT id) const
   using T = typename NodeForId<IdT>::TypedNode;
   return ExtractNodeFromChildren<T>(children(id));
 }
+
+template <const NodeKind& K>
+struct Tree::ConvertTo<NodeIdForKind<K>> {
+  static auto AllowedFor(NodeKind kind) -> bool { return kind == K; }
+};
+
+template <NodeCategory C>
+struct Tree::ConvertTo<NodeIdInCategory<C>> {
+  static auto AllowedFor(NodeKind kind) -> bool {
+    return !!(kind.category() & C);
+  }
+};
+
+template <typename T, typename U>
+struct Tree::ConvertTo<NodeIdOneOf<T, U>> {
+  static auto AllowedFor(NodeKind kind) -> bool {
+    return kind == T::Kind || kind == U::Kind;
+  }
+};
 
 }  // namespace Carbon::Parse
 

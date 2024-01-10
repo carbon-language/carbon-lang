@@ -76,7 +76,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 // an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
-  auto& function = sem_ir.functions().Get(function_id);
+  const auto& function = sem_ir.functions().Get(function_id);
   for (auto param_id :
        sem_ir.inst_blocks().Get(function.implicit_param_refs_id)) {
     auto param =
