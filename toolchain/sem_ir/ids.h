@@ -185,9 +185,13 @@ struct NameId : public IdBase, public Printable<NameId> {
 
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
-    CARBON_CHECK(!id.is_valid() || id.index >= 0)
-        << "Unexpected identifier ID " << id.index;
-    return NameId(id.index);
+    if (id.index >= 0) {
+      return NameId(id.index);
+    } else if (!id.is_valid()) {
+      return NameId::Invalid;
+    } else {
+      CARBON_FATAL() << "Unexpected identifier ID " << id;
+    }
   }
 
   using IdBase::IdBase;
