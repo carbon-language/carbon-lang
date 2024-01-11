@@ -35,7 +35,7 @@ class LexicalLookup {
 
   // Returns the lexical lookup results for a name.
   auto Get(SemIR::NameId name_id) -> llvm::SmallVector<Result, 2>& {
-    CARBON_CHECK(name_id.index < original_identifiers_size_)
+    CARBON_CHECK(name_id.index + SemIR::NameID::NonIndexValueCount < lookup_.size())
         << "An identifier was added after the Context was initialized. "
            "Currently, we expect that new identifiers will never be used with "
            "lexical lookup (they're added for things like detecting name "
