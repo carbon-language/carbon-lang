@@ -590,17 +590,17 @@ void BM_GroupingSymbols(benchmark::State& state) {
       os.indent(j * 2) << "{\n";
     }
     os.indent(curly_brace_depth * 2);
-    for ([[gnu::unused]] int j : llvm::seq(paren_depth)) {
+    for ([[maybe_unused]] int j : llvm::seq(paren_depth)) {
       os << "(";
     }
-    for ([[gnu::unused]] int j : llvm::seq(square_bracket_depth)) {
+    for ([[maybe_unused]] int j : llvm::seq(square_bracket_depth)) {
       os << "[";
     }
     os << ids[(i * 2) % NumTokens];
-    for ([[gnu::unused]] int j : llvm::seq(square_bracket_depth)) {
+    for ([[maybe_unused]] int j : llvm::seq(square_bracket_depth)) {
       os << "]";
     }
-    for ([[gnu::unused]] int j : llvm::seq(paren_depth)) {
+    for ([[maybe_unused]] int j : llvm::seq(paren_depth)) {
       os << ")";
     }
     for (int j : llvm::reverse(llvm::seq(curly_brace_depth))) {
