@@ -18,7 +18,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A
+// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -30,7 +30,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B}
-// CHECK:STDOUT:   %B: <function> = fn_decl @B
+// CHECK:STDOUT:   %B: <function> = fn_decl @B, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

@@ -18,7 +18,7 @@ package Implicit impl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A
+// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

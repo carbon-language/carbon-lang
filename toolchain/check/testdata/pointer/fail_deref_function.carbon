@@ -15,12 +15,12 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A
+// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A, const = file.%A
 // CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

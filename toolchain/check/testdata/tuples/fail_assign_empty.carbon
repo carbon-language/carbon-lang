@@ -12,9 +12,9 @@ var x: (i32,) = ();
 // CHECK:STDOUT: --- fail_assign_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_13.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc10_13.2: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc10_18: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_13.1: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc10_13.2: type = tuple_type (i32), const
+// CHECK:STDOUT:   %.loc10_18: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

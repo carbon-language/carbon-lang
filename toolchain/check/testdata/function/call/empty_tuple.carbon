@@ -15,13 +15,14 @@ fn Main() {
 // CHECK:STDOUT: --- empty_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc12: () = tuple_value (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Echo = %Echo, .Main = %Main}
-// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
@@ -32,9 +33,9 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo
+// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo, const = file.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value (), const = constants.%.loc12
 // CHECK:STDOUT:   %.loc12_9.3: () = converted %.loc12_9.1, %.loc12_9.2
 // CHECK:STDOUT:   %.loc12_7: init () = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return

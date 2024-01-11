@@ -25,17 +25,18 @@ fn F(x: X) {
 // CHECK:STDOUT: --- fail_not_copyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_1.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc8_1.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT:   %.loc8_1.1: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc8_1.2: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {}, const
+// CHECK:STDOUT:   %.1: type = ptr_type String, const
+// CHECK:STDOUT:   %.loc16: String = string_literal "hello", const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.X = %X.decl, .F = %F}
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %X: type = class_type @X, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -47,9 +48,9 @@ fn F(x: X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref String = var s
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
-// CHECK:STDOUT:   %.loc16: String = string_literal "hello"
+// CHECK:STDOUT:   %.loc16: String = string_literal "hello", const = constants.%.loc16
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X
+// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X, const = file.%X
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: X = name_ref x, %x

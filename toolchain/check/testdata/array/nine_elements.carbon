@@ -9,25 +9,36 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT: --- nine_elements.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15: type = ptr_type [i32; 9]
-// CHECK:STDOUT:   %.loc7_45: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32)
+// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9, const
+// CHECK:STDOUT:   %.loc7_15.1: type = array_type %.loc7_14, i32, const
+// CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 9], const
+// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3, const
+// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5, const
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6, const
+// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8, const
+// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9, const
+// CHECK:STDOUT:   %.loc7_45: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a}
-// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9
-// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32
+// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9, const = constants.%.loc7_14
+// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32, const = constants.%.loc7_15.1
 // CHECK:STDOUT:   %a.var: ref [i32; 9] = var a
 // CHECK:STDOUT:   %a: ref [i32; 9] = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4
-// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5
-// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6
-// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7
-// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8
-// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9
+// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1, const = constants.%.loc7_20
+// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2, const = constants.%.loc7_23
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3, const = constants.%.loc7_26
+// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4, const = constants.%.loc7_29
+// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5, const = constants.%.loc7_32
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6, const = constants.%.loc7_35
+// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7, const = constants.%.loc7_38
+// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8, const = constants.%.loc7_41
+// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9, const = constants.%.loc7_44
 // CHECK:STDOUT:   %.loc7_45.1: (i32, i32, i32, i32, i32, i32, i32, i32, i32) = tuple_literal (%.loc7_20, %.loc7_23, %.loc7_26, %.loc7_29, %.loc7_32, %.loc7_35, %.loc7_38, %.loc7_41, %.loc7_44)
 // CHECK:STDOUT:   %.loc7_45.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_45.3: ref i32 = array_index %a.var, %.loc7_45.2

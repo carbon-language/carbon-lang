@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_base_misplaced.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = struct_type {}
+// CHECK:STDOUT:   %.loc7: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -12,9 +12,9 @@ fn Baz() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Bar = %Bar, .Baz = %Baz}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
-// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar, const
+// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

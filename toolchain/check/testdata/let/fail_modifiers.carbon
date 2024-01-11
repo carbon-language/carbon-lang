@@ -70,23 +70,34 @@ protected protected let i: i32 = 1;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc36: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc47: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc58: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc69: i32 = int_literal 1, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {}
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 1, const = constants.%.loc10
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc10
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const = constants.%.loc15
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc15
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 1, const = constants.%.loc20
 // CHECK:STDOUT:   %d: i32 = bind_name d, %.loc20
-// CHECK:STDOUT:   %.loc25: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 1, const = constants.%.loc25
 // CHECK:STDOUT:   %e: i32 = bind_name e, %.loc25
-// CHECK:STDOUT:   %.loc36: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc36: i32 = int_literal 1, const = constants.%.loc36
 // CHECK:STDOUT:   %f: i32 = bind_name f, %.loc36
-// CHECK:STDOUT:   %.loc47: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc47: i32 = int_literal 1, const = constants.%.loc47
 // CHECK:STDOUT:   %g: i32 = bind_name g, %.loc47
-// CHECK:STDOUT:   %.loc58: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc58: i32 = int_literal 1, const = constants.%.loc58
 // CHECK:STDOUT:   %h: i32 = bind_name h, %.loc58
-// CHECK:STDOUT:   %.loc69: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc69: i32 = int_literal 1, const = constants.%.loc69
 // CHECK:STDOUT:   %i: i32 = bind_name i, %.loc69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

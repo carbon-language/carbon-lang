@@ -58,15 +58,21 @@ fn Main() {
 // CHECK:STDOUT: --- fail_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc18: type = tuple_type ()
+// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc18_7: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc55: i32 = int_literal 0, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Run0 = %Run0, .Run1 = %Run1, .Run2 = %Run2, .Main = %Main}
-// CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0
-// CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1
-// CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0, const
+// CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1, const
+// CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
@@ -86,23 +92,23 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_ref Run0, file.%Run0
-// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1
+// CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_ref Run0, file.%Run0, const = file.%Run0
+// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1, const = constants.%.loc18_8
 // CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>)
-// CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_ref Run0, file.%Run0
-// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1
+// CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_ref Run0, file.%Run0, const = file.%Run0
+// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0, const = constants.%.loc25_8
+// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1, const = constants.%.loc25_11
 // CHECK:STDOUT:   %.loc25_7: init () = call %Run0.ref.loc25(<invalid>)
-// CHECK:STDOUT:   %Run1.ref.loc33: <function> = name_ref Run1, file.%Run1
+// CHECK:STDOUT:   %Run1.ref.loc33: <function> = name_ref Run1, file.%Run1, const = file.%Run1
 // CHECK:STDOUT:   %.loc33: init () = call %Run1.ref.loc33(<invalid>)
-// CHECK:STDOUT:   %Run1.ref.loc40: <function> = name_ref Run1, file.%Run1
-// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1
+// CHECK:STDOUT:   %Run1.ref.loc40: <function> = name_ref Run1, file.%Run1, const = file.%Run1
+// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0, const = constants.%.loc40_8
+// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1, const = constants.%.loc40_11
 // CHECK:STDOUT:   %.loc40_7: init () = call %Run1.ref.loc40(<invalid>)
-// CHECK:STDOUT:   %Run2.ref.loc48: <function> = name_ref Run2, file.%Run2
+// CHECK:STDOUT:   %Run2.ref.loc48: <function> = name_ref Run2, file.%Run2, const = file.%Run2
 // CHECK:STDOUT:   %.loc48: init () = call %Run2.ref.loc48(<invalid>)
-// CHECK:STDOUT:   %Run2.ref.loc55: <function> = name_ref Run2, file.%Run2
-// CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0
+// CHECK:STDOUT:   %Run2.ref.loc55: <function> = name_ref Run2, file.%Run2, const = file.%Run2
+// CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0, const = constants.%.loc55
 // CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

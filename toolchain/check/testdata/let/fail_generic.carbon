@@ -19,16 +19,20 @@ fn F(a: i32) -> i32 {
 
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 5, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 5
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 5, const = constants.%.loc13
 // CHECK:STDOUT:   %x: T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: T = name_ref x, %x
 // CHECK:STDOUT:   return <error>

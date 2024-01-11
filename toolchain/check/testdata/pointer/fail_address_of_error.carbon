@@ -21,13 +21,13 @@ fn Test() {
 // CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = ptr_type <error>
-// CHECK:STDOUT:   %.loc18: type = ptr_type <error>*
+// CHECK:STDOUT:   %.loc11: type = ptr_type <error>, const
+// CHECK:STDOUT:   %.loc18: type = ptr_type <error>*, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Test = %Test}
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {

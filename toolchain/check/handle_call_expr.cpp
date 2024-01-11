@@ -56,7 +56,7 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   }
 
   // Identify the function we're calling.
-  auto function_decl_id = context.GetConstantValue(function_callee_id);
+  auto function_decl_id = context.constant_values().Get(function_callee_id);
   if (!function_decl_id.is_valid()) {
     return diagnose_not_callable();
   }

@@ -15,15 +15,18 @@ fn Main() {
 // CHECK:STDOUT: --- more_param_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_15.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc10_15.2: type = tuple_type (i32)
-// CHECK:STDOUT:   %.loc12: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_15.1: type = tuple_type (type), const
+// CHECK:STDOUT:   %.loc10_15.2: type = tuple_type (i32), const
+// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6, const
+// CHECK:STDOUT:   %.loc12_6: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Main = %Main}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
@@ -37,16 +40,16 @@ fn Main() {
 // CHECK:STDOUT:   %.loc10_15.2: type = converted %.loc10_15.1, constants.%.loc10_15.2
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
 // CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1, const = constants.%.loc10_20
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = tuple_literal (%.loc10_20)
 // CHECK:STDOUT:   %.loc10_22.2: init (i32,) = tuple_init (%.loc10_20) to %x.var
 // CHECK:STDOUT:   %.loc10_22.3: init (i32,) = converted %.loc10_22.1, %.loc10_22.2
 // CHECK:STDOUT:   assign %x.var, %.loc10_22.3
-// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo
+// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo, const = file.%Foo
 // CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
-// CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0, const = constants.%.loc12_9
 // CHECK:STDOUT:   %.loc12_10.1: ref i32 = tuple_index %x.ref, %.loc12_9
-// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6, const = constants.%.loc12_13
 // CHECK:STDOUT:   %.loc12_10.2: i32 = bind_value %.loc12_10.1
 // CHECK:STDOUT:   %.loc12_6: init () = call %Foo.ref(%.loc12_10.2, %.loc12_13)
 // CHECK:STDOUT:   return

@@ -77,31 +77,31 @@ base class G;
 // CHECK:STDOUT: --- fail_redeclaration_introducer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = struct_type {}
+// CHECK:STDOUT:   %.loc14: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl.loc7, .B = %B.decl.loc16, .C = %C.decl.loc25, .D = %D.decl.loc34, .E = %E.decl.loc43, .F = %F.decl.loc52, .G = %G.decl.loc61}
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A
+// CHECK:STDOUT:   %A: type = class_type @A, const
 // CHECK:STDOUT:   %A.decl.loc14 = class_decl @A, ()
 // CHECK:STDOUT:   %B.decl.loc16 = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B
+// CHECK:STDOUT:   %B: type = class_type @B, const
 // CHECK:STDOUT:   %B.decl.loc23 = class_decl @B, ()
 // CHECK:STDOUT:   %C.decl.loc25 = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
+// CHECK:STDOUT:   %C: type = class_type @C, const
 // CHECK:STDOUT:   %C.decl.loc32 = class_decl @C, ()
 // CHECK:STDOUT:   %D.decl.loc34 = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D
+// CHECK:STDOUT:   %D: type = class_type @D, const
 // CHECK:STDOUT:   %D.decl.loc41 = class_decl @D, ()
 // CHECK:STDOUT:   %E.decl.loc43 = class_decl @E, ()
-// CHECK:STDOUT:   %E: type = class_type @E
+// CHECK:STDOUT:   %E: type = class_type @E, const
 // CHECK:STDOUT:   %E.decl.loc50 = class_decl @E, ()
 // CHECK:STDOUT:   %F.decl.loc52 = class_decl @F, ()
-// CHECK:STDOUT:   %F: type = class_type @F
+// CHECK:STDOUT:   %F: type = class_type @F, const
 // CHECK:STDOUT:   %F.decl.loc59 = class_decl @F, ()
 // CHECK:STDOUT:   %G.decl.loc61 = class_decl @G, ()
-// CHECK:STDOUT:   %G: type = class_type @G
+// CHECK:STDOUT:   %G: type = class_type @G, const
 // CHECK:STDOUT:   %G.decl.loc68 = class_decl @G, ()
 // CHECK:STDOUT:   %G.decl.loc75 = class_decl @G, ()
 // CHECK:STDOUT: }

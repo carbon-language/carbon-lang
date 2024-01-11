@@ -30,8 +30,8 @@ private interface Private {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final, const
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Final = %Final

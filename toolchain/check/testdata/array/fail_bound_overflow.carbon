@@ -11,10 +11,15 @@ var a: [1; 39999999999999999993];
 
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a}
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1, const = constants.%.loc10_9
+// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993, const = constants.%.loc10_12
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

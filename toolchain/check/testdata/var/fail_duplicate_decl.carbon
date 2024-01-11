@@ -18,20 +18,25 @@ fn Main() {
 
 // CHECK:STDOUT: --- fail_duplicate_decl.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var.loc9: ref i32 = var x
 // CHECK:STDOUT:   %x.loc9: ref i32 = bind_name x, %x.var.loc9
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0, const = constants.%.loc9
 // CHECK:STDOUT:   assign %x.var.loc9, %.loc9
 // CHECK:STDOUT:   %x.var.loc16: ref i32 = var x
 // CHECK:STDOUT:   %x.loc16: ref i32 = bind_name x, %x.var.loc16
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 0, const = constants.%.loc16
 // CHECK:STDOUT:   assign %x.var.loc16, %.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

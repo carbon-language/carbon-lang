@@ -25,44 +25,46 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.b: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.b: i32}
-// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Base, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.b: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.b: i32}*, .d: i32}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base, .d: i32}
-// CHECK:STDOUT:   %.loc18: type = struct_type {.base: {.b: i32}, .d: i32}
-// CHECK:STDOUT:   %.loc21_35.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc21_35.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc21_35.3: type = ptr_type (i32, i32)
+// CHECK:STDOUT:   %.loc9: type = struct_type {.b: i32}, const
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.b: i32}, const
+// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Base, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.b: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.b: i32}*, .d: i32}, const
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base, .d: i32}, const
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7, const
+// CHECK:STDOUT:   %.loc18_35: type = struct_type {.base: {.b: i32}, .d: i32}, const
+// CHECK:STDOUT:   %.loc21_35.1: type = tuple_type (type, type), const
+// CHECK:STDOUT:   %.loc21_35.2: type = tuple_type (i32, i32), const
+// CHECK:STDOUT:   %.loc21_35.3: type = ptr_type (i32, i32), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %Base: type = class_type @Base, const
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, const
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make, const
+// CHECK:STDOUT:   %Access: <function> = fn_decl @Access, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl b, element0
-// CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32, const
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl b, element0, const
+// CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc8_8.2, const = %.loc8_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .b = %b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base
-// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base
-// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0
-// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Derived, i32
-// CHECK:STDOUT:   %.loc14_8.2: <unbound element of class Derived> = field_decl d, element1
-// CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc14_8.2
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base, const = file.%Base
+// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base, const
+// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0, const
+// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Derived, i32, const
+// CHECK:STDOUT:   %.loc14_8.2: <unbound element of class Derived> = field_decl d, element1, const
+// CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc14_8.2, const = %.loc14_8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12_20.2
@@ -72,9 +74,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4, const = constants.%.loc18_25
 // CHECK:STDOUT:   %.loc18_26.1: {.b: i32} = struct_literal (%.loc18_25)
-// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7, const = constants.%.loc18_34
 // CHECK:STDOUT:   %.loc18_35.1: {.base: {.b: i32}, .d: i32} = struct_literal (%.loc18_26.1, %.loc18_34)
 // CHECK:STDOUT:   %.loc18_35.2: ref Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0

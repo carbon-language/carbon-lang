@@ -12,16 +12,17 @@ var x: () = (66);
 // CHECK:STDOUT: --- fail_assign_to_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_9: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.loc10_9
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66, const = constants.%.loc10_14
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -53,6 +53,51 @@ class InstStore {
   ValueStore<InstId> values_;
 };
 
+// Provides a ValueStore wrapper for tracking the constant values of
+// instructions.
+class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
+ public:
+  // Returns the constant value of the requested instruction, or InstId::Invalid
+  // if it is not constant.
+  auto Get(InstId inst_id) const -> InstId {
+    CARBON_CHECK(inst_id.index >= 0);
+    return static_cast<size_t>(inst_id.index) >= values_.size()
+               ? InstId::Invalid
+               : values_[inst_id.index];
+  }
+
+  // Sets the constant value of the given instruction.
+  auto Set(InstId inst_id, InstId const_id) -> void {
+    CARBON_CHECK(inst_id.index >= 0);
+    CARBON_CHECK(const_id.is_valid());
+    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
+      values_.resize(inst_id.index + 1, InstId::Invalid);
+    }
+    values_[inst_id.index] = const_id;
+  }
+
+  // Outputs the store as YAML. Because this is modeled as a sparse mapping,
+  // non-constant elements are skipped in the output.
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+      for (auto [id, value] : llvm::enumerate(values_)) {
+        if (value.is_valid()) {
+          map.Add(PrintToString(InstId(id)), Yaml::OutputScalar(value));
+        }
+      }
+    });
+  }
+
+ private:
+  // A mapping from `InstId::index` to the corresponding constant value. This is
+  // expected to be sparse, and may be smaller than the list of instructions if
+  // there are trailing non-constant instructions.
+  //
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<InstId, 0> values_;
+};
+
 // Provides storage for instructions representing global constants.
 class ConstantStore {
  public:

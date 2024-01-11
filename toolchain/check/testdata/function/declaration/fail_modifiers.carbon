@@ -74,12 +74,12 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.WrongOrder = %WrongOrder, .DuplicateVirtual = %DuplicateVirtual, .TwoAccess = %TwoAccess, .ModifiersConflict = %ModifiersConflict, .InvalidModifier = %InvalidModifier, .ModifiersConflict2 = %ModifiersConflict2}
-// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder
-// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual
-// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess
-// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict
-// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier
-// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2
+// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder, const
+// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual, const
+// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess, const
+// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict, const
+// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier, const
+// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongOrder();

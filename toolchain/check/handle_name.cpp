@@ -154,7 +154,7 @@ auto HandleMemberAccessExpr(Context& context,
 
         // Find the specified element, which could be either a field or a base
         // class, and build an element access expression.
-        auto element_id = context.GetConstantValue(member_id);
+        auto element_id = context.constant_values().Get(member_id);
         CARBON_CHECK(element_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of unbound element type";
@@ -178,7 +178,7 @@ auto HandleMemberAccessExpr(Context& context,
       if (member_type_id ==
           context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
         // Find the named function and check whether it's an instance method.
-        auto function_name_id = context.GetConstantValue(member_id);
+        auto function_name_id = context.constant_values().Get(member_id);
         CARBON_CHECK(function_name_id.is_valid())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of function type";

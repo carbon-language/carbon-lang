@@ -61,29 +61,29 @@ abstract class Abstract {
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc28: type = struct_type {.k: i32, .l: i32}
-// CHECK:STDOUT:   %.loc41: type = struct_type {}
+// CHECK:STDOUT:   %.loc28: type = struct_type {.k: i32, .l: i32}, const
+// CHECK:STDOUT:   %.loc41: type = struct_type {}, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl}
 // CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
-// CHECK:STDOUT:   %Access: type = class_type @Access
+// CHECK:STDOUT:   %Access: type = class_type @Access, const
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base
+// CHECK:STDOUT:   %Base: type = class_type @Base, const
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc22_16.1: type = unbound_element_type Access, i32
-// CHECK:STDOUT:   %.loc22_16.2: <unbound element of class Access> = field_decl k, element0
-// CHECK:STDOUT:   %k: <unbound element of class Access> = bind_name k, %.loc22_16.2
-// CHECK:STDOUT:   %.loc27_18.1: type = unbound_element_type Access, i32
-// CHECK:STDOUT:   %.loc27_18.2: <unbound element of class Access> = field_decl l, element1
-// CHECK:STDOUT:   %l: <unbound element of class Access> = bind_name l, %.loc27_18.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %.loc22_16.1: type = unbound_element_type Access, i32, const
+// CHECK:STDOUT:   %.loc22_16.2: <unbound element of class Access> = field_decl k, element0, const
+// CHECK:STDOUT:   %k: <unbound element of class Access> = bind_name k, %.loc22_16.2, const = %.loc22_16.2
+// CHECK:STDOUT:   %.loc27_18.1: type = unbound_element_type Access, i32, const
+// CHECK:STDOUT:   %.loc27_18.2: <unbound element of class Access> = field_decl l, element1, const
+// CHECK:STDOUT:   %l: <unbound element of class Access> = bind_name l, %.loc27_18.2, const = %.loc27_18.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -93,8 +93,8 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %H: <function> = fn_decl @H
-// CHECK:STDOUT:   %I: <function> = fn_decl @I
+// CHECK:STDOUT:   %H: <function> = fn_decl @H, const
+// CHECK:STDOUT:   %I: <function> = fn_decl @I, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .H = %H
@@ -102,9 +102,9 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %J: <function> = fn_decl @J
-// CHECK:STDOUT:   %K: <function> = fn_decl @K
-// CHECK:STDOUT:   %L: <function> = fn_decl @L
+// CHECK:STDOUT:   %J: <function> = fn_decl @J, const
+// CHECK:STDOUT:   %K: <function> = fn_decl @K, const
+// CHECK:STDOUT:   %L: <function> = fn_decl @L, const
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .J = %J

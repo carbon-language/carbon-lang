@@ -11,16 +11,18 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %.loc7_25: type = ptr_type {.a: f64, .b: i32}, const
+// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1, const
+// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y, .z = %z}
-// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}, const
 // CHECK:STDOUT:   %x.var: ref {.a: f64, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1
-// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1, const = constants.%.loc7_35
+// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1, const = constants.%.loc7_45
 // CHECK:STDOUT:   %.loc7_46.1: {.a: f64, .b: i32} = struct_literal (%.loc7_35, %.loc7_45)
 // CHECK:STDOUT:   %.loc7_46.2: ref f64 = struct_access %x.var, element0
 // CHECK:STDOUT:   %.loc7_46.3: init f64 = initialize_from %.loc7_35 to %.loc7_46.2

@@ -13,16 +13,20 @@ fn Main() {
 
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: i32 = bind_symbolic_name x, %x.var
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0, const = constants.%.loc11
 // CHECK:STDOUT:   assign %x.var, %.loc11
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

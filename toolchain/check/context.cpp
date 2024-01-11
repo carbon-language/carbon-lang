@@ -11,6 +11,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
@@ -63,12 +64,22 @@ auto Context::VerifyOnFinish() -> void {
 auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
   auto inst_id = inst_block_stack_.AddInst(inst);
   CARBON_VLOG() << "AddInst: " << inst << "\n";
+
+  auto const_id = TryEvalInst(*this, inst_id, inst);
+  if (const_id.is_valid()) {
+    CARBON_VLOG() << "Constant: " << inst << " -> " << insts().Get(const_id)
+                  << "\n";
+    constant_values().Set(inst_id, const_id);
+  }
+
   return inst_id;
 }
 
 auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
+  // TODO: Deduplicate constants.
   auto inst_id = insts().AddInNoBlock(inst);
   constants().Add(inst_id);
+  constant_values().Set(inst_id, inst_id);
   CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
   return inst_id;
 }
@@ -192,6 +203,7 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
                                Parse::NodeId::Invalid,
                                GetBuiltinType(SemIR::BuiltinKind::FunctionType),
                                function_id});
+      constant_values().Set(inst_id, inst_id);
       break;
     }
 
@@ -434,32 +446,6 @@ auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
     inst_id = name_ref->value_id;
   }
   return inst_id;
-}
-
-auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  // TODO: The constant value of an instruction should be computed as we build
-  // the instruction, or at least cached once computed.
-  while (true) {
-    auto inst = insts().Get(inst_id);
-    switch (inst.kind()) {
-      case SemIR::NameRef::Kind:
-        inst_id = inst.As<SemIR::NameRef>().value_id;
-        break;
-
-      case SemIR::BindName::Kind:
-        inst_id = inst.As<SemIR::BindName>().value_id;
-        break;
-
-      case SemIR::BaseDecl::Kind:
-      case SemIR::FieldDecl::Kind:
-      case SemIR::FunctionDecl::Kind:
-        return inst_id;
-
-      default:
-        // TODO: Handle the remaining cases.
-        return SemIR::InstId::Invalid;
-    }
-  }
 }
 
 template <typename BranchNode, typename... Args>

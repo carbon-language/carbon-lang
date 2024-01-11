@@ -11,16 +11,20 @@ fn Main() {
 
 // CHECK:STDOUT: --- lookup.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
 // CHECK:STDOUT:   assign %x.var, %.loc8
 // CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, %x
 // CHECK:STDOUT:   return

@@ -18,12 +18,12 @@ fn Procedure() {
 // CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = tuple_type ()
+// CHECK:STDOUT:   %.loc14: type = tuple_type (), const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Procedure = %Procedure}
-// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure
+// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
