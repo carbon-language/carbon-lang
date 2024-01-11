@@ -54,10 +54,12 @@ interesting Carbon code that interoperates with C++.
 Some example language features that we think are key to success here but far
 from an exhaustive list:
 
--   Imports and a working prelude
+-   Imports and a working [prelude] (the earliest stages of a standard library)
 -   Operator overloading and dispatch for expressions
 -   Generic types and functions
 -   Templates (likely only partial support and focused on interop use cases)
+
+[prelude]: /docs/design#name-lookup-for-common-types
 
 ### Carbon's toolchain can build C++ code
 
@@ -94,6 +96,18 @@ features they depend on:
 We want to continue to engage with the external C++ community as the Carbon
 toolchain becomes a more real and complete toolchain. We specifically want to
 share when interop becomes something people can experiment with and explore.
+
+### Start building our initial tutorial and introductory material
+
+Because of the nature of Carbon's experiment, the tutorial and introductory
+material won't be focused on typical teaching of the language to general
+developers. Instead, it will be focused on enabling C++ developers to start
+evaluating specific aspects of Carbon for interoperating with existing C++
+codebases.
+
+We only expect to _start_ building this material in 2024. We want to learn about
+any critical gaps are for folks to start evaluating C++ interop and how best to
+close them going into 2025.
 
 ## Beyond 2024
 
