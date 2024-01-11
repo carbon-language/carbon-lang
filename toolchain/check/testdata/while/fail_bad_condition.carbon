@@ -19,7 +19,7 @@ fn While() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.While = %While}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.While = %While}
 // CHECK:STDOUT:   %While: <function> = fn_decl @While, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

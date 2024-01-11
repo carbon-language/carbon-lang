@@ -20,7 +20,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Run = %Run}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Run = %Run}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
 // CHECK:STDOUT: }

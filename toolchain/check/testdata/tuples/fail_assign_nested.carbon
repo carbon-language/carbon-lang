@@ -30,7 +30,7 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %.loc10_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_30: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_31.1: ((type, type), (type, type)) = tuple_literal (%.loc10_18, %.loc10_30)

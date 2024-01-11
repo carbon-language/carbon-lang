@@ -46,7 +46,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:   %G: <function> = fn_decl @G, const
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc14_22.1: ref [i32; 3] = value_as_ref %b.ref.loc14
 // CHECK:STDOUT:   %.loc14_22.2: ref i32 = array_index %.loc14_22.1, %.loc14_21
 // CHECK:STDOUT:   %.loc14_22.3: i32 = bind_value %.loc14_22.2
-// CHECK:STDOUT:   %.loc14_18: i32* = address_of %.loc14_22.3
+// CHECK:STDOUT:   %.loc14_18: i32* = addr_of %.loc14_22.3
 // CHECK:STDOUT:   assign %pb.var, %.loc14_18
 // CHECK:STDOUT:   %b.ref.loc18: [i32; 3] = name_ref b, %b
 // CHECK:STDOUT:   %.loc18_5: i32 = int_literal 0, const = constants.%.loc18_5
@@ -82,7 +82,7 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc25_20.3: ref [i32; 3] = temporary %.loc25_20.1, %.loc25_20.2
 // CHECK:STDOUT:   %.loc25_24.1: ref i32 = array_index %.loc25_20.3, %.loc25_23
 // CHECK:STDOUT:   %.loc25_24.2: i32 = bind_value %.loc25_24.1
-// CHECK:STDOUT:   %.loc25_18: i32* = address_of %.loc25_24.2
+// CHECK:STDOUT:   %.loc25_18: i32* = addr_of %.loc25_24.2
 // CHECK:STDOUT:   assign %pf.var, %.loc25_18
 // CHECK:STDOUT:   %F.ref.loc29: <function> = name_ref F, file.%F, const = file.%F
 // CHECK:STDOUT:   %.loc29_4.1: ref [i32; 3] = temporary_storage

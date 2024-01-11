@@ -18,7 +18,7 @@ fn C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.C = %C.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.C = %C.decl}
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C, const
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const

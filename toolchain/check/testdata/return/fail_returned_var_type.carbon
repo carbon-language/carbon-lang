@@ -22,7 +22,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Mismatch = %Mismatch}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Mismatch = %Mismatch}
 // CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

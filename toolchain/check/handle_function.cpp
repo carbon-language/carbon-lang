@@ -4,9 +4,11 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -169,10 +171,8 @@ static auto BuildFunctionDecl(Context& context,
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
     function_decl.function_id = context.functions().Add(
-        {.name_id =
-             name_context.state == DeclNameStack::NameContext::State::Unresolved
-                 ? name_context.unresolved_name_id
-                 : SemIR::NameId::Invalid,
+        {.name_id = name_context.name_id_for_new_inst(),
+         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
          .decl_id = function_decl_id,
          .implicit_param_refs_id = implicit_param_refs_id,
          .param_refs_id = param_refs_id,

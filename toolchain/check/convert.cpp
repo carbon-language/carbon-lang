@@ -645,8 +645,7 @@ static auto ConvertDerivedPointerToBasePointer(
   ref_id = ConvertDerivedToBase(context, parse_node, ref_id, path);
 
   // Take the address.
-  return context.AddInst(
-      SemIR::AddressOf{parse_node, dest_ptr_type_id, ref_id});
+  return context.AddInst(SemIR::AddrOf{parse_node, dest_ptr_type_id, ref_id});
 }
 
 // Returns whether `category` is a valid expression category to produce as a
@@ -1108,10 +1107,10 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
         context.emitter().Emit(TokenOnly(call_parse_node), AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
-    self_or_addr_id = context.AddInst(SemIR::AddressOf{
-        self.parse_node(),
-        context.GetPointerType(self.parse_node(), self.type_id()),
-        self_or_addr_id});
+    self_or_addr_id = context.AddInst(
+        SemIR::AddrOf{self.parse_node(),
+                      context.GetPointerType(self.parse_node(), self.type_id()),
+                      self_or_addr_id});
   }
 
   return ConvertToValueOfType(context, call_parse_node, self_or_addr_id,

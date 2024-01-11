@@ -150,6 +150,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("cross_ref_irs_size",
                       Yaml::OutputScalar(cross_ref_irs_.size()));
+              map.Add("name_scopes", name_scopes_.OutputYaml());
               map.Add("bind_names", bind_names_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
@@ -198,7 +199,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
-    case AddressOf::Kind:
+    case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
@@ -226,7 +227,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case IntLiteral::Kind:
     case LazyImportRef::Kind:
     case Namespace::Kind:
-    case NoOp::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
     case Return::Kind:
@@ -403,7 +403,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
@@ -433,7 +433,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case IntLiteral::Kind:
       case LazyImportRef::Kind:
       case Namespace::Kind:
-      case NoOp::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
       case Return::Kind:
@@ -490,7 +489,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceDecl::Kind:
       case LazyImportRef::Kind:
       case Namespace::Kind:
-      case NoOp::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
@@ -513,7 +511,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case AddressOf::Kind:
+      case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
       case BindSymbolicName::Kind:

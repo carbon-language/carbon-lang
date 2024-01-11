@@ -13,7 +13,7 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

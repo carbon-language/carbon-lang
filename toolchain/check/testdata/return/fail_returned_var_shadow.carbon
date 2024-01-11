@@ -49,7 +49,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.SameScope = %SameScope, .DifferentScopes = %DifferentScopes}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.SameScope = %SameScope, .DifferentScopes = %DifferentScopes}
 // CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope, const
 // CHECK:STDOUT:   %DifferentScopes: <function> = fn_decl @DifferentScopes, const
 // CHECK:STDOUT: }

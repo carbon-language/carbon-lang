@@ -183,13 +183,19 @@ struct NameId : public IdBase, public Printable<NameId> {
   // The name of `base`.
   static const NameId Base;
 
+  // The number of non-index (<0) that exist, and will need storage in name
+  // lookup.
+  static const int NonIndexValueCount;
+
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
-    // NOLINTNEXTLINE(misc-redundant-expression): Asserting to be sure.
-    static_assert(NameId::InvalidIndex == IdentifierId::InvalidIndex);
-    CARBON_CHECK(id.index >= 0 || id.index == InvalidIndex)
-        << "Unexpected identifier ID";
-    return NameId(id.index);
+    if (id.index >= 0) {
+      return NameId(id.index);
+    } else if (!id.is_valid()) {
+      return NameId::Invalid;
+    } else {
+      CARBON_FATAL() << "Unexpected identifier ID " << id;
+    }
   }
 
   using IdBase::IdBase;
@@ -213,7 +219,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     } else if (*this == Base) {
       out << "Base";
     } else {
-      CARBON_CHECK(index >= 0) << "Unknown index";
+      CARBON_CHECK(!is_valid() || index >= 0) << "Unknown index " << index;
       IdBase::Print(out);
     }
   }
@@ -225,6 +231,9 @@ constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
 constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
+constexpr int NameId::NonIndexValueCount = 6;
+// Enforce the link between SpecialValueCount and the last special value.
+static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
@@ -347,5 +356,8 @@ struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

@@ -45,7 +45,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .F = %F}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %A: type = class_type @A, const
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()

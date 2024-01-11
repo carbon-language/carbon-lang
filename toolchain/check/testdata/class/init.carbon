@@ -26,7 +26,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class, const
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make, const

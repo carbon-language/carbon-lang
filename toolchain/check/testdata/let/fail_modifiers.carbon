@@ -82,7 +82,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {}
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1, const = constants.%.loc10
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc10
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1, const = constants.%.loc15

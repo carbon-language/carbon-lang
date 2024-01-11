@@ -19,7 +19,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .F = %F}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A, const
 // CHECK:STDOUT:   %B: <function> = fn_decl @B, const
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const

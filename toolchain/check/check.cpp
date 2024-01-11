@@ -6,14 +6,16 @@
 
 #include "common/check.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/import.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -74,46 +76,23 @@ struct UnitInfo {
   llvm::SmallVector<UnitInfo*> incoming_imports;
 };
 
-// Returns the NameId for the entity. May return Invalid for a TODO.
-// TODO: This will need to handle enclosing namespaces.
-static auto GetImportNameId(Parse::NodeId parse_node, Context& context,
-                            const SemIR::File& import_sem_ir,
-                            SemIR::InstId import_inst_id) -> SemIR::NameId {
-  auto import_inst = import_sem_ir.insts().Get(import_inst_id);
-
-  switch (import_inst.kind()) {
-    case SemIR::InstKind::BindName: {
-      auto bind_name = import_inst.As<SemIR::BindName>();
-      return import_sem_ir.bind_names().Get(bind_name.bind_name_id).name_id;
-    }
-
-    case SemIR::InstKind::FunctionDecl: {
-      auto bind_name = import_inst.As<SemIR::FunctionDecl>();
-      return import_sem_ir.functions().Get(bind_name.function_id).name_id;
-    }
-
-    default:
-      context.TODO(parse_node, (llvm::Twine("Support GetImportNameId of ") +
-                                import_inst.kind().name())
-                                   .str());
-      return SemIR::NameId::Invalid;
-  }
-}
-
 // Add imports to the root block.
 static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     -> void {
+  // Importing makes many namespaces, so only canonicalize the type once.
+  auto namespace_type_id =
+      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
+
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
-  auto package_scope_id =
-      context.name_scopes().Add(SemIR::InstId::PackageNamespace);
+  auto package_scope_id = context.name_scopes().Add(
+      SemIR::InstId::PackageNamespace, SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
-  auto package_inst = context.AddInst(SemIR::Namespace{
-      Parse::NodeId::Invalid,
-      context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      SemIR::NameScopeId::Package});
-  CARBON_CHECK(package_inst == SemIR::InstId::PackageNamespace);
+  auto package_inst_id = context.AddInst(SemIR::Namespace{
+      Parse::NodeId::Invalid, namespace_type_id,
+      SemIR::NameId::PackageNamespace, SemIR::NameScopeId::Package});
+  CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
   // Add imports from the current package.
   auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
@@ -121,51 +100,31 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     auto& package_scope =
         context.name_scopes().Get(SemIR::NameScopeId::Package);
     package_scope.has_error = self_import->second.has_load_error;
-
-    for (const auto& import : self_import->second.imports) {
-      const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-
-      // If an import of the current package caused an error for the imported
-      // file, it transitively affects the current file too.
-      package_scope.has_error |= import_sem_ir.name_scopes()
-                                     .Get(SemIR::NameScopeId::Package)
-                                     .has_error;
-
-      auto ir_id = context.sem_ir().cross_ref_irs().Add(&import_sem_ir);
-
-      for (const auto import_inst_id :
-           import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
-        // TODO: Handle enclosing namespaces.
-        auto name_id = GetImportNameId(self_import->second.node, context,
-                                       import_sem_ir, import_inst_id);
-
-        // Translate the name to the current IR. It will usually be an
-        // identifier, but could also be a builtin name ID which is
-        // equivalent cross-IR.
-        if (auto import_identifier_id = name_id.AsIdentifierId();
-            import_identifier_id.is_valid()) {
-          auto name = import_sem_ir.identifiers().Get(import_identifier_id);
-          name_id =
-              SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
+    if (!package_scope.has_error) {
+      for (const auto& import : self_import->second.imports) {
+        const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
+        // If an import of the current package caused an error for the imported
+        // file, it transitively affects the current file too.
+        if (import_sem_ir.name_scopes()
+                .Get(SemIR::NameScopeId::Package)
+                .has_error) {
+          package_scope.has_error = true;
+          break;
         }
-
-        // Leave a placeholder that the inst comes from the other IR.
-        auto target_id = context.AddInst(
-            SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id});
-        // TODO: When importing from other packages, the scope's names should be
-        // changed to allow for ambiguous names. When importing from the current
-        // package, as is currently being done, we should issue a diagnostic on
-        // conflicts.
-        package_scope.names.insert({name_id, target_id});
       }
     }
 
+    for (const auto& import : self_import->second.imports) {
+      Import(context, namespace_type_id, self_import->second.node,
+             **import.unit_info->unit->sem_ir);
+    }
+
     // Push the scope.
-    context.PushScope(package_inst, SemIR::NameScopeId::Package,
+    context.PushScope(package_inst_id, SemIR::NameScopeId::Package,
                       package_scope.has_error);
   } else {
     // Push the scope; there are no names to add.
-    context.PushScope(package_inst, SemIR::NameScopeId::Package);
+    context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
   }
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {

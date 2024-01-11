@@ -29,7 +29,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Deref = %Deref}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Deref = %Deref}
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

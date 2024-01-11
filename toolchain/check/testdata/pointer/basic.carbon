@@ -18,7 +18,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,7 +32,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc9_17: i32* = address_of %n.ref
+// CHECK:STDOUT:   %.loc9_17: i32* = addr_of %n.ref
 // CHECK:STDOUT:   assign %p.var, %.loc9_17
 // CHECK:STDOUT:   %p.ref: ref i32* = name_ref p, %p
 // CHECK:STDOUT:   %.loc11_11: i32* = bind_value %p.ref

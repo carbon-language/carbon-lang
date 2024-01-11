@@ -70,9 +70,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
-    case SemIR::AddressOf::Kind:
+    case SemIR::AddrOf::Kind:
       return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::AddressOf::lvalue_id);
+                                       &SemIR::AddrOf::lvalue_id);
     case SemIR::ArrayIndex::Kind:
       return TryRebuildIfConstOperands(context, inst,
                                        &SemIR::ArrayIndex::array_id,
@@ -178,7 +178,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::InterfaceDecl::Kind:
     case SemIR::LazyImportRef::Kind:
     case SemIR::Namespace::Kind:
-    case SemIR::NoOp::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:

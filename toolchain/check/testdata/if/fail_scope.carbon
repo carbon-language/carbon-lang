@@ -22,7 +22,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.VarScope = %VarScope}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.VarScope = %VarScope}
 // CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

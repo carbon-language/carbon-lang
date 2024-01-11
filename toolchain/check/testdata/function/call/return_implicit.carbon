@@ -18,7 +18,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.MakeImplicitEmptyTuple = %MakeImplicitEmptyTuple, .Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.MakeImplicitEmptyTuple = %MakeImplicitEmptyTuple, .Main = %Main}
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple: <function> = fn_decl @MakeImplicitEmptyTuple, const
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
 // CHECK:STDOUT: }

@@ -76,10 +76,8 @@ static auto BuildInterfaceDecl(Context& context,
     // invalid.
     // TODO: should have a `Self` type id member
     interface_decl.interface_id = context.interfaces().Add(
-        {.name_id =
-             name_context.state == DeclNameStack::NameContext::State::Unresolved
-                 ? name_context.unresolved_name_id
-                 : SemIR::NameId::Invalid,
+        {.name_id = name_context.name_id_for_new_inst(),
+         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
          .decl_id = interface_decl_id});
   }
 
@@ -116,7 +114,8 @@ auto HandleInterfaceDefinitionStart(
         .Emit();
   } else {
     interface_info.definition_id = interface_decl_id;
-    interface_info.scope_id = context.name_scopes().Add(interface_decl_id);
+    interface_info.scope_id = context.name_scopes().Add(
+        interface_decl_id, interface_info.enclosing_scope_id);
   }
 
   // Enter the interface scope.

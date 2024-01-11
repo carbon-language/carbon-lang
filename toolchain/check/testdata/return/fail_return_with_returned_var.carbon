@@ -39,7 +39,7 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .C = %C.decl, .G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .C = %C.decl, .G = %G}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C, const

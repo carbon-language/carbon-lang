@@ -22,16 +22,18 @@ fn B() {}
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   name_scopes:
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {inst: instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
@@ -50,7 +52,7 @@ fn B() {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,16 +65,18 @@ fn B() {}
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   cross_ref_irs_size: 1
+// CHECK:STDOUT:   name_scopes:
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, param_refs: empty, body: [block2]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block2]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {inst: instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
@@ -91,7 +95,7 @@ fn B() {}
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

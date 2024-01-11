@@ -33,7 +33,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .G = %G, .F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .G = %G, .F = %F}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class, const
 // CHECK:STDOUT:   %G: <function> = fn_decl @G, const
@@ -76,7 +76,7 @@ fn F() {
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc22_5: Class* = address_of %c.ref
+// CHECK:STDOUT:   %.loc22_5: Class* = addr_of %c.ref
 // CHECK:STDOUT:   %.loc22_4: init () = call %G.ref(%.loc22_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

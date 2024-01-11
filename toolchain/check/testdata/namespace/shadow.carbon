@@ -33,11 +33,11 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.loc7, .N = %.loc9}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.loc7, .N = %.loc9}
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1, const
-// CHECK:STDOUT:   %.loc9: <namespace> = namespace {.A = %A.loc10, .M = %.loc12}
+// CHECK:STDOUT:   %.loc9: <namespace> = namespace N, {.A = %A.loc10, .M = %.loc12}
 // CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2, const
-// CHECK:STDOUT:   %.loc12: <namespace> = namespace {.B = %B}
+// CHECK:STDOUT:   %.loc12: <namespace> = namespace M, {.B = %B}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B, const
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

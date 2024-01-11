@@ -17,7 +17,7 @@
 
 // For each instruction kind declared here there is a matching definition in
 // `typed_insts.h`.
-CARBON_SEM_IR_INST_KIND(AddressOf)
+CARBON_SEM_IR_INST_KIND(AddrOf)
 CARBON_SEM_IR_INST_KIND(AddrPattern)
 CARBON_SEM_IR_INST_KIND(ArrayIndex)
 CARBON_SEM_IR_INST_KIND(ArrayInit)
@@ -52,7 +52,6 @@ CARBON_SEM_IR_INST_KIND(IntLiteral)
 CARBON_SEM_IR_INST_KIND(LazyImportRef)
 CARBON_SEM_IR_INST_KIND(NameRef)
 CARBON_SEM_IR_INST_KIND(Namespace)
-CARBON_SEM_IR_INST_KIND(NoOp)
 CARBON_SEM_IR_INST_KIND(Param)
 CARBON_SEM_IR_INST_KIND(PointerType)
 CARBON_SEM_IR_INST_KIND(RealLiteral)

@@ -146,13 +146,13 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> ValueType& {
-    CARBON_CHECK(id.index >= 0) << id.index;
+    CARBON_CHECK(id.index >= 0) << id;
     return values_[id.index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> const ValueType& {
-    CARBON_CHECK(id.index >= 0) << id.index;
+    CARBON_CHECK(id.index >= 0) << id;
     return values_[id.index];
   }
 
@@ -170,7 +170,7 @@ class ValueStore
   }
 
   auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
-  auto size() const -> int { return values_.size(); }
+  auto size() const -> size_t { return values_.size(); }
 
  private:
   // Set inline size to 0 because these will typically be too large for the
@@ -208,6 +208,8 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
     });
   }
 
+  auto size() const -> size_t { return values_.size(); }
+
  private:
   llvm::DenseMap<llvm::StringRef, StringId> map_;
   // Set inline size to 0 because these will typically be too large for the
@@ -232,6 +234,8 @@ class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
   }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << *values_; }
+
+  auto size() const -> size_t { return values_->size(); }
 
  private:
   ValueStore<StringId>* values_;

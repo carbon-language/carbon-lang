@@ -36,7 +36,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.UnrelatedScopes = %UnrelatedScopes, .EnclosingButAfter = %EnclosingButAfter}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.UnrelatedScopes = %UnrelatedScopes, .EnclosingButAfter = %EnclosingButAfter}
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes, const
 // CHECK:STDOUT:   %EnclosingButAfter: <function> = fn_decl @EnclosingButAfter, const
 // CHECK:STDOUT: }

@@ -12,6 +12,7 @@
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
@@ -110,14 +111,15 @@ class Context {
       -> void;
 
   // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
-  // scopes. name_lookup_has_load_error is used to limit diagnostics when a
+  // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
   // imports.
   auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
                  SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-                 bool name_lookup_has_load_error = false) -> void;
+                 bool lexical_lookup_has_load_error = false) -> void;
 
-  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
+  // Pops the top scope from scope_stack_, cleaning up names from
+  // lexical_lookup_.
   auto PopScope() -> void;
 
   // Pops scopes until we return to the specified scope index.
@@ -342,10 +344,16 @@ class Context {
 
   auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
 
+  auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
+
   // Directly expose SemIR::File data accessors for brevity in calls.
-  auto identifiers() -> StringStoreWrapper<IdentifierId>& {
+
+  // Use `lexical_lookup().AddIdentifier` to add entries. `identifiers()` is
+  // const to discourage misuse.
+  auto identifiers() -> const StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
+
   auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
@@ -411,10 +419,10 @@ class Context {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
-    // The previous state of name_lookup_has_load_error_, restored on pop.
-    bool prev_name_lookup_has_load_error;
+    // The previous state of lexical_lookup_has_load_error_, restored on pop.
+    bool prev_lexical_lookup_has_load_error;
 
-    // Names which are registered with name_lookup_, and will need to be
+    // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     llvm::DenseSet<SemIR::NameId> names;
 
@@ -423,14 +431,6 @@ class Context {
     bool has_returned_var = false;
 
     // TODO: This likely needs to track things which need to be destructed.
-  };
-
-  // A lookup result in the lexical lookup table `name_lookup_`.
-  struct LexicalLookupResult {
-    // The instruction that was added to lookup.
-    SemIR::InstId inst_id;
-    // The scope in which the instruction was added.
-    ScopeIndex scope_index;
   };
 
   // Forms a canonical type ID for a type. This function is given two
@@ -519,20 +519,12 @@ class Context {
   // The stack of declarations that could have modifiers.
   DeclStateStack decl_state_stack_;
 
-  // Maps identifiers to name lookup results. Values are a stack of name lookup
-  // results in the ancestor scopes. This offers constant-time lookup of names,
-  // regardless of how many scopes exist between the name declaration and
-  // reference. The corresponding scope for each lookup result is tracked, so
-  // that lexical lookup results can be interleaved with lookup results from
-  // non-lexical scopes such as classes.
-  //
-  // Names which no longer have lookup results are erased.
-  llvm::DenseMap<SemIR::NameId, llvm::SmallVector<LexicalLookupResult>>
-      name_lookup_;
+  // Tracks lexical lookup results.
+  LexicalLookup lexical_lookup_;
 
-  // Whether name_lookup_ has load errors, updated whenever scope_stack_ is
+  // Whether lexical_lookup_ has load errors, updated whenever scope_stack_ is
   // pushed or popped.
-  bool name_lookup_has_load_error_ = false;
+  bool lexical_lookup_has_load_error_ = false;
 
   // Cache of the mapping from instructions to types, to avoid recomputing the
   // folding set ID.

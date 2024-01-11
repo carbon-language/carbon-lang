@@ -75,8 +75,8 @@ repos:
         language: python
         files: |
           (?x)^(
-            .*MODULE.bazel.*
-            .*WORKSPACE.*|
+            .*MODULE.bazel.*|
+            .*WORKSPACE.*
           )$
       - id: clang-format
         name: clang-format

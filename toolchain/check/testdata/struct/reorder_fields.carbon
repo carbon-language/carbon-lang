@@ -22,7 +22,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.MakeI32 = %MakeI32, .MakeF64 = %MakeF64, .F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.MakeI32 = %MakeI32, .MakeF64 = %MakeF64, .F = %F}
 // CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32, const
 // CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64, const
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const

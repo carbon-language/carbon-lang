@@ -25,8 +25,8 @@ static auto FatalErrorIfEncountered(InstT inst) -> void {
       << inst;
 }
 
-auto HandleAddressOf(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::AddressOf inst) -> void {
+auto HandleAddrOf(FunctionContext& context, SemIR::InstId inst_id,
+                  SemIR::AddrOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
 }
 
@@ -240,11 +240,6 @@ auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleNamespace(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                      SemIR::Namespace inst) -> void {
   FatalErrorIfEncountered(inst);
-}
-
-auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::NoOp /*inst*/) -> void {
-  // No action to take.
 }
 
 auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,

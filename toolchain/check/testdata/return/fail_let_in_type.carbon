@@ -18,7 +18,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Six = %Six}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Six = %Six}
 // CHECK:STDOUT:   %x: type = bind_name x, i32
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six, const
 // CHECK:STDOUT: }

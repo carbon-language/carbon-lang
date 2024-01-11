@@ -54,7 +54,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .ValueBinding = %ValueBinding}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G, .ValueBinding = %ValueBinding}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F, const
 // CHECK:STDOUT:   %G: <function> = fn_decl @G, const
 // CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding, const
@@ -90,7 +90,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %a.ref.loc13: ref [i32; 3] = name_ref a, %a
 // CHECK:STDOUT:   %.loc13_21: i32 = int_literal 0, const = constants.%.loc13
 // CHECK:STDOUT:   %.loc13_22: ref i32 = array_index %a.ref.loc13, %.loc13_21
-// CHECK:STDOUT:   %.loc13_18: i32* = address_of %.loc13_22
+// CHECK:STDOUT:   %.loc13_18: i32* = addr_of %.loc13_22
 // CHECK:STDOUT:   assign %pa.var, %.loc13_18
 // CHECK:STDOUT:   %a.ref.loc14: ref [i32; 3] = name_ref a, %a
 // CHECK:STDOUT:   %.loc14_5: i32 = int_literal 0, const = constants.%.loc14_5
