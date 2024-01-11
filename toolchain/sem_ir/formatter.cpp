@@ -257,7 +257,7 @@ class InstNamer {
     }
 
     auto AllocateName(const InstNamer& namer, Parse::NodeId node,
-                      std::string name = "") -> Name {
+                      std::string name) -> Name {
       // The best (shortest) name for this instruction so far, and the current
       // name for it.
       Name best;
