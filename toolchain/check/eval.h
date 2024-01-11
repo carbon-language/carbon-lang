@@ -13,11 +13,11 @@ namespace Carbon::Check {
 
 // Determines the phase of the instruction `inst`, and returns its constant
 // value if it has constant phase. If it has runtime phase, returns
-// `SemIR::InstId::Invalid`.
+// `SemIR::ConstantId::NotConstant`.
 //
 // TODO: Support symbolic phase.
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::InstId;
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

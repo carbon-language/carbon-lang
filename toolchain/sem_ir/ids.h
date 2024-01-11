@@ -68,6 +68,65 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 
+// The ID of a constant value of an expression. An expression is either:
+//
+// - a template constant, with an immediate value, such as `42` or `i32*` or
+//   `("hello", "world")`, or
+// - a symbolic constant, whose value includes a symbolic parameter, such as
+//   `Vector(T*)`, or
+// - a runtime expression, such as `Print("hello")`.
+struct ConstantId : public IdBase, public Printable<ConstantId> {
+  // An ID for an expression that is not constant.
+  static const ConstantId NotConstant;
+
+  // Returns the constant ID corresponding to a template constant, which should
+  // either be in the `constants` block in the file or should be known to be
+  // unique.
+  static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
+    return ConstantId(const_id.index + 1);
+  }
+
+  // Returns the constant ID corresponding to a symbolic constant, which should
+  // either be in the `constants` block in the file or should be known to be
+  // unique.
+  static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
+    // Avoid allocating index -1.
+    return ConstantId(-const_id.index - 1);
+  }
+
+  using IdBase::IdBase;
+
+  // Returns whether this represents a constant.
+  auto is_constant() const -> bool { return index != 0; }
+  // Returns whether this represents a symbolic constant.
+  auto is_symbolic() const -> bool { return index < 0; }
+  // Returns whether this represents a template constant.
+  auto is_template() const -> bool { return index > 0; }
+
+  // Returns the instruction that describes this constant value, or
+  // InstId::Invalid for a runtime value.
+  auto inst_id() const -> InstId {
+    static_assert(InstId::InvalidIndex == -1);
+    return InstId(std::abs(index) - 1);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (is_template()) {
+      out << "!" << inst_id();
+    } else if (is_symbolic()) {
+      out << "!!" << inst_id();
+    } else {
+      out << "nonconst";
+    }
+  }
+
+ private:
+  // ConstantIds don't have an invalid state.
+  using IdBase::is_valid;
+};
+
+constexpr ConstantId ConstantId::NotConstant = ConstantId(0);
+
 // The ID of a bind name.
 struct BindNameId : public IdBase, public Printable<BindNameId> {
   using ValueType = BindNameInfo;

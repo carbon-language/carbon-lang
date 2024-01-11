@@ -60,7 +60,7 @@ class Context {
   auto AddInst(SemIR::Inst inst) -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstantInst(SemIR::Inst inst) -> SemIR::InstId;
+  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.

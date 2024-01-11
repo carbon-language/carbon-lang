@@ -57,21 +57,21 @@ class InstStore {
 // instructions.
 class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
  public:
-  // Returns the constant value of the requested instruction, or InstId::Invalid
-  // if it is not constant.
-  auto Get(InstId inst_id) const -> InstId {
+  // Returns the constant value of the requested instruction, or
+  // `ConstantId::NotConstant` if it is not constant.
+  auto Get(InstId inst_id) const -> ConstantId {
     CARBON_CHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? InstId::Invalid
+               ? ConstantId::NotConstant
                : values_[inst_id.index];
   }
 
   // Sets the constant value of the given instruction.
-  auto Set(InstId inst_id, InstId const_id) -> void {
+  auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_CHECK(inst_id.index >= 0);
-    CARBON_CHECK(const_id.is_valid());
+    CARBON_CHECK(const_id.is_constant());
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.resize(inst_id.index + 1, InstId::Invalid);
+      values_.resize(inst_id.index + 1, ConstantId::NotConstant);
     }
     values_[inst_id.index] = const_id;
   }
@@ -81,7 +81,7 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [id, value] : llvm::enumerate(values_)) {
-        if (value.is_valid()) {
+        if (value.is_constant()) {
           map.Add(PrintToString(InstId(id)), Yaml::OutputScalar(value));
         }
       }
@@ -95,7 +95,7 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  llvm::SmallVector<InstId, 0> values_;
+  llvm::SmallVector<ConstantId, 0> values_;
 };
 
 // Provides storage for instructions representing global constants.

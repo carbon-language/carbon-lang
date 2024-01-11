@@ -57,11 +57,12 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
 
   // Identify the function we're calling.
   auto function_decl_id = context.constant_values().Get(function_callee_id);
-  if (!function_decl_id.is_valid()) {
+  if (!function_decl_id.is_constant()) {
     return diagnose_not_callable();
   }
-  auto function_decl =
-      context.insts().Get(function_decl_id).TryAs<SemIR::FunctionDecl>();
+  auto function_decl = context.insts()
+                           .Get(function_decl_id.inst_id())
+                           .TryAs<SemIR::FunctionDecl>();
   if (!function_decl) {
     return diagnose_not_callable();
   }

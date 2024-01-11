@@ -66,8 +66,8 @@ auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
   CARBON_VLOG() << "AddInst: " << inst << "\n";
 
   auto const_id = TryEvalInst(*this, inst_id, inst);
-  if (const_id.is_valid()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> " << insts().Get(const_id)
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << inst << " -> " << const_id.inst_id()
                   << "\n";
     constant_values().Set(inst_id, const_id);
   }
@@ -75,13 +75,18 @@ auto Context::AddInst(SemIR::Inst inst) -> SemIR::InstId {
   return inst_id;
 }
 
-auto Context::AddConstantInst(SemIR::Inst inst) -> SemIR::InstId {
+auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
+    -> SemIR::ConstantId {
   // TODO: Deduplicate constants.
   auto inst_id = insts().AddInNoBlock(inst);
   constants().Add(inst_id);
-  constant_values().Set(inst_id, inst_id);
+
+  auto const_id = is_symbolic ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
+                              : SemIR::ConstantId::ForTemplateConstant(inst_id);
+  constant_values().Set(inst_id, const_id);
+
   CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
-  return inst_id;
+  return const_id;
 }
 
 auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
@@ -203,7 +208,8 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
                                Parse::NodeId::Invalid,
                                GetBuiltinType(SemIR::BuiltinKind::FunctionType),
                                function_id});
-      constant_values().Set(inst_id, inst_id);
+      constant_values().Set(inst_id,
+                            SemIR::ConstantId::ForTemplateConstant(inst_id));
       break;
     }
 
@@ -843,7 +849,13 @@ class TypeCompleter {
       if (field_value_rep.type_id != field.field_type_id) {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
-        field_id = context_.AddConstantInst(field);
+        // TODO: Use `TryEvalInst` to form this value.
+        field_id = context_
+                       .AddConstant(field, context_.constant_values()
+                                               .Get(context_.types().GetInstId(
+                                                   field.field_type_id))
+                                               .is_symbolic())
+                       .inst_id();
       }
       value_rep_fields.push_back(field_id);
     }
@@ -1147,7 +1159,10 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     return ProfileType(*this, inst, canonical_id);
   };
-  auto make_inst = [&] { return AddConstantInst(inst); };
+  auto make_inst = [&] {
+    // TODO: Properly determine whether types are symbolic.
+    return AddConstant(inst, /*is_symbolic=*/false).inst_id();
+  };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
@@ -1186,8 +1201,11 @@ auto Context::CanonicalizeTupleType(Parse::NodeId parse_node,
     return true;
   };
   auto make_tuple_inst = [&] {
-    return AddConstantInst(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
-                                            type_blocks().Add(type_ids)});
+    // TODO: Properly determine when types are symbolic.
+    return AddConstant(SemIR::TupleType{parse_node, SemIR::TypeId::TypeType,
+                                        type_blocks().Add(type_ids)},
+                       /*is_symbolic=*/false)
+        .inst_id();
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
                               make_tuple_inst);
