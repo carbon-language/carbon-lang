@@ -30,26 +30,22 @@ class LexicalLookup {
   };
 
   explicit LexicalLookup(const StringStoreWrapper<IdentifierId>& identifiers)
-      : original_identifiers_size_(identifiers.size()),
-        lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
+      : lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
 
   // Returns the lexical lookup results for a name.
   auto Get(SemIR::NameId name_id) -> llvm::SmallVector<Result, 2>& {
-    CARBON_CHECK(name_id.index + SemIR::NameID::NonIndexValueCount < lookup_.size())
+    size_t index = name_id.index + SemIR::NameId::NonIndexValueCount;
+    CARBON_CHECK(index < lookup_.size())
         << "An identifier was added after the Context was initialized. "
            "Currently, we expect that new identifiers will never be used with "
            "lexical lookup (they're added for things like detecting name "
            "collisions in imports). That might change with metaprogramming: if "
            "it does, we may need to start resizing `lookup_`, either on each "
            "identifier addition or in Get` where this CHECK currently fires.";
-    return lookup_[name_id.index + SemIR::NameId::NonIndexValueCount];
+    return lookup_[index];
   }
 
  private:
-  // Track the original size of identifiers_ to assist with identifier
-  // validation.
-  const int32_t original_identifiers_size_;
-
   // Maps identifiers to name lookup results.
   // TODO: Consider TinyPtrVector<Result> or similar. For now, use a small size
   // of 2 to cover the common case.
