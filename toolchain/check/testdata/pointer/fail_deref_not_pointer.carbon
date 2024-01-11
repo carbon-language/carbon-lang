@@ -39,11 +39,11 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %.loc11: ref <error> = deref %n.ref
 // CHECK:STDOUT:   %.loc15_5.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_5.2: () = tuple_value (), const = constants.%.loc15_5.2
-// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2
+// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2, const = constants.%.loc15_5.2
 // CHECK:STDOUT:   %.loc15_3: ref <error> = deref %.loc15_5.3
 // CHECK:STDOUT:   %.loc19_5.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc19_5.2: {} = struct_value (), const = constants.%.loc19_5.2
-// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2
+// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2, const = constants.%.loc19_5.2
 // CHECK:STDOUT:   %.loc19_3: ref <error> = deref %.loc19_5.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

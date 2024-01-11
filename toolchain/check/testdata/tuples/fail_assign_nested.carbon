@@ -34,9 +34,9 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_30: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_31.1: ((type, type), (type, type)) = tuple_literal (%.loc10_18, %.loc10_30)
-// CHECK:STDOUT:   %.loc10_31.2: type = converted %.loc10_18, constants.%.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.3: type = converted %.loc10_30, constants.%.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.4: type = converted %.loc10_31.1, constants.%.loc10_31.3
+// CHECK:STDOUT:   %.loc10_31.2: type = converted %.loc10_18, constants.%.loc10_31.2, const = constants.%.loc10_31.2
+// CHECK:STDOUT:   %.loc10_31.3: type = converted %.loc10_30, constants.%.loc10_31.2, const = constants.%.loc10_31.2
+// CHECK:STDOUT:   %.loc10_31.4: type = converted %.loc10_31.1, constants.%.loc10_31.3, const = constants.%.loc10_31.3
 // CHECK:STDOUT:   %x.var: ref ((i32, i32), (i32, i32)) = var x
 // CHECK:STDOUT:   %x: ref ((i32, i32), (i32, i32)) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const = constants.%.loc10_37

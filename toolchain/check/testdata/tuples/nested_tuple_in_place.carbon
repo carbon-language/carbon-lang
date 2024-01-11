@@ -46,9 +46,9 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_25: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_42: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_43.1: ((type, type, type), (type, type, type)) = tuple_literal (%.loc10_25, %.loc10_42)
-// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_25, constants.%.loc7_25.2
-// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_42, constants.%.loc7_25.2
-// CHECK:STDOUT:   %.loc10_43.2: type = converted %.loc10_43.1, constants.%.loc10_43.2
+// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_25, constants.%.loc7_25.2, const = constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_42, constants.%.loc7_25.2, const = constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc10_43.2: type = converted %.loc10_43.1, constants.%.loc10_43.2, const = constants.%.loc10_43.2
 // CHECK:STDOUT:   %v.var: ref ((i32, i32, i32), (i32, i32, i32)) = var v
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_ref F, file.%F, const = file.%F
@@ -68,8 +68,8 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_30: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc14_36.1: (type, (type, type, type), type) = tuple_literal (i32, %.loc14_30, i32)
-// CHECK:STDOUT:   %.loc7: type = converted %.loc14_30, constants.%.loc7_25.2
-// CHECK:STDOUT:   %.loc14_36.2: type = converted %.loc14_36.1, constants.%.loc14_36.2
+// CHECK:STDOUT:   %.loc7: type = converted %.loc14_30, constants.%.loc7_25.2, const = constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc14_36.2: type = converted %.loc14_36.1, constants.%.loc14_36.2, const = constants.%.loc14_36.2
 // CHECK:STDOUT:   %v.var: ref (i32, (i32, i32, i32), i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, (i32, i32, i32), i32) = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc14_41: i32 = int_literal 1, const = constants.%.loc14_41

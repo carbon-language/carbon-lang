@@ -77,6 +77,9 @@ static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::InstId {
+  // TODO: Ensure we have test coverage for each of these cases that can result
+  // in a constant, once those situations are all reachable.
+
   // clang warns on unhandled enum values; clang-tidy is incorrect here.
   // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
@@ -84,10 +87,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::AddrOf::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::AddrOf::lvalue_id);
-    case SemIR::ArrayIndex::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::ArrayIndex::array_id,
-                                        &SemIR::ArrayIndex::index_id);
     case SemIR::ArrayType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::ArrayType::bound_id);
@@ -129,18 +128,18 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return context.AddConstantInst(inst);
 
     // TODO: These need special handling.
-    case SemIR::StructInit::Kind:
+    case SemIR::ArrayIndex::Kind:
     case SemIR::ArrayInit::Kind:
     case SemIR::BindValue::Kind:
     case SemIR::Call::Kind:
     case SemIR::ClassElementAccess::Kind:
     case SemIR::ClassInit::Kind:
-    case SemIR::Converted::Kind:
     case SemIR::CrossRef::Kind:
     case SemIR::Deref::Kind:
     case SemIR::InitializeFrom::Kind:
     case SemIR::SpliceBlock::Kind:
     case SemIR::StructAccess::Kind:
+    case SemIR::StructInit::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::TupleAccess::Kind:
     case SemIR::TupleIndex::Kind:
@@ -150,15 +149,16 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       break;
 
     case SemIR::BindName::Kind:
-    case SemIR::BindSymbolicName::Kind: {
+    case SemIR::BindSymbolicName::Kind:
       // TODO: Should we really be looking through runtime and symbolic `let`
       // bindings?
       return GetConstantValue(context, inst.As<SemIR::AnyBindName>().value_id);
-    }
 
-    case SemIR::NameRef::Kind: {
+    case SemIR::NameRef::Kind:
       return GetConstantValue(context, inst.As<SemIR::NameRef>().value_id);
-    }
+
+    case SemIR::Converted::Kind:
+      return GetConstantValue(context, inst.As<SemIR::Converted>().result_id);
 
     case SemIR::UnaryOperatorNot::Kind: {
       auto const_id = GetConstantValue(

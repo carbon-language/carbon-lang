@@ -34,7 +34,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete, const
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete, const = %Incomplete
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
-// CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.loc15_24.2
+// CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.loc15_24.2, const = constants.%.loc15_24.2
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
 // CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete, const = %Incomplete

@@ -107,7 +107,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_17.7: init (i32, i32) = converted %.loc21_17.1, %.loc21_17.6
 // CHECK:STDOUT:   assign %.loc21_8.1, %.loc21_17.7
 // CHECK:STDOUT:   %.loc21_8.2: (i32, i32) = tuple_value (%.loc21_4, %.loc21_7), const = constants.%.loc21_8.3
-// CHECK:STDOUT:   %.loc21_8.3: (i32, i32) = converted %.loc21_8.1, %.loc21_8.2
+// CHECK:STDOUT:   %.loc21_8.3: (i32, i32) = converted %.loc21_8.1, %.loc21_8.2, const = constants.%.loc21_8.3
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0, const = constants.%.loc22
@@ -145,7 +145,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_37.7: init {.x: i32, .y: i32} = converted %.loc34_37.1, %.loc34_37.6
 // CHECK:STDOUT:   assign %.loc34_18.1, %.loc34_37.7
 // CHECK:STDOUT:   %.loc34_18.2: {.x: i32, .y: i32} = struct_value (%.loc34_9, %.loc34_17), const = constants.%.loc34_18.3
-// CHECK:STDOUT:   %.loc34_18.3: {.x: i32, .y: i32} = converted %.loc34_18.1, %.loc34_18.2
+// CHECK:STDOUT:   %.loc34_18.3: {.x: i32, .y: i32} = converted %.loc34_18.1, %.loc34_18.2, const = constants.%.loc34_18.3
 // CHECK:STDOUT:   %.loc38_7: bool = bool_literal true, const = constants.%.loc38_7
 // CHECK:STDOUT:   if %.loc38_7 br !if.expr.then.loc38 else br !if.expr.else.loc38
 // CHECK:STDOUT:

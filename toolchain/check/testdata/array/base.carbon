@@ -61,7 +61,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   assign %b.var, %.loc8_30.9
 // CHECK:STDOUT:   %.loc9_10.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 5, const = constants.%.loc9_13
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.loc9_10
+// CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.loc9_10, const = constants.%.loc9_10
 // CHECK:STDOUT:   %.loc9_14: type = array_type %.loc9_13, (), const = constants.%.loc9_14.1
 // CHECK:STDOUT:   %c.var: ref [(); 5] = var c
 // CHECK:STDOUT:   %c: ref [(); 5] = bind_name c, %c.var

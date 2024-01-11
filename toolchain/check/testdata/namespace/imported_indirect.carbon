@@ -90,7 +90,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %.5}
 // CHECK:STDOUT:   %.5: <function> = fn_decl @.1, const
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.loc5
+// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.loc5, const = constants.%.loc5
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, %.2
