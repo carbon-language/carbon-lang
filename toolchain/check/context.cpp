@@ -448,10 +448,6 @@ auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
   return inst_id;
 }
 
-auto Context::GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId {
-  return constant_values().Get(inst_id);
-}
-
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
                                            Parse::NodeId parse_node,

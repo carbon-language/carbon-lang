@@ -8,20 +8,24 @@
 
 namespace Carbon::Check {
 
+// `GetConstantValue` checks to see whether the provided ID describes a value
+// with constant phase, and if so, returns the corresponding constant value.
+// Overloads are provided for different kinds of ID.
+
 // If the given instruction is constant, returns its constant value.
-static auto UnwrapIfConstant(Context& context, SemIR::InstId inst_id)
+static auto GetConstantValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   return context.constant_values().Get(inst_id);
 }
 
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
-static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
+static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id)
     -> SemIR::InstBlockId {
   auto insts = context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
-    auto const_inst_id = UnwrapIfConstant(context, inst_id);
+    auto const_inst_id = GetConstantValue(context, inst_id);
     if (!const_inst_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
     }
@@ -40,24 +44,31 @@ static auto UnwrapIfConstant(Context& context, SemIR::InstBlockId inst_block_id)
   return context.inst_blocks().Add(const_insts);
 }
 
-// If the specified operands of the given instruction have constant values,
-// replaces the operands with their constant values and builds a corresponding
+// Replaces the specified field of the given typed instruction with its constant
+// value, if it has constant phase. Returns true on success, false if the value
+// has runtime phase.
+template <typename InstT, typename FieldIdT>
+static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
+                                          FieldIdT InstT::*field) -> bool {
+  auto unwrapped = GetConstantValue(context, inst->*field);
+  if (!unwrapped.is_valid()) {
+    return false;
+  }
+  inst->*field = unwrapped;
+  return true;
+}
+
+// If the specified fields of the given typed instruction have constant values,
+// replaces the fields with their constant values and builds a corresponding
 // constant value. Otherwise returns `SemIR::InstId::Invalid`.
-template <typename InstT, typename... SpecificNodeId>
-static auto TryRebuildIfConstOperands(Context& context, SemIR::Inst inst,
-                                      SpecificNodeId InstT::*... each_op_id)
+template <typename InstT, typename... EachFieldIdT>
+static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
+                                       EachFieldIdT InstT::*... each_field_id)
     -> SemIR::InstId {
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
-  if (([&] {
-        auto unwrapped = UnwrapIfConstant(context, typed_inst.*each_op_id);
-        if (!unwrapped.is_valid()) {
-          return false;
-        }
-        typed_inst.*each_op_id = unwrapped;
-        return true;
-      }() &&
+  if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id) &&
        ...)) {
     return context.AddConstantInst(typed_inst);
   }
@@ -71,28 +82,28 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::AddrOf::lvalue_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::AddrOf::lvalue_id);
     case SemIR::ArrayIndex::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::ArrayIndex::array_id,
-                                       &SemIR::ArrayIndex::index_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::ArrayIndex::array_id,
+                                        &SemIR::ArrayIndex::index_id);
     case SemIR::ArrayType::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::ArrayType::bound_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::ArrayType::bound_id);
     case SemIR::BoundMethod::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::BoundMethod::object_id,
-                                       &SemIR::BoundMethod::function_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::BoundMethod::object_id,
+                                        &SemIR::BoundMethod::function_id);
     case SemIR::StructValue::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::StructValue::elements_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::StructValue::elements_id);
     case SemIR::Temporary::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::Temporary::init_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::Temporary::init_id);
     case SemIR::TupleValue::Kind:
-      return TryRebuildIfConstOperands(context, inst,
-                                       &SemIR::TupleValue::elements_id);
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::TupleValue::elements_id);
 
     // These cases are constants already.
     case SemIR::Builtin::Kind:
@@ -142,15 +153,15 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BindSymbolicName::Kind: {
       // TODO: Should we really be looking through runtime and symbolic `let`
       // bindings?
-      return UnwrapIfConstant(context, inst.As<SemIR::AnyBindName>().value_id);
+      return GetConstantValue(context, inst.As<SemIR::AnyBindName>().value_id);
     }
 
     case SemIR::NameRef::Kind: {
-      return UnwrapIfConstant(context, inst.As<SemIR::NameRef>().value_id);
+      return GetConstantValue(context, inst.As<SemIR::NameRef>().value_id);
     }
 
     case SemIR::UnaryOperatorNot::Kind: {
-      auto const_id = UnwrapIfConstant(
+      auto const_id = GetConstantValue(
           context, inst.As<SemIR::UnaryOperatorNot>().operand_id);
       if (!const_id.is_valid()) {
         break;

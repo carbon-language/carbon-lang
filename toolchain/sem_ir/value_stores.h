@@ -69,14 +69,15 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
   // Sets the constant value of the given instruction.
   auto Set(InstId inst_id, InstId const_id) -> void {
     CARBON_CHECK(inst_id.index >= 0);
-    if (values_.size() <= static_cast<size_t>(inst_id.index)) {
+    CARBON_CHECK(const_id.is_valid());
+    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
       values_.resize(inst_id.index + 1, InstId::Invalid);
     }
     values_[inst_id.index] = const_id;
   }
 
-  auto Reserve(size_t size) -> void { values_.reserve(size); }
-
+  // Outputs the store as YAML. Because this is modeled as a sparse mapping,
+  // non-constant elements are skipped in the output.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [id, value] : llvm::enumerate(values_)) {
@@ -87,10 +88,11 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
     });
   }
 
-  auto array_ref() const -> llvm::ArrayRef<InstId> { return values_; }
-  auto size() const -> int { return values_.size(); }
-
  private:
+  // A mapping from `InstId::index` to the corresponding constant value. This is
+  // expected to be sparse, and may be smaller than the list of instructions if
+  // there are trailing non-constant instructions.
+  //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
   llvm::SmallVector<InstId, 0> values_;
