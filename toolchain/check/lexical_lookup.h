@@ -29,36 +29,23 @@ class LexicalLookup {
     ScopeIndex scope_index;
   };
 
-  explicit LexicalLookup(StringStoreWrapper<IdentifierId>& identifiers)
-      : identifiers_(&identifiers),
-        lookup_(identifiers_->size() + SemIR::NameId::NonIndexValueCount) {}
-
-  ~LexicalLookup() {
-    CARBON_CHECK(lookup_.size() ==
-                 identifiers_->size() + SemIR::NameId::NonIndexValueCount)
-        << lookup_.size() << " must match " << identifiers_->size() << " + "
-        << SemIR::NameId::NonIndexValueCount
-        << "; something may have been added incorrectly";
-  }
-
-  // Handles both adding the identifier and resizing lookup_ to accommodate the
-  // new entry. `identifiers().Add` must not be called directly once checking
-  // has begun.
-  auto AddIdentifier(llvm::StringRef name) -> IdentifierId {
-    auto id = identifiers_->Add(name);
-    // Bear in mind that Add was not guaranteed to actually change the size.
-    lookup_.resize(identifiers_->size() + SemIR::NameId::NonIndexValueCount);
-    return id;
-  }
+  explicit LexicalLookup(const StringStoreWrapper<IdentifierId>& identifiers)
+      : lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
 
   // Returns the lexical lookup results for a name.
   auto Get(SemIR::NameId name_id) -> llvm::SmallVector<Result, 2>& {
-    return lookup_[name_id.index + SemIR::NameId::NonIndexValueCount];
+    size_t index = name_id.index + SemIR::NameId::NonIndexValueCount;
+    CARBON_CHECK(index < lookup_.size())
+        << "An identifier was added after the Context was initialized. "
+           "Currently, we expect that new identifiers will never be used with "
+           "lexical lookup (they're added for things like detecting name "
+           "collisions in imports). That might change with metaprogramming: if "
+           "it does, we may need to start resizing `lookup_`, either on each "
+           "identifier addition or in Get` where this CHECK currently fires.";
+    return lookup_[index];
   }
 
  private:
-  StringStoreWrapper<IdentifierId>* identifiers_;
-
   // Maps identifiers to name lookup results.
   // TODO: Consider TinyPtrVector<Result> or similar. For now, use a small size
   // of 2 to cover the common case.
