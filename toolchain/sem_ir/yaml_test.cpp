@@ -25,7 +25,6 @@ using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
 using ::testing::SizeIs;
-using ::testing::Value;
 
 namespace Yaml = ::Carbon::Testing::Yaml;
 
