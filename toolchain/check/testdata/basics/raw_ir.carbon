@@ -69,6 +69,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     inst+3:          inst+3
 // CHECK:STDOUT:     inst+5:          inst+5
+// CHECK:STDOUT:     inst+6:          inst+5
 // CHECK:STDOUT:     inst+8:          inst+8
 // CHECK:STDOUT:     inst+9:          inst+9
 // CHECK:STDOUT:     inst+11:         inst+12

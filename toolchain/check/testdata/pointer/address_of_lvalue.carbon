@@ -73,7 +73,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_17: i32* = addr_of %.loc12_19
 // CHECK:STDOUT:   assign %r.var, %.loc12_17
 // CHECK:STDOUT:   %.loc14_19.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc14_19.2: type = converted %.loc14_19.1, constants.%.loc14_19.2
+// CHECK:STDOUT:   %.loc14_19.2: type = converted %.loc14_19.1, constants.%.loc14_19.2, const = constants.%.loc14_19.2
 // CHECK:STDOUT:   %t.var: ref (i32, i32) = var t
 // CHECK:STDOUT:   %t: ref (i32, i32) = bind_name t, %t.var
 // CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1, const = constants.%.loc14_24

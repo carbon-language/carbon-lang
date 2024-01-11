@@ -220,7 +220,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: class @DeriveFromTuple {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base, const = file.%Base
 // CHECK:STDOUT:   %.loc51_22: (type,) = tuple_literal (%Base.ref)
-// CHECK:STDOUT:   %.loc51_23.1: type = converted %.loc51_22, constants.%.loc51_23.1
+// CHECK:STDOUT:   %.loc51_23.1: type = converted %.loc51_22, constants.%.loc51_23.1, const = constants.%.loc51_23.1
 // CHECK:STDOUT:   %.loc51_23.2: type = unbound_element_type DeriveFromTuple, <error>, const
 // CHECK:STDOUT:   %.loc51_23.3: <unbound element of class DeriveFromTuple> = base_decl <error>, element0, const
 // CHECK:STDOUT:

@@ -44,7 +44,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a_ref = %package.var, .a = %a}
 // CHECK:STDOUT:   %package.var: ref <error> = var package
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.loc4
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.loc4, const = constants.%.loc4
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %package.var

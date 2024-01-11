@@ -37,7 +37,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo, const = file.%Echo
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = struct_value (), const = constants.%.loc12
-// CHECK:STDOUT:   %.loc12_9.3: {} = converted %.loc12_9.1, %.loc12_9.2
+// CHECK:STDOUT:   %.loc12_9.3: {} = converted %.loc12_9.1, %.loc12_9.2, const = constants.%.loc12
 // CHECK:STDOUT:   %.loc12_7: init {} = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

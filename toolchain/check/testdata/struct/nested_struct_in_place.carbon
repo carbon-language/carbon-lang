@@ -31,9 +31,9 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_29: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_29, constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_29, constants.%.loc7_25.2, const = constants.%.loc7_25.2
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_50, constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_50, constants.%.loc7_25.2, const = constants.%.loc7_25.2
 // CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}, const
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var v
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name v, %v.var

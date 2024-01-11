@@ -20,7 +20,7 @@ var x: (i32,) = ();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %.loc10_13.1: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc10_13.2: type = converted %.loc10_13.1, constants.%.loc10_13.2
+// CHECK:STDOUT:   %.loc10_13.2: type = converted %.loc10_13.1, constants.%.loc10_13.2, const = constants.%.loc10_13.2
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
 // CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_18: () = tuple_literal ()

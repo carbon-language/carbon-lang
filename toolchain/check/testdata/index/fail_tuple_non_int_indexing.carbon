@@ -24,7 +24,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, .b = %b}
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2
+// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2, const = constants.%.loc7_17.2
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
 // CHECK:STDOUT:   %a: ref (i32, i32) = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12, const = constants.%.loc7_22

@@ -25,7 +25,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3, const = constants.%.loc8_16
 // CHECK:STDOUT:   %.loc8_17.1: {.a: i32} = struct_literal (%.loc8_16)
 // CHECK:STDOUT:   %.loc8_17.2: {.a: i32} = struct_value (%.loc8_16), const = constants.%.loc8_17
-// CHECK:STDOUT:   %.loc8_17.3: {.a: i32} = converted %.loc8_17.1, %.loc8_17.2
+// CHECK:STDOUT:   %.loc8_17.3: {.a: i32} = converted %.loc8_17.1, %.loc8_17.2, const = constants.%.loc8_17
 // CHECK:STDOUT:   return %.loc8_17.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
