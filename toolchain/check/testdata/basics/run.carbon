@@ -10,7 +10,7 @@ fn Run() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

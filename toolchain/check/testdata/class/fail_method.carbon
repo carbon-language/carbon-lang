@@ -33,21 +33,21 @@ fn F(c: Class) {
 // CHECK:STDOUT: --- fail_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {}, const
-// CHECK:STDOUT:   %.loc10_1.2: type = tuple_type (), const
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}, const
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.loc10_1.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .F = %F}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %NoSelf: <function> = fn_decl @NoSelf, const
-// CHECK:STDOUT:   %WithSelf: <function> = fn_decl @WithSelf, const
+// CHECK:STDOUT:   %NoSelf: <function> = fn_decl @NoSelf [template]
+// CHECK:STDOUT:   %WithSelf: <function> = fn_decl @WithSelf [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .NoSelf = %NoSelf
@@ -61,19 +61,19 @@ fn F(c: Class) {
 // CHECK:STDOUT: fn @F(%c: Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc13: Class = name_ref c, %c
-// CHECK:STDOUT:   %NoSelf.ref.loc13: <function> = name_ref NoSelf, @Class.%NoSelf, const = @Class.%NoSelf
+// CHECK:STDOUT:   %NoSelf.ref.loc13: <function> = name_ref NoSelf, @Class.%NoSelf [template = @Class.%NoSelf]
 // CHECK:STDOUT:   %.loc13: init () = call %NoSelf.ref.loc13()
 // CHECK:STDOUT:   %c.ref.loc14: Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc14_4: <bound method> = bound_method %c.ref.loc14, @Class.%WithSelf
 // CHECK:STDOUT:   %.loc14_13: init () = call %.loc14_4(%c.ref.loc14)
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class, const = file.%Class
-// CHECK:STDOUT:   %NoSelf.ref.loc16: <function> = name_ref NoSelf, @Class.%NoSelf, const = @Class.%NoSelf
+// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %NoSelf.ref.loc16: <function> = name_ref NoSelf, @Class.%NoSelf [template = @Class.%NoSelf]
 // CHECK:STDOUT:   %.loc16: init () = call %NoSelf.ref.loc16()
-// CHECK:STDOUT:   %Class.ref.loc23: type = name_ref Class, file.%Class, const = file.%Class
-// CHECK:STDOUT:   %WithSelf.ref.loc23: <function> = name_ref WithSelf, @Class.%WithSelf, const = @Class.%WithSelf
+// CHECK:STDOUT:   %Class.ref.loc23: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc23: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %.loc23: init () = call %WithSelf.ref.loc23(<invalid>)
-// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class, const = file.%Class
-// CHECK:STDOUT:   %WithSelf.ref.loc30: <function> = name_ref WithSelf, @Class.%WithSelf, const = @Class.%WithSelf
+// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc30: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc30: Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc30: init () = call %WithSelf.ref.loc30(<invalid>)
 // CHECK:STDOUT:   return

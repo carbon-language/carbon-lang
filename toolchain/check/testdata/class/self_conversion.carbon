@@ -31,41 +31,41 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: --- self_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32}, const
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32}, const
-// CHECK:STDOUT:   %.loc16_1.1: type = struct_type {.base: Base}, const
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc16_1.2: type = struct_type {.base: {.a: i32}*}, const
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base}, const
-// CHECK:STDOUT:   %.loc27: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.loc16_1.1: type = struct_type {.base: Base} [template]
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc16_1.2: type = struct_type {.base: {.a: i32}*} [template]
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base} [template]
+// CHECK:STDOUT:   %.loc27: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base, const
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived, const
-// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase, const
-// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase, const
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call, const
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
+// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32, const
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0, const
-// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2, const = %.loc8_8.2
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base, const = file.%Base
-// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base, const
-// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0, const
-// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase, const
-// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase, const
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
+// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
+// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
+// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12_20.2
@@ -87,7 +87,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc23_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc23_10: ref i32 = class_element_access %.loc23_4, element0
-// CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1, const = constants.%.loc23
+// CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1 [template = constants.%.loc23]
 // CHECK:STDOUT:   assign %.loc23_10, %.loc23_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

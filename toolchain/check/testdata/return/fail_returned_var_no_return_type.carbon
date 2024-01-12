@@ -18,18 +18,18 @@ fn Procedure() {
 // CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc14: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Procedure = %Procedure}
-// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure, const
+// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_20.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_20.2: type = converted %.loc14_20.1, constants.%.loc14, const = constants.%.loc14
+// CHECK:STDOUT:   %.loc14_20.2: type = converted %.loc14_20.1, constants.%.loc14 [template = constants.%.loc14]
 // CHECK:STDOUT:   %v: () = bind_name v, <error>
 // CHECK:STDOUT:   %.loc14_25: () = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>

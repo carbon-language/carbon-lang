@@ -14,41 +14,41 @@ fn And() -> bool {
 // CHECK:STDOUT: --- and.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true, const
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const
-// CHECK:STDOUT:   %.loc11: bool = bool_literal false, const
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.loc11: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G, .And = %And}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
-// CHECK:STDOUT:   %And: <function> = fn_decl @And, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %And: <function> = fn_decl @And [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true, const = constants.%.loc7
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.loc7]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true, const = constants.%.loc8
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.loc8]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
-// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false, const = constants.%.loc11
+// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.loc11]
 // CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G, const = file.%G
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %.loc11_19: init bool = call %G.ref()
 // CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %.loc11_19
 // CHECK:STDOUT:   %.loc11_14.5: bool = converted %.loc11_19, %.loc11_14.4

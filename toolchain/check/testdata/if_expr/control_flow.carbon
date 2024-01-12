@@ -14,26 +14,26 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: --- control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .F = %F}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
-// CHECK:STDOUT:   %B: <function> = fn_decl @B, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.loc7]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2, const = constants.%.loc8
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.loc8]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -43,14 +43,14 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A, const = file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc11_21.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc11_21.2: i32 = value_of_initializer %.loc11_21.1
 // CHECK:STDOUT:   %.loc11_21.3: i32 = converted %.loc11_21.1, %.loc11_21.2
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B, const = file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %.loc11_30: init i32 = call %B.ref()
 // CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %.loc11_30
 // CHECK:STDOUT:   %.loc11_24.2: i32 = converted %.loc11_30, %.loc11_24.1

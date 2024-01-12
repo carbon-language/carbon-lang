@@ -11,14 +11,14 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT: --- global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1, const = constants.%.loc7
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.loc7]
 // CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

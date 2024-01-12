@@ -13,31 +13,31 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT: --- two_entries.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25: type = ptr_type {.a: i32, .b: i32}, const
-// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc7_44: {.a: i32, .b: i32} = struct_value (%.loc7_35, %.loc7_43), const
-// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 2, const
+// CHECK:STDOUT:   %.loc7_25: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.loc7_44: {.a: i32, .b: i32} = struct_value (%.loc7_35, %.loc7_43) [template]
+// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y}
-// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}, const
-// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1, const = constants.%.loc7_35
-// CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2, const = constants.%.loc7_43
+// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1 [template = constants.%.loc7_35]
+// CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2 [template = constants.%.loc7_43]
 // CHECK:STDOUT:   %.loc7_44.1: {.a: i32, .b: i32} = struct_literal (%.loc7_35, %.loc7_43)
-// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = struct_value (%.loc7_35, %.loc7_43), const = constants.%.loc7_44
-// CHECK:STDOUT:   %.loc7_44.3: {.a: i32, .b: i32} = converted %.loc7_44.1, %.loc7_44.2, const = constants.%.loc7_44
+// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = struct_value (%.loc7_35, %.loc7_43) [template = constants.%.loc7_44]
+// CHECK:STDOUT:   %.loc7_44.3: {.a: i32, .b: i32} = converted %.loc7_44.1, %.loc7_44.2 [template = constants.%.loc7_44]
 // CHECK:STDOUT:   %v: {.a: i32, .b: i32} = bind_name v, %.loc7_44.3
-// CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %v.ref: {.a: i32, .b: i32} = name_ref v, %v
 // CHECK:STDOUT:   %w: {.a: i32, .b: i32} = bind_name w, %v.ref
-// CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1, const = constants.%.loc10_35
-// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 2, const = constants.%.loc10_43
+// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1 [template = constants.%.loc10_35]
+// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 2 [template = constants.%.loc10_43]
 // CHECK:STDOUT:   %.loc10_44.1: {.a: i32, .b: i32} = struct_literal (%.loc10_35, %.loc10_43)
 // CHECK:STDOUT:   %.loc10_44.2: ref i32 = struct_access %x.var, element0
 // CHECK:STDOUT:   %.loc10_44.3: init i32 = initialize_from %.loc10_35 to %.loc10_44.2
@@ -46,7 +46,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc10_44.6: init {.a: i32, .b: i32} = struct_init (%.loc10_44.3, %.loc10_44.5) to %x.var
 // CHECK:STDOUT:   %.loc10_44.7: init {.a: i32, .b: i32} = converted %.loc10_44.1, %.loc10_44.6
 // CHECK:STDOUT:   assign %x.var, %.loc10_44.7
-// CHECK:STDOUT:   %.loc11_25: type = struct_type {.a: i32, .b: i32}, const
+// CHECK:STDOUT:   %.loc11_25: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: i32} = var y
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: i32} = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: i32} = name_ref x, %x

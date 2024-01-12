@@ -12,12 +12,12 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT: --- fail_assign_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc10: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
-// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_21: {} = struct_literal ()

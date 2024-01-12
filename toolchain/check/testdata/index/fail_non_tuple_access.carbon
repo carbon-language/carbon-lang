@@ -14,19 +14,19 @@ fn Main() {
 // CHECK:STDOUT: --- fail_non_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0, const
-// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0, const = constants.%.loc11_3
-// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1, const = constants.%.loc11_5
+// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template = constants.%.loc11_3]
+// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template = constants.%.loc11_5]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

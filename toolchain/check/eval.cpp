@@ -13,19 +13,21 @@ namespace Carbon::Check {
 // Overloads are provided for different kinds of ID.
 
 // If the given instruction is constant, returns its constant value.
-static auto GetConstantValue(Context& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  return context.constant_values().Get(inst_id);
+static auto GetConstantValue(Context& context, SemIR::InstId inst_id,
+                             bool* is_symbolic) -> SemIR::InstId {
+  auto const_id = context.constant_values().Get(inst_id);
+  *is_symbolic |= const_id.is_symbolic();
+  return const_id.inst_id();
 }
 
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
-static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id)
-    -> SemIR::InstBlockId {
+static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
+                             bool* is_symbolic) -> SemIR::InstBlockId {
   auto insts = context.inst_blocks().Get(inst_block_id);
   llvm::SmallVector<SemIR::InstId> const_insts;
   for (auto inst_id : insts) {
-    auto const_inst_id = GetConstantValue(context, inst_id);
+    auto const_inst_id = GetConstantValue(context, inst_id, is_symbolic);
     if (!const_inst_id.is_valid()) {
       return SemIR::InstBlockId::Invalid;
     }
@@ -49,8 +51,9 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id)
 // has runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
-                                          FieldIdT InstT::*field) -> bool {
-  auto unwrapped = GetConstantValue(context, inst->*field);
+                                          FieldIdT InstT::*field,
+                                          bool* is_symbolic) -> bool {
+  auto unwrapped = GetConstantValue(context, inst->*field, is_symbolic);
   if (!unwrapped.is_valid()) {
     return false;
   }
@@ -64,19 +67,21 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
 template <typename InstT, typename... EachFieldIdT>
 static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
                                        EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::InstId {
+    -> SemIR::ConstantId {
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
-  if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id) &&
+  bool is_symbolic = false;
+  if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
+                                     &is_symbolic) &&
        ...)) {
-    return context.AddConstantInst(typed_inst);
+    return context.AddConstant(typed_inst, is_symbolic);
   }
-  return SemIR::InstId::Invalid;
+  return SemIR::ConstantId::NotConstant;
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::InstId {
+    -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
 
@@ -110,22 +115,24 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ConstType::Kind:
     case SemIR::PointerType::Kind:
     case SemIR::StructType::Kind:
+    case SemIR::StructTypeField::Kind:
     case SemIR::TupleType::Kind:
     case SemIR::UnboundElementType::Kind:
-      return inst_id;
+      // TODO: Propagate symbolic / template nature from operands.
+      return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:
       // TODO: Consider adding a corresponding `Value` inst.
-      return inst_id;
+      return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:
     case SemIR::IntLiteral::Kind:
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
-      return context.AddConstantInst(inst);
+      return context.AddConstant(inst, /*is_symbolic=*/false);
 
     // TODO: These need special handling.
     case SemIR::ArrayIndex::Kind:
@@ -148,33 +155,38 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ValueOfInitializer::Kind:
       break;
 
-    case SemIR::BindName::Kind:
     case SemIR::BindSymbolicName::Kind:
-      // TODO: Should we really be looking through runtime and symbolic `let`
-      // bindings?
-      return GetConstantValue(context, inst.As<SemIR::AnyBindName>().value_id);
+      // TODO: Consider forming a constant value here using a de Bruijn index or
+      // similar, so that corresponding symbolic parameters in redeclarations
+      // are treated as the same value.
+      return SemIR::ConstantId::ForSymbolicConstant(inst_id);
+
+    case SemIR::BindName::Kind:
+      // TODO: We need to look through `BindName`s for member accesses naming
+      // fields, where the member name is a `BindName`. Should we really be
+      // creating a `BindName` in that case?
+      return context.constant_values().Get(inst.As<SemIR::BindName>().value_id);
 
     case SemIR::NameRef::Kind:
-      return GetConstantValue(context, inst.As<SemIR::NameRef>().value_id);
+      return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);
 
     case SemIR::Converted::Kind:
-      return GetConstantValue(context, inst.As<SemIR::Converted>().result_id);
+      return context.constant_values().Get(
+          inst.As<SemIR::Converted>().result_id);
 
     case SemIR::UnaryOperatorNot::Kind: {
-      auto const_id = GetConstantValue(
-          context, inst.As<SemIR::UnaryOperatorNot>().operand_id);
-      if (!const_id.is_valid()) {
+      auto const_id = context.constant_values().Get(
+          inst.As<SemIR::UnaryOperatorNot>().operand_id);
+      if (!const_id.is_template()) {
         break;
       }
-      auto value = context.insts().TryGetAs<SemIR::BoolLiteral>(const_id);
-      if (!value) {
-        // TODO: Can we CHECK this instead?
-        break;
-      }
-      value->value =
-          (value->value == SemIR::BoolValue::False ? SemIR::BoolValue::True
-                                                   : SemIR::BoolValue::False);
-      return context.AddConstantInst(*value);
+      // A template constant of bool type is always a bool literal.
+      auto value =
+          context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
+      value.value =
+          (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
+                                                  : SemIR::BoolValue::False);
+      return context.AddConstant(value, /*is_symbolic=*/false);
     }
 
     // These cases are either not expressions or not constant.
@@ -193,12 +205,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
     case SemIR::StructLiteral::Kind:
-    case SemIR::StructTypeField::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;
   }
-  return SemIR::InstId::Invalid;
+  return SemIR::ConstantId::NotConstant;
 }
 
 }  // namespace Carbon::Check

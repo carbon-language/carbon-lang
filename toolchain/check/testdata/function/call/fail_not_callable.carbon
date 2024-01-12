@@ -14,20 +14,20 @@ fn Run() {
 // CHECK:STDOUT: --- fail_not_callable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String, const
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const
+// CHECK:STDOUT:   %.1: type = ptr_type String [template]
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello", const = constants.%.loc11
+// CHECK:STDOUT:   %.loc11: String = string_literal "hello" [template = constants.%.loc11]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

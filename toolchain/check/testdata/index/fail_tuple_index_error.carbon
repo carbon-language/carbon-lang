@@ -13,21 +13,21 @@ var b: i32 = a[oops];
 // CHECK:STDOUT: --- fail_tuple_index_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type), const
-// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32), const
-// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32), const
-// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12, const
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 6, const
+// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.loc7_17.2: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc7_17.3: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, .b = %b}
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2, const = constants.%.loc7_17.2
+// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.loc7_17.2 [template = constants.%.loc7_17.2]
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
 // CHECK:STDOUT:   %a: ref (i32, i32) = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12, const = constants.%.loc7_22
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 6, const = constants.%.loc7_26
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 12 [template = constants.%.loc7_22]
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 6 [template = constants.%.loc7_26]
 // CHECK:STDOUT:   %.loc7_27.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_26)
 // CHECK:STDOUT:   %.loc7_27.2: ref i32 = tuple_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_27.3: init i32 = initialize_from %.loc7_22 to %.loc7_27.2

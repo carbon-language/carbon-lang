@@ -67,23 +67,23 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc27: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc27: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl}
 // CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
-// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate, const
+// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template]
 // CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
-// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess, const
+// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template]
 // CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()
-// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract, const
+// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
 // CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, ()
-// CHECK:STDOUT:   %Virtual: type = class_type @Virtual, const
+// CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, ()
-// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder, const
+// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
 // CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, ()
-// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase, const
+// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;

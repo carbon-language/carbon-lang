@@ -14,8 +14,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- fail_unimplemented_op.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 12, const
-// CHECK:STDOUT:   %.loc11_15: i32 = int_literal 34, const
+// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.loc11_15: i32 = int_literal 34 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

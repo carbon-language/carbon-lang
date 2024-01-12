@@ -37,7 +37,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+1:          inst+1
+// CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -53,7 +53,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A, const
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -80,7 +80,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+1:          inst+1
+// CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -96,7 +96,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B}
-// CHECK:STDOUT:   %B: <function> = fn_decl @B, const
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

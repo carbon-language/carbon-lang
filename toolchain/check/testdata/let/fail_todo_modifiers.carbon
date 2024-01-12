@@ -12,12 +12,12 @@ private let a: i32 = 1;
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {}
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 1, const = constants.%.loc10
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template = constants.%.loc10]
 // CHECK:STDOUT:   %a: i32 = bind_name a, %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

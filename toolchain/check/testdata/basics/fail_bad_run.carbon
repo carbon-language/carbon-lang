@@ -15,13 +15,13 @@ fn Run() -> String {}
 // CHECK:STDOUT: --- fail_bad_run.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String, const
-// CHECK:STDOUT:   %.loc13: type = tuple_type (), const
+// CHECK:STDOUT:   %.1: type = ptr_type String [template]
+// CHECK:STDOUT:   %.loc13: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %return: String {

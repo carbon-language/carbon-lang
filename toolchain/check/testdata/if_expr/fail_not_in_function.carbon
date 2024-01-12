@@ -36,22 +36,22 @@ class C {
 // CHECK:STDOUT: --- fail_not_in_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc17_17: bool = bool_literal true, const
-// CHECK:STDOUT:   %.loc17_27: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc17_34: i32 = int_literal 0, const
-// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const
-// CHECK:STDOUT:   %.loc34: type = struct_type {.n: <error>}, const
+// CHECK:STDOUT:   %.loc17_17: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.loc17_27: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc17_34: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.loc34: type = struct_type {.n: <error>} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block5>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C, const
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc33: bool = bool_literal true, const = constants.%.loc33
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true [template = constants.%.loc33]
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

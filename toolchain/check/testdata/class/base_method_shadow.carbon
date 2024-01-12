@@ -32,42 +32,42 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: --- base_method_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}, const
-// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type (), const
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}, const
-// CHECK:STDOUT:   %.loc14_1.1: type = struct_type {.base: A}, const
-// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.base: {}*}, const
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: A}, const
-// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: B}, const
-// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.base: A}*}, const
-// CHECK:STDOUT:   %.loc16: type = ptr_type {.base: B}, const
+// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.loc14_1.1: type = struct_type {.base: A} [template]
+// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.base: {}*} [template]
+// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: A} [template]
+// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.base: A}*} [template]
+// CHECK:STDOUT:   %.loc16: type = ptr_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A, const
+// CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B, const
+// CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C, const
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D, const
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call, const
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A, const = file.%A
-// CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A, const
-// CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2, const
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A [template]
+// CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12_17.2
@@ -76,10 +76,10 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B, const = file.%B
-// CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B, const
-// CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.3, const
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
+// CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc17_17.2
@@ -88,9 +88,9 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B, const = file.%B
-// CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B, const
-// CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0, const
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
+// CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B [template]
+// CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc22_17.2

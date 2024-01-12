@@ -47,37 +47,37 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: --- fail_duplicate_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc21_36: type = struct_type {.a: i32}, const
-// CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc45_25: type = ptr_type {.b: i32, .c: i32}, const
-// CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3, const
-// CHECK:STDOUT:   %.loc45_43: i32 = int_literal 4, const
+// CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc21_36: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.loc45_25: type = ptr_type {.b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.loc45_43: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .x = %x, .y = %y}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1, const = constants.%.loc21_35
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1 [template = constants.%.loc21_35]
 // CHECK:STDOUT:   %.loc21_36: {.a: i32} = struct_literal (%.loc21_35)
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
-// CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1, const = constants.%.loc29_22
-// CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2, const = constants.%.loc29_32
+// CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1 [template = constants.%.loc29_22]
+// CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2 [template = constants.%.loc29_32]
 // CHECK:STDOUT:   %w: i32 = bind_name w, <error>
-// CHECK:STDOUT:   %.loc37_16: type = struct_type {.a: i32}, const
+// CHECK:STDOUT:   %.loc37_16: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1, const = constants.%.loc37_26
-// CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2, const = constants.%.loc37_34
+// CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1 [template = constants.%.loc37_26]
+// CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2 [template = constants.%.loc37_34]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc45_25: type = struct_type {.b: i32, .c: i32}, const
+// CHECK:STDOUT:   %.loc45_25: type = struct_type {.b: i32, .c: i32} [template]
 // CHECK:STDOUT:   %y.var: ref {.b: i32, .c: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32, .c: i32} = bind_name y, %y.var
-// CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3, const = constants.%.loc45_35
-// CHECK:STDOUT:   %.loc45_43: i32 = int_literal 4, const = constants.%.loc45_43
+// CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3 [template = constants.%.loc45_35]
+// CHECK:STDOUT:   %.loc45_43: i32 = int_literal 4 [template = constants.%.loc45_43]
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

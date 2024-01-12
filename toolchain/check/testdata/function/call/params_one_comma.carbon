@@ -14,15 +14,15 @@ fn Main() {
 // CHECK:STDOUT: --- params_one_comma.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_6: type = tuple_type (), const
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_6: type = tuple_type () [template]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Main = %Main}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {
@@ -32,11 +32,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref.loc10: <function> = name_ref Foo, file.%Foo, const = file.%Foo
-// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1, const = constants.%.loc10_7
+// CHECK:STDOUT:   %Foo.ref.loc10: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1 [template = constants.%.loc10_7]
 // CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref.loc10(%.loc10_7)
-// CHECK:STDOUT:   %Foo.ref.loc11: <function> = name_ref Foo, file.%Foo, const = file.%Foo
-// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1, const = constants.%.loc11
+// CHECK:STDOUT:   %Foo.ref.loc11: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
+// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1 [template = constants.%.loc11]
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref.loc11(%.loc11_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

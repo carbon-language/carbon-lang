@@ -155,10 +155,10 @@ auto HandleMemberAccessExpr(Context& context,
         // Find the specified element, which could be either a field or a base
         // class, and build an element access expression.
         auto element_id = context.constant_values().Get(member_id);
-        CARBON_CHECK(element_id.is_valid())
+        CARBON_CHECK(element_id.is_constant())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of unbound element type";
-        auto index = GetClassElementIndex(context, element_id);
+        auto index = GetClassElementIndex(context, element_id.inst_id());
         auto access_id = context.AddInst(SemIR::ClassElementAccess{
             parse_node, unbound_element_type->element_type_id, base_id, index});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
@@ -179,13 +179,15 @@ auto HandleMemberAccessExpr(Context& context,
           context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
         // Find the named function and check whether it's an instance method.
         auto function_name_id = context.constant_values().Get(member_id);
-        CARBON_CHECK(function_name_id.is_valid())
+        CARBON_CHECK(function_name_id.is_constant())
             << "Non-constant value " << context.insts().Get(member_id)
             << " of function type";
-        auto function_decl =
-            context.insts().Get(function_name_id).TryAs<SemIR::FunctionDecl>();
+        auto function_decl = context.insts()
+                                 .Get(function_name_id.inst_id())
+                                 .TryAs<SemIR::FunctionDecl>();
         CARBON_CHECK(function_decl)
-            << "Unexpected value " << context.insts().Get(function_name_id)
+            << "Unexpected value "
+            << context.insts().Get(function_name_id.inst_id())
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
           context.AddInstAndPush(
