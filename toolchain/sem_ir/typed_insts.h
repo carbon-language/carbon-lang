@@ -235,10 +235,10 @@ struct BranchWithArg {
 };
 
 struct Builtin {
+  // Builtins don't have a parse node associated with them.
   static constexpr auto Kind =
       InstKind::Builtin.Define<Parse::InvalidNodeId>("builtin");
 
-  // Builtins don't have a parse node associated with them.
   TypeId type_id;
   BuiltinKind builtin_kind;
 };
