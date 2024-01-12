@@ -26,6 +26,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(parse_node, "generic class");
   }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+    context.TODO(parse_node, "generic class");
+  }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
