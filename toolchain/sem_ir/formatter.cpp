@@ -69,10 +69,9 @@ class InstNamer {
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
         insts[fn.return_slot_id.index] = {
-            fn_scope,
-            GetScopeInfo(fn_scope).insts.AllocateName(
-                *this, sem_ir.insts().Get(fn.return_slot_id).parse_node(),
-                "return")};
+            fn_scope, GetScopeInfo(fn_scope).insts.AllocateName(
+                          *this, sem_ir.insts().GetParseNode(fn.return_slot_id),
+                          "return")};
       }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -341,7 +340,7 @@ class InstNamer {
     if (!parse_node.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        parse_node = sem_ir_.insts().Get(block.front()).parse_node();
+        parse_node = sem_ir_.insts().GetParseNode(block.front());
       }
     }
 
@@ -352,9 +351,10 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, AnyBranch branch) -> void {
+  auto AddBlockLabel(ScopeIndex scope_idx, Parse::NodeId parse_node,
+                     AnyBranch branch) -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(branch.parse_node)) {
+    switch (parse_tree_.node_kind(parse_node)) {
       case Parse::NodeKind::IfExprIf:
         switch (branch.kind) {
           case BranchIf::Kind:
@@ -416,7 +416,7 @@ class InstNamer {
         break;
     }
 
-    AddBlockLabel(scope_idx, branch.target_id, name.str(), branch.parse_node);
+    AddBlockLabel(scope_idx, branch.target_id, name.str(), parse_node);
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
@@ -437,8 +437,9 @@ class InstNamer {
 
       auto inst = sem_ir_.insts().Get(inst_id);
       auto add_inst_name = [&](std::string name) {
-        insts[inst_id.index] = {scope_idx, scope.insts.AllocateName(
-                                               *this, inst.parse_node(), name)};
+        insts[inst_id.index] = {
+            scope_idx, scope.insts.AllocateName(
+                           *this, sem_ir_.insts().GetParseNode(inst_id), name)};
       };
       auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
         add_inst_name(
@@ -446,7 +447,8 @@ class InstNamer {
       };
 
       if (auto branch = inst.TryAs<AnyBranch>()) {
-        AddBlockLabel(scope_idx, *branch);
+        AddBlockLabel(scope_idx, sem_ir_.insts().GetParseNode(inst_id),
+                      *branch);
       }
 
       switch (inst.kind()) {

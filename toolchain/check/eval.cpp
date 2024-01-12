@@ -5,6 +5,7 @@
 #include "toolchain/check/eval.h"
 
 #include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -65,7 +66,8 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
 // replaces the fields with their constant values and builds a corresponding
 // constant value. Otherwise returns `SemIR::InstId::Invalid`.
 template <typename InstT, typename... EachFieldIdT>
-static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
+static auto RebuildIfFieldsAreConstant(Context& context, SemIR::InstId inst_id,
+                                       SemIR::Inst inst,
                                        EachFieldIdT InstT::*... each_field_id)
     -> SemIR::ConstantId {
   // Build a constant instruction by replacing each non-constant operand with
@@ -75,7 +77,10 @@ static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &is_symbolic) &&
        ...)) {
-    return context.AddConstant(typed_inst, is_symbolic);
+    return context.AddConstant(
+        SemIR::ParseNodeAndInst::Untyped(context.insts().GetParseNode(inst_id),
+                                         typed_inst),
+        is_symbolic);
   }
   return SemIR::ConstantId::NotConstant;
 }
@@ -90,23 +95,23 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::AddrOf::lvalue_id);
     case SemIR::ArrayType::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::ArrayType::bound_id);
     case SemIR::BoundMethod::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
     case SemIR::StructValue::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::StructValue::elements_id);
     case SemIR::Temporary::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::Temporary::init_id);
     case SemIR::TupleValue::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
+      return RebuildIfFieldsAreConstant(context, inst_id, inst,
                                         &SemIR::TupleValue::elements_id);
 
     // These cases are constants already.
@@ -132,7 +137,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
-      return context.AddConstant(inst, /*is_symbolic=*/false);
+      return context.AddConstant(
+          SemIR::ParseNodeAndInst::Untyped(
+              context.insts().GetParseNode(inst_id), inst),
+          /*is_symbolic=*/false);
 
     // TODO: These need special handling.
     case SemIR::ArrayIndex::Kind:
@@ -186,7 +194,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       value.value =
           (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
                                                   : SemIR::BoolValue::False);
-      return context.AddConstant(value, /*is_symbolic=*/false);
+      return context.AddConstant(
+          {context.insts().GetParseNode(const_id.inst_id()), value},
+          /*is_symbolic=*/false);
     }
 
     // These cases are either not expressions or not constant.

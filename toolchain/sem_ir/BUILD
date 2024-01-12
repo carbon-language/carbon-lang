@@ -123,6 +123,7 @@ cc_library(
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",
+        "//toolchain/parse:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )

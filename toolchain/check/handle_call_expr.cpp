@@ -81,18 +81,21 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   if (callable.return_slot_id.is_valid()) {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
-    return_storage_id = context.AddInst(
-        SemIR::TemporaryStorage{call_expr_parse_node, callable.return_type_id});
+    return_storage_id =
+        context.AddInst({call_expr_parse_node,
+                         SemIR::TemporaryStorage{callable.return_type_id}});
   }
 
   // Convert the arguments to match the parameters.
   auto converted_args_id =
       ConvertCallArgs(context, call_expr_parse_node, self_id,
                       context.params_or_args_stack().PeekCurrentBlockContents(),
-                      return_storage_id, function_decl->parse_node,
+                      return_storage_id,
+                      context.insts().GetParseNode(function_decl_id.inst_id()),
                       callable.implicit_param_refs_id, callable.param_refs_id);
-  auto call_inst_id = context.AddInst(
-      SemIR::Call{call_expr_parse_node, type_id, callee_id, converted_args_id});
+  auto call_inst_id =
+      context.AddInst({call_expr_parse_node,
+                       SemIR::Call{type_id, callee_id, converted_args_id}});
 
   context.node_stack().Push(parse_node, call_inst_id);
   return true;

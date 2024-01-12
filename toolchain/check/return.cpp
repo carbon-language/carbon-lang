@@ -34,7 +34,7 @@ static auto NoteNoReturnTypeProvided(Context& context,
                                      const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeOmittedNote, Note,
                     "There was no return type provided.");
-  diag.Note(context.insts().Get(function.decl_id).parse_node(),
+  diag.Note(context.insts().GetParseNode(function.decl_id),
             ReturnTypeOmittedNote);
 }
 
@@ -43,7 +43,7 @@ static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   // TODO: This is the location of the `fn` keyword. Find the location of the
   // return type.
-  auto type_parse_node = context.insts().Get(function.decl_id).parse_node();
+  auto type_parse_node = context.insts().GetParseNode(function.decl_id);
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
                     "Return type of function is `{0}`.", std::string);
   diag.Note(type_parse_node, ReturnTypeHereNote,
@@ -54,7 +54,7 @@ static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
 static auto NoteReturnedVar(Context& context, Context::DiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
   CARBON_DIAGNOSTIC(ReturnedVarHere, Note, "`returned var` was declared here.");
-  diag.Note(context.insts().Get(returned_var_id).parse_node(), ReturnedVarHere);
+  diag.Note(context.insts().GetParseNode(returned_var_id), ReturnedVarHere);
 }
 
 auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
@@ -92,7 +92,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   if (function.return_slot_id.is_valid()) {
     return function.return_slot_id;
   }
-  return context.AddInst(SemIR::VarStorage{name_node, type_id, name_id});
+  return context.AddInst({name_node, SemIR::VarStorage{type_id, name_id}});
 }
 
 auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
@@ -101,8 +101,8 @@ auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "Cannot declare a `returned var` in the scope of "
                       "another `returned var`.");
-    auto diag = context.emitter().Build(
-        context.insts().Get(bind_id).parse_node(), ReturnedVarShadowed);
+    auto diag = context.emitter().Build(context.insts().GetParseNode(bind_id),
+                                        ReturnedVarShadowed);
     NoteReturnedVar(context, diag, existing_id);
     diag.Emit();
   }
@@ -120,7 +120,7 @@ auto BuildReturnWithNoExpr(Context& context,
     diag.Emit();
   }
 
-  context.AddInst(SemIR::Return{parse_node});
+  context.AddInst({parse_node, SemIR::Return{}});
 }
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
@@ -152,7 +152,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
                                    function.return_type_id);
   }
 
-  context.AddInst(SemIR::ReturnExpr{parse_node, expr_id});
+  context.AddInst({parse_node, SemIR::ReturnExpr{expr_id}});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
@@ -173,7 +173,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
   }
 
-  context.AddInst(SemIR::ReturnExpr{parse_node, returned_var_id});
+  context.AddInst({parse_node, SemIR::ReturnExpr{returned_var_id}});
 }
 
 }  // namespace Carbon::Check

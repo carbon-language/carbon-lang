@@ -74,11 +74,12 @@ File::File(SharedValueStores& value_stores)
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                         \
-  insts_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
-                                  ? TypeId::Error                     \
-                                  : TypeId::TypeType,                 \
-                              BuiltinKind::Name});
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
+  insts_.AddInNoBlock(                                                     \
+      {Parse::NodeId::Invalid,                                             \
+       Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
+                                                       : TypeId::TypeType, \
+               BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
 
   CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
@@ -102,7 +103,9 @@ File::File(SharedValueStores& value_stores, std::string filename,
   static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    insts_.AddInNoBlock(CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
+    insts_.AddInNoBlock(
+        {Parse::NodeId::Invalid,
+         CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)}});
   }
 }
 

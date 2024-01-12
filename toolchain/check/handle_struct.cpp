@@ -40,8 +40,9 @@ auto HandleStructFieldValue(Context& context,
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Store the name for the type.
-  context.args_type_info_stack().AddInst(SemIR::StructTypeField{
-      name_node, name_id, context.insts().Get(value_inst_id).type_id()});
+  context.args_type_info_stack().AddInst(
+      {name_node, SemIR::StructTypeField{
+                      name_id, context.insts().Get(value_inst_id).type_id()}});
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_inst_id);
@@ -55,8 +56,9 @@ auto HandleStructFieldType(Context& context,
 
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
-  context.AddInstAndPush(
-      parse_node, SemIR::StructTypeField{name_node, name_id, cast_type_id});
+  auto inst_id = context.AddInst(
+      {name_node, SemIR::StructTypeField{name_id, cast_type_id}});
+  context.node_stack().Push(parse_node, inst_id);
   return true;
 }
 
@@ -65,12 +67,11 @@ static auto DiagnoseDuplicateNames(Context& context,
                                    llvm::StringRef construct) -> bool {
   auto& sem_ir = context.sem_ir();
   auto fields = sem_ir.inst_blocks().Get(type_block_id);
-  llvm::SmallDenseMap<SemIR::NameId, Parse::NodeId> names;
+  llvm::SmallDenseMap<SemIR::NameId, SemIR::InstId> names;
   auto& insts = sem_ir.insts();
   for (SemIR::InstId field_inst_id : fields) {
     auto field_inst = insts.GetAs<SemIR::StructTypeField>(field_inst_id);
-    auto [it, added] =
-        names.insert({field_inst.name_id, field_inst.parse_node});
+    auto [it, added] = names.insert({field_inst.name_id, field_inst_id});
     if (!added) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Duplicated field name `{1}` in {0}.", std::string,
@@ -78,9 +79,10 @@ static auto DiagnoseDuplicateNames(Context& context,
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
       context.emitter()
-          .Build(field_inst.parse_node, StructNameDuplicate, construct.str(),
+          .Build(context.insts().GetParseNode(field_inst_id),
+                 StructNameDuplicate, construct.str(),
                  sem_ir.names().GetFormatted(field_inst.name_id).str())
-          .Note(it->second, StructNamePrevious)
+          .Note(context.insts().GetParseNode(it->second), StructNamePrevious)
           .Emit();
       return true;
     }
@@ -106,7 +108,7 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id =
-      context.AddInst(SemIR::StructLiteral{parse_node, type_id, refs_id});
+      context.AddInst({parse_node, SemIR::StructLiteral{type_id, refs_id}});
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
@@ -131,8 +133,7 @@ auto HandleStructTypeLiteral(Context& context,
     return true;
   }
   context.AddInstAndPush(
-      parse_node,
-      SemIR::StructType{parse_node, SemIR::TypeId::TypeType, refs_id});
+      {parse_node, SemIR::StructType{SemIR::TypeId::TypeType, refs_id}});
   return true;
 }
 

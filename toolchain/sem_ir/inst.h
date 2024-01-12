@@ -37,9 +37,8 @@ struct InstLikeTypeInfoBase {
   using Tuple =
       decltype(StructReflection::AsTuple(std::declval<InstLikeType>()));
 
-  static constexpr int FirstArgField = HasKindMemberAsField<InstLikeType> +
-                                       HasParseNodeMember<InstLikeType> +
-                                       HasTypeIdMember<InstLikeType>;
+  static constexpr int FirstArgField =
+      HasKindMemberAsField<InstLikeType> + HasTypeIdMember<InstLikeType>;
 
   static constexpr int NumArgs = std::tuple_size_v<Tuple> - FirstArgField;
   static_assert(NumArgs <= 2,
@@ -57,8 +56,11 @@ struct InstLikeTypeInfoBase {
 // A particular type of instruction is instruction-like.
 template <typename TypedInst>
 struct InstLikeTypeInfo<
-    TypedInst, static_cast<bool>(std::is_same_v<const InstKind::Definition,
-                                                decltype(TypedInst::Kind)>)>
+    TypedInst,
+    static_cast<bool>(
+        std::is_same_v<const InstKind::Definition<
+                           typename decltype(TypedInst::Kind)::TypedNodeId>,
+                       decltype(TypedInst::Kind)>)>
     : InstLikeTypeInfoBase<TypedInst> {
   static_assert(!HasKindMemberAsField<TypedInst>,
                 "Instruction type should not have a kind field");
@@ -106,7 +108,6 @@ struct InstLikeTypeInfo<
 // provides access to common fields present on most or all kinds of
 // instructions:
 //
-// - `parse_node` for error placement.
 // - `kind` for run-time logic when the input Kind is unknown.
 // - `type_id` for quick type checking.
 //
@@ -127,15 +128,11 @@ class Inst : public Printable<Inst> {
             typename Info = typename InstLikeTypeInfo<TypedInst>::Self>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
-      : parse_node_(Parse::NodeId::Invalid),
-        // Always overwritten below.
-        kind_(InstKind::Create({})),
+      // kind_ is always overwritten below.
+      : kind_(InstKind::Create({})),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (HasParseNodeMember<TypedInst>) {
-      parse_node_ = typed_inst.parse_node;
-    }
     if constexpr (HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind;
     } else {
@@ -164,20 +161,11 @@ class Inst : public Printable<Inst> {
   auto As() const -> TypedInst {
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << Info::DebugName();
-    auto build_with_parse_node_onwards = [&](auto... parse_node_onwards) {
-      if constexpr (HasKindMemberAsField<TypedInst>) {
-        return TypedInst{kind(), parse_node_onwards...};
-      } else {
-        return TypedInst{parse_node_onwards...};
-      }
-    };
-
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
-      if constexpr (HasParseNodeMember<TypedInst>) {
-        return build_with_parse_node_onwards(
-            decltype(TypedInst::parse_node)(parse_node()), type_id_onwards...);
+      if constexpr (HasKindMemberAsField<TypedInst>) {
+        return TypedInst{kind(), type_id_onwards...};
       } else {
-        return build_with_parse_node_onwards(type_id_onwards...);
+        return TypedInst{type_id_onwards...};
       }
     };
 
@@ -212,7 +200,6 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto parse_node() const -> Parse::NodeId { return parse_node_; }
   auto kind() const -> InstKind { return kind_; }
 
   // Gets the type of the value produced by evaluating this instruction.
@@ -224,13 +211,8 @@ class Inst : public Printable<Inst> {
   friend class InstTestHelper;
 
   // Raw constructor, used for testing.
-  explicit Inst(InstKind kind, Parse::NodeId parse_node, TypeId type_id,
-                int32_t arg0, int32_t arg1)
-      : parse_node_(parse_node),
-        kind_(kind),
-        type_id_(type_id),
-        arg0_(arg0),
-        arg1_(arg1) {}
+  explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
+      : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
@@ -248,7 +230,6 @@ class Inst : public Printable<Inst> {
     return BuiltinKind::FromInt(raw);
   }
 
-  Parse::NodeId parse_node_;
   InstKind kind_;
   TypeId type_id_;
 
@@ -257,10 +238,12 @@ class Inst : public Printable<Inst> {
   int32_t arg1_;
 };
 
-// TODO: This is currently 20 bytes because we sometimes have 2 arguments for a
+// TODO: This is currently 16 bytes because we sometimes have 2 arguments for a
 // pair of Insts. However, InstKind is 1 byte; if args were 3.5 bytes, we could
 // potentially shrink Inst by 4 bytes. This may be worth investigating further.
-static_assert(sizeof(Inst) == 20, "Unexpected Inst size");
+// Note though that 16 bytes is an ideal size for registers, we may want more
+// flags, and 12 bytes would be a more marginal improvement.
+static_assert(sizeof(Inst) == 16, "Unexpected Inst size");
 
 // Instruction-like types can be printed by converting them to instructions.
 template <typename TypedInst,
