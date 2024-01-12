@@ -104,7 +104,7 @@ auto Context::DiagnoseDuplicateName(Parse::NodeId parse_node,
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
   emitter_->Build(parse_node, NameDeclDuplicate)
-      .Note(insts().GetParseNode(prev_def_id), NameDeclPrevious)
+      .Note(prev_def_id, NameDeclPrevious)
       .Emit();
 }
 
@@ -123,11 +123,9 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
   if (class_info.definition_id.is_valid()) {
-    builder.Note(insts().GetParseNode(class_info.definition_id),
-                 ClassIncompleteWithinDefinition);
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
-    builder.Note(insts().GetParseNode(class_info.decl_id),
-                 ClassForwardDeclaredHere);
+    builder.Note(class_info.decl_id, ClassForwardDeclaredHere);
   }
 }
 

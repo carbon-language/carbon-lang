@@ -224,8 +224,7 @@ auto HandleFunctionDefinitionStart(Context& context,
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
                context.names().GetFormatted(function.name_id).str())
-        .Note(context.insts().GetParseNode(function.definition_id),
-              FunctionPreviousDefinition)
+        .Note(function.definition_id, FunctionPreviousDefinition)
         .Emit();
   } else {
     function.definition_id = decl_id;

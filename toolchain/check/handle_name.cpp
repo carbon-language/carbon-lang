@@ -26,8 +26,7 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
                         "Member access into incomplete class `{0}`.",
                         std::string);
       auto builder =
-          context.emitter().Build(context.insts().GetParseNode(base_id),
-                                  QualifiedExprInIncompleteClassScope,
+          context.emitter().Build(base_id, QualifiedExprInIncompleteClassScope,
                                   context.sem_ir().StringifyTypeExpr(base_id));
       context.NoteIncompleteClass(base_as_class->class_id, builder);
       builder.Emit();
@@ -119,7 +118,7 @@ auto HandleMemberAccessExpr(Context& context,
                           "Member access into object of incomplete type `{0}`.",
                           std::string);
         return context.emitter().Build(
-            context.insts().GetParseNode(base_id), IncompleteTypeInMemberAccess,
+            base_id, IncompleteTypeInMemberAccess,
             context.sem_ir().StringifyType(base_type_id));
       })) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);

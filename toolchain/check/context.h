@@ -23,10 +23,31 @@
 
 namespace Carbon::Check {
 
+// Diagnostic locations produced by checking may be either a parse node
+// directly, or an inst ID which is later translated to a parse node.
+struct SemIRLocation {
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(Parse::NodeLocation node_location)
+      : node_location(node_location), is_inst_id(false) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(Parse::NodeId node_id)
+      : SemIRLocation(Parse::NodeLocation(node_id)) {}
+
+  union {
+    SemIR::InstId inst_id;
+    Parse::NodeLocation node_location;
+  };
+
+  bool is_inst_id;
+};
+
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::NodeLocation>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // A scope in which `break` and `continue` can be used.

@@ -25,6 +25,28 @@ namespace Carbon::Check {
   auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
 
+// Handles the transformation of a SemIRLocation to a DiagnosticLocation.
+class SemIRLocationTranslator
+    : public DiagnosticLocationTranslator<SemIRLocation> {
+ public:
+  explicit SemIRLocationTranslator(
+      Parse::NodeLocationTranslator* node_translator, const SemIR::File* sem_ir)
+      : node_translator_(node_translator), sem_ir_(sem_ir) {}
+
+  auto GetLocation(SemIRLocation loc) -> DiagnosticLocation override {
+    if (loc.is_inst_id) {
+      return node_translator_->GetLocation(
+          sem_ir_->insts().GetParseNode(loc.inst_id));
+    } else {
+      return node_translator_->GetLocation(loc.node_location);
+    }
+  }
+
+ private:
+  Parse::NodeLocationTranslator* node_translator_;
+  const SemIR::File* sem_ir_;
+};
+
 struct UnitInfo {
   // A given import within the file, with its destination.
   struct Import {
@@ -57,7 +79,6 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
-  // TODO: Augment the translator to translate InstIds for locations.
   Parse::NodeLocationTranslator translator;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLocation> emitter;
@@ -179,8 +200,10 @@ static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
 
-  Context context(*unit_info.unit->tokens, unit_info.emitter,
-                  *unit_info.unit->parse_tree, sem_ir, vlog_stream);
+  SemIRLocationTranslator translator(&unit_info.translator, &sem_ir);
+  Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
+  Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
+                  sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
