@@ -55,7 +55,7 @@ class StaticScope {
   auto Add(std::string_view name, ValueNodeView entity,
            NameStatus status = NameStatus::Usable) -> ErrorOr<Success>;
 
-  template<typename Action>
+  template <typename Action>
   void PrintCommon(Action action) const;
 
   void Print(llvm::raw_ostream& out) const;
