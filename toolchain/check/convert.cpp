@@ -1220,13 +1220,19 @@ auto ExprAsType(Context& context, Parse::NodeId parse_node,
   if (type_inst_id == SemIR::InstId::BuiltinError) {
     return SemIR::TypeId::Error;
   }
-  auto type_id = context.CanonicalizeType(type_inst_id);
-  if (type_id == SemIR::TypeId::Error) {
-    CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
-                      "Cannot evaluate type expression.");
-    context.emitter().Emit(parse_node, TypeExprEvaluationFailure);
+
+  if (auto type_const_id = context.constant_values().Get(type_inst_id);
+      type_const_id.is_constant()) {
+    auto type_id = context.CanonicalizeType(type_const_id.inst_id());
+    if (type_id != SemIR::TypeId::Error) {
+      return type_id;
+    }
   }
-  return type_id;
+
+  CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
+                    "Cannot evaluate type expression.");
+  context.emitter().Emit(parse_node, TypeExprEvaluationFailure);
+  return SemIR::TypeId::Error;
 }
 
 }  // namespace Carbon::Check

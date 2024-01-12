@@ -489,13 +489,6 @@ auto Context::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
   return SemIR::InstId::Invalid;
 }
 
-auto Context::FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId {
-  while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
-    inst_id = name_ref->value_id;
-  }
-  return inst_id;
-}
-
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
                                            Parse::NodeId parse_node,
@@ -1205,10 +1198,9 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
 }
 
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
-  while (auto converted = insts().Get(inst_id).TryAs<SemIR::Converted>()) {
-    inst_id = converted->result_id;
-  }
-  inst_id = FollowNameRefs(inst_id);
+  inst_id = constant_values().Get(inst_id).inst_id();
+  // TODO: Pass the ConstantId to CanonicalizeType directly.
+  CARBON_CHECK(inst_id.is_valid());
 
   auto it = canonical_types_.find(inst_id);
   if (it != canonical_types_.end()) {

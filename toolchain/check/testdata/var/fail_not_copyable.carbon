@@ -51,7 +51,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello" [template = constants.%.5]
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref: type = name_ref X, constants.%X [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: X = name_ref x, %x

@@ -85,7 +85,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2 [template = constants.%A2]
+// CHECK:STDOUT:   %A2.ref: type = name_ref A2, constants.%A2 [template = constants.%A2]
 // CHECK:STDOUT:   %.loc16_18.1: type = unbound_element_type B2, A2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc16_18.2: <unbound element of class B2> = base_decl A2, element0 [template]
 // CHECK:STDOUT:   %.loc17_8.1: type = unbound_element_type B2, i32 [template = constants.%.6]

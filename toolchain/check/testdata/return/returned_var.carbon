@@ -54,7 +54,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %result: ref C = bind_name result, %return
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_42: i32 = int_literal 2 [template = constants.%.5]

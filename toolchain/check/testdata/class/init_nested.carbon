@@ -59,11 +59,11 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc15_8.1: type = unbound_element_type Outer, Inner [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_8.2: <unbound element of class Outer> = field_decl c, element0 [template]
 // CHECK:STDOUT:   %c: <unbound element of class Outer> = bind_name c, %.loc15_8.2 [template = %.loc15_8.2]
-// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc16_8.1: type = unbound_element_type Outer, Inner [template = constants.%.4]
 // CHECK:STDOUT:   %.loc16_8.2: <unbound element of class Outer> = field_decl d, element1 [template]
 // CHECK:STDOUT:   %d: <unbound element of class Outer> = bind_name d, %.loc16_8.2 [template = %.loc16_8.2]

@@ -248,7 +248,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:   %.loc51_22.1: (type,) = tuple_literal (%Base.ref)
 // CHECK:STDOUT:   %.loc51_22.2: type = converted %.loc51_22.1, constants.%.15 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc51_23.1: type = unbound_element_type DeriveFromTuple, <error> [template = constants.%.19]
@@ -272,7 +272,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromIncomplete {
-// CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc87_26.1: type = unbound_element_type DeriveFromIncomplete, <error> [template = constants.%.26]
 // CHECK:STDOUT:   %.loc87_26.2: <unbound element of class DeriveFromIncomplete> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
@@ -282,7 +282,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
-// CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final [template = constants.%Final]
+// CHECK:STDOUT:   %Final.ref: type = name_ref Final, constants.%Final [template = constants.%Final]
 // CHECK:STDOUT:   %.loc101_21.1: type = unbound_element_type DeriveFromFinal, Final [template = constants.%.30]
 // CHECK:STDOUT:   %.loc101_21.2: <unbound element of class DeriveFromFinal> = base_decl Final, element0 [template]
 // CHECK:STDOUT:

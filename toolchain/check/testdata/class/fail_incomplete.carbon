@@ -130,7 +130,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction [template]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
 // CHECK:STDOUT:   %global_var: ref <error> = bind_name global_var, %global_var.var
 // CHECK:STDOUT:   %ConvertFromStruct: <function> = fn_decl @ConvertFromStruct [template]
@@ -152,7 +152,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallClassFunction() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %Function.ref: <error> = name_ref Function, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -179,7 +179,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc75: ref Class = deref %p.ref
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>

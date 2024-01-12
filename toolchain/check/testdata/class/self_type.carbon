@@ -35,7 +35,7 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_14: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, Class* [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl p, element0 [template]

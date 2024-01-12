@@ -75,7 +75,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
 // CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
@@ -87,7 +87,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B [template = constants.%.10]
 // CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
@@ -99,7 +99,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B [template = constants.%.13]
 // CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:

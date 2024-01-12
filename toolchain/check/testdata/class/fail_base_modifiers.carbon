@@ -81,7 +81,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc13_25.1: type = unbound_element_type C1, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_25.2: <unbound element of class C1> = base_decl B, element0 [template]
 // CHECK:STDOUT:
@@ -91,7 +91,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc23_19.1: type = unbound_element_type C2, B [template = constants.%.6]
 // CHECK:STDOUT:   %.loc23_19.2: <unbound element of class C2> = base_decl B, element0 [template]
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc33_25.1: type = unbound_element_type C3, B [template = constants.%.7]
 // CHECK:STDOUT:   %.loc33_25.2: <unbound element of class C3> = base_decl B, element0 [template]
 // CHECK:STDOUT:
@@ -110,7 +110,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc43_24.1: type = unbound_element_type C4, B [template = constants.%.8]
 // CHECK:STDOUT:   %.loc43_24.2: <unbound element of class C4> = base_decl B, element0 [template]
 // CHECK:STDOUT:

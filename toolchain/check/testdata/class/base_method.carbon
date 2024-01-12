@@ -62,7 +62,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:   %.loc18_20.1: type = unbound_element_type Derived, Base [template = constants.%.6]
 // CHECK:STDOUT:   %.loc18_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:

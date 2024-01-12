@@ -33,8 +33,8 @@ let b: B = C.base;
 // CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
-// CHECK:STDOUT:   %B.ref: type = name_ref B, %B [template = constants.%B]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C [template = constants.%C]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %base.ref: <unbound element of class C> = name_ref base, @C.%.loc10_17.2 [template = @C.%.loc10_17.2]
 // CHECK:STDOUT:   %b: B = bind_name b, <error>
 // CHECK:STDOUT: }
@@ -45,7 +45,7 @@ let b: B = C.base;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc10_17.1: type = unbound_element_type C, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_17.2: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:

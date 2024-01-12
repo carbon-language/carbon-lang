@@ -82,6 +82,13 @@ File::File(SharedValueStores& value_stores)
                                                        : TypeId::TypeType, \
                BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
+  for (auto [i, inst] : llvm::enumerate(insts_.array_ref())) {
+    auto builtin_id = SemIR::InstId(i);
+    if (builtin_id != SemIR::InstId::BuiltinError) {
+      constant_values_.Set(builtin_id,
+                           SemIR::ConstantId::ForTemplateConstant(builtin_id));
+    }
+  }
 
   CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount
@@ -105,9 +112,13 @@ File::File(SharedValueStores& value_stores, std::string filename,
   static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse builtin type IDs because they're special-cased values.
-    insts_.AddInNoBlock(
-        {Parse::NodeId::Invalid,
-         CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)}});
+    auto builtin_id = SemIR::InstId(i);
+    insts_.AddInNoBlock({Parse::NodeId::Invalid,
+                         CrossRef{inst.type_id(), BuiltinIR, builtin_id}});
+    if (builtin_id != SemIR::InstId::BuiltinError) {
+      constant_values_.Set(builtin_id,
+                           SemIR::ConstantId::ForTemplateConstant(builtin_id));
+    }
   }
 }
 

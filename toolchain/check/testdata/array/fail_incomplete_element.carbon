@@ -34,12 +34,12 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .a = %a, .p = %p} [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template = constants.%Incomplete]
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref.loc20: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc20_18: type = ptr_type Incomplete [template = constants.%.3]
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var

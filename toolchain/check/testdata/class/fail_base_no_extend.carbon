@@ -39,7 +39,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc13_10.1: type = unbound_element_type C, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_10.2: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:

@@ -68,10 +68,10 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref: type = name_ref B1, constants.%B1 [template = constants.%B1]
 // CHECK:STDOUT:   %.loc11_18.1: type = unbound_element_type C, B1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_18.2: <unbound element of class C> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2 [template = constants.%B2]
+// CHECK:STDOUT:   %B2.ref: type = name_ref B2, constants.%B2 [template = constants.%B2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc11_18.2
@@ -79,10 +79,10 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, constants.%B1 [template = constants.%B1]
 // CHECK:STDOUT:   %.loc23_18.1: type = unbound_element_type D, B1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc23_18.2: <unbound element of class D> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, constants.%B1 [template = constants.%B1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc23_18.2

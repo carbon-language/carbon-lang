@@ -67,7 +67,7 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc16_17.1: type = unbound_element_type D, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc16_17.2: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:

@@ -55,7 +55,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field [template = @Class.%.loc8_12.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

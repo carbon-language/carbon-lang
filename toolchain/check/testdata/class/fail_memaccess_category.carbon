@@ -66,7 +66,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
 // CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2 [template = %.loc12_8.2]

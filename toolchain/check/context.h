@@ -220,13 +220,6 @@ class Context {
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Follows NameRef instructions to find the value named by a given
-  // instruction.
-  auto FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId;
-
-  // Gets the constant value of the given instruction, if it has one.
-  auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId;
-
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.

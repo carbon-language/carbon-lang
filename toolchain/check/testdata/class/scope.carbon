@@ -79,7 +79,7 @@ fn Run() {
 // CHECK:STDOUT:   assign %a.var, %.loc22
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @Class.%F [template = @Class.%F]
 // CHECK:STDOUT:   %.loc23: init i32 = call %F.ref.loc23()
 // CHECK:STDOUT:   assign %b.var, %.loc23

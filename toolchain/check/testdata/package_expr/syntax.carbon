@@ -136,7 +136,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc4 [template = file.%.loc4]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, @C.%Foo [template = @C.%Foo]
 // CHECK:STDOUT:   %.loc11: init () = call %Foo.ref()
 // CHECK:STDOUT:   return

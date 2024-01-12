@@ -41,7 +41,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Class, Class* [template = constants.%.3]
 // CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Class> = field_decl next, element1 [template]
