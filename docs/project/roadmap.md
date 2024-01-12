@@ -107,8 +107,8 @@ evaluating specific aspects of Carbon for interoperating with existing C++
 codebases.
 
 We only expect to _start_ building this material in 2024. We want to learn about
-any critical gaps are for folks to start evaluating C++ interop and how best to
-close them going into 2025.
+what any critical gaps are for folks to start evaluating C++ interop and how best
+to close them going into 2025.
 
 ## Beyond 2024
 
