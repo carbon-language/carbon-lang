@@ -10,7 +10,7 @@ fn Foo(a: i32, b: i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo, const
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {

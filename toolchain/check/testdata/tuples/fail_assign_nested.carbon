@@ -12,21 +12,21 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT: --- fail_assign_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_18: type = tuple_type (type, type), const
-// CHECK:STDOUT:   %.loc10_31.1: type = tuple_type ((type, type), (type, type)), const
-// CHECK:STDOUT:   %.loc10_31.2: type = tuple_type (i32, i32), const
-// CHECK:STDOUT:   %.loc10_31.3: type = tuple_type ((i32, i32), (i32, i32)), const
-// CHECK:STDOUT:   %.loc10_31.4: type = ptr_type (i32, i32), const
-// CHECK:STDOUT:   %.loc10_31.5: type = tuple_type ((i32, i32)*, (i32, i32)*), const
-// CHECK:STDOUT:   %.loc10_31.6: type = ptr_type ((i32, i32)*, (i32, i32)*), const
-// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3, const
-// CHECK:STDOUT:   %.loc10_44: type = tuple_type (i32, i32, i32), const
-// CHECK:STDOUT:   %.loc10_48: i32 = int_literal 4, const
-// CHECK:STDOUT:   %.loc10_51: i32 = int_literal 5, const
-// CHECK:STDOUT:   %.loc10_54: i32 = int_literal 6, const
-// CHECK:STDOUT:   %.loc10_56: type = tuple_type ((i32, i32, i32), (i32, i32, i32)), const
+// CHECK:STDOUT:   %.loc10_18: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.loc10_31.1: type = tuple_type ((type, type), (type, type)) [template]
+// CHECK:STDOUT:   %.loc10_31.2: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_31.3: type = tuple_type ((i32, i32), (i32, i32)) [template]
+// CHECK:STDOUT:   %.loc10_31.4: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_31.5: type = tuple_type ((i32, i32)*, (i32, i32)*) [template]
+// CHECK:STDOUT:   %.loc10_31.6: type = ptr_type ((i32, i32)*, (i32, i32)*) [template]
+// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.loc10_44: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_48: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.loc10_51: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.loc10_54: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.loc10_56: type = tuple_type ((i32, i32, i32), (i32, i32, i32)) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,18 +34,18 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_30: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_31.1: ((type, type), (type, type)) = tuple_literal (%.loc10_18, %.loc10_30)
-// CHECK:STDOUT:   %.loc10_31.2: type = converted %.loc10_18, constants.%.loc10_31.2, const = constants.%.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.3: type = converted %.loc10_30, constants.%.loc10_31.2, const = constants.%.loc10_31.2
-// CHECK:STDOUT:   %.loc10_31.4: type = converted %.loc10_31.1, constants.%.loc10_31.3, const = constants.%.loc10_31.3
+// CHECK:STDOUT:   %.loc10_31.2: type = converted %.loc10_18, constants.%.loc10_31.2 [template = constants.%.loc10_31.2]
+// CHECK:STDOUT:   %.loc10_31.3: type = converted %.loc10_30, constants.%.loc10_31.2 [template = constants.%.loc10_31.2]
+// CHECK:STDOUT:   %.loc10_31.4: type = converted %.loc10_31.1, constants.%.loc10_31.3 [template = constants.%.loc10_31.3]
 // CHECK:STDOUT:   %x.var: ref ((i32, i32), (i32, i32)) = var x
 // CHECK:STDOUT:   %x: ref ((i32, i32), (i32, i32)) = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1, const = constants.%.loc10_37
-// CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2, const = constants.%.loc10_40
-// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3, const = constants.%.loc10_43
+// CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1 [template = constants.%.loc10_37]
+// CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2 [template = constants.%.loc10_40]
+// CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3 [template = constants.%.loc10_43]
 // CHECK:STDOUT:   %.loc10_44: (i32, i32, i32) = tuple_literal (%.loc10_37, %.loc10_40, %.loc10_43)
-// CHECK:STDOUT:   %.loc10_48: i32 = int_literal 4, const = constants.%.loc10_48
-// CHECK:STDOUT:   %.loc10_51: i32 = int_literal 5, const = constants.%.loc10_51
-// CHECK:STDOUT:   %.loc10_54: i32 = int_literal 6, const = constants.%.loc10_54
+// CHECK:STDOUT:   %.loc10_48: i32 = int_literal 4 [template = constants.%.loc10_48]
+// CHECK:STDOUT:   %.loc10_51: i32 = int_literal 5 [template = constants.%.loc10_51]
+// CHECK:STDOUT:   %.loc10_54: i32 = int_literal 6 [template = constants.%.loc10_54]
 // CHECK:STDOUT:   %.loc10_55: (i32, i32, i32) = tuple_literal (%.loc10_48, %.loc10_51, %.loc10_54)
 // CHECK:STDOUT:   %.loc10_56: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_44, %.loc10_55)
 // CHECK:STDOUT:   assign %x.var, <error>

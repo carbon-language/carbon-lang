@@ -15,20 +15,20 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- function_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_17: i32 = int_literal 3, const
-// CHECK:STDOUT:   %.loc7_18.1: type = array_type %.loc7_17, i32, const
-// CHECK:STDOUT:   %.loc7_18.2: type = ptr_type [i32; 3], const
-// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2, const
-// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3, const
-// CHECK:STDOUT:   %.loc12_20: type = tuple_type (i32, i32, i32), const
-// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc7_17: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.loc7_18.1: type = array_type %.loc7_17, i32 [template]
+// CHECK:STDOUT:   %.loc7_18.2: type = ptr_type [i32; 3] [template]
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.loc12_20: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {
@@ -43,12 +43,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
-// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1, const = constants.%.loc12_13
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2, const = constants.%.loc12_16
-// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3, const = constants.%.loc12_19
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
+// CHECK:STDOUT:   %.loc12_13: i32 = int_literal 1 [template = constants.%.loc12_13]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 2 [template = constants.%.loc12_16]
+// CHECK:STDOUT:   %.loc12_19: i32 = int_literal 3 [template = constants.%.loc12_19]
 // CHECK:STDOUT:   %.loc12_20.1: (i32, i32, i32) = tuple_literal (%.loc12_13, %.loc12_16, %.loc12_19)
-// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1, const = constants.%.loc12_23
+// CHECK:STDOUT:   %.loc12_23: i32 = int_literal 1 [template = constants.%.loc12_23]
 // CHECK:STDOUT:   %.loc12_20.2: ref [i32; 3] = temporary_storage
 // CHECK:STDOUT:   %.loc12_20.3: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc12_20.4: ref i32 = array_index %.loc12_20.2, %.loc12_20.3

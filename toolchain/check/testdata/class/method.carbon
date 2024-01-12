@@ -51,32 +51,32 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: --- method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32}, const
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32}, const
-// CHECK:STDOUT:   %.loc25: i32 = int_literal 1, const
+// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32} [template]
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Call = %Call, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call, const
-// CHECK:STDOUT:   %CallOnConstBoundMethod: <function> = fn_decl @CallOnConstBoundMethod, const
-// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr, const
-// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer, const
-// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer, const
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make, const
-// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr, const
-// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr, const
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
+// CHECK:STDOUT:   %CallOnConstBoundMethod: <function> = fn_decl @CallOnConstBoundMethod [template]
+// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr [template]
+// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer [template]
+// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer [template]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
+// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr [template]
+// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
-// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32, const
-// CHECK:STDOUT:   %.loc11_8.2: <unbound element of class Class> = field_decl k, element0, const
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11_8.2, const = %.loc11_8.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.loc11_8.2: <unbound element of class Class> = field_decl k, element0 [template]
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11_8.2 [template = %.loc11_8.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -106,9 +106,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_17: i32 = int_literal 1, const = constants.%.loc25
+// CHECK:STDOUT:   %.loc25_17: i32 = int_literal 1 [template = constants.%.loc25]
 // CHECK:STDOUT:   %.loc25_18.1: {.k: i32} = struct_literal (%.loc25_17)
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %.loc25_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_18.3: ref i32 = class_element_access %.loc25_18.2, element0
 // CHECK:STDOUT:   %.loc25_18.4: init i32 = initialize_from %.loc25_17 to %.loc25_18.3
@@ -125,7 +125,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
@@ -165,7 +165,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make, const = file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc44_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc44_14.2: init Class = call %Make.ref() to %.loc44_14.1
 // CHECK:STDOUT:   %.loc44_14.3: ref Class = temporary %.loc44_14.1, %.loc44_14.2
@@ -179,7 +179,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make, const = file.%Make
+// CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc48_14.1: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc48_14.2: init Class = call %Make.ref() to %.loc48_14.1
 // CHECK:STDOUT:   %.loc48_14.3: ref Class = temporary %.loc48_14.1, %.loc48_14.2

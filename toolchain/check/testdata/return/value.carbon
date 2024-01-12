@@ -11,17 +11,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0, const = constants.%.loc8
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.loc8]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

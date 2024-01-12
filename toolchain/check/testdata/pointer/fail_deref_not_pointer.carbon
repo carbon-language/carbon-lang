@@ -22,15 +22,15 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: --- fail_deref_not_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15_5.1: type = tuple_type (), const
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value (), const
-// CHECK:STDOUT:   %.loc19_5.1: type = struct_type {}, const
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value (), const
+// CHECK:STDOUT:   %.loc15_5.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %.loc19_5.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Deref = %Deref}
-// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref, const
+// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
@@ -38,12 +38,12 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc11: ref <error> = deref %n.ref
 // CHECK:STDOUT:   %.loc15_5.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value (), const = constants.%.loc15_5.2
-// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2, const = constants.%.loc15_5.2
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value () [template = constants.%.loc15_5.2]
+// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2 [template = constants.%.loc15_5.2]
 // CHECK:STDOUT:   %.loc15_3: ref <error> = deref %.loc15_5.3
 // CHECK:STDOUT:   %.loc19_5.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value (), const = constants.%.loc19_5.2
-// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2, const = constants.%.loc19_5.2
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value () [template = constants.%.loc19_5.2]
+// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2 [template = constants.%.loc19_5.2]
 // CHECK:STDOUT:   %.loc19_3: ref <error> = deref %.loc19_5.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

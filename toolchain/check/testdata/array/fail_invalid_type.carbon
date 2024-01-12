@@ -12,17 +12,17 @@ var a: [1; 1];
 // CHECK:STDOUT: --- fail_invalid_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc10_13.1: type = array_type %.loc10_12, <error>, const
-// CHECK:STDOUT:   %.loc10_13.2: type = ptr_type [<error>; 1], const
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_13.1: type = array_type %.loc10_12, <error> [template]
+// CHECK:STDOUT:   %.loc10_13.2: type = ptr_type [<error>; 1] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a}
-// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1, const = constants.%.loc10_9
-// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1, const = constants.%.loc10_12
-// CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error>, const = constants.%.loc10_13.1
+// CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.loc10_9]
+// CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.loc10_12]
+// CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error> [template = constants.%.loc10_13.1]
 // CHECK:STDOUT:   %a.var: ref [<error>; 1] = var a
 // CHECK:STDOUT:   %a: ref [<error>; 1] = bind_name a, %a.var
 // CHECK:STDOUT: }

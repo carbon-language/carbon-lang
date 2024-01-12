@@ -18,7 +18,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {

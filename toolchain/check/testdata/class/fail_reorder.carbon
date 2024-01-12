@@ -28,19 +28,19 @@ class Class {
 // CHECK:STDOUT: --- fail_reorder.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const
-// CHECK:STDOUT:   %.loc26: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc26: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class, const
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G
@@ -49,14 +49,14 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 1, const = constants.%.loc24
+// CHECK:STDOUT:   %.loc24: i32 = int_literal 1 [template = constants.%.loc24]
 // CHECK:STDOUT:   return %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

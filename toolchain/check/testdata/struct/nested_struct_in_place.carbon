@@ -13,17 +13,17 @@ fn G() {
 // CHECK:STDOUT: --- nested_struct_in_place.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type), const
-// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32), const
-// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32), const
-// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}, const
-// CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*}, const
+// CHECK:STDOUT:   %.loc7_25.1: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.loc7_25.2: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc7_25.3: type = ptr_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_51.1: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*} [template]
+// CHECK:STDOUT:   %.loc10_51.2: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %G: <function> = fn_decl @G, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);
@@ -31,16 +31,16 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_29: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_29, constants.%.loc7_25.2, const = constants.%.loc7_25.2
+// CHECK:STDOUT:   %.loc7_25.1: type = converted %.loc10_29, constants.%.loc7_25.2 [template = constants.%.loc7_25.2]
 // CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_50, constants.%.loc7_25.2, const = constants.%.loc7_25.2
-// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)}, const
+// CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc10_50, constants.%.loc7_25.2 [template = constants.%.loc7_25.2]
+// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template]
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var v
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_ref F, file.%F, const = file.%F
+// CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc10_74.1: ref (i32, i32, i32) = struct_access %v.var, element0
 // CHECK:STDOUT:   %.loc10_62: init (i32, i32, i32) = call %F.ref.loc10_61() to %.loc10_74.1
-// CHECK:STDOUT:   %F.ref.loc10_71: <function> = name_ref F, file.%F, const = file.%F
+// CHECK:STDOUT:   %F.ref.loc10_71: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc10_74.2: ref (i32, i32, i32) = struct_access %v.var, element1
 // CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call %F.ref.loc10_71() to %.loc10_74.2
 // CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)

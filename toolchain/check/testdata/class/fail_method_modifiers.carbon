@@ -50,22 +50,22 @@ base class BaseClass {
 // CHECK:STDOUT: --- fail_method_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc24: type = struct_type {}, const
+// CHECK:STDOUT:   %.loc24: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.FinalClass = %FinalClass.decl, .AbstractClass = %AbstractClass.decl, .BaseClass = %BaseClass.decl}
 // CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass, ()
-// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass, const
+// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
 // CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass, ()
-// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass, const
+// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
 // CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass, ()
-// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass, const
+// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.1, const
-// CHECK:STDOUT:   %Virtual: <function> = fn_decl @Virtual, const
+// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.1 [template]
+// CHECK:STDOUT:   %Virtual: <function> = fn_decl @Virtual [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Abstract = %Abstract
@@ -73,8 +73,8 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default, const
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final, const
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template]
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Default = %Default
@@ -82,7 +82,7 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.2, const
+// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Abstract = %Abstract

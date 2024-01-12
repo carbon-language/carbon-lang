@@ -69,7 +69,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.3}
 // CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.4}
 // CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %D}
-// CHECK:STDOUT:   %D: <function> = fn_decl @D, const
+// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
@@ -80,7 +80,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- e.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc5: type = tuple_type (), const
+// CHECK:STDOUT:   %.loc5: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -88,15 +88,15 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.3}
 // CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.4}
 // CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %.5}
-// CHECK:STDOUT:   %.5: <function> = fn_decl @.1, const
+// CHECK:STDOUT:   %.5: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.loc5, const = constants.%.loc5
+// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.loc5 [template = constants.%.loc5]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, %.2
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, %.3
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, %.4
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, %.5, const = %.5
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, %.5 [template = %.5]
 // CHECK:STDOUT:   %.loc5_20: init () = call %D.ref()
 // CHECK:STDOUT:   assign %e.var, %.loc5_20
 // CHECK:STDOUT: }

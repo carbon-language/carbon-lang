@@ -14,19 +14,19 @@ fn Main() {
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 12, const
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main, const
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12, const = constants.%.loc11
+// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12 [template = constants.%.loc11]
 // CHECK:STDOUT:   %.loc11_17: <error> = not <error>
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return

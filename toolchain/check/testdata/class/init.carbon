@@ -20,28 +20,28 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*}, const
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*}, const
-// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32}, const
+// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.n: i32, .next: Class*} [template]
+// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.n: i32, .next: Class*} [template]
+// CHECK:STDOUT:   %.loc17: type = struct_type {.next: Class*, .n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class, const
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make, const
-// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder, const
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
+// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32, const
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0, const
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2, const = %.loc8_8.2
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class, const = file.%Class
-// CHECK:STDOUT:   %.loc9_18: type = ptr_type Class, const
-// CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Class, Class*, const
-// CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Class> = field_decl next, element1, const
-// CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11.2, const = %.loc9_11.2
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0 [template]
+// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2 [template = %.loc8_8.2]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Class, Class* [template]
+// CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Class> = field_decl next, element1 [template]
+// CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11.2 [template = %.loc9_11.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n

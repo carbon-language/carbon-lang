@@ -30,12 +30,12 @@ fn While() {
 // CHECK:STDOUT: --- fail_break_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc16: bool = bool_literal false, const
+// CHECK:STDOUT:   %.loc16: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.While = %While}
-// CHECK:STDOUT:   %While: <function> = fn_decl @While, const
+// CHECK:STDOUT:   %While: <function> = fn_decl @While [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {

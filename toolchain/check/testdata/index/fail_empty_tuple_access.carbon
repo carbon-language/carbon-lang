@@ -16,14 +16,14 @@ fn Run() {
 // CHECK:STDOUT: --- fail_empty_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc13_4: type = tuple_type (), const
-// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0, const
+// CHECK:STDOUT:   %.loc13_4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .Run = %Run}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F, const
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run, const
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -33,9 +33,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F, const = file.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc13_4.1: init () = call %F.ref()
-// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0, const = constants.%.loc13_7
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0 [template = constants.%.loc13_7]
 // CHECK:STDOUT:   %.loc13_4.2: ref () = temporary_storage
 // CHECK:STDOUT:   %.loc13_4.3: ref () = temporary %.loc13_4.2, %.loc13_4.1
 // CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.3, <error>
