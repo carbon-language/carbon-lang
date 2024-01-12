@@ -25,8 +25,8 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %.loc7_18: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.1: ((type, type), type) = tuple_literal (%.loc7_18, i32)
-// CHECK:STDOUT:   %.loc7_24.2: type = converted %.loc7_18, constants.%.loc7_24.2
-// CHECK:STDOUT:   %.loc7_24.3: type = converted %.loc7_24.1, constants.%.loc7_24.3
+// CHECK:STDOUT:   %.loc7_24.2: type = converted %.loc7_18, constants.%.loc7_24.2, const = constants.%.loc7_24.2
+// CHECK:STDOUT:   %.loc7_24.3: type = converted %.loc7_24.1, constants.%.loc7_24.3, const = constants.%.loc7_24.3
 // CHECK:STDOUT:   %x.var: ref ((i32, i32), i32) = var x
 // CHECK:STDOUT:   %x: ref ((i32, i32), i32) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 12, const = constants.%.loc7_30
