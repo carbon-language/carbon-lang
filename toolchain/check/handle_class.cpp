@@ -52,7 +52,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
 
   // Add the class declaration.
   auto class_decl = SemIR::ClassDecl{SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddInst({parse_node, class_decl});
+  auto class_decl_id = context.AddPlaceholderInst({parse_node, class_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -108,7 +108,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   }
 
   // Write the class ID into the ClassDecl.
-  context.insts().Set(class_decl_id, class_decl);
+  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -303,9 +303,9 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
-  context.args_type_info_stack().AddInst(
+  context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
       {parse_node,
-       SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}});
+       SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
 
   // Bind the name `base` in the class to the base field.
   context.decl_name_stack().AddNameToLookup(

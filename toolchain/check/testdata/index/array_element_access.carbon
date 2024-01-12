@@ -17,7 +17,9 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 2] [template]
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.loc7_24: i32 = int_literal 24 [template]
-// CHECK:STDOUT:   %.loc7_26: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc7_26.1: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.loc7_26.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc7_26.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
@@ -31,10 +33,10 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_20: i32 = int_literal 12 [template = constants.%.loc7_20]
 // CHECK:STDOUT:   %.loc7_24: i32 = int_literal 24 [template = constants.%.loc7_24]
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_literal (%.loc7_20, %.loc7_24)
-// CHECK:STDOUT:   %.loc7_26.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc7_26.2: i32 = int_literal 0 [template = constants.%.loc7_26.2]
 // CHECK:STDOUT:   %.loc7_26.3: ref i32 = array_index %a.var, %.loc7_26.2
 // CHECK:STDOUT:   %.loc7_26.4: init i32 = initialize_from %.loc7_20 to %.loc7_26.3
-// CHECK:STDOUT:   %.loc7_26.5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_26.5: i32 = int_literal 1 [template = constants.%.loc7_26.3]
 // CHECK:STDOUT:   %.loc7_26.6: ref i32 = array_index %a.var, %.loc7_26.5
 // CHECK:STDOUT:   %.loc7_26.7: init i32 = initialize_from %.loc7_24 to %.loc7_26.6
 // CHECK:STDOUT:   %.loc7_26.8: init [i32; 2] = array_init (%.loc7_26.4, %.loc7_26.7) to %a.var

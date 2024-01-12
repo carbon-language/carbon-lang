@@ -37,7 +37,10 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc10_29: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_29.1: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.loc10_29.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc10_29.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc10_29.4: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.loc13: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.loc14_5: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.loc14_10: i32 = int_literal 4 [template]
@@ -48,6 +51,9 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc18_22: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.loc18_25: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.loc18_28: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.loc18_29.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc18_29.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.loc18_29.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.loc24: i32 = int_literal 0 [template]
@@ -72,13 +78,13 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 2 [template = constants.%.loc10_25]
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 3 [template = constants.%.loc10_28]
 // CHECK:STDOUT:   %.loc10_29.1: (i32, i32, i32) = tuple_literal (%.loc10_22, %.loc10_25, %.loc10_28)
-// CHECK:STDOUT:   %.loc10_29.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc10_29.2: i32 = int_literal 0 [template = constants.%.loc10_29.2]
 // CHECK:STDOUT:   %.loc10_29.3: ref i32 = array_index %a.var, %.loc10_29.2
 // CHECK:STDOUT:   %.loc10_29.4: init i32 = initialize_from %.loc10_22 to %.loc10_29.3
-// CHECK:STDOUT:   %.loc10_29.5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_29.5: i32 = int_literal 1 [template = constants.%.loc10_29.3]
 // CHECK:STDOUT:   %.loc10_29.6: ref i32 = array_index %a.var, %.loc10_29.5
 // CHECK:STDOUT:   %.loc10_29.7: init i32 = initialize_from %.loc10_25 to %.loc10_29.6
-// CHECK:STDOUT:   %.loc10_29.8: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc10_29.8: i32 = int_literal 2 [template = constants.%.loc10_29.4]
 // CHECK:STDOUT:   %.loc10_29.9: ref i32 = array_index %a.var, %.loc10_29.8
 // CHECK:STDOUT:   %.loc10_29.10: init i32 = initialize_from %.loc10_28 to %.loc10_29.9
 // CHECK:STDOUT:   %.loc10_29.11: init [i32; 3] = array_init (%.loc10_29.4, %.loc10_29.7, %.loc10_29.10) to %a.var
@@ -110,13 +116,13 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc18_25: i32 = int_literal 2 [template = constants.%.loc18_25]
 // CHECK:STDOUT:   %.loc18_28: i32 = int_literal 3 [template = constants.%.loc18_28]
 // CHECK:STDOUT:   %.loc18_29.1: (i32, i32, i32) = tuple_literal (%.loc18_22, %.loc18_25, %.loc18_28)
-// CHECK:STDOUT:   %.loc18_29.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc18_29.2: i32 = int_literal 0 [template = constants.%.loc18_29.1]
 // CHECK:STDOUT:   %.loc18_29.3: ref i32 = array_index %a.var, %.loc18_29.2
 // CHECK:STDOUT:   %.loc18_29.4: init i32 = initialize_from %.loc18_22 to %.loc18_29.3
-// CHECK:STDOUT:   %.loc18_29.5: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc18_29.5: i32 = int_literal 1 [template = constants.%.loc18_29.2]
 // CHECK:STDOUT:   %.loc18_29.6: ref i32 = array_index %a.var, %.loc18_29.5
 // CHECK:STDOUT:   %.loc18_29.7: init i32 = initialize_from %.loc18_25 to %.loc18_29.6
-// CHECK:STDOUT:   %.loc18_29.8: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc18_29.8: i32 = int_literal 2 [template = constants.%.loc18_29.3]
 // CHECK:STDOUT:   %.loc18_29.9: ref i32 = array_index %a.var, %.loc18_29.8
 // CHECK:STDOUT:   %.loc18_29.10: init i32 = initialize_from %.loc18_28 to %.loc18_29.9
 // CHECK:STDOUT:   %.loc18_29.11: init [i32; 3] = array_init (%.loc18_29.4, %.loc18_29.7, %.loc18_29.10) to %a.var

@@ -16,7 +16,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc8_17.1: type = array_type %.loc8_16, i32 [template]
 // CHECK:STDOUT:   %.loc8_17.2: type = ptr_type [i32; 1] [template]
 // CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc8_24: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.loc8_24.1: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.loc8_24.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,7 +33,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %x: ref [i32; 1] = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0 [template = constants.%.loc8_22]
 // CHECK:STDOUT:   %.loc8_24.1: (i32,) = tuple_literal (%.loc8_22)
-// CHECK:STDOUT:   %.loc8_24.2: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8_24.2: i32 = int_literal 0 [template = constants.%.loc8_24.2]
 // CHECK:STDOUT:   %.loc8_24.3: ref i32 = array_index %x.var, %.loc8_24.2
 // CHECK:STDOUT:   %.loc8_24.4: init i32 = initialize_from %.loc8_22 to %.loc8_24.3
 // CHECK:STDOUT:   %.loc8_24.5: init [i32; 1] = array_init (%.loc8_24.4) to %x.var

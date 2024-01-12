@@ -19,7 +19,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.loc10_29.1: type = array_type %.loc10_28, (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.loc10_29.2: type = ptr_type [(i32, i32, i32); 2] [template]
-// CHECK:STDOUT:   %.loc10_42: type = tuple_type ((i32, i32, i32), (i32, i32, i32)) [template]
+// CHECK:STDOUT:   %.loc10_42.1: type = tuple_type ((i32, i32, i32), (i32, i32, i32)) [template]
+// CHECK:STDOUT:   %.loc10_42.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.loc10_42.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,13 +42,13 @@ fn G() {
 // CHECK:STDOUT:   %v: ref [(i32, i32, i32); 2] = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10_34: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc10_42.3: ref (i32, i32, i32) = splice_block %.loc10_42.2 {
-// CHECK:STDOUT:     %.loc10_42.1: i32 = int_literal 0
+// CHECK:STDOUT:     %.loc10_42.1: i32 = int_literal 0 [template = constants.%.loc10_42.2]
 // CHECK:STDOUT:     %.loc10_42.2: ref (i32, i32, i32) = array_index %v.var, %.loc10_42.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_35: init (i32, i32, i32) = call %F.ref.loc10_34() to %.loc10_42.3
 // CHECK:STDOUT:   %F.ref.loc10_39: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc10_42.6: ref (i32, i32, i32) = splice_block %.loc10_42.5 {
-// CHECK:STDOUT:     %.loc10_42.4: i32 = int_literal 1
+// CHECK:STDOUT:     %.loc10_42.4: i32 = int_literal 1 [template = constants.%.loc10_42.3]
 // CHECK:STDOUT:     %.loc10_42.5: ref (i32, i32, i32) = array_index %v.var, %.loc10_42.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_40: init (i32, i32, i32) = call %F.ref.loc10_39() to %.loc10_42.6

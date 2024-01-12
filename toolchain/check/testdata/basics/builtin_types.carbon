@@ -29,7 +29,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1 [template = constants.%.loc8]
 // CHECK:STDOUT:   assign %test_f64.var, %.loc8
 // CHECK:STDOUT:   %.loc9: String = string_literal "Test" [template = constants.%.loc9]
-// CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc9
+// CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc9 [template = constants.%.loc9]
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
 // CHECK:STDOUT:   assign %test_type.var, i32

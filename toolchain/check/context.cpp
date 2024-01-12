@@ -62,9 +62,9 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
-auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
     -> SemIR::InstId {
-  auto inst_id = inst_block_stack_.AddInst(parse_node_and_inst);
+  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
   CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
 
   auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
@@ -77,10 +77,31 @@ auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
   return inst_id;
 }
 
+auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(parse_node_and_inst);
+  inst_block_stack_.AddInstId(inst_id);
+  return inst_id;
+}
+
+auto Context::AddPlaceholderInstInNoBlock(
+    SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
+  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
+  CARBON_VLOG() << "AddPlaceholderInst: " << parse_node_and_inst.inst << "\n";
+  return inst_id;
+}
+
+auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddPlaceholderInstInNoBlock(parse_node_and_inst);
+  inst_block_stack_.AddInstId(inst_id);
+  return inst_id;
+}
+
 auto Context::AddConstant(SemIR::ParseNodeAndInst parse_node_and_inst,
                           bool is_symbolic) -> SemIR::ConstantId {
   // TODO: Deduplicate constants.
-  auto inst_id = insts().AddInNoBlock(parse_node_and_inst);
+  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
   constants().Add(inst_id);
 
   auto const_id = is_symbolic ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
@@ -95,6 +116,25 @@ auto Context::AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst)
     -> void {
   auto inst_id = AddInst(parse_node_and_inst);
   node_stack_.Push(parse_node_and_inst.parse_node, inst_id);
+}
+
+auto Context::ReplaceInstBeforeConstantUse(
+    SemIR::InstId inst_id, SemIR::ParseNodeAndInst parse_node_and_inst)
+    -> void {
+  sem_ir().insts().Set(inst_id, parse_node_and_inst);
+
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> "
+                << parse_node_and_inst.inst << "\n";
+
+  // Redo evaluation. This is only safe to do if this instruction has not
+  // already been used as a constant, which is the caller's responsibility to
+  // ensure.
+  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+                  << const_id.inst_id() << "\n";
+  }
+  constant_values().Set(inst_id, const_id);
 }
 
 auto Context::DiagnoseDuplicateName(Parse::NodeId parse_node,
@@ -204,9 +244,13 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
                            .param_refs_id = SemIR::InstBlockId::Empty,
                            .return_type_id = SemIR::TypeId::Invalid,
                            .return_slot_id = SemIR::InstId::Invalid});
-      insts().Set(inst_id, SemIR::FunctionDecl{
-                               GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-                               function_id});
+      ReplaceInstBeforeConstantUse(
+          inst_id,
+          // TODO: For diagnostic purposes, we should provide some form of
+          // location for the function.
+          {Parse::NodeId::Invalid,
+           SemIR::FunctionDecl{GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+                               function_id}});
       constant_values().Set(inst_id,
                             SemIR::ConstantId::ForTemplateConstant(inst_id));
       break;
@@ -219,8 +263,10 @@ auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
       // error.
       TODO(Parse::NodeId::Invalid,
            (llvm::Twine("TODO: support ") + import_inst.kind().name()).str());
-      insts().Set(inst_id, SemIR::VarStorage{SemIR::TypeId::Error,
-                                             SemIR::NameId::PackageNamespace});
+      ReplaceInstBeforeConstantUse(
+          inst_id, {Parse::NodeId::Invalid,
+                    SemIR::VarStorage{SemIR::TypeId::Error,
+                                      SemIR::NameId::PackageNamespace}});
       break;
   }
 }

@@ -25,10 +25,10 @@ let not_false: bool = not false;
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not [template]
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.loc11_26.1]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.loc11_26.2]
-// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22
+// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22 [template = constants.%.loc11_26.2]
 // CHECK:STDOUT:   %.loc12_27: bool = bool_literal false [template = constants.%.loc12_27.1]
 // CHECK:STDOUT:   %.loc12_23: bool = not %.loc12_27 [template = constants.%.loc12_27.2]
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23
+// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23 [template = constants.%.loc12_27.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {

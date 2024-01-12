@@ -138,7 +138,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
-  auto function_decl_id = context.AddInst({parse_node, function_decl});
+  auto function_decl_id =
+      context.AddPlaceholderInst({parse_node, function_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -180,7 +181,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Write the function ID into the FunctionDecl.
-  context.insts().Set(function_decl_id, function_decl);
+  context.ReplaceInstBeforeConstantUse(function_decl_id,
+                                       {parse_node, function_decl});
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.

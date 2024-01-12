@@ -6,7 +6,6 @@
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
@@ -25,10 +24,11 @@ auto HandleNamespace(Context& context, Parse::NamespaceId parse_node) -> bool {
   auto namespace_inst = SemIR::Namespace{
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
       name_context.name_id_for_new_inst(), SemIR::NameScopeId::Invalid};
-  auto namespace_id = context.AddInst({parse_node, namespace_inst});
+  auto namespace_id = context.AddPlaceholderInst({parse_node, namespace_inst});
   namespace_inst.name_scope_id = context.name_scopes().Add(
       namespace_id, name_context.enclosing_scope_id_for_new_inst());
-  context.insts().Set(namespace_id, namespace_inst);
+  context.ReplaceInstBeforeConstantUse(namespace_id,
+                                       {parse_node, namespace_inst});
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);
 
   context.decl_name_stack().PopScope();

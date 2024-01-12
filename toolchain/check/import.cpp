@@ -71,9 +71,9 @@ static auto AddNamespace(Context& context,
   // Use the invalid node because there's no node to associate with.
   auto inst =
       SemIR::Namespace{namespace_type_id, name_id, SemIR::NameScopeId::Invalid};
-  auto id = context.AddInst({Parse::NodeId::Invalid, inst});
+  auto id = context.AddPlaceholderInst({Parse::NodeId::Invalid, inst});
   inst.name_scope_id = context.name_scopes().Add(id, enclosing_scope_id);
-  context.insts().Set(id, inst);
+  context.ReplaceInstBeforeConstantUse(id, {Parse::NodeId::Invalid, inst});
   return {id, inst.name_scope_id};
 }
 
@@ -194,7 +194,7 @@ auto Import(Context& context, SemIR::TypeId namespace_type_id,
                            import_namespace_inst->name_scope_id, name_scope_id);
     } else {
       // Leave a placeholder that the inst comes from the other IR.
-      auto target_id = context.AddInst(
+      auto target_id = context.AddPlaceholderInst(
           {Parse::NodeId::Invalid,
            SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id}});
       // TODO: When importing from other packages, the scope's names should

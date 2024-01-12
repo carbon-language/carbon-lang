@@ -7,8 +7,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -47,14 +45,6 @@ class InstBlockStack {
   // Pops the top instruction block, and discards it if it hasn't had an ID
   // allocated.
   auto PopAndDiscard() -> void;
-
-  // Adds the given instruction to the block at the top of the stack and returns
-  // its ID.
-  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
-    auto inst_id = sem_ir_->insts().AddInNoBlock(parse_node_and_inst);
-    AddInstId(inst_id);
-    return inst_id;
-  }
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {

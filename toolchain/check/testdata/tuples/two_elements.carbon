@@ -32,11 +32,11 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc7_28.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_25)
 // CHECK:STDOUT:   %.loc7_28.2: (i32, i32) = tuple_value (%.loc7_22, %.loc7_25) [template = constants.%.loc7_28]
 // CHECK:STDOUT:   %.loc7_28.3: (i32, i32) = converted %.loc7_28.1, %.loc7_28.2 [template = constants.%.loc7_28]
-// CHECK:STDOUT:   %v: (i32, i32) = bind_name v, %.loc7_28.3
+// CHECK:STDOUT:   %v: (i32, i32) = bind_name v, %.loc7_28.3 [template = constants.%.loc7_28]
 // CHECK:STDOUT:   %.loc8: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.3: type = converted %.loc8, constants.%.loc7_17.2 [template = constants.%.loc7_17.2]
-// CHECK:STDOUT:   %v.ref: (i32, i32) = name_ref v, %v
-// CHECK:STDOUT:   %w: (i32, i32) = bind_name w, %v.ref
+// CHECK:STDOUT:   %v.ref: (i32, i32) = name_ref v, %v [template = constants.%.loc7_28]
+// CHECK:STDOUT:   %w: (i32, i32) = bind_name w, %v.ref [template = constants.%.loc7_28]
 // CHECK:STDOUT:   %.loc10_17: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.4: type = converted %.loc10_17, constants.%.loc7_17.2 [template = constants.%.loc7_17.2]
 // CHECK:STDOUT:   %x.var: ref (i32, i32) = var x

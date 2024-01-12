@@ -49,7 +49,8 @@ static auto BuildInterfaceDecl(Context& context,
   // Add the interface declaration.
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::InterfaceId::Invalid, decl_block_id};
-  auto interface_decl_id = context.AddInst({parse_node, interface_decl});
+  auto interface_decl_id =
+      context.AddPlaceholderInst({parse_node, interface_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
@@ -82,7 +83,8 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.insts().Set(interface_decl_id, interface_decl);
+  context.ReplaceInstBeforeConstantUse(interface_decl_id,
+                                       {parse_node, interface_decl});
 
   return {interface_decl.interface_id, interface_decl_id};
 }
