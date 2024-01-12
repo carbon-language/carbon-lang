@@ -42,6 +42,7 @@ TEST(SemIRTest, YAML) {
   // cross-references, so this code is only doing loose structural checks.
   auto int_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
+  auto constant_id = Yaml::Scalar(MatchesRegex(R"((const|sym) inst\+\d+)"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
@@ -75,7 +76,7 @@ TEST(SemIRTest, YAML) {
                                                 Pair("arg0", inst_id),
                                                 Pair("arg1", inst_id)))))))),
       Pair("constant_values",
-           Yaml::Mapping(AllOf(Each(Pair(inst_id, inst_id))))),
+           Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
       // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(

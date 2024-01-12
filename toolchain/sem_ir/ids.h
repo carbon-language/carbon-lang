@@ -112,9 +112,9 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     if (is_template()) {
-      out << "!" << inst_id();
+      out << "const " << inst_id();
     } else if (is_symbolic()) {
-      out << "!!" << inst_id();
+      out << "sym " << inst_id();
     } else {
       out << "nonconst";
     }

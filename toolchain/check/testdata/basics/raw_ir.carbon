@@ -67,15 +67,15 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+23:         {kind: Converted, arg0: inst+15, arg1: inst+22, type: type4}
 // CHECK:STDOUT:     inst+24:         {kind: ReturnExpr, arg0: inst+23}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+3:          !inst+3
-// CHECK:STDOUT:     inst+5:          !inst+5
-// CHECK:STDOUT:     inst+6:          !inst+5
-// CHECK:STDOUT:     inst+8:          !inst+8
-// CHECK:STDOUT:     inst+9:          !inst+9
-// CHECK:STDOUT:     inst+11:         !inst+12
-// CHECK:STDOUT:     inst+12:         !inst+12
-// CHECK:STDOUT:     inst+13:         !inst+14
-// CHECK:STDOUT:     inst+14:         !inst+14
+// CHECK:STDOUT:     inst+3:          const inst+3
+// CHECK:STDOUT:     inst+5:          const inst+5
+// CHECK:STDOUT:     inst+6:          const inst+5
+// CHECK:STDOUT:     inst+8:          const inst+8
+// CHECK:STDOUT:     inst+9:          const inst+9
+// CHECK:STDOUT:     inst+11:         const inst+12
+// CHECK:STDOUT:     inst+12:         const inst+12
+// CHECK:STDOUT:     inst+13:         const inst+14
+// CHECK:STDOUT:     inst+14:         const inst+14
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
