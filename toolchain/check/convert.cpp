@@ -555,8 +555,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                       "Cannot construct instance of abstract class. "
                       "Consider using `partial {0}` instead.",
                       std::string);
-    context.emitter().Emit(context.insts().GetParseNode(value_id),
-                           ConstructionOfAbstractClass,
+    context.emitter().Emit(value_id, ConstructionOfAbstractClass,
                            context.sem_ir().StringifyType(target.type_id));
     return SemIR::InstId::BuiltinError;
   }
@@ -864,8 +863,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
                     "Cannot copy value of type `{0}`.", std::string);
-  context.emitter().Emit(context.insts().GetParseNode(expr_id),
-                         CopyOfUncopyableType,
+  context.emitter().Emit(expr_id, CopyOfUncopyableType,
                          context.sem_ir().StringifyType(type_id));
   return SemIR::InstId::BuiltinError;
 }
@@ -888,8 +886,7 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
     // namespace names, and allow use of functions as values.
     CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
                       "Expression cannot be used as a value.");
-    context.emitter().Emit(sem_ir.insts().GetParseNode(expr_id),
-                           UseOfNonExprAsValue);
+    context.emitter().Emit(expr_id, UseOfNonExprAsValue);
     return SemIR::InstId::BuiltinError;
   }
 
@@ -1100,8 +1097,7 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
             InCallToFunctionSelf, Note,
             "Initializing `{0}` parameter of method declared here.",
             llvm::StringLiteral);
-        builder.Note(context.insts().GetParseNode(self_param_id),
-                     InCallToFunctionSelf,
+        builder.Note(self_param_id, InCallToFunctionSelf,
                      addr_pattern ? llvm::StringLiteral("addr self")
                                   : llvm::StringLiteral("self"));
       });

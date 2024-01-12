@@ -79,10 +79,9 @@ static auto DiagnoseDuplicateNames(Context& context,
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
       context.emitter()
-          .Build(context.insts().GetParseNode(field_inst_id),
-                 StructNameDuplicate, construct.str(),
+          .Build(field_inst_id, StructNameDuplicate, construct.str(),
                  sem_ir.names().GetFormatted(field_inst.name_id).str())
-          .Note(context.insts().GetParseNode(it->second), StructNamePrevious)
+          .Note(it->second, StructNamePrevious)
           .Emit();
       return true;
     }

@@ -73,8 +73,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
                           "Previously declared here.");
         context.emitter()
             .Build(parse_node, ClassRedeclarationDifferentIntroducer)
-            .Note(context.insts().GetParseNode(existing_id),
-                  ClassRedeclarationDifferentIntroducerPrevious)
+            .Note(existing_id, ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
       }
 
@@ -134,8 +133,7 @@ auto HandleClassDefinitionStart(Context& context,
     context.emitter()
         .Build(parse_node, ClassRedefinition,
                context.names().GetFormatted(class_info.name_id).str())
-        .Note(context.insts().GetParseNode(class_info.definition_id),
-              ClassPreviousDefinition)
+        .Note(class_info.definition_id, ClassPreviousDefinition)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
@@ -280,7 +278,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
                       "Previous `base` declaration is here.");
     context.emitter()
         .Build(parse_node, BaseRepeated)
-        .Note(context.insts().GetParseNode(class_info.base_id), BasePrevious)
+        .Note(class_info.base_id, BasePrevious)
         .Emit();
     return true;
   }
