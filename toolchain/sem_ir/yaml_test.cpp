@@ -42,7 +42,8 @@ TEST(SemIRTest, YAML) {
   // cross-references, so this code is only doing loose structural checks.
   auto int_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
-  auto constant_id = Yaml::Scalar(MatchesRegex(R"((const|sym) inst\+\d+)"));
+  auto constant_id =
+      Yaml::Scalar(MatchesRegex(R"((template|symbolic) inst\+\d+)"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
