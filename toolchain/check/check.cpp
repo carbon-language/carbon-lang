@@ -57,6 +57,7 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
+  // TODO: Augment the translator to translate InstIds for locations.
   Parse::NodeLocationTranslator translator;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLocation> emitter;

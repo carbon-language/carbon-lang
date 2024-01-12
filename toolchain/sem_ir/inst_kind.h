@@ -48,16 +48,16 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
-  template <typename TypedNode>
+  template <typename TypedNodeId>
   class Definition;
 
   // Provides a definition for this instruction kind. Should only be called
   // once, to construct the kind as part of defining it in `typed_insts.h`.
-  template <typename TypedNode>
+  template <typename TypedNodeId>
   constexpr auto Define(
       llvm::StringLiteral ir_name,
       TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
-      -> Definition<TypedNode>;
+      -> Definition<TypedNodeId>;
 
   using EnumBase::Create;
 
@@ -91,10 +91,10 @@ static_assert(sizeof(InstKind) == 1, "Kind objects include padding!");
 // are not copyable, and only one instance of this type is expected to exist per
 // instruction kind, specifically `TypedInst::Kind`. Use `InstKind` instead as a
 // thin wrapper around an instruction kind index.
-template <typename TypedNodeArg>
+template <typename TypedNodeIdArg>
 class InstKind::Definition : public InstKind {
  public:
-  using TypedNode = TypedNodeArg;
+  using TypedNodeId = TypedNodeIdArg;
 
   // Not copyable.
   Definition(const Definition&) = delete;
@@ -120,11 +120,11 @@ class InstKind::Definition : public InstKind {
   TerminatorKind terminator_kind_;
 };
 
-template <typename TypedNode>
+template <typename TypedNodeId>
 constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
                                 TerminatorKind terminator_kind) const
-    -> Definition<TypedNode> {
-  return Definition<TypedNode>(*this, ir_name, terminator_kind);
+    -> Definition<TypedNodeId> {
+  return Definition<TypedNodeId>(*this, ir_name, terminator_kind);
 }
 
 }  // namespace Carbon::SemIR

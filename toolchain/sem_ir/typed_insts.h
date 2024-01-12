@@ -409,12 +409,11 @@ struct IntLiteral {
 // This instruction is not intended for direct use. Instead, it should be loaded
 // if it's referenced through name resolution.
 struct LazyImportRef {
-  static constexpr auto Kind =
-      InstKind::LazyImportRef.Define<Parse::InvalidNodeId>("lazy_import_ref");
-
   // No parse node: an instruction's parse tree node must refer to a node in the
   // current parse tree. This cannot use the cross-referenced instruction's
   // parse tree node because it will be in a different parse tree.
+  static constexpr auto Kind =
+      InstKind::LazyImportRef.Define<Parse::InvalidNodeId>("lazy_import_ref");
 
   CrossRefIRId ir_id;
   InstId inst_id;
