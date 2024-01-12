@@ -27,6 +27,9 @@ static auto BuildInterfaceDecl(Context& context,
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(parse_node, "generic interface");
   }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+    context.TODO(parse_node, "generic interface");
+  }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
