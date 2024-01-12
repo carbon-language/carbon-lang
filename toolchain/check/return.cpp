@@ -92,7 +92,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
   if (function.return_slot_id.is_valid()) {
     return function.return_slot_id;
   }
-  return context.AddInst(name_node, SemIR::VarStorage{type_id, name_id});
+  return context.AddInst({name_node, SemIR::VarStorage{type_id, name_id}});
 }
 
 auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
@@ -120,7 +120,7 @@ auto BuildReturnWithNoExpr(Context& context,
     diag.Emit();
   }
 
-  context.AddInst(parse_node, SemIR::Return{});
+  context.AddInst({parse_node, SemIR::Return{}});
 }
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
@@ -152,7 +152,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
                                    function.return_type_id);
   }
 
-  context.AddInst(parse_node, SemIR::ReturnExpr{expr_id});
+  context.AddInst({parse_node, SemIR::ReturnExpr{expr_id}});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
@@ -173,7 +173,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
   }
 
-  context.AddInst(parse_node, SemIR::ReturnExpr{returned_var_id});
+  context.AddInst({parse_node, SemIR::ReturnExpr{returned_var_id}});
 }
 
 }  // namespace Carbon::Check

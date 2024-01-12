@@ -14,6 +14,34 @@
 
 namespace Carbon::SemIR {
 
+// Associates a NodeId and Inst in order to provide type-checking that the
+// TypedNodeId corresponds to the InstT.
+struct ParseNodeAndInst {
+  // In cases where the NodeId is untyped or the InstT is unknown, the check
+  // can't be done at compile time.
+  // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
+  // corresponds.
+  static auto Untyped(Parse::NodeId parse_node, Inst inst) -> ParseNodeAndInst {
+    return ParseNodeAndInst(parse_node, inst, /*is_untyped=*/true);
+  }
+
+  // For the common case, support construction as:
+  //   context.AddInst({parse_node, SemIR::MyInst{...}});
+  template <typename InstT>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(typename decltype(InstT::Kind)::TypedNodeId parse_node,
+                   InstT inst)
+      : parse_node(parse_node), inst(inst) {}
+
+  Parse::NodeId parse_node;
+  Inst inst;
+
+ private:
+  explicit ParseNodeAndInst(Parse::NodeId parse_node, Inst inst,
+                            bool /*is_untyped*/)
+      : parse_node(parse_node), inst(inst) {}
+};
+
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
@@ -22,10 +50,9 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(Parse::NodeId parse_node, Inst inst) -> InstId {
-    // TODO: CARBON_CHECK the parse node kind against the instruction kind.
-    parse_nodes_.push_back(parse_node);
-    return values_.Add(inst);
+  auto AddInNoBlock(ParseNodeAndInst parse_node_and_inst) -> InstId {
+    parse_nodes_.push_back(parse_node_and_inst.parse_node);
+    return values_.Add(parse_node_and_inst.inst);
   }
 
   // Returns the requested instruction.
@@ -195,8 +222,7 @@ class TypeStore : public ValueStore<TypeId> {
 // A name is either an identifier name or a special name such as `self` that
 // does not correspond to an identifier token. Identifier names are represented
 // as `NameId`s with the same non-negative index as the `IdentifierId` of the
-// identifier. Special names are represented as `NameId`s with a negative
-// index.
+// identifier. Special names are represented as `NameId`s with a negative index.
 //
 // `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
 // or the named constants such as `NameId::SelfValue`.
@@ -223,10 +249,10 @@ class NameStoreWrapper {
   // `"r#name"` if `name` is a keyword.
   auto GetFormatted(NameId name_id) const -> llvm::StringRef;
 
-  // Returns a best-effort name to use as the basis for SemIR and LLVM IR
-  // names. This is always identifier-shaped, but may be ambiguous, for example
-  // if there is both a `self` and an `r#self` in the same scope. Returns ""
-  // for an invalid name.
+  // Returns a best-effort name to use as the basis for SemIR and LLVM IR names.
+  // This is always identifier-shaped, but may be ambiguous, for example if
+  // there is both a `self` and an `r#self` in the same scope. Returns "" for an
+  // invalid name.
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:
@@ -265,9 +291,9 @@ struct NameScope : Printable<NameScope> {
 
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
-  // an `extend` declaration was ill-formed. If true, the `names` map is
-  // assumed to be missing names as a result of the error, and no further
-  // errors are produced for lookup failures in this scope.
+  // an `extend` declaration was ill-formed. If true, the `names` map is assumed
+  // to be missing names as a result of the error, and no further errors are
+  // produced for lookup failures in this scope.
   bool has_error = false;
 };
 

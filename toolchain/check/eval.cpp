@@ -5,6 +5,7 @@
 #include "toolchain/check/eval.h"
 
 #include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -76,8 +77,10 @@ static auto RebuildIfFieldsAreConstant(Context& context, SemIR::InstId inst_id,
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &is_symbolic) &&
        ...)) {
-    return context.AddConstant(context.insts().GetParseNode(inst_id),
-                               typed_inst, is_symbolic);
+    return context.AddConstant(
+        SemIR::ParseNodeAndInst::Untyped(context.insts().GetParseNode(inst_id),
+                                         typed_inst),
+        is_symbolic);
   }
   return SemIR::ConstantId::NotConstant;
 }
@@ -134,8 +137,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
-      return context.AddConstant(context.insts().GetParseNode(inst_id), inst,
-                                 /*is_symbolic=*/false);
+      return context.AddConstant(
+          SemIR::ParseNodeAndInst::Untyped(
+              context.insts().GetParseNode(inst_id), inst),
+          /*is_symbolic=*/false);
 
     // TODO: These need special handling.
     case SemIR::ArrayIndex::Kind:
@@ -190,7 +195,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
                                                   : SemIR::BoolValue::False);
       return context.AddConstant(
-          context.insts().GetParseNode(const_id.inst_id()), value,
+          {context.insts().GetParseNode(const_id.inst_id()), value},
           /*is_symbolic=*/false);
     }
 

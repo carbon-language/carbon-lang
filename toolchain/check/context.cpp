@@ -20,6 +20,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -61,39 +62,39 @@ auto Context::VerifyOnFinish() -> void {
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
-auto Context::AddInst(Parse::NodeId parse_node, SemIR::Inst inst)
+auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
     -> SemIR::InstId {
-  auto inst_id = inst_block_stack_.AddInst(parse_node, inst);
-  CARBON_VLOG() << "AddInst: " << inst << "\n";
+  auto inst_id = inst_block_stack_.AddInst(parse_node_and_inst);
+  CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
 
-  auto const_id = TryEvalInst(*this, inst_id, inst);
+  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << inst << " -> " << const_id.inst_id()
-                  << "\n";
+    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+                  << const_id.inst_id() << "\n";
     constant_values().Set(inst_id, const_id);
   }
 
   return inst_id;
 }
 
-auto Context::AddConstant(Parse::NodeId parse_node, SemIR::Inst inst,
+auto Context::AddConstant(SemIR::ParseNodeAndInst parse_node_and_inst,
                           bool is_symbolic) -> SemIR::ConstantId {
   // TODO: Deduplicate constants.
-  auto inst_id = insts().AddInNoBlock(parse_node, inst);
+  auto inst_id = insts().AddInNoBlock(parse_node_and_inst);
   constants().Add(inst_id);
 
   auto const_id = is_symbolic ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
                               : SemIR::ConstantId::ForTemplateConstant(inst_id);
   constant_values().Set(inst_id, const_id);
 
-  CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
+  CARBON_VLOG() << "AddConstantInst: " << parse_node_and_inst.inst << "\n";
   return const_id;
 }
 
-auto Context::AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst)
+auto Context::AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst)
     -> void {
-  auto inst_id = AddInst(parse_node, inst);
-  node_stack_.Push(parse_node, inst_id);
+  auto inst_id = AddInst(parse_node_and_inst);
+  node_stack_.Push(parse_node_and_inst.parse_node, inst_id);
 }
 
 auto Context::DiagnoseDuplicateName(Parse::NodeId parse_node,
@@ -150,9 +151,9 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
 
   auto type_id = GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
   auto inst_id =
-      AddInst(import_node, SemIR::Import{.type_id = type_id,
-                                         .first_cross_ref_ir_id = first_id,
-                                         .last_cross_ref_ir_id = last_id});
+      AddInst({import_node, SemIR::Import{.type_id = type_id,
+                                          .first_cross_ref_ir_id = first_id,
+                                          .last_cross_ref_ir_id = last_id}});
 
   // Add the import to lookup. Should always succeed because imports will be
   // uniquely named.
@@ -162,9 +163,9 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
   // otherwise fits in an Inst.
   auto bind_name_id = bind_names().Add(
       {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
-  AddInst(import_node, SemIR::BindName{.type_id = type_id,
-                                       .bind_name_id = bind_name_id,
-                                       .value_id = inst_id});
+  AddInst({import_node, SemIR::BindName{.type_id = type_id,
+                                        .bind_name_id = bind_name_id,
+                                        .value_id = inst_id}});
 }
 
 auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
@@ -459,7 +460,7 @@ static auto AddDominatedBlockAndBranchImpl(Context& context,
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst(parse_node, BranchNode{block_id, args...});
+  context.AddInst({parse_node, BranchNode{block_id, args...}});
   return block_id;
 }
 
@@ -492,7 +493,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst(parse_node, SemIR::Branch{new_block_id});
+      AddInst({parse_node, SemIR::Branch{new_block_id}});
     }
     inst_block_stack().Pop();
   }
@@ -510,7 +511,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst(parse_node, SemIR::BranchWithArg{new_block_id, arg_id});
+      AddInst({parse_node, SemIR::BranchWithArg{new_block_id, arg_id}});
     }
     inst_block_stack().Pop();
   }
@@ -518,7 +519,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst(parse_node, SemIR::BlockArg{result_type_id, new_block_id});
+  return AddInst({parse_node, SemIR::BlockArg{result_type_id, new_block_id}});
 }
 
 // Add the current code block to the enclosing function.
@@ -852,7 +853,7 @@ class TypeCompleter {
         field_id =
             context_
                 .AddConstant(
-                    context_.insts().GetParseNode(field_id), field,
+                    {context_.insts().GetParseNode(field_id), field},
                     context_.constant_values()
                         .Get(context_.types().GetInstId(field.field_type_id))
                         .is_symbolic())
@@ -1164,7 +1165,9 @@ auto Context::CanonicalizeTypeAndAddInstIfNew(Parse::NodeId parse_node,
   };
   auto make_inst = [&] {
     // TODO: Properly determine whether types are symbolic.
-    return AddConstant(parse_node, inst, /*is_symbolic=*/false).inst_id();
+    return AddConstant(SemIR::ParseNodeAndInst::Untyped(parse_node, inst),
+                       /*is_symbolic=*/false)
+        .inst_id();
   };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
@@ -1205,10 +1208,10 @@ auto Context::CanonicalizeTupleType(Parse::NodeId parse_node,
   };
   auto make_tuple_inst = [&] {
     // TODO: Properly determine when types are symbolic.
-    return AddConstant(parse_node,
-                       SemIR::TupleType{SemIR::TypeId::TypeType,
-                                        type_blocks().Add(type_ids)},
-                       /*is_symbolic=*/false)
+    return AddConstant(
+               {parse_node, SemIR::TupleType{SemIR::TypeId::TypeType,
+                                             type_blocks().Add(type_ids)}},
+               /*is_symbolic=*/false)
         .inst_id();
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,

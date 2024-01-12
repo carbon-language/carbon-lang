@@ -107,8 +107,8 @@ auto HandleMemberAccessExpr(Context& context,
     }
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
-    context.AddInstAndPush(parse_node,
-                           SemIR::NameRef{inst.type_id(), name_id, inst_id});
+    context.AddInstAndPush(
+        {parse_node, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
     return true;
   }
 
@@ -158,9 +158,9 @@ auto HandleMemberAccessExpr(Context& context,
             << " of unbound element type";
         auto index = GetClassElementIndex(context, element_id.inst_id());
         auto access_id = context.AddInst(
-            parse_node,
-            SemIR::ClassElementAccess{unbound_element_type->element_type_id,
-                                      base_id, index});
+            {parse_node,
+             SemIR::ClassElementAccess{unbound_element_type->element_type_id,
+                                       base_id, index}});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
             SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -191,10 +191,10 @@ auto HandleMemberAccessExpr(Context& context,
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
           context.AddInstAndPush(
-              parse_node,
-              SemIR::BoundMethod{
-                  context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
-                  base_id, member_id});
+              {parse_node,
+               SemIR::BoundMethod{
+                   context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
+                   base_id, member_id}});
           return true;
         }
       }
@@ -202,7 +202,7 @@ auto HandleMemberAccessExpr(Context& context,
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.
       context.AddInstAndPush(
-          parse_node, SemIR::NameRef{member_type_id, name_id, member_id});
+          {parse_node, SemIR::NameRef{member_type_id, name_id, member_id}});
       return true;
     }
     case SemIR::StructType::Kind: {
@@ -213,8 +213,8 @@ auto HandleMemberAccessExpr(Context& context,
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
           context.AddInstAndPush(
-              parse_node, SemIR::StructAccess{field.field_type_id, base_id,
-                                              SemIR::ElementIndex(i)});
+              {parse_node, SemIR::StructAccess{field.field_type_id, base_id,
+                                               SemIR::ElementIndex(i)}});
           return true;
         }
       }
@@ -272,8 +272,8 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
     return context.TODO(parse_node, "Unimplemented use of interface");
   }
   auto value = context.insts().Get(value_id);
-  context.AddInstAndPush(parse_node,
-                         SemIR::NameRef{value.type_id(), name_id, value_id});
+  context.AddInstAndPush(
+      {parse_node, SemIR::NameRef{value.type_id(), name_id, value_id}});
   return true;
 }
 
@@ -353,10 +353,10 @@ auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
 auto HandlePackageExpr(Context& context, Parse::PackageExprId parse_node)
     -> bool {
   context.AddInstAndPush(
-      parse_node,
-      SemIR::NameRef{context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-                     SemIR::NameId::PackageNamespace,
-                     SemIR::InstId::PackageNamespace});
+      {parse_node,
+       SemIR::NameRef{context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
+                      SemIR::NameId::PackageNamespace,
+                      SemIR::InstId::PackageNamespace}});
   return true;
 }
 

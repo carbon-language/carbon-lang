@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -57,15 +58,15 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(Parse::NodeId parse_node, SemIR::Inst inst) -> SemIR::InstId;
+  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(Parse::NodeId parse_node, SemIR::Inst inst, bool is_symbolic)
-      -> SemIR::ConstantId;
+  auto AddConstant(SemIR::ParseNodeAndInst parse_node_and_inst,
+                   bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddInstAndPush(Parse::NodeId parse_node, SemIR::Inst inst) -> void;
+  auto AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst) -> void;
 
   // Adds a package's imports to name lookup, with all libraries together.
   // sem_irs will all be non-null; has_load_error must be used for any errors.

@@ -49,7 +49,7 @@ static auto BuildInterfaceDecl(Context& context,
   // Add the interface declaration.
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::InterfaceId::Invalid, decl_block_id};
-  auto interface_decl_id = context.AddInst(parse_node, interface_decl);
+  auto interface_decl_id = context.AddInst({parse_node, interface_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(

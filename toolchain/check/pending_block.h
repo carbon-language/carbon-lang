@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -39,8 +40,8 @@ class PendingBlock {
     size_t size_;
   };
 
-  auto AddInst(Parse::NodeId parse_node, SemIR::Inst inst) -> SemIR::InstId {
-    auto inst_id = context_.insts().AddInNoBlock(parse_node, inst);
+  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
+    auto inst_id = context_.insts().AddInNoBlock(parse_node_and_inst);
     insts_.push_back(inst_id);
     return inst_id;
   }

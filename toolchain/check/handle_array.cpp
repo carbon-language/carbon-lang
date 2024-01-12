@@ -38,9 +38,9 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
     // TODO: Produce an error if the array type is too large.
     if (bound_value.getActiveBits() <= 64) {
       context.AddInstAndPush(
-          parse_node, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
-                                       ExprAsType(context, parse_node,
-                                                  element_type_inst_id)});
+          {parse_node, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
+                                        ExprAsType(context, parse_node,
+                                                   element_type_inst_id)}});
       return true;
     }
   }

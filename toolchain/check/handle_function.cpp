@@ -32,8 +32,8 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
       context.node_stack().PopExprWithParseNode();
   auto type_id = ExprAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
-  context.AddInstAndPush(parse_node,
-                         SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot});
+  context.AddInstAndPush(
+      {parse_node, SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot}});
   return true;
 }
 
@@ -138,7 +138,7 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
-  auto function_decl_id = context.AddInst(parse_node, function_decl);
+  auto function_decl_id = context.AddInst({parse_node, function_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -289,7 +289,7 @@ auto HandleFunctionDefinition(Context& context,
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
     } else {
-      context.AddInst(parse_node, SemIR::Return{});
+      context.AddInst({parse_node, SemIR::Return{}});
     }
   }
 

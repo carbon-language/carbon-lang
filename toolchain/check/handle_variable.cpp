@@ -69,7 +69,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
       init_id = Initialize(context, parse_node, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst(parse_node, SemIR::Assign{value_id, *init_id});
+      context.AddInst({parse_node, SemIR::Assign{value_id, *init_id}});
     }
   }
 

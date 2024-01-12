@@ -59,7 +59,7 @@ struct InstLikeTypeInfo<
     TypedInst,
     static_cast<bool>(
         std::is_same_v<const InstKind::Definition<
-                           typename decltype(TypedInst::Kind)::TypedNode>,
+                           typename decltype(TypedInst::Kind)::TypedNodeId>,
                        decltype(TypedInst::Kind)>)>
     : InstLikeTypeInfoBase<TypedInst> {
   static_assert(!HasKindMemberAsField<TypedInst>,
