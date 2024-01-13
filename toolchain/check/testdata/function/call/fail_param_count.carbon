@@ -58,13 +58,13 @@ fn Main() {
 // CHECK:STDOUT: --- fail_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc18_7: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc55: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,22 +93,22 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
-// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1 [template = constants.%.loc18_8]
+// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>)
 // CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
-// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0 [template = constants.%.loc25_8]
-// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1 [template = constants.%.loc25_11]
+// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc25_7: init () = call %Run0.ref.loc25(<invalid>)
 // CHECK:STDOUT:   %Run1.ref.loc33: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
 // CHECK:STDOUT:   %.loc33: init () = call %Run1.ref.loc33(<invalid>)
 // CHECK:STDOUT:   %Run1.ref.loc40: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
-// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0 [template = constants.%.loc40_8]
-// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1 [template = constants.%.loc40_11]
+// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc40_7: init () = call %Run1.ref.loc40(<invalid>)
 // CHECK:STDOUT:   %Run2.ref.loc48: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
 // CHECK:STDOUT:   %.loc48: init () = call %Run2.ref.loc48(<invalid>)
 // CHECK:STDOUT:   %Run2.ref.loc55: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0 [template = constants.%.loc55]
+// CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

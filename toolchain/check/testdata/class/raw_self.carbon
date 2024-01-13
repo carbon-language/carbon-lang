@@ -21,11 +21,11 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: --- raw_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_46.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.loc9_46.2: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc9_46.3: type = ptr_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc11: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -53,9 +53,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: --- fail_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc20_1.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc20_1.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

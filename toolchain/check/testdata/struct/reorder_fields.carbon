@@ -16,9 +16,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT: --- reorder_fields.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = ptr_type {.a: i32, .b: f64} [template]
-// CHECK:STDOUT:   %.loc11_62.1: type = struct_type {.b: f64, .a: i32} [template]
-// CHECK:STDOUT:   %.loc11_62.2: type = ptr_type {.b: f64, .a: i32} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type {.a: i32, .b: f64} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.b: f64, .a: i32} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.b: f64, .a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

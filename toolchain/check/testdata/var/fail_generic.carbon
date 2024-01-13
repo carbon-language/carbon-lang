@@ -14,7 +14,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: i32 = bind_symbolic_name x, %x.var [symbolic]
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 0 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, %.loc11
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

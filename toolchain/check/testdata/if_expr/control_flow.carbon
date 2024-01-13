@@ -14,8 +14,8 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: --- control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,13 +27,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

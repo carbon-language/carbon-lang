@@ -25,8 +25,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,7 +66,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4 [template = constants.%.loc22]
+// CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc22_17: init i32 = call %F.ref(%.loc22_18)
 // CHECK:STDOUT:   %.loc22_20.1: i32 = value_of_initializer %.loc22_17
 // CHECK:STDOUT:   %.loc22_20.2: i32 = converted %.loc22_17, %.loc22_20.1

@@ -17,7 +17,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_value_disallowed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 0 [template = constants.%.loc14]
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

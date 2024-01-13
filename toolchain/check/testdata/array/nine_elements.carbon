@@ -9,36 +9,36 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT: --- nine_elements.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9 [template]
-// CHECK:STDOUT:   %.loc7_15.1: type = array_type %.loc7_14, i32 [template]
-// CHECK:STDOUT:   %.loc7_15.2: type = ptr_type [i32; 9] [template]
-// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6 [template]
-// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8 [template]
-// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9 [template]
-// CHECK:STDOUT:   %.loc7_45: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32) [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 9 [template]
+// CHECK:STDOUT:   %.2: type = array_type %.1, i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type [i32; 9] [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.9: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.10: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.11: i32 = int_literal 8 [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 9 [template]
+// CHECK:STDOUT:   %.13: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a}
-// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9 [template = constants.%.loc7_14]
-// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32 [template = constants.%.loc7_15.1]
+// CHECK:STDOUT:   %.loc7_14: i32 = int_literal 9 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 9] = var a
 // CHECK:STDOUT:   %a: ref [i32; 9] = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1 [template = constants.%.loc7_20]
-// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2 [template = constants.%.loc7_23]
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3 [template = constants.%.loc7_26]
-// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4 [template = constants.%.loc7_29]
-// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5 [template = constants.%.loc7_32]
-// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6 [template = constants.%.loc7_35]
-// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7 [template = constants.%.loc7_38]
-// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8 [template = constants.%.loc7_41]
-// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9 [template = constants.%.loc7_44]
+// CHECK:STDOUT:   %.loc7_20: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 3 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc7_32: i32 = int_literal 5 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc7_35: i32 = int_literal 6 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc7_38: i32 = int_literal 7 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc7_41: i32 = int_literal 8 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc7_44: i32 = int_literal 9 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc7_45.1: (i32, i32, i32, i32, i32, i32, i32, i32, i32) = tuple_literal (%.loc7_20, %.loc7_23, %.loc7_26, %.loc7_29, %.loc7_32, %.loc7_35, %.loc7_38, %.loc7_41, %.loc7_44)
 // CHECK:STDOUT:   %.loc7_45.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_45.3: ref i32 = array_index %a.var, %.loc7_45.2

@@ -24,7 +24,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- fail_unbound_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = struct_type {.field: i32} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.field: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

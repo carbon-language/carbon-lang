@@ -51,9 +51,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: --- method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.k: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.k: i32} [template]
-// CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.k: i32} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,7 +106,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25_17: i32 = int_literal 1 [template = constants.%.loc25]
+// CHECK:STDOUT:   %.loc25_17: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_18.1: {.k: i32} = struct_literal (%.loc25_17)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %.loc25_18.2: ref Class = temporary_storage

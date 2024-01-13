@@ -15,7 +15,7 @@ fn Main() {
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo [template = file.%Echo]
-// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1 [template = constants.%.loc12]
+// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
 // CHECK:STDOUT:   assign %b.var, %.loc12_20
 // CHECK:STDOUT:   return

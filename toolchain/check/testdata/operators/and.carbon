@@ -14,9 +14,9 @@ fn And() -> bool {
 // CHECK:STDOUT: --- and.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc11: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,13 +28,13 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,7 +44,7 @@ fn And() -> bool {
 // CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
-// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:

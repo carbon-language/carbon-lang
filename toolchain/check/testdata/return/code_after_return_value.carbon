@@ -19,11 +19,11 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: --- code_after_return_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc12_26: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc12_33: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc13_9: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.loc13_16: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.4: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,7 +33,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

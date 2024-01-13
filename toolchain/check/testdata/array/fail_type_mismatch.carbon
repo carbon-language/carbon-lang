@@ -29,50 +29,50 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc10_15.1: type = array_type %.loc10_14, i32 [template]
-// CHECK:STDOUT:   %.loc10_15.2: type = ptr_type [i32; 3] [template]
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.1: type = ptr_type String [template]
-// CHECK:STDOUT:   %.loc10_23: String = string_literal "Hello" [template]
-// CHECK:STDOUT:   %.loc10_32: String = string_literal "World" [template]
-// CHECK:STDOUT:   %.loc10_39.1: type = tuple_type (i32, String, String) [template]
-// CHECK:STDOUT:   %.loc12: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.loc10_39.2: type = tuple_type (i32, String*, String*) [template]
-// CHECK:STDOUT:   %.loc10_39.3: type = ptr_type (i32, String*, String*) [template]
-// CHECK:STDOUT:   %.loc16_14: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc16_15: type = array_type %.loc16_14, i32 [template]
-// CHECK:STDOUT:   %.loc21_14: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc21_15: type = array_type %.loc21_14, i32 [template]
-// CHECK:STDOUT:   %.loc21_20: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc21_23: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc21_24.1: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc23: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.loc21_24.2: type = ptr_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc27_14: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc27_15: type = array_type %.loc27_14, i32 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.2: type = array_type %.1, i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type [i32; 3] [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type String [template]
+// CHECK:STDOUT:   %.6: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %.7: String = string_literal "World" [template]
+// CHECK:STDOUT:   %.8: type = tuple_type (i32, String, String) [template]
+// CHECK:STDOUT:   %.9: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.10: type = tuple_type (i32, String*, String*) [template]
+// CHECK:STDOUT:   %.11: type = ptr_type (i32, String*, String*) [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.13: type = array_type %.12, i32 [template]
+// CHECK:STDOUT:   %.14: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.15: type = array_type %.14, i32 [template]
+// CHECK:STDOUT:   %.16: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.17: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.18: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.19: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.20: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.21: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.22: type = array_type %.21, i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, .t1 = %t1, .b = %b, .c = %c, .t2 = %t2, .d = %d}
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template = constants.%.loc10_14]
-// CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32 [template = constants.%.loc10_15.1]
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a
 // CHECK:STDOUT:   %a: ref [i32; 3] = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1 [template = constants.%.loc10_20]
-// CHECK:STDOUT:   %.loc10_23: String = string_literal "Hello" [template = constants.%.loc10_23]
-// CHECK:STDOUT:   %.loc10_32: String = string_literal "World" [template = constants.%.loc10_32]
+// CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_23: String = string_literal "Hello" [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_32: String = string_literal "World" [template = constants.%.7]
 // CHECK:STDOUT:   %.loc10_39.1: (i32, String, String) = tuple_literal (%.loc10_20, %.loc10_23, %.loc10_32)
 // CHECK:STDOUT:   %.loc10_39.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_39.3: ref i32 = array_index %a.var, %.loc10_39.2
 // CHECK:STDOUT:   %.loc10_39.4: init i32 = initialize_from %.loc10_20 to %.loc10_39.3
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %.loc12: (type, type, type) = tuple_literal (i32, String, String)
-// CHECK:STDOUT:   %.loc10_39.5: type = converted %.loc12, constants.%.loc10_39.1 [template = constants.%.loc10_39.1]
+// CHECK:STDOUT:   %.2: type = converted %.loc12, constants.%.8 [template = constants.%.8]
 // CHECK:STDOUT:   %t1.var: ref (i32, String, String) = var t1
 // CHECK:STDOUT:   %t1: ref (i32, String, String) = bind_name t1, %t1.var
-// CHECK:STDOUT:   %.loc16_14: i32 = int_literal 3 [template = constants.%.loc16_14]
-// CHECK:STDOUT:   %.loc16_15: type = array_type %.loc16_14, i32 [template = constants.%.loc16_15]
+// CHECK:STDOUT:   %.loc16_14: i32 = int_literal 3 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc16_15: type = array_type %.loc16_14, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %b.var: ref [i32; 3] = var b
 // CHECK:STDOUT:   %b: ref [i32; 3] = bind_name b, %b.var
 // CHECK:STDOUT:   %t1.ref: ref (i32, String, String) = name_ref t1, %t1
@@ -83,20 +83,20 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc16_19.5: init i32 = initialize_from %.loc16_19.2 to %.loc16_19.4
 // CHECK:STDOUT:   %.loc16_19.6: ref String = tuple_access %t1.ref, element1
 // CHECK:STDOUT:   assign %b.var, <error>
-// CHECK:STDOUT:   %.loc21_14: i32 = int_literal 3 [template = constants.%.loc21_14]
-// CHECK:STDOUT:   %.loc21_15: type = array_type %.loc21_14, i32 [template = constants.%.loc21_15]
+// CHECK:STDOUT:   %.loc21_14: i32 = int_literal 3 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc21_15: type = array_type %.loc21_14, i32 [template = constants.%.15]
 // CHECK:STDOUT:   %c.var: ref [i32; 3] = var c
 // CHECK:STDOUT:   %c: ref [i32; 3] = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc21_20: i32 = int_literal 1 [template = constants.%.loc21_20]
-// CHECK:STDOUT:   %.loc21_23: i32 = int_literal 2 [template = constants.%.loc21_23]
-// CHECK:STDOUT:   %.loc21_24.1: (i32, i32) = tuple_literal (%.loc21_20, %.loc21_23)
+// CHECK:STDOUT:   %.loc21_20: i32 = int_literal 1 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc21_23: i32 = int_literal 2 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc21_24: (i32, i32) = tuple_literal (%.loc21_20, %.loc21_23)
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %.loc23: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc21_24.2: type = converted %.loc23, constants.%.loc21_24.1 [template = constants.%.loc21_24.1]
+// CHECK:STDOUT:   %.3: type = converted %.loc23, constants.%.18 [template = constants.%.18]
 // CHECK:STDOUT:   %t2.var: ref (i32, i32) = var t2
 // CHECK:STDOUT:   %t2: ref (i32, i32) = bind_name t2, %t2.var
-// CHECK:STDOUT:   %.loc27_14: i32 = int_literal 3 [template = constants.%.loc27_14]
-// CHECK:STDOUT:   %.loc27_15: type = array_type %.loc27_14, i32 [template = constants.%.loc27_15]
+// CHECK:STDOUT:   %.loc27_14: i32 = int_literal 3 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc27_15: type = array_type %.loc27_14, i32 [template = constants.%.22]
 // CHECK:STDOUT:   %d.var: ref [i32; 3] = var d
 // CHECK:STDOUT:   %d: ref [i32; 3] = bind_name d, %d.var
 // CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_ref t2, %t2

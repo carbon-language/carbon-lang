@@ -21,11 +21,11 @@ fn G(o: Outer) {
 // CHECK:STDOUT: --- nested_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.loc11_1.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc8: type = ptr_type {.n: i32} [template]
-// CHECK:STDOUT:   %.loc11_1.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

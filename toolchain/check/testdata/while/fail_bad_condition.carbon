@@ -15,7 +15,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String [template]
-// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %.2: String = string_literal "Hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,7 +28,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.2]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

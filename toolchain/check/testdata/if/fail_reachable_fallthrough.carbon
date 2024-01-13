@@ -36,9 +36,9 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: --- fail_reachable_fallthrough.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,7 +54,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -72,7 +72,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 2 [template = constants.%.loc20]
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
@@ -84,7 +84,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template = constants.%.loc29]
+// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

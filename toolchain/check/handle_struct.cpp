@@ -105,7 +105,7 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
     return true;
   }
 
-  auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
+  auto type_id = context.CanonicalizeStructType(type_block_id);
 
   auto value_id =
       context.AddInst({parse_node, SemIR::StructLiteral{type_id, refs_id}});

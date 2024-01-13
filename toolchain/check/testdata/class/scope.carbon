@@ -26,9 +26,9 @@ fn Run() {
 // CHECK:STDOUT: --- scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc15: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,7 +50,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,7 +65,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template = constants.%.loc18]
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

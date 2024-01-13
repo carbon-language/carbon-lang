@@ -11,25 +11,25 @@ var c: i32 = b[0];
 // CHECK:STDOUT: --- tuple_element_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, .b = %b, .c = %c}
-// CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.loc7_13.2 [template = constants.%.loc7_13.2]
+// CHECK:STDOUT:   %.loc7_13: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.2: type = converted %.loc7_13, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a
 // CHECK:STDOUT:   %a: ref (i32,) = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12 [template = constants.%.loc7_18]
+// CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_21.1: (i32,) = tuple_literal (%.loc7_18)
 // CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init (%.loc7_18) to %a.var
 // CHECK:STDOUT:   %.loc7_21.3: init (i32,) = converted %.loc7_21.1, %.loc7_21.2
 // CHECK:STDOUT:   assign %a.var, %.loc7_21.3
 // CHECK:STDOUT:   %.loc8_13: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.loc7_13.3: type = converted %.loc8_13, constants.%.loc7_13.2 [template = constants.%.loc7_13.2]
+// CHECK:STDOUT:   %.3: type = converted %.loc8_13, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %b.var: ref (i32,) = var b
 // CHECK:STDOUT:   %b: ref (i32,) = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref (i32,) = name_ref a, %a
@@ -41,7 +41,7 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %b.ref: ref (i32,) = name_ref b, %b
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_17.1: ref i32 = tuple_index %b.ref, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = bind_value %.loc9_17.1
 // CHECK:STDOUT:   assign %c.var, %.loc9_17.2

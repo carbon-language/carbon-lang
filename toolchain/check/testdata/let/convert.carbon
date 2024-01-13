@@ -14,13 +14,13 @@ fn F() -> i32 {
 // CHECK:STDOUT: --- convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_24.1: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.loc8_24.2: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.loc8_24.3: type = ptr_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,13 +30,13 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_24.1: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc8_24.2: type = converted %.loc8_24.1, constants.%.loc8_24.2 [template = constants.%.loc8_24.2]
+// CHECK:STDOUT:   %.loc8_24: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.1: type = converted %.loc8_24, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %v.var: ref (i32, i32, i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, i32, i32) = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template = constants.%.loc8_29]
-// CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2 [template = constants.%.loc8_32]
-// CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3 [template = constants.%.loc8_35]
+// CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_32: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc8_36.1: (i32, i32, i32) = tuple_literal (%.loc8_29, %.loc8_32, %.loc8_35)
 // CHECK:STDOUT:   %.loc8_36.2: ref i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_36.3: init i32 = initialize_from %.loc8_29 to %.loc8_36.2
@@ -48,7 +48,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_36.9: init (i32, i32, i32) = converted %.loc8_36.1, %.loc8_36.8
 // CHECK:STDOUT:   assign %v.var, %.loc8_36.9
 // CHECK:STDOUT:   %.loc10_24: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc8_24.3: type = converted %.loc10_24, constants.%.loc8_24.2 [template = constants.%.loc8_24.2]
+// CHECK:STDOUT:   %.2: type = converted %.loc10_24, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %v.ref: ref (i32, i32, i32) = name_ref v, %v
 // CHECK:STDOUT:   %.loc10_28.1: ref i32 = tuple_access %v.ref, element0
 // CHECK:STDOUT:   %.loc10_28.2: i32 = bind_value %.loc10_28.1
@@ -60,7 +60,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_28.8: (i32, i32, i32) = converted %v.ref, %.loc10_28.7
 // CHECK:STDOUT:   %w: (i32, i32, i32) = bind_name w, %.loc10_28.8
 // CHECK:STDOUT:   %w.ref: (i32, i32, i32) = name_ref w, %w
-// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w.ref, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }

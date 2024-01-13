@@ -73,7 +73,7 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   // tuple type.
   SemIR::TypeId type_id = callable.return_type_id;
   if (!type_id.is_valid()) {
-    type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
+    type_id = context.CanonicalizeTupleType({});
   }
 
   // If there is a return slot, build storage for the result.

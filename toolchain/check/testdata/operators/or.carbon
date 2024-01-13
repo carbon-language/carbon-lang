@@ -14,9 +14,9 @@ fn Or() -> bool {
 // CHECK:STDOUT: --- or.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,13 +28,13 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,7 +45,7 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = not %.loc11_14.2
-// CHECK:STDOUT:   %.loc11_14.4: bool = bool_literal true [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_14.4: bool = bool_literal true [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc11_14.3 br !or.rhs else br !or.result(%.loc11_14.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:

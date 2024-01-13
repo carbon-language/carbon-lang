@@ -28,26 +28,26 @@ fn F() {
 // CHECK:STDOUT: --- numeric_literals.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %.loc10_20.1: type = array_type %.loc10_19, i32 [template]
-// CHECK:STDOUT:   %.loc10_20.2: type = ptr_type [i32; 5] [template]
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 8 [template]
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 9 [template]
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 8 [template]
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 8 [template]
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 39999999999999999993 [template]
-// CHECK:STDOUT:   %.loc16: type = tuple_type (i32, i32, i32, i32, i32) [template]
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.loc17_22.1: type = array_type %.loc17_21, f64 [template]
-// CHECK:STDOUT:   %.loc17_22.2: type = ptr_type [f64; 7] [template]
-// CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1 [template]
-// CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1 [template]
-// CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1 [template]
-// CHECK:STDOUT:   %.loc21: f64 = real_literal 10e6 [template]
-// CHECK:STDOUT:   %.loc22: f64 = real_literal 10e7 [template]
-// CHECK:STDOUT:   %.loc23: f64 = real_literal 10e-9 [template]
-// CHECK:STDOUT:   %.loc24: f64 = real_literal 399999999999999999930e39999999999999999992 [template]
-// CHECK:STDOUT:   %.loc25: type = tuple_type (f64, f64, f64, f64, f64, f64, f64) [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.2: type = array_type %.1, i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type [i32; 5] [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 8 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 9 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 8 [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 8 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 39999999999999999993 [template]
+// CHECK:STDOUT:   %.9: type = tuple_type (i32, i32, i32, i32, i32) [template]
+// CHECK:STDOUT:   %.10: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.11: type = array_type %.10, f64 [template]
+// CHECK:STDOUT:   %.12: type = ptr_type [f64; 7] [template]
+// CHECK:STDOUT:   %.13: f64 = real_literal 9e-1 [template]
+// CHECK:STDOUT:   %.14: f64 = real_literal 80e-1 [template]
+// CHECK:STDOUT:   %.15: f64 = real_literal 800e-1 [template]
+// CHECK:STDOUT:   %.16: f64 = real_literal 10e6 [template]
+// CHECK:STDOUT:   %.17: f64 = real_literal 10e7 [template]
+// CHECK:STDOUT:   %.18: f64 = real_literal 10e-9 [template]
+// CHECK:STDOUT:   %.19: f64 = real_literal 399999999999999999930e39999999999999999992 [template]
+// CHECK:STDOUT:   %.20: type = tuple_type (f64, f64, f64, f64, f64, f64, f64) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -57,15 +57,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5 [template = constants.%.loc10_19]
-// CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32 [template = constants.%.loc10_20.1]
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 5 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_20: type = array_type %.loc10_19, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %ints.var: ref [i32; 5] = var ints
 // CHECK:STDOUT:   %ints: ref [i32; 5] = bind_name ints, %ints.var
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 8 [template = constants.%.loc11]
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 9 [template = constants.%.loc12]
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 8 [template = constants.%.loc13]
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 8 [template = constants.%.loc14]
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 39999999999999999993 [template = constants.%.loc15]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 8 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 9 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 8 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 8 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 39999999999999999993 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc16_3.1: (i32, i32, i32, i32, i32) = tuple_literal (%.loc11, %.loc12, %.loc13, %.loc14, %.loc15)
 // CHECK:STDOUT:   %.loc16_3.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc16_3.3: ref i32 = array_index %ints.var, %.loc16_3.2
@@ -85,17 +85,17 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_3.17: init [i32; 5] = array_init (%.loc16_3.4, %.loc16_3.7, %.loc16_3.10, %.loc16_3.13, %.loc16_3.16) to %ints.var
 // CHECK:STDOUT:   %.loc16_3.18: init [i32; 5] = converted %.loc16_3.1, %.loc16_3.17
 // CHECK:STDOUT:   assign %ints.var, %.loc16_3.18
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7 [template = constants.%.loc17_21]
-// CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64 [template = constants.%.loc17_22.1]
+// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 7 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc17_22: type = array_type %.loc17_21, f64 [template = constants.%.11]
 // CHECK:STDOUT:   %floats.var: ref [f64; 7] = var floats
 // CHECK:STDOUT:   %floats: ref [f64; 7] = bind_name floats, %floats.var
-// CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1 [template = constants.%.loc18]
-// CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1 [template = constants.%.loc19]
-// CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1 [template = constants.%.loc20]
-// CHECK:STDOUT:   %.loc21: f64 = real_literal 10e6 [template = constants.%.loc21]
-// CHECK:STDOUT:   %.loc22: f64 = real_literal 10e7 [template = constants.%.loc22]
-// CHECK:STDOUT:   %.loc23: f64 = real_literal 10e-9 [template = constants.%.loc23]
-// CHECK:STDOUT:   %.loc24: f64 = real_literal 399999999999999999930e39999999999999999992 [template = constants.%.loc24]
+// CHECK:STDOUT:   %.loc18: f64 = real_literal 9e-1 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc19: f64 = real_literal 80e-1 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc20: f64 = real_literal 800e-1 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc21: f64 = real_literal 10e6 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc22: f64 = real_literal 10e7 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc23: f64 = real_literal 10e-9 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc24: f64 = real_literal 399999999999999999930e39999999999999999992 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc25_3.1: (f64, f64, f64, f64, f64, f64, f64) = tuple_literal (%.loc18, %.loc19, %.loc20, %.loc21, %.loc22, %.loc23, %.loc24)
 // CHECK:STDOUT:   %.loc25_3.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_3.3: ref f64 = array_index %floats.var, %.loc25_3.2

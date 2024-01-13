@@ -80,7 +80,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- e.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc5: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,8 +89,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.4}
 // CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %.5}
 // CHECK:STDOUT:   %.5: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.loc5 [template = constants.%.loc5]
+// CHECK:STDOUT:   %.loc5_9: () = tuple_literal ()
+// CHECK:STDOUT:   %.6: type = converted %.loc5_9, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, %.2

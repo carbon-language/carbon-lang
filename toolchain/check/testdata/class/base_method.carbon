@@ -25,13 +25,13 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: --- base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: Base} [template]
-// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.a: i32}*} [template]
-// CHECK:STDOUT:   %.loc17: type = ptr_type {.base: Base} [template]
-// CHECK:STDOUT:   %.loc22: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: Base} [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: {.a: i32}*} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base} [template]
+// CHECK:STDOUT:   %.7: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,7 +70,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc14_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
-// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.loc14]
+// CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %.loc14_10, %.loc14_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

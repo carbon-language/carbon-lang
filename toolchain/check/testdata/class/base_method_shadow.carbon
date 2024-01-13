@@ -32,15 +32,15 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: --- base_method_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.loc14_1.1: type = struct_type {.base: A} [template]
-// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.base: {}*} [template]
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: A} [template]
-// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: B} [template]
-// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.base: A}*} [template]
-// CHECK:STDOUT:   %.loc16: type = ptr_type {.base: B} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: A} [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: {}*} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: A} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: {.base: A}*} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

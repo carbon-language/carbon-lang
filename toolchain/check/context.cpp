@@ -77,17 +77,18 @@ auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
   return inst_id;
 }
 
-auto Context::AddConstant(SemIR::ParseNodeAndInst parse_node_and_inst,
-                          bool is_symbolic) -> SemIR::ConstantId {
+auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
+    -> SemIR::ConstantId {
   // TODO: Deduplicate constants.
-  auto inst_id = insts().AddInNoBlock(parse_node_and_inst);
+  auto inst_id = insts().AddInNoBlock(
+      SemIR::ParseNodeAndInst::Untyped(Parse::NodeId::Invalid, inst));
   constants().Add(inst_id);
 
   auto const_id = is_symbolic ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
                               : SemIR::ConstantId::ForTemplateConstant(inst_id);
   constant_values().Set(inst_id, const_id);
 
-  CARBON_VLOG() << "AddConstantInst: " << parse_node_and_inst.inst << "\n";
+  CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
   return const_id;
 }
 
@@ -653,8 +654,7 @@ class TypeCompleter {
         break;
 
       case Phase::BuildValueRepr: {
-        auto value_rep = BuildValueRepr(
-            type_id, context_.insts().GetParseNode(inst_id), inst);
+        auto value_rep = BuildValueRepr(type_id, inst);
         context_.sem_ir().CompleteType(type_id, value_rep);
         CARBON_CHECK(old_work_list_size == work_list_.size())
             << "BuildValueRepr should not change work items";
@@ -733,9 +733,9 @@ class TypeCompleter {
 
   // Makes an empty value representation, which is used for types that have no
   // state, such as empty structs and tuples.
-  auto MakeEmptyValueRepr(Parse::NodeId parse_node) const -> SemIR::ValueRepr {
+  auto MakeEmptyValueRepr() const -> SemIR::ValueRepr {
     return {.kind = SemIR::ValueRepr::None,
-            .type_id = context_.CanonicalizeTupleType(parse_node, {})};
+            .type_id = context_.CanonicalizeTupleType({})};
   }
 
   // Makes a value representation that uses pass-by-copy, copying the given
@@ -751,14 +751,14 @@ class TypeCompleter {
 
   // Makes a value representation that uses pass-by-address with the given
   // pointee type.
-  auto MakePointerValueRepr(Parse::NodeId parse_node, SemIR::TypeId pointee_id,
+  auto MakePointerValueRepr(SemIR::TypeId pointee_id,
                             SemIR::ValueRepr::AggregateKind aggregate_kind =
                                 SemIR::ValueRepr::NotAggregate) const
       -> SemIR::ValueRepr {
     // TODO: Should we add `const` qualification to `pointee_id`?
     return {.kind = SemIR::ValueRepr::Pointer,
             .aggregate_kind = aggregate_kind,
-            .type_id = context_.GetPointerType(parse_node, pointee_id)};
+            .type_id = context_.GetPointerType(pointee_id)};
   }
 
   // Gets the value representation of a nested type, which should already be
@@ -802,13 +802,12 @@ class TypeCompleter {
         // TODO: Decide on string value semantics. This should probably be a
         // custom value representation carrying a pointer and size or
         // similar.
-        return MakePointerValueRepr(Parse::NodeId::Invalid, type_id);
+        return MakePointerValueRepr(type_id);
     }
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildStructOrTupleValueRepr(Parse::NodeId parse_node,
-                                   std::size_t num_elements,
+  auto BuildStructOrTupleValueRepr(std::size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
                                    bool same_as_object_rep) const
       -> SemIR::ValueRepr {
@@ -826,16 +825,16 @@ class TypeCompleter {
     }
     // For a struct or tuple with multiple fields, we use a pointer
     // to the elementwise value representation.
-    return MakePointerValueRepr(parse_node, elementwise_rep, aggregate_kind);
+    return MakePointerValueRepr(elementwise_rep, aggregate_kind);
   }
 
-  auto BuildStructTypeValueRepr(SemIR::TypeId type_id, Parse::NodeId parse_node,
+  auto BuildStructTypeValueRepr(SemIR::TypeId type_id,
                                 SemIR::StructType struct_type) const
       -> SemIR::ValueRepr {
     // TODO: Share more code with tuples.
     auto fields = context_.inst_blocks().Get(struct_type.fields_id);
     if (fields.empty()) {
-      return MakeEmptyValueRepr(parse_node);
+      return MakeEmptyValueRepr();
     }
 
     // Find the value representation for each field, and construct a struct
@@ -850,34 +849,31 @@ class TypeCompleter {
         same_as_object_rep = false;
         field.field_type_id = field_value_rep.type_id;
         // TODO: Use `TryEvalInst` to form this value.
-        field_id =
-            context_
-                .AddConstant(
-                    {context_.insts().GetParseNode(field_id), field},
-                    context_.constant_values()
-                        .Get(context_.types().GetInstId(field.field_type_id))
-                        .is_symbolic())
-                .inst_id();
+        field_id = context_
+                       .AddConstant(field, context_.constant_values()
+                                               .Get(context_.types().GetInstId(
+                                                   field.field_type_id))
+                                               .is_symbolic())
+                       .inst_id();
       }
       value_rep_fields.push_back(field_id);
     }
 
-    auto value_rep =
-        same_as_object_rep
-            ? type_id
-            : context_.CanonicalizeStructType(
-                  parse_node, context_.inst_blocks().Add(value_rep_fields));
-    return BuildStructOrTupleValueRepr(parse_node, fields.size(), value_rep,
+    auto value_rep = same_as_object_rep
+                         ? type_id
+                         : context_.CanonicalizeStructType(
+                               context_.inst_blocks().Add(value_rep_fields));
+    return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                        same_as_object_rep);
   }
 
-  auto BuildTupleTypeValueRepr(SemIR::TypeId type_id, Parse::NodeId parse_node,
+  auto BuildTupleTypeValueRepr(SemIR::TypeId type_id,
                                SemIR::TupleType tuple_type) const
       -> SemIR::ValueRepr {
     // TODO: Share more code with structs.
     auto elements = context_.type_blocks().Get(tuple_type.elements_id);
     if (elements.empty()) {
-      return MakeEmptyValueRepr(parse_node);
+      return MakeEmptyValueRepr();
     }
 
     // Find the value representation for each element, and construct a tuple
@@ -893,17 +889,17 @@ class TypeCompleter {
       value_rep_elements.push_back(element_value_rep.type_id);
     }
 
-    auto value_rep = same_as_object_rep ? type_id
-                                        : context_.CanonicalizeTupleType(
-                                              parse_node, value_rep_elements);
-    return BuildStructOrTupleValueRepr(parse_node, elements.size(), value_rep,
+    auto value_rep = same_as_object_rep
+                         ? type_id
+                         : context_.CanonicalizeTupleType(value_rep_elements);
+    return BuildStructOrTupleValueRepr(elements.size(), value_rep,
                                        same_as_object_rep);
   }
 
   // Builds and returns the value representation for the given type. All nested
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
-  auto BuildValueRepr(SemIR::TypeId type_id, Parse::NodeId parse_node,
-                      SemIR::Inst inst) const -> SemIR::ValueRepr {
+  auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
+      -> SemIR::ValueRepr {
     // TODO: This can emit new SemIR instructions. Consider emitting them into a
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
@@ -972,17 +968,14 @@ class TypeCompleter {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
-        return MakePointerValueRepr(parse_node, type_id,
-                                    SemIR::ValueRepr::ObjectAggregate);
+        return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
 
       case SemIR::StructType::Kind:
-        return BuildStructTypeValueRepr(type_id, parse_node,
-                                        inst.As<SemIR::StructType>());
+        return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
 
       case SemIR::TupleType::Kind:
-        return BuildTupleTypeValueRepr(type_id, parse_node,
-                                       inst.As<SemIR::TupleType>());
+        return BuildTupleTypeValueRepr(type_id, inst.As<SemIR::TupleType>());
 
       case SemIR::ClassType::Kind:
         // The value representation for a class is a pointer to the object
@@ -990,7 +983,6 @@ class TypeCompleter {
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
         return MakePointerValueRepr(
-            parse_node,
             context_.classes()
                 .Get(inst.As<SemIR::ClassType>().class_id)
                 .object_repr_id,
@@ -1157,17 +1149,14 @@ static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
   return true;
 }
 
-auto Context::CanonicalizeTypeAndAddInstIfNew(Parse::NodeId parse_node,
-                                              SemIR::Inst inst)
+auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
     -> SemIR::TypeId {
   auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
     return ProfileType(*this, inst, canonical_id);
   };
   auto make_inst = [&] {
     // TODO: Properly determine whether types are symbolic.
-    return AddConstant(SemIR::ParseNodeAndInst::Untyped(parse_node, inst),
-                       /*is_symbolic=*/false)
-        .inst_id();
+    return AddConstant(inst, /*is_symbolic=*/false).inst_id();
   };
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
@@ -1191,15 +1180,13 @@ auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
 }
 
-auto Context::CanonicalizeStructType(Parse::NodeId parse_node,
-                                     SemIR::InstBlockId refs_id)
+auto Context::CanonicalizeStructType(SemIR::InstBlockId refs_id)
     -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
-      parse_node, SemIR::StructType{SemIR::TypeId::TypeType, refs_id});
+      SemIR::StructType{SemIR::TypeId::TypeType, refs_id});
 }
 
-auto Context::CanonicalizeTupleType(Parse::NodeId parse_node,
-                                    llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto Context::CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
   // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
@@ -1208,10 +1195,9 @@ auto Context::CanonicalizeTupleType(Parse::NodeId parse_node,
   };
   auto make_tuple_inst = [&] {
     // TODO: Properly determine when types are symbolic.
-    return AddConstant(
-               {parse_node, SemIR::TupleType{SemIR::TypeId::TypeType,
-                                             type_blocks().Add(type_ids)}},
-               /*is_symbolic=*/false)
+    return AddConstant(SemIR::TupleType{SemIR::TypeId::TypeType,
+                                        type_blocks().Add(type_ids)},
+                       /*is_symbolic=*/false)
         .inst_id();
   };
   return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
@@ -1227,10 +1213,9 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   return type_id;
 }
 
-auto Context::GetPointerType(Parse::NodeId parse_node,
-                             SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
+auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
   return CanonicalizeTypeAndAddInstIfNew(
-      parse_node, SemIR::PointerType{SemIR::TypeId::TypeType, pointee_type_id});
+      SemIR::PointerType{SemIR::TypeId::TypeType, pointee_type_id});
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

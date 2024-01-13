@@ -15,9 +15,9 @@ fn Main() {
 // CHECK:STDOUT: --- empty_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_13.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc7_13.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc12: {} = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: {} = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,8 +36,8 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo [template = file.%Echo]
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: {} = struct_value () [template = constants.%.loc12]
-// CHECK:STDOUT:   %.loc12_9.3: {} = converted %.loc12_9.1, %.loc12_9.2 [template = constants.%.loc12]
+// CHECK:STDOUT:   %.loc12_9.2: {} = struct_value () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_9.3: {} = converted %.loc12_9.1, %.loc12_9.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_7: init {} = call %Echo.ref(%.loc12_9.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

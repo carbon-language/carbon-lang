@@ -821,7 +821,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
-      auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
+      auto tuple_type_id = context.CanonicalizeTupleType(type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -1124,9 +1124,8 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
     }
     auto parse_node = context.insts().GetParseNode(self_or_addr_id);
     self_or_addr_id = context.AddInst(
-        {parse_node,
-         SemIR::AddrOf{context.GetPointerType(parse_node, self.type_id()),
-                       self_or_addr_id}});
+        {parse_node, SemIR::AddrOf{context.GetPointerType(self.type_id()),
+                                   self_or_addr_id}});
   }
 
   return ConvertToValueOfType(context, call_parse_node, self_or_addr_id,

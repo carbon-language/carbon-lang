@@ -14,7 +14,7 @@ fn Main() {
 // CHECK:STDOUT: --- return_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_11.2: type = converted %.loc11_11.1, constants.%.loc11 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_11: () = tuple_literal ()
+// CHECK:STDOUT:   %.1: type = converted %.loc11_11, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple [template = file.%MakeImplicitEmptyTuple]
