@@ -945,7 +945,7 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
     expr_id = context.AddInst(
-        {context.insts().GetParseNode(expr_id),
+        {context.insts().GetParseNode(orig_expr_id),
          SemIR::Converted{target.type_id, orig_expr_id, expr_id}});
   }
 

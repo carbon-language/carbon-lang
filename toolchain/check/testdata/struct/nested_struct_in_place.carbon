@@ -30,10 +30,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_29: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.1: type = converted %.loc10_29, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_50: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.2: type = converted %.loc10_50, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_29.1: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10_29.2: type = converted %.loc10_29.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_50.1: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:   %.loc10_50.2: type = converted %.loc10_50.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template]
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var v
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name v, %v.var

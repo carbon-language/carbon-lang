@@ -60,8 +60,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref.loc9: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 9 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.ref.loc9, %.loc9
-// CHECK:STDOUT:   %.loc11_19: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.1: type = converted %.loc11_19, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_19.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %b.var: ref (i32, i32) = var b
 // CHECK:STDOUT:   %b: ref (i32, i32) = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1 [template = constants.%.6]

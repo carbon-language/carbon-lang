@@ -41,21 +41,21 @@ fn And() -> bool {
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc11_11: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_11, %.loc11_14.1
-// CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
+// CHECK:STDOUT:   %.loc11_11.1: init bool = call %F.ref()
+// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_11.1
+// CHECK:STDOUT:   %.loc11_11.2: bool = converted %.loc11_11.1, %.loc11_14.1
+// CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc11_11.2 br !and.rhs else br !and.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc11_19: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %.loc11_19
-// CHECK:STDOUT:   %.loc11_14.5: bool = converted %.loc11_19, %.loc11_14.4
-// CHECK:STDOUT:   br !and.result(%.loc11_14.5)
+// CHECK:STDOUT:   %.loc11_19.1: init bool = call %G.ref()
+// CHECK:STDOUT:   %.loc11_14.3: bool = value_of_initializer %.loc11_19.1
+// CHECK:STDOUT:   %.loc11_19.2: bool = converted %.loc11_19.1, %.loc11_14.3
+// CHECK:STDOUT:   br !and.result(%.loc11_19.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc11_14.6: bool = block_arg !and.result
-// CHECK:STDOUT:   return %.loc11_14.6
+// CHECK:STDOUT:   %.loc11_14.4: bool = block_arg !and.result
+// CHECK:STDOUT:   return %.loc11_14.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

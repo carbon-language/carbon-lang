@@ -72,8 +72,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_19: ref i32 = struct_access %s.ref.loc12, element1
 // CHECK:STDOUT:   %.loc12_17: i32* = addr_of %.loc12_19
 // CHECK:STDOUT:   assign %r.var, %.loc12_17
-// CHECK:STDOUT:   %.loc14_19: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.1: type = converted %.loc14_19, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_19.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc14_19.2: type = converted %.loc14_19.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %t.var: ref (i32, i32) = var t
 // CHECK:STDOUT:   %t: ref (i32, i32) = bind_name t, %t.var
 // CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1 [template = constants.%.7]

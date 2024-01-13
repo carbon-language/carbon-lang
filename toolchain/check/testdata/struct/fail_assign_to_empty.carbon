@@ -20,8 +20,8 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
-// CHECK:STDOUT:   %.loc10_9: {} = struct_literal ()
-// CHECK:STDOUT:   %.2: type = converted %.loc10_9, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_9.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref {} = var x
 // CHECK:STDOUT:   %x: ref {} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1 [template = constants.%.3]

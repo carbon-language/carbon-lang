@@ -23,10 +23,10 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
-// CHECK:STDOUT:   %.loc7_18: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc7_24: ((type, type), type) = tuple_literal (%.loc7_18, i32)
-// CHECK:STDOUT:   %.2: type = converted %.loc7_18, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %.3: type = converted %.loc7_24, constants.%.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_18.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc7_24.1: ((type, type), type) = tuple_literal (%.loc7_18.1, i32)
+// CHECK:STDOUT:   %.loc7_18.2: type = converted %.loc7_18.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_24.2: type = converted %.loc7_24.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %x.var: ref ((i32, i32), i32) = var x
 // CHECK:STDOUT:   %x: ref ((i32, i32), i32) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_30: i32 = int_literal 12 [template = constants.%.8]

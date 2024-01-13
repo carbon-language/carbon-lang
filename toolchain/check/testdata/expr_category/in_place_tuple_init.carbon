@@ -36,8 +36,8 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_19: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.1: type = converted %.loc10_19, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_19.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc10_19.2: type = converted %.loc10_19.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %v.var: ref (i32, i32) = var v
 // CHECK:STDOUT:   %v: ref (i32, i32) = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10: <function> = name_ref F, file.%F [template = file.%F]

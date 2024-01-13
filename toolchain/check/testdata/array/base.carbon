@@ -59,9 +59,9 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc8_30.8: init [f64; 2] = array_init (%.loc8_30.4, %.loc8_30.7) to %b.var
 // CHECK:STDOUT:   %.loc8_30.9: init [f64; 2] = converted %.loc8_30.1, %.loc8_30.8
 // CHECK:STDOUT:   assign %b.var, %.loc8_30.9
-// CHECK:STDOUT:   %.loc9_10: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_10.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 5 [template = constants.%.13]
-// CHECK:STDOUT:   %.2: type = converted %.loc9_10, constants.%.12 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%.12 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc9_14: type = array_type %.loc9_13, () [template = constants.%.14]
 // CHECK:STDOUT:   %c.var: ref [(); 5] = var c
 // CHECK:STDOUT:   %c: ref [(); 5] = bind_name c, %c.var

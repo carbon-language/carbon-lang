@@ -36,8 +36,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_15: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.1: type = converted %.loc10_15, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_15.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc10_15.2: type = converted %.loc10_15.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
 // CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1 [template = constants.%.3]

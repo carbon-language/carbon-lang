@@ -113,8 +113,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc21_39.1: ref C = deref %p.ref
 // CHECK:STDOUT:   %.loc21_39.2: ref B = class_element_access %.loc21_39.1, element0
 // CHECK:STDOUT:   %.loc21_39.3: B* = addr_of %.loc21_39.2
-// CHECK:STDOUT:   %.loc21_39.4: B* = converted %p.ref, %.loc21_39.3
-// CHECK:STDOUT:   return %.loc21_39.4
+// CHECK:STDOUT:   %.loc21_38: B* = converted %p.ref, %.loc21_39.3
+// CHECK:STDOUT:   return %.loc21_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p: B*) -> A* {
@@ -123,8 +123,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc22_39.1: ref B = deref %p.ref
 // CHECK:STDOUT:   %.loc22_39.2: ref A = class_element_access %.loc22_39.1, element0
 // CHECK:STDOUT:   %.loc22_39.3: A* = addr_of %.loc22_39.2
-// CHECK:STDOUT:   %.loc22_39.4: A* = converted %p.ref, %.loc22_39.3
-// CHECK:STDOUT:   return %.loc22_39.4
+// CHECK:STDOUT:   %.loc22_38: A* = converted %p.ref, %.loc22_39.3
+// CHECK:STDOUT:   return %.loc22_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p: C*) -> A* {
@@ -134,8 +134,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc23_39.2: ref B = class_element_access %.loc23_39.1, element0
 // CHECK:STDOUT:   %.loc23_39.3: ref A = class_element_access %.loc23_39.2, element0
 // CHECK:STDOUT:   %.loc23_39.4: A* = addr_of %.loc23_39.3
-// CHECK:STDOUT:   %.loc23_39.5: A* = converted %p.ref, %.loc23_39.4
-// CHECK:STDOUT:   return %.loc23_39.5
+// CHECK:STDOUT:   %.loc23_38: A* = converted %p.ref, %.loc23_39.4
+// CHECK:STDOUT:   return %.loc23_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c: C) {
@@ -144,21 +144,21 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
 // CHECK:STDOUT:   %.loc26_15.1: ref B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc26_15.2: ref A = class_element_access %.loc26_15.1, element0
-// CHECK:STDOUT:   %.loc26_15.3: ref A = converted %c.ref, %.loc26_15.2
-// CHECK:STDOUT:   %.loc26_15.4: A = bind_value %.loc26_15.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc26_15.4
+// CHECK:STDOUT:   %.loc26_14.1: ref A = converted %c.ref, %.loc26_15.2
+// CHECK:STDOUT:   %.loc26_14.2: A = bind_value %.loc26_14.1
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc26_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c: C*) -> A* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
-// CHECK:STDOUT:   %.loc30_12: ref C = deref %c.ref
+// CHECK:STDOUT:   %.loc30_12.1: ref C = deref %c.ref
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12, element0
+// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12.1, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
-// CHECK:STDOUT:   %.loc30_15.3: ref A = converted %.loc30_12, %.loc30_15.2
-// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_15.3
+// CHECK:STDOUT:   %.loc30_12.2: ref A = converted %.loc30_12.1, %.loc30_15.2
+// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_12.2
 // CHECK:STDOUT:   return %.loc30_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -190,9 +190,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc34_57.8: ref C = converted %.loc34_57.1, %.loc34_57.7
 // CHECK:STDOUT:   %.loc34_63.1: ref B = class_element_access %.loc34_57.8, element0
 // CHECK:STDOUT:   %.loc34_63.2: ref A = class_element_access %.loc34_63.1, element0
-// CHECK:STDOUT:   %.loc34_63.3: ref A = converted %.loc34_57.8, %.loc34_63.2
-// CHECK:STDOUT:   %.loc34_63.4: A = bind_value %.loc34_63.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc34_63.4
+// CHECK:STDOUT:   %.loc34_57.9: ref A = converted %.loc34_57.8, %.loc34_63.2
+// CHECK:STDOUT:   %.loc34_57.10: A = bind_value %.loc34_57.9
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc34_57.10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

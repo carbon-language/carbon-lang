@@ -219,8 +219,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
-// CHECK:STDOUT:   %.loc51_22: (type,) = tuple_literal (%Base.ref)
-// CHECK:STDOUT:   %.1: type = converted %.loc51_22, constants.%.7 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc51_22.1: (type,) = tuple_literal (%Base.ref)
+// CHECK:STDOUT:   %.loc51_22.2: type = converted %.loc51_22.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc51_23.1: type = unbound_element_type DeriveFromTuple, <error> [template]
 // CHECK:STDOUT:   %.loc51_23.2: <unbound element of class DeriveFromTuple> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
@@ -339,19 +339,19 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc106_11.1: ref DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %.loc106_11.2: ref Final = class_element_access %.loc106_11.1, element0
 // CHECK:STDOUT:   %.loc106_11.3: Final* = addr_of %.loc106_11.2
-// CHECK:STDOUT:   %.loc106_11.4: Final* = converted %p.ref, %.loc106_11.3
-// CHECK:STDOUT:   return %.loc106_11.4
+// CHECK:STDOUT:   %.loc106_10: Final* = converted %p.ref, %.loc106_11.3
+// CHECK:STDOUT:   return %.loc106_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_WithMember(%p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromFinal* = name_ref p, %p
-// CHECK:STDOUT:   %.loc110_11: ref DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %.loc110_14.1: ref Final = class_element_access %.loc110_11, element0
-// CHECK:STDOUT:   %.loc110_14.2: ref Final = converted %.loc110_11, %.loc110_14.1
-// CHECK:STDOUT:   %.loc110_14.3: ref i32 = class_element_access %.loc110_14.2, element0
-// CHECK:STDOUT:   %.loc110_14.4: i32 = bind_value %.loc110_14.3
-// CHECK:STDOUT:   return %.loc110_14.4
+// CHECK:STDOUT:   %.loc110_11.1: ref DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc110_14.1: ref Final = class_element_access %.loc110_11.1, element0
+// CHECK:STDOUT:   %.loc110_11.2: ref Final = converted %.loc110_11.1, %.loc110_14.1
+// CHECK:STDOUT:   %.loc110_14.2: ref i32 = class_element_access %.loc110_11.2, element0
+// CHECK:STDOUT:   %.loc110_14.3: i32 = bind_value %.loc110_14.2
+// CHECK:STDOUT:   return %.loc110_14.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_NoMember(%p: DeriveFromFinal*) -> i32 {

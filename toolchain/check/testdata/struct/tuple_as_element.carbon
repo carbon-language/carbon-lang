@@ -19,8 +19,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y}
-// CHECK:STDOUT:   %.loc7_27: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.2: type = converted %.loc7_27, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_27.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: (i32,)} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: (i32,)} = bind_name x, %x.var
@@ -37,8 +37,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc7_50.6: init {.a: i32, .b: (i32,)} = struct_init (%.loc7_50.3, %.loc7_50.5) to %x.var
 // CHECK:STDOUT:   %.loc7_50.7: init {.a: i32, .b: (i32,)} = converted %.loc7_50.1, %.loc7_50.6
 // CHECK:STDOUT:   assign %x.var, %.loc7_50.7
-// CHECK:STDOUT:   %.loc8_27: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   %.3: type = converted %.loc8_27, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_27.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   %.loc8_27.2: type = converted %.loc8_27.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)} [template]
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: (i32,)} = var y
 // CHECK:STDOUT:   %y: ref {.a: i32, .b: (i32,)} = bind_name y, %y.var
