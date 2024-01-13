@@ -16,7 +16,7 @@ fn Run() -> String {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = ptr_type String [template]
-// CHECK:STDOUT:   %.loc13: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

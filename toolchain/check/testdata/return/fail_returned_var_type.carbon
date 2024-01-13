@@ -18,7 +18,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1 [template]
+// CHECK:STDOUT:   %.1: f64 = real_literal 0e-1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -29,7 +29,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1 [template = constants.%.loc14]
+// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1 [template = constants.%.1]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

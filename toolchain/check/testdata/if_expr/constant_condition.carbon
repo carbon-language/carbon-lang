@@ -18,10 +18,10 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc15: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,19 +34,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_13: bool = bool_literal true [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_13: bool = bool_literal true [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc11_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -58,10 +58,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc11_33: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_27.1: i32 = value_of_initializer %.loc11_33
-// CHECK:STDOUT:   %.loc11_27.2: i32 = converted %.loc11_33, %.loc11_27.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_27.2)
+// CHECK:STDOUT:   %.loc11_33.1: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_27: i32 = value_of_initializer %.loc11_33.1
+// CHECK:STDOUT:   %.loc11_33.2: i32 = converted %.loc11_33.1, %.loc11_27
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_33.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
@@ -70,7 +70,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13: bool = bool_literal false [template = constants.%.loc15]
+// CHECK:STDOUT:   %.loc15_13: bool = bool_literal false [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -82,10 +82,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc15_34: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc15_28.1: i32 = value_of_initializer %.loc15_34
-// CHECK:STDOUT:   %.loc15_28.2: i32 = converted %.loc15_34, %.loc15_28.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_28.2)
+// CHECK:STDOUT:   %.loc15_34.1: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc15_28: i32 = value_of_initializer %.loc15_34.1
+// CHECK:STDOUT:   %.loc15_34.2: i32 = converted %.loc15_34.1, %.loc15_28
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_34.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result

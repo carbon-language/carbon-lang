@@ -12,11 +12,11 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: --- tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.loc8_23.2: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc8_23.3: type = ptr_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15 [template]
-// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 15 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 35 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,8 +26,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15 [template = constants.%.loc9_11]
-// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35 [template = constants.%.loc9_15]
+// CHECK:STDOUT:   %.loc9_11: i32 = int_literal 15 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_15: i32 = int_literal 35 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_literal (%.loc9_11, %.loc9_15)
 // CHECK:STDOUT:   %.loc9_17.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc9_17.3: init i32 = initialize_from %.loc9_11 to %.loc9_17.2

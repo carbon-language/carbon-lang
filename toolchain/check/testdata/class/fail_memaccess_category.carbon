@@ -36,12 +36,12 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: --- fail_memaccess_category.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.loc13_1.1: type = struct_type {.a: A} [template]
-// CHECK:STDOUT:   %.loc13_1.2: type = struct_type {.a: {}*} [template]
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.a: A} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.a: A} [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: {}*} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.a: A} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -37,21 +37,21 @@ fn ConvertInit() {
 // CHECK:STDOUT: --- derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc14_1.1: type = struct_type {.base: A, .b: i32} [template]
-// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.base: {.a: i32}*, .b: i32} [template]
-// CHECK:STDOUT:   %.loc14_1.3: type = ptr_type {.base: {.a: i32}*, .b: i32} [template]
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: A, .b: i32} [template]
-// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: B, .c: i32} [template]
-// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.base: A, .b: i32}*, .c: i32} [template]
-// CHECK:STDOUT:   %.loc19_1.3: type = ptr_type {.base: {.base: A, .b: i32}*, .c: i32} [template]
-// CHECK:STDOUT:   %.loc16: type = ptr_type {.base: B, .c: i32} [template]
-// CHECK:STDOUT:   %.loc34_38: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc34_47: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc34_48: type = struct_type {.base: {.a: i32}, .b: i32} [template]
-// CHECK:STDOUT:   %.loc34_56: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc34_57: type = struct_type {.base: {.base: {.a: i32}, .b: i32}, .c: i32} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.base: A, .b: i32} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: {.a: i32}*, .b: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.a: i32}*, .b: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: A, .b: i32} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: B, .c: i32} [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: {.base: A, .b: i32}*, .c: i32} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: {.base: A, .b: i32}*, .c: i32} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type {.base: B, .c: i32} [template]
+// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: {.a: i32}, .b: i32} [template]
+// CHECK:STDOUT:   %.14: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.15: type = struct_type {.base: {.base: {.a: i32}, .b: i32}, .c: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -113,8 +113,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc21_39.1: ref C = deref %p.ref
 // CHECK:STDOUT:   %.loc21_39.2: ref B = class_element_access %.loc21_39.1, element0
 // CHECK:STDOUT:   %.loc21_39.3: B* = addr_of %.loc21_39.2
-// CHECK:STDOUT:   %.loc21_39.4: B* = converted %p.ref, %.loc21_39.3
-// CHECK:STDOUT:   return %.loc21_39.4
+// CHECK:STDOUT:   %.loc21_38: B* = converted %p.ref, %.loc21_39.3
+// CHECK:STDOUT:   return %.loc21_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p: B*) -> A* {
@@ -123,8 +123,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc22_39.1: ref B = deref %p.ref
 // CHECK:STDOUT:   %.loc22_39.2: ref A = class_element_access %.loc22_39.1, element0
 // CHECK:STDOUT:   %.loc22_39.3: A* = addr_of %.loc22_39.2
-// CHECK:STDOUT:   %.loc22_39.4: A* = converted %p.ref, %.loc22_39.3
-// CHECK:STDOUT:   return %.loc22_39.4
+// CHECK:STDOUT:   %.loc22_38: A* = converted %p.ref, %.loc22_39.3
+// CHECK:STDOUT:   return %.loc22_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p: C*) -> A* {
@@ -134,8 +134,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc23_39.2: ref B = class_element_access %.loc23_39.1, element0
 // CHECK:STDOUT:   %.loc23_39.3: ref A = class_element_access %.loc23_39.2, element0
 // CHECK:STDOUT:   %.loc23_39.4: A* = addr_of %.loc23_39.3
-// CHECK:STDOUT:   %.loc23_39.5: A* = converted %p.ref, %.loc23_39.4
-// CHECK:STDOUT:   return %.loc23_39.5
+// CHECK:STDOUT:   %.loc23_38: A* = converted %p.ref, %.loc23_39.4
+// CHECK:STDOUT:   return %.loc23_38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c: C) {
@@ -144,32 +144,32 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
 // CHECK:STDOUT:   %.loc26_15.1: ref B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc26_15.2: ref A = class_element_access %.loc26_15.1, element0
-// CHECK:STDOUT:   %.loc26_15.3: ref A = converted %c.ref, %.loc26_15.2
-// CHECK:STDOUT:   %.loc26_15.4: A = bind_value %.loc26_15.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc26_15.4
+// CHECK:STDOUT:   %.loc26_14.1: ref A = converted %c.ref, %.loc26_15.2
+// CHECK:STDOUT:   %.loc26_14.2: A = bind_value %.loc26_14.1
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc26_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertRef(%c: C*) -> A* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
-// CHECK:STDOUT:   %.loc30_12: ref C = deref %c.ref
+// CHECK:STDOUT:   %.loc30_12.1: ref C = deref %c.ref
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12, element0
+// CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12.1, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
-// CHECK:STDOUT:   %.loc30_15.3: ref A = converted %.loc30_12, %.loc30_15.2
-// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_15.3
+// CHECK:STDOUT:   %.loc30_12.2: ref A = converted %.loc30_12.1, %.loc30_15.2
+// CHECK:STDOUT:   %.loc30_10: A* = addr_of %.loc30_12.2
 // CHECK:STDOUT:   return %.loc30_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc34_38: i32 = int_literal 1 [template = constants.%.loc34_38]
+// CHECK:STDOUT:   %.loc34_38: i32 = int_literal 1 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc34_39.1: {.a: i32} = struct_literal (%.loc34_38)
-// CHECK:STDOUT:   %.loc34_47: i32 = int_literal 2 [template = constants.%.loc34_47]
+// CHECK:STDOUT:   %.loc34_47: i32 = int_literal 2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc34_48.1: {.base: {.a: i32}, .b: i32} = struct_literal (%.loc34_39.1, %.loc34_47)
-// CHECK:STDOUT:   %.loc34_56: i32 = int_literal 3 [template = constants.%.loc34_56]
+// CHECK:STDOUT:   %.loc34_56: i32 = int_literal 3 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc34_57.1: {.base: {.base: {.a: i32}, .b: i32}, .c: i32} = struct_literal (%.loc34_48.1, %.loc34_56)
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C [template = file.%C]
 // CHECK:STDOUT:   %.loc34_57.2: ref C = temporary_storage
@@ -190,9 +190,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc34_57.8: ref C = converted %.loc34_57.1, %.loc34_57.7
 // CHECK:STDOUT:   %.loc34_63.1: ref B = class_element_access %.loc34_57.8, element0
 // CHECK:STDOUT:   %.loc34_63.2: ref A = class_element_access %.loc34_63.1, element0
-// CHECK:STDOUT:   %.loc34_63.3: ref A = converted %.loc34_57.8, %.loc34_63.2
-// CHECK:STDOUT:   %.loc34_63.4: A = bind_value %.loc34_63.3
-// CHECK:STDOUT:   %a: A = bind_name a, %.loc34_63.4
+// CHECK:STDOUT:   %.loc34_57.9: ref A = converted %.loc34_57.8, %.loc34_63.2
+// CHECK:STDOUT:   %.loc34_57.10: A = bind_value %.loc34_57.9
+// CHECK:STDOUT:   %a: A = bind_name a, %.loc34_57.10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -37,15 +37,15 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc22: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc24: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.loc31: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc34: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.7: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -56,42 +56,42 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SameScope() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc8 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc9
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 1 [template = constants.%.loc16]
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc16
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.loc18]
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DifferentScopes() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: bool = bool_literal true [template = constants.%.loc22]
+// CHECK:STDOUT:   %.loc22: bool = bool_literal true [template = constants.%.5]
 // CHECK:STDOUT:   if %.loc22 br !if.then.loc22 else br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc22:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template = constants.%.loc23]
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   assign %v.var, %.loc23
-// CHECK:STDOUT:   %.loc24: bool = bool_literal true [template = constants.%.loc24]
+// CHECK:STDOUT:   %.loc24: bool = bool_literal true [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc24 br !if.then.loc24 else br !if.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc24:
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc31: i32 = int_literal 1 [template = constants.%.loc31]
+// CHECK:STDOUT:   %.loc31: i32 = int_literal 1 [template = constants.%.8]
 // CHECK:STDOUT:   assign %w.var, %.loc31
 // CHECK:STDOUT:   br !if.else.loc24
 // CHECK:STDOUT:
@@ -99,7 +99,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc22:
-// CHECK:STDOUT:   %.loc34: i32 = int_literal 0 [template = constants.%.loc34]
+// CHECK:STDOUT:   %.loc34: i32 = int_literal 0 [template = constants.%.9]
 // CHECK:STDOUT:   return %.loc34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

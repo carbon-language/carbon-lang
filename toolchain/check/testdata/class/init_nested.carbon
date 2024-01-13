@@ -23,12 +23,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: --- init_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.c: Inner, .d: Inner} [template]
-// CHECK:STDOUT:   %.loc17_1.2: type = struct_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
-// CHECK:STDOUT:   %.loc17_1.3: type = ptr_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
-// CHECK:STDOUT:   %.loc14: type = ptr_type {.c: Inner, .d: Inner} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: Inner, .d: Inner} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.c: Inner, .d: Inner} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

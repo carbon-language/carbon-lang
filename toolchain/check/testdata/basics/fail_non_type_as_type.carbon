@@ -12,14 +12,14 @@ var x: type = 42;
 // CHECK:STDOUT: --- fail_non_type_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 42 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 42 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10: i32 = int_literal 42 [template = constants.%.loc10]
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 42 [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -28,7 +28,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,7 +45,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.loc4]
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

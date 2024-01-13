@@ -22,8 +22,8 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT: --- self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

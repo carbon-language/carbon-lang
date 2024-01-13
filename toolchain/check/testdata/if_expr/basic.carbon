@@ -12,11 +12,11 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc8_17.1: type = array_type %.loc8_16, i32 [template]
-// CHECK:STDOUT:   %.loc8_17.2: type = ptr_type [i32; 1] [template]
-// CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc8_24: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: type = array_type %.1, i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type [i32; 1] [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.5: type = tuple_type (i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,11 +26,11 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.loc8_16]
-// CHECK:STDOUT:   %.loc8_17: type = array_type %.loc8_16, i32 [template = constants.%.loc8_17.1]
+// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_17: type = array_type %.loc8_16, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref [i32; 1] = var x
 // CHECK:STDOUT:   %x: ref [i32; 1] = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0 [template = constants.%.loc8_22]
+// CHECK:STDOUT:   %.loc8_22: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_24.1: (i32,) = tuple_literal (%.loc8_22)
 // CHECK:STDOUT:   %.loc8_24.2: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc8_24.3: ref i32 = array_index %x.var, %.loc8_24.2

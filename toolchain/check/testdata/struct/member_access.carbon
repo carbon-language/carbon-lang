@@ -11,9 +11,9 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_25: type = ptr_type {.a: f64, .b: i32} [template]
-// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1 [template]
-// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: type = ptr_type {.a: f64, .b: i32} [template]
+// CHECK:STDOUT:   %.2: f64 = real_literal 0e-1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -21,8 +21,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: f64, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1 [template = constants.%.loc7_35]
-// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1 [template = constants.%.loc7_45]
+// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_46.1: {.a: f64, .b: i32} = struct_literal (%.loc7_35, %.loc7_45)
 // CHECK:STDOUT:   %.loc7_46.2: ref f64 = struct_access %x.var, element0
 // CHECK:STDOUT:   %.loc7_46.3: init f64 = initialize_from %.loc7_35 to %.loc7_46.2

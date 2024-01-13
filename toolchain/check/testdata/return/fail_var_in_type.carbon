@@ -13,7 +13,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

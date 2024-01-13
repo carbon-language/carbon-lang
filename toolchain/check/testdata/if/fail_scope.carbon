@@ -18,7 +18,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: --- fail_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,7 +34,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 2 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 2 [template = constants.%.1]
 // CHECK:STDOUT:   assign %n.var, %.loc9
 // CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc10: i32 = bind_value %n.ref.loc10

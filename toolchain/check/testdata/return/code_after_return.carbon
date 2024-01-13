@@ -12,7 +12,7 @@ fn Main() {
 // CHECK:STDOUT: --- code_after_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

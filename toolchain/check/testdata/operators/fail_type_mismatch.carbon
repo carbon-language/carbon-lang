@@ -14,7 +14,7 @@ fn Main() {
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_17: <error> = not <error>
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return

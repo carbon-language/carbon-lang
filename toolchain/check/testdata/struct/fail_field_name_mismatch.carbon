@@ -17,8 +17,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT: --- fail_field_name_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc10_27: type = struct_type {.b: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.loc10_26]
+// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_27: {.b: i32} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.loc15: type = struct_type {.b: i32} [template]
