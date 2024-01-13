@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "5704ebd75cf3cb5f4ab56ba2939bb74d98752cd7eed0ea9357a9ed39ca41640e",
+  "moduleFileHash": "ddc3243fab92897b86a0cf8a5d3f048e44bf17ca432eb5ec454fa91710337db6",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -56,7 +56,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 58,
+                "line": 88,
                 "column": 13
               }
             },
@@ -79,7 +79,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 68,
+                "line": 98,
                 "column": 13
               }
             },
@@ -105,7 +105,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 108,
+                "line": 138,
                 "column": 13
               }
             }
@@ -119,7 +119,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 77,
+            "line": 107,
             "column": 35
           },
           "imports": {
@@ -136,7 +136,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 123,
+            "line": 153,
             "column": 29
           },
           "imports": {
@@ -153,7 +153,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 135,
+            "line": 165,
             "column": 23
           },
           "imports": {
@@ -169,7 +169,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 136,
+                "line": 166,
                 "column": 17
               }
             }
@@ -183,7 +183,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 142,
+            "line": 172,
             "column": 20
           },
           "imports": {
@@ -201,7 +201,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 143,
+                "line": 173,
                 "column": 10
               }
             }
@@ -215,7 +215,8 @@
         "com_google_absl": "abseil-cpp@20230802.0",
         "com_googlesource_code_re2": "re2@2023-11-01",
         "com_google_googletest": "googletest@1.14.0.bcr.1",
-        "com_github_google_benchmark": "google_benchmark@1.8.3",
+        "com_github_google_benchmark": "google_benchmark@_",
+        "libpfm": "libpfm@_",
         "rules_bison": "rules_bison@0.2.2",
         "rules_flex": "rules_flex@0.2.1",
         "rules_m4": "rules_m4@0.2.3",
@@ -275,7 +276,7 @@
         "platforms": "platforms@0.0.8",
         "bazel_skylib": "bazel_skylib@1.5.0",
         "com_google_googletest": "googletest@1.14.0.bcr.1",
-        "com_github_google_benchmark": "google_benchmark@1.8.3",
+        "com_github_google_benchmark": "google_benchmark@_",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
       },
@@ -393,10 +394,10 @@
         }
       }
     },
-    "google_benchmark@1.8.3": {
+    "google_benchmark@_": {
       "name": "google_benchmark",
       "version": "1.8.3",
-      "key": "google_benchmark@1.8.3",
+      "key": "google_benchmark@_",
       "repoName": "google_benchmark",
       "executionPlatformsToRegister": [],
       "toolchainsToRegister": [],
@@ -406,23 +407,24 @@
         "platforms": "platforms@0.0.8",
         "rules_foreign_cc": "rules_foreign_cc@0.9.0",
         "rules_cc": "rules_cc@0.0.9",
-        "libpfm": "libpfm@4.11.0",
+        "libpfm": "libpfm@_",
         "bazel_tools": "bazel_tools@_",
         "local_config_platform": "local_config_platform@_"
-      },
-      "repoSpec": {
-        "bzlFile": "@bazel_tools//tools/build_defs/repo:http.bzl",
-        "ruleClassName": "http_archive",
-        "attributes": {
-          "name": "google_benchmark~1.8.3",
-          "urls": [
-            "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.tar.gz"
-          ],
-          "integrity": "sha256-a8GApX0j1NlRVRn5KwyD1hsFtbqxiJYfNqx7BrDZ6c4=",
-          "strip_prefix": "benchmark-1.8.3",
-          "remote_patches": {},
-          "remote_patch_strip": 0
-        }
+      }
+    },
+    "libpfm@_": {
+      "name": "libpfm",
+      "version": "",
+      "key": "libpfm@_",
+      "repoName": "libpfm",
+      "executionPlatformsToRegister": [],
+      "toolchainsToRegister": [],
+      "extensionUsages": [],
+      "deps": {
+        "rules_cc": "rules_cc@0.0.9",
+        "platforms": "platforms@0.0.8",
+        "bazel_tools": "bazel_tools@_",
+        "local_config_platform": "local_config_platform@_"
       }
     },
     "rules_bison@0.2.2": {
@@ -1211,38 +1213,6 @@
             "https://bcr.bazel.build/modules/rules_foreign_cc/0.9.0/patches/module_dot_bazel.patch": "sha256-VTNnq8ySdeo9pI4rrJ+EXa/9ZACgQQ4baUwoQpljzCM="
           },
           "remote_patch_strip": 1
-        }
-      }
-    },
-    "libpfm@4.11.0": {
-      "name": "libpfm",
-      "version": "4.11.0",
-      "key": "libpfm@4.11.0",
-      "repoName": "libpfm",
-      "executionPlatformsToRegister": [],
-      "toolchainsToRegister": [],
-      "extensionUsages": [],
-      "deps": {
-        "platforms": "platforms@0.0.8",
-        "rules_foreign_cc": "rules_foreign_cc@0.9.0",
-        "bazel_tools": "bazel_tools@_",
-        "local_config_platform": "local_config_platform@_"
-      },
-      "repoSpec": {
-        "bzlFile": "@bazel_tools//tools/build_defs/repo:http.bzl",
-        "ruleClassName": "http_archive",
-        "attributes": {
-          "name": "libpfm~4.11.0",
-          "urls": [
-            "https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-4.11.0.tar.gz"
-          ],
-          "integrity": "sha256-XaX4hyveFLNjTJaI2YD2i9ootRAmhyPMEpc+7bq5/sw=",
-          "strip_prefix": "libpfm-4.11.0",
-          "remote_patches": {
-            "https://bcr.bazel.build/modules/libpfm/4.11.0/patches/module_dot_bazel.patch": "sha256-G0wQJ2mVEoW/L5LGzmbNfuZaxI2+9NDuWJtqvCpM1pc=",
-            "https://bcr.bazel.build/modules/libpfm/4.11.0/patches/add_build_file.patch": "sha256-E61d/qQgmeOcUliWaveHPp1EZoOjkvZJsqhGhHofqUg="
-          },
-          "remote_patch_strip": 0
         }
       }
     },
