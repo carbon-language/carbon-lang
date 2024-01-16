@@ -13,12 +13,12 @@ fn F() -> i32 {
 // CHECK:STDOUT: --- literal_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.x: i32, .y: i32, .z: i32} [template]
-// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.loc10_35.1: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} [template]
-// CHECK:STDOUT:   %.loc10_35.2: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32} [template]
-// CHECK:STDOUT:   %.loc10_35.3: type = ptr_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type {.x: i32, .y: i32, .z: i32} [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.a: i32, .b: {.x: i32, .y: i32, .z: i32}*, .c: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,11 +31,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.loc10_16]
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc10_25.2: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
-// CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3 [template = constants.%.loc10_34]
+// CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_35.1: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_literal (%.loc10_16, %.loc10_25.2, %.loc10_34)
 // CHECK:STDOUT:   %.loc10_25.3: ref {.x: i32, .y: i32, .z: i32} = temporary %.loc10_25.1, %.loc10_25.2
 // CHECK:STDOUT:   %.loc10_25.4: ref i32 = struct_access %.loc10_25.3, element0

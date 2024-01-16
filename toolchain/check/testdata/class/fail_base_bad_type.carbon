@@ -120,21 +120,21 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: --- fail_base_bad_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_18.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc17: type = struct_type {.base: <error>} [template]
-// CHECK:STDOUT:   %.loc12: type = ptr_type {.base: <error>} [template]
-// CHECK:STDOUT:   %.loc26: i32 = int_literal 32 [template]
-// CHECK:STDOUT:   %.loc51_22: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %.loc51_23.1: type = tuple_type (Base) [template]
-// CHECK:STDOUT:   %.loc7_18.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7_17: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.loc51_23.2: type = tuple_type ({}*) [template]
-// CHECK:STDOUT:   %.loc67: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.loc8: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc102_1.1: type = struct_type {.base: Final} [template]
-// CHECK:STDOUT:   %.loc102_1.2: type = struct_type {.base: {.a: i32}*} [template]
-// CHECK:STDOUT:   %.loc97: type = ptr_type {.base: Final} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.base: <error>} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.base: <error>} [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 32 [template]
+// CHECK:STDOUT:   %.6: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %.7: type = tuple_type (Base) [template]
+// CHECK:STDOUT:   %.8: type = tuple_type () [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.10: type = tuple_type ({}*) [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: Final} [template]
+// CHECK:STDOUT:   %.14: type = struct_type {.base: {.a: i32}*} [template]
+// CHECK:STDOUT:   %.15: type = ptr_type {.base: Final} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -199,7 +199,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromNonType {
-// CHECK:STDOUT:   %.loc26_16: i32 = int_literal 32 [template = constants.%.loc26]
+// CHECK:STDOUT:   %.loc26_16: i32 = int_literal 32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc26_18.1: type = unbound_element_type DeriveFromNonType, <error> [template]
 // CHECK:STDOUT:   %.loc26_18.2: <unbound element of class DeriveFromNonType> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
@@ -219,13 +219,13 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
-// CHECK:STDOUT:   %.loc51_22: (type,) = tuple_literal (%Base.ref)
-// CHECK:STDOUT:   %.loc51_23.1: type = converted %.loc51_22, constants.%.loc51_23.1 [template = constants.%.loc51_23.1]
-// CHECK:STDOUT:   %.loc51_23.2: type = unbound_element_type DeriveFromTuple, <error> [template]
-// CHECK:STDOUT:   %.loc51_23.3: <unbound element of class DeriveFromTuple> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc51_22.1: (type,) = tuple_literal (%Base.ref)
+// CHECK:STDOUT:   %.loc51_22.2: type = converted %.loc51_22.1, constants.%.7 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc51_23.1: type = unbound_element_type DeriveFromTuple, <error> [template]
+// CHECK:STDOUT:   %.loc51_23.2: <unbound element of class DeriveFromTuple> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc51_23.3
+// CHECK:STDOUT:   .base = %.loc51_23.2
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,19 +339,19 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc106_11.1: ref DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %.loc106_11.2: ref Final = class_element_access %.loc106_11.1, element0
 // CHECK:STDOUT:   %.loc106_11.3: Final* = addr_of %.loc106_11.2
-// CHECK:STDOUT:   %.loc106_11.4: Final* = converted %p.ref, %.loc106_11.3
-// CHECK:STDOUT:   return %.loc106_11.4
+// CHECK:STDOUT:   %.loc106_10: Final* = converted %p.ref, %.loc106_11.3
+// CHECK:STDOUT:   return %.loc106_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_WithMember(%p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: DeriveFromFinal* = name_ref p, %p
-// CHECK:STDOUT:   %.loc110_11: ref DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %.loc110_14.1: ref Final = class_element_access %.loc110_11, element0
-// CHECK:STDOUT:   %.loc110_14.2: ref Final = converted %.loc110_11, %.loc110_14.1
-// CHECK:STDOUT:   %.loc110_14.3: ref i32 = class_element_access %.loc110_14.2, element0
-// CHECK:STDOUT:   %.loc110_14.4: i32 = bind_value %.loc110_14.3
-// CHECK:STDOUT:   return %.loc110_14.4
+// CHECK:STDOUT:   %.loc110_11.1: ref DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc110_14.1: ref Final = class_element_access %.loc110_11.1, element0
+// CHECK:STDOUT:   %.loc110_11.2: ref Final = converted %.loc110_11.1, %.loc110_14.1
+// CHECK:STDOUT:   %.loc110_14.2: ref i32 = class_element_access %.loc110_11.2, element0
+// CHECK:STDOUT:   %.loc110_14.3: i32 = bind_value %.loc110_14.2
+// CHECK:STDOUT:   return %.loc110_14.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_NoMember(%p: DeriveFromFinal*) -> i32 {

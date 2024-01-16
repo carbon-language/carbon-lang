@@ -14,7 +14,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: f64 = real_literal 10e-1 [template]
+// CHECK:STDOUT:   %.1: f64 = real_literal 10e-1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -24,7 +24,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: f64 = real_literal 10e-1 [template = constants.%.loc11]
+// CHECK:STDOUT:   %.loc11: f64 = real_literal 10e-1 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

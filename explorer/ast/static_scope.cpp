@@ -35,20 +35,21 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
   return Success();
 }
 
-void StaticScope::Print(llvm::raw_ostream& out) const {
+template <typename Action>
+void StaticScope::PrintCommon(Action action) const {
   if (ast_node_) {
-    ast_node_.value()->Print(out);
+    action(ast_node_.value());
   } else {
     *trace_stream_ << "package";
   }
 }
 
+void StaticScope::Print(llvm::raw_ostream& out) const {
+  PrintCommon([&out](auto node) { node->Print(out); });
+}
+
 void StaticScope::PrintID(llvm::raw_ostream& out) const {
-  if (ast_node_) {
-    ast_node_.value()->PrintID(out);
-  } else {
-    *trace_stream_ << "package";
-  }
+  PrintCommon([&out](auto node) { node->PrintID(out); });
 }
 
 void StaticScope::MarkDeclared(std::string_view name) {
@@ -136,20 +137,15 @@ auto StaticScope::TryResolveHere(std::string_view name,
     }
   });
 
-  if (allow_undeclared) {
+  if (allow_undeclared || it->second.status == NameStatus::Usable) {
     return {it->second.entity};
   }
-  switch (it->second.status) {
-    case NameStatus::KnownButNotDeclared:
-      return ProgramError(source_loc)
-             << "'" << name << "' has not been declared yet";
-    case NameStatus::DeclaredButNotUsable:
-      return ProgramError(source_loc) << "'" << name
-                                      << "' is not usable until after it "
-                                         "has been completely declared";
-    case NameStatus::Usable:
-      return {it->second.entity};
-  }
+  return ProgramError(source_loc)
+         << "'" << name
+         << (it->second.status == NameStatus::KnownButNotDeclared
+                 ? "' has not been declared yet"
+                 : "' is not usable until after it has been completely "
+                   "declared");
 }
 
 auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)

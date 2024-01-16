@@ -10,22 +10,22 @@ var y: {} = x;
 // CHECK:STDOUT: --- empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_9.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc7_9.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y}
 // CHECK:STDOUT:   %.loc7_9.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.loc7_9.1 [template = constants.%.loc7_9.1]
+// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref {} = var x
 // CHECK:STDOUT:   %x: ref {} = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc7_14.2: init {} = struct_init () to %x.var
 // CHECK:STDOUT:   %.loc7_14.3: init {} = converted %.loc7_14.1, %.loc7_14.2
 // CHECK:STDOUT:   assign %x.var, %.loc7_14.3
-// CHECK:STDOUT:   %.loc8_9: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc7_9.3: type = converted %.loc8_9, constants.%.loc7_9.1 [template = constants.%.loc7_9.1]
+// CHECK:STDOUT:   %.loc8_9.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %y.var: ref {} = var y
 // CHECK:STDOUT:   %y: ref {} = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref {} = name_ref x, %x

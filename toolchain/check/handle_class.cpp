@@ -26,6 +26,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(parse_node, "generic class");
   }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+    context.TODO(parse_node, "generic class");
+  }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
@@ -73,8 +76,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
                           "Previously declared here.");
         context.emitter()
             .Build(parse_node, ClassRedeclarationDifferentIntroducer)
-            .Note(context.insts().GetParseNode(existing_id),
-                  ClassRedeclarationDifferentIntroducerPrevious)
+            .Note(existing_id, ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
       }
 
@@ -134,8 +136,7 @@ auto HandleClassDefinitionStart(Context& context,
     context.emitter()
         .Build(parse_node, ClassRedefinition,
                context.names().GetFormatted(class_info.name_id).str())
-        .Note(context.insts().GetParseNode(class_info.definition_id),
-              ClassPreviousDefinition)
+        .Note(class_info.definition_id, ClassPreviousDefinition)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
@@ -280,7 +281,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
                       "Previous `base` declaration is here.");
     context.emitter()
         .Build(parse_node, BaseRepeated)
-        .Note(context.insts().GetParseNode(class_info.base_id), BasePrevious)
+        .Note(class_info.base_id, BasePrevious)
         .Emit();
     return true;
   }
@@ -326,7 +327,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 }
 
 auto HandleClassDefinition(Context& context,
-                           Parse::ClassDefinitionId parse_node) -> bool {
+                           Parse::ClassDefinitionId /*parse_node*/) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
@@ -336,8 +337,7 @@ auto HandleClassDefinition(Context& context,
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
-  class_info.object_repr_id =
-      context.CanonicalizeStructType(parse_node, fields_id);
+  class_info.object_repr_id = context.CanonicalizeStructType(fields_id);
   return true;
 }
 

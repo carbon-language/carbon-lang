@@ -12,9 +12,9 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT: --- fail_too_few_values.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_25: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc10_36: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.1: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -22,7 +22,7 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1 [template = constants.%.loc10_35]
+// CHECK:STDOUT:   %.loc10_35: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_36: {.a: i32} = struct_literal (%.loc10_35)
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT: }

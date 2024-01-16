@@ -31,13 +31,13 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: --- self_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.loc16_1.1: type = struct_type {.base: Base} [template]
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc16_1.2: type = struct_type {.base: {.a: i32}*} [template]
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base} [template]
-// CHECK:STDOUT:   %.loc27: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.base: Base} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: {.a: i32}*} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base} [template]
+// CHECK:STDOUT:   %.7: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -87,7 +87,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc23_4: ref Base = deref %self.ref
 // CHECK:STDOUT:   %.loc23_10: ref i32 = class_element_access %.loc23_4, element0
-// CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1 [template = constants.%.loc23]
+// CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %.loc23_10, %.loc23_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -101,17 +101,17 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc27_20.1: ref Derived = deref %.loc27_4.2
 // CHECK:STDOUT:   %.loc27_20.2: ref Base = class_element_access %.loc27_20.1, element0
 // CHECK:STDOUT:   %.loc27_20.3: Base* = addr_of %.loc27_20.2
-// CHECK:STDOUT:   %.loc27_20.4: Base* = converted %.loc27_4.2, %.loc27_20.3
-// CHECK:STDOUT:   %.loc27_20.5: init () = call %.loc27_7(%.loc27_20.4)
+// CHECK:STDOUT:   %.loc27_4.3: Base* = converted %.loc27_4.2, %.loc27_20.3
+// CHECK:STDOUT:   %.loc27_20.4: init () = call %.loc27_7(%.loc27_4.3)
 // CHECK:STDOUT:   %p.ref.loc28: Derived* = name_ref p, %p
-// CHECK:STDOUT:   %.loc28_11: ref Derived = deref %p.ref.loc28
-// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11, @Derived.%SelfBase
-// CHECK:STDOUT:   %.loc28_23.1: ref Base = class_element_access %.loc28_11, element0
-// CHECK:STDOUT:   %.loc28_23.2: ref Base = converted %.loc28_11, %.loc28_23.1
-// CHECK:STDOUT:   %.loc28_23.3: Base = bind_value %.loc28_23.2
-// CHECK:STDOUT:   %.loc28_23.4: init i32 = call %.loc28_14(%.loc28_23.3)
-// CHECK:STDOUT:   %.loc28_25.1: i32 = value_of_initializer %.loc28_23.4
-// CHECK:STDOUT:   %.loc28_25.2: i32 = converted %.loc28_23.4, %.loc28_25.1
-// CHECK:STDOUT:   return %.loc28_25.2
+// CHECK:STDOUT:   %.loc28_11.1: ref Derived = deref %p.ref.loc28
+// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11.1, @Derived.%SelfBase
+// CHECK:STDOUT:   %.loc28_23.1: ref Base = class_element_access %.loc28_11.1, element0
+// CHECK:STDOUT:   %.loc28_11.2: ref Base = converted %.loc28_11.1, %.loc28_23.1
+// CHECK:STDOUT:   %.loc28_11.3: Base = bind_value %.loc28_11.2
+// CHECK:STDOUT:   %.loc28_23.2: init i32 = call %.loc28_14(%.loc28_11.3)
+// CHECK:STDOUT:   %.loc28_25: i32 = value_of_initializer %.loc28_23.2
+// CHECK:STDOUT:   %.loc28_23.3: i32 = converted %.loc28_23.2, %.loc28_25
+// CHECK:STDOUT:   return %.loc28_23.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

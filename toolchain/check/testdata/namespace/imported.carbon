@@ -41,7 +41,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,15 +51,15 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %.4: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.5: <function> = fn_decl @.2 [template]
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.loc4 [template = constants.%.loc4]
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %NS.ref.loc4: <namespace> = name_ref NS, %.2
 // CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, %.4 [template = %.4]
 // CHECK:STDOUT:   %.loc4_17: init () = call %A.ref.loc4()
 // CHECK:STDOUT:   assign %a.var, %.loc4_17
-// CHECK:STDOUT:   %.loc5_9: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.3: type = converted %.loc5_9, constants.%.loc4 [template = constants.%.loc4]
+// CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %NS.ref.loc5: <namespace> = name_ref NS, %.2
@@ -67,8 +67,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %B.ref.loc5: <function> = name_ref B, %.5 [template = %.5]
 // CHECK:STDOUT:   %.loc5_25: init () = call %B.ref.loc5()
 // CHECK:STDOUT:   assign %b.var, %.loc5_25
-// CHECK:STDOUT:   %.loc7_17: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.4: type = converted %.loc7_17, constants.%.loc4 [template = constants.%.loc4]
+// CHECK:STDOUT:   %.loc7_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref () = var package_a
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
 // CHECK:STDOUT:   %package.ref.loc7: <namespace> = name_ref package, package
@@ -76,8 +76,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, %.4 [template = %.4]
 // CHECK:STDOUT:   %.loc7_33: init () = call %A.ref.loc7()
 // CHECK:STDOUT:   assign %package_a.var, %.loc7_33
-// CHECK:STDOUT:   %.loc8_17: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.5: type = converted %.loc8_17, constants.%.loc4 [template = constants.%.loc4]
+// CHECK:STDOUT:   %.loc8_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref () = var package_b
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
 // CHECK:STDOUT:   %package.ref.loc8: <namespace> = name_ref package, package

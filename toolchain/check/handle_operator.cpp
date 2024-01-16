@@ -223,10 +223,9 @@ auto HandlePrefixOperatorAmp(Context& context,
       break;
   }
   context.AddInstAndPush(
-      {parse_node,
-       SemIR::AddrOf{context.GetPointerType(
-                         parse_node, context.insts().Get(value_id).type_id()),
-                     value_id}});
+      {parse_node, SemIR::AddrOf{context.GetPointerType(
+                                     context.insts().Get(value_id).type_id()),
+                                 value_id}});
   return true;
 }
 

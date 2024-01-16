@@ -10,7 +10,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT: --- one_entry.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -18,7 +18,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4 [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7_26: i32 = int_literal 4 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_27.1: {.a: i32} = struct_literal (%.loc7_26)
 // CHECK:STDOUT:   %.loc7_27.2: init {.a: i32} = struct_init (%.loc7_26) to %x.var
 // CHECK:STDOUT:   %.loc7_27.3: init {.a: i32} = converted %.loc7_27.1, %.loc7_27.2

@@ -27,6 +27,9 @@ static auto BuildInterfaceDecl(Context& context,
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(parse_node, "generic interface");
   }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+    context.TODO(parse_node, "generic interface");
+  }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
@@ -111,8 +114,7 @@ auto HandleInterfaceDefinitionStart(
     context.emitter()
         .Build(parse_node, InterfaceRedefinition,
                context.names().GetFormatted(interface_info.name_id).str())
-        .Note(context.insts().GetParseNode(interface_info.definition_id),
-              InterfacePreviousDefinition)
+        .Note(interface_info.definition_id, InterfacePreviousDefinition)
         .Emit();
   } else {
     interface_info.definition_id = interface_decl_id;

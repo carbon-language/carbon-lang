@@ -25,18 +25,18 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.b: i32} [template]
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.b: i32} [template]
-// CHECK:STDOUT:   %.loc15_1.1: type = struct_type {.base: Base, .d: i32} [template]
-// CHECK:STDOUT:   %.loc15_1.2: type = struct_type {.base: {.b: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.loc15_1.3: type = ptr_type {.base: {.b: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: Base, .d: i32} [template]
-// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.loc18_35: type = struct_type {.base: {.b: i32}, .d: i32} [template]
-// CHECK:STDOUT:   %.loc21_35.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.loc21_35.2: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.loc21_35.3: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.b: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.b: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.base: Base, .d: i32} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: {.b: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.b: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base, .d: i32} [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: {.b: i32}, .d: i32} [template]
+// CHECK:STDOUT:   %.10: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.11: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.12: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,9 +74,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4 [template = constants.%.loc18_25]
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc18_26.1: {.b: i32} = struct_literal (%.loc18_25)
-// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7 [template = constants.%.loc18_34]
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc18_35.1: {.base: {.b: i32}, .d: i32} = struct_literal (%.loc18_26.1, %.loc18_34)
 // CHECK:STDOUT:   %.loc18_35.2: ref Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0

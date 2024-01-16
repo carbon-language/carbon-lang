@@ -20,7 +20,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: --- fail_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 5 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,7 +32,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T]
-// CHECK:STDOUT:   %.loc13: i32 = int_literal 5 [template = constants.%.loc13]
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 5 [template = constants.%.1]
 // CHECK:STDOUT:   %x: T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: T = name_ref x, %x
 // CHECK:STDOUT:   return <error>

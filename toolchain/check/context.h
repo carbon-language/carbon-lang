@@ -23,10 +23,31 @@
 
 namespace Carbon::Check {
 
+// Diagnostic locations produced by checking may be either a parse node
+// directly, or an inst ID which is later translated to a parse node.
+struct SemIRLocation {
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(Parse::NodeLocation node_location)
+      : node_location(node_location), is_inst_id(false) {}
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SemIRLocation(Parse::NodeId node_id)
+      : SemIRLocation(Parse::NodeLocation(node_id)) {}
+
+  union {
+    SemIR::InstId inst_id;
+    Parse::NodeLocation node_location;
+  };
+
+  bool is_inst_id;
+};
+
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<Parse::NodeLocation>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // A scope in which `break` and `continue` can be used.
@@ -78,8 +99,7 @@ class Context {
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::ParseNodeAndInst parse_node_and_inst,
-                   bool is_symbolic) -> SemIR::ConstantId;
+  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
@@ -263,13 +283,11 @@ class Context {
   // Individual struct type fields aren't canonicalized because they may have
   // name conflicts or other diagnostics during creation, which can use the
   // parse node.
-  auto CanonicalizeStructType(Parse::NodeId parse_node,
-                              SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+  auto CanonicalizeStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
 
   // Handles canonicalization of tuple types. This may create a new tuple type
   // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(Parse::NodeId parse_node,
-                             llvm::ArrayRef<SemIR::TypeId> type_ids)
+  auto CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
       -> SemIR::TypeId;
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
@@ -298,8 +316,7 @@ class Context {
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
-  auto GetPointerType(Parse::NodeId parse_node, SemIR::TypeId pointee_type_id)
-      -> SemIR::TypeId;
+  auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -487,8 +504,7 @@ class Context {
 
   // Forms a canonical type ID for a type. If the type is new, adds the
   // instruction to the current block.
-  auto CanonicalizeTypeAndAddInstIfNew(Parse::NodeId parse_node,
-                                       SemIR::Inst inst) -> SemIR::TypeId;
+  auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
 
   // If the passed in instruction ID is a LazyImportRef, resolves it for use.
   // Called when name lookup intends to return an inst_id.

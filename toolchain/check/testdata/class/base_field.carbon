@@ -24,12 +24,12 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: --- base_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_1.1: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.loc11_1.2: type = ptr_type {.a: i32, .b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.loc18_1.1: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.loc18_1.2: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.loc18_1.3: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.loc13: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32, .b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,11 +79,11 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: fn @Access(%p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
-// CHECK:STDOUT:   %.loc21_12: ref Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc21_15.1: ref Base = class_element_access %.loc21_12, element0
-// CHECK:STDOUT:   %.loc21_15.2: ref Base = converted %.loc21_12, %.loc21_15.1
-// CHECK:STDOUT:   %.loc21_15.3: ref i32 = class_element_access %.loc21_15.2, element2
-// CHECK:STDOUT:   %.loc21_10: i32* = addr_of %.loc21_15.3
+// CHECK:STDOUT:   %.loc21_12.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc21_15.1: ref Base = class_element_access %.loc21_12.1, element0
+// CHECK:STDOUT:   %.loc21_12.2: ref Base = converted %.loc21_12.1, %.loc21_15.1
+// CHECK:STDOUT:   %.loc21_15.2: ref i32 = class_element_access %.loc21_12.2, element2
+// CHECK:STDOUT:   %.loc21_10: i32* = addr_of %.loc21_15.2
 // CHECK:STDOUT:   return %.loc21_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

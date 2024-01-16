@@ -27,9 +27,9 @@ fn Initializing() {
 // CHECK:STDOUT: --- identity.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_1.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc11_1.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc9: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -30,7 +30,7 @@ fn While() {
 // CHECK:STDOUT: --- fail_break_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc16: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -555,8 +555,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                       "Cannot construct instance of abstract class. "
                       "Consider using `partial {0}` instead.",
                       std::string);
-    context.emitter().Emit(context.insts().GetParseNode(value_id),
-                           ConstructionOfAbstractClass,
+    context.emitter().Emit(value_id, ConstructionOfAbstractClass,
                            context.sem_ir().StringifyType(target.type_id));
     return SemIR::InstId::BuiltinError;
   }
@@ -821,7 +820,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
-      auto tuple_type_id = context.CanonicalizeTupleType(parse_node, type_ids);
+      auto tuple_type_id = context.CanonicalizeTupleType(type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -864,8 +863,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
                     "Cannot copy value of type `{0}`.", std::string);
-  context.emitter().Emit(context.insts().GetParseNode(expr_id),
-                         CopyOfUncopyableType,
+  context.emitter().Emit(expr_id, CopyOfUncopyableType,
                          context.sem_ir().StringifyType(type_id));
   return SemIR::InstId::BuiltinError;
 }
@@ -888,8 +886,7 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
     // namespace names, and allow use of functions as values.
     CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
                       "Expression cannot be used as a value.");
-    context.emitter().Emit(sem_ir.insts().GetParseNode(expr_id),
-                           UseOfNonExprAsValue);
+    context.emitter().Emit(expr_id, UseOfNonExprAsValue);
     return SemIR::InstId::BuiltinError;
   }
 
@@ -945,7 +942,7 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
     expr_id = context.AddInst(
-        {context.insts().GetParseNode(expr_id),
+        {context.insts().GetParseNode(orig_expr_id),
          SemIR::Converted{target.type_id, orig_expr_id, expr_id}});
   }
 
@@ -1100,8 +1097,7 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
             InCallToFunctionSelf, Note,
             "Initializing `{0}` parameter of method declared here.",
             llvm::StringLiteral);
-        builder.Note(context.insts().GetParseNode(self_param_id),
-                     InCallToFunctionSelf,
+        builder.Note(self_param_id, InCallToFunctionSelf,
                      addr_pattern ? llvm::StringLiteral("addr self")
                                   : llvm::StringLiteral("self"));
       });
@@ -1124,9 +1120,8 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
     }
     auto parse_node = context.insts().GetParseNode(self_or_addr_id);
     self_or_addr_id = context.AddInst(
-        {parse_node,
-         SemIR::AddrOf{context.GetPointerType(parse_node, self.type_id()),
-                       self_or_addr_id}});
+        {parse_node, SemIR::AddrOf{context.GetPointerType(self.type_id()),
+                                   self_or_addr_id}});
   }
 
   return ConvertToValueOfType(context, call_parse_node, self_or_addr_id,

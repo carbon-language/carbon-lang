@@ -14,11 +14,11 @@ fn Main() {
 // CHECK:STDOUT: --- params_two_comma.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc10_10: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.loc10_6: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,12 +35,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref.loc10: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
-// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1 [template = constants.%.loc10_7]
-// CHECK:STDOUT:   %.loc10_10: i32 = int_literal 2 [template = constants.%.loc10_10]
+// CHECK:STDOUT:   %.loc10_7: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_10: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_6: init () = call %Foo.ref.loc10(%.loc10_7, %.loc10_10)
 // CHECK:STDOUT:   %Foo.ref.loc11: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
-// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1 [template = constants.%.loc11_7]
-// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 2 [template = constants.%.loc11_10]
+// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_6: init () = call %Foo.ref.loc11(%.loc11_7, %.loc11_10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

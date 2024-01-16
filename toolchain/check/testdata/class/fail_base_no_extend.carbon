@@ -16,10 +16,10 @@ class C {
 // CHECK:STDOUT: --- fail_base_no_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7_15.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc7_15.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.loc7_14: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.loc14: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

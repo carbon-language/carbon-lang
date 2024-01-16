@@ -26,9 +26,9 @@ fn Run() {
 // CHECK:STDOUT: --- scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc15: type = struct_type {} [template]
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,22 +50,22 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.loc9]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
-// CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
-// CHECK:STDOUT:   return %.loc13_15.2
+// CHECK:STDOUT:   %.loc13_13.1: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_15: i32 = value_of_initializer %.loc13_13.1
+// CHECK:STDOUT:   %.loc13_13.2: i32 = converted %.loc13_13.1, %.loc13_15
+// CHECK:STDOUT:   return %.loc13_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template = constants.%.loc18]
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

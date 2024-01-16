@@ -13,7 +13,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: --- fail_member_access_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: f64 = real_literal 40e-1 [template]
+// CHECK:STDOUT:   %.1: f64 = real_literal 40e-1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -21,7 +21,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: f64} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_26: f64 = real_literal 40e-1 [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7_26: f64 = real_literal 40e-1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_29.1: {.a: f64} = struct_literal (%.loc7_26)
 // CHECK:STDOUT:   %.loc7_29.2: init {.a: f64} = struct_init (%.loc7_26) to %x.var
 // CHECK:STDOUT:   %.loc7_29.3: init {.a: f64} = converted %.loc7_29.1, %.loc7_29.2

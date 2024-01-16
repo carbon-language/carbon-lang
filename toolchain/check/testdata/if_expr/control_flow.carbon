@@ -14,8 +14,8 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: --- control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,13 +27,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.loc7]
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.loc8]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,10 +51,10 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc11_30: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %.loc11_30
-// CHECK:STDOUT:   %.loc11_24.2: i32 = converted %.loc11_30, %.loc11_24.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)
+// CHECK:STDOUT:   %.loc11_30.1: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_24: i32 = value_of_initializer %.loc11_30.1
+// CHECK:STDOUT:   %.loc11_30.2: i32 = converted %.loc11_30.1, %.loc11_24
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result

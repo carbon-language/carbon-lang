@@ -21,10 +21,10 @@ fn Test() {
 // CHECK:STDOUT: --- field_access_in_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32} [template]
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32} [template]
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,11 +54,11 @@ fn Test() {
 // CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc14_5: ref i32 = class_element_access %cv.ref.loc14, element0
-// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1 [template = constants.%.loc14]
+// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %.loc14_5, %.loc14_10
 // CHECK:STDOUT:   %cv.ref.loc15: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc15_5: ref i32 = class_element_access %cv.ref.loc15, element1
-// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.loc15]
+// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   assign %.loc15_5, %.loc15_10
 // CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class [template = file.%Class]
 // CHECK:STDOUT:   %cv.ref.loc16: ref Class = name_ref cv, %cv

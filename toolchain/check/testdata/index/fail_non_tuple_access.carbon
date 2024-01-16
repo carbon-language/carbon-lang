@@ -14,8 +14,8 @@ fn Main() {
 // CHECK:STDOUT: --- fail_non_tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -25,8 +25,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template = constants.%.loc11_3]
-// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template = constants.%.loc11_5]
+// CHECK:STDOUT:   %.loc11_3: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_5: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

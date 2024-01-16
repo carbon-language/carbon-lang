@@ -21,8 +21,8 @@ fn Test() {
 // CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11: type = ptr_type <error> [template]
-// CHECK:STDOUT:   %.loc18: type = ptr_type <error>* [template]
+// CHECK:STDOUT:   %.1: type = ptr_type <error> [template]
+// CHECK:STDOUT:   %.2: type = ptr_type <error>* [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

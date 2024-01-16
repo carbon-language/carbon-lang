@@ -17,7 +17,7 @@ fn F(a: i32) {
 // CHECK:STDOUT: --- fail_duplicate_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,8 +27,8 @@ fn F(a: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.loc7: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.loc14]
-// CHECK:STDOUT:   %a.loc14: i32 = bind_name a, %.loc14 [template = constants.%.loc14]
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %a.loc14: i32 = bind_name a, %.loc14 [template = constants.%.1]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

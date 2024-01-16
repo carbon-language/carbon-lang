@@ -30,9 +30,9 @@ class Class {
 // CHECK:STDOUT: --- fail_field_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.loc28: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.j: i32, .k: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,10 +48,10 @@ class Class {
 // CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32 [template]
 // CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1 [template]
 // CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2 [template = %.loc17_14.2]
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.loc22]
-// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22 [template = constants.%.loc22]
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.loc27]
-// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27 [template = constants.%.loc27]
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .j = %j

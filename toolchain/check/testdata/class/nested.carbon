@@ -31,10 +31,10 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12_3.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
-// CHECK:STDOUT:   %.loc17_1.1: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.loc17_1.2: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.loc12_3.2: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
