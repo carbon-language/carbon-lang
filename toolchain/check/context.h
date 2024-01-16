@@ -81,12 +81,38 @@ class Context {
   // Adds an instruction to the current block, returning the produced ID.
   auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId;
 
+  // Adds an instruction in no block, returning the produced ID. Should be used
+  // rarely.
+  auto AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+      -> SemIR::InstId;
+
+  // Adds an instruction to the current block, returning the produced ID. The
+  // instruction is a placeholder that is expected to be replaced by
+  // `ReplaceInstBeforeConstantUse`.
+  auto AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+      -> SemIR::InstId;
+
+  // Adds an instruction in no block, returning the produced ID. Should be used
+  // rarely. The instruction is a placeholder that is expected to be replaced by
+  // `ReplaceInstBeforeConstantUse`.
+  auto AddPlaceholderInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+      -> SemIR::InstId;
+
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   auto AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst) -> void;
+
+  // Replaces the value of the instruction `inst_id` with `parse_node_and_inst`.
+  // The instruction is required to not have been used in any constant
+  // evaluation, either because it's newly created and entirely unused, or
+  // because it's only used in a position that constant evaluation ignores, such
+  // as a return slot.
+  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
+                                    SemIR::ParseNodeAndInst parse_node_and_inst)
+      -> void;
 
   // Adds a package's imports to name lookup, with all libraries together.
   // sem_irs will all be non-null; has_load_error must be used for any errors.
@@ -404,7 +430,9 @@ class Context {
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
     return sem_ir().type_blocks();
   }
-  auto insts() -> SemIR::InstStore& { return sem_ir().insts(); }
+  // Instructions should be added with `AddInst` or `AddInstInNoBlock`. This is
+  // `const` to prevent accidental misuse.
+  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }

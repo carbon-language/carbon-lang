@@ -29,10 +29,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc7_44.1: {.a: i32, .b: i32} = struct_literal (%.loc7_35, %.loc7_43)
 // CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = struct_value (%.loc7_35, %.loc7_43) [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_44.3: {.a: i32, .b: i32} = converted %.loc7_44.1, %.loc7_44.2 [template = constants.%.4]
-// CHECK:STDOUT:   %v: {.a: i32, .b: i32} = bind_name v, %.loc7_44.3
+// CHECK:STDOUT:   %v: {.a: i32, .b: i32} = bind_name v, %.loc7_44.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %v.ref: {.a: i32, .b: i32} = name_ref v, %v
-// CHECK:STDOUT:   %w: {.a: i32, .b: i32} = bind_name w, %v.ref
+// CHECK:STDOUT:   %v.ref: {.a: i32, .b: i32} = name_ref v, %v [template = constants.%.4]
+// CHECK:STDOUT:   %w: {.a: i32, .b: i32} = bind_name w, %v.ref [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_25: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32, .b: i32} = bind_name x, %x.var

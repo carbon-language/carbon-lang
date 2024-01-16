@@ -58,6 +58,11 @@ class InstStore {
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
+  // Returns the requested instruction and its parse node.
+  auto GetWithParseNode(InstId inst_id) const -> ParseNodeAndInst {
+    return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
+  }
+
   // Returns the requested instruction, which is known to have the specified
   // type.
   template <typename InstT>
@@ -72,15 +77,14 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
-  // Overwrites a given instruction with a new value.
-  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
-
   auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
     return parse_nodes_[inst_id.index];
   }
 
-  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
-    parse_nodes_[inst_id.index] = parse_node;
+  // Overwrites a given instruction and parse node with a new value.
+  auto Set(InstId inst_id, ParseNodeAndInst parse_node_and_inst) -> void {
+    values_.Get(inst_id) = parse_node_and_inst.inst;
+    parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
   }
 
   // Reserves space.
@@ -110,10 +114,10 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
                : values_[inst_id.index];
   }
 
-  // Sets the constant value of the given instruction.
+  // Sets the constant value of the given instruction, or sets that it is known
+  // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_CHECK(inst_id.index >= 0);
-    CARBON_CHECK(const_id.is_constant());
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
       values_.resize(inst_id.index + 1, ConstantId::NotConstant);
     }

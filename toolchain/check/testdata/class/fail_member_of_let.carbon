@@ -29,7 +29,7 @@ fn T.F() {}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class [template = %Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
+// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref [template = %Class]
 // CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

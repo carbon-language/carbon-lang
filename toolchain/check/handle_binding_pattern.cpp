@@ -5,7 +5,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
-#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
@@ -105,8 +104,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                                                      .size())}});
 
         // Add a corresponding field to the object representation of the class.
-        context.args_type_info_stack().AddInst(
-            {binding_id, SemIR::StructTypeField{name_id, cast_type_id}});
+        context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
+            {binding_id, SemIR::StructTypeField{name_id, cast_type_id}}));
       } else {
         value_id = context.AddInst(
             {name_node, SemIR::VarStorage{value_type_id, name_id}});
@@ -146,9 +145,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
-      context.node_stack().Push(parse_node,
-                                context.insts().AddInNoBlock(make_bind_name(
-                                    cast_type_id, SemIR::InstId::Invalid)));
+      context.node_stack().Push(
+          parse_node, context.AddPlaceholderInstInNoBlock(make_bind_name(
+                          cast_type_id, SemIR::InstId::Invalid)));
       break;
 
     default:

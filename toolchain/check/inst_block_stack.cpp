@@ -7,7 +7,6 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 

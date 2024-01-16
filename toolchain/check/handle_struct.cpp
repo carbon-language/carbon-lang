@@ -40,9 +40,9 @@ auto HandleStructFieldValue(Context& context,
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Store the name for the type.
-  context.args_type_info_stack().AddInst(
+  context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
       {name_node, SemIR::StructTypeField{
-                      name_id, context.insts().Get(value_inst_id).type_id()}});
+                      name_id, context.insts().Get(value_inst_id).type_id()}}));
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(parse_node, value_inst_id);
