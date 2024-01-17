@@ -24,7 +24,7 @@ private interface Private {
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Modifiers = %Modifiers.decl, .Private = %Private.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Modifiers = %Modifiers.decl, .Private = %Private.decl} [template]
 // CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, ()
 // CHECK:STDOUT:   %Private.decl = interface_decl @Private, ()
 // CHECK:STDOUT: }

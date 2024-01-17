@@ -15,7 +15,12 @@ namespace Carbon::Check {
 // On invalid scopes, prints a diagnostic and still returns the scope.
 static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
     -> std::optional<SemIR::NameScopeId> {
-  auto base = context.insts().Get(context.FollowNameRefs(base_id));
+  auto base_const_id = context.constant_values().Get(base_id);
+  if (!base_const_id.is_constant()) {
+    // A name scope must be a constant.
+    return std::nullopt;
+  }
+  auto base = context.insts().Get(base_const_id.inst_id());
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }

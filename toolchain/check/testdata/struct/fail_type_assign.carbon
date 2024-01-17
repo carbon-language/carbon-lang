@@ -12,7 +12,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT: --- fail_type_assign.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var

@@ -25,7 +25,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .F = %F, .G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A, .B = %B, .F = %F, .G = %G} [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]

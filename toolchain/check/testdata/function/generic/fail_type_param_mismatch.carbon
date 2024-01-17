@@ -15,7 +15,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: --- fail_type_param_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
