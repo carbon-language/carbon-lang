@@ -29,8 +29,8 @@ auto ConstantStore::GetOrAdd(Inst inst) -> std::pair<InstId, bool> {
   return {node.inst_id, true};
 }
 
-auto ConstantStore::vector() const -> std::vector<InstId> {
-  std::vector<InstId> result;
+auto ConstantStore::GetAsVector() const -> llvm::SmallVector<InstId, 0> {
+  llvm::SmallVector<InstId, 0> result;
   result.reserve(constants_.size());
   for (const ConstantNode& node : constants_) {
     result.push_back(node.inst_id);
@@ -44,7 +44,7 @@ auto ConstantStore::vector() const -> std::vector<InstId> {
 
 auto ConstantStore::ConstantNode::Profile(llvm::FoldingSetNodeID& id,
                                           File* sem_ir) -> void {
-  return ProfileConstant(id, sem_ir, inst);
+  ProfileConstant(id, *sem_ir, inst);
 }
 
 // Get the spelling to use for a special name.

@@ -149,15 +149,18 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  explicit ConstantStore(SemIR::File* sem_ir, llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator), constants_(sem_ir) {}
+  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& allocator)
+      : allocator_(&allocator), constants_(&sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the instruction ID and a bool indicating whether a new
   // instruction was added.
-  auto GetOrAdd(Inst inst) -> std::pair<SemIR::InstId, bool>;
+  auto GetOrAdd(Inst inst) -> std::pair<InstId, bool>;
 
-  auto vector() const -> std::vector<InstId>;
+  // Returns a copy of the constant IDs as a vector, in an arbitrary but
+  // stable order. This should not be used anywhere performance-sensitive.
+  auto GetAsVector() const -> llvm::SmallVector<InstId, 0>;
+
   auto size() const -> int { return constants_.size(); }
 
  private:
@@ -170,11 +173,11 @@ class ConstantStore {
     Inst inst;
     InstId inst_id;
 
-    auto Profile(llvm::FoldingSetNodeID& id, SemIR::File* sem_ir) -> void;
+    auto Profile(llvm::FoldingSetNodeID& id, File* sem_ir) -> void;
   };
 
   llvm::BumpPtrAllocator* allocator_;
-  llvm::ContextualFoldingSet<ConstantNode, SemIR::File*> constants_;
+  llvm::ContextualFoldingSet<ConstantNode, File*> constants_;
 };
 
 // Provides a ValueStore wrapper with an API specific to types.

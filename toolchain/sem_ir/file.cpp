@@ -65,7 +65,7 @@ File::File(SharedValueStores& value_stores)
       filename_("<builtins>"),
       type_blocks_(allocator_),
       inst_blocks_(allocator_),
-      constants_(this, allocator_) {
+      constants_(*this, allocator_) {
   auto builtins_id = cross_ref_irs_.Add(this);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR, even if self-referential";
@@ -94,7 +94,7 @@ File::File(SharedValueStores& value_stores, std::string filename,
       filename_(std::move(filename)),
       type_blocks_(allocator_),
       inst_blocks_(allocator_),
-      constants_(this, allocator_) {
+      constants_(*this, allocator_) {
   CARBON_CHECK(builtins != nullptr);
   auto builtins_id = cross_ref_irs_.Add(builtins);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)

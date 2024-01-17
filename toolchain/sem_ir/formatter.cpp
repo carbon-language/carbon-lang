@@ -50,7 +50,8 @@ class InstNamer {
     // Build the constants scope.
     GetScopeInfo(ScopeIndex::Constants).name =
         globals.AddNameUnchecked("constants");
-    CollectNamesInBlock(ScopeIndex::Constants, sem_ir.constants().vector());
+    CollectNamesInBlock(ScopeIndex::Constants,
+                        sem_ir.constants().GetAsVector());
 
     // Build the file scope.
     GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
@@ -592,7 +593,7 @@ class Formatter {
     llvm::SaveAndRestore constants_scope(scope_,
                                          InstNamer::ScopeIndex::Constants);
     out_ << "constants {\n";
-    FormatCodeBlock(sem_ir_.constants().vector());
+    FormatCodeBlock(sem_ir_.constants().GetAsVector());
     out_ << "}\n\n";
   }
 
