@@ -294,10 +294,6 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {
         auto field = sem_ir_->insts().GetAs<SemIR::StructTypeField>(field_id);
-        // TODO: Handle recursive types. The restriction for builtins prevents
-        // recursion while still letting them cache.
-        CARBON_CHECK(field.field_type_id.index < SemIR::BuiltinKind::ValidCount)
-            << field.field_type_id;
         subtypes.push_back(GetType(field.field_type_id));
       }
       return llvm::StructType::get(*llvm_context_, subtypes);

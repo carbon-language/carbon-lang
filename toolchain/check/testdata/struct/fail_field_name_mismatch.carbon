@@ -20,7 +20,6 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %.1: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.b: i32} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -31,7 +30,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_27: {.b: i32} = struct_literal (%.loc10_26)
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc15: type = struct_type {.b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15: type = struct_type {.b: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %y.var: ref {.b: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32} = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, %x

@@ -1065,178 +1065,38 @@ auto Context::TryToCompleteType(
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
-auto Context::CanonicalizeTypeImpl(
-    SemIR::InstKind kind,
-    llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)> profile_type,
-    llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId {
-  llvm::FoldingSetNodeID canonical_id;
-  kind.Profile(canonical_id);
-  if (!profile_type(canonical_id)) {
-    return SemIR::TypeId::Error;
-  }
-
-  void* insert_pos;
-  auto* node =
-      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, insert_pos);
-  if (node != nullptr) {
-    return node->type_id();
-  }
-
-  auto inst_id = make_inst();
-  auto type_id = types().Add({.inst_id = inst_id});
-  CARBON_CHECK(canonical_types_.insert({inst_id, type_id}).second);
-  type_node_storage_.push_back(
-      std::make_unique<TypeNode>(canonical_id, type_id));
-
-  // In a debug build, check that our insertion position is still valid. It
-  // could have been invalidated by a misbehaving `make_inst`.
-  CARBON_DCHECK([&] {
-    void* check_insert_pos;
-    auto* check_node = canonical_type_nodes_.FindNodeOrInsertPos(
-        canonical_id, check_insert_pos);
-    return !check_node && insert_pos == check_insert_pos;
-  }()) << "Type was created recursively during canonicalization";
-
-  canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
-  return type_id;
-}
-
-// Compute a fingerprint for a tuple type, for use as a key in a folding set.
-static auto ProfileTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids,
-                             llvm::FoldingSetNodeID& canonical_id) -> void {
-  for (auto type_id : type_ids) {
-    canonical_id.AddInteger(type_id.index);
-  }
-}
-
-// Compute a fingerprint for a type, for use as a key in a folding set. Returns
-// false if not supported, which is presently the case for compile-time
-// expressions.
-// TODO: Once support is more complete, in particular ensuring that various
-// valid compile-time expressions are supported, it may be desirable to switch
-// the default to a CARBON_FATAL error.
-static auto ProfileType(Context& semantics_context, SemIR::Inst inst,
-                        llvm::FoldingSetNodeID& canonical_id) -> bool {
-  switch (inst.kind()) {
-    case SemIR::ArrayType::Kind: {
-      auto array_type = inst.As<SemIR::ArrayType>();
-      canonical_id.AddInteger(
-          semantics_context.sem_ir().GetArrayBoundValue(array_type.bound_id));
-      canonical_id.AddInteger(array_type.element_type_id.index);
-      break;
-    }
-    case SemIR::Builtin::Kind:
-      canonical_id.AddInteger(inst.As<SemIR::Builtin>().builtin_kind.AsInt());
-      break;
-    case SemIR::ClassType::Kind:
-      canonical_id.AddInteger(inst.As<SemIR::ClassType>().class_id.index);
-      break;
-    case SemIR::CrossRef::Kind: {
-      // TODO: Cross-references should be canonicalized by looking at their
-      // target rather than treating them as new unique types.
-      auto xref = inst.As<SemIR::CrossRef>();
-      canonical_id.AddInteger(xref.ir_id.index);
-      canonical_id.AddInteger(xref.inst_id.index);
-      break;
-    }
-    case SemIR::ConstType::Kind:
-      canonical_id.AddInteger(
-          semantics_context
-              .GetUnqualifiedType(inst.As<SemIR::ConstType>().inner_id)
-              .index);
-      break;
-    case SemIR::BindSymbolicName::Kind:
-      // TODO: Use de Bruijn levels or similar to identify equivalent type
-      // bindings across redeclarations.
-      canonical_id.AddInteger(
-          inst.As<SemIR::BindSymbolicName>().bind_name_id.index);
-      break;
-    case SemIR::PointerType::Kind:
-      canonical_id.AddInteger(inst.As<SemIR::PointerType>().pointee_id.index);
-      break;
-    case SemIR::StructType::Kind: {
-      auto fields = semantics_context.inst_blocks().Get(
-          inst.As<SemIR::StructType>().fields_id);
-      for (const auto& field_id : fields) {
-        auto field =
-            semantics_context.insts().GetAs<SemIR::StructTypeField>(field_id);
-        canonical_id.AddInteger(field.name_id.index);
-        canonical_id.AddInteger(field.field_type_id.index);
-      }
-      break;
-    }
-    case SemIR::TupleType::Kind:
-      ProfileTupleType(semantics_context.type_blocks().Get(
-                           inst.As<SemIR::TupleType>().elements_id),
-                       canonical_id);
-      break;
-    case SemIR::UnboundElementType::Kind: {
-      auto unbound_field_type = inst.As<SemIR::UnboundElementType>();
-      canonical_id.AddInteger(unbound_field_type.class_type_id.index);
-      canonical_id.AddInteger(unbound_field_type.element_type_id.index);
-      break;
-    }
-    default: {
-      // Right now, this is only expected to occur in calls from
-      // ExprAsType. Diagnostics are issued there.
-      return false;
-    }
-  }
-  return true;
-}
-
-auto Context::CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst)
-    -> SemIR::TypeId {
-  auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    return ProfileType(*this, inst, canonical_id);
-  };
-  auto make_inst = [&] {
-    // TODO: Properly determine whether types are symbolic.
-    return AddConstant(inst, /*is_symbolic=*/false).inst_id();
-  };
-  return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
-}
-
 auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
   inst_id = constant_values().Get(inst_id).inst_id();
   // TODO: Pass the ConstantId to CanonicalizeType directly.
   CARBON_CHECK(inst_id.is_valid());
 
-  auto it = canonical_types_.find(inst_id);
-  if (it != canonical_types_.end()) {
-    return it->second;
+  auto [it, added] = canonical_types_.insert({inst_id, SemIR::TypeId::Invalid});
+  if (added) {
+    it->second = types().Add({.inst_id = inst_id});
   }
-
-  auto inst = insts().Get(inst_id);
-  auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
-    return ProfileType(*this, inst, canonical_id);
-  };
-  auto make_inst = [&] { return inst_id; };
-  return CanonicalizeTypeImpl(inst.kind(), profile_node, make_inst);
+  return it->second;
 }
 
 auto Context::CanonicalizeStructType(SemIR::InstBlockId refs_id)
     -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddInstIfNew(
-      SemIR::StructType{SemIR::TypeId::TypeType, refs_id});
+  // TODO: Remove inst_id parameter from TryEvalInst.
+  auto constant_id =
+      TryEvalInst(*this, SemIR::InstId::Invalid,
+                  SemIR::StructType{SemIR::TypeId::TypeType, refs_id});
+  CARBON_CHECK(constant_id.is_constant()) << "Non-constant struct type";
+  return CanonicalizeType(constant_id.inst_id());
 }
 
 auto Context::CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
-  // Defer allocating a SemIR::TypeBlockId until we know this is a new type.
-  auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
-    ProfileTupleType(type_ids, canonical_id);
-    return true;
-  };
-  auto make_tuple_inst = [&] {
-    // TODO: Properly determine when types are symbolic.
-    return AddConstant(SemIR::TupleType{SemIR::TypeId::TypeType,
-                                        type_blocks().Add(type_ids)},
-                       /*is_symbolic=*/false)
-        .inst_id();
-  };
-  return CanonicalizeTypeImpl(SemIR::TupleType::Kind, profile_tuple,
-                              make_tuple_inst);
+  // TODO: Defer allocating a SemIR::TypeBlockId until we know this is a new
+  // type.
+  // TODO: Remove inst_id parameter from TryEvalInst.
+  auto constant_id = TryEvalInst(
+      *this, SemIR::InstId::Invalid,
+      SemIR::TupleType{SemIR::TypeId::TypeType, type_blocks().Add(type_ids)});
+  CARBON_CHECK(constant_id.is_constant()) << "Non-constant tuple type";
+  return CanonicalizeType(constant_id.inst_id());
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
@@ -1249,8 +1109,11 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  return CanonicalizeTypeAndAddInstIfNew(
-      SemIR::PointerType{SemIR::TypeId::TypeType, pointee_type_id});
+  auto constant_id =
+      TryEvalInst(*this, SemIR::InstId::Invalid,
+                  SemIR::PointerType{SemIR::TypeId::TypeType, pointee_type_id});
+  CARBON_CHECK(constant_id.is_constant()) << "Non-constant pointer type";
+  return CanonicalizeType(constant_id.inst_id());
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

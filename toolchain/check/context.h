@@ -478,27 +478,6 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Forms a canonical type ID for a type. This function is given two
-  // callbacks:
-  //
-  // `profile_type(canonical_id)` is called to build a fingerprint for this
-  // type. The ID should be distinct for all distinct type values with the same
-  // `kind`.
-  //
-  // `make_inst()` is called to obtain a `SemIR::InstId` that describes the
-  // type. It is only called if the type does not already exist, so can be used
-  // to lazily build the `SemIR::Inst`. `make_inst()` is not permitted to
-  // directly or indirectly canonicalize any types.
-  auto CanonicalizeTypeImpl(
-      SemIR::InstKind kind,
-      llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)>
-          profile_type,
-      llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId;
-
-  // Forms a canonical type ID for a type. If the type is new, adds the
-  // instruction to the current block.
-  auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
-
   // If the passed in instruction ID is a LazyImportRef, resolves it for use.
   // Called when name lookup intends to return an inst_id.
   auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
@@ -571,16 +550,15 @@ class Context {
   // pushed or popped.
   bool lexical_lookup_has_load_error_ = false;
 
-  // Cache of the mapping from instructions to types, to avoid recomputing the
-  // folding set ID.
+  // Cache of reverse mapping from type constants to types.
+  //
+  // TODO: Instead of mapping to a dense `TypeId` space, we could make `TypeId`
+  // be a thin wrapper around `ConstantId` and only perform the lookup only when
+  // we want to access the completeness and value representation of a type. It's
+  // not clear whether that would result in more or fewer lookups.
+  //
+  // TODO: Should this be part of the `TypeStore`?
   llvm::DenseMap<SemIR::InstId, SemIR::TypeId> canonical_types_;
-
-  // Tracks the canonical representation of types that have been defined.
-  llvm::FoldingSet<TypeNode> canonical_type_nodes_;
-
-  // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
-  // that FoldingSet can have stable pointers.
-  llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;

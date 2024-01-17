@@ -40,6 +40,10 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:       0:               type1
 // CHECK:STDOUT:       1:               type1
 // CHECK:STDOUT:       2:               type3
+// CHECK:STDOUT:     typeBlock2:
+// CHECK:STDOUT:       0:               type1
+// CHECK:STDOUT:       1:               type1
+// CHECK:STDOUT:       2:               type3
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
