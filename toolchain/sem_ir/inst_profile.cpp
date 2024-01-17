@@ -30,10 +30,19 @@ static auto DefaultProfileArgFunction(llvm::FoldingSetNodeID& id,
 
 // Profiling for block ID arguments for which the content of the block should be
 // included.
-static auto BlockProfileArgFunction(llvm::FoldingSetNodeID& id, File* context,
-                                    int32_t arg) -> void {
+static auto InstBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
+                                        File* context, int32_t arg) -> void {
   for (auto inst_id : context->inst_blocks().Get(InstBlockId(arg))) {
     id.AddInteger(inst_id.index);
+  }
+}
+
+// Profiling for type block ID arguments for which the content of the block
+// should be included.
+static auto TypeBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
+                                        File* context, int32_t arg) -> void {
+  for (auto type_id : context->type_blocks().Get(TypeBlockId(arg))) {
+    id.AddInteger(type_id.index);
   }
 }
 
@@ -77,7 +86,13 @@ constexpr ProfileArgFunction* SelectProfileArgFunction<InstT, N, true> =
 // TODO: Consider deduplicating the block operands of constants themselves.
 template <>
 constexpr ProfileArgFunction* SelectProfileArgTypeFunction<InstBlockId> =
-    BlockProfileArgFunction;
+    InstBlockProfileArgFunction;
+
+// If ArgT is TypeBlockId, then profile the contents of the block.
+// TODO: Consider deduplicating the block operands of constants themselves.
+template <>
+constexpr ProfileArgFunction* SelectProfileArgTypeFunction<TypeBlockId> =
+    TypeBlockProfileArgFunction;
 
 // If ArgT is IntId, then profile the `APInt`, which profiles the bit-width and
 // value.
