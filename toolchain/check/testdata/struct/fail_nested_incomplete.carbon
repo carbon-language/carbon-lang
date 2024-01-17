@@ -29,7 +29,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .s = %s, .p = %p}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .s = %s, .p = %p} [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete [template = constants.%Incomplete]

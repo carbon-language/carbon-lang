@@ -41,7 +41,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.If1 = %If1, .If2 = %If2, .If3 = %If3}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.If1 = %If1, .If2 = %If2, .If3 = %If3} [template]
 // CHECK:STDOUT:   %If1: <function> = fn_decl @If1 [template]
 // CHECK:STDOUT:   %If2: <function> = fn_decl @If2 [template]
 // CHECK:STDOUT:   %If3: <function> = fn_decl @If3 [template]

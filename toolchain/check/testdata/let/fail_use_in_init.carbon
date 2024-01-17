@@ -14,7 +14,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_use_in_init.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

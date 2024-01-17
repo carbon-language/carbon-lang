@@ -20,7 +20,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Echo = %Echo, .Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Echo = %Echo, .Main = %Main} [template]
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }

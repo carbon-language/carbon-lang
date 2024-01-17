@@ -37,6 +37,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
@@ -67,6 +68,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}

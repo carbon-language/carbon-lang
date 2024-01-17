@@ -131,6 +131,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:
+    case SemIR::Namespace::Kind:
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:
@@ -209,7 +210,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::Import::Kind:
     case SemIR::InterfaceDecl::Kind:
     case SemIR::LazyImportRef::Kind:
-    case SemIR::Namespace::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:

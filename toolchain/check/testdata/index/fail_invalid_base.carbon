@@ -43,11 +43,11 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.N = %.loc11, .a = %a, .F = %F, .b = %b, .c = %c, .d = %d}
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace N, {}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.N = %.loc11, .a = %a, .F = %F, .b = %b, .c = %c, .d = %d} [template]
+// CHECK:STDOUT:   %.loc11: <namespace> = namespace N, {} [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %.loc11
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %.loc11 [template = %.loc11]
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]

@@ -84,7 +84,7 @@ static auto GetIdentifierName(const SharedValueStores& value_stores,
   for (auto ch : p.children(node)) {
     if (p.node_kind(ch) == Parse::NodeKind::IdentifierName) {
       return value_stores.identifiers().Get(
-          tokens.GetIdentifier(p.node_token(node)));
+          tokens.GetIdentifier(p.node_token(ch)));
     }
   }
   return std::nullopt;

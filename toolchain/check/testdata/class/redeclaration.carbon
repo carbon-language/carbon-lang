@@ -20,7 +20,7 @@ fn Class.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl.loc7}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl.loc7} [template]
 // CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
 // CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %Class.decl.loc9 = class_decl @Class, ()

@@ -21,8 +21,8 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4}
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -32,12 +32,12 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.2, .a = %a}
-// CHECK:STDOUT:   %.2: <namespace> = namespace NS, {.A = %A}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.2, .a = %a} [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace NS, {.A = %A} [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.2
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.2 [template = %.2]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
 // CHECK:STDOUT:   %.loc6: init i32 = call %A.ref()
 // CHECK:STDOUT:   assign %a.var, %.loc6

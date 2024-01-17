@@ -26,7 +26,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G} [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
