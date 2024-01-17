@@ -39,6 +39,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.6: {.a: i32, .b: i32} = struct_value (%.2, %.3) [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,7 +67,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %d.var: ref i32 = var d
 // CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.7]
 // CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }

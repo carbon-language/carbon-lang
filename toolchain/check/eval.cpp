@@ -100,6 +100,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::StructType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::StructType::fields_id);
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructValue::elements_id);
@@ -115,7 +118,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
     case SemIR::PointerType::Kind:
-    case SemIR::StructType::Kind:
     case SemIR::StructTypeField::Kind:
     case SemIR::TupleType::Kind:
     case SemIR::UnboundElementType::Kind:

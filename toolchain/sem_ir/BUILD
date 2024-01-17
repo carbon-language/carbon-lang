@@ -62,8 +62,16 @@ cc_library(
 
 cc_library(
     name = "file",
-    srcs = ["file.cpp", "value_stores.cpp"],
-    hdrs = ["file.h", "value_stores.h"],
+    srcs = [
+        "file.cpp",
+        "inst_profile.cpp",
+        "inst_profile.h",
+        "value_stores.cpp",
+    ],
+    hdrs = [
+        "file.h",
+        "value_stores.h",
+    ],
     deps = [
         ":builtin_kind",
         ":ids",

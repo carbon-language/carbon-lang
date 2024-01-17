@@ -44,8 +44,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type B, A [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: A} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.a: {}*} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type {.a: A} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.a: A} [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.a: {}*} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.a: A} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
