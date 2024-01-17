@@ -53,19 +53,21 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: --- fail_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .WrongSelf = %WrongSelf.decl, .CallWrongSelf = %CallWrongSelf}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, ()
-// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf [template]
+// CHECK:STDOUT:   %WrongSelf: type = class_type @WrongSelf [template = constants.%WrongSelf]
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +94,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref Class = var self
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self

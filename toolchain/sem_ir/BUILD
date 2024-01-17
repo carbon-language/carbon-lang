@@ -62,18 +62,19 @@ cc_library(
 
 cc_library(
     name = "file",
-    srcs = ["file.cpp"],
-    hdrs = ["file.h"],
+    srcs = ["file.cpp", "value_stores.cpp"],
+    hdrs = ["file.h", "value_stores.h"],
     deps = [
         ":builtin_kind",
         ":ids",
         ":inst",
         ":inst_kind",
         ":type_info",
-        ":value_stores",
         "//common:check",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
+        "//toolchain/lex:token_kind",
+        "//toolchain/parse:node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -110,21 +111,6 @@ cc_library(
         ":ids",
         ":inst",
         "//common:ostream",
-    ],
-)
-
-cc_library(
-    name = "value_stores",
-    srcs = ["value_stores.cpp"],
-    hdrs = ["value_stores.h"],
-    deps = [
-        ":inst",
-        ":type_info",
-        "//toolchain/base:value_store",
-        "//toolchain/base:yaml",
-        "//toolchain/lex:token_kind",
-        "//toolchain/parse:node_kind",
-        "@llvm-project//llvm:Support",
     ],
 )
 

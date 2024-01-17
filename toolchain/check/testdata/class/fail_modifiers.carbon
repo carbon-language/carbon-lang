@@ -67,23 +67,29 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template]
+// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
+// CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
+// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
+// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl}
 // CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
-// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template]
+// CHECK:STDOUT:   %DuplicatePrivate: type = class_type @DuplicatePrivate [template = constants.%DuplicatePrivate]
 // CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
-// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template]
+// CHECK:STDOUT:   %TwoAccess: type = class_type @TwoAccess [template = constants.%TwoAccess]
 // CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()
-// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
+// CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template = constants.%TwoAbstract]
 // CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, ()
-// CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
+// CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template = constants.%Virtual]
 // CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, ()
-// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
+// CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template = constants.%WrongOrder]
 // CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, ()
-// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
+// CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template = constants.%AbstractAndBase]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;

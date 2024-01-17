@@ -24,18 +24,20 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- fail_unbound_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.field: i32} [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.field: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .G = %G}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_12.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.loc8_12.1: type = unbound_element_type Class, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_12.2: <unbound element of class Class> = field_decl field, element0 [template]
 // CHECK:STDOUT:   %field: <unbound element of class Class> = bind_name field, %.loc8_12.2 [template = %.loc8_12.2]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
@@ -53,7 +55,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = file.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field [template = @Class.%.loc8_12.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

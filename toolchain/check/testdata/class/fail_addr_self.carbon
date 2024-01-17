@@ -41,15 +41,17 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: --- fail_addr_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .F = %F}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

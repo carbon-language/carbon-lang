@@ -14,13 +14,15 @@ class Class {
 // CHECK:STDOUT: --- raw_self_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -32,12 +34,12 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, file.%Class [template = file.%Class]
-// CHECK:STDOUT:   %.loc9: type = ptr_type Class [template]
+// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %.loc9: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
 // CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
-// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, file.%Class [template = file.%Class]
-// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template]
+// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref Class* = var p
 // CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var
 // CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_ref r#Self, %Self

@@ -21,15 +21,16 @@ fn T.F() {}
 // CHECK:STDOUT: --- fail_member_of_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class [template = %Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref [template = %Class]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class [template = constants.%Class]
+// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref [template = constants.%Class]
 // CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

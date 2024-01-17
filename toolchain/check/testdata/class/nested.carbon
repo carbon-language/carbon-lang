@@ -31,35 +31,43 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
+// CHECK:STDOUT:   %.1: type = ptr_type Inner [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Inner, Inner* [template]
+// CHECK:STDOUT:   %.3: type = ptr_type Outer [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Inner, Outer* [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type Outer, Outer* [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type Outer, Inner* [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Outer = %Outer.decl, .F = %F}
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer [template = file.%Outer]
-// CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer [template]
-// CHECK:STDOUT:   %.loc14_9.1: type = unbound_element_type Outer, Outer* [template]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer [template = constants.%Outer]
+// CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_9.1: type = unbound_element_type Outer, Outer* [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_9.2: <unbound element of class Outer> = field_decl po, element0 [template]
 // CHECK:STDOUT:   %po: <unbound element of class Outer> = bind_name po, %.loc14_9.2 [template = %.loc14_9.2]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer [template = file.%Outer]
-// CHECK:STDOUT:   %.loc15_16: type = ptr_type Outer [template]
-// CHECK:STDOUT:   %.loc15_9.1: type = unbound_element_type Outer, Outer* [template]
+// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer [template = constants.%Outer]
+// CHECK:STDOUT:   %.loc15_16: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15_9.1: type = unbound_element_type Outer, Outer* [template = constants.%.6]
 // CHECK:STDOUT:   %.loc15_9.2: <unbound element of class Outer> = field_decl qo, element1 [template]
 // CHECK:STDOUT:   %qo: <unbound element of class Outer> = bind_name qo, %.loc15_9.2 [template = %.loc15_9.2]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner [template = %Inner]
-// CHECK:STDOUT:   %.loc16_16: type = ptr_type Inner [template]
-// CHECK:STDOUT:   %.loc16_9.1: type = unbound_element_type Outer, Inner* [template]
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %.loc16_16: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16_9.1: type = unbound_element_type Outer, Inner* [template = constants.%.7]
 // CHECK:STDOUT:   %.loc16_9.2: <unbound element of class Outer> = field_decl pi, element2 [template]
 // CHECK:STDOUT:   %pi: <unbound element of class Outer> = bind_name pi, %.loc16_9.2 [template = %.loc16_9.2]
 // CHECK:STDOUT:
@@ -71,19 +79,19 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner [template = @Outer.%Inner]
-// CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner [template]
-// CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Inner, Inner* [template]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Inner, Inner* [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Inner> = field_decl pi, element0 [template]
 // CHECK:STDOUT:   %pi: <unbound element of class Inner> = bind_name pi, %.loc9_11.2 [template = %.loc9_11.2]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer [template = file.%Outer]
-// CHECK:STDOUT:   %.loc10_18: type = ptr_type Outer [template]
-// CHECK:STDOUT:   %.loc10_11.1: type = unbound_element_type Inner, Outer* [template]
+// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer [template = constants.%Outer]
+// CHECK:STDOUT:   %.loc10_18: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_11.1: type = unbound_element_type Inner, Outer* [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_11.2: <unbound element of class Inner> = field_decl po, element1 [template]
 // CHECK:STDOUT:   %po: <unbound element of class Inner> = bind_name po, %.loc10_11.2 [template = %.loc10_11.2]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner [template = @Outer.%Inner]
-// CHECK:STDOUT:   %.loc11_18: type = ptr_type Inner [template]
-// CHECK:STDOUT:   %.loc11_11.1: type = unbound_element_type Inner, Inner* [template]
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %.loc11_18: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_11.1: type = unbound_element_type Inner, Inner* [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_11.2: <unbound element of class Inner> = field_decl qi, element2 [template]
 // CHECK:STDOUT:   %qi: <unbound element of class Inner> = bind_name qi, %.loc11_11.2 [template = %.loc11_11.2]
 // CHECK:STDOUT:

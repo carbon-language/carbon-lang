@@ -22,18 +22,21 @@ fn Derived.H() {
 // CHECK:STDOUT: --- base_function_unqualified.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: Base} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: Base} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl}
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template = constants.%Base]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template = constants.%Derived]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,8 +48,8 @@ fn Derived.H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
-// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template]

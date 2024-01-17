@@ -100,14 +100,13 @@ auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
 
 auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
     -> SemIR::ConstantId {
-  // TODO: Deduplicate constants.
-  auto inst_id = sem_ir().insts().AddInNoBlock(
-      SemIR::ParseNodeAndInst::Untyped(Parse::NodeId::Invalid, inst));
-  constants().Add(inst_id);
-
+  auto [inst_id, added] = constants().GetOrAdd(inst);
   auto const_id = is_symbolic ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
                               : SemIR::ConstantId::ForTemplateConstant(inst_id);
-  constant_values().Set(inst_id, const_id);
+  if (added) {
+    // TODO: Should `ConstantStore` do this for us?
+    constant_values().Set(inst_id, const_id);
+  }
 
   CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
   return const_id;

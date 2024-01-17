@@ -107,6 +107,7 @@ fn Main() {
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
@@ -115,7 +116,7 @@ fn Main() {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4, .Main = %Main}
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {.C = %C.decl}
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,7 +136,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc4
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C [template = file.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C [template = constants.%C]
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, @C.%Foo [template = @C.%Foo]
 // CHECK:STDOUT:   %.loc11: init () = call %Foo.ref()
 // CHECK:STDOUT:   return

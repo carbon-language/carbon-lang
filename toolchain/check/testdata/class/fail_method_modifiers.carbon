@@ -50,17 +50,20 @@ base class BaseClass {
 // CHECK:STDOUT: --- fail_method_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
+// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.FinalClass = %FinalClass.decl, .AbstractClass = %AbstractClass.decl, .BaseClass = %BaseClass.decl}
 // CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass, ()
-// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
+// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass, ()
-// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
+// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass, ()
-// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template]
+// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {

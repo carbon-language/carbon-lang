@@ -32,30 +32,42 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: --- fail_derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.base: A2, .b: i32} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: {.a: i32}*, .b: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.a: i32}*, .b: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.base: A2, .b: i32} [template]
+// CHECK:STDOUT:   %A1: type = class_type @A1 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type A1, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %A2: type = class_type @A2 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type A2, i32 [template]
+// CHECK:STDOUT:   %B2: type = class_type @B2 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type B2, A2 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type B2, i32 [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: A2, .b: i32} [template]
+// CHECK:STDOUT:   %.8: type = ptr_type B2 [template]
+// CHECK:STDOUT:   %.9: type = ptr_type A1 [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.base: {.a: i32}*, .b: i32} [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.base: {.a: i32}*, .b: i32} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type {.base: A2, .b: i32} [template]
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
+// CHECK:STDOUT:   %.13: type = ptr_type Incomplete [template]
+// CHECK:STDOUT:   %.14: type = ptr_type A2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A1 = %A1.decl, .A2 = %A2.decl, .B2 = %B2.decl, .ConvertUnrelated = %ConvertUnrelated, .Incomplete = %Incomplete.decl, .ConvertIncomplete = %ConvertIncomplete}
 // CHECK:STDOUT:   %A1.decl = class_decl @A1, ()
-// CHECK:STDOUT:   %A1: type = class_type @A1 [template]
+// CHECK:STDOUT:   %A1: type = class_type @A1 [template = constants.%A1]
 // CHECK:STDOUT:   %A2.decl = class_decl @A2, ()
-// CHECK:STDOUT:   %A2: type = class_type @A2 [template]
+// CHECK:STDOUT:   %A2: type = class_type @A2 [template = constants.%A2]
 // CHECK:STDOUT:   %B2.decl = class_decl @B2, ()
-// CHECK:STDOUT:   %B2: type = class_type @B2 [template]
+// CHECK:STDOUT:   %B2: type = class_type @B2 [template = constants.%B2]
 // CHECK:STDOUT:   %ConvertUnrelated: <function> = fn_decl @ConvertUnrelated [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
+// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %ConvertIncomplete: <function> = fn_decl @ConvertIncomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type A1, i32 [template]
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type A1, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_8.2: <unbound element of class A1> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %a: <unbound element of class A1> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
 // CHECK:STDOUT:
@@ -64,7 +76,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
-// CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type A2, i32 [template]
+// CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type A2, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_8.2: <unbound element of class A2> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %a: <unbound element of class A2> = bind_name a, %.loc12_8.2 [template = %.loc12_8.2]
 // CHECK:STDOUT:
@@ -73,10 +85,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2 [template = file.%A2]
-// CHECK:STDOUT:   %.loc16_18.1: type = unbound_element_type B2, A2 [template]
+// CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2 [template = constants.%A2]
+// CHECK:STDOUT:   %.loc16_18.1: type = unbound_element_type B2, A2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc16_18.2: <unbound element of class B2> = base_decl A2, element0 [template]
-// CHECK:STDOUT:   %.loc17_8.1: type = unbound_element_type B2, i32 [template]
+// CHECK:STDOUT:   %.loc17_8.1: type = unbound_element_type B2, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_8.2: <unbound element of class B2> = field_decl b, element1 [template]
 // CHECK:STDOUT:   %b: <unbound element of class B2> = bind_name b, %.loc17_8.2 [template = %.loc17_8.2]
 // CHECK:STDOUT:

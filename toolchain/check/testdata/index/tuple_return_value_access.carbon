@@ -17,7 +17,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.4: (i32,) = tuple_value (%.3) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,7 +38,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc10_11.1: init (i32,) = call %F.ref()
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_11.2: ref (i32,) = temporary_storage
 // CHECK:STDOUT:   %.loc10_11.3: ref (i32,) = temporary %.loc10_11.2, %.loc10_11.1
 // CHECK:STDOUT:   %.loc10_15.1: ref i32 = tuple_index %.loc10_11.3, %.loc10_14

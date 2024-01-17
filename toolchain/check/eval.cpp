@@ -110,7 +110,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::TupleValue::elements_id);
 
-    // These cases are constants already.
+    // These cases are always constants.
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
@@ -120,12 +120,15 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleType::Kind:
     case SemIR::UnboundElementType::Kind:
       // TODO: Propagate symbolic / template nature from operands.
-      return SemIR::ConstantId::ForTemplateConstant(inst_id);
+      return context.AddConstant(inst, /*is_symbolic=*/false);
 
+    // These cases are treated as being the unique canonical definition of the
+    // corresponding constant value.
+    // TODO: This doesn't properly handle redeclarations. Consider adding a
+    // corresponding `Value` inst for each of these cases.
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:
-      // TODO: Consider adding a corresponding `Value` inst.
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:

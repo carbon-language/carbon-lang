@@ -15,6 +15,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,7 +29,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %n.var, %.loc8
-// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref i32* = var p
 // CHECK:STDOUT:   %p: ref i32* = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n

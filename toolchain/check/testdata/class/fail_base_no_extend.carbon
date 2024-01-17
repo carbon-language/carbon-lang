@@ -16,18 +16,21 @@ class C {
 // CHECK:STDOUT: --- fail_base_no_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .C = %C.decl}
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -36,8 +39,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc13_10.1: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc13_10.1: type = unbound_element_type C, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_10.2: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

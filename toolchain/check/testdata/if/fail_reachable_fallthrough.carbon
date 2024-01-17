@@ -38,7 +38,6 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,7 +83,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

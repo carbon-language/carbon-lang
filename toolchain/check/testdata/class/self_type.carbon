@@ -19,22 +19,25 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT: --- self_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.p: Class*} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type {.p: Class*} [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Class, Class* [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.p: Class*} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.p: Class*} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class [template = file.%Class]
-// CHECK:STDOUT:   %.loc9_14: type = ptr_type Class [template]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, Class* [template]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %.loc9_14: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, Class* [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl p, element0 [template]
 // CHECK:STDOUT:   %p: <unbound element of class Class> = bind_name p, %.loc9_8.2 [template = %.loc9_8.2]
 // CHECK:STDOUT:

@@ -32,27 +32,38 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: --- base_method_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: A} [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: {}*} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.base: A} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: B} [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: {.base: A}*} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type {.base: B} [template]
+// CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %.1: type = ptr_type A [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type B, A [template]
+// CHECK:STDOUT:   %.6: type = ptr_type B [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: A} [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: {}*} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: A} [template]
+// CHECK:STDOUT:   %.10: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %.11: type = ptr_type C [template]
+// CHECK:STDOUT:   %.12: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.13: type = unbound_element_type D, B [template]
+// CHECK:STDOUT:   %.14: type = ptr_type D [template]
+// CHECK:STDOUT:   %.15: type = struct_type {.base: {.base: A}*} [template]
+// CHECK:STDOUT:   %.16: type = ptr_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call}
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %A: type = class_type @A [template = constants.%A]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template = constants.%D]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,8 +75,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A [template]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = constants.%A]
+// CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT:
@@ -76,8 +87,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B [template = constants.%.10]
 // CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
 // CHECK:STDOUT:
@@ -88,8 +99,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B [template = constants.%.13]
 // CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -205,6 +205,14 @@ class Inst : public Printable<Inst> {
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
 
+  // Gets the first argument of the instruction. InvalidIndex if there is no
+  // such argument.
+  auto arg0() const -> int32_t { return arg0_; }
+
+  // Gets the second argument of the instruction. InvalidIndex if there is no
+  // such argument.
+  auto arg1() const -> int32_t { return arg1_; }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:

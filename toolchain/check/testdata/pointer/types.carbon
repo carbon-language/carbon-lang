@@ -14,6 +14,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.2: type = const_type i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type const i32 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Ptr = %Ptr, .ConstPtr = %ConstPtr}
 // CHECK:STDOUT:   %Ptr: <function> = fn_decl @Ptr [template]

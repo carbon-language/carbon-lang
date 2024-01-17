@@ -19,7 +19,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 42 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 42 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,7 +33,7 @@ fn Main() {
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error>
 // CHECK:STDOUT:   %.loc15_3: ref <error> = deref <error>
-// CHECK:STDOUT:   %.loc15_22: i32 = int_literal 42 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_22: i32 = int_literal 42 [template = constants.%.1]
 // CHECK:STDOUT:   assign %.loc15_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
