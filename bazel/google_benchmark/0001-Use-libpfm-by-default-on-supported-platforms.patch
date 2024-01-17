@@ -1,0 +1,62 @@
+From 4110acfa9a131a5a93ae4caef26bd34dd5509155 Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Sat, 13 Jan 2024 02:58:47 -0800
+Subject: [PATCH] Use libpfm by default on supported platforms.
+
+---
+ BUILD.bazel | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 60d31d2..c313c8a 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,3 +1,5 @@
++load("@bazel_skylib//lib:selects.bzl", "selects")
++
+ licenses(["notice"])
+
+ config_setting(
+@@ -24,12 +26,20 @@ config_setting(
+     visibility = ["//visibility:public"],
+ )
+
+-config_setting(
+-    name = "perfcounters",
+-    define_values = {
+-        "pfm": "1",
+-    },
+-    visibility = [":__subpackages__"],
++selects.config_setting_group(
++    name = "aarch64_or_x86_64",
++    match_any = [
++        "@platforms//cpu:aarch64",
++        "@platforms//cpu:x86_64",
++    ],
++)
++
++selects.config_setting_group(
++    name = "linux_aarch64_or_x86_64",
++    match_all = [
++        "@platforms//os:linux",
++        ":aarch64_or_x86_64",
++    ],
+ )
+
+ cc_library(
+@@ -62,11 +72,11 @@ cc_library(
+     defines = [
+         "BENCHMARK_STATIC_DEFINE",
+     ] + select({
+-        ":perfcounters": ["HAVE_LIBPFM"],
++        ":linux_aarch64_or_x86_64": ["HAVE_LIBPFM"],
+         "//conditions:default": [],
+     }),
+     deps = select({
+-        ":perfcounters": ["@libpfm//:libpfm"],
++        ":linux_aarch64_or_x86_64": ["@libpfm//:libpfm"],
+         "//conditions:default": [],
+     }),
+ )
+--
+2.43.0
