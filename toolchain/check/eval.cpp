@@ -138,6 +138,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
+      // TODO: Convert literals into a canonical form. Currently we can form two
+      // different `i32` constants with the same value if they are represented
+      // by `APInt`s with different bit widths.
       return context.AddConstant(inst, /*is_symbolic=*/false);
 
     // TODO: These need special handling.
