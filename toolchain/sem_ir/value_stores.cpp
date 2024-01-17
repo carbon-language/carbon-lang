@@ -18,7 +18,7 @@ auto ConstantStore::GetOrAdd(Inst inst) -> std::pair<InstId, bool> {
 
   // Check if we have already created this constant.
   void* insert_pos;
-  if (ConstantNode *found = constants_.FindNodeOrInsertPos(id, insert_pos)) {
+  if (ConstantNode* found = constants_.FindNodeOrInsertPos(id, insert_pos)) {
     return {found->inst_id, false};
   }
 

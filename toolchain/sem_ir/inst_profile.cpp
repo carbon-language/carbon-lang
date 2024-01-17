@@ -21,7 +21,8 @@ static auto NullProfileArgFunction(llvm::FoldingSetNodeID& /*id*/,
       << "Unexpected value for unused argument.";
 }
 
-// Profiling for ID arguments that should participate in the instruction's value.
+// Profiling for ID arguments that should participate in the instruction's
+// value.
 static auto DefaultProfileArgFunction(llvm::FoldingSetNodeID& id,
                                       File* /*context*/, int32_t arg) -> void {
   id.AddInteger(arg);
@@ -103,7 +104,8 @@ static constexpr auto KindIndex(InstKind::RawEnumType kind) -> int {
   return static_cast<InstKind::UnderlyingType>(kind);
 }
 
-auto ProfileConstant(llvm::FoldingSetNodeID& id, File* sem_ir, Inst inst) -> void {
+auto ProfileConstant(llvm::FoldingSetNodeID& id, File* sem_ir, Inst inst)
+    -> void {
   using ProfileArgsFunction =
       auto(llvm::FoldingSetNodeID&, File*, int32_t, int32_t)->void;
   static constexpr ProfileArgsFunction* ProfileFunctions[] = {
@@ -114,7 +116,8 @@ auto ProfileConstant(llvm::FoldingSetNodeID& id, File* sem_ir, Inst inst) -> voi
   };
 
   inst.kind().Profile(id);
-  ProfileFunctions[KindIndex(inst.kind())](id, sem_ir, inst.arg0(), inst.arg1());
+  ProfileFunctions[KindIndex(inst.kind())](id, sem_ir, inst.arg0(),
+                                           inst.arg1());
 }
 
 }  // namespace Carbon::SemIR

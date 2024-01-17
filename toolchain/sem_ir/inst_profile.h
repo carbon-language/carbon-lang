@@ -13,8 +13,8 @@ namespace Carbon::SemIR {
 
 // Computes a profile of the given constant instruction, for canonicalization /
 // deduplication.
-auto ProfileConstant(llvm::FoldingSetNodeID& id, File* sem_ir,
-                     Inst inst) -> void;
+auto ProfileConstant(llvm::FoldingSetNodeID& id, File* sem_ir, Inst inst)
+    -> void;
 
 }  // namespace Carbon::SemIR
 
