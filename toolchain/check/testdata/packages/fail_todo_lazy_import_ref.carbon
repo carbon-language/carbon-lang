@@ -27,7 +27,7 @@ var a: () = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.a_ref = %a_ref}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.a_ref = %a_ref} [template]
 // CHECK:STDOUT:   %a_ref.var: ref i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref i32 = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
@@ -41,7 +41,7 @@ var a: () = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.a_ref = %package.var, .a = %a}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.a_ref = %package.var, .a = %a} [template]
 // CHECK:STDOUT:   %package.var: ref <error> = var package
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]

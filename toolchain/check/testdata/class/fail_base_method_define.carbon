@@ -36,7 +36,7 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .D = %D.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .D = %D.decl} [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()

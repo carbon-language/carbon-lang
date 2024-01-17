@@ -67,6 +67,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+23:         {kind: Converted, arg0: inst+15, arg1: inst+22, type: type4}
 // CHECK:STDOUT:     inst+24:         {kind: ReturnExpr, arg0: inst+23}
 // CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+3:          template inst+3
 // CHECK:STDOUT:     inst+5:          template inst+5
 // CHECK:STDOUT:     inst+6:          template inst+5

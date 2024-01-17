@@ -39,7 +39,7 @@ abstract var e: i32;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.b = %b, .c = %c, .d = %d, .e = %e}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.b = %b, .c = %c, .d = %d, .e = %e} [template]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c

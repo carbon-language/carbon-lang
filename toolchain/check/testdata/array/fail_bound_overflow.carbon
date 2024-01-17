@@ -17,7 +17,7 @@ var a: [1; 39999999999999999993];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a} [template]
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 39999999999999999993 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref <error> = var a

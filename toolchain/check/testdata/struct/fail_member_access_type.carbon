@@ -17,7 +17,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y} [template]
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64} [template]
 // CHECK:STDOUT:   %x.var: ref {.a: f64} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64} = bind_name x, %x.var
