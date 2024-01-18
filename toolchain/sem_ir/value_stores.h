@@ -331,13 +331,6 @@ class NameScopeStore {
         {.inst_id = inst_id, .enclosing_scope_id = enclosing_scope_id});
   }
 
-  // Adds an entry to a name scope. Returns true on success, false on
-  // duplicates.
-  auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
-      -> bool {
-    return values_.Get(scope_id).names.insert({name_id, target_id}).second;
-  }
-
   // Returns the requested name scope.
   auto Get(NameScopeId scope_id) -> NameScope& { return values_.Get(scope_id); }
 
