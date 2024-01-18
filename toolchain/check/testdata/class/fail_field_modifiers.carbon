@@ -40,16 +40,13 @@ class Class {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12_16.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_16.2: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12_16.2 [template = %.loc12_16.2]
-// CHECK:STDOUT:   %.loc17_14.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_14.2: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17_14.2 [template = %.loc17_14.2]
+// CHECK:STDOUT:   %.loc12: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12 [template = %.loc12]
+// CHECK:STDOUT:   %.loc17: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17 [template = %.loc17]
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.3]

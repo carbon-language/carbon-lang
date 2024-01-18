@@ -38,11 +38,14 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
       lexical_lookup_(sem_ir_->identifiers()) {
-  // Inserts the "Error" and "Type" types as "used types" so that
-  // canonicalization can skip them. We don't emit either for lowering.
-  canonical_types_.insert({SemIR::InstId::BuiltinError, SemIR::TypeId::Error});
-  canonical_types_.insert(
-      {SemIR::InstId::BuiltinTypeType, SemIR::TypeId::TypeType});
+  // Map the builtin `<error>` and `type` type constants to their corresponding
+  // special `TypeId` values.
+  type_ids_for_type_constants_.insert(
+      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinError),
+       SemIR::TypeId::Error});
+  type_ids_for_type_constants_.insert(
+      {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
+       SemIR::TypeId::TypeType});
 }
 
 auto Context::TODO(Parse::NodeId parse_node, std::string label) -> bool {
@@ -771,7 +774,7 @@ class TypeCompleter {
   // state, such as empty structs and tuples.
   auto MakeEmptyValueRepr() const -> SemIR::ValueRepr {
     return {.kind = SemIR::ValueRepr::None,
-            .type_id = context_.CanonicalizeTupleType({})};
+            .type_id = context_.GetTupleType({})};
   }
 
   // Makes a value representation that uses pass-by-copy, copying the given
@@ -897,7 +900,7 @@ class TypeCompleter {
 
     auto value_rep = same_as_object_rep
                          ? type_id
-                         : context_.CanonicalizeStructType(
+                         : context_.GetStructType(
                                context_.inst_blocks().Add(value_rep_fields));
     return BuildStructOrTupleValueRepr(fields.size(), value_rep,
                                        same_as_object_rep);
@@ -927,7 +930,7 @@ class TypeCompleter {
 
     auto value_rep = same_as_object_rep
                          ? type_id
-                         : context_.CanonicalizeTupleType(value_rep_elements);
+                         : context_.GetTupleType(value_rep_elements);
     return BuildStructOrTupleValueRepr(elements.size(), value_rep,
                                        same_as_object_rep);
   }
@@ -1065,55 +1068,63 @@ auto Context::TryToCompleteType(
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
-auto Context::CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId {
-  inst_id = constant_values().Get(inst_id).inst_id();
-  // TODO: Pass the ConstantId to CanonicalizeType directly.
-  CARBON_CHECK(inst_id.is_valid());
+auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId {
+  CARBON_CHECK(constant_id.is_constant()) << "Canonicalizing non-constant type";
 
-  auto [it, added] = canonical_types_.insert({inst_id, SemIR::TypeId::Invalid});
+  auto [it, added] = type_ids_for_type_constants_.insert(
+      {constant_id, SemIR::TypeId::Invalid});
   if (added) {
-    it->second = types().Add({.inst_id = inst_id});
+    // TODO: Store the full `constant_id` on the TypeInfo.
+    it->second = types().Add({.inst_id = constant_id.inst_id()});
   }
   return it->second;
 }
 
-auto Context::CanonicalizeStructType(SemIR::InstBlockId refs_id)
-    -> SemIR::TypeId {
+template <typename InstT, typename... EachArgT>
+static auto GetTypeImpl(Context& context,
+                        EachArgT... each_arg) -> SemIR::TypeId {
   // TODO: Remove inst_id parameter from TryEvalInst.
-  auto constant_id =
-      TryEvalInst(*this, SemIR::InstId::Invalid,
-                  SemIR::StructType{SemIR::TypeId::TypeType, refs_id});
-  CARBON_CHECK(constant_id.is_constant()) << "Non-constant struct type";
-  return CanonicalizeType(constant_id.inst_id());
+  return context.GetTypeIdForTypeConstant(
+      TryEvalInst(context, SemIR::InstId::Invalid,
+                  InstT{SemIR::TypeId::TypeType, each_arg...}));
 }
 
-auto Context::CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto Context::GetStructType(SemIR::InstBlockId refs_id)
     -> SemIR::TypeId {
-  // TODO: Defer allocating a SemIR::TypeBlockId until we know this is a new
-  // type.
-  // TODO: Remove inst_id parameter from TryEvalInst.
-  auto constant_id = TryEvalInst(
-      *this, SemIR::InstId::Invalid,
-      SemIR::TupleType{SemIR::TypeId::TypeType, type_blocks().Add(type_ids)});
-  CARBON_CHECK(constant_id.is_constant()) << "Non-constant tuple type";
-  return CanonicalizeType(constant_id.inst_id());
+  return GetTypeImpl<SemIR::StructType>(*this, refs_id);
+}
+
+auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
+    -> SemIR::TypeId {
+  // TODO: Deduplicate the type block here. Currently requesting the same tuple
+  // type more than once will create multiple type blocks, all but one of which
+  // is unused.
+  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id = CanonicalizeType(SemIR::InstId::ForBuiltin(kind));
+  auto type_id =
+      GetTypeIdForTypeConstant(constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";
   return type_id;
 }
 
+auto Context::GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::ClassType>(*this, class_id);
+}
+
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  auto constant_id =
-      TryEvalInst(*this, SemIR::InstId::Invalid,
-                  SemIR::PointerType{SemIR::TypeId::TypeType, pointee_type_id});
-  CARBON_CHECK(constant_id.is_constant()) << "Non-constant pointer type";
-  return CanonicalizeType(constant_id.inst_id());
+  return GetTypeImpl<SemIR::PointerType>(*this, pointee_type_id);
+}
+
+auto Context::GetUnboundElementType(SemIR::TypeId class_type_id,
+                                    SemIR::TypeId element_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::UnboundElementType>(*this, class_type_id,
+                                                element_type_id);
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

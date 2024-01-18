@@ -34,23 +34,20 @@ fn G(o: Outer) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
-// CHECK:STDOUT:   %Outer: type = class_type @Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
-// CHECK:STDOUT:   %Inner: type = class_type @Inner [template = constants.%Inner]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc9_10.1: type = unbound_element_type Inner, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_10.2: <unbound element of class Inner> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %n: <unbound element of class Inner> = bind_name n, %.loc9_10.2 [template = %.loc9_10.2]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Inner> = field_decl n, element0 [template]
+// CHECK:STDOUT:   %n: <unbound element of class Inner> = bind_name n, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n

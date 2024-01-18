@@ -34,18 +34,15 @@ fn G() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.C = %C.decl, .F = %F, .G = %G} [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type C, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class C> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class C> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type C, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class C> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class C> = bind_name b, %.loc9_8.2 [template = %.loc9_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class C> = bind_name a, %.loc8 [template = %.loc8]
+// CHECK:STDOUT:   %.loc9: <unbound element of class C> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %b: <unbound element of class C> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

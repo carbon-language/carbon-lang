@@ -266,22 +266,8 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Canonicalizes a type which is tracked as a single instruction.
-  auto CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId;
-
-  // Handles canonicalization of struct types. This may create a new struct type
-  // when it has a new structure, or reference an existing struct type when it
-  // duplicates a prior type.
-  //
-  // Individual struct type fields aren't canonicalized because they may have
-  // name conflicts or other diagnostics during creation, which can use the
-  // parse node.
-  auto CanonicalizeStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
-
-  // Handles canonicalization of tuple types. This may create a new tuple type
-  // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
-      -> SemIR::TypeId;
+  // Returns the type ID for a constant of type `type`.
+  auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
@@ -305,11 +291,28 @@ class Context {
                                                  : SemIR::TypeId::Error;
   }
 
+  // TODO: Consider moving these `Get*Type` functions to a separate class.
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
+  // Returns a class type for the class described by `class_id`.
+  // TODO: Support generic arguments.
+  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
+
+  // Returns a struct type with the given fields, which should be a block of
+  // `StructTypeField`s.
+  auto GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+
+  // Returns a tuple type with the given element types.
+  auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
+
+  // Returns an unbound element type.
+  auto GetUnboundElementType(SemIR::TypeId class_type_id,
+                             SemIR::TypeId element_type_id) -> SemIR::TypeId;
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -558,7 +561,7 @@ class Context {
   // not clear whether that would result in more or fewer lookups.
   //
   // TODO: Should this be part of the `TypeStore`?
-  llvm::DenseMap<SemIR::InstId, SemIR::TypeId> canonical_types_;
+  llvm::DenseMap<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;

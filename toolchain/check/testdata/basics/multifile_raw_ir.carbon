@@ -38,6 +38,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
+// CHECK:STDOUT:     instError:       template instError
 // CHECK:STDOUT:     instBoolType:    template instBoolType
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType
@@ -77,6 +78,7 @@ fn B() {}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
+// CHECK:STDOUT:     instError:       template instError
 // CHECK:STDOUT:     instBoolType:    template instBoolType
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType

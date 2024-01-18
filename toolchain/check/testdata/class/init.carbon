@@ -32,20 +32,17 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2 [template = %.loc8_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
+// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_11.1: type = unbound_element_type Class, Class* [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_11.2: <unbound element of class Class> = field_decl next, element1 [template]
-// CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11.2 [template = %.loc9_11.2]
+// CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
+// CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11 [template = %.loc9_11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .n = %n

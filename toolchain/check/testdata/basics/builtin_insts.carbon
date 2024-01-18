@@ -31,6 +31,7 @@
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
+// CHECK:STDOUT:     instError:       template instError
 // CHECK:STDOUT:     instBoolType:    template instBoolType
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType

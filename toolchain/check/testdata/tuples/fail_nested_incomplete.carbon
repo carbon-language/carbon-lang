@@ -33,7 +33,6 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .t = %t, .p = %p} [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
 // CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.2 [template = constants.%.2]
@@ -45,7 +44,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %t.ref: ref <error> = name_ref t, %t
 // CHECK:STDOUT:   %.loc20_25: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error>
+// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -116,7 +116,6 @@ fn Main() {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4, .Main = %Main} [template]
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {.C = %C.decl} [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

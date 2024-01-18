@@ -33,7 +33,6 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Incomplete = %Incomplete.decl, .a = %a, .p = %p} [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete [template = constants.%.2]
@@ -45,7 +44,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, %a
 // CHECK:STDOUT:   %.loc20_25: i32 = int_literal 0 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error>
+// CHECK:STDOUT:   %.loc20_22: <error>* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

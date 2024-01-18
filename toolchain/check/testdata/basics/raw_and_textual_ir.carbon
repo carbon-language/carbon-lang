@@ -72,6 +72,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+24:         {kind: ReturnExpr, arg0: inst+23}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
+// CHECK:STDOUT:     instError:       template instError
 // CHECK:STDOUT:     instBoolType:    template instBoolType
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType

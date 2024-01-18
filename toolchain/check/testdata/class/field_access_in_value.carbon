@@ -32,17 +32,14 @@ fn Test() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Test = %Test} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc9_8.2 [template = %.loc9_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc8 [template = %.loc8]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .j = %j

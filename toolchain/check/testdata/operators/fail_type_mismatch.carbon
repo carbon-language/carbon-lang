@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc11_21: i32 = int_literal 12 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_17: <error> = not <error>
+// CHECK:STDOUT:   %.loc11_17: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

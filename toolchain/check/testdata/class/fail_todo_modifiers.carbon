@@ -72,22 +72,17 @@ abstract class Abstract {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl} [template]
 // CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
-// CHECK:STDOUT:   %Access: type = class_type @Access [template = constants.%Access]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base [template = constants.%Base]
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
-// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template = constants.%Abstract]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %.loc22_16.1: type = unbound_element_type Access, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc22_16.2: <unbound element of class Access> = field_decl k, element0 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Access> = bind_name k, %.loc22_16.2 [template = %.loc22_16.2]
-// CHECK:STDOUT:   %.loc27_18.1: type = unbound_element_type Access, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc27_18.2: <unbound element of class Access> = field_decl l, element1 [template]
-// CHECK:STDOUT:   %l: <unbound element of class Access> = bind_name l, %.loc27_18.2 [template = %.loc27_18.2]
+// CHECK:STDOUT:   %.loc22: <unbound element of class Access> = field_decl k, element0 [template]
+// CHECK:STDOUT:   %k: <unbound element of class Access> = bind_name k, %.loc22 [template = %.loc22]
+// CHECK:STDOUT:   %.loc27: <unbound element of class Access> = field_decl l, element1 [template]
+// CHECK:STDOUT:   %l: <unbound element of class Access> = bind_name l, %.loc27 [template = %.loc27]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

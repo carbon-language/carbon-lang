@@ -48,7 +48,6 @@ class C {
 // CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block5>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -56,6 +55,6 @@ class C {
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = <unexpected instref inst+27>
+// CHECK:STDOUT:   .n = <unexpected instref inst+25>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

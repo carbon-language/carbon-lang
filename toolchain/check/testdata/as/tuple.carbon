@@ -36,7 +36,6 @@ fn Var() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.X = %X.decl, .Make = %Make, .Let = %Let, .Var = %Var} [template]
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X [template = constants.%X]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
 // CHECK:STDOUT:   %Let: <function> = fn_decl @Let [template]
 // CHECK:STDOUT:   %Var: <function> = fn_decl @Var [template]

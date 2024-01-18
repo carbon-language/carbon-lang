@@ -37,7 +37,6 @@ fn Initializing() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.X = %X.decl, .Value = %Value, .Reference = %Reference, .Make = %Make, .Initializing = %Initializing} [template]
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X [template = constants.%X]
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value [template]
 // CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference [template]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]

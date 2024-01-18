@@ -49,18 +49,15 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call} [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base [template = constants.%Base]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template = constants.%Derived]
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -68,13 +65,12 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
+// CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_20.2
+// CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .SelfBase = %SelfBase
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase
 // CHECK:STDOUT:   extend name_scope1
