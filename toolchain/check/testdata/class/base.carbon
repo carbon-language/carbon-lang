@@ -25,32 +25,37 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.b: i32} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type {.b: i32} [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.base: Base, .d: i32} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: {.b: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.b: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base, .d: i32} [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: {.b: i32}, .d: i32} [template]
-// CHECK:STDOUT:   %.10: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.11: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.12: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.b: i32} [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.b: i32} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type Derived, i32 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: Base, .d: i32} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: {.b: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.8: type = ptr_type {.base: {.b: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: Base, .d: i32} [template]
+// CHECK:STDOUT:   %.10: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.11: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.12: type = struct_type {.base: {.b: i32}, .d: i32} [template]
+// CHECK:STDOUT:   %.13: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.15: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access} [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template = constants.%Base]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template = constants.%Derived]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl b, element0 [template]
 // CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc8_8.2 [template = %.loc8_8.2]
 // CHECK:STDOUT:
@@ -59,10 +64,10 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
-// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %.loc12_20.1: type = unbound_element_type Derived, Base [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
-// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Derived, i32 [template]
+// CHECK:STDOUT:   %.loc14_8.1: type = unbound_element_type Derived, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_8.2: <unbound element of class Derived> = field_decl d, element1 [template]
 // CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc14_8.2 [template = %.loc14_8.2]
 // CHECK:STDOUT:
@@ -74,9 +79,9 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_25: i32 = int_literal 4 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18_26.1: {.b: i32} = struct_literal (%.loc18_25)
-// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc18_34: i32 = int_literal 7 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc18_35.1: {.base: {.b: i32}, .d: i32} = struct_literal (%.loc18_26.1, %.loc18_34)
 // CHECK:STDOUT:   %.loc18_35.2: ref Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0

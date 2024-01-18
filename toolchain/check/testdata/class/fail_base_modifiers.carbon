@@ -46,24 +46,33 @@ class C4 {
 // CHECK:STDOUT: --- fail_base_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type C1, B [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %C2: type = class_type @C2 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type C2, B [template]
+// CHECK:STDOUT:   %C3: type = class_type @C3 [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type C3, B [template]
+// CHECK:STDOUT:   %C4: type = class_type @C4 [template]
+// CHECK:STDOUT:   %.8: type = unbound_element_type C4, B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .C1 = %C1.decl, .C2 = %C2.decl, .C3 = %C3.decl, .C4 = %C4.decl} [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %C1.decl = class_decl @C1, ()
-// CHECK:STDOUT:   %C1: type = class_type @C1 [template]
+// CHECK:STDOUT:   %C1: type = class_type @C1 [template = constants.%C1]
 // CHECK:STDOUT:   %C2.decl = class_decl @C2, ()
-// CHECK:STDOUT:   %C2: type = class_type @C2 [template]
+// CHECK:STDOUT:   %C2: type = class_type @C2 [template = constants.%C2]
 // CHECK:STDOUT:   %C3.decl = class_decl @C3, ()
-// CHECK:STDOUT:   %C3: type = class_type @C3 [template]
+// CHECK:STDOUT:   %C3: type = class_type @C3 [template = constants.%C3]
 // CHECK:STDOUT:   %C4.decl = class_decl @C4, ()
-// CHECK:STDOUT:   %C4: type = class_type @C4 [template]
+// CHECK:STDOUT:   %C4: type = class_type @C4 [template = constants.%C4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -72,8 +81,8 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc13_25.1: type = unbound_element_type C1, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc13_25.1: type = unbound_element_type C1, B [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_25.2: <unbound element of class C1> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -82,8 +91,8 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc23_19.1: type = unbound_element_type C2, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc23_19.1: type = unbound_element_type C2, B [template = constants.%.6]
 // CHECK:STDOUT:   %.loc23_19.2: <unbound element of class C2> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -91,8 +100,8 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc33_25.1: type = unbound_element_type C3, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc33_25.1: type = unbound_element_type C3, B [template = constants.%.7]
 // CHECK:STDOUT:   %.loc33_25.2: <unbound element of class C3> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -101,8 +110,8 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc43_24.1: type = unbound_element_type C4, B [template]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc43_24.1: type = unbound_element_type C4, B [template = constants.%.8]
 // CHECK:STDOUT:   %.loc43_24.2: <unbound element of class C4> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

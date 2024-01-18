@@ -16,6 +16,15 @@ fn G(p: const (const i32)**) -> i32** {
 
 // CHECK:STDOUT: --- fail_collapse.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = const_type i32 [template]
+// CHECK:STDOUT:   %.2: type = const_type const i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type const i32 [template]
+// CHECK:STDOUT:   %.4: type = ptr_type const i32* [template]
+// CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.6: type = ptr_type i32* [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G} [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]

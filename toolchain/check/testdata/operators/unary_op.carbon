@@ -16,8 +16,6 @@ let not_false: bool = not false;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.3: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,9 +24,9 @@ let not_false: bool = not false;
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.2]
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_27: bool = bool_literal false [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_23: bool = not %.loc12_27 [template = constants.%.4]
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_27: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_23: bool = not %.loc12_27 [template = constants.%.1]
+// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {

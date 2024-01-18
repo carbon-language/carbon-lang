@@ -28,11 +28,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.3: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,18 +50,18 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
-// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc11 br !if.then.loc11 else br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11:
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc12
 // CHECK:STDOUT:   br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,7 +73,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %v.var: ref i32 = var v
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc19_27: i32 = int_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19_27: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign %v.var, %.loc19_27
 // CHECK:STDOUT:   %.loc19_18: i32 = bind_value %v
 // CHECK:STDOUT:   return %.loc19_18
@@ -85,7 +81,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %w.var: ref i32 = var w
 // CHECK:STDOUT:   %w: ref i32 = bind_name w, %w.var
-// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign %w.var, %.loc22_25
 // CHECK:STDOUT:   %.loc22_16: i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc22_16

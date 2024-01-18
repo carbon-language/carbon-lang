@@ -59,6 +59,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
       TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
       -> Definition<TypedNodeId>;
 
+  using EnumBase::AsInt;
   using EnumBase::Create;
 
   // Returns the name to use for this instruction kind in Semantics IR.

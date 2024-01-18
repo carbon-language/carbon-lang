@@ -65,7 +65,6 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
-        "//toolchain/sem_ir:value_stores",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -96,7 +95,6 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
-        "//toolchain/sem_ir:value_stores",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -124,7 +122,6 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
-        "//toolchain/sem_ir:value_stores",
     ],
 )
 

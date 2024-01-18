@@ -100,6 +100,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::StructType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::StructType::fields_id);
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructValue::elements_id);
@@ -110,23 +113,25 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::TupleValue::elements_id);
 
-    // These cases are constants already.
+    // These cases are always constants.
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
     case SemIR::ConstType::Kind:
     case SemIR::PointerType::Kind:
-    case SemIR::StructType::Kind:
     case SemIR::StructTypeField::Kind:
     case SemIR::TupleType::Kind:
     case SemIR::UnboundElementType::Kind:
       // TODO: Propagate symbolic / template nature from operands.
-      return SemIR::ConstantId::ForTemplateConstant(inst_id);
+      return context.AddConstant(inst, /*is_symbolic=*/false);
 
+    // These cases are treated as being the unique canonical definition of the
+    // corresponding constant value.
+    // TODO: This doesn't properly handle redeclarations. Consider adding a
+    // corresponding `Value` inst for each of these cases.
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:
     case SemIR::Namespace::Kind:
-      // TODO: Consider adding a corresponding `Value` inst.
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:
@@ -134,6 +139,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:
       // Promote literals to the constant block.
+      // TODO: Convert literals into a canonical form. Currently we can form two
+      // different `i32` constants with the same value if they are represented
+      // by `APInt`s with different bit widths.
       return context.AddConstant(inst, /*is_symbolic=*/false);
 
     // TODO: These need special handling.

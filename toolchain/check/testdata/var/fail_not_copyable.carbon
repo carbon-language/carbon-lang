@@ -25,6 +25,7 @@ fn F(x: X) {
 // CHECK:STDOUT: --- fail_not_copyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
@@ -35,7 +36,7 @@ fn F(x: X) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.X = %X.decl, .F = %F} [template]
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %X: type = class_type @X [template]
+// CHECK:STDOUT:   %X: type = class_type @X [template = constants.%X]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,7 +51,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello" [template = constants.%.5]
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X [template = file.%X]
+// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: X = name_ref x, %x

@@ -20,7 +20,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,7 +59,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_28.8: (i32, i32, i32) = converted %v.ref, %.loc10_28.7
 // CHECK:STDOUT:   %w: (i32, i32, i32) = bind_name w, %.loc10_28.8
 // CHECK:STDOUT:   %w.ref: (i32, i32, i32) = name_ref w, %w
-// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_12: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_13: i32 = tuple_index %w.ref, %.loc11_12
 // CHECK:STDOUT:   return %.loc11_13
 // CHECK:STDOUT: }

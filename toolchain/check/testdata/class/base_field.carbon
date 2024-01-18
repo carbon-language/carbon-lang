@@ -24,31 +24,38 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: --- base_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type {.a: i32, .b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type Derived, i32 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type Derived [template]
+// CHECK:STDOUT:   %.8: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl, .Access = %Access} [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [template = constants.%Base]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template = constants.%Derived]
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Base, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Base> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Base, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Base> = field_decl b, element1 [template]
 // CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc9_8.2 [template = %.loc9_8.2]
-// CHECK:STDOUT:   %.loc10_8.1: type = unbound_element_type Base, i32 [template]
+// CHECK:STDOUT:   %.loc10_8.1: type = unbound_element_type Base, i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_8.2: <unbound element of class Base> = field_decl c, element2 [template]
 // CHECK:STDOUT:   %c: <unbound element of class Base> = bind_name c, %.loc10_8.2 [template = %.loc10_8.2]
 // CHECK:STDOUT:
@@ -59,13 +66,13 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = file.%Base]
-// CHECK:STDOUT:   %.loc14_20.1: type = unbound_element_type Derived, Base [template]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %.loc14_20.1: type = unbound_element_type Derived, Base [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_20.2: <unbound element of class Derived> = base_decl Base, element0 [template]
-// CHECK:STDOUT:   %.loc16_8.1: type = unbound_element_type Derived, i32 [template]
+// CHECK:STDOUT:   %.loc16_8.1: type = unbound_element_type Derived, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc16_8.2: <unbound element of class Derived> = field_decl d, element1 [template]
 // CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc16_8.2 [template = %.loc16_8.2]
-// CHECK:STDOUT:   %.loc17_8.1: type = unbound_element_type Derived, i32 [template]
+// CHECK:STDOUT:   %.loc17_8.1: type = unbound_element_type Derived, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc17_8.2: <unbound element of class Derived> = field_decl e, element2 [template]
 // CHECK:STDOUT:   %e: <unbound element of class Derived> = bind_name e, %.loc17_8.2 [template = %.loc17_8.2]
 // CHECK:STDOUT:

@@ -5,8 +5,47 @@
 #include "toolchain/sem_ir/value_stores.h"
 
 #include "llvm/ADT/StringSwitch.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/inst_profile.h"
 
 namespace Carbon::SemIR {
+
+auto ConstantStore::GetOrAdd(Inst inst) -> std::pair<InstId, bool> {
+  // Compute the instruction's profile.
+  ConstantNode node = {.inst = inst, .inst_id = InstId::Invalid};
+  llvm::FoldingSetNodeID id;
+  node.Profile(id, constants_.getContext());
+
+  // Check if we have already created this constant.
+  void* insert_pos;
+  if (ConstantNode* found = constants_.FindNodeOrInsertPos(id, insert_pos)) {
+    return {found->inst_id, false};
+  }
+
+  // Create the new inst and insert the new node.
+  node.inst_id = constants_.getContext()->insts().AddInNoBlock(
+      ParseNodeAndInst::Untyped(Parse::NodeId::Invalid, inst));
+  constants_.InsertNode(new (*allocator_) ConstantNode(node), insert_pos);
+  return {node.inst_id, true};
+}
+
+auto ConstantStore::GetAsVector() const -> llvm::SmallVector<InstId, 0> {
+  llvm::SmallVector<InstId, 0> result;
+  result.reserve(constants_.size());
+  for (const ConstantNode& node : constants_) {
+    result.push_back(node.inst_id);
+  }
+  // For stability, put the results into index order. This happens to also be
+  // insertion order.
+  std::sort(result.begin(), result.end(),
+            [](InstId a, InstId b) { return a.index < b.index; });
+  return result;
+}
+
+auto ConstantStore::ConstantNode::Profile(llvm::FoldingSetNodeID& id,
+                                          File* sem_ir) -> void {
+  ProfileConstant(id, *sem_ir, inst);
+}
 
 // Get the spelling to use for a special name.
 static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {

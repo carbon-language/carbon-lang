@@ -29,7 +29,6 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,7 +61,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   return %.loc21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   return %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

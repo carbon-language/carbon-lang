@@ -11,6 +11,14 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 
 // CHECK:STDOUT: --- nested_const.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = const_type i32 [template]
+// CHECK:STDOUT:   %.2: type = ptr_type const i32 [template]
+// CHECK:STDOUT:   %.3: type = const_type const i32* [template]
+// CHECK:STDOUT:   %.4: type = ptr_type const (const i32*) [template]
+// CHECK:STDOUT:   %.5: type = const_type const (const i32*)* [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]

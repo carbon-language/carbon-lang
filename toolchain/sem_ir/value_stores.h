@@ -146,17 +146,38 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
   llvm::SmallVector<ConstantId, 0> values_;
 };
 
-// Provides storage for instructions representing global constants.
+// Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  // Add a constant instruction.
-  auto Add(InstId inst_id) -> void { values_.push_back(inst_id); }
+  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& allocator)
+      : allocator_(&allocator), constants_(&sem_ir) {}
 
-  auto array_ref() const -> llvm::ArrayRef<InstId> { return values_; }
-  auto size() const -> int { return values_.size(); }
+  // Adds a new constant instruction, or gets the existing constant with this
+  // value. Returns the instruction ID and a bool indicating whether a new
+  // instruction was added.
+  auto GetOrAdd(Inst inst) -> std::pair<InstId, bool>;
+
+  // Returns a copy of the constant IDs as a vector, in an arbitrary but
+  // stable order. This should not be used anywhere performance-sensitive.
+  auto GetAsVector() const -> llvm::SmallVector<InstId, 0>;
+
+  auto size() const -> int { return constants_.size(); }
 
  private:
-  llvm::SmallVector<InstId> values_;
+  // TODO: We store two copies of each constant instruction: one in insts() and
+  // one here. We could avoid one of those copies and store just an InstId here,
+  // at the cost of some more indirection when recomputing profiles during
+  // lookup. Once we have a representative data set, we should measure the
+  // impact on compile time from that change.
+  struct ConstantNode : llvm::FoldingSetNode {
+    Inst inst;
+    InstId inst_id;
+
+    auto Profile(llvm::FoldingSetNodeID& id, File* sem_ir) -> void;
+  };
+
+  llvm::BumpPtrAllocator* allocator_;
+  llvm::ContextualFoldingSet<ConstantNode, File*> constants_;
 };
 
 // Provides a ValueStore wrapper with an API specific to types.
