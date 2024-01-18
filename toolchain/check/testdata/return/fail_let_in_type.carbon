@@ -4,9 +4,23 @@
 //
 // AUTOUPDATE
 
-// TODO: This should probably work, it just doesn't right now.
+// TODO: This should require `:!` rather than just `:`.
 let x: type = i32;
 fn Six() -> x { return 6; }
+
+// TODO: This should probably work.
+let y:! type = i32;
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
+// CHECK:STDERR: fn HalfDozen() -> y { return 6; }
+// CHECK:STDERR:                       ^~~~~~~~~
+fn HalfDozen() -> y { return 6; }
+
+// TODO: This should work.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:5: ERROR: Semantics TODO: `HandleTemplate`.
+// CHECK:STDERR: let template z:! type = i32;
+// CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+let template z:! type = i32;
+fn FirstPerfectNumber() -> z { return 6; }
 
 // CHECK:STDOUT: --- fail_let_in_type.carbon
 // CHECK:STDOUT:
@@ -15,14 +29,17 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Six = %Six} [template]
-// CHECK:STDOUT:   %x: type = bind_name x, i32 [template = i32]
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @HalfDozen() -> y {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

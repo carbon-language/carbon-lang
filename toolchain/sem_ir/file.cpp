@@ -159,28 +159,38 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
   return Yaml::OutputMapping([this,
                               include_builtins](Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("cross_ref_irs_size",
-                      Yaml::OutputScalar(cross_ref_irs_.size()));
-              map.Add("name_scopes", name_scopes_.OutputYaml());
-              map.Add("bind_names", bind_names_.OutputYaml());
-              map.Add("functions", functions_.OutputYaml());
-              map.Add("classes", classes_.OutputYaml());
-              map.Add("types", types_.OutputYaml());
-              map.Add("type_blocks", type_blocks_.OutputYaml());
-              map.Add("insts",
-                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                        int start =
-                            include_builtins ? 0 : BuiltinKind::ValidCount;
-                        for (int i : llvm::seq(start, insts_.size())) {
-                          auto id = InstId(i);
-                          map.Add(PrintToString(id),
-                                  Yaml::OutputScalar(insts_.Get(id)));
-                        }
-                      }));
-              map.Add("constant_values", constant_values_.OutputYaml());
-              map.Add("inst_blocks", inst_blocks_.OutputYaml());
-            }));
+    map.Add(
+        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+          map.Add("cross_ref_irs_size",
+                  Yaml::OutputScalar(cross_ref_irs_.size()));
+          map.Add("name_scopes", name_scopes_.OutputYaml());
+          map.Add("bind_names", bind_names_.OutputYaml());
+          map.Add("functions", functions_.OutputYaml());
+          map.Add("classes", classes_.OutputYaml());
+          map.Add("types", types_.OutputYaml());
+          map.Add("type_blocks", type_blocks_.OutputYaml());
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    for (int i : llvm::seq(start, insts_.size())) {
+                      auto id = InstId(i);
+                      map.Add(PrintToString(id),
+                              Yaml::OutputScalar(insts_.Get(id)));
+                    }
+                  }));
+          map.Add("constant_values",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    for (int i : llvm::seq(start, insts_.size())) {
+                      auto id = InstId(i);
+                      auto value = constant_values_.Get(id);
+                      if (value.is_constant()) {
+                        map.Add(PrintToString(id), Yaml::OutputScalar(value));
+                      }
+                    }
+                  }));
+          map.Add("inst_blocks", inst_blocks_.OutputYaml());
+        }));
   });
 }
 

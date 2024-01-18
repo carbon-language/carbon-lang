@@ -37,15 +37,6 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     instTypeType:    template instTypeType
-// CHECK:STDOUT:     instError:       template instError
-// CHECK:STDOUT:     instBoolType:    template instBoolType
-// CHECK:STDOUT:     instIntType:     template instIntType
-// CHECK:STDOUT:     instFloatType:   template instFloatType
-// CHECK:STDOUT:     instStringType:  template instStringType
-// CHECK:STDOUT:     instFunctionType: template instFunctionType
-// CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
-// CHECK:STDOUT:     instNamespaceType: template instNamespaceType
 // CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:
@@ -77,15 +68,6 @@ fn B() {}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     instTypeType:    template instTypeType
-// CHECK:STDOUT:     instError:       template instError
-// CHECK:STDOUT:     instBoolType:    template instBoolType
-// CHECK:STDOUT:     instIntType:     template instIntType
-// CHECK:STDOUT:     instFloatType:   template instFloatType
-// CHECK:STDOUT:     instStringType:  template instStringType
-// CHECK:STDOUT:     instFunctionType: template instFunctionType
-// CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
-// CHECK:STDOUT:     instNamespaceType: template instNamespaceType
 // CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1
 // CHECK:STDOUT:   inst_blocks:

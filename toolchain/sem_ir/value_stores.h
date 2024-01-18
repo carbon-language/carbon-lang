@@ -103,7 +103,7 @@ class InstStore {
 
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
-class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
+class ConstantValueStore {
  public:
   // Returns the constant value of the requested instruction, or
   // `ConstantId::NotConstant` if it is not constant.
@@ -122,18 +122,6 @@ class ConstantValueStore : public Yaml::Printable<ConstantValueStore> {
       values_.resize(inst_id.index + 1, ConstantId::NotConstant);
     }
     values_[inst_id.index] = const_id;
-  }
-
-  // Outputs the store as YAML. Because this is modeled as a sparse mapping,
-  // non-constant elements are skipped in the output.
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      for (auto [id, value] : llvm::enumerate(values_)) {
-        if (value.is_constant()) {
-          map.Add(PrintToString(InstId(id)), Yaml::OutputScalar(value));
-        }
-      }
-    });
   }
 
  private:
