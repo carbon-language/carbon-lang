@@ -8,8 +8,7 @@ namespace Carbon::Parse {
 auto HandleChoiceIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::ChoiceDefinitionStart;
-  context.PushState(state);
+  context.PushState(state, State::ChoiceDefinitionStart);
   context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
@@ -19,15 +18,17 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceDefinition, Error,
-                        "Expected Choice definition.");
+                        "Choice definition expected.");
       context.emitter().Emit(*context.position(), ExpectedChoiceDefinition);
     }
-    // Only need to skip if we've not already found a new line.
-    const bool skip_past_likely_end =
-        context.tokens().GetLine(*context.position()) ==
-        context.tokens().GetLine(state.token);
-    context.RecoverFromDeclError(state, NodeKind::ChoiceIntroducer,
-                                 skip_past_likely_end);
+
+    context.AddNode(NodeKind::ChoiceDefinitionStart, *context.position(),
+                    state.subtree_start, /*has_error=*/true);
+
+    context.AddNode(NodeKind::ChoiceDefinition, *context.position(),
+                    state.subtree_start, /*has_error=*/true);
+
+    context.SkipPastLikelyEnd(*context.position());
     return;
   }
 
@@ -48,13 +49,11 @@ auto HandleChoiceAlternative(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::Identifier)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceAlternativeName, Error,
-                        "Expected Choice alternative name.");
+                        "Expected choice alternative name.");
       context.emitter().Emit(*context.position(),
                              ExpectedChoiceAlternativeName);
     }
 
-    // TODO: recover?
-    CARBON_CHECK(false) << "Not implemented";
     return;
   }
 
@@ -78,6 +77,7 @@ auto HandleChoiceAlternativeFinish(Context& context) -> void {
 
 auto HandleChoiceDefinitionFinish(Context& context) -> void {
   const auto state = context.PopState();
+
   context.AddNode(NodeKind::ChoiceDefinition,
                   context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
                   state.subtree_start, state.has_error);
