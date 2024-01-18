@@ -153,9 +153,11 @@ class ConstantStore {
       : allocator_(&allocator), constants_(&sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
-  // value. Returns the instruction ID and a bool indicating whether a new
-  // instruction was added.
-  auto GetOrAdd(Inst inst) -> std::pair<InstId, bool>;
+  // value. Returns the ID of the constant.
+  //
+  // This updates `sem_ir.insts()` and `sem_ir.constant_values()` if the
+  // constant is new.
+  auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
 
   // Returns a copy of the constant IDs as a vector, in an arbitrary but
   // stable order. This should not be used anywhere performance-sensitive.
@@ -171,7 +173,7 @@ class ConstantStore {
   // impact on compile time from that change.
   struct ConstantNode : llvm::FoldingSetNode {
     Inst inst;
-    InstId inst_id;
+    ConstantId constant_id;
 
     auto Profile(llvm::FoldingSetNodeID& id, File* sem_ir) -> void;
   };
