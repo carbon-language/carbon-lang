@@ -8,7 +8,7 @@
 // CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `const const i32**` to `i32**`.
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `const i32**` to `i32**`.
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   return p;
@@ -18,11 +18,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = const_type i32 [template]
-// CHECK:STDOUT:   %.2: type = const_type const i32 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type const const i32 [template]
-// CHECK:STDOUT:   %.4: type = ptr_type const const i32* [template]
-// CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type i32* [template]
+// CHECK:STDOUT:   %.2: type = ptr_type const i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type const i32* [template]
+// CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type i32* [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,9 +29,9 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p: const const i32**) -> i32** {
+// CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: const const i32** = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: const i32** = name_ref p, %p
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

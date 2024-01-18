@@ -116,7 +116,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // These cases are always constants.
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
-    case SemIR::ConstType::Kind:
     case SemIR::PointerType::Kind:
     case SemIR::StructTypeField::Kind:
     case SemIR::TupleType::Kind:
@@ -197,6 +196,20 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
                                                   : SemIR::BoolValue::False);
       return context.AddConstant(value, /*is_symbolic=*/false);
+    }
+
+    // `const (const T)` evaluates to `const T`. Otherwise, `const T` evaluates
+    // to itself.
+    case SemIR::ConstType::Kind: {
+      auto inner_id = context.constant_values().Get(
+          context.types().GetInstId(inst.As<SemIR::ConstType>().inner_id));
+      if (!inner_id.is_constant()) {
+        return SemIR::ConstantId::NotConstant;
+      }
+      if (context.insts().Get(inner_id.inst_id()).Is<SemIR::ConstType>()) {
+        return inner_id;
+      }
+      return context.AddConstant(inst, inner_id.is_symbolic());
     }
 
     // These cases are either not expressions or not constant.
