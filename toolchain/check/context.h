@@ -121,8 +121,7 @@ class Context {
                          bool has_load_error) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
-                       SemIR::InstId target_id) -> void;
+  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
@@ -147,7 +146,7 @@ class Context {
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(Parse::NodeId parse_node,
+  auto DiagnoseDuplicateName(SemIR::InstId dup_def_id,
                              SemIR::InstId prev_def_id) -> void;
 
   // Prints a diagnostic for a missing name.

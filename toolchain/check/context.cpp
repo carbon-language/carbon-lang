@@ -137,13 +137,13 @@ auto Context::ReplaceInstBeforeConstantUse(
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::DiagnoseDuplicateName(Parse::NodeId parse_node,
+auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
                                     SemIR::InstId prev_def_id) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
-  emitter_->Build(parse_node, NameDeclDuplicate)
+  emitter_->Build(dup_def_id, NameDeclDuplicate)
       .Note(prev_def_id, NameDeclPrevious)
       .Emit();
 }
@@ -195,7 +195,7 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
 
   // Add the import to lookup. Should always succeed because imports will be
   // uniquely named.
-  AddNameToLookup(import_node, name_id, inst_id);
+  AddNameToLookup(name_id, inst_id);
   // Add a name for formatted output. This isn't used in name lookup in order
   // to reduce indirection, but it's separate from the Import because it
   // otherwise fits in an Inst.
@@ -206,8 +206,8 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
                                         .value_id = inst_id}});
 }
 
-auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
-                              SemIR::InstId target_id) -> void {
+auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
+    -> void {
   if (current_scope().names.insert(name_id).second) {
     // TODO: Reject if we previously performed a failed lookup for this name in
     // this scope or a scope nested within it.
@@ -218,7 +218,7 @@ auto Context::AddNameToLookup(Parse::NodeId name_node, SemIR::NameId name_id,
     lexical_results.push_back(
         {.inst_id = target_id, .scope_index = current_scope_index()});
   } else {
-    DiagnoseDuplicateName(name_node,
+    DiagnoseDuplicateName(target_id,
                           lexical_lookup_.Get(name_id).back().inst_id);
   }
 }

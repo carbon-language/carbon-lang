@@ -18,9 +18,9 @@ interface Interface {
 
 fn Function();
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:11: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: interface Function;
-// CHECK:STDERR:           ^~~~~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
@@ -28,9 +28,9 @@ interface Function;
 
 class Class;
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:11: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: interface Class { }
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~

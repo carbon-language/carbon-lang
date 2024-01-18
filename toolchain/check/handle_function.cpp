@@ -164,7 +164,7 @@ static auto BuildFunctionDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a function.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(function_decl_id, existing_id);
     }
   }
 
@@ -264,7 +264,6 @@ auto HandleFunctionDefinitionStart(Context& context,
 
     if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
       context.AddNameToLookup(
-          context.insts().GetParseNode(param_id),
           context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
