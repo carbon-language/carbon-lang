@@ -120,31 +120,23 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   // Add imports from the current package.
   auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
   if (self_import != unit_info.package_imports_map.end()) {
-    auto& package_scope =
-        context.name_scopes().Get(SemIR::NameScopeId::Package);
-    package_scope.has_error = self_import->second.has_load_error;
-    if (!package_scope.has_error) {
-      for (const auto& import : self_import->second.imports) {
-        const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-        // If an import of the current package caused an error for the imported
-        // file, it transitively affects the current file too.
-        if (import_sem_ir.name_scopes()
-                .Get(SemIR::NameScopeId::Package)
-                .has_error) {
-          package_scope.has_error = true;
-          break;
-        }
-      }
-    }
-
+    bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
+      const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
       Import(context, namespace_type_id, self_import->second.node,
-             **import.unit_info->unit->sem_ir);
+             import_sem_ir);
+      error_in_import = error_in_import || import_sem_ir.name_scopes()
+                                               .Get(SemIR::NameScopeId::Package)
+                                               .has_error;
     }
 
-    // Push the scope.
+    // If an import of the current package caused an error for the imported
+    // file, it transitively affects the current file too.
+    if (error_in_import) {
+      context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
+    }
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package,
-                      package_scope.has_error);
+                      error_in_import);
   } else {
     // Push the scope; there are no names to add.
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
