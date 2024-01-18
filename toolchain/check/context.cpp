@@ -1068,7 +1068,8 @@ auto Context::TryToCompleteType(
   return TypeCompleter(*this, diagnoser).Complete(type_id);
 }
 
-auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId {
+auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
+    -> SemIR::TypeId {
   CARBON_CHECK(constant_id.is_constant()) << "Canonicalizing non-constant type";
 
   auto [it, added] = type_ids_for_type_constants_.insert(
@@ -1081,16 +1082,15 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::
 }
 
 template <typename InstT, typename... EachArgT>
-static auto GetTypeImpl(Context& context,
-                        EachArgT... each_arg) -> SemIR::TypeId {
+static auto GetTypeImpl(Context& context, EachArgT... each_arg)
+    -> SemIR::TypeId {
   // TODO: Remove inst_id parameter from TryEvalInst.
   return context.GetTypeIdForTypeConstant(
       TryEvalInst(context, SemIR::InstId::Invalid,
                   InstT{SemIR::TypeId::TypeType, each_arg...}));
 }
 
-auto Context::GetStructType(SemIR::InstBlockId refs_id)
-    -> SemIR::TypeId {
+auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::StructType>(*this, refs_id);
 }
 
@@ -1104,8 +1104,8 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id =
-      GetTypeIdForTypeConstant(constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
+  auto type_id = GetTypeIdForTypeConstant(
+      constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";

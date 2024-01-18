@@ -25,7 +25,7 @@ enum class Phase : uint8_t {
   // Evaluation encountered a non-constant construct.
   Runtime,
 };
-}
+}  // namespace
 
 // Gets the phase in which the value of a constant will become available.
 static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
@@ -47,8 +47,8 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
 }
 
 // Forms a `constant_id` describing a given evaluation result.
-static auto MakeConstantResult(Context& context, SemIR::Inst inst,
-                               Phase phase) -> SemIR::ConstantId {
+static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
+    -> SemIR::ConstantId {
   switch (phase) {
     case Phase::Template:
     case Phase::Symbolic:
@@ -103,8 +103,8 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
 // has runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
-                                          FieldIdT InstT::*field,
-                                          Phase* phase) -> bool {
+                                          FieldIdT InstT::*field, Phase* phase)
+    -> bool {
   auto unwrapped = GetConstantValue(context, inst->*field, phase);
   if (!unwrapped.is_valid()) {
     return false;
