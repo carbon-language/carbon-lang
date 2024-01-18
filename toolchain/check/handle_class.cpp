@@ -85,7 +85,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
       // declaration.
     } else {
       // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(class_decl_id, existing_id);
     }
   }
 
@@ -149,7 +149,7 @@ auto HandleClassDefinitionStart(Context& context,
   context.PushScope(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.AddNameToLookup(parse_node, SemIR::NameId::SelfType,
+  context.AddNameToLookup(SemIR::NameId::SelfType,
                           context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();

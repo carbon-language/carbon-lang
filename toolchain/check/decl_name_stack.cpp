@@ -67,8 +67,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 
     case NameContext::State::Unresolved:
       if (!name_context.target_scope_id.is_valid()) {
-        context_->AddNameToLookup(name_context.parse_node,
-                                  name_context.unresolved_name_id, target_id);
+        context_->AddNameToLookup(name_context.unresolved_name_id, target_id);
       } else {
         auto& name_scope =
             context_->name_scopes().Get(name_context.target_scope_id);
@@ -103,7 +102,7 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
                                     SemIR::InstId target_id) -> void {
   auto existing_inst_id = LookupOrAddName(name_context, target_id);
   if (existing_inst_id.is_valid()) {
-    context_->DiagnoseDuplicateName(name_context.parse_node, existing_inst_id);
+    context_->DiagnoseDuplicateName(target_id, existing_inst_id);
   }
 }
 

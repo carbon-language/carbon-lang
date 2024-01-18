@@ -68,7 +68,7 @@ static auto BuildInterfaceDecl(Context& context,
       // declaration.
     } else {
       // This is a redeclaration of something other than a interface.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(interface_decl_id, existing_id);
     }
   }
 

@@ -9,9 +9,9 @@
 package Implicit api;
 
 namespace NS;
-// CHECK:STDERR: implicit.carbon:[[@LINE+6]]:11: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: implicit.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: namespace NS;
-// CHECK:STDERR:           ^~
+// CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: implicit.carbon:[[@LINE-4]]:1: Name is previously declared here.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
