@@ -81,6 +81,8 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+12:         template inst+12
 // CHECK:STDOUT:     inst+13:         template inst+14
 // CHECK:STDOUT:     inst+14:         template inst+14
+// CHECK:STDOUT:     inst+19:         template inst+12
+// CHECK:STDOUT:     inst+21:         template inst+14
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -148,9 +150,9 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:   %.loc12_20.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc12_20.3: init i32 = initialize_from %n.ref to %.loc12_20.2
 // CHECK:STDOUT:   %.loc12_20.4: ref i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4
+// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_20.6: ref f64 = tuple_access %return, element2
-// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6
+// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_20.8: init (i32, i32, f64) = tuple_init (%.loc12_20.3, %.loc12_20.5, %.loc12_20.7) to %return
 // CHECK:STDOUT:   %.loc12_20.9: init (i32, i32, f64) = converted %.loc12_20.1, %.loc12_20.8
 // CHECK:STDOUT:   return %.loc12_20.9

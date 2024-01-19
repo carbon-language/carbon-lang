@@ -138,6 +138,22 @@ static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
                                            : SemIR::ConstantId::NotConstant;
 }
 
+// Rebuilds the given aggregate initialization instruction as a corresponding
+// constant aggregate value, if its elements are all constants.
+static auto RebuildInitAsValue(Context& context, SemIR::Inst inst,
+                               SemIR::InstKind value_kind)
+    -> SemIR::ConstantId {
+  auto init_inst = inst.As<SemIR::AnyAggregateInit>();
+  Phase phase = Phase::Template;
+  auto elements_id = GetConstantValue(context, init_inst.elements_id, &phase);
+  return MakeConstantResult(
+      context,
+      SemIR::AnyAggregateValue{.kind = value_kind,
+                               .type_id = init_inst.type_id,
+                               .elements_id = elements_id},
+      phase);
+}
+
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
@@ -163,12 +179,23 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructValue::elements_id);
-    case SemIR::Temporary::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::Temporary::init_id);
     case SemIR::TupleValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::TupleValue::elements_id);
+
+    // Initializers evaluate to a value of the object representation.
+    case SemIR::ArrayInit::Kind:
+      // TODO: Add an `ArrayValue` to represent a constant array object
+      // representation instead of using a `TupleValue`.
+      return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
+    case SemIR::ClassInit::Kind:
+      // TODO: Add a `ClassValue` to represent a constant class object
+      // representation instead of using a `StructValue`.
+      return RebuildInitAsValue(context, inst, SemIR::StructValue::Kind);
+    case SemIR::StructInit::Kind:
+      return RebuildInitAsValue(context, inst, SemIR::StructValue::Kind);
+    case SemIR::TupleInit::Kind:
+      return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
     // These cases are always constants.
     case SemIR::Builtin::Kind:
@@ -200,25 +227,22 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // by `APInt`s with different bit widths.
       return MakeConstantResult(context, inst, Phase::Template);
 
-    // TODO: These need special handling.
+    // TODO: Support subobject access.
     case SemIR::ArrayIndex::Kind:
-    case SemIR::ArrayInit::Kind:
-    case SemIR::BindValue::Kind:
-    case SemIR::Call::Kind:
     case SemIR::ClassElementAccess::Kind:
-    case SemIR::ClassInit::Kind:
-    case SemIR::CrossRef::Kind:
-    case SemIR::Deref::Kind:
-    case SemIR::InitializeFrom::Kind:
-    case SemIR::SpliceBlock::Kind:
     case SemIR::StructAccess::Kind:
-    case SemIR::StructInit::Kind:
-    case SemIR::TemporaryStorage::Kind:
     case SemIR::TupleAccess::Kind:
     case SemIR::TupleIndex::Kind:
-    case SemIR::TupleInit::Kind:
+      break;
+
+    // TODO: These need special handling.
+    case SemIR::BindValue::Kind:
+    case SemIR::Call::Kind:
+    case SemIR::CrossRef::Kind:
+    case SemIR::Deref::Kind:
+    case SemIR::Temporary::Kind:
+    case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
-    case SemIR::ValueOfInitializer::Kind:
       break;
 
     case SemIR::BindSymbolicName::Kind:
@@ -233,12 +257,21 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // creating a `BindName` in that case?
       return context.constant_values().Get(inst.As<SemIR::BindName>().value_id);
 
+    // These semnatic wrappers don't change the constant value.
     case SemIR::NameRef::Kind:
       return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);
-
     case SemIR::Converted::Kind:
       return context.constant_values().Get(
           inst.As<SemIR::Converted>().result_id);
+    case SemIR::InitializeFrom::Kind:
+      return context.constant_values().Get(
+          inst.As<SemIR::InitializeFrom>().src_id);
+    case SemIR::SpliceBlock::Kind:
+      return context.constant_values().Get(
+          inst.As<SemIR::SpliceBlock>().result_id);
+    case SemIR::ValueOfInitializer::Kind:
+      return context.constant_values().Get(
+          inst.As<SemIR::ValueOfInitializer>().init_id);
 
     // `not true` -> `false`, `not false` -> `true`.
     // All other uses of unary `not` are non-constant.

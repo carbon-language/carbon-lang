@@ -73,6 +73,28 @@ struct ArrayIndex {
   InstId index_id;
 };
 
+// Common representation for all kinds of aggregate initialization.
+struct AnyAggregateInit {
+  static constexpr InstKind Kinds[] = {InstKind::ArrayInit, InstKind::ClassInit,
+                                       InstKind::StructInit,
+                                       InstKind::TupleInit};
+
+  InstKind kind;
+  TypeId type_id;
+  InstBlockId elements_id;
+  InstId dest_id;
+};
+
+// Common representation for all kinds of aggregate value.
+struct AnyAggregateValue {
+  static constexpr InstKind Kinds[] = {InstKind::StructValue,
+                                       InstKind::TupleValue};
+
+  InstKind kind;
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
 // Initializes an array from a tuple. `tuple_id` is the source tuple
 // expression. `inits_id` contains one initializer per array element.
 // `dest_id` is the destination array object for the initialization.

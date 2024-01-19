@@ -81,6 +81,8 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+12:         template inst+12
 // CHECK:STDOUT:     inst+13:         template inst+14
 // CHECK:STDOUT:     inst+14:         template inst+14
+// CHECK:STDOUT:     inst+19:         template inst+12
+// CHECK:STDOUT:     inst+21:         template inst+14
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:

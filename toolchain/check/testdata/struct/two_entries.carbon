@@ -39,11 +39,11 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc10_43: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_44.1: {.a: i32, .b: i32} = struct_literal (%.loc10_35, %.loc10_43)
 // CHECK:STDOUT:   %.loc10_44.2: ref i32 = struct_access %x.var, element0
-// CHECK:STDOUT:   %.loc10_44.3: init i32 = initialize_from %.loc10_35 to %.loc10_44.2
+// CHECK:STDOUT:   %.loc10_44.3: init i32 = initialize_from %.loc10_35 to %.loc10_44.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_44.4: ref i32 = struct_access %x.var, element1
-// CHECK:STDOUT:   %.loc10_44.5: init i32 = initialize_from %.loc10_43 to %.loc10_44.4
-// CHECK:STDOUT:   %.loc10_44.6: init {.a: i32, .b: i32} = struct_init (%.loc10_44.3, %.loc10_44.5) to %x.var
-// CHECK:STDOUT:   %.loc10_44.7: init {.a: i32, .b: i32} = converted %.loc10_44.1, %.loc10_44.6
+// CHECK:STDOUT:   %.loc10_44.5: init i32 = initialize_from %.loc10_43 to %.loc10_44.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_44.6: init {.a: i32, .b: i32} = struct_init (%.loc10_44.3, %.loc10_44.5) to %x.var [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_44.7: init {.a: i32, .b: i32} = converted %.loc10_44.1, %.loc10_44.6 [template = constants.%.5]
 // CHECK:STDOUT:   assign %x.var, %.loc10_44.7
 // CHECK:STDOUT:   %.loc11_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %y.var: ref {.a: i32, .b: i32} = var y
