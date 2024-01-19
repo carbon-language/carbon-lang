@@ -38,18 +38,15 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .G = %G, .F = %F} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9_8.2 [template = %.loc9_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8 [template = %.loc8]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -60,13 +57,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc21_10: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc21_10: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc21_24: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc21_32: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc21_33.1: {.a: i32, .b: i32} = struct_literal (%.loc21_24, %.loc21_32)
-// CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc21_33.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_33.3: ref i32 = class_element_access %.loc21_33.2, element0
 // CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3

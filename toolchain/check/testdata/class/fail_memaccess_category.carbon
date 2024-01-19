@@ -44,17 +44,14 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type B, A [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.a: A} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.a: A} [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.a: {}*} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type {.a: A} [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.a: {}*} [template]
+// CHECK:STDOUT:   %.8: type = ptr_type {.a: A} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .F = %F} [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A [template = constants.%A]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,10 +63,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A [template = constants.%A]
-// CHECK:STDOUT:   %.loc12_8.1: type = unbound_element_type B, A [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_8.2: <unbound element of class B> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12_8.2 [template = %.loc12_8.2]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %.loc12: <unbound element of class B> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12 [template = %.loc12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a

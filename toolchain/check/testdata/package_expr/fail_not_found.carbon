@@ -23,7 +23,7 @@ fn Main() {
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error>
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

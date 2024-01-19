@@ -27,17 +27,14 @@ fn F() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .F = %F} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9_8.2 [template = %.loc9_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8 [template = %.loc8]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -49,7 +46,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_17: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_25: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_26.1: {.a: i32, .b: i32} = struct_literal (%.loc13_17, %.loc13_25)
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_26.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc13_26.3: ref i32 = class_element_access %.loc13_26.2, element0
 // CHECK:STDOUT:   %.loc13_26.4: init i32 = initialize_from %.loc13_17 to %.loc13_26.3

@@ -107,10 +107,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.20: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.21: bool* = addr_of %.20 [template]
 // CHECK:STDOUT:   %.22: type = ptr_type type [template]
-// CHECK:STDOUT:   %.23: type = const_type i32 [template]
-// CHECK:STDOUT:   %.24: type = ptr_type const i32 [template]
-// CHECK:STDOUT:   %.25: type* = addr_of %.24 [template]
-// CHECK:STDOUT:   %.26: (i32, i32) = tuple_value (%.14, %.15) [template]
+// CHECK:STDOUT:   %.23: type* = addr_of i32 [template]
+// CHECK:STDOUT:   %.24: type = const_type i32 [template]
+// CHECK:STDOUT:   %.25: type = ptr_type const i32 [template]
+// CHECK:STDOUT:   %.26: type* = addr_of %.25 [template]
+// CHECK:STDOUT:   %.27: (i32, i32) = tuple_value (%.14, %.15) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -184,10 +185,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc64: type* = addr_of i32
-// CHECK:STDOUT:   %.loc68_5: type = const_type i32 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc68_14: type = ptr_type const i32 [template = constants.%.24]
-// CHECK:STDOUT:   %.loc68_3: type* = addr_of %.loc68_14 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc64: type* = addr_of i32 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc68_5: type = const_type i32 [template = constants.%.24]
+// CHECK:STDOUT:   %.loc68_14: type = ptr_type const i32 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc68_3: type* = addr_of %.loc68_14 [template = constants.%.26]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,8 +198,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc75_9: i32 = int_literal 2 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc75_10.1: (i32, i32) = tuple_literal (%.loc75_6, %.loc75_9)
 // CHECK:STDOUT:   %.loc75_12: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc75_10.2: (i32, i32) = tuple_value (%.loc75_6, %.loc75_9) [template = constants.%.26]
-// CHECK:STDOUT:   %.loc75_10.3: (i32, i32) = converted %.loc75_10.1, %.loc75_10.2 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc75_10.2: (i32, i32) = tuple_value (%.loc75_6, %.loc75_9) [template = constants.%.27]
+// CHECK:STDOUT:   %.loc75_10.3: (i32, i32) = converted %.loc75_10.1, %.loc75_10.2 [template = constants.%.27]
 // CHECK:STDOUT:   %.loc75_13: i32 = tuple_index %.loc75_10.3, %.loc75_12
 // CHECK:STDOUT:   %.loc75_3: i32* = addr_of %.loc75_13
 // CHECK:STDOUT:   return

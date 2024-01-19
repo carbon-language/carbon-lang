@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error>
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   return

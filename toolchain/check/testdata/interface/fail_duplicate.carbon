@@ -49,7 +49,6 @@ interface Class { }
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template]
 // CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, ()
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

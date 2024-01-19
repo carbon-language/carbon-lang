@@ -42,17 +42,14 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .F = %F} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8_8.2 [template = %.loc8_8.2]
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9_8.2 [template = %.loc9_8.2]
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8 [template = %.loc8]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %a
@@ -63,27 +60,27 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc16_10.1: {.a: i32} = struct_literal (%.loc16_9)
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc16_10.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc16_10.3: ref Class = temporary %.loc16_10.2, <error>
-// CHECK:STDOUT:   %.loc16_10.4: ref Class = converted %.loc16_10.1, %.loc16_10.3
+// CHECK:STDOUT:   %.loc16_10.3: ref Class = temporary %.loc16_10.2, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc16_10.4: ref Class = converted %.loc16_10.1, %.loc16_10.3 [template = <error>]
 // CHECK:STDOUT:   %.loc20_9: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc20_17: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc20_18.1: {.a: i32, .c: i32} = struct_literal (%.loc20_9, %.loc20_17)
-// CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc20_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc20_18.3: ref i32 = class_element_access %.loc20_18.2, element0
 // CHECK:STDOUT:   %.loc20_18.4: init i32 = initialize_from %.loc20_9 to %.loc20_18.3
-// CHECK:STDOUT:   %.loc20_18.5: ref Class = temporary %.loc20_18.2, <error>
-// CHECK:STDOUT:   %.loc20_18.6: ref Class = converted %.loc20_18.1, %.loc20_18.5
+// CHECK:STDOUT:   %.loc20_18.5: ref Class = temporary %.loc20_18.2, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_18.6: ref Class = converted %.loc20_18.1, %.loc20_18.5 [template = <error>]
 // CHECK:STDOUT:   %.loc24_9: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc24_17: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc24_25: i32 = int_literal 3 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc24_26.1: {.a: i32, .b: i32, .c: i32} = struct_literal (%.loc24_9, %.loc24_17, %.loc24_25)
-// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc24_26.2: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc24_26.3: ref Class = temporary %.loc24_26.2, <error>
-// CHECK:STDOUT:   %.loc24_26.4: ref Class = converted %.loc24_26.1, %.loc24_26.3
+// CHECK:STDOUT:   %.loc24_26.3: ref Class = temporary %.loc24_26.2, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24_26.4: ref Class = converted %.loc24_26.1, %.loc24_26.3 [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -219,13 +219,6 @@ class Context {
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Follows NameRef instructions to find the value named by a given
-  // instruction.
-  auto FollowNameRefs(SemIR::InstId inst_id) -> SemIR::InstId;
-
-  // Gets the constant value of the given instruction, if it has one.
-  auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::InstId;
-
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
@@ -272,22 +265,8 @@ class Context {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Canonicalizes a type which is tracked as a single instruction.
-  auto CanonicalizeType(SemIR::InstId inst_id) -> SemIR::TypeId;
-
-  // Handles canonicalization of struct types. This may create a new struct type
-  // when it has a new structure, or reference an existing struct type when it
-  // duplicates a prior type.
-  //
-  // Individual struct type fields aren't canonicalized because they may have
-  // name conflicts or other diagnostics during creation, which can use the
-  // parse node.
-  auto CanonicalizeStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
-
-  // Handles canonicalization of tuple types. This may create a new tuple type
-  // if the `type_ids` doesn't match an existing tuple type.
-  auto CanonicalizeTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
-      -> SemIR::TypeId;
+  // Returns the type ID for a constant of type `type`.
+  auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
@@ -311,11 +290,28 @@ class Context {
                                                  : SemIR::TypeId::Error;
   }
 
+  // TODO: Consider moving these `Get*Type` functions to a separate class.
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
+  // Returns a class type for the class described by `class_id`.
+  // TODO: Support generic arguments.
+  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
+
+  // Returns a struct type with the given fields, which should be a block of
+  // `StructTypeField`s.
+  auto GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+
+  // Returns a tuple type with the given element types.
+  auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
+
+  // Returns an unbound element type.
+  auto GetUnboundElementType(SemIR::TypeId class_type_id,
+                             SemIR::TypeId element_type_id) -> SemIR::TypeId;
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
@@ -484,27 +480,6 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Forms a canonical type ID for a type. This function is given two
-  // callbacks:
-  //
-  // `profile_type(canonical_id)` is called to build a fingerprint for this
-  // type. The ID should be distinct for all distinct type values with the same
-  // `kind`.
-  //
-  // `make_inst()` is called to obtain a `SemIR::InstId` that describes the
-  // type. It is only called if the type does not already exist, so can be used
-  // to lazily build the `SemIR::Inst`. `make_inst()` is not permitted to
-  // directly or indirectly canonicalize any types.
-  auto CanonicalizeTypeImpl(
-      SemIR::InstKind kind,
-      llvm::function_ref<bool(llvm::FoldingSetNodeID& canonical_id)>
-          profile_type,
-      llvm::function_ref<SemIR::InstId()> make_inst) -> SemIR::TypeId;
-
-  // Forms a canonical type ID for a type. If the type is new, adds the
-  // instruction to the current block.
-  auto CanonicalizeTypeAndAddInstIfNew(SemIR::Inst inst) -> SemIR::TypeId;
-
   // If the passed in instruction ID is a LazyImportRef, resolves it for use.
   // Called when name lookup intends to return an inst_id.
   auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
@@ -577,16 +552,15 @@ class Context {
   // pushed or popped.
   bool lexical_lookup_has_load_error_ = false;
 
-  // Cache of the mapping from instructions to types, to avoid recomputing the
-  // folding set ID.
-  llvm::DenseMap<SemIR::InstId, SemIR::TypeId> canonical_types_;
-
-  // Tracks the canonical representation of types that have been defined.
-  llvm::FoldingSet<TypeNode> canonical_type_nodes_;
-
-  // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
-  // that FoldingSet can have stable pointers.
-  llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
+  // Cache of reverse mapping from type constants to types.
+  //
+  // TODO: Instead of mapping to a dense `TypeId` space, we could make `TypeId`
+  // be a thin wrapper around `ConstantId` and only perform the lookup only when
+  // we want to access the completeness and value representation of a type. It's
+  // not clear whether that would result in more or fewer lookups.
+  //
+  // TODO: Should this be part of the `TypeStore`?
+  llvm::DenseMap<SemIR::ConstantId, SemIR::TypeId> type_ids_for_type_constants_;
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;

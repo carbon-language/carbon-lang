@@ -59,11 +59,8 @@ base class BaseClass {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.FinalClass = %FinalClass.decl, .AbstractClass = %AbstractClass.decl, .BaseClass = %BaseClass.decl} [template]
 // CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass, ()
-// CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass, ()
-// CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass, ()
-// CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {

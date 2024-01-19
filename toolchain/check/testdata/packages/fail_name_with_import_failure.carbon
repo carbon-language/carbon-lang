@@ -25,7 +25,7 @@ var a: () = A();
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error>
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -62,7 +62,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Call = %Call, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT:   %CallOnConstBoundMethod: <function> = fn_decl @CallOnConstBoundMethod [template]
@@ -77,9 +76,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %.loc11_8.1: type = unbound_element_type Class, i32 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_8.2: <unbound element of class Class> = field_decl k, element0 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11_8.2 [template = %.loc11_8.2]
+// CHECK:STDOUT:   %.loc11: <unbound element of class Class> = field_decl k, element0 [template]
+// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc11 [template = %.loc11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -111,7 +109,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_17: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc25_18.1: {.k: i32} = struct_literal (%.loc25_17)
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc25_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_18.3: ref i32 = class_element_access %.loc25_18.2, element0
 // CHECK:STDOUT:   %.loc25_18.4: init i32 = initialize_from %.loc25_17 to %.loc25_18.3
@@ -128,7 +126,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c

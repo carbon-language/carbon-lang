@@ -19,8 +19,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.1: type = struct_type {.a: i32, .b: f64} [template]
 // CHECK:STDOUT:   %.2: type = ptr_type {.a: i32, .b: f64} [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.b: f64, .a: i32} [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.b: f64, .a: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.b: f64, .a: i32} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.b: f64, .a: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -49,7 +48,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc11_62.4: {.a: i32, .b: f64} = struct_value (%.loc11_60.2, %.loc11_44.2)
 // CHECK:STDOUT:   %.loc11_62.5: {.a: i32, .b: f64} = converted %.loc11_62.1, %.loc11_62.4
 // CHECK:STDOUT:   %x: {.a: i32, .b: f64} = bind_name x, %.loc11_62.5
-// CHECK:STDOUT:   %.loc12_27: type = struct_type {.b: f64, .a: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_27: type = struct_type {.b: f64, .a: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %x.ref: {.a: i32, .b: f64} = name_ref x, %x
 // CHECK:STDOUT:   %.loc12_31.1: f64 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc12_31.2: i32 = struct_access %x.ref, element0

@@ -90,25 +90,18 @@ base class G;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl.loc7, .B = %B.decl.loc16, .C = %C.decl.loc25, .D = %D.decl.loc34, .E = %E.decl.loc43, .F = %F.decl.loc52, .G = %G.decl.loc61} [template]
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A [template = constants.%A]
 // CHECK:STDOUT:   %A.decl.loc14 = class_decl @A, ()
 // CHECK:STDOUT:   %B.decl.loc16 = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B [template = constants.%B]
 // CHECK:STDOUT:   %B.decl.loc23 = class_decl @B, ()
 // CHECK:STDOUT:   %C.decl.loc25 = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C [template = constants.%C]
 // CHECK:STDOUT:   %C.decl.loc32 = class_decl @C, ()
 // CHECK:STDOUT:   %D.decl.loc34 = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D [template = constants.%D]
 // CHECK:STDOUT:   %D.decl.loc41 = class_decl @D, ()
 // CHECK:STDOUT:   %E.decl.loc43 = class_decl @E, ()
-// CHECK:STDOUT:   %E: type = class_type @E [template = constants.%E]
 // CHECK:STDOUT:   %E.decl.loc50 = class_decl @E, ()
 // CHECK:STDOUT:   %F.decl.loc52 = class_decl @F, ()
-// CHECK:STDOUT:   %F: type = class_type @F [template = constants.%F]
 // CHECK:STDOUT:   %F.decl.loc59 = class_decl @F, ()
 // CHECK:STDOUT:   %G.decl.loc61 = class_decl @G, ()
-// CHECK:STDOUT:   %G: type = class_type @G [template = constants.%G]
 // CHECK:STDOUT:   %G.decl.loc68 = class_decl @G, ()
 // CHECK:STDOUT:   %G.decl.loc75 = class_decl @G, ()
 // CHECK:STDOUT: }

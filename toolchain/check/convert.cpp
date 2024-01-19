@@ -820,7 +820,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
         // iterative approach.
         type_ids.push_back(ExprAsType(context, parse_node, tuple_inst_id));
       }
-      auto tuple_type_id = context.CanonicalizeTupleType(type_ids);
+      auto tuple_type_id = context.GetTupleType(type_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -1220,13 +1220,16 @@ auto ExprAsType(Context& context, Parse::NodeId parse_node,
   if (type_inst_id == SemIR::InstId::BuiltinError) {
     return SemIR::TypeId::Error;
   }
-  auto type_id = context.CanonicalizeType(type_inst_id);
-  if (type_id == SemIR::TypeId::Error) {
+
+  auto type_const_id = context.constant_values().Get(type_inst_id);
+  if (!type_const_id.is_constant()) {
     CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
                       "Cannot evaluate type expression.");
     context.emitter().Emit(parse_node, TypeExprEvaluationFailure);
+    return SemIR::TypeId::Error;
   }
-  return type_id;
+
+  return context.GetTypeIdForTypeConstant(type_const_id);
 }
 
 }  // namespace Carbon::Check

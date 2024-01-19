@@ -41,7 +41,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   return %.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %n.ref.loc15: <error> = name_ref n, <error>
+// CHECK:STDOUT:   %n.ref.loc15: <error> = name_ref n, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

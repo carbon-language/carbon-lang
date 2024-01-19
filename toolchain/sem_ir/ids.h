@@ -78,6 +78,9 @@ constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression that is not constant.
   static const ConstantId NotConstant;
+  // An ID for an expression whose phase cannot be determined because it
+  // contains an error. This is always modeled as a template constant.
+  static const ConstantId Error;
 
   // Returns the constant ID corresponding to a template constant, which should
   // either be in the `constants` block in the file or should be known to be
@@ -126,6 +129,8 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(0);
+constexpr ConstantId ConstantId::Error =
+    ConstantId::ForTemplateConstant(InstId::BuiltinError);
 
 // The ID of a bind name.
 struct BindNameId : public IdBase, public Printable<BindNameId> {
@@ -409,6 +414,9 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
 }  // namespace Carbon::SemIR
 
 // Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::ConstantId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::ConstantId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};
