@@ -105,7 +105,7 @@ static auto CopySingleNameScopeFromImportIR(
   context.ReplaceInstBeforeConstantUse(
       namespace_id, {Parse::NodeId::Invalid, namespace_inst});
 
-  // If there's a name conflict, produce the diagnose, but still produce the
+  // Diagnose if there's a name conflict, but still produce the
   // namespace to supersede the name conflict in order to avoid repeat
   // diagnostics.
   if (!success) {
