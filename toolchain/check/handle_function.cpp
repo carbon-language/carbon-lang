@@ -258,7 +258,7 @@ auto HandleFunctionDefinitionStart(Context& context,
           "Parameter has incomplete type `{0}` in function definition.",
           std::string);
       return context.emitter().Build(
-          context.insts().GetParseNode(param_id), IncompleteTypeInFunctionParam,
+          param_id, IncompleteTypeInFunctionParam,
           context.sem_ir().StringifyType(param.type_id()));
     });
 

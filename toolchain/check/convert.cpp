@@ -1077,7 +1077,7 @@ CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
 static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
-                        Parse::NodeId callee_parse_node,
+                        SemIR::InstId callee_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
                         SemIR::InstId self_id) -> SemIR::InstId {
@@ -1086,7 +1086,7 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
                       "Missing object argument in method call.");
     context.emitter()
         .Build(call_parse_node, MissingObjectInMethodCall)
-        .Note(callee_parse_node, InCallToFunction)
+        .Note(callee_id, InCallToFunction)
         .Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -1131,8 +1131,7 @@ static auto ConvertSelf(Context& context, Parse::NodeId call_parse_node,
 auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id,
-                     Parse::NodeId callee_parse_node,
+                     SemIR::InstId return_storage_id, SemIR::InstId callee_id,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
   auto implicit_param_refs =
@@ -1148,7 +1147,7 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
     context.emitter()
         .Build(call_parse_node, CallArgCountMismatch, arg_refs.size(),
                param_refs.size())
-        .Note(callee_parse_node, InCallToFunction)
+        .Note(callee_id, InCallToFunction)
         .Emit();
     return SemIR::InstBlockId::Invalid;
   }
@@ -1166,7 +1165,7 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
         context.sem_ir(), implicit_param_id);
     if (param.name_id == SemIR::NameId::SelfValue) {
       auto converted_self_id =
-          ConvertSelf(context, call_parse_node, callee_parse_node, addr_pattern,
+          ConvertSelf(context, call_parse_node, callee_id, addr_pattern,
                       param_id, param, self_id);
       if (converted_self_id == SemIR::InstId::BuiltinError) {
         return SemIR::InstBlockId::Invalid;
@@ -1185,8 +1184,7 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
         CARBON_DIAGNOSTIC(
             InCallToFunctionParam, Note,
             "Initializing parameter {0} of function declared here.", int);
-        builder.Note(callee_parse_node, InCallToFunctionParam,
-                     diag_param_index + 1);
+        builder.Note(callee_id, InCallToFunctionParam, diag_param_index + 1);
       });
 
   // Check type conversions per-element.
