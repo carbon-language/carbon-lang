@@ -112,6 +112,7 @@ auto ProfileConstant(llvm::FoldingSetNodeID& id, const File& sem_ir, Inst inst)
   };
 
   inst.kind().Profile(id);
+  id.AddInteger(inst.type_id().index);
   ProfileFunctions[inst.kind().AsInt()](id, sem_ir, inst.arg0(), inst.arg1());
 }
 
