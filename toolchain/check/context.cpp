@@ -101,7 +101,7 @@ auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
 auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
     -> SemIR::ConstantId {
   auto const_id = constants().GetOrAdd(inst, is_symbolic);
-  CARBON_VLOG() << "AddConstantInst: " << inst << "\n";
+  CARBON_VLOG() << "AddConstant: " << inst << "\n";
   return const_id;
 }
 
