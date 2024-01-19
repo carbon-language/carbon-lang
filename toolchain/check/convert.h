@@ -96,8 +96,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_storage_id,
-                     Parse::NodeId callee_parse_node,
+                     SemIR::InstId return_storage_id, SemIR::InstId callee_id,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
 

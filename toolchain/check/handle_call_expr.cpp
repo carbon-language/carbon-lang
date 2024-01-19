@@ -90,8 +90,7 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   auto converted_args_id =
       ConvertCallArgs(context, call_expr_parse_node, self_id,
                       context.params_or_args_stack().PeekCurrentBlockContents(),
-                      return_storage_id,
-                      context.insts().GetParseNode(function_decl_id.inst_id()),
+                      return_storage_id, function_decl_id.inst_id(),
                       callable.implicit_param_refs_id, callable.param_refs_id);
   auto call_inst_id =
       context.AddInst({call_expr_parse_node,
