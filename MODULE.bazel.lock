@@ -4375,7 +4375,7 @@
         ]
       },
       "os:osx,arch:x86_64": {
-        "bzlTransitiveDigest": "9Tlt1SOlU8V1bBjSSrjLscYHKGXE7fCWpIqBfFGgEIE=",
+        "bzlTransitiveDigest": "SDPwAg2fgTyonat1Y05sy9ZnauWfmD2CueMGOopJacU=",
         "accumulatedFileDigests": {
           "@@//github_tools:requirements.txt": "d80b9092d3a65a010718aea12f66392a0e522299349d3754a85477237004fdde"
         },
@@ -4633,7 +4633,113 @@
             }
           }
         },
-        "recordedRepoMappingEntries": []
+        "recordedRepoMappingEntries": [
+          [
+            "bazel_features~1.1.1",
+            "bazel_features_globals",
+            "bazel_features~1.1.1~version_extension~bazel_features_globals"
+          ],
+          [
+            "bazel_features~1.1.1",
+            "bazel_features_version",
+            "bazel_features~1.1.1~version_extension~bazel_features_version"
+          ],
+          [
+            "rules_python~0.27.1",
+            "bazel_features",
+            "bazel_features~1.1.1"
+          ],
+          [
+            "rules_python~0.27.1",
+            "bazel_tools",
+            "bazel_tools"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__build",
+            "rules_python~0.27.1~internal_deps~pypi__build"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__click",
+            "rules_python~0.27.1~internal_deps~pypi__click"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__colorama",
+            "rules_python~0.27.1~internal_deps~pypi__colorama"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__importlib_metadata",
+            "rules_python~0.27.1~internal_deps~pypi__importlib_metadata"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__installer",
+            "rules_python~0.27.1~internal_deps~pypi__installer"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__more_itertools",
+            "rules_python~0.27.1~internal_deps~pypi__more_itertools"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__packaging",
+            "rules_python~0.27.1~internal_deps~pypi__packaging"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__pep517",
+            "rules_python~0.27.1~internal_deps~pypi__pep517"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__pip",
+            "rules_python~0.27.1~internal_deps~pypi__pip"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__pip_tools",
+            "rules_python~0.27.1~internal_deps~pypi__pip_tools"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__pyproject_hooks",
+            "rules_python~0.27.1~internal_deps~pypi__pyproject_hooks"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__setuptools",
+            "rules_python~0.27.1~internal_deps~pypi__setuptools"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__tomli",
+            "rules_python~0.27.1~internal_deps~pypi__tomli"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__wheel",
+            "rules_python~0.27.1~internal_deps~pypi__wheel"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pypi__zipp",
+            "rules_python~0.27.1~internal_deps~pypi__zipp"
+          ],
+          [
+            "rules_python~0.27.1",
+            "pythons_hub",
+            "rules_python~0.27.1~python~pythons_hub"
+          ],
+          [
+            "rules_python~0.27.1~python~pythons_hub",
+            "python_3_11_x86_64-apple-darwin",
+            "rules_python~0.27.1~python~python_3_11_x86_64-apple-darwin"
+          ]
+        ]
       },
       "os:linux,arch:aarch64": {
         "bzlTransitiveDigest": "JWodUBz1ohddcDPS6O0hhZ1KYgJkH0Wr/e8qC48SvZ0=",
