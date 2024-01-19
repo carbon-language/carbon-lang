@@ -26,7 +26,7 @@ enum class Phase : uint8_t {
   // already-diagnosed semantic or syntax error. This is treated as being
   // potentially constant, but with an unknown phase.
   UnknownDueToError,
-  // The epxression has runtime phase because of a non-constant subexpression.
+  // The expression has runtime phase because of a non-constant subexpression.
   Runtime,
 };
 }  // namespace
