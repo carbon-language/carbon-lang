@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_
 
+#include <type_traits>
+
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -27,11 +29,22 @@ struct ParseNodeAndInst {
 
   // For the common case, support construction as:
   //   context.AddInst({parse_node, SemIR::MyInst{...}});
-  template <typename InstT>
+  template <typename InstT, typename std::enable_if_t<!std::is_same_v<
+                                typename decltype(InstT::Kind)::TypedNodeId,
+                                Parse::InvalidNodeId>>* = nullptr>
   // NOLINTNEXTLINE(google-explicit-constructor)
   ParseNodeAndInst(typename decltype(InstT::Kind)::TypedNodeId parse_node,
                    InstT inst)
       : parse_node(parse_node), inst(inst) {}
+
+  // For cases with no parse node, support construction as:
+  //   context.AddInst({SemIR::MyInst{...}});
+  template <typename InstT, typename std::enable_if_t<std::is_same_v<
+                                typename decltype(InstT::Kind)::TypedNodeId,
+                                Parse::InvalidNodeId>>* = nullptr>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(InstT inst)
+      : parse_node(Parse::NodeId::Invalid), inst(inst) {}
 
   Parse::NodeId parse_node;
   Inst inst;

@@ -201,8 +201,7 @@ auto Import(Context& context, SemIR::TypeId namespace_type_id,
     } else {
       // Leave a placeholder that the inst comes from the other IR.
       auto target_id = context.AddPlaceholderInst(
-          {Parse::NodeId::Invalid,
-           SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id}});
+          {SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id}});
       // TODO: When importing from other packages, the scope's names should
       // be changed to allow for ambiguous names. When importing from the
       // current package, as is currently being done, we should issue a

@@ -77,8 +77,7 @@ File::File(SharedValueStores& value_stores)
   // self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
   insts_.AddInNoBlock(                                                     \
-      {Parse::NodeId::Invalid,                                             \
-       Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
+      {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
                                                        : TypeId::TypeType, \
                BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
