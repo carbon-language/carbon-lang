@@ -6,7 +6,7 @@
 // CHECK:STDERR: conflict.carbon: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: conflict.carbon: Name is previously declared here.
 
-// --- namespace.carbon
+// --- fn.carbon
 
 package Example library "fn" api;
 
