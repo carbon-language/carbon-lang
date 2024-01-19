@@ -37,6 +37,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.7: C = struct_value (%.2, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,11 +76,11 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc20_38.1: {.a: i32, .b: i32} = struct_literal (%.loc20_29, %.loc20_37)
 // CHECK:STDOUT:   %.loc20_38.2: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2
+// CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc20_38.4: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4
-// CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return
-// CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6
+// CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return [template = constants.%.7]
+// CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6 [template = constants.%.7]
 // CHECK:STDOUT:   assign %return, %.loc20_38.7
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>

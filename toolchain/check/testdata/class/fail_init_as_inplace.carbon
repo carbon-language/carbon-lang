@@ -32,7 +32,8 @@ fn F() {
 // CHECK:STDOUT:   %.4: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.7: type = tuple_type () [template]
+// CHECK:STDOUT:   %.7: Class = struct_value (%.5, %.6) [template]
+// CHECK:STDOUT:   %.8: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,10 +67,10 @@ fn F() {
 // CHECK:STDOUT:   %Class.ref.loc21_38: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc21_33.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_33.3: ref i32 = class_element_access %.loc21_33.2, element0
-// CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3
+// CHECK:STDOUT:   %.loc21_33.4: init i32 = initialize_from %.loc21_24 to %.loc21_33.3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc21_33.5: ref i32 = class_element_access %.loc21_33.2, element1
-// CHECK:STDOUT:   %.loc21_33.6: init i32 = initialize_from %.loc21_32 to %.loc21_33.5
-// CHECK:STDOUT:   %.loc21_33.7: init Class = class_init (%.loc21_33.4, %.loc21_33.6), %.loc21_33.2
+// CHECK:STDOUT:   %.loc21_33.6: init i32 = initialize_from %.loc21_32 to %.loc21_33.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_33.7: init Class = class_init (%.loc21_33.4, %.loc21_33.6), %.loc21_33.2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc21_33.8: ref Class = temporary %.loc21_33.2, %.loc21_33.7
 // CHECK:STDOUT:   %.loc21_33.9: ref Class = converted %.loc21_33.1, %.loc21_33.8
 // CHECK:STDOUT:   %.loc21_33.10: Class = bind_value %.loc21_33.9

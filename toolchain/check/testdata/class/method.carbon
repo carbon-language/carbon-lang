@@ -57,6 +57,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.3: type = struct_type {.k: i32} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.k: i32} [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: Class = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,8 +113,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc25_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_18.3: ref i32 = class_element_access %.loc25_18.2, element0
-// CHECK:STDOUT:   %.loc25_18.4: init i32 = initialize_from %.loc25_17 to %.loc25_18.3
-// CHECK:STDOUT:   %.loc25_18.5: init Class = class_init (%.loc25_18.4), %.loc25_18.2
+// CHECK:STDOUT:   %.loc25_18.4: init i32 = initialize_from %.loc25_17 to %.loc25_18.3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc25_18.5: init Class = class_init (%.loc25_18.4), %.loc25_18.2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc25_18.6: ref Class = temporary %.loc25_18.2, %.loc25_18.5
 // CHECK:STDOUT:   %.loc25_18.7: ref Class = converted %.loc25_18.1, %.loc25_18.6
 // CHECK:STDOUT:   %.loc25_29: <bound method> = bound_method %.loc25_18.7, @Class.%F

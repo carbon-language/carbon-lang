@@ -17,7 +17,8 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.1: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 295147905179352825855 [template]
+// CHECK:STDOUT:   %.4: (i32,) = tuple_value (%.3) [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 295147905179352825855 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -28,8 +29,8 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %a: ref (i32,) = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 12 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_21.1: (i32,) = tuple_literal (%.loc7_18)
-// CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init (%.loc7_18) to %a.var
-// CHECK:STDOUT:   %.loc7_21.3: init (i32,) = converted %.loc7_21.1, %.loc7_21.2
+// CHECK:STDOUT:   %.loc7_21.2: init (i32,) = tuple_init (%.loc7_18) to %a.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_21.3: init (i32,) = converted %.loc7_21.1, %.loc7_21.2 [template = constants.%.4]
 // CHECK:STDOUT:   assign %a.var, %.loc7_21.3
 // CHECK:STDOUT:   %.loc8_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %.loc8_13.1, constants.%.2 [template = constants.%.2]
@@ -44,7 +45,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %b.ref: ref (i32,) = name_ref b, %b
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_35: ref <error> = tuple_index %b.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }

@@ -79,9 +79,9 @@ fn H() {
 // CHECK:STDOUT:   %.loc14_49: i32 = int_literal 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc14_50.2: (i32, (i32, i32, i32), i32) = tuple_literal (%.loc14_41, %.loc14_45, %.loc14_49)
 // CHECK:STDOUT:   %.loc14_50.3: ref i32 = tuple_access %v.var, element0
-// CHECK:STDOUT:   %.loc14_50.4: init i32 = initialize_from %.loc14_41 to %.loc14_50.3
+// CHECK:STDOUT:   %.loc14_50.4: init i32 = initialize_from %.loc14_41 to %.loc14_50.3 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc14_50.5: ref i32 = tuple_access %v.var, element2
-// CHECK:STDOUT:   %.loc14_50.6: init i32 = initialize_from %.loc14_49 to %.loc14_50.5
+// CHECK:STDOUT:   %.loc14_50.6: init i32 = initialize_from %.loc14_49 to %.loc14_50.5 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc14_50.7: init (i32, (i32, i32, i32), i32) = tuple_init (%.loc14_50.4, %.loc14_45, %.loc14_50.6) to %v.var
 // CHECK:STDOUT:   %.loc14_50.8: init (i32, (i32, i32, i32), i32) = converted %.loc14_50.2, %.loc14_50.7
 // CHECK:STDOUT:   assign %v.var, %.loc14_50.8

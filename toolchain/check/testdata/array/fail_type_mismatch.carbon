@@ -60,7 +60,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc10_39.1: (i32, String, String) = tuple_literal (%.loc10_20, %.loc10_23, %.loc10_32)
 // CHECK:STDOUT:   %.loc10_39.2: i32 = int_literal 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_39.3: ref i32 = array_index %a.var, %.loc10_39.2
-// CHECK:STDOUT:   %.loc10_39.4: init i32 = initialize_from %.loc10_20 to %.loc10_39.3
+// CHECK:STDOUT:   %.loc10_39.4: init i32 = initialize_from %.loc10_20 to %.loc10_39.3 [template = constants.%.4]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %.loc12_29.1: (type, type, type) = tuple_literal (i32, String, String)
 // CHECK:STDOUT:   %.loc12_29.2: type = converted %.loc12_29.1, constants.%.8 [template = constants.%.8]

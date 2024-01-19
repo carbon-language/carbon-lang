@@ -20,6 +20,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.7: (i32, i32, i32) = tuple_value (%.4, %.5, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -38,13 +39,13 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_35: i32 = int_literal 3 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc8_36.1: (i32, i32, i32) = tuple_literal (%.loc8_29, %.loc8_32, %.loc8_35)
 // CHECK:STDOUT:   %.loc8_36.2: ref i32 = tuple_access %v.var, element0
-// CHECK:STDOUT:   %.loc8_36.3: init i32 = initialize_from %.loc8_29 to %.loc8_36.2
+// CHECK:STDOUT:   %.loc8_36.3: init i32 = initialize_from %.loc8_29 to %.loc8_36.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_36.4: ref i32 = tuple_access %v.var, element1
-// CHECK:STDOUT:   %.loc8_36.5: init i32 = initialize_from %.loc8_32 to %.loc8_36.4
+// CHECK:STDOUT:   %.loc8_36.5: init i32 = initialize_from %.loc8_32 to %.loc8_36.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8_36.6: ref i32 = tuple_access %v.var, element2
-// CHECK:STDOUT:   %.loc8_36.7: init i32 = initialize_from %.loc8_35 to %.loc8_36.6
-// CHECK:STDOUT:   %.loc8_36.8: init (i32, i32, i32) = tuple_init (%.loc8_36.3, %.loc8_36.5, %.loc8_36.7) to %v.var
-// CHECK:STDOUT:   %.loc8_36.9: init (i32, i32, i32) = converted %.loc8_36.1, %.loc8_36.8
+// CHECK:STDOUT:   %.loc8_36.7: init i32 = initialize_from %.loc8_35 to %.loc8_36.6 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8_36.8: init (i32, i32, i32) = tuple_init (%.loc8_36.3, %.loc8_36.5, %.loc8_36.7) to %v.var [template = constants.%.7]
+// CHECK:STDOUT:   %.loc8_36.9: init (i32, i32, i32) = converted %.loc8_36.1, %.loc8_36.8 [template = constants.%.7]
 // CHECK:STDOUT:   assign %v.var, %.loc8_36.9
 // CHECK:STDOUT:   %.loc10_24.1: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, constants.%.2 [template = constants.%.2]

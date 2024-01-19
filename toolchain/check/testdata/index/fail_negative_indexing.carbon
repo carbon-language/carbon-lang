@@ -18,7 +18,8 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.3: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 6 [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 10 [template]
+// CHECK:STDOUT:   %.6: (i32, i32) = tuple_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
