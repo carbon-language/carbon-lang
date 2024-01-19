@@ -206,6 +206,7 @@ auto HandlePostfixOperatorStar(Context& context,
 auto HandlePrefixOperatorAmp(Context& context,
                              Parse::PrefixOperatorAmpId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
+  auto type_id = context.insts().Get(value_id).type_id();
   // Only durable reference expressions can have their address taken.
   switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
     case SemIR::ExprCategory::DurableRef:
@@ -215,17 +216,17 @@ auto HandlePrefixOperatorAmp(Context& context,
       CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
                         "Cannot take the address of a temporary object.");
       context.emitter().Emit(TokenOnly(parse_node), AddrOfEphemeralRef);
+      value_id = SemIR::InstId::BuiltinError;
       break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "Cannot take the address of non-reference expression.");
       context.emitter().Emit(TokenOnly(parse_node), AddrOfNonRef);
+      value_id = SemIR::InstId::BuiltinError;
       break;
   }
   context.AddInstAndPush(
-      {parse_node, SemIR::AddrOf{context.GetPointerType(
-                                     context.insts().Get(value_id).type_id()),
-                                 value_id}});
+      {parse_node, SemIR::AddrOf{context.GetPointerType(type_id), value_id}});
   return true;
 }
 
