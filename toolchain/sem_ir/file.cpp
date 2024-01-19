@@ -109,10 +109,12 @@ File::File(SharedValueStores& value_stores, std::string filename,
   insts_.Reserve(BuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
-    // We can reuse builtin type IDs because they're special-cased values.
+    // We can reuse the type IDs from the builtins IR because they're
+    // special-cased values.
+    auto type_id = inst.type_id();
     auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock({Parse::NodeId::Invalid,
-                         CrossRef{inst.type_id(), BuiltinIR, builtin_id}});
+    insts_.AddInNoBlock(
+        {Parse::NodeId::Invalid, CrossRef{type_id, BuiltinIR, builtin_id}});
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }

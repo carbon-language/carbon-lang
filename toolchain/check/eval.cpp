@@ -13,16 +13,20 @@ namespace Carbon::Check {
 namespace {
 // The evaluation phase for an expression, computed by evaluation. These are
 // ordered so that the phase of an expression is the numerically highest phase
-// of its constituent evaluations.
+// of its constituent evaluations. Note that an expression with any runtime
+// component is known to have Runtime phase even if it involves an evaluation
+// with UnknownDueToError phase.
 enum class Phase : uint8_t {
   // Value could be entirely and concretely computed.
   Template,
-  // Evaluation encountered a reference to a symbolic binding.
+  // Evaluation phase is symbolic because the expression involves a reference to
+  // a symbolic binding.
   Symbolic,
-  // Evaluation encountered an error, which is treated as being potentially
-  // constant, but with an unknown phase.
-  Error,
-  // Evaluation encountered a non-constant construct.
+  // The evaluation phase is unknown because evaluation encountered an
+  // already-diagnosed semantic or syntax error. This is treated as being
+  // potentially constant, but with an unknown phase.
+  UnknownDueToError,
+  // The epxression has runtime phase because of a non-constant subexpression.
   Runtime,
 };
 }  // namespace
@@ -31,10 +35,9 @@ enum class Phase : uint8_t {
 static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
   if (!constant_id.is_constant()) {
     return Phase::Runtime;
+  } else if (constant_id == SemIR::ConstantId::Error) {
+    return Phase::UnknownDueToError;
   } else if (constant_id.is_template()) {
-    if (constant_id.inst_id() == SemIR::InstId::BuiltinError) {
-      return Phase::Error;
-    }
     return Phase::Template;
   } else {
     return Phase::Symbolic;
@@ -43,7 +46,8 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
 
 // Returns the later of two phases.
 static auto LatestPhase(Phase a, Phase b) -> Phase {
-  return Phase(std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
+  return static_cast<Phase>(
+      std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
 }
 
 // Forms a `constant_id` describing a given evaluation result.
@@ -51,9 +55,10 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
   switch (phase) {
     case Phase::Template:
+      return context.AddConstant(inst, /*is_symbolic=*/false);
     case Phase::Symbolic:
-      return context.AddConstant(inst, phase == Phase::Symbolic);
-    case Phase::Error:
+      return context.AddConstant(inst, /*is_symbolic=*/true);
+    case Phase::UnknownDueToError:
       return SemIR::ConstantId::Error;
     case Phase::Runtime:
       return SemIR::ConstantId::NotConstant;
@@ -129,8 +134,8 @@ static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
        ...)) {
     return MakeConstantResult(context, typed_inst, phase);
   }
-  return phase == Phase::Error ? SemIR::ConstantId::Error
-                               : SemIR::ConstantId::NotConstant;
+  return phase == Phase::UnknownDueToError ? SemIR::ConstantId::Error
+                                           : SemIR::ConstantId::NotConstant;
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
@@ -249,7 +254,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                                     : SemIR::BoolValue::False);
         return MakeConstantResult(context, value, Phase::Template);
       }
-      if (phase == Phase::Error) {
+      if (phase == Phase::UnknownDueToError) {
         return SemIR::ConstantId::Error;
       }
       break;
