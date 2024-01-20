@@ -32,21 +32,25 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExprSemi>();
   auto element_type_inst_id = context.node_stack().PopExpr();
-  auto bound_inst = context.insts().Get(bound_inst_id);
-  if (auto literal = bound_inst.TryAs<SemIR::IntLiteral>()) {
-    const auto& bound_value = context.ints().Get(literal->int_id);
-    // TODO: Produce an error if the array type is too large.
-    if (bound_value.getActiveBits() <= 64) {
-      context.AddInstAndPush(
-          {parse_node, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
-                                        ExprAsType(context, parse_node,
-                                                   element_type_inst_id)}});
-      return true;
-    }
+
+  // The array bound must be a constant.
+  //
+  // TODO: Should we support runtime-phase bounds in cases such as:
+  //   comptime fn F(n: i32) -> type { return [i32; n]; }
+  auto bound_inst = context.constant_values().Get(bound_inst_id);
+  if (!bound_inst.is_constant()) {
+    CARBON_DIAGNOSTIC(InvalidArrayExpr, Error,
+                      "Array bound is not a constant.");
+    context.emitter().Emit(context.insts().GetParseNode(bound_inst_id),
+                           InvalidArrayExpr);
+    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    return true;
   }
-  CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "Invalid array expression.");
-  context.emitter().Emit(parse_node, InvalidArrayExpr);
-  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+
+  context.AddInstAndPush(
+      {parse_node, SemIR::ArrayType{
+                       SemIR::TypeId::TypeType, bound_inst_id,
+                       ExprAsType(context, parse_node, element_type_inst_id)}});
   return true;
 }
 

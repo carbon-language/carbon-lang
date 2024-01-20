@@ -65,6 +65,12 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
   }
 }
 
+// Forms a `constant_id` describing why an evaluation was not constant.
+static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
+  return phase == Phase::UnknownDueToError ? SemIR::ConstantId::Error
+                                           : SemIR::ConstantId::NotConstant;
+}
+
 // `GetConstantValue` checks to see whether the provided ID describes a value
 // with constant phase, and if so, returns the corresponding constant value.
 // Overloads are provided for different kinds of ID.
@@ -120,22 +126,36 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
 
 // If the specified fields of the given typed instruction have constant values,
 // replaces the fields with their constant values and builds a corresponding
-// constant value. Otherwise returns `SemIR::InstId::Invalid`.
-template <typename InstT, typename... EachFieldIdT>
-static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
-                                       EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::ConstantId {
+// constant value. The constant value is then checked by calling
+// `validate_fn(typed_inst)`, which should return a `bool` indicating whether
+// the new constant is valid. If validation passes, a corresponding ConstantId
+// for the new constant is returned. Otherwise returns
+// `ConstantId::NotConstant`. Returns `ConstantId::Error` if any subexpression
+// is an error.
+template <typename InstT, typename ValidateFn, typename... EachFieldIdT>
+static auto RebuildAndValidateIfFieldsAreConstant(
+    Context& context, SemIR::Inst inst, ValidateFn validate_fn,
+    EachFieldIdT InstT::*... each_field_id) -> SemIR::ConstantId {
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
   Phase phase = Phase::Template;
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
-       ...)) {
+       ...) &&
+      validate_fn(typed_inst)) {
     return MakeConstantResult(context, typed_inst, phase);
   }
-  return phase == Phase::UnknownDueToError ? SemIR::ConstantId::Error
-                                           : SemIR::ConstantId::NotConstant;
+  return MakeNonConstantResult(phase);
+}
+
+// Same as above but with no validation step.
+template <typename InstT, typename... EachFieldIdT>
+static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
+                                       EachFieldIdT InstT::*... each_field_id)
+    -> SemIR::ConstantId {
+  return RebuildAndValidateIfFieldsAreConstant(
+      context, inst, [](...) { return true; }, each_field_id...);
 }
 
 // Rebuilds the given aggregate initialization instruction as a corresponding
@@ -154,6 +174,63 @@ static auto RebuildInitAsValue(Context& context, SemIR::Inst inst,
       phase);
 }
 
+// Performs an access into an aggregate, retrieving the specified element.
+static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
+  Phase phase = Phase::Template;
+  if (auto aggregate_id =
+          GetConstantValue(context, access_inst.aggregate_id, &phase);
+      aggregate_id.is_valid()) {
+    if (auto aggregate =
+            context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id)) {
+      auto elements = context.inst_blocks().Get(aggregate->elements_id);
+      auto index = static_cast<size_t>(access_inst.index.index);
+      CARBON_CHECK(index < elements.size()) << "Access out of bounds.";
+      // `Phase` is not used here. If this element is a template constant, then
+      // so is the result of indexing, even if the aggregate also contains a
+      // symbolic context.
+      return context.constant_values().Get(elements[index]);
+    } else {
+      CARBON_CHECK(phase != Phase::Template)
+          << "Failed to evaluate template constant " << inst;
+    }
+  }
+  return MakeNonConstantResult(phase);
+}
+
+// Performs an index into a homogeneous aggregate, retrieving the specified
+// element.
+static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto index_inst = inst.As<SemIR::AnyAggregateIndex>();
+  Phase phase = Phase::Template;
+  auto aggregate_id =
+      GetConstantValue(context, index_inst.aggregate_id, &phase);
+  auto index_id = GetConstantValue(context, index_inst.index_id, &phase);
+  if (aggregate_id.is_valid() && index_id.is_valid()) {
+    auto aggregate =
+        context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
+    auto index = context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
+    if (aggregate && index) {
+      const auto& index_val = context.ints().Get(index->int_id);
+      auto elements = context.inst_blocks().Get(aggregate->elements_id);
+      if (index_val.ult(elements.size())) {
+        return context.constant_values().Get(
+            elements[index_val.getZExtValue()]);
+      } else {
+        // TODO: In this case, this instruction is a constant, but it indexes an
+        // array with a statically out-of-bounds index. This should produce an
+        // error rather than just treating the instruction as non-constant.
+      }
+    } else {
+      CARBON_CHECK(phase != Phase::Template)
+          << "Failed to evaluate template constant " << inst;
+    }
+  }
+  return MakeNonConstantResult(phase);
+}
+
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
@@ -167,8 +244,18 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::AddrOf::lvalue_id);
     case SemIR::ArrayType::Kind:
-      return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::ArrayType::bound_id);
+      return RebuildAndValidateIfFieldsAreConstant(
+          context, inst,
+          [&](SemIR::ArrayType result) {
+            // TODO: If the bound doesn't fit in 64 bits or is negative,
+            // produce an error rather than a non-constant type.
+            // TODO: Support a symbolic bound here. This will require fixing
+            // callers of `GetArrayBoundValue`.
+            auto int_bound =
+                context.insts().TryGetAs<SemIR::IntLiteral>(result.bound_id);
+            return context.ints().Get(int_bound->int_id).getActiveBits() <= 64;
+          },
+          &SemIR::ArrayType::bound_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
@@ -227,13 +314,14 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // by `APInt`s with different bit widths.
       return MakeConstantResult(context, inst, Phase::Template);
 
-    // TODO: Support subobject access.
-    case SemIR::ArrayIndex::Kind:
+    // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
+      return PerformAggregateAccess(context, inst);
+    case SemIR::ArrayIndex::Kind:
     case SemIR::TupleIndex::Kind:
-      break;
+      return PerformAggregateIndex(context, inst);
 
     // TODO: These need special handling.
     case SemIR::BindValue::Kind:
