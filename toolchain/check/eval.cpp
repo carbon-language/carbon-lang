@@ -126,21 +126,36 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
 
 // If the specified fields of the given typed instruction have constant values,
 // replaces the fields with their constant values and builds a corresponding
-// constant value. Otherwise returns `SemIR::InstId::Invalid`.
-template <typename InstT, typename... EachFieldIdT>
-static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
-                                       EachFieldIdT InstT::*... each_field_id)
-    -> SemIR::ConstantId {
+// constant value. The constant value is then checked by calling
+// `validate_fn(typed_inst)`, which should return a `bool` indicating whether
+// the new constant is valid. If validation passes, a corresponding ConstantId
+// for the new constant is returned. Otherwise returns
+// `ConstantId::NotConstant`. Returns `ConstantId::Error` if any subexpression
+// is an error.
+template <typename InstT, typename ValidateFn, typename... EachFieldIdT>
+static auto RebuildAndValidateIfFieldsAreConstant(
+    Context& context, SemIR::Inst inst, ValidateFn validate_fn,
+    EachFieldIdT InstT::*... each_field_id) -> SemIR::ConstantId {
   // Build a constant instruction by replacing each non-constant operand with
   // its constant value.
   auto typed_inst = inst.As<InstT>();
   Phase phase = Phase::Template;
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
-       ...)) {
+       ...) &&
+      validate_fn(typed_inst)) {
     return MakeConstantResult(context, typed_inst, phase);
   }
   return MakeNonConstantResult(phase);
+}
+
+// Same as above but with no validation step.
+template <typename InstT, typename... EachFieldIdT>
+static auto RebuildIfFieldsAreConstant(Context& context, SemIR::Inst inst,
+                                       EachFieldIdT InstT::*... each_field_id)
+    -> SemIR::ConstantId {
+  return RebuildAndValidateIfFieldsAreConstant(
+      context, inst, [](...) { return true; }, each_field_id...);
 }
 
 // Rebuilds the given aggregate initialization instruction as a corresponding
@@ -229,10 +244,18 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::AddrOf::lvalue_id);
     case SemIR::ArrayType::Kind:
-      // TODO: If the bound doesn't fit in 64 bits or is negative, evaluation
-      // should fail with an error.
-      return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::ArrayType::bound_id);
+      return RebuildAndValidateIfFieldsAreConstant(
+          context, inst,
+          [&](SemIR::ArrayType result) {
+            // TODO: If the bound doesn't fit in 64 bits or is negative,
+            // produce an error rather than a non-constant type.
+            // TODO: Support a symbolic bound here. This will require fixing
+            // callers of `GetArrayBoundValue`.
+            auto int_bound =
+                context.insts().TryGetAs<SemIR::IntLiteral>(result.bound_id);
+            return context.ints().Get(int_bound->int_id).getActiveBits() <= 64;
+          },
+          &SemIR::ArrayType::bound_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
