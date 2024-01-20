@@ -143,7 +143,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>constant.character.escape.carbon</string>
                 <key>match</key>
-                <string>\([tnr'"0\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})</string>
+                <string>\\([tnr'"0\0]|x[0-9A-F]{2}|u\{[0-9A-F]{4,}\})</string>
             </dict>
         </dict>
     </dict>
