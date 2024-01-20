@@ -393,11 +393,35 @@ class Hasher {
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
 
-  // The multiplicative hash constant from Knuth, derived from 2^64 / Phi. For
-  // details on its selection, see:
+  // We need a multiplicative hashing constant for both 64-bit multiplicative
+  // hashing fast paths and some other 128-bit folded multiplies. We use an
+  // empirically better constant compared to Knuth's, Rust's FxHash, and others
+  // we've tried. It was found by a search of uniformly distributed odd numbers
+  // and examining them for desirable properties when used as a multiplicative
+  // hash, however our search seems largely to have been lucky rather than
+  // having a highly effective set of criteria. We evaluated this constant by
+  // integrating this hash function with a hashtable and looking at the
+  // collision rates of several different but very fundamental patterns of keys:
+  // integers counting from 0, pointers allocated on the heap, and strings with
+  // character and size distributions matching C-style ASCII identifiers.
+  // Different constants found with this search worked better or less well, but
+  // fairly consistently across the different types of keys. At the end, far and
+  // away the best behaved constant we found was one of the first ones in the
+  // search and is what we use here.
+  //
+  // For reference, some other constants include one derived by diving 2^64 by
+  // Phi: 0x9e37'79b9'7f4a'7c15U -- see these sites for details:
   // https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
   // https://book.huihoo.com/data-structures-and-algorithms-with-object-oriented-design-patterns-in-c++/html/page214.html
-  static constexpr uint64_t MulConstant = 0x9e37'79b9'7f4a'7c15U;
+  //
+  // Another very good constant derived by minimizing repeating bit patterns is
+  // 0xdcb2'2ca6'8cb1'34edU and its bit-reversed form. However, this constant
+  // has observed frequent issues at roughly 4k pointer keys, connected to a
+  // common hashtable seed also being a pointer. These issues appear to occur
+  // both more often and have a larger impact relative to the number of keys
+  // than the rare cases where some combinations of pointer seeds and pointer
+  // keys create minor quality issues with the constant we use.
+  static constexpr uint64_t MulConstant = 0x7924'f9e0'de1e'8cf5U;
 
  private:
   uint64_t buffer;
