@@ -691,7 +691,7 @@ inline auto Hasher::Hash(const T& value) -> void {
     // data to fully and densely populate all 8 bytes. For these cases we have a
     // `WeakMix` routine that is lower latency but lower quality.
     CARBON_MCA_BEGIN("fixed-8b");
-    buffer = WeakMix(ReadSmall(value));
+    buffer = WeakMix(buffer ^ ReadSmall(value));
     CARBON_MCA_END("fixed-8b");
     return;
   }

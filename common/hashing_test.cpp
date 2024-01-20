@@ -86,6 +86,15 @@ TEST(HashingTest, Integers) {
   }
 }
 
+TEST(HashingTest, BasicSeeding) {
+  auto unseeded_hash = HashValue(42);
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 1)));
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 2)));
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 3)));
+  EXPECT_THAT(unseeded_hash,
+              Ne(HashValue(42, static_cast<uint64_t>(unseeded_hash))));
+}
+
 TEST(HashingTest, Pointers) {
   int object1 = 42;
   std::string object2 =
