@@ -40,6 +40,12 @@ TEST(HashingTest, HashCodeAPI) {
   EXPECT_THAT(a.ExtractIndex(), Ne(b.ExtractIndex()));
   EXPECT_THAT(a.ExtractIndex(), Ne(empty.ExtractIndex()));
 
+  // The tag shouldn't have bits set outside the range requested.
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<1>().second & ~0b1, Eq(0));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<2>().second & ~0b11, Eq(0));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<3>().second & ~0b111, Eq(0));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<4>().second & ~0b1111, Eq(0));
+
   // Note that the index produced with a tag may be different from the index
   // alone!
   EXPECT_THAT(HashValue("a").ExtractIndexAndTag<2>(),

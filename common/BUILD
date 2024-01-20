@@ -204,11 +204,174 @@ cc_library(
 )
 
 cc_library(
+    name = "map",
+    hdrs = ["map.h"],
+    deps = [
+        ":check",
+        ":raw_hashtable",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "map_test",
+    srcs = ["map_test.cpp"],
+    deps = [
+        ":map",
+        ":raw_hashtable_test_helpers",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_binary(
+    name = "map_benchmark",
+    testonly = 1,
+    srcs = ["map_benchmark.cpp"],
+    deps = [
+        ":map",
+        ":raw_hashtable_benchmark_helpers",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "map_benchmark_test",
+    # The benchmark allocates a large amount of memory.
+    size = "enormous",
+    # We configure the test to run quickly.
+    timeout = "short",
+    srcs = ["map_benchmark_test.sh"],
+    data = [":map_benchmark"],
+)
+
+cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "raw_hashtable",
+    srcs = ["raw_hashtable.cpp"],
+    hdrs = ["raw_hashtable.h"],
+    deps = [
+        ":check",
+        ":hashing",
+        ":raw_hashtable_metadata_group",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "raw_hashtable_metadata_group",
+    srcs = ["raw_hashtable_metadata_group.cpp"],
+    hdrs = ["raw_hashtable_metadata_group.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "raw_hashtable_metadata_group_benchmark",
+    testonly = 1,
+    srcs = ["raw_hashtable_metadata_group_benchmark.cpp"],
+    deps = [
+        ":raw_hashtable_metadata_group",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "raw_hashtable_metadata_group_benchmark_test",
+    srcs = ["raw_hashtable_metadata_group_benchmark_test.sh"],
+    data = [":raw_hashtable_metadata_group_benchmark"],
+)
+
+cc_library(
+    name = "raw_hashtable_benchmark_helpers",
+    testonly = 1,
+    srcs = ["raw_hashtable_benchmark_helpers.cpp"],
+    hdrs = ["raw_hashtable_benchmark_helpers.h"],
+    copts = [
+        "-O2",  # Always optimize to make testing benchmarks faster.
+    ],
+    deps = [
+        ":check",
+        ":hashing",
+        ":raw_hashtable",
+        ":set",
+        "@abseil-cpp//absl/base:no_destructor",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "raw_hashtable_test_helpers",
+    testonly = 1,
+    hdrs = ["raw_hashtable_test_helpers.h"],
+    deps = [
+        ":check",
+        ":hashing",
+        ":ostream",
+    ],
+)
+
+cc_library(
+    name = "set",
+    hdrs = ["set.h"],
+    deps = [
+        ":check",
+        ":raw_hashtable",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "set_test",
+    srcs = ["set_test.cpp"],
+    deps = [
+        ":raw_hashtable_test_helpers",
+        ":set",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_binary(
+    name = "set_benchmark",
+    testonly = 1,
+    srcs = ["set_benchmark.cpp"],
+    deps = [
+        ":raw_hashtable_benchmark_helpers",
+        ":set",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@google_benchmark//:benchmark_main",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "set_benchmark_test",
+    # The benchmark allocates a large amount of memory.
+    size = "enormous",
+    # We configure the test to run quickly.
+    timeout = "short",
+    srcs = ["set_benchmark_test.sh"],
+    data = [":set_benchmark"],
 )
 
 cc_library(

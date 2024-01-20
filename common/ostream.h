@@ -54,6 +54,7 @@ class Printable {
 
 // Returns the result of printing the value.
 template <typename T>
+  requires std::derived_from<T, Printable<T>>
 inline auto PrintToString(const T& val) -> std::string {
   std::string str;
   llvm::raw_string_ostream stream(str);
