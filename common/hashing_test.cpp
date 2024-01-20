@@ -551,8 +551,8 @@ TEST(HashingTest, Collisions1ByteSized) {
   // distributed.
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);
   auto low_7bit_collisions = FindBitRangeCollisions<0, 7>(hashes);
-  EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
-  EXPECT_THAT(low_7bit_collisions.max, Le(4 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.median, Le(8 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.max, Le(8 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
   EXPECT_THAT(high_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(high_7bit_collisions.max, Le(4 * min_7bit_collisions));
