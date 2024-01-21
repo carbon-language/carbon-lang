@@ -688,7 +688,8 @@ struct ChoiceSignature {
 
   ChoiceIntroducerId introducer;
   AnyNameComponentId name;
-  std::optional<TuplePatternId> parameters;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<TuplePatternId> params;
 };
 
 using ChoiceDefinitionStart = ChoiceSignature;
