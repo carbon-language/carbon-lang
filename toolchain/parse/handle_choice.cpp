@@ -54,6 +54,14 @@ auto HandleChoiceAlternative(Context& context) -> void {
                              ExpectedChoiceAlternativeName);
     }
 
+    context.SkipPastLikelyEnd(*context.position());
+
+    state.state = State::ChoiceAlternativeFinish;
+    state.subtree_start = {};
+    state.token = *context.position();
+    state.has_error = true;
+    context.PushState(state);
+
     return;
   }
 
@@ -66,6 +74,10 @@ auto HandleChoiceAlternativeFinish(Context& context) -> void {
 
   if (state.has_error) {
     context.ReturnErrorOnState();
+    if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+      context.PushState(State::ChoiceAlternative);
+    }
+    return;
   }
 
   if (context.ConsumeListToken(
