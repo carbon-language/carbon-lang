@@ -167,12 +167,3 @@ python.toolchain(
     python_version = "3.11",
 )
 use_repo(python, "python_versions")
-
-# Create a central repo that knows about the pip dependencies.
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "py_deps",
-    python_version = "3.11",
-    requirements_lock = "//github_tools:requirements.txt",
-)
-use_repo(pip, "py_deps")
