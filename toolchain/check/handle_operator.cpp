@@ -344,7 +344,7 @@ static auto HandleShortCircuitOperand(Context& context,
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(end_block_id);
   context.inst_block_stack().Push(rhs_block_id);
-  context.AddCurrentCodeBlockToFunction();
+  context.AddCurrentCodeBlockToFunction(parse_node);
 
   // HandleShortCircuitOperator will follow, and doesn't need the operand on the
   // node stack.
@@ -379,7 +379,7 @@ static auto HandleShortCircuitOperator(Context& context,
   auto resume_block_id = context.inst_block_stack().PeekOrAdd(/*depth=*/1);
   context.AddInst({parse_node, SemIR::BranchWithArg{resume_block_id, rhs_id}});
   context.inst_block_stack().Pop();
-  context.AddCurrentCodeBlockToFunction();
+  context.AddCurrentCodeBlockToFunction(parse_node);
 
   // Collect the result from either the first or second operand.
   context.AddInstAndPush(
