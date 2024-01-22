@@ -70,7 +70,12 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   // Returns which categories this node kind is in.
   auto category() const -> NodeCategory;
 
+  // Number of different kinds, usable in a constexpr context.
+  static const int ValidCount;
+
+  using EnumBase::AsInt;
   using EnumBase::Create;
+  using EnumBase::FromInt;
 
   class Definition;
 
@@ -87,6 +92,17 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
 #include "toolchain/parse/node_kind.def"
+
+constexpr int NodeKind::ValidCount = 0
+#define CARBON_PARSE_NODE_KIND(Name) +1
+#include "toolchain/parse/node_kind.def"
+    ;
+
+static_assert(
+    NodeKind::ValidCount != 0,
+    "The above `constexpr` definition of `ValidCount` makes it available in "
+    "a `constexpr` context despite being declared as merely `const`. We use it "
+    "in a static assert here to ensure that.");
 
 // We expect the parse node kind to fit compactly into 8 bits.
 static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");

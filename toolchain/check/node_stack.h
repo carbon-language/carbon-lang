@@ -363,91 +363,87 @@ class NodeStack {
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
 
+  // Translate a parse node category to the enum ID kind it should always
+  // provide, if it is consistent.
+  static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category)
+      -> std::optional<IdKind> {
+    if (!!(category & Parse::NodeCategory::Expr)) {
+      return IdKind::InstId;
+    } else if (!!(category & Parse::NodeCategory::MemberName)) {
+      return IdKind::NameId;
+    } else if (!!(category &
+                  (Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
+                   Parse::NodeCategory::Modifier))) {
+      return IdKind::Unused;
+    }
+    return std::nullopt;
+  }
+
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
-    switch (kind) {
-      case Parse::NodeKind::Addr:
-      case Parse::NodeKind::ArrayExpr:
-      case Parse::NodeKind::BindingPattern:
-      case Parse::NodeKind::CallExpr:
-      case Parse::NodeKind::CallExprStart:
-      case Parse::NodeKind::GenericBindingPattern:
-      case Parse::NodeKind::IdentifierNameExpr:
-      case Parse::NodeKind::IfExprThen:
-      case Parse::NodeKind::IfExprElse:
-      case Parse::NodeKind::IndexExpr:
-      case Parse::NodeKind::MemberAccessExpr:
-      case Parse::NodeKind::PackageExpr:
-      case Parse::NodeKind::ParenExpr:
-      case Parse::NodeKind::ReturnType:
-      case Parse::NodeKind::SelfTypeNameExpr:
-      case Parse::NodeKind::SelfValueNameExpr:
-      case Parse::NodeKind::ShortCircuitOperandAnd:
-      case Parse::NodeKind::ShortCircuitOperandOr:
-      case Parse::NodeKind::ShortCircuitOperatorAnd:
-      case Parse::NodeKind::ShortCircuitOperatorOr:
-      case Parse::NodeKind::StructFieldValue:
-      case Parse::NodeKind::StructLiteral:
-      case Parse::NodeKind::StructFieldType:
-      case Parse::NodeKind::StructTypeLiteral:
-      case Parse::NodeKind::TupleLiteral:
-      case Parse::NodeKind::VariableInitializer:
-        return IdKind::InstId;
-      case Parse::NodeKind::IfCondition:
-      case Parse::NodeKind::IfExprIf:
-      case Parse::NodeKind::ImplicitParamList:
-      case Parse::NodeKind::TuplePattern:
-      case Parse::NodeKind::WhileCondition:
-      case Parse::NodeKind::WhileConditionStart:
-        return IdKind::InstBlockId;
-      case Parse::NodeKind::FunctionDefinitionStart:
-        return IdKind::FunctionId;
-      case Parse::NodeKind::ClassDefinitionStart:
-        return IdKind::ClassId;
-      case Parse::NodeKind::InterfaceDefinitionStart:
-        return IdKind::InterfaceId;
-      case Parse::NodeKind::BaseName:
-      case Parse::NodeKind::IdentifierName:
-      case Parse::NodeKind::SelfValueName:
-        return IdKind::NameId;
-      case Parse::NodeKind::ArrayExprSemi:
-      case Parse::NodeKind::ClassIntroducer:
-      case Parse::NodeKind::CodeBlockStart:
-      case Parse::NodeKind::ExprOpenParen:
-      case Parse::NodeKind::FunctionIntroducer:
-      case Parse::NodeKind::IfStatementElse:
-      case Parse::NodeKind::ImplicitParamListStart:
-      case Parse::NodeKind::InterfaceIntroducer:
-      case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::QualifiedName:
-      case Parse::NodeKind::ReturnedModifier:
-      case Parse::NodeKind::ReturnStatementStart:
-      case Parse::NodeKind::ReturnVarModifier:
-      case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
-      case Parse::NodeKind::TuplePatternStart:
-      case Parse::NodeKind::VariableIntroducer:
-        return IdKind::SoloParseNode;
-// Use x-macros to handle boilerplate cases.
-#define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) \
-  case Parse::NodeKind::InfixOperator##Name:             \
-    return IdKind::InstId;
-#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) \
-  case Parse::NodeKind::PostfixOperator##Name:             \
-    return IdKind::InstId;
-#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) \
-  case Parse::NodeKind::PrefixOperator##Name:             \
-    return IdKind::InstId;
-#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) \
-  case Parse::NodeKind::Name:                           \
-    return IdKind::InstId;
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
-  case Parse::NodeKind::Name##Modifier:                  \
-    return IdKind::Unused;
-#include "toolchain/parse/node_kind.def"
-      default:
-        return IdKind::Unused;
-    }
+    static constexpr std::array<IdKind, Parse::NodeKind::ValidCount>
+        IdKindTable = [] {
+          std::array<IdKind, Parse::NodeKind::ValidCount> table = {};
+          for (int i = 0; i < Parse::NodeKind::ValidCount; ++i) {
+            Parse::NodeKind node_kind = Parse::NodeKind::FromInt(i);
+            table[i] = [node_kind] {
+              if (auto from_category =
+                      ParseNodeCategoryToIdKind(node_kind.category())) {
+                return *from_category;
+              }
+              switch (node_kind) {
+                case Parse::NodeKind::Addr:
+                case Parse::NodeKind::BindingPattern:
+                case Parse::NodeKind::CallExprStart:
+                case Parse::NodeKind::GenericBindingPattern:
+                case Parse::NodeKind::IfExprThen:
+                case Parse::NodeKind::ReturnType:
+                case Parse::NodeKind::ShortCircuitOperandAnd:
+                case Parse::NodeKind::ShortCircuitOperandOr:
+                case Parse::NodeKind::StructFieldValue:
+                case Parse::NodeKind::StructFieldType:
+                case Parse::NodeKind::VariableInitializer:
+                  return IdKind::InstId;
+                case Parse::NodeKind::IfCondition:
+                case Parse::NodeKind::IfExprIf:
+                case Parse::NodeKind::ImplicitParamList:
+                case Parse::NodeKind::TuplePattern:
+                case Parse::NodeKind::WhileCondition:
+                case Parse::NodeKind::WhileConditionStart:
+                  return IdKind::InstBlockId;
+                case Parse::NodeKind::FunctionDefinitionStart:
+                  return IdKind::FunctionId;
+                case Parse::NodeKind::ClassDefinitionStart:
+                  return IdKind::ClassId;
+                case Parse::NodeKind::InterfaceDefinitionStart:
+                  return IdKind::InterfaceId;
+                case Parse::NodeKind::SelfValueName:
+                  return IdKind::NameId;
+                case Parse::NodeKind::ArrayExprSemi:
+                case Parse::NodeKind::ClassIntroducer:
+                case Parse::NodeKind::CodeBlockStart:
+                case Parse::NodeKind::ExprOpenParen:
+                case Parse::NodeKind::FunctionIntroducer:
+                case Parse::NodeKind::IfStatementElse:
+                case Parse::NodeKind::ImplicitParamListStart:
+                case Parse::NodeKind::InterfaceIntroducer:
+                case Parse::NodeKind::LetIntroducer:
+                case Parse::NodeKind::QualifiedName:
+                case Parse::NodeKind::ReturnedModifier:
+                case Parse::NodeKind::ReturnStatementStart:
+                case Parse::NodeKind::ReturnVarModifier:
+                case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
+                case Parse::NodeKind::TuplePatternStart:
+                case Parse::NodeKind::VariableIntroducer:
+                  return IdKind::SoloParseNode;
+                default:
+                  return IdKind::Unused;
+              }
+            }();
+          }
+          return table;
+        }();
+    return IdKindTable[kind.AsInt()];
   }
 
   // Translates an ID type to the enum ID kind for comparison with
