@@ -32,7 +32,7 @@ enum class NodeCategory : uint32_t {
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)
 };
 
-inline auto operator!(NodeCategory k) -> bool {
+inline constexpr auto operator!(NodeCategory k) -> bool {
   return !static_cast<uint32_t>(k);
 }
 
@@ -75,7 +75,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 
   using EnumBase::AsInt;
   using EnumBase::Create;
-  using EnumBase::FromInt;
 
   class Definition;
 
