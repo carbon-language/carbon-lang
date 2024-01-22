@@ -687,6 +687,7 @@ struct ChoiceSignature {
       NodeKind::ChoiceDefinitionStart.Define(NodeCategory::None);
 
   ChoiceIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   AnyNameComponentId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<TuplePatternId> params;
