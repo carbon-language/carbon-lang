@@ -10,8 +10,8 @@ import os
 import unittest
 from unittest import mock
 
-from github_tools import github_helpers
-from github_tools import pr_comments
+import github_helpers
+import pr_comments
 
 
 class TestPRComments(unittest.TestCase):

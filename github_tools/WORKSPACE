@@ -2,8 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Carbon creates some non-standard bazel directories, so ignore them.
-bazel-carbon-lang
-
-# See github_tools/MODULE.bazel.
-github_tools
+workspace(name = "github_tools")
