@@ -368,16 +368,27 @@ class NodeStack {
   // provide, if it is consistent.
   static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category)
       -> std::optional<IdKind> {
+    std::optional<IdKind> id_kind;
     if (!!(category & Parse::NodeCategory::Expr)) {
-      return IdKind::InstId;
-    } else if (!!(category & Parse::NodeCategory::MemberName)) {
-      return IdKind::NameId;
-    } else if (!!(category &
-                  (Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
-                   Parse::NodeCategory::Modifier))) {
-      return IdKind::Unused;
+      id_kind = IdKind::InstId;
     }
-    return std::nullopt;
+    if (!!(category & Parse::NodeCategory::MemberName)) {
+      // Check for no consistent IdKind due to category with multiple bits set.
+      if (id_kind) {
+        return std::nullopt;
+      }
+      id_kind = IdKind::NameId;
+    }
+    if (!!(category &
+           (Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
+            Parse::NodeCategory::Modifier))) {
+      // Check for no consistent IdKind due to category with multiple bits set.
+      if (id_kind) {
+        return std::nullopt;
+      }
+      id_kind = IdKind::Unused;
+    }
+    return id_kind;
   }
 
   static constexpr auto ComputeIdKindTable()
