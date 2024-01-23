@@ -193,7 +193,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <const Parse::NodeCategory& RequiredParseCategory>
   auto PopWithParseNode() -> auto {
     constexpr std::optional<IdKind> RequiredIdKind =
         ParseNodeCategoryToIdKind(RequiredParseCategory);
@@ -255,7 +255,7 @@ class NodeStack {
 
   // Pops the top of the stack and returns the parse_node and the ID if it is
   // of the specified category
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <const Parse::NodeCategory& RequiredParseCategory>
   auto PopWithParseNodeIf()
       -> std::optional<decltype(PopWithParseNode<RequiredParseCategory>())> {
     if (!PeekIs<RequiredParseCategory>()) {
@@ -284,7 +284,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the ID.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <const Parse::NodeCategory& RequiredParseCategory>
   auto Pop() -> auto {
     return PopWithParseNode<RequiredParseCategory>().second;
   }
@@ -301,7 +301,7 @@ class NodeStack {
 
   // Pops the top of the stack if it has the given category, and returns the ID.
   // Otherwise returns std::nullopt.
-  template <Parse::NodeCategory RequiredParseCategory>
+  template <const Parse::NodeCategory& RequiredParseCategory>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
     if (PeekIs<RequiredParseCategory>()) {
       return Pop<RequiredParseCategory>();
