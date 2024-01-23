@@ -195,6 +195,37 @@ class NodeStack {
                    << "; see value in ParseNodeKindToIdKind";
   }
 
+  // Pops the top of the stack and returns the parse_node and the ID.
+  template <Parse::NodeCategory RequiredParseCategory>
+  auto PopWithParseNode() -> auto {
+    constexpr std::optional<IdKind> RequiredIdKind =
+        ParseNodeCategoryToIdKind(RequiredParseCategory);
+    static_assert(RequiredIdKind.has_value(),
+                  "NodeCategory doesn't correspond to an IdKind");
+    auto node_id_cast = [&](auto back) {
+      using NodeIdT = Parse::NodeIdInCategory<RequiredParseCategory>;
+      return std::pair<NodeIdT, decltype(back.second)>(back);
+    };
+    if constexpr (RequiredIdKind == IdKind::InstId) {
+      auto back = PopWithParseNode<SemIR::InstId>();
+      RequireParseCategory<RequiredParseCategory>(back.first);
+      return node_id_cast(back);
+    }
+    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
+      auto back = PopWithParseNode<SemIR::InstBlockId>();
+      RequireParseCategory<RequiredParseCategory>(back.first);
+      return node_id_cast(back);
+    }
+    if constexpr (RequiredIdKind == IdKind::NameId) {
+      auto back = PopWithParseNode<SemIR::NameId>();
+      RequireParseCategory<RequiredParseCategory>(back.first);
+      return node_id_cast(back);
+    }
+    CARBON_FATAL() << "Unpoppable IdKind for parse category: "
+                   << RequiredParseCategory
+                   << "; see value in ParseNodeCategoryToIdKind";
+  }
+
   // Pops the top of the stack and returns the parse_node and the ID if it is
   // of the specified kind.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -219,9 +250,6 @@ class NodeStack {
   // Pops a name from the top of the stack and returns the ID.
   auto PopName() -> SemIR::NameId { return PopNameWithParseNode().second; }
 
-  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
-  // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
-
   // Pops the top of the stack and returns the ID.
   template <const Parse::NodeKind& RequiredParseKind>
   auto Pop() -> auto {
@@ -237,6 +265,9 @@ class NodeStack {
     }
     return std::nullopt;
   }
+
+  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
+  // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
 
   // Peeks at the parse node of the top of the node stack.
   auto PeekParseNode() const -> Parse::NodeId {
@@ -525,6 +556,15 @@ class NodeStack {
     auto actual_kind = parse_tree_->node_kind(parse_node);
     CARBON_CHECK(RequiredParseKind == actual_kind)
         << "Expected " << RequiredParseKind << ", found " << actual_kind;
+  }
+
+  // Require an entry to have the given Parse::NodeCategory.
+  template <const Parse::NodeCategory& RequiredParseCategory>
+  auto RequireParseCategory(Parse::NodeId parse_node) const -> void {
+    auto kind = parse_tree_->node_kind(parse_node);
+    CARBON_CHECK(!!(RequiredParseCategory & kind.category()))
+        << "Expected " << RequiredParseCategory << ", found " << kind
+        << " with category " << kind.category();
   }
 
   // The file's parse tree.
