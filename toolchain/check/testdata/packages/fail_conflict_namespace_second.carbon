@@ -4,7 +4,6 @@
 //
 // AUTOUPDATE
 // CHECK:STDERR: fn_then_namespace.carbon: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn_then_namespace.carbon: Name is previously declared here.
 
 // --- namespace.carbon
 
@@ -17,6 +16,9 @@ fn NS.Foo() {}
 
 package Example library "fn" api;
 
+// CHECK:STDERR: fn.carbon:[[@LINE+3]]:1: Name is previously declared here.
+// CHECK:STDERR: fn NS() {}
+// CHECK:STDERR: ^~~~~~~~~
 fn NS() {}
 
 // --- fn_then_namespace.carbon

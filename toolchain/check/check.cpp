@@ -30,20 +30,51 @@ class SemIRLocationTranslator
     : public DiagnosticLocationTranslator<SemIRLocation> {
  public:
   explicit SemIRLocationTranslator(
-      Parse::NodeLocationTranslator* node_translator, const SemIR::File* sem_ir)
-      : node_translator_(node_translator), sem_ir_(sem_ir) {}
+      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+          node_translators,
+      const SemIR::File* sem_ir)
+      : node_translators_(node_translators), sem_ir_(sem_ir) {}
 
   auto GetLocation(SemIRLocation loc) -> DiagnosticLocation override {
-    if (loc.is_inst_id) {
-      return node_translator_->GetLocation(
-          sem_ir_->insts().GetParseNode(loc.inst_id));
-    } else {
-      return node_translator_->GetLocation(loc.node_location);
+    // Parse nodes always refer to the current IR.
+    if (!loc.is_inst_id) {
+      return GetLocationInFile(sem_ir_, loc.node_location);
+    }
+
+    const auto* cursor_ir = sem_ir_;
+    auto cursor_inst_id = loc.inst_id;
+    while (true) {
+      // If the parse node is valid, use it for the location.
+      if (auto parse_node = cursor_ir->insts().GetParseNode(cursor_inst_id);
+          parse_node.is_valid()) {
+        return GetLocationInFile(cursor_ir, parse_node);
+      }
+
+      // If the parse node was invalid, recurse through import references when
+      // possible.
+      auto import_ref =
+          cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(cursor_inst_id);
+      if (!import_ref) {
+        // Invalid parse node but not an import; just nothing to point at.
+        return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      }
+
+      cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
+      cursor_inst_id = import_ref->inst_id;
     }
   }
 
  private:
-  Parse::NodeLocationTranslator* node_translator_;
+  auto GetLocationInFile(const SemIR::File* sem_ir,
+                         Parse::NodeLocation node_location) const
+      -> DiagnosticLocation {
+    auto it = node_translators_->find(sem_ir);
+    CARBON_CHECK(it != node_translators_->end());
+    return it->second->GetLocation(node_location);
+  }
+
+  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+      node_translators_;
   const SemIR::File* sem_ir_;
 };
 
@@ -183,16 +214,21 @@ static auto ProcessParseNodes(Context& context,
 }
 
 // Produces and checks the IR for the provided Parse::Tree.
-static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
-                           llvm::raw_ostream* vlog_stream) -> void {
+static auto CheckParseTree(
+    llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+        node_translators,
+    const SemIR::File& builtin_ir, UnitInfo& unit_info,
+    llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(
       *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str(), &builtin_ir);
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
+  CARBON_CHECK(
+      node_translators->insert({&sem_ir, &unit_info.translator}).second);
 
-  SemIRLocationTranslator translator(&unit_info.translator, &sem_ir);
+  SemIRLocationTranslator translator(node_translators, &sem_ir);
   Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
                   sem_ir, vlog_stream);
@@ -504,12 +540,15 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
+  llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>
+      node_translators;
+
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(builtin_ir, *unit_info, vlog_stream);
+    CheckParseTree(&node_translators, builtin_ir, *unit_info, vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -554,7 +593,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(builtin_ir, unit_info, vlog_stream);
+        CheckParseTree(&node_translators, builtin_ir, unit_info, vlog_stream);
       }
     }
   }

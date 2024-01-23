@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: conflict.carbon: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: conflict.carbon: Name is previously declared here.
 
 // --- fn.carbon
 
@@ -16,6 +14,12 @@ fn Foo();
 
 package Example library "var" api;
 
+// CHECK:STDERR: var.carbon:[[@LINE+6]]:5: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: var Foo: i32;
+// CHECK:STDERR:     ^~~
+// CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn Foo();
+// CHECK:STDERR: ^~~~~~~~~
 var Foo: i32;
 
 // --- conflict.carbon

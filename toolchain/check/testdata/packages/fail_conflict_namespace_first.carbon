@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: namespace_then_fn.carbon: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: namespace_then_fn.carbon: Name is previously declared here.
 
 // --- namespace.carbon
 
@@ -17,6 +15,10 @@ fn NS.Foo() {}
 
 package Example library "fn" api;
 
+// CHECK:STDERR: fn.carbon:[[@LINE+4]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn NS() {}
+// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: namespace_then_fn.carbon: Name is previously declared here.
 fn NS() {}
 
 // --- namespace_then_fn.carbon
