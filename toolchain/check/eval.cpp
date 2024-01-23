@@ -126,12 +126,14 @@ static auto ReplaceFieldWithConstantValue(Context& context, InstT* inst,
 
 // If the specified fields of the given typed instruction have constant values,
 // replaces the fields with their constant values and builds a corresponding
-// constant value. The constant value is then checked by calling
-// `validate_fn(typed_inst)`, which should return a `bool` indicating whether
-// the new constant is valid. If validation passes, a corresponding ConstantId
-// for the new constant is returned. Otherwise returns
-// `ConstantId::NotConstant`. Returns `ConstantId::Error` if any subexpression
-// is an error.
+// constant value. Otherwise returns `ConstantId::NotConstant`. Returns
+// `ConstantId::Error` if any subexpression is an error.
+//
+// The constant value is then checked by calling `validate_fn(typed_inst)`,
+// which should return a `bool` indicating whether the new constant is valid. If
+// validation passes, a corresponding ConstantId for the new constant is
+// returned. If validation fails, it should produce a suitable error message.
+// `ConstantId::Error` is returned.
 template <typename InstT, typename ValidateFn, typename... EachFieldIdT>
 static auto RebuildAndValidateIfFieldsAreConstant(
     Context& context, SemIR::Inst inst, ValidateFn validate_fn,
@@ -142,8 +144,10 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   Phase phase = Phase::Template;
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
-       ...) &&
-      validate_fn(typed_inst)) {
+       ...)) {
+    if (!validate_fn(typed_inst)) {
+      return SemIR::ConstantId::Error;
+    }
     return MakeConstantResult(context, typed_inst, phase);
   }
   return MakeNonConstantResult(phase);
@@ -277,13 +281,29 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildAndValidateIfFieldsAreConstant(
           context, inst,
           [&](SemIR::ArrayType result) {
-            // TODO: If the bound doesn't fit in 64 bits or is negative,
-            // produce an error rather than a non-constant type.
-            // TODO: Support a symbolic bound here. This will require fixing
-            // callers of `GetArrayBoundValue`.
-            auto int_bound =
-                context.insts().TryGetAs<SemIR::IntLiteral>(result.bound_id);
-            return context.ints().Get(int_bound->int_id).getActiveBits() <= 64;
+            auto bound_id = inst.As<SemIR::ArrayType>().bound_id;
+            if (auto int_bound = context.insts().TryGetAs<SemIR::IntLiteral>(
+                    result.bound_id)) {
+              // TODO: We should check that the size of the resulting array type
+              // fits in 64 bits, not just that the bound does. Should we use a
+              // 32-bit limit for 32-bit targets?
+              // TODO: Also check for a negative bound, once that's something we
+              // can represent.
+              const auto& bound_val = context.ints().Get(int_bound->int_id);
+              if (bound_val.getActiveBits() > 64) {
+                CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                                  "Array bound of {0} is too large.",
+                                  llvm::APInt);
+                context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
+                return false;
+              }
+            } else {
+              // TODO: Permit symbolic array bounds. This will require fixing
+              // callers of `GetArrayBoundValue`.
+              context.TODO(context.insts().GetParseNode(bound_id),
+                           "symbolic array bound");
+            }
+            return true;
           },
           &SemIR::ArrayType::bound_id);
     case SemIR::BoundMethod::Kind:

@@ -41,8 +41,7 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
   if (!bound_inst.is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error,
                       "Array bound is not a constant.");
-    context.emitter().Emit(context.insts().GetParseNode(bound_inst_id),
-                           InvalidArrayExpr);
+    context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
   }
