@@ -42,12 +42,11 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %.loc10: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc10 [template = %.loc10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .n = %n
+// CHECK:STDOUT:   .n = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.loc13_17: Class*](%self.loc13_31: i32) {

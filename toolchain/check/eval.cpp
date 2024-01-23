@@ -339,12 +339,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // are treated as the same value.
       return SemIR::ConstantId::ForSymbolicConstant(inst_id);
 
-    case SemIR::BindName::Kind:
-      // TODO: We need to look through `BindName`s for member accesses naming
-      // fields, where the member name is a `BindName`. Should we really be
-      // creating a `BindName` in that case?
-      return context.constant_values().Get(inst.As<SemIR::BindName>().value_id);
-
     // These semnatic wrappers don't change the constant value.
     case SemIR::NameRef::Kind:
       return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);
@@ -396,6 +390,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // These cases are either not expressions or not constant.
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
+    case SemIR::BindName::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:

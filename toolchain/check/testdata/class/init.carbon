@@ -38,15 +38,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
-// CHECK:STDOUT:   %next: <unbound element of class Class> = bind_name next, %.loc9_11 [template = %.loc9_11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = %n
-// CHECK:STDOUT:   .next = %next
+// CHECK:STDOUT:   .n = %.loc8
+// CHECK:STDOUT:   .next = %.loc9_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n: i32, %next: Class*) -> %return: Class {

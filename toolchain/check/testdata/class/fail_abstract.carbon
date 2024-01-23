@@ -58,21 +58,19 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Abstract> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Abstract> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, constants.%Abstract [template = constants.%Abstract]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Abstract, element0 [template]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Derived> = field_decl d, element1 [template]
-// CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc14 [template = %.loc14]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12
-// CHECK:STDOUT:   .d = %d
+// CHECK:STDOUT:   .d = %.loc14
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

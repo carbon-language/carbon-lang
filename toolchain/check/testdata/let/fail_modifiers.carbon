@@ -77,20 +77,20 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace package, {} [template]
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc10 [template = constants.%.1]
+// CHECK:STDOUT:   %b: i32 = bind_name b, %.loc10
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc15 [template = constants.%.1]
+// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc15
 // CHECK:STDOUT:   %.loc20: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %d: i32 = bind_name d, %.loc20 [template = constants.%.1]
+// CHECK:STDOUT:   %d: i32 = bind_name d, %.loc20
 // CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc25 [template = constants.%.1]
+// CHECK:STDOUT:   %e: i32 = bind_name e, %.loc25
 // CHECK:STDOUT:   %.loc36: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %f: i32 = bind_name f, %.loc36 [template = constants.%.1]
+// CHECK:STDOUT:   %f: i32 = bind_name f, %.loc36
 // CHECK:STDOUT:   %.loc47: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %g: i32 = bind_name g, %.loc47 [template = constants.%.1]
+// CHECK:STDOUT:   %g: i32 = bind_name g, %.loc47
 // CHECK:STDOUT:   %.loc58: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %h: i32 = bind_name h, %.loc58 [template = constants.%.1]
+// CHECK:STDOUT:   %h: i32 = bind_name h, %.loc58
 // CHECK:STDOUT:   %.loc69: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %i: i32 = bind_name i, %.loc69 [template = constants.%.1]
+// CHECK:STDOUT:   %i: i32 = bind_name i, %.loc69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

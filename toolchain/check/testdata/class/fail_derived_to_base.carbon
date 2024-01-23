@@ -64,29 +64,26 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %.loc8: <unbound element of class A1> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class A1> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
 // CHECK:STDOUT:   %.loc12: <unbound element of class A2> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class A2> = bind_name a, %.loc12 [template = %.loc12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, constants.%A2 [template = constants.%A2]
 // CHECK:STDOUT:   %.loc16: <unbound element of class B2> = base_decl A2, element0 [template]
 // CHECK:STDOUT:   %.loc17: <unbound element of class B2> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class B2> = bind_name b, %.loc17 [template = %.loc17]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .b = %.loc17
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

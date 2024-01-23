@@ -37,13 +37,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .j = %j
-// CHECK:STDOUT:   .k = %k
+// CHECK:STDOUT:   .j = %.loc8
+// CHECK:STDOUT:   .k = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {

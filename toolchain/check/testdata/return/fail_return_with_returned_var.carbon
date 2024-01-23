@@ -49,13 +49,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc18_16: <unbound element of class C> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class C> = bind_name a, %.loc18_16 [template = %.loc18_16]
 // CHECK:STDOUT:   %.loc18_28: <unbound element of class C> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class C> = bind_name b, %.loc18_28 [template = %.loc18_28]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
-// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .a = %.loc18_16
+// CHECK:STDOUT:   .b = %.loc18_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

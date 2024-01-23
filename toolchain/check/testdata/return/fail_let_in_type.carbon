@@ -4,8 +4,10 @@
 //
 // AUTOUPDATE
 
-// TODO: This should require `:!` rather than just `:`.
 let x: type = i32;
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fn Six() -> x { return 6; }
+// CHECK:STDERR:             ^
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
@@ -31,15 +33,15 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Six() -> i32 {
+// CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 6 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc9
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> y {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
