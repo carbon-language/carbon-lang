@@ -41,7 +41,7 @@ var b: i32 = a[oops];
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, %a
 // CHECK:STDOUT:   %oops.ref: <error> = name_ref oops, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11: ref <error> = tuple_index %a.ref, %oops.ref
+// CHECK:STDOUT:   %.loc11: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

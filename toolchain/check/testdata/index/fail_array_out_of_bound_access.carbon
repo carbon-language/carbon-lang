@@ -5,10 +5,10 @@
 // AUTOUPDATE
 
 var a: [i32; 1] = (12,);
-// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:14: ERROR: Index `2` is past the end of type `[i32; 1]`.
-// CHECK:STDERR: var b: i32 = a[2];
-// CHECK:STDERR:              ^~~~
-var b: i32 = a[2];
+// CHECK:STDERR: fail_array_out_of_bound_access.carbon:[[@LINE+3]]:16: ERROR: Array index `1` is past the end of type `[i32; 1]`.
+// CHECK:STDERR: var b: i32 = a[1];
+// CHECK:STDERR:                ^
+var b: i32 = a[1];
 
 // CHECK:STDOUT: --- fail_array_out_of_bound_access.carbon
 // CHECK:STDOUT:
@@ -20,7 +20,6 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %.5: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.7: [i32; 1] = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,8 +39,8 @@ var b: i32 = a[2];
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref [i32; 1] = name_ref a, %a
-// CHECK:STDOUT:   %.loc11_16: i32 = int_literal 2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_17.1: ref i32 = array_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc11_16: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_17.1: ref i32 = array_index %a.ref, %.loc11_16 [template = <error>]
 // CHECK:STDOUT:   %.loc11_17.2: i32 = bind_value %.loc11_17.1
 // CHECK:STDOUT:   assign %b.var, %.loc11_17.2
 // CHECK:STDOUT: }
