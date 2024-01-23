@@ -144,6 +144,24 @@ class NodeStack {
     return true;
   }
 
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId> {
+    return PopWithParseNode<Parse::NodeCategory::Expr>();
+  }
+
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
+  // Pops a name from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
+    return PopWithParseNode<SemIR::NameId>();
+  }
+
   // Pops the top of the stack and returns the parse_node and the ID.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithParseNode() -> auto {
@@ -222,24 +240,6 @@ class NodeStack {
     CARBON_FATAL() << "Unpoppable IdKind for parse category: "
                    << RequiredParseCategory
                    << "; see value in ParseNodeCategoryToIdKind";
-  }
-
-  // Pops an expression from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId> {
-    return PopWithParseNode<Parse::NodeCategory::Expr>();
-  }
-
-  // Pops a pattern from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
-    return PopWithParseNode<SemIR::InstId>();
-  }
-
-  // Pops a name from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
-    return PopWithParseNode<SemIR::NameId>();
   }
 
   // Pops the top of the stack and returns the parse_node and the ID if it is
