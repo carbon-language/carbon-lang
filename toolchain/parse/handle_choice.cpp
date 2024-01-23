@@ -46,6 +46,9 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
 
 auto HandleChoiceAlternative(Context& context) -> void {
   auto state = context.PopState();
+
+  context.PushState(State::ChoiceAlternativeFinish);
+
   if (!context.PositionIs(Lex::TokenKind::Identifier)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceAlternativeName, Error,
@@ -56,16 +59,11 @@ auto HandleChoiceAlternative(Context& context) -> void {
 
     context.SkipPastLikelyEnd(*context.position());
 
-    state.state = State::ChoiceAlternativeFinish;
-    state.subtree_start = {};
-    state.token = *context.position();
-    state.has_error = true;
-    context.PushState(state);
+    context.ReturnErrorOnState();
 
     return;
   }
 
-  context.PushState(State::ChoiceAlternativeFinish);
   context.PushState(State::DeclNameAndParamsAsOptional, state.token);
 }
 
