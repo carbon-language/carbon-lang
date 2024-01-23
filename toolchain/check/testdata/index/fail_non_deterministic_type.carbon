@@ -6,7 +6,7 @@
 
 var a: (i32, i32) = (2, 3);
 var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:14: ERROR: Tuples indices must be integer literals.
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:14: ERROR: Tuple index must be a constant.
 // CHECK:STDERR: var c: i32 = a[b];
 // CHECK:STDERR:              ^~~~
 var c: i32 = a[b];
@@ -47,7 +47,8 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc12: ref <error> = tuple_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc12_16: i32 = bind_value %b.ref
+// CHECK:STDOUT:   %.loc12_17: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

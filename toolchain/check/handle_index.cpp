@@ -15,19 +15,20 @@ auto HandleIndexExprStart(Context& /*context*/,
   return true;
 }
 
-// Validates that the index (required to be an IntLiteral) is valid within
-// the array or tuple size. Returns the index on success, or nullptr on failure.
-static auto ValidateIntLiteralBound(Context& context, Parse::NodeId parse_node,
-                                    SemIR::Inst operand_inst,
-                                    SemIR::IntLiteral index_inst, int size)
+// Validates that the index (required to be an IntLiteral) is valid within the
+// tuple size. Returns the index on success, or nullptr on failure.
+static auto ValidateTupleIndex(Context& context, Parse::NodeId parse_node,
+                               SemIR::Inst operand_inst,
+                               SemIR::IntLiteral index_inst, int size)
     -> const llvm::APInt* {
   const auto& index_val = context.ints().Get(index_inst.int_id);
   if (index_val.uge(size)) {
-    CARBON_DIAGNOSTIC(IndexOutOfBounds, Error,
-                      "Index `{0}` is past the end of type `{1}`.",
-                      llvm::APSInt, std::string);
+    CARBON_DIAGNOSTIC(
+        TupleIndexOutOfBounds, Error,
+        "Tuple element index `{0}` is past the end of type `{1}`.",
+        llvm::APSInt, std::string);
     context.emitter().Emit(
-        parse_node, IndexOutOfBounds,
+        parse_node, TupleIndexOutOfBounds,
         llvm::APSInt(index_val, /*isUnsigned=*/true),
         context.sem_ir().StringifyType(operand_inst.type_id()));
     return nullptr;
@@ -37,7 +38,6 @@ static auto ValidateIntLiteralBound(Context& context, Parse::NodeId parse_node,
 
 auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
-  auto index_inst = context.insts().Get(index_inst_id);
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
@@ -48,15 +48,6 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
     case SemIR::ArrayType::Kind: {
       auto array_type = operand_type_inst.As<SemIR::ArrayType>();
       auto index_parse_node = context.insts().GetParseNode(index_inst_id);
-      // We can check whether integers are in-bounds, although it doesn't affect
-      // the IR for an array.
-      if (auto index_literal = index_inst.TryAs<SemIR::IntLiteral>();
-          index_literal &&
-          !ValidateIntLiteralBound(
-              context, parse_node, operand_inst, *index_literal,
-              context.sem_ir().GetArrayBoundValue(array_type.bound_id))) {
-        index_inst_id = SemIR::InstId::BuiltinError;
-      }
       auto cast_index_id = ConvertToValueOfType(
           context, index_parse_node, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
@@ -68,6 +59,8 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         operand_inst_id = context.AddInst(
             {parse_node, SemIR::ValueAsRef{operand_type_id, operand_inst_id}});
       }
+      // Constant evaluation will perform a bounds check on this array indexing
+      // if the index is constant.
       auto elem_id = context.AddInst(
           {parse_node, SemIR::ArrayIndex{array_type.element_type_id,
                                          operand_inst_id, cast_index_id}});
@@ -83,21 +76,31 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
     }
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      if (auto index_literal = index_inst.TryAs<SemIR::IntLiteral>()) {
+      auto index_parse_node = context.insts().GetParseNode(index_inst_id);
+      index_inst_id = ConvertToValueOfType(
+          context, index_parse_node, index_inst_id,
+          context.GetBuiltinType(SemIR::BuiltinKind::IntType));
+      auto index_const_id = context.constant_values().Get(index_inst_id);
+      if (index_const_id == SemIR::ConstantId::Error) {
+        index_inst_id = SemIR::InstId::BuiltinError;
+      } else if (!index_const_id.is_template()) {
+        // TODO: Decide what to do if the index is a symbolic constant.
+        CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
+                          "Tuple index must be a constant.");
+        context.emitter().Emit(parse_node, TupleIndexNotConstant);
+        index_inst_id = SemIR::InstId::BuiltinError;
+      } else {
+        auto index_literal =
+            context.insts().GetAs<SemIR::IntLiteral>(index_const_id.inst_id());
         auto type_block = context.type_blocks().Get(
             operand_type_inst.As<SemIR::TupleType>().elements_id);
         if (const auto* index_val =
-                ValidateIntLiteralBound(context, parse_node, operand_inst,
-                                        *index_literal, type_block.size())) {
+                ValidateTupleIndex(context, parse_node, operand_inst,
+                                   index_literal, type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
           index_inst_id = SemIR::InstId::BuiltinError;
         }
-      } else if (index_inst.type_id() != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(TupleIndexIntLiteral, Error,
-                          "Tuples indices must be integer literals.");
-        context.emitter().Emit(parse_node, TupleIndexIntLiteral);
-        index_inst_id = SemIR::InstId::BuiltinError;
       }
       context.AddInstAndPush(
           {parse_node,
