@@ -181,7 +181,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc75: ref Class = deref %p.ref
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [template = <error>]
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -212,27 +212,57 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   auto aggregate_id =
       GetConstantValue(context, index_inst.aggregate_id, &phase);
   auto index_id = GetConstantValue(context, index_inst.index_id, &phase);
-  if (aggregate_id.is_valid() && index_id.is_valid()) {
-    auto aggregate =
-        context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
-    auto index = context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
-    if (aggregate && index) {
-      const auto& index_val = context.ints().Get(index->int_id);
-      auto elements = context.inst_blocks().Get(aggregate->elements_id);
-      if (index_val.ult(elements.size())) {
-        return context.constant_values().Get(
-            elements[index_val.getZExtValue()]);
-      } else {
-        // TODO: In this case, this instruction is a constant, but it indexes an
-        // array with a statically out-of-bounds index. This should produce an
-        // error rather than just treating the instruction as non-constant.
+
+  if (!index_id.is_valid()) {
+    return MakeNonConstantResult(phase);
+  }
+  auto index = context.insts().TryGetAs<SemIR::IntLiteral>(index_id);
+  if (!index) {
+    CARBON_CHECK(phase != Phase::Template)
+        << "Template constant integer should be a literal";
+    return MakeNonConstantResult(phase);
+  }
+
+  // Array indexing is invalid if the index is constant and out of range.
+  auto aggregate_type_id =
+      context.insts().Get(index_inst.aggregate_id).type_id();
+  const auto& index_val = context.ints().Get(index->int_id);
+  if (auto array_type =
+          context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
+    if (auto bound =
+            context.insts().TryGetAs<SemIR::IntLiteral>(array_type->bound_id)) {
+      // This awkward call to `getZExtValue` is a workaround for APInt not
+      // supporting comparisons between integers of different bit widths.
+      if (index_val.getActiveBits() > 64 ||
+          context.ints().Get(bound->int_id).ule(index_val.getZExtValue())) {
+        CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
+                          "Array index `{0}` is past the end of type `{1}`.",
+                          llvm::APSInt, std::string);
+        context.emitter().Emit(
+            index_inst.index_id, ArrayIndexOutOfBounds,
+            llvm::APSInt(index_val, /*isUnsigned=*/true),
+            context.sem_ir().StringifyType(aggregate_type_id));
+        return SemIR::ConstantId::Error;
       }
-    } else {
-      CARBON_CHECK(phase != Phase::Template)
-          << "Failed to evaluate template constant " << inst;
     }
   }
-  return MakeNonConstantResult(phase);
+
+  if (!aggregate_id.is_valid()) {
+    return MakeNonConstantResult(phase);
+  }
+  auto aggregate =
+      context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
+  if (!aggregate) {
+    CARBON_CHECK(phase != Phase::Template)
+        << "Unexpected representation for template constant aggregate";
+    return MakeNonConstantResult(phase);
+  }
+
+  auto elements = context.inst_blocks().Get(aggregate->elements_id);
+  // We checked this for the array case above.
+  CARBON_CHECK(index_val.ult(elements.size()))
+      << "Index out of bounds in tuple indexing";
+  return context.constant_values().Get(elements[index_val.getZExtValue()]);
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
@@ -359,12 +389,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // are treated as the same value.
       return SemIR::ConstantId::ForSymbolicConstant(inst_id);
 
-    case SemIR::BindName::Kind:
-      // TODO: We need to look through `BindName`s for member accesses naming
-      // fields, where the member name is a `BindName`. Should we really be
-      // creating a `BindName` in that case?
-      return context.constant_values().Get(inst.As<SemIR::BindName>().value_id);
-
     // These semnatic wrappers don't change the constant value.
     case SemIR::NameRef::Kind:
       return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);
@@ -416,6 +440,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // These cases are either not expressions or not constant.
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
+    case SemIR::BindName::Kind:
     case SemIR::BlockArg::Kind:
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:

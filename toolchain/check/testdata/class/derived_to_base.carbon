@@ -83,21 +83,19 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %.loc8: <unbound element of class A> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class A> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %.loc13: <unbound element of class B> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class B> = bind_name b, %.loc13 [template = %.loc13]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12
-// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,11 +103,10 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %.loc18: <unbound element of class C> = field_decl c, element1 [template]
-// CHECK:STDOUT:   %c: <unbound element of class C> = bind_name c, %.loc18 [template = %.loc18]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc17
-// CHECK:STDOUT:   .c = %c
+// CHECK:STDOUT:   .c = %.loc18
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

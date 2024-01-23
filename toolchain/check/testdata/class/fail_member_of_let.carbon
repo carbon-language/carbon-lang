@@ -29,7 +29,7 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref [template = constants.%Class]
+// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

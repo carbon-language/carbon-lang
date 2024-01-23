@@ -42,12 +42,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Class> = field_decl k, element0 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc14 [template = %.loc14]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .k = %k
+// CHECK:STDOUT:   .k = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n: i32) -> i32 {

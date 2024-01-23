@@ -56,41 +56,35 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_9: <unbound element of class Outer> = field_decl po, element0 [template]
-// CHECK:STDOUT:   %po: <unbound element of class Outer> = bind_name po, %.loc14_9 [template = %.loc14_9]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc15_16: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:   %.loc15_9: <unbound element of class Outer> = field_decl qo, element1 [template]
-// CHECK:STDOUT:   %qo: <unbound element of class Outer> = bind_name qo, %.loc15_9 [template = %.loc15_9]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc16_16: type = ptr_type Inner [template = constants.%.1]
 // CHECK:STDOUT:   %.loc16_9: <unbound element of class Outer> = field_decl pi, element2 [template]
-// CHECK:STDOUT:   %pi: <unbound element of class Outer> = bind_name pi, %.loc16_9 [template = %.loc16_9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
-// CHECK:STDOUT:   .po = %po
-// CHECK:STDOUT:   .qo = %qo
-// CHECK:STDOUT:   .pi = %pi
+// CHECK:STDOUT:   .po = %.loc14_9
+// CHECK:STDOUT:   .qo = %.loc15_9
+// CHECK:STDOUT:   .pi = %.loc16_9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Inner> = field_decl pi, element0 [template]
-// CHECK:STDOUT:   %pi: <unbound element of class Inner> = bind_name pi, %.loc9_11 [template = %.loc9_11]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc10_18: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_11: <unbound element of class Inner> = field_decl po, element1 [template]
-// CHECK:STDOUT:   %po: <unbound element of class Inner> = bind_name po, %.loc10_11 [template = %.loc10_11]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc11_18: type = ptr_type Inner [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_11: <unbound element of class Inner> = field_decl qi, element2 [template]
-// CHECK:STDOUT:   %qi: <unbound element of class Inner> = bind_name qi, %.loc11_11 [template = %.loc11_11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .pi = %pi
-// CHECK:STDOUT:   .po = %po
-// CHECK:STDOUT:   .qi = %qi
+// CHECK:STDOUT:   .pi = %.loc9_11
+// CHECK:STDOUT:   .po = %.loc10_11
+// CHECK:STDOUT:   .qi = %.loc11_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: Outer*) {

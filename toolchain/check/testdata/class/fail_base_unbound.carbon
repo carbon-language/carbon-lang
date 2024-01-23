@@ -34,7 +34,7 @@ let b: B = C.base;
 // CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
 // CHECK:STDOUT:   %base.ref: <unbound element of class C> = name_ref base, @C.%.loc10 [template = @C.%.loc10]
-// CHECK:STDOUT:   %b: B = bind_name b, <error> [template = <error>]
+// CHECK:STDOUT:   %b: B = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

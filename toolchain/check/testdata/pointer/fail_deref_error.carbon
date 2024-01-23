@@ -15,6 +15,6 @@ let n: i32 = *undeclared;
 // CHECK:STDOUT:   package: <namespace> = namespace package, {} [template]
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc10: ref <error> = deref <error>
-// CHECK:STDOUT:   %n: i32 = bind_name n, <error> [template = <error>]
+// CHECK:STDOUT:   %n: i32 = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
