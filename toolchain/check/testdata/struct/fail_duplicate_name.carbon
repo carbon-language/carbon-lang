@@ -61,10 +61,10 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc21_36: {.a: i32} = struct_literal (%.loc21_35)
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [template = <error>]
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %w: i32 = bind_name w, <error> [template = <error>]
+// CHECK:STDOUT:   %w: i32 = bind_name w, <error>
 // CHECK:STDOUT:   %.loc37_16: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var

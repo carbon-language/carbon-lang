@@ -40,12 +40,11 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %.loc11: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc11 [template = %.loc11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .n = %n
+// CHECK:STDOUT:   .n = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {

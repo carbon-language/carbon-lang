@@ -33,13 +33,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Class> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Class> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
-// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .a = %.loc8
+// CHECK:STDOUT:   .b = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

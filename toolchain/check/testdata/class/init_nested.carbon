@@ -45,26 +45,22 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Inner> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Inner> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %.loc9: <unbound element of class Inner> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Inner> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
-// CHECK:STDOUT:   .b = %b
+// CHECK:STDOUT:   .a = %.loc8
+// CHECK:STDOUT:   .b = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc15: <unbound element of class Outer> = field_decl c, element0 [template]
-// CHECK:STDOUT:   %c: <unbound element of class Outer> = bind_name c, %.loc15 [template = %.loc15]
 // CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc16: <unbound element of class Outer> = field_decl d, element1 [template]
-// CHECK:STDOUT:   %d: <unbound element of class Outer> = bind_name d, %.loc16 [template = %.loc16]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .c = %c
-// CHECK:STDOUT:   .d = %d
+// CHECK:STDOUT:   .c = %.loc15
+// CHECK:STDOUT:   .d = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> %return: Inner;

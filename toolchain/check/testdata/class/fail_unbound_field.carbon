@@ -37,24 +37,23 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl field, element0 [template]
-// CHECK:STDOUT:   %field: <unbound element of class Class> = bind_name field, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .field = %field
+// CHECK:STDOUT:   .field = %.loc8
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field [template = @Class.%.loc8]
+// CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%field [template = @Class.%.loc8]
+// CHECK:STDOUT:   %field.ref: <unbound element of class Class> = name_ref field, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

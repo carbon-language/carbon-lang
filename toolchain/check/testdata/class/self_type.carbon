@@ -37,11 +37,10 @@ fn Class.F[self: Class]() -> i32 {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_14: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_8: <unbound element of class Class> = field_decl p, element0 [template]
-// CHECK:STDOUT:   %p: <unbound element of class Class> = bind_name p, %.loc9_8 [template = %.loc9_8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
-// CHECK:STDOUT:   .p = %p
+// CHECK:STDOUT:   .p = %.loc9_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {

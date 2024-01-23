@@ -78,23 +78,17 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                                  : llvm::StringLiteral("Variable"),
             context.sem_ir().StringifyType(cast_type_id));
       });
-      SemIR::InstId value_id = SemIR::InstId::Invalid;
-      SemIR::TypeId value_type_id = cast_type_id;
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
-        // TODO: Should we check this for the `var` as a whole, rather than for
-        // the name binding?
-        CARBON_CHECK(!enclosing_class_decl) << "`returned var` at class scope";
-        value_id =
-            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
-                             name_node, name_id, type_node, cast_type_id);
-      } else if (enclosing_class_decl) {
+      if (enclosing_class_decl) {
+        CARBON_CHECK(context_parse_node_kind ==
+                     Parse::NodeKind::VariableIntroducer)
+            << "`returned var` at class scope";
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
-        value_type_id = context.GetUnboundElementType(class_info.self_type_id,
-                                                      cast_type_id);
-        value_id = context.AddInst(
+        auto field_type_id = context.GetUnboundElementType(
+            class_info.self_type_id, cast_type_id);
+        auto field_id = context.AddInst(
             {binding_id, SemIR::FieldDecl{
-                             value_type_id, name_id,
+                             field_type_id, name_id,
                              SemIR::ElementIndex(context.args_type_info_stack()
                                                      .PeekCurrentBlockContents()
                                                      .size())}});
@@ -102,11 +96,22 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
             {binding_id, SemIR::StructTypeField{name_id, cast_type_id}}));
+        context.node_stack().Push(parse_node, field_id);
+        break;
+      }
+
+      SemIR::InstId value_id = SemIR::InstId::Invalid;
+      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
+        // TODO: Should we check this for the `var` as a whole, rather than for
+        // the name binding?
+        value_id =
+            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
+                             name_node, name_id, type_node, cast_type_id);
       } else {
         value_id = context.AddInst(
-            {name_node, SemIR::VarStorage{value_type_id, name_id}});
+            {name_node, SemIR::VarStorage{cast_type_id, name_id}});
       }
-      auto bind_id = context.AddInst(make_bind_name(value_type_id, value_id));
+      auto bind_id = context.AddInst(make_bind_name(cast_type_id, value_id));
       context.node_stack().Push(parse_node, bind_id);
 
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {

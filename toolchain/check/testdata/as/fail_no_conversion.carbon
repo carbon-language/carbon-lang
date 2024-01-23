@@ -25,6 +25,6 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc10_21: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_35.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_35.2: type = converted %.loc10_35.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   %n: (i32, i32) = bind_name n, <error> [template = <error>]
+// CHECK:STDOUT:   %n: (i32, i32) = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

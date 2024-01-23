@@ -33,7 +33,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %p.ref: ref T* = name_ref p, %p
 // CHECK:STDOUT:   %.loc12_15: T* = bind_value %p.ref
 // CHECK:STDOUT:   %.loc12_14: ref T = deref %.loc12_15
-// CHECK:STDOUT:   %n: U = bind_name n, <error> [template = <error>]
+// CHECK:STDOUT:   %n: U = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -65,10 +65,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class B> = bind_name a, %.loc12 [template = %.loc12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[addr %self: A*]();

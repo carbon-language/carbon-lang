@@ -48,30 +48,25 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %a: <unbound element of class Base> = bind_name a, %.loc8 [template = %.loc8]
 // CHECK:STDOUT:   %.loc9: <unbound element of class Base> = field_decl b, element1 [template]
-// CHECK:STDOUT:   %b: <unbound element of class Base> = bind_name b, %.loc9 [template = %.loc9]
 // CHECK:STDOUT:   %.loc10: <unbound element of class Base> = field_decl c, element2 [template]
-// CHECK:STDOUT:   %c: <unbound element of class Base> = bind_name c, %.loc10 [template = %.loc10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %a
-// CHECK:STDOUT:   .b = %b
-// CHECK:STDOUT:   .c = %c
+// CHECK:STDOUT:   .a = %.loc8
+// CHECK:STDOUT:   .b = %.loc9
+// CHECK:STDOUT:   .c = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %.loc16: <unbound element of class Derived> = field_decl d, element1 [template]
-// CHECK:STDOUT:   %d: <unbound element of class Derived> = bind_name d, %.loc16 [template = %.loc16]
 // CHECK:STDOUT:   %.loc17: <unbound element of class Derived> = field_decl e, element2 [template]
-// CHECK:STDOUT:   %e: <unbound element of class Derived> = bind_name e, %.loc17 [template = %.loc17]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc14
-// CHECK:STDOUT:   .d = %d
-// CHECK:STDOUT:   .e = %e
+// CHECK:STDOUT:   .d = %.loc16
+// CHECK:STDOUT:   .e = %.loc17
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

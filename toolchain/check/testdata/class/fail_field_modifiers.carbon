@@ -44,16 +44,14 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc12: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc12 [template = %.loc12]
 // CHECK:STDOUT:   %.loc17: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc17 [template = %.loc17]
 // CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22 [template = constants.%.2]
+// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22
 // CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27 [template = constants.%.3]
+// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .j = %j
-// CHECK:STDOUT:   .k = %k
+// CHECK:STDOUT:   .j = %.loc12
+// CHECK:STDOUT:   .k = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
