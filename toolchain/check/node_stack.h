@@ -380,71 +380,76 @@ class NodeStack {
     return std::nullopt;
   }
 
-  // Lookup table to implement `ParseNodeKindToIdKind`.
-  static constexpr std::array<IdKind, Parse::NodeKind::ValidCount> IdKindTable =
-      []() constexpr {
-        std::array<IdKind, Parse::NodeKind::ValidCount> table = {};
-        auto to_id_kind =
-            [](const Parse::NodeKind::Definition& node_kind) constexpr {
-              if (auto from_category = NodeStack::ParseNodeCategoryToIdKind(
-                      node_kind.category())) {
-                return *from_category;
-              }
-              switch (node_kind) {
-                case Parse::NodeKind::Addr:
-                case Parse::NodeKind::BindingPattern:
-                case Parse::NodeKind::CallExprStart:
-                case Parse::NodeKind::GenericBindingPattern:
-                case Parse::NodeKind::IfExprThen:
-                case Parse::NodeKind::ReturnType:
-                case Parse::NodeKind::ShortCircuitOperandAnd:
-                case Parse::NodeKind::ShortCircuitOperandOr:
-                case Parse::NodeKind::StructFieldValue:
-                case Parse::NodeKind::StructFieldType:
-                case Parse::NodeKind::VariableInitializer:
-                  return IdKind::InstId;
-                case Parse::NodeKind::IfCondition:
-                case Parse::NodeKind::IfExprIf:
-                case Parse::NodeKind::ImplicitParamList:
-                case Parse::NodeKind::TuplePattern:
-                case Parse::NodeKind::WhileCondition:
-                case Parse::NodeKind::WhileConditionStart:
-                  return IdKind::InstBlockId;
-                case Parse::NodeKind::FunctionDefinitionStart:
-                  return IdKind::FunctionId;
-                case Parse::NodeKind::ClassDefinitionStart:
-                  return IdKind::ClassId;
-                case Parse::NodeKind::InterfaceDefinitionStart:
-                  return IdKind::InterfaceId;
-                case Parse::NodeKind::SelfValueName:
-                  return IdKind::NameId;
-                case Parse::NodeKind::ArrayExprSemi:
-                case Parse::NodeKind::ClassIntroducer:
-                case Parse::NodeKind::CodeBlockStart:
-                case Parse::NodeKind::ExprOpenParen:
-                case Parse::NodeKind::FunctionIntroducer:
-                case Parse::NodeKind::IfStatementElse:
-                case Parse::NodeKind::ImplicitParamListStart:
-                case Parse::NodeKind::InterfaceIntroducer:
-                case Parse::NodeKind::LetIntroducer:
-                case Parse::NodeKind::QualifiedName:
-                case Parse::NodeKind::ReturnedModifier:
-                case Parse::NodeKind::ReturnStatementStart:
-                case Parse::NodeKind::ReturnVarModifier:
-                case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
-                case Parse::NodeKind::TuplePatternStart:
-                case Parse::NodeKind::VariableIntroducer:
-                  return IdKind::SoloParseNode;
-                default:
-                  return IdKind::Unused;
-              }
-            };
+  static constexpr auto to_id_kind(const Parse::NodeKind::Definition& node_kind)
+      -> IdKind {
+    if (auto from_category =
+            NodeStack::ParseNodeCategoryToIdKind(node_kind.category())) {
+      return *from_category;
+    }
+    switch (node_kind) {
+      case Parse::NodeKind::Addr:
+      case Parse::NodeKind::BindingPattern:
+      case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::GenericBindingPattern:
+      case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::ReturnType:
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+      case Parse::NodeKind::ShortCircuitOperandOr:
+      case Parse::NodeKind::StructFieldValue:
+      case Parse::NodeKind::StructFieldType:
+      case Parse::NodeKind::VariableInitializer:
+        return IdKind::InstId;
+      case Parse::NodeKind::IfCondition:
+      case Parse::NodeKind::IfExprIf:
+      case Parse::NodeKind::ImplicitParamList:
+      case Parse::NodeKind::TuplePattern:
+      case Parse::NodeKind::WhileCondition:
+      case Parse::NodeKind::WhileConditionStart:
+        return IdKind::InstBlockId;
+      case Parse::NodeKind::FunctionDefinitionStart:
+        return IdKind::FunctionId;
+      case Parse::NodeKind::ClassDefinitionStart:
+        return IdKind::ClassId;
+      case Parse::NodeKind::InterfaceDefinitionStart:
+        return IdKind::InterfaceId;
+      case Parse::NodeKind::SelfValueName:
+        return IdKind::NameId;
+      case Parse::NodeKind::ArrayExprSemi:
+      case Parse::NodeKind::ClassIntroducer:
+      case Parse::NodeKind::CodeBlockStart:
+      case Parse::NodeKind::ExprOpenParen:
+      case Parse::NodeKind::FunctionIntroducer:
+      case Parse::NodeKind::IfStatementElse:
+      case Parse::NodeKind::ImplicitParamListStart:
+      case Parse::NodeKind::InterfaceIntroducer:
+      case Parse::NodeKind::LetIntroducer:
+      case Parse::NodeKind::QualifiedName:
+      case Parse::NodeKind::ReturnedModifier:
+      case Parse::NodeKind::ReturnStatementStart:
+      case Parse::NodeKind::ReturnVarModifier:
+      case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
+      case Parse::NodeKind::TuplePatternStart:
+      case Parse::NodeKind::VariableIntroducer:
+        return IdKind::SoloParseNode;
+      default:
+        return IdKind::Unused;
+    }
+  }
+
+  static constexpr auto ComputeIdKindTable()
+      -> std::array<IdKind, Parse::NodeKind::ValidCount> {
+    std::array<IdKind, Parse::NodeKind::ValidCount> table = {};
+
 #define CARBON_PARSE_NODE_KIND(Name) \
   table[Parse::Name::Kind.AsInt()] = to_id_kind(Parse::Name::Kind);
 #include "toolchain/parse/node_kind.def"
 
-        return table;
-      }();
+    return table;
+  }
+
+  // Lookup table to implement `ParseNodeKindToIdKind`. Initialized to the
+  // return value of `ComputeIdKindTable()`.
+  static const std::array<IdKind, Parse::NodeKind::ValidCount> IdKindTable;
 
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
@@ -522,6 +527,9 @@ class NodeStack {
   // vlogging.
   llvm::SmallVector<Entry> stack_;
 };
+
+constexpr std::array<NodeStack::IdKind, Parse::NodeKind::ValidCount>
+    NodeStack::IdKindTable = NodeStack::ComputeIdKindTable();
 
 }  // namespace Carbon::Check
 
