@@ -24,10 +24,11 @@ namespace Carbon::Check {
 //
 // Pop APIs will run basic verification:
 //
-// - If receiving a pop_parse_kind, verify that the parse_node being popped is
-//   of pop_parse_kind.
-// - Validates presence of inst_id based on whether it's a solo
-//   parse_node.
+// - If receiving a Parse::NodeKind, verify that the parse_node being popped has
+//   that kind. Similarly, if receiving a Parse::NodeCategory, make sure the
+//   of the popped parse_node overlaps that category.
+// - Validates the kind of id data in the node based on the kind or category of
+//   the parse_node.
 //
 // These should be assumed API constraints unless otherwise mentioned on a
 // method. The main exception is PopAndIgnore, which doesn't do verification.
@@ -76,6 +77,20 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PeekIs() const -> bool {
     return PeekIs(RequiredParseKind);
+  }
+
+  // Returns whether the node on the top of the stack has an overlapping
+  // category.
+  auto PeekIs(Parse::NodeCategory category) const -> bool {
+    return !stack_.empty() && !!(PeekParseNodeKind().category() & category);
+  }
+
+  // Returns whether the node on the top of the stack has an overlapping
+  // category. Templated for consistency with other functions taking a parse
+  // node category.
+  template <const Parse::NodeCategory& RequiredParseCategory>
+  auto PeekIs() const -> bool {
+    return PeekIs(RequiredParseCategory);
   }
 
   // Returns whether there is a name on top of the stack.
@@ -127,24 +142,6 @@ class NodeStack {
     }
     PopForSoloParseNode<RequiredParseKind>();
     return true;
-  }
-
-  // Pops an expression from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopExprWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
-    return PopWithParseNode<SemIR::InstId>();
-  }
-
-  // Pops a pattern from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
-    return PopWithParseNode<SemIR::InstId>();
-  }
-
-  // Pops a name from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
-    return PopWithParseNode<SemIR::NameId>();
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
@@ -226,6 +223,24 @@ class NodeStack {
                    << "; see value in ParseNodeCategoryToIdKind";
   }
 
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId> {
+    return PopWithParseNode<Parse::NodeCategory::Expr>();
+  }
+
+  // Pops a pattern from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
+    return PopWithParseNode<SemIR::InstId>();
+  }
+
+  // Pops a name from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
+    return PopWithParseNode<SemIR::NameId>();
+  }
+
   // Pops the top of the stack and returns the parse_node and the ID if it is
   // of the specified kind.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -265,9 +280,6 @@ class NodeStack {
     }
     return std::nullopt;
   }
-
-  // TODO: Can we add a `Pop<...>` that takes a parse node category? See
-  // https://github.com/carbon-language/carbon-lang/pull/3534/files#r1432067519
 
   // Peeks at the parse node of the top of the node stack.
   auto PeekParseNode() const -> Parse::NodeId {
@@ -400,6 +412,8 @@ class NodeStack {
   static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category)
       -> std::optional<IdKind> {
     std::optional<IdKind> id_kind;
+    // TODO: Patterns should also produce an `InstId`, but currently
+    // `TuplePattern` produces an `InstBlockId`.
     if (!!(category & Parse::NodeCategory::Expr)) {
       id_kind = IdKind::InstId;
     }
