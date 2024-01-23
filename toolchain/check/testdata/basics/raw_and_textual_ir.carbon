@@ -45,7 +45,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:       1:               type1
 // CHECK:STDOUT:       2:               type3
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: BindName, arg0: bindName0, arg1: inst+1, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
@@ -137,7 +137,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo}, invalid [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

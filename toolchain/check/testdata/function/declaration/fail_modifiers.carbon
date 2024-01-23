@@ -73,7 +73,7 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.WrongOrder = %WrongOrder, .DuplicateVirtual = %DuplicateVirtual, .TwoAccess = %TwoAccess, .ModifiersConflict = %ModifiersConflict, .InvalidModifier = %InvalidModifier, .ModifiersConflict2 = %ModifiersConflict2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.WrongOrder = %WrongOrder, .DuplicateVirtual = %DuplicateVirtual, .TwoAccess = %TwoAccess, .ModifiersConflict = %ModifiersConflict, .InvalidModifier = %InvalidModifier, .ModifiersConflict2 = %ModifiersConflict2}, invalid [template]
 // CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder [template]
 // CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual [template]
 // CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess [template]

@@ -28,7 +28,7 @@ let b: B = C.base;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C = %C.decl}, invalid [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]

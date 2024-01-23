@@ -37,7 +37,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A}, invalid [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,7 +50,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.2, .a = %a, .package_a = %package_a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .a = %a, .package_a = %package_a}, invalid [template]
 // CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
@@ -74,7 +74,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: --- same_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B}, invalid [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,7 +87,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %.2, .b = %b, .package_b = %package_b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.B = %.2, .b = %b, .package_b = %package_b}, invalid [template]
 // CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]

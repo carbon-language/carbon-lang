@@ -12,7 +12,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: --- local.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F}, invalid [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

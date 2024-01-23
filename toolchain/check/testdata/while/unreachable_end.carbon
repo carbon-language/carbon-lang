@@ -26,7 +26,7 @@ fn While() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Cond = %Cond, .F = %F, .G = %G, .H = %H, .While = %While} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Cond = %Cond, .F = %F, .G = %G, .H = %H, .While = %While}, invalid [template]
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]

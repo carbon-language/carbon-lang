@@ -24,8 +24,8 @@ fn Bar() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %.loc7, .Baz = %Baz.loc10, .Bar = %Bar} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace Foo, {.Baz = %Baz.loc13} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7, .Baz = %Baz.loc10, .Bar = %Bar}, invalid [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc13}, invalid [template]
 // CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1 [template]
 // CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2 [template]
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]

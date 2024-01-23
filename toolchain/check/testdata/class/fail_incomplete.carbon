@@ -125,7 +125,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .CallClassFunction = %CallClassFunction, .global_var = %global_var, .ConvertFromStruct = %ConvertFromStruct, .MemberAccess = %MemberAccess, .Copy = %Copy, .Let = %Let, .TakeIncomplete = %TakeIncomplete, .ReturnIncomplete = %ReturnIncomplete, .CallTakeIncomplete = %CallTakeIncomplete, .CallReturnIncomplete = %CallReturnIncomplete} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .CallClassFunction = %CallClassFunction, .global_var = %global_var, .ConvertFromStruct = %ConvertFromStruct, .MemberAccess = %MemberAccess, .Copy = %Copy, .Let = %Let, .TakeIncomplete = %TakeIncomplete, .ReturnIncomplete = %ReturnIncomplete, .CallTakeIncomplete = %CallTakeIncomplete, .CallReturnIncomplete = %CallReturnIncomplete}, invalid [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction [template]

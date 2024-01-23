@@ -41,34 +41,40 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace A, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.loc4}, invalid [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {}, invalid [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.2} [template]
-// CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.loc5} [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace B, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.loc5}, %lazy_import_ref [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {}, invalid [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.2} [template]
-// CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.3} [template]
-// CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.loc5} [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace C, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
+// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+3
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.loc5}, %lazy_import_ref.2 [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {}, invalid [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.2} [template]
-// CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.3} [template]
-// CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.4} [template]
-// CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %D} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
+// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %lazy_import_ref.2 [template]
+// CHECK:STDOUT:   %lazy_import_ref.3 = lazy_import_ref ir1, inst+5
+// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %D}, %lazy_import_ref.3 [template]
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,10 +90,13 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.2, .e = %e} [template]
-// CHECK:STDOUT:   %.2: <namespace> = namespace A, {.B = %.3} [template]
-// CHECK:STDOUT:   %.3: <namespace> = namespace B, {.C = %.4} [template]
-// CHECK:STDOUT:   %.4: <namespace> = namespace C, {.D = %.5} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .e = %e}, invalid [template]
+// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
+// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %lazy_import_ref.2 [template]
+// CHECK:STDOUT:   %lazy_import_ref.3 = lazy_import_ref ir1, inst+6
+// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %.5}, %lazy_import_ref.3 [template]
 // CHECK:STDOUT:   %.5: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]

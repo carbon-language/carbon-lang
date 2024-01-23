@@ -24,7 +24,7 @@ fn If(b: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G, .H = %H, .If = %If} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .H = %H, .If = %If}, invalid [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template]

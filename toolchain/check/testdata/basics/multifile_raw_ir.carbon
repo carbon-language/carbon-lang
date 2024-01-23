@@ -33,7 +33,7 @@ fn B() {}
 // CHECK:STDOUT:     type1:           {inst: instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
@@ -64,7 +64,7 @@ fn B() {}
 // CHECK:STDOUT:     type1:           {inst: instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: Return}
 // CHECK:STDOUT:   constant_values:

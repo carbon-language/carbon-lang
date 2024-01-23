@@ -314,6 +314,9 @@ struct NameScope : Printable<NameScope> {
   // The instruction which owns the scope.
   InstId inst_id;
 
+  // When the scope is a namespace, the name. Otherwise, invalid.
+  NameId name_id;
+
   // The scope enclosing this one.
   NameScopeId enclosing_scope_id;
 
@@ -329,9 +332,11 @@ struct NameScope : Printable<NameScope> {
 class NameScopeStore {
  public:
   // Adds a name scope, returning an ID to reference it.
-  auto Add(InstId inst_id, NameScopeId enclosing_scope_id) -> NameScopeId {
-    return values_.Add(
-        {.inst_id = inst_id, .enclosing_scope_id = enclosing_scope_id});
+  auto Add(InstId inst_id, NameId name_id, NameScopeId enclosing_scope_id)
+      -> NameScopeId {
+    return values_.Add({.inst_id = inst_id,
+                        .name_id = name_id,
+                        .enclosing_scope_id = enclosing_scope_id});
   }
 
   // Returns the requested name scope.

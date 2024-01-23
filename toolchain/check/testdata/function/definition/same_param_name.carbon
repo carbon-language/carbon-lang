@@ -10,7 +10,7 @@ fn Bar(a: i32) {}
 // CHECK:STDOUT: --- same_param_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Bar = %Bar} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Bar = %Bar}, invalid [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
 // CHECK:STDOUT: }

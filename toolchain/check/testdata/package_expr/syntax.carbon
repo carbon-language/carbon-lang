@@ -50,7 +50,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Main = %Main}, invalid [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
@@ -81,7 +81,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Main = %Main}, invalid [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
@@ -113,8 +113,8 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4, .Main = %Main} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {.C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4, .Main = %Main}, invalid [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.C = %C.decl}, invalid [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }

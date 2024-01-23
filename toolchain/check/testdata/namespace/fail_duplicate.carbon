@@ -21,8 +21,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %.loc7} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace Foo, {.Baz = %Baz.loc9} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7}, invalid [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc9}, invalid [template]
 // CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz [template]
 // CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz [template]
 // CHECK:STDOUT: }

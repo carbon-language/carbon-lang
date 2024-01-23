@@ -64,7 +64,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Run0 = %Run0, .Run1 = %Run1, .Run2 = %Run2, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Run0 = %Run0, .Run1 = %Run1, .Run2 = %Run2, .Main = %Main}, invalid [template]
 // CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0 [template]
 // CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1 [template]
 // CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2 [template]

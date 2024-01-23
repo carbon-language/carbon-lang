@@ -28,7 +28,7 @@
 // CHECK:STDOUT:     instFunctionType: {kind: CrossRef, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: CrossRef, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: CrossRef, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
+// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
 // CHECK:STDOUT:     instError:       template instError
