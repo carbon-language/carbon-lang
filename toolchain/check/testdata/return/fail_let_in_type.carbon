@@ -35,13 +35,13 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> y {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
