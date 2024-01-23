@@ -704,7 +704,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    AnyNameComponentId name;
+    IdentifierNameId name;
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;

@@ -722,7 +722,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinition, ChoiceDefinitionStart,
                                CARBON_IF_VALID(CloseCurlyBrace))
 
 // Choice alternative list:
-//     _external_: Name
+//     _external_: IdentifierName
 //     _optional_ _external_ : TuplePattern
 //     _optional_: ChoiceAlternativeListComma
 //   _repeated_
