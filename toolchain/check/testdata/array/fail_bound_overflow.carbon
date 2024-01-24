@@ -9,9 +9,9 @@
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:9: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var b: [1; 39999999999999999993];
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:12: ERROR: Array bound of 39999999999999999993 is too large.
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~

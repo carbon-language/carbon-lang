@@ -20,18 +20,18 @@ class DeriveFromError {
 fn AccessMemberWithInvalidBaseError(p: DeriveFromError*) -> i32 { return (*p).n; }
 
 class DeriveFromNonType {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:16: ERROR: Cannot implicitly convert from `i32` to `type`.
   // CHECK:STDERR:   extend base: 32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~
   extend base: 32;
 }
 
 fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> i32 { return (*p).n; }
 
 class DeriveFromi32 {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `i32`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:16: ERROR: Deriving from final type `i32`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~
   extend base: i32;
 }
 
@@ -45,9 +45,9 @@ fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 
 class DeriveFromTuple {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `(Base,)`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:16: ERROR: Deriving from final type `(Base,)`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: (Base,);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~~~
   extend base: (Base,);
 }
 
@@ -61,9 +61,9 @@ fn AccessMemberWithInvalidBaseTuple(p: DeriveFromTuple*) -> i32 { return (*p).n;
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
 class DeriveFromStruct {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `{.a: i32, .b: i32}`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:16: ERROR: Deriving from final type `{.a: i32, .b: i32}`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: {.a: i32, .b: i32};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~
   extend base: {.a: i32, .b: i32};
 }
 
@@ -78,9 +78,9 @@ fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).
 base class Incomplete;
 
 class DeriveFromIncomplete {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:3: ERROR: Base `Incomplete` is an incomplete type.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+6]]:16: ERROR: Base `Incomplete` is an incomplete type.
   // CHECK:STDERR:   extend base: Incomplete;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~~~~~~
   // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE-6]]:1: Class was forward declared here.
   // CHECK:STDERR: base class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
@@ -95,9 +95,9 @@ fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return 
 fn AccessMemberWithInvalidBaseIncomplete(p: DeriveFromIncomplete*) -> i32 { return (*p).n; }
 
 class DeriveFromFinal {
-  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:3: ERROR: Deriving from final type `Final`. Base type must be an `abstract` or `base` class.
+  // CHECK:STDERR: fail_base_bad_type.carbon:[[@LINE+3]]:16: ERROR: Deriving from final type `Final`. Base type must be an `abstract` or `base` class.
   // CHECK:STDERR:   extend base: Final;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                ^~~~~
   extend base: Final;
 }
 

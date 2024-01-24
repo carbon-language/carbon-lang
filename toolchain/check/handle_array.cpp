@@ -31,7 +31,8 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
   auto bound_inst_id = context.node_stack().PopExpr();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExprSemi>();
-  auto element_type_inst_id = context.node_stack().PopExpr();
+  auto [element_type_node_id, element_type_inst_id] =
+      context.node_stack().PopExprWithParseNode();
 
   // The array bound must be a constant.
   //
@@ -47,9 +48,9 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
   }
 
   context.AddInstAndPush(
-      {parse_node, SemIR::ArrayType{
-                       SemIR::TypeId::TypeType, bound_inst_id,
-                       ExprAsType(context, parse_node, element_type_inst_id)}});
+      {parse_node, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
+                                    ExprAsType(context, element_type_node_id,
+                                               element_type_inst_id)}});
   return true;
 }
 
