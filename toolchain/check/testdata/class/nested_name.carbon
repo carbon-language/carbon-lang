@@ -32,7 +32,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]

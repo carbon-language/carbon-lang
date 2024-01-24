@@ -108,7 +108,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G, .H = %H, .AddressOfLiteral = %AddressOfLiteral, .AddressOfOperator = %AddressOfOperator, .AddressOfCall = %AddressOfCall, .AddressOfType = %AddressOfType, .AddressOfTupleElementValue = %AddressOfTupleElementValue, .AddressOfParam = %AddressOfParam} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .H = %H, .AddressOfLiteral = %AddressOfLiteral, .AddressOfOperator = %AddressOfOperator, .AddressOfCall = %AddressOfCall, .AddressOfType = %AddressOfType, .AddressOfTupleElementValue = %AddressOfTupleElementValue, .AddressOfParam = %AddressOfParam} [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
 // CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral [template]

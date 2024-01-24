@@ -13,7 +13,7 @@ var x: i32 = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x} [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]

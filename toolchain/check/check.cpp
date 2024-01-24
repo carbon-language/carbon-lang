@@ -52,15 +52,25 @@ class SemIRLocationTranslator
 
       // If the parse node was invalid, recurse through import references when
       // possible.
-      auto import_ref =
-          cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(cursor_inst_id);
-      if (!import_ref) {
-        // Invalid parse node but not an import; just nothing to point at.
-        return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(
+              cursor_inst_id)) {
+        cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
+        cursor_inst_id = import_ref->inst_id;
+        continue;
       }
 
-      cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
-      cursor_inst_id = import_ref->inst_id;
+      // If a namespace has an instruction for an import, switch to looking at
+      // it.
+      if (auto ns =
+              cursor_ir->insts().TryGetAs<SemIR::Namespace>(cursor_inst_id)) {
+        if (ns->import_id.is_valid()) {
+          cursor_inst_id = ns->import_id;
+          continue;
+        }
+      }
+
+      // Invalid parse node but not an import; just nothing to point at.
+      return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
     }
   }
 
@@ -139,13 +149,14 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
   auto package_scope_id = context.name_scopes().Add(
-      SemIR::InstId::PackageNamespace, SemIR::NameScopeId::Invalid);
+      SemIR::InstId::PackageNamespace, SemIR::NameId::PackageNamespace,
+      SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id = context.AddInst(
       {Parse::NodeId::Invalid,
-       SemIR::Namespace{namespace_type_id, SemIR::NameId::PackageNamespace,
-                        SemIR::NameScopeId::Package}});
+       SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::Package,
+                        SemIR::InstId::Invalid}});
   CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
   // Add imports from the current package.

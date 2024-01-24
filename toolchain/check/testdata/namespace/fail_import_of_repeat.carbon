@@ -24,15 +24,16 @@ package Implicit impl;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {} [template]
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace <invalid>, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc11: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.2} [template]
-// CHECK:STDOUT:   %.2: <namespace> = namespace NS, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2} [template]
+// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
+// CHECK:STDOUT:   %.2: <namespace> = namespace {}, %lazy_import_ref [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -61,7 +61,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Call = %Call, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]

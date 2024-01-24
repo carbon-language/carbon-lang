@@ -118,8 +118,9 @@ auto HandleInterfaceDefinitionStart(
         .Emit();
   } else {
     interface_info.definition_id = interface_decl_id;
-    interface_info.scope_id = context.name_scopes().Add(
-        interface_decl_id, interface_info.enclosing_scope_id);
+    interface_info.scope_id =
+        context.name_scopes().Add(interface_decl_id, SemIR::NameId::Invalid,
+                                  interface_info.enclosing_scope_id);
   }
 
   // Enter the interface scope.
