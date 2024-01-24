@@ -88,7 +88,7 @@ class NodeStack {
   // Returns whether the node on the top of the stack has an overlapping
   // category. Templated for consistency with other functions taking a parse
   // node category.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto PeekIs() const -> bool {
     return PeekIs(RequiredParseCategory);
   }
@@ -144,12 +144,6 @@ class NodeStack {
     return true;
   }
 
-  // Pops an expression from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId> {
-    return PopWithParseNode<Parse::NodeCategory::Expr>();
-  }
-
   // Pops a pattern from the top of the stack and returns the parse_node and
   // the ID.
   auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
@@ -161,6 +155,10 @@ class NodeStack {
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
     return PopWithParseNode<SemIR::NameId>();
   }
+
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId>;
 
   // Pops the top of the stack and returns the parse_node and the ID.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -211,7 +209,7 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto PopWithParseNode() -> auto {
     constexpr std::optional<IdKind> RequiredIdKind =
         ParseNodeCategoryToIdKind(RequiredParseCategory);
@@ -255,7 +253,7 @@ class NodeStack {
 
   // Pops the top of the stack and returns the parse_node and the ID if it is
   // of the specified category
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto PopWithParseNodeIf()
       -> std::optional<decltype(PopWithParseNode<RequiredParseCategory>())> {
     if (!PeekIs<RequiredParseCategory>()) {
@@ -265,7 +263,7 @@ class NodeStack {
   }
 
   // Pops an expression from the top of the stack and returns the ID.
-  // Expressions map multiple Parse::NodeKinds to SemIR::InstId always.
+  // Expressions always map Parse::NodeCategory::Expr nodes to SemIR::InstId.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
 
   // Pops a pattern from the top of the stack and returns the ID.
@@ -284,9 +282,15 @@ class NodeStack {
   }
 
   // Pops the top of the stack and returns the ID.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto Pop() -> auto {
     return PopWithParseNode<RequiredParseCategory>().second;
+  }
+
+  // Pops the top of the stack and returns the ID.
+  template <typename IdT>
+  auto Pop() -> IdT {
+    return PopWithParseNode<IdT>().second;
   }
 
   // Pops the top of the stack if it has the given kind, and returns the ID.
@@ -301,7 +305,7 @@ class NodeStack {
 
   // Pops the top of the stack if it has the given category, and returns the ID.
   // Otherwise returns std::nullopt.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
     if (PeekIs<RequiredParseCategory>()) {
       return Pop<RequiredParseCategory>();
@@ -351,7 +355,7 @@ class NodeStack {
   }
 
   // Peeks at the ID associated with the top of the name stack.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto Peek() const -> auto {
     Entry back = stack_.back();
     RequireParseCategory<RequiredParseCategory>(back.parse_node);
@@ -622,7 +626,7 @@ class NodeStack {
   }
 
   // Require an entry to have the given Parse::NodeCategory.
-  template <const Parse::NodeCategory& RequiredParseCategory>
+  template <Parse::NodeCategory RequiredParseCategory>
   auto RequireParseCategory(Parse::NodeId parse_node) const -> void {
     auto kind = parse_tree_->node_kind(parse_node);
     CARBON_CHECK(!!(RequiredParseCategory & kind.category()))
@@ -644,6 +648,11 @@ class NodeStack {
 
 constexpr std::array<NodeStack::IdKind, Parse::NodeKind::ValidCount>
     NodeStack::IdKindTable = NodeStack::ComputeIdKindTable();
+
+inline auto NodeStack::PopExprWithParseNode()
+    -> std::pair<Parse::AnyExprId, SemIR::InstId> {
+  return PopWithParseNode<Parse::NodeCategory::Expr>();
+}
 
 }  // namespace Carbon::Check
 

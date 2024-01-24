@@ -589,12 +589,16 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
 auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpr());
+  // Support both expressions and parameters here, both of which produce
+  // InstIds.
+  ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
   if (!node_stack_.PeekIs(start_kind)) {
-    ParamOrArgSave(node_stack_.PopExpr());
+    // Support both expressions and parameters here, both of which produce
+    // InstIds.
+    ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
   }
 }
 
