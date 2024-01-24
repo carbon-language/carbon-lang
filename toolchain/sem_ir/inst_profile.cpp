@@ -10,96 +10,119 @@
 
 namespace Carbon::SemIR {
 
+// Profiling for unused arguments.
+namespace {
+struct NoArg {
+  int32_t value;
+};
+}  // namespace
+static auto ProfileArg(llvm::FoldingSetNodeID& /*id*/, const File& /*sem_ir*/,
+                       NoArg arg) -> void {
+  CARBON_CHECK(arg.value == IdBase::InvalidIndex)
+      << "Unexpected value for unused argument.";
+}
+
 // Profiling for ID arguments that should participate in the instruction's
-// value.
-template <typename ArgType>
+// value but are already canonical.
 static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& /*sem_ir*/,
                        int32_t arg) -> void {
   id.AddInteger(arg);
 }
 
-// Profiling for unused arguments.
-namespace {
-struct NoArg {};
-}  // namespace
-template <>
-auto ProfileArg<NoArg>(llvm::FoldingSetNodeID& /*id*/, const File& /*sem_ir*/,
-                       int32_t arg) -> void {
-  CARBON_CHECK(arg == IdBase::InvalidIndex)
-      << "Unexpected value for unused argument.";
-}
-
 // Profiling for block ID arguments for which the content of the block should be
 // included.
-template <>
-auto ProfileArg<InstBlockId>(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                             int32_t arg) -> void {
-  for (auto inst_id : sem_ir.inst_blocks().Get(InstBlockId(arg))) {
+static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                       InstBlockId block_id) -> void {
+  for (auto inst_id : sem_ir.inst_blocks().Get(block_id)) {
     id.AddInteger(inst_id.index);
   }
 }
 
 // Profiling for type block ID arguments for which the content of the block
 // should be included.
-template <>
-auto ProfileArg<TypeBlockId>(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                             int32_t arg) -> void {
-  for (auto type_id : sem_ir.type_blocks().Get(TypeBlockId(arg))) {
+static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                       TypeBlockId block_id) -> void {
+  for (auto type_id : sem_ir.type_blocks().Get(block_id)) {
     id.AddInteger(type_id.index);
   }
 }
 
 // Profiling for integer IDs.
-template <>
-auto ProfileArg<IntId>(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                       int32_t arg) -> void {
-  sem_ir.ints().Get(IntId(arg)).Profile(id);
+static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                       IntId int_id) -> void {
+  sem_ir.ints().Get(int_id).Profile(id);
 }
 
 // Profiling for real number IDs.
-template <>
-auto ProfileArg<RealId>(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                        int32_t arg) -> void {
-  const auto& real = sem_ir.reals().Get(RealId(arg));
+static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                       RealId real_id) -> void {
+  const auto& real = sem_ir.reals().Get(real_id);
   // TODO: Profile the value rather than the syntactic form.
   real.mantissa.Profile(id);
   real.exponent.Profile(id);
   id.AddBoolean(real.is_decimal);
 }
 
-// Profiles a pair of arguments. We separate this out from InstT so that any
-// instruction with the same pair of arguments will share the same
-// implementation.
-template <typename ArgType0, typename ArgType1>
-static auto ProfileArgs(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                        int32_t arg0, int32_t arg1) -> void {
-  ProfileArg<ArgType0>(id, sem_ir, arg0);
-  ProfileArg<ArgType1>(id, sem_ir, arg1);
-}
+// TODO: Replace with `std::type_identity` once we switch to C++20.
+template <typename T>
+struct Wrap {
+  using type = T;
+};
 
-using ProfileArgsFunction = auto(llvm::FoldingSetNodeID&, const File&, int32_t,
-                                 int32_t) -> void;
-
-// Selects the function to use to profile arguments of instruction InstT.
-template <typename InstT>
-static constexpr auto SelectProfileArgs() -> ProfileArgsFunction* {
-  if constexpr (InstLikeTypeInfo<InstT>::NumArgs < 1) {
-    return ProfileArgs<NoArg, NoArg>;
+// Selects the argument type to use to profile argument N of instruction InstT.
+// We map as many types as we can to `int32_t` so that we can reuse the
+// profiling code for all instructions that are profiled in the same way. For
+// example, all instructions that take two IDs that are profiled by value use
+// the same profiling code.
+template <typename InstT, int N>
+static auto ComputeProfileArgType() -> auto {
+  if constexpr (N >= InstLikeTypeInfo<InstT>::NumArgs) {
+    // This argument is not used by this instruction; don't profile it.
+    return Wrap<NoArg>();
   } else {
-    using ArgType0 = typename InstLikeTypeInfo<InstT>::template ArgType<0>;
-    if constexpr (InstLikeTypeInfo<InstT>::NumArgs < 2) {
-      return ProfileArgs<ArgType0, NoArg>;
+    using ArgT = typename InstLikeTypeInfo<InstT>::template ArgType<N>;
+    if constexpr (std::is_same_v<ArgT, BindNameId> ||
+                  std::is_same_v<ArgT, BoolValue> ||
+                  std::is_same_v<ArgT, BuiltinKind> ||
+                  std::is_same_v<ArgT, ClassId> ||
+                  std::is_same_v<ArgT, CrossRefIRId> ||
+                  std::is_same_v<ArgT, ElementIndex> ||
+                  std::is_same_v<ArgT, FunctionId> ||
+                  std::is_same_v<ArgT, InstId> ||
+                  std::is_same_v<ArgT, InterfaceId> ||
+                  std::is_same_v<ArgT, NameId> ||
+                  std::is_same_v<ArgT, NameScopeId> ||
+                  // TODO: Should we deduplicate string literals?
+                  std::is_same_v<ArgT, StringLiteralValueId> ||
+                  std::is_same_v<ArgT, TypeId>) {
+      // This argument is already canonical. Just profile its ID.
+      return Wrap<int32_t>();
     } else {
-      using ArgType1 = typename InstLikeTypeInfo<InstT>::template ArgType<1>;
-      return ProfileArgs<ArgType0, ArgType1>;
+      // Profile this argument using its real type, using a suitable
+      // `ProfileArg` overload.
+      return Wrap<ArgT>();
     }
   }
+}
+template <typename InstT, int N>
+using ProfileArgType =
+    typename decltype(ComputeProfileArgType<InstT, N>())::type;
+
+// Profiles the given instruction arguments using the specified functions.
+template <typename Arg0Type, typename Arg1Type>
+static auto ProfileArgs(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                        int32_t arg0, int32_t arg1) -> void {
+  ProfileArg(id, sem_ir, Arg0Type{arg0});
+  ProfileArg(id, sem_ir, Arg1Type{arg1});
 }
 
 auto ProfileConstant(llvm::FoldingSetNodeID& id, const File& sem_ir, Inst inst)
     -> void {
+  using ProfileArgsFunction =
+      auto(llvm::FoldingSetNodeID&, const File&, int32_t, int32_t)->void;
   static constexpr ProfileArgsFunction* ProfileFunctions[] = {
-#define CARBON_SEM_IR_INST_KIND(KindName) SelectProfileArgs<KindName>(),
+#define CARBON_SEM_IR_INST_KIND(KindName) \
+  ProfileArgs<ProfileArgType<KindName, 0>, ProfileArgType<KindName, 1>>,
 #include "toolchain/sem_ir/inst_kind.def"
   };
 
