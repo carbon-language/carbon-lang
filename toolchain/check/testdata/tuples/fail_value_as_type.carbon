@@ -18,7 +18,7 @@ var x: (1, );
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x} [template]
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12.1: (i32,) = tuple_literal (%.loc10_9)
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%.3 [template = constants.%.3]

@@ -23,7 +23,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

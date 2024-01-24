@@ -13,7 +13,7 @@ fn F() { a.b; }
 // CHECK:STDOUT: --- fail_access_into_invalid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

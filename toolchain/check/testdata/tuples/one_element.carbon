@@ -17,7 +17,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .y = %y} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
 // CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x

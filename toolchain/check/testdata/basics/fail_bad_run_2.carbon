@@ -12,7 +12,7 @@ fn Run(n: i32) {}
 // CHECK:STDOUT: --- fail_bad_run_2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Run = %Run} [template]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

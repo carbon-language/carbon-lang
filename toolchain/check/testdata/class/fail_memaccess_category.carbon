@@ -49,7 +49,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F} [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]

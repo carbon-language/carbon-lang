@@ -23,10 +23,11 @@ auto HandleNamespace(Context& context, Parse::NamespaceId parse_node) -> bool {
                        Lex::TokenKind::Namespace);
   auto namespace_inst = SemIR::Namespace{
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
-      name_context.name_id_for_new_inst(), SemIR::NameScopeId::Invalid};
+      SemIR::NameScopeId::Invalid, SemIR::InstId::Invalid};
   auto namespace_id = context.AddPlaceholderInst({parse_node, namespace_inst});
   namespace_inst.name_scope_id = context.name_scopes().Add(
-      namespace_id, name_context.enclosing_scope_id_for_new_inst());
+      namespace_id, name_context.name_id_for_new_inst(),
+      name_context.enclosing_scope_id_for_new_inst());
   context.ReplaceInstBeforeConstantUse(namespace_id,
                                        {parse_node, namespace_inst});
   context.decl_name_stack().AddNameToLookup(name_context, namespace_id);

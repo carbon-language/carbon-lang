@@ -32,7 +32,7 @@ import library "var";
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -41,7 +41,7 @@ import library "var";
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
@@ -49,7 +49,7 @@ import library "var";
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %lazy_import_ref.1} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %lazy_import_ref.1} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir2, inst+2
 // CHECK:STDOUT: }
