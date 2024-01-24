@@ -11,10 +11,10 @@ fn Baz() {}
 // CHECK:STDOUT: --- order.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Bar = %Bar, .Baz = %Baz}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar
-// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo, .Bar = %Bar, .Baz = %Baz} [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
+// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

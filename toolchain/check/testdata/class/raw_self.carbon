@@ -21,32 +21,32 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: --- raw_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_46.1: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.loc9_46.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.loc9_46.3: type = ptr_type (i32, i32)
-// CHECK:STDOUT:   %.loc11: type = struct_type {.n: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.4: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type {.n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %.loc10_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc10_8.2: <unbound element of class Class> = field_decl n, element0
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc10_8.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %.loc10: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .n = %n
+// CHECK:STDOUT:   .n = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.loc13_17: Class*](%self.loc13_31: i32) {

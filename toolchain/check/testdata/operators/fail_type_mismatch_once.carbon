@@ -15,6 +15,11 @@ fn Main() -> i32 {
 
 // CHECK:STDOUT: --- fail_type_mismatch_once.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.2: f64 = real_literal 34e-1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

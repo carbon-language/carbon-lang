@@ -40,6 +40,10 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:       0:               type1
 // CHECK:STDOUT:       1:               type1
 // CHECK:STDOUT:       2:               type3
+// CHECK:STDOUT:     typeBlock2:
+// CHECK:STDOUT:       0:               type1
+// CHECK:STDOUT:       1:               type1
+// CHECK:STDOUT:       2:               type3
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
 // CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
@@ -53,17 +57,32 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+9:          {kind: FunctionDecl, arg0: function0, type: type6}
 // CHECK:STDOUT:     inst+10:         {kind: NameRef, arg0: name1, arg1: inst+2, type: type1}
 // CHECK:STDOUT:     inst+11:         {kind: IntLiteral, arg0: int4, type: type1}
-// CHECK:STDOUT:     inst+12:         {kind: RealLiteral, arg0: real0, type: type3}
-// CHECK:STDOUT:     inst+13:         {kind: TupleLiteral, arg0: block6, type: type4}
-// CHECK:STDOUT:     inst+14:         {kind: TupleAccess, arg0: inst+7, arg1: element0, type: type1}
-// CHECK:STDOUT:     inst+15:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+14, type: type1}
-// CHECK:STDOUT:     inst+16:         {kind: TupleAccess, arg0: inst+7, arg1: element1, type: type1}
-// CHECK:STDOUT:     inst+17:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+16, type: type1}
-// CHECK:STDOUT:     inst+18:         {kind: TupleAccess, arg0: inst+7, arg1: element2, type: type3}
-// CHECK:STDOUT:     inst+19:         {kind: InitializeFrom, arg0: inst+12, arg1: inst+18, type: type3}
-// CHECK:STDOUT:     inst+20:         {kind: TupleInit, arg0: block7, arg1: inst+7, type: type4}
-// CHECK:STDOUT:     inst+21:         {kind: Converted, arg0: inst+13, arg1: inst+20, type: type4}
-// CHECK:STDOUT:     inst+22:         {kind: ReturnExpr, arg0: inst+21}
+// CHECK:STDOUT:     inst+12:         {kind: IntLiteral, arg0: int4, type: type1}
+// CHECK:STDOUT:     inst+13:         {kind: RealLiteral, arg0: real0, type: type3}
+// CHECK:STDOUT:     inst+14:         {kind: RealLiteral, arg0: real0, type: type3}
+// CHECK:STDOUT:     inst+15:         {kind: TupleLiteral, arg0: block6, type: type4}
+// CHECK:STDOUT:     inst+16:         {kind: TupleAccess, arg0: inst+7, arg1: element0, type: type1}
+// CHECK:STDOUT:     inst+17:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+16, type: type1}
+// CHECK:STDOUT:     inst+18:         {kind: TupleAccess, arg0: inst+7, arg1: element1, type: type1}
+// CHECK:STDOUT:     inst+19:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+18, type: type1}
+// CHECK:STDOUT:     inst+20:         {kind: TupleAccess, arg0: inst+7, arg1: element2, type: type3}
+// CHECK:STDOUT:     inst+21:         {kind: InitializeFrom, arg0: inst+13, arg1: inst+20, type: type3}
+// CHECK:STDOUT:     inst+22:         {kind: TupleInit, arg0: block7, arg1: inst+7, type: type4}
+// CHECK:STDOUT:     inst+23:         {kind: Converted, arg0: inst+15, arg1: inst+22, type: type4}
+// CHECK:STDOUT:     inst+24:         {kind: ReturnExpr, arg0: inst+23}
+// CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     inst+0:          template inst+0
+// CHECK:STDOUT:     inst+3:          template inst+3
+// CHECK:STDOUT:     inst+5:          template inst+5
+// CHECK:STDOUT:     inst+6:          template inst+5
+// CHECK:STDOUT:     inst+8:          template inst+8
+// CHECK:STDOUT:     inst+9:          template inst+9
+// CHECK:STDOUT:     inst+11:         template inst+12
+// CHECK:STDOUT:     inst+12:         template inst+12
+// CHECK:STDOUT:     inst+13:         template inst+14
+// CHECK:STDOUT:     inst+14:         template inst+14
+// CHECK:STDOUT:     inst+19:         template inst+12
+// CHECK:STDOUT:     inst+21:         template inst+14
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -83,25 +102,25 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+10
 // CHECK:STDOUT:       1:               inst+11
-// CHECK:STDOUT:       2:               inst+12
-// CHECK:STDOUT:       3:               inst+13
-// CHECK:STDOUT:       4:               inst+14
-// CHECK:STDOUT:       5:               inst+15
-// CHECK:STDOUT:       6:               inst+16
-// CHECK:STDOUT:       7:               inst+17
-// CHECK:STDOUT:       8:               inst+18
-// CHECK:STDOUT:       9:               inst+19
-// CHECK:STDOUT:       10:              inst+20
-// CHECK:STDOUT:       11:              inst+21
-// CHECK:STDOUT:       12:              inst+22
+// CHECK:STDOUT:       2:               inst+13
+// CHECK:STDOUT:       3:               inst+15
+// CHECK:STDOUT:       4:               inst+16
+// CHECK:STDOUT:       5:               inst+17
+// CHECK:STDOUT:       6:               inst+18
+// CHECK:STDOUT:       7:               inst+19
+// CHECK:STDOUT:       8:               inst+20
+// CHECK:STDOUT:       9:               inst+21
+// CHECK:STDOUT:       10:              inst+22
+// CHECK:STDOUT:       11:              inst+23
+// CHECK:STDOUT:       12:              inst+24
 // CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+10
 // CHECK:STDOUT:       1:               inst+11
-// CHECK:STDOUT:       2:               inst+12
+// CHECK:STDOUT:       2:               inst+13
 // CHECK:STDOUT:     block7:
-// CHECK:STDOUT:       0:               inst+15
-// CHECK:STDOUT:       1:               inst+17
-// CHECK:STDOUT:       2:               inst+19
+// CHECK:STDOUT:       0:               inst+17
+// CHECK:STDOUT:       1:               inst+19
+// CHECK:STDOUT:       2:               inst+21
 // CHECK:STDOUT:     block8:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+9
@@ -110,28 +129,30 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: --- raw_and_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc11_33.1: type = tuple_type (type, type, type)
-// CHECK:STDOUT:   %.loc11_33.2: type = tuple_type (i32, i32, f64)
-// CHECK:STDOUT:   %.loc11_33.3: type = ptr_type (i32, i32, f64)
+// CHECK:STDOUT:   %.1: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32, i32, f64) [template]
+// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32, f64) [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: f64 = real_literal 34e-1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo}
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, i32, f64) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_20.1: (i32, i32, f64) = tuple_literal (%n.ref, %.loc12_14, %.loc12_17)
 // CHECK:STDOUT:   %.loc12_20.2: ref i32 = tuple_access %return, element0
 // CHECK:STDOUT:   %.loc12_20.3: init i32 = initialize_from %n.ref to %.loc12_20.2
 // CHECK:STDOUT:   %.loc12_20.4: ref i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4
+// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_20.6: ref f64 = tuple_access %return, element2
-// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6
+// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_20.8: init (i32, i32, f64) = tuple_init (%.loc12_20.3, %.loc12_20.5, %.loc12_20.7) to %return
 // CHECK:STDOUT:   %.loc12_20.9: init (i32, i32, f64) = converted %.loc12_20.1, %.loc12_20.8
 // CHECK:STDOUT:   return %.loc12_20.9

@@ -14,18 +14,22 @@ fn F(T:! type, U:! type) {
 
 // CHECK:STDOUT: --- fail_type_param_mismatch.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = ptr_type T [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T
-// CHECK:STDOUT:   %.loc8: type = ptr_type T
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %.loc8: type = ptr_type T [template = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
-// CHECK:STDOUT:   %U.ref: type = name_ref U, %U
+// CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = %U]
 // CHECK:STDOUT:   %p.ref: ref T* = name_ref p, %p
 // CHECK:STDOUT:   %.loc12_15: T* = bind_value %p.ref
 // CHECK:STDOUT:   %.loc12_14: ref T = deref %.loc12_15

@@ -13,8 +13,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_unresolved_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {}
-// CHECK:STDOUT:   %.loc10: <function> = fn_decl @.1
+// CHECK:STDOUT:   package: <namespace> = namespace package, {} [template]
+// CHECK:STDOUT:   %.loc10: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {

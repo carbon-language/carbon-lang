@@ -286,6 +286,10 @@ class File : public Printable<File> {
   }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
+  auto constant_values() -> ConstantValueStore& { return constant_values_; }
+  auto constant_values() const -> const ConstantValueStore& {
+    return constant_values_;
+  }
   auto inst_blocks() -> InstBlockStore& { return inst_blocks_; }
   auto inst_blocks() const -> const InstBlockStore& { return inst_blocks_; }
   auto constants() -> ConstantStore& { return constants_; }
@@ -349,6 +353,9 @@ class File : public Printable<File> {
   // All instructions. The first entries will always be cross-references to
   // builtins, at indices matching BuiltinKind ordering.
   InstStore insts_;
+
+  // Constant values for instructions.
+  ConstantValueStore constant_values_;
 
   // Instruction blocks within the IR. These reference entries in
   // insts_. Storage for the data is provided by allocator_.

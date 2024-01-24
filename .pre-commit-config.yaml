@@ -233,6 +233,8 @@ exclude: |
   (?x)^(
       MODULE.bazel.lock|
       bazel/bazel_clang_tidy/.*\.patch|
+      bazel/google_benchmark/.*\.patch|
+      bazel/libpfm/.*\.patch|
       bazel/llvm_project/.*\.patch|
       third_party/examples/.*/carbon/.*|
   )$

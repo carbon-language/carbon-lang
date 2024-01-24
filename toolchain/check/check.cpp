@@ -6,8 +6,8 @@
 
 #include "common/check.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/base/value_store.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/import.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -17,7 +17,6 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -25,6 +24,59 @@ namespace Carbon::Check {
 #define CARBON_PARSE_NODE_KIND(Name) \
   auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
 #include "toolchain/parse/node_kind.def"
+
+// Handles the transformation of a SemIRLocation to a DiagnosticLocation.
+class SemIRLocationTranslator
+    : public DiagnosticLocationTranslator<SemIRLocation> {
+ public:
+  explicit SemIRLocationTranslator(
+      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+          node_translators,
+      const SemIR::File* sem_ir)
+      : node_translators_(node_translators), sem_ir_(sem_ir) {}
+
+  auto GetLocation(SemIRLocation loc) -> DiagnosticLocation override {
+    // Parse nodes always refer to the current IR.
+    if (!loc.is_inst_id) {
+      return GetLocationInFile(sem_ir_, loc.node_location);
+    }
+
+    const auto* cursor_ir = sem_ir_;
+    auto cursor_inst_id = loc.inst_id;
+    while (true) {
+      // If the parse node is valid, use it for the location.
+      if (auto parse_node = cursor_ir->insts().GetParseNode(cursor_inst_id);
+          parse_node.is_valid()) {
+        return GetLocationInFile(cursor_ir, parse_node);
+      }
+
+      // If the parse node was invalid, recurse through import references when
+      // possible.
+      auto import_ref =
+          cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(cursor_inst_id);
+      if (!import_ref) {
+        // Invalid parse node but not an import; just nothing to point at.
+        return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      }
+
+      cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
+      cursor_inst_id = import_ref->inst_id;
+    }
+  }
+
+ private:
+  auto GetLocationInFile(const SemIR::File* sem_ir,
+                         Parse::NodeLocation node_location) const
+      -> DiagnosticLocation {
+    auto it = node_translators_->find(sem_ir);
+    CARBON_CHECK(it != node_translators_->end());
+    return it->second->GetLocation(node_location);
+  }
+
+  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+      node_translators_;
+  const SemIR::File* sem_ir_;
+};
 
 struct UnitInfo {
   // A given import within the file, with its destination.
@@ -77,152 +129,6 @@ struct UnitInfo {
   llvm::SmallVector<UnitInfo*> incoming_imports;
 };
 
-// Returns name information for the entity, corresponding to IDs in the import
-// IR rather than the current IR. May return Invalid for a TODO.
-static auto GetImportName(Parse::NodeId parse_node, Context& context,
-                          const SemIR::File& import_sem_ir,
-                          SemIR::Inst import_inst)
-    -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
-  switch (import_inst.kind()) {
-    case SemIR::InstKind::BindName: {
-      const auto& bind_name = import_sem_ir.bind_names().Get(
-          import_inst.As<SemIR::BindName>().bind_name_id);
-      return {bind_name.name_id, bind_name.enclosing_scope_id};
-    }
-
-    case SemIR::InstKind::FunctionDecl: {
-      const auto& function = import_sem_ir.functions().Get(
-          import_inst.As<SemIR::FunctionDecl>().function_id);
-      return {function.name_id, function.enclosing_scope_id};
-    }
-
-    case SemIR::InstKind::Namespace: {
-      auto namespace_inst = import_inst.As<SemIR::Namespace>();
-      const auto& scope =
-          import_sem_ir.name_scopes().Get(namespace_inst.name_scope_id);
-      return {namespace_inst.name_id, scope.enclosing_scope_id};
-    }
-
-    default:
-      context.TODO(parse_node, (llvm::Twine("Support GetImportName of ") +
-                                import_inst.kind().name())
-                                   .str());
-      return {SemIR::NameId::Invalid, SemIR::NameScopeId::Invalid};
-  }
-}
-
-// Translate the name to the current IR. It will usually be an identifier, but
-// could also be a builtin name ID which is equivalent cross-IR.
-static auto CopyNameFromImportIR(Context& context,
-                                 const SemIR::File& import_sem_ir,
-                                 SemIR::NameId import_name_id) {
-  if (auto import_identifier_id = import_name_id.AsIdentifierId();
-      import_identifier_id.is_valid()) {
-    auto name = import_sem_ir.identifiers().Get(import_identifier_id);
-    return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
-  }
-  return import_name_id;
-}
-
-// Creates a namespace. The type ID is builtin, and reused to avoid duplicative
-// canonicalization.
-static auto AddNamespace(Context& context,
-                         SemIR::NameScopeId enclosing_scope_id,
-                         SemIR::NameId name_id, SemIR::TypeId namespace_type_id)
-    -> std::pair<SemIR::InstId, SemIR::NameScopeId> {
-  // Use the invalid node because there's no node to associate with.
-  auto inst = SemIR::Namespace{Parse::NodeId::Invalid, namespace_type_id,
-                               name_id, SemIR::NameScopeId::Invalid};
-  auto id = context.AddInst(inst);
-  inst.name_scope_id = context.name_scopes().Add(id, enclosing_scope_id);
-  context.insts().Set(id, inst);
-  return {id, inst.name_scope_id};
-}
-
-static auto CacheCopiedNamespace(
-    llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
-    SemIR::NameScopeId import_scope_id, SemIR::NameScopeId to_scope_id)
-    -> void {
-  auto [it, success] = copied_namespaces.insert({import_scope_id, to_scope_id});
-  CARBON_CHECK(success || it->second == to_scope_id)
-      << "Copy result for namespace changed from " << import_scope_id << " to "
-      << to_scope_id;
-}
-
-// Copies enclosing name scopes from the import IR. Handles the parent
-// traversal. Returns the NameScope corresponding to the copied
-// import_enclosing_scope_id.
-static auto CopyEnclosingNameScopeFromImportIR(
-    Context& context, SemIR::TypeId namespace_type_id,
-    const SemIR::File& import_sem_ir,
-    SemIR::NameScopeId import_enclosing_scope_id,
-    llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces)
-    -> SemIR::NameScopeId {
-  // Package-level names don't need work.
-  if (import_enclosing_scope_id == SemIR::NameScopeId::Package) {
-    return import_enclosing_scope_id;
-  }
-
-  // The scope to add namespaces to. Note this may change while looking at
-  // enclosing scopes, if we encounter a namespace that's already added.
-  auto scope_cursor = SemIR::NameScopeId::Package;
-
-  // Build a stack of enclosing namespace names, with innermost first.
-  llvm::SmallVector<std::pair<SemIR::NameScopeId, SemIR::NameId>>
-      new_namespaces;
-  while (import_enclosing_scope_id != SemIR::NameScopeId::Package) {
-    // If the namespace was already copied, reuse the results.
-    if (auto it = copied_namespaces.find(import_enclosing_scope_id);
-        it != copied_namespaces.end()) {
-      // We inject names at the provided scope, and don't need to keep
-      // traversing parents.
-      scope_cursor = it->second;
-      break;
-    }
-
-    // The namespace hasn't been copied yet, so add it to our list.
-    const auto& scope =
-        import_sem_ir.name_scopes().Get(import_enclosing_scope_id);
-    auto scope_inst =
-        import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id);
-    new_namespaces.push_back({scope_inst.name_scope_id, scope_inst.name_id});
-    import_enclosing_scope_id = scope.enclosing_scope_id;
-  }
-
-  // Add enclosing namespace names, starting with the outermost.
-  for (auto import_namespace : llvm::reverse(new_namespaces)) {
-    auto name_id =
-        CopyNameFromImportIR(context, import_sem_ir, import_namespace.second);
-    auto& scope = context.name_scopes().Get(scope_cursor);
-    auto [it, success] = scope.names.insert({name_id, SemIR::InstId::Invalid});
-    if (!success) {
-      auto inst = context.insts().Get(it->second);
-      if (auto namespace_inst = inst.TryAs<SemIR::Namespace>()) {
-        // Namespaces are open, so we can append to the existing one even if it
-        // comes from a different file.
-        scope_cursor = namespace_inst->name_scope_id;
-        CacheCopiedNamespace(copied_namespaces, import_namespace.first,
-                             scope_cursor);
-        continue;
-      }
-      // Produce a diagnostic, but still produce the namespace to supersede the
-      // name conflict in order to avoid repeat diagnostics.
-      // TODO: Produce a diagnostic.
-    }
-
-    // Produce the namespace for the entry.
-    auto [namespace_id, name_scope_id] =
-        AddNamespace(context, scope_cursor, name_id, namespace_type_id);
-
-    it->second = namespace_id;
-    scope_cursor = name_scope_id;
-    CacheCopiedNamespace(copied_namespaces, import_namespace.first,
-                         scope_cursor);
-  }
-
-  return scope_cursor;
-}
-
 // Add imports to the root block.
 static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     -> void {
@@ -236,76 +142,32 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
       SemIR::InstId::PackageNamespace, SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
-  auto package_inst_id = context.AddInst(SemIR::Namespace{
-      Parse::NodeId::Invalid, namespace_type_id,
-      SemIR::NameId::PackageNamespace, SemIR::NameScopeId::Package});
+  auto package_inst_id = context.AddInst(
+      {Parse::NodeId::Invalid,
+       SemIR::Namespace{namespace_type_id, SemIR::NameId::PackageNamespace,
+                        SemIR::NameScopeId::Package}});
   CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
   // Add imports from the current package.
   auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
   if (self_import != unit_info.package_imports_map.end()) {
-    auto& package_scope =
-        context.name_scopes().Get(SemIR::NameScopeId::Package);
-    package_scope.has_error = self_import->second.has_load_error;
-
+    bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-
-      // If an import of the current package caused an error for the imported
-      // file, it transitively affects the current file too.
-      package_scope.has_error |= import_sem_ir.name_scopes()
-                                     .Get(SemIR::NameScopeId::Package)
-                                     .has_error;
-
-      auto ir_id = context.sem_ir().cross_ref_irs().Add(&import_sem_ir);
-
-      llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
-      for (const auto import_inst_id :
-           import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
-        auto import_inst = import_sem_ir.insts().Get(import_inst_id);
-        auto [import_name_id, import_enclosing_scope_id] = GetImportName(
-            self_import->second.node, context, import_sem_ir, import_inst);
-        // TODO: This should only be invalid when GetImportName for an inst
-        // isn't yet implemented. Long-term this should be removed.
-        if (!import_name_id.is_valid()) {
-          continue;
-        }
-
-        auto name_id =
-            CopyNameFromImportIR(context, import_sem_ir, import_name_id);
-        SemIR::NameScopeId enclosing_scope_id =
-            CopyEnclosingNameScopeFromImportIR(
-                context, namespace_type_id, import_sem_ir,
-                import_enclosing_scope_id, copied_namespaces);
-
-        if (auto import_namespace_inst =
-                import_inst.TryAs<SemIR::Namespace>()) {
-          // Namespaces are always imported because they're essential for
-          // qualifiers, and the type is simple.
-          auto [namespace_id, name_scope_id] = AddNamespace(
-              context, enclosing_scope_id, name_id, namespace_type_id);
-          context.name_scopes().AddEntry(enclosing_scope_id, name_id,
-                                         namespace_id);
-          CacheCopiedNamespace(copied_namespaces,
-                               import_namespace_inst->name_scope_id,
-                               name_scope_id);
-        } else {
-          // Leave a placeholder that the inst comes from the other IR.
-          auto target_id = context.AddInst(
-              SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id});
-          // TODO: When importing from other packages, the scope's names should
-          // be changed to allow for ambiguous names. When importing from the
-          // current package, as is currently being done, we should issue a
-          // diagnostic on conflicts.
-          context.name_scopes().AddEntry(enclosing_scope_id, name_id,
-                                         target_id);
-        }
-      }
+      Import(context, namespace_type_id, self_import->second.node,
+             import_sem_ir);
+      error_in_import = error_in_import || import_sem_ir.name_scopes()
+                                               .Get(SemIR::NameScopeId::Package)
+                                               .has_error;
     }
 
-    // Push the scope.
+    // If an import of the current package caused an error for the imported
+    // file, it transitively affects the current file too.
+    if (error_in_import) {
+      context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
+    }
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package,
-                      package_scope.has_error);
+                      error_in_import);
   } else {
     // Push the scope; there are no names to add.
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
@@ -352,17 +214,24 @@ static auto ProcessParseNodes(Context& context,
 }
 
 // Produces and checks the IR for the provided Parse::Tree.
-static auto CheckParseTree(const SemIR::File& builtin_ir, UnitInfo& unit_info,
-                           llvm::raw_ostream* vlog_stream) -> void {
+static auto CheckParseTree(
+    llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
+        node_translators,
+    const SemIR::File& builtin_ir, UnitInfo& unit_info,
+    llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(
       *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str(), &builtin_ir);
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
+  CARBON_CHECK(
+      node_translators->insert({&sem_ir, &unit_info.translator}).second);
 
-  Context context(*unit_info.unit->tokens, unit_info.emitter,
-                  *unit_info.unit->parse_tree, sem_ir, vlog_stream);
+  SemIRLocationTranslator translator(node_translators, &sem_ir);
+  Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
+  Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
+                  sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -671,12 +540,15 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
+  llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>
+      node_translators;
+
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(builtin_ir, *unit_info, vlog_stream);
+    CheckParseTree(&node_translators, builtin_ir, *unit_info, vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -721,7 +593,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(builtin_ir, unit_info, vlog_stream);
+        CheckParseTree(&node_translators, builtin_ir, unit_info, vlog_stream);
       }
     }
   }

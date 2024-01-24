@@ -365,7 +365,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
                       << options.phase << "'.\n";
         return false;
       }
-      [[clang::fallthrough]];
+      [[fallthrough]];
     case Phase::Parse:
       if (options.dump_sem_ir) {
         error_stream_ << "ERROR: Requested dumping the SemIR but compile phase "
@@ -373,7 +373,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
                       << options.phase << "'.\n";
         return false;
       }
-      [[clang::fallthrough]];
+      [[fallthrough]];
     case Phase::Check:
       if (options.dump_llvm_ir) {
         error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
@@ -381,7 +381,7 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
                       << options.phase << "'.\n";
         return false;
       }
-      [[clang::fallthrough]];
+      [[fallthrough]];
     case Phase::Lower:
     case Phase::CodeGen:
       // Everything can be dumped in these phases.

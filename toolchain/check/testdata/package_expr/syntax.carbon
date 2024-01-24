@@ -44,24 +44,29 @@ fn Main() {
 
 // CHECK:STDOUT: --- global.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main} [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, %.loc4
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
+// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc9: i32 = bind_value %x.ref
 // CHECK:STDOUT:   assign %y.var, %.loc9
@@ -70,24 +75,29 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inside_fn.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main} [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, %.loc4
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
+// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc9: i32 = bind_value %x.ref
 // CHECK:STDOUT:   assign %y.var, %.loc9
@@ -97,20 +107,20 @@ fn Main() {
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc8: type = struct_type {}
-// CHECK:STDOUT:   %.loc11: type = tuple_type ()
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4, .Main = %Main}
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {.C = %C.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.NS = %.loc4, .Main = %Main} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace NS, {.C = %C.decl} [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Foo = %Foo
@@ -123,10 +133,10 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc4
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C
-// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, @C.%Foo
+// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc4 [template = file.%.loc4]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
+// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, @C.%Foo [template = @C.%Foo]
 // CHECK:STDOUT:   %.loc11: init () = call %Foo.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

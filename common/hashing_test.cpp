@@ -35,44 +35,22 @@ TEST(HashingTest, HashCodeAPI) {
 
   // Exercise the methods in basic ways across a few sizes. This doesn't check
   // much beyond stability across re-computed values, crashing, or hitting UB.
-  EXPECT_THAT(HashValue("a").ExtractIndex(2), Eq(a.ExtractIndex(2)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(4), Eq(a.ExtractIndex(4)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(8), Eq(a.ExtractIndex(8)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 10),
-              Eq(a.ExtractIndex(1 << 10)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 20),
-              Eq(a.ExtractIndex(1 << 20)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1 << 30),
-              Eq(a.ExtractIndex(1 << 30)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 40),
-              Eq(a.ExtractIndex(1LL << 40)));
-  EXPECT_THAT(HashValue("a").ExtractIndex(1LL << 50),
-              Eq(a.ExtractIndex(1LL << 50)));
+  EXPECT_THAT(HashValue("a").ExtractIndex(), Eq(a.ExtractIndex()));
 
-  EXPECT_THAT(a.ExtractIndex(8), Ne(b.ExtractIndex(8)));
-  EXPECT_THAT(a.ExtractIndex(8), Ne(empty.ExtractIndex(8)));
+  EXPECT_THAT(a.ExtractIndex(), Ne(b.ExtractIndex()));
+  EXPECT_THAT(a.ExtractIndex(), Ne(empty.ExtractIndex()));
 
   // Note that the index produced with a tag may be different from the index
   // alone!
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<2>(2),
-              Eq(a.ExtractIndexAndTag<2>(2)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<16>(4),
-              Eq(a.ExtractIndexAndTag<16>(4)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(8),
-              Eq(a.ExtractIndexAndTag<7>(8)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 10),
-              Eq(a.ExtractIndexAndTag<7>(1 << 10)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 20),
-              Eq(a.ExtractIndexAndTag<7>(1 << 20)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1 << 30),
-              Eq(a.ExtractIndexAndTag<7>(1 << 30)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1LL << 40),
-              Eq(a.ExtractIndexAndTag<7>(1LL << 40)));
-  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(1LL << 50),
-              Eq(a.ExtractIndexAndTag<7>(1LL << 50)));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<2>(),
+              Eq(a.ExtractIndexAndTag<2>()));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<16>(),
+              Eq(a.ExtractIndexAndTag<16>()));
+  EXPECT_THAT(HashValue("a").ExtractIndexAndTag<7>(),
+              Eq(a.ExtractIndexAndTag<7>()));
 
-  const auto [a_index, a_tag] = a.ExtractIndexAndTag<4>(8);
-  const auto [b_index, b_tag] = b.ExtractIndexAndTag<4>(8);
+  const auto [a_index, a_tag] = a.ExtractIndexAndTag<4>();
+  const auto [b_index, b_tag] = b.ExtractIndexAndTag<4>();
   EXPECT_THAT(a_index, Ne(b_index));
   EXPECT_THAT(a_tag, Ne(b_tag));
 }
@@ -106,6 +84,15 @@ TEST(HashingTest, Integers) {
     test_int_hash(static_cast<int64_t>(i));
     test_int_hash(static_cast<uint64_t>(i));
   }
+}
+
+TEST(HashingTest, BasicSeeding) {
+  auto unseeded_hash = HashValue(42);
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 1)));
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 2)));
+  EXPECT_THAT(unseeded_hash, Ne(HashValue(42, 3)));
+  EXPECT_THAT(unseeded_hash,
+              Ne(HashValue(42, static_cast<uint64_t>(unseeded_hash))));
 }
 
 TEST(HashingTest, Pointers) {
@@ -564,8 +551,8 @@ TEST(HashingTest, Collisions1ByteSized) {
   // distributed.
   int min_7bit_collisions = llvm::NextPowerOf2(hashes.size() - 1) / (1 << 7);
   auto low_7bit_collisions = FindBitRangeCollisions<0, 7>(hashes);
-  EXPECT_THAT(low_7bit_collisions.median, Le(2 * min_7bit_collisions));
-  EXPECT_THAT(low_7bit_collisions.max, Le(4 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.median, Le(8 * min_7bit_collisions));
+  EXPECT_THAT(low_7bit_collisions.max, Le(8 * min_7bit_collisions));
   auto high_7bit_collisions = FindBitRangeCollisions<64 - 7, 64>(hashes);
   EXPECT_THAT(high_7bit_collisions.median, Le(2 * min_7bit_collisions));
   EXPECT_THAT(high_7bit_collisions.max, Le(4 * min_7bit_collisions));

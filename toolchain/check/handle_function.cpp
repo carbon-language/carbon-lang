@@ -33,8 +33,7 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
   auto type_id = ExprAsType(context, type_parse_node, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
-      parse_node,
-      SemIR::VarStorage{parse_node, type_id, SemIR::NameId::ReturnSlot});
+      {parse_node, SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot}});
   return true;
 }
 
@@ -52,12 +51,12 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
     if (inheritance_kind == SemIR::Class::Final) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                             " in a non-abstract non-base `class` definition",
-                            class_decl->parse_node);
+                            context.GetCurrentScopeParseNode());
     }
     if (inheritance_kind != SemIR::Class::Abstract) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                             " in a non-abstract `class` definition",
-                            class_decl->parse_node);
+                            context.GetCurrentScopeParseNode());
     }
   } else {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
@@ -137,9 +136,10 @@ static auto BuildFunctionDecl(Context& context,
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
-      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
+      context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid};
-  auto function_decl_id = context.AddInst(function_decl);
+  auto function_decl_id =
+      context.AddPlaceholderInst({parse_node, function_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -164,7 +164,7 @@ static auto BuildFunctionDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a function.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(function_decl_id, existing_id);
     }
   }
 
@@ -181,7 +181,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Write the function ID into the FunctionDecl.
-  context.insts().Set(function_decl_id, function_decl);
+  context.ReplaceInstBeforeConstantUse(function_decl_id,
+                                       {parse_node, function_decl});
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
@@ -190,7 +191,7 @@ static auto BuildFunctionDecl(Context& context,
         (return_slot_id.is_valid() &&
          return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
-         return_type_id != context.CanonicalizeTupleType(parse_node, {}))) {
+         return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
@@ -225,8 +226,7 @@ auto HandleFunctionDefinitionStart(Context& context,
     context.emitter()
         .Build(parse_node, FunctionRedefinition,
                context.names().GetFormatted(function.name_id).str())
-        .Note(context.insts().Get(function.definition_id).parse_node(),
-              FunctionPreviousDefinition)
+        .Note(function.definition_id, FunctionPreviousDefinition)
         .Emit();
   } else {
     function.definition_id = decl_id;
@@ -258,13 +258,12 @@ auto HandleFunctionDefinitionStart(Context& context,
           "Parameter has incomplete type `{0}` in function definition.",
           std::string);
       return context.emitter().Build(
-          param.parse_node(), IncompleteTypeInFunctionParam,
+          param_id, IncompleteTypeInFunctionParam,
           context.sem_ir().StringifyType(param.type_id()));
     });
 
     if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
       context.AddNameToLookup(
-          fn_param->parse_node,
           context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
     } else {
       CARBON_FATAL() << "Unexpected kind of parameter in function definition "
@@ -290,7 +289,7 @@ auto HandleFunctionDefinition(Context& context,
           "Missing `return` at end of function with declared return type.");
       context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
     } else {
-      context.AddInst(SemIR::Return{parse_node});
+      context.AddInst({parse_node, SemIR::Return{}});
     }
   }
 

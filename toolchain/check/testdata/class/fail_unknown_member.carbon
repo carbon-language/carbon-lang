@@ -19,30 +19,29 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: --- fail_unknown_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = struct_type {.n: i32}
-// CHECK:STDOUT:   %.loc7: type = ptr_type {.n: i32}
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .G = %G}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .G = %G} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl n, element0
-// CHECK:STDOUT:   %n: <unbound element of class Class> = bind_name n, %.loc8_8.2
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = %n
+// CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_ref c, %c
-// CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error>
+// CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

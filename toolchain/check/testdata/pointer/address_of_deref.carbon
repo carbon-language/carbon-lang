@@ -12,19 +12,20 @@ fn F() -> i32 {
 // CHECK:STDOUT: --- address_of_deref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9: type = ptr_type i32
+// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.2: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %n.var, %.loc8
 // CHECK:STDOUT:   %n.ref: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc9_13: i32* = addr_of %n.ref

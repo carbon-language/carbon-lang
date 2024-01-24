@@ -44,15 +44,20 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
 
   // Extract the name binding.
   auto value_id = context.node_stack().PopPattern();
-  if (auto bind_name =
-          context.insts().Get(value_id).TryAs<SemIR::AnyBindName>()) {
+  if (auto bind_name = context.insts().TryGetAs<SemIR::AnyBindName>(value_id)) {
     // Form a corresponding name in the current context, and bind the name to
     // the variable.
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
-        bind_name->parse_node,
+        context.insts().GetParseNode(value_id),
         context.bind_names().Get(bind_name->bind_name_id).name_id);
     context.decl_name_stack().AddNameToLookup(name_context, value_id);
     value_id = bind_name->value_id;
+  } else if (auto field_decl =
+                 context.insts().TryGetAs<SemIR::FieldDecl>(value_id)) {
+    // Introduce the field name into the class.
+    auto name_context = context.decl_name_stack().MakeUnqualifiedName(
+        context.insts().GetParseNode(value_id), field_decl->name_id);
+    context.decl_name_stack().AddNameToLookup(name_context, value_id);
   }
   // TODO: Handle other kinds of pattern.
 
@@ -70,7 +75,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
       init_id = Initialize(context, parse_node, value_id, *init_id);
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
-      context.AddInst(SemIR::Assign{parse_node, value_id, *init_id});
+      context.AddInst({parse_node, SemIR::Assign{value_id, *init_id}});
     }
   }
 

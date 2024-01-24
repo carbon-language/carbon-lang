@@ -49,23 +49,24 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   context.decl_state_stack().Pop(DeclState::Let);
 
   // Convert the value to match the type of the pattern.
-  auto pattern = context.insts().Get(pattern_id);
-  value_id =
-      ConvertToValueOfType(context, parse_node, value_id, pattern.type_id());
+  auto pattern = context.insts().GetWithParseNode(pattern_id);
+  value_id = ConvertToValueOfType(context, parse_node, value_id,
+                                  pattern.inst.type_id());
 
   // Update the binding with its value and add it to the current block, after
   // the computation of the value.
   // TODO: Support other kinds of pattern here.
-  auto bind_name = pattern.As<SemIR::AnyBindName>();
+  auto bind_name = pattern.inst.As<SemIR::AnyBindName>();
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = value_id;
-  context.insts().Set(pattern_id, bind_name);
+  pattern.inst = bind_name;
+  context.ReplaceInstBeforeConstantUse(pattern_id, pattern);
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
-  context.AddNameToLookup(pattern.parse_node(), name_id, pattern_id);
+  context.AddNameToLookup(name_id, pattern_id);
   return true;
 }
 

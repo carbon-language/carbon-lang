@@ -19,13 +19,14 @@ fn F() {
 // CHECK:STDOUT: --- fail_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc16: type = tuple_type ()
+// CHECK:STDOUT:   %.1: f64 = real_literal 10e-1 [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G, .F = %F}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G, .F = %F} [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {
@@ -35,8 +36,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G
-// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
+// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

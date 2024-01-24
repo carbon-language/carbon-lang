@@ -29,19 +29,19 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT: --- unqualified_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = tuple_type ()
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.OuterN = %.loc7, .A = %A, .CallA = %CallA}
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace OuterN, {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB}
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace InnerN, {.C = %C, .CallABC = %CallABC}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A
-// CHECK:STDOUT:   %B: <function> = fn_decl @B
-// CHECK:STDOUT:   %C: <function> = fn_decl @C
-// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA
-// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB
-// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.OuterN = %.loc7, .A = %A, .CallA = %CallA} [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace OuterN, {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB} [template]
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace InnerN, {.C = %C, .CallABC = %CallABC} [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
+// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA [template]
+// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB [template]
+// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -52,27 +52,27 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallA() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc15: init () = call %A.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAB() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc19: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %.loc20: init () = call %B.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallABC() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc24: init () = call %A.ref()
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %.loc25: init () = call %B.ref()
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
 // CHECK:STDOUT:   %.loc26: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

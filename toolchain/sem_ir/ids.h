@@ -68,6 +68,70 @@ constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
 // The package namespace will be the instruction after builtins.
 constexpr InstId InstId::PackageNamespace = InstId(BuiltinKind::ValidCount);
 
+// The ID of a constant value of an expression. An expression is either:
+//
+// - a template constant, with an immediate value, such as `42` or `i32*` or
+//   `("hello", "world")`, or
+// - a symbolic constant, whose value includes a symbolic parameter, such as
+//   `Vector(T*)`, or
+// - a runtime expression, such as `Print("hello")`.
+struct ConstantId : public IdBase, public Printable<ConstantId> {
+  // An ID for an expression that is not constant.
+  static const ConstantId NotConstant;
+  // An ID for an expression whose phase cannot be determined because it
+  // contains an error. This is always modeled as a template constant.
+  static const ConstantId Error;
+
+  // Returns the constant ID corresponding to a template constant, which should
+  // either be in the `constants` block in the file or should be known to be
+  // unique.
+  static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
+    return ConstantId(const_id.index + 1);
+  }
+
+  // Returns the constant ID corresponding to a symbolic constant, which should
+  // either be in the `constants` block in the file or should be known to be
+  // unique.
+  static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
+    // Avoid allocating index -1.
+    return ConstantId(-const_id.index - 1);
+  }
+
+  using IdBase::IdBase;
+
+  // Returns whether this represents a constant.
+  auto is_constant() const -> bool { return index != 0; }
+  // Returns whether this represents a symbolic constant.
+  auto is_symbolic() const -> bool { return index < 0; }
+  // Returns whether this represents a template constant.
+  auto is_template() const -> bool { return index > 0; }
+
+  // Returns the instruction that describes this constant value, or
+  // InstId::Invalid for a runtime value.
+  auto inst_id() const -> InstId {
+    static_assert(InstId::InvalidIndex == -1);
+    return InstId(std::abs(index) - 1);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (is_template()) {
+      out << "template " << inst_id();
+    } else if (is_symbolic()) {
+      out << "symbolic " << inst_id();
+    } else {
+      out << "runtime";
+    }
+  }
+
+ private:
+  // ConstantIds don't have an invalid state.
+  using IdBase::is_valid;
+};
+
+constexpr ConstantId ConstantId::NotConstant = ConstantId(0);
+constexpr ConstantId ConstantId::Error =
+    ConstantId::ForTemplateConstant(InstId::BuiltinError);
+
 // The ID of a bind name.
 struct BindNameId : public IdBase, public Printable<BindNameId> {
   using ValueType = BindNameInfo;
@@ -183,6 +247,10 @@ struct NameId : public IdBase, public Printable<NameId> {
   // The name of `base`.
   static const NameId Base;
 
+  // The number of non-index (<0) that exist, and will need storage in name
+  // lookup.
+  static const int NonIndexValueCount;
+
   // Returns the NameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> NameId {
     if (id.index >= 0) {
@@ -227,6 +295,9 @@ constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
 constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
 constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
 constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
+constexpr int NameId::NonIndexValueCount = 6;
+// Enforce the link between SpecialValueCount and the last special value.
+static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
 
 // The ID of a name scope.
 struct NameScopeId : public IdBase, public Printable<NameScopeId> {
@@ -343,6 +414,9 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
 }  // namespace Carbon::SemIR
 
 // Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::ConstantId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::ConstantId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::InstBlockId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::InstBlockId> {};

@@ -242,11 +242,6 @@ auto HandleNamespace(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleNoOp(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::NoOp /*inst*/) -> void {
-  // No action to take.
-}
-
 auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                  SemIR::Param /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";

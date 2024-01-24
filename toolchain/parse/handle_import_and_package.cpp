@@ -168,7 +168,7 @@ auto HandleImport(Context& context) -> void {
     case Context::PackagingState::FileStart:
       // `package` is no longer allowed, but `import` may repeat.
       context.set_packaging_state(Context::PackagingState::InImports);
-      [[clang::fallthrough]];
+      [[fallthrough]];
 
     case Context::PackagingState::InImports:
       HandleDirectiveContent(context, state, directive, on_parse_error);

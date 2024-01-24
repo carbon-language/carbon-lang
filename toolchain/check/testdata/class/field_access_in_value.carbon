@@ -21,44 +21,43 @@ fn Test() {
 // CHECK:STDOUT: --- field_access_in_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10_1.1: type = struct_type {.j: i32, .k: i32}
-// CHECK:STDOUT:   %.loc10_1.2: type = ptr_type {.j: i32, .k: i32}
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.j: i32, .k: i32} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Test = %Test}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Test = %Test} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc8_8.2: <unbound element of class Class> = field_decl j, element0
-// CHECK:STDOUT:   %j: <unbound element of class Class> = bind_name j, %.loc8_8.2
-// CHECK:STDOUT:   %.loc9_8.1: type = unbound_element_type Class, i32
-// CHECK:STDOUT:   %.loc9_8.2: <unbound element of class Class> = field_decl k, element1
-// CHECK:STDOUT:   %k: <unbound element of class Class> = bind_name k, %.loc9_8.2
+// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl k, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .j = %j
-// CHECK:STDOUT:   .k = %k
+// CHECK:STDOUT:   .j = %.loc8
+// CHECK:STDOUT:   .k = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc13: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc13: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %cv.var: ref Class = var cv
 // CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc14_5: ref i32 = class_element_access %cv.ref.loc14, element0
-// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %.loc14_5, %.loc14_10
 // CHECK:STDOUT:   %cv.ref.loc15: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc15_5: ref i32 = class_element_access %cv.ref.loc15, element1
-// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   assign %.loc15_5, %.loc15_10
-// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, file.%Class
+// CHECK:STDOUT:   %Class.ref.loc16: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %cv.ref.loc16: ref Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc16: Class = bind_value %cv.ref.loc16
 // CHECK:STDOUT:   %c: Class = bind_name c, %.loc16

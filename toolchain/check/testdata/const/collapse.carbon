@@ -14,9 +14,15 @@ fn F(p: const i32**) -> const (const i32)** {
 
 // CHECK:STDOUT: --- collapse.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = const_type i32 [template]
+// CHECK:STDOUT:   %.2: type = ptr_type const i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type const i32* [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {

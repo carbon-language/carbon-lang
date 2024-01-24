@@ -34,6 +34,7 @@ cc_library(
         "context.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
+        "eval.cpp",
         "inst_block_stack.cpp",
         "modifiers.cpp",
         "return.cpp",
@@ -43,15 +44,19 @@ cc_library(
         "convert.h",
         "decl_name_stack.h",
         "decl_state.h",
+        "eval.h",
         "inst_block_stack.h",
+        "lexical_lookup.h",
         "modifiers.h",
         "pending_block.h",
         "return.h",
+        "scope_index.h",
     ],
     deps = [
         ":node_stack",
         "//common:check",
         "//common:vlog",
+        "//toolchain/base:index_base",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
@@ -74,6 +79,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":import",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
@@ -89,7 +95,6 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
-        "//toolchain/sem_ir:value_stores",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -102,6 +107,21 @@ cc_fuzz_test(
     deps = [
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "import",
+    srcs = ["import.cpp"],
+    hdrs = ["import.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
     ],
 )
 

@@ -149,18 +149,16 @@ and the language:
 -   A prototype interpreter demo that can both run isolated examples and gives a
     detailed analysis of the specific semantic model and abstract machine of
     Carbon. We call this the [Carbon Explorer](/explorer/).
--   Early components of a full [compiler and toolchain](/toolchain/) that can
-    compile Carbon (and eventually C++ code as well) into standard executable
-    code. This is where most of our current implementation efforts are directed.
+-   An under-development [compiler and toolchain](/toolchain/) that will compile
+    Carbon (and eventually C++ code as well) into standard executable code. This
+    is where most of our current implementation efforts are directed.
 
-If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
-and
-[completing the Carbon Toolchain implementation of this design](/docs/project/roadmap.md#a-toolchain-that-can-build-a-minimal-mixed-c-and-carbon-program).
-We are also currently working to get more broad feedback and participation from
-the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
-realistic toolchain that implements the 0.1 language and can be used to evaluate
-Carbon in more detail.
+If you're interested in contributing, we're currently focused on
+[developing the Carbon toolchain until it can support Carbon ↔ C++ interop](/docs/project/roadmap.md#objective-for-2024-a-working-toolchain-that-supports-c-interop).
+Beyond that, we plan to continue developing the design and toolchain until we
+can ship the
+[0.1 language](/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation)
+and support evaluating Carbon in more detail.
 
 You can see our [full roadmap](/docs/project/roadmap.md) for more details.
 

@@ -12,17 +12,21 @@ fn Six() -> x { return 6; }
 
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Six = %Six}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Six = %Six} [template]
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT:   assign %x.var, i32
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

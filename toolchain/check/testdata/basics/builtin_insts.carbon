@@ -29,6 +29,17 @@
 // CHECK:STDOUT:     instBoundMethodType: {kind: CrossRef, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: CrossRef, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: namePackageNamespace, arg1: name_scope0, type: type0}
+// CHECK:STDOUT:   constant_values:
+// CHECK:STDOUT:     instTypeType:    template instTypeType
+// CHECK:STDOUT:     instError:       template instError
+// CHECK:STDOUT:     instBoolType:    template instBoolType
+// CHECK:STDOUT:     instIntType:     template instIntType
+// CHECK:STDOUT:     instFloatType:   template instFloatType
+// CHECK:STDOUT:     instStringType:  template instStringType
+// CHECK:STDOUT:     instFunctionType: template instFunctionType
+// CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
+// CHECK:STDOUT:     instNamespaceType: template instNamespaceType
+// CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}

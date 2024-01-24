@@ -29,26 +29,27 @@ fn D.C.F() {}
 // CHECK:STDOUT: --- fail_base_method_define.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc12_3.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc12_3.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %.loc17: type = struct_type {.base: B}
+// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type D, B [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .D = %D.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.B = %B.decl, .D = %D.decl} [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.3
-// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
+// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -56,19 +57,18 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc16_17.1: type = unbound_element_type D, B
-// CHECK:STDOUT:   %.loc16_17.2: <unbound element of class D> = base_decl B, element0
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc16: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc16_17.2
+// CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }

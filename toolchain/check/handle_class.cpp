@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -24,6 +25,9 @@ auto HandleClassIntroducer(Context& context,
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
+    context.TODO(parse_node, "generic class");
+  }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
     context.TODO(parse_node, "generic class");
   }
 
@@ -51,9 +55,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDecl{parse_node, SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddInst(class_decl);
+  auto class_decl = SemIR::ClassDecl{SemIR::ClassId::Invalid, decl_block_id};
+  auto class_decl_id = context.AddPlaceholderInst({parse_node, class_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -74,8 +77,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
                           "Previously declared here.");
         context.emitter()
             .Build(parse_node, ClassRedeclarationDifferentIntroducer)
-            .Note(existing_class_decl->parse_node,
-                  ClassRedeclarationDifferentIntroducerPrevious)
+            .Note(existing_id, ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
       }
 
@@ -83,7 +85,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
       // declaration.
     } else {
       // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(class_decl_id, existing_id);
     }
   }
 
@@ -102,14 +104,11 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
 
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    class_info.self_type_id =
-        context.CanonicalizeType(context.AddInst(SemIR::ClassType{
-            parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
-            class_decl.class_id}));
+    class_info.self_type_id = context.GetClassType(class_decl.class_id);
   }
 
   // Write the class ID into the ClassDecl.
-  context.insts().Set(class_decl_id, class_decl);
+  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -135,8 +134,7 @@ auto HandleClassDefinitionStart(Context& context,
     context.emitter()
         .Build(parse_node, ClassRedefinition,
                context.names().GetFormatted(class_info.name_id).str())
-        .Note(context.insts().Get(class_info.definition_id).parse_node(),
-              ClassPreviousDefinition)
+        .Note(class_info.definition_id, ClassPreviousDefinition)
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
@@ -148,7 +146,7 @@ auto HandleClassDefinitionStart(Context& context,
   context.PushScope(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.AddNameToLookup(parse_node, SemIR::NameId::SelfType,
+  context.AddNameToLookup(SemIR::NameId::SelfType,
                           context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();
@@ -251,7 +249,8 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
 }
 
 auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
-  auto base_type_expr_id = context.node_stack().PopExpr();
+  auto [base_type_node_id, base_type_expr_id] =
+      context.node_stack().PopExprWithParseNode();
 
   // Process modifiers. `extend` is required, none others are allowed.
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
@@ -281,29 +280,29 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
                       "Previous `base` declaration is here.");
     context.emitter()
         .Build(parse_node, BaseRepeated)
-        .Note(context.insts().Get(class_info.base_id).parse_node(),
-              BasePrevious)
+        .Note(class_info.base_id, BasePrevious)
         .Emit();
     return true;
   }
 
-  auto base_info = CheckBaseType(context, parse_node, base_type_expr_id);
+  auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_inst_id = context.AddInst(SemIR::UnboundElementType{
-      parse_node, context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
-      class_info.self_type_id, base_info.type_id});
-  auto field_type_id = context.CanonicalizeType(field_type_inst_id);
-  class_info.base_id = context.AddInst(SemIR::BaseDecl{
-      parse_node, field_type_id, base_info.type_id,
-      SemIR::ElementIndex(
-          context.args_type_info_stack().PeekCurrentBlockContents().size())});
+  auto field_type_id =
+      context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
+  class_info.base_id = context.AddInst(
+      {parse_node,
+       SemIR::BaseDecl{field_type_id, base_info.type_id,
+                       SemIR::ElementIndex(context.args_type_info_stack()
+                                               .PeekCurrentBlockContents()
+                                               .size())}});
 
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
-  context.args_type_info_stack().AddInst(SemIR::StructTypeField{
-      parse_node, SemIR::NameId::Base, base_info.type_id});
+  context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
+      {parse_node,
+       SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
 
   // Bind the name `base` in the class to the base field.
   context.decl_name_stack().AddNameToLookup(
@@ -324,7 +323,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 }
 
 auto HandleClassDefinition(Context& context,
-                           Parse::ClassDefinitionId parse_node) -> bool {
+                           Parse::ClassDefinitionId /*parse_node*/) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
@@ -334,8 +333,7 @@ auto HandleClassDefinition(Context& context,
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
-  class_info.object_repr_id =
-      context.CanonicalizeStructType(parse_node, fields_id);
+  class_info.object_repr_id = context.GetStructType(fields_id);
   return true;
 }
 

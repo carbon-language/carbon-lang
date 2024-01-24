@@ -5,13 +5,55 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_SEM_IR_VALUE_STORES_H_
 
+#include <type_traits>
+
 #include "llvm/ADT/DenseMap.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
+
+// Associates a NodeId and Inst in order to provide type-checking that the
+// TypedNodeId corresponds to the InstT.
+struct ParseNodeAndInst {
+  // In cases where the NodeId is untyped or the InstT is unknown, the check
+  // can't be done at compile time.
+  // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
+  // corresponds.
+  static auto Untyped(Parse::NodeId parse_node, Inst inst) -> ParseNodeAndInst {
+    return ParseNodeAndInst(parse_node, inst, /*is_untyped=*/true);
+  }
+
+  // For the common case, support construction as:
+  //   context.AddInst({parse_node, SemIR::MyInst{...}});
+  template <typename InstT, typename std::enable_if_t<!std::is_same_v<
+                                typename decltype(InstT::Kind)::TypedNodeId,
+                                Parse::InvalidNodeId>>* = nullptr>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(typename decltype(InstT::Kind)::TypedNodeId parse_node,
+                   InstT inst)
+      : parse_node(parse_node), inst(inst) {}
+
+  // For cases with no parse node, support construction as:
+  //   context.AddInst({SemIR::MyInst{...}});
+  template <typename InstT, typename std::enable_if_t<std::is_same_v<
+                                typename decltype(InstT::Kind)::TypedNodeId,
+                                Parse::InvalidNodeId>>* = nullptr>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(InstT inst)
+      : parse_node(Parse::NodeId::Invalid), inst(inst) {}
+
+  Parse::NodeId parse_node;
+  Inst inst;
+
+ private:
+  explicit ParseNodeAndInst(Parse::NodeId parse_node, Inst inst,
+                            bool /*is_untyped*/)
+      : parse_node(parse_node), inst(inst) {}
+};
 
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
@@ -21,10 +63,18 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(Inst inst) -> InstId { return values_.Add(inst); }
+  auto AddInNoBlock(ParseNodeAndInst parse_node_and_inst) -> InstId {
+    parse_nodes_.push_back(parse_node_and_inst.parse_node);
+    return values_.Add(parse_node_and_inst.inst);
+  }
 
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
+
+  // Returns the requested instruction and its parse node.
+  auto GetWithParseNode(InstId inst_id) const -> ParseNodeAndInst {
+    return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
+  }
 
   // Returns the requested instruction, which is known to have the specified
   // type.
@@ -40,30 +90,97 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
-  // Overwrites a given instruction with a new value.
-  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
+  auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
+    return parse_nodes_[inst_id.index];
+  }
+
+  // Overwrites a given instruction and parse node with a new value.
+  auto Set(InstId inst_id, ParseNodeAndInst parse_node_and_inst) -> void {
+    values_.Get(inst_id) = parse_node_and_inst.inst;
+    parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
+  }
 
   // Reserves space.
-  auto Reserve(size_t size) -> void { values_.Reserve(size); }
+  auto Reserve(size_t size) -> void {
+    parse_nodes_.reserve(size);
+    values_.Reserve(size);
+  }
 
   auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
   auto size() const -> int { return values_.size(); }
 
  private:
+  llvm::SmallVector<Parse::NodeId> parse_nodes_;
   ValueStore<InstId> values_;
 };
 
-// Provides storage for instructions representing global constants.
-class ConstantStore {
+// Provides a ValueStore wrapper for tracking the constant values of
+// instructions.
+class ConstantValueStore {
  public:
-  // Add a constant instruction.
-  auto Add(InstId inst_id) -> void { values_.push_back(inst_id); }
+  // Returns the constant value of the requested instruction, or
+  // `ConstantId::NotConstant` if it is not constant.
+  auto Get(InstId inst_id) const -> ConstantId {
+    CARBON_CHECK(inst_id.index >= 0);
+    return static_cast<size_t>(inst_id.index) >= values_.size()
+               ? ConstantId::NotConstant
+               : values_[inst_id.index];
+  }
 
-  auto array_ref() const -> llvm::ArrayRef<InstId> { return values_; }
-  auto size() const -> int { return values_.size(); }
+  // Sets the constant value of the given instruction, or sets that it is known
+  // to not be a constant.
+  auto Set(InstId inst_id, ConstantId const_id) -> void {
+    CARBON_CHECK(inst_id.index >= 0);
+    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
+      values_.resize(inst_id.index + 1, ConstantId::NotConstant);
+    }
+    values_[inst_id.index] = const_id;
+  }
 
  private:
-  llvm::SmallVector<InstId> values_;
+  // A mapping from `InstId::index` to the corresponding constant value. This is
+  // expected to be sparse, and may be smaller than the list of instructions if
+  // there are trailing non-constant instructions.
+  //
+  // Set inline size to 0 because these will typically be too large for the
+  // stack, while this does make File smaller.
+  llvm::SmallVector<ConstantId, 0> values_;
+};
+
+// Provides storage for instructions representing deduplicated global constants.
+class ConstantStore {
+ public:
+  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& allocator)
+      : allocator_(&allocator), constants_(&sem_ir) {}
+
+  // Adds a new constant instruction, or gets the existing constant with this
+  // value. Returns the ID of the constant.
+  //
+  // This updates `sem_ir.insts()` and `sem_ir.constant_values()` if the
+  // constant is new.
+  auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
+
+  // Returns a copy of the constant IDs as a vector, in an arbitrary but
+  // stable order. This should not be used anywhere performance-sensitive.
+  auto GetAsVector() const -> llvm::SmallVector<InstId, 0>;
+
+  auto size() const -> int { return constants_.size(); }
+
+ private:
+  // TODO: We store two copies of each constant instruction: one in insts() and
+  // one here. We could avoid one of those copies and store just an InstId here,
+  // at the cost of some more indirection when recomputing profiles during
+  // lookup. Once we have a representative data set, we should measure the
+  // impact on compile time from that change.
+  struct ConstantNode : llvm::FoldingSetNode {
+    Inst inst;
+    ConstantId constant_id;
+
+    auto Profile(llvm::FoldingSetNodeID& id, File* sem_ir) -> void;
+  };
+
+  llvm::BumpPtrAllocator* allocator_;
+  llvm::ContextualFoldingSet<ConstantNode, File*> constants_;
 };
 
 // Provides a ValueStore wrapper with an API specific to types.
@@ -133,8 +250,7 @@ class TypeStore : public ValueStore<TypeId> {
 // A name is either an identifier name or a special name such as `self` that
 // does not correspond to an identifier token. Identifier names are represented
 // as `NameId`s with the same non-negative index as the `IdentifierId` of the
-// identifier. Special names are represented as `NameId`s with a negative
-// index.
+// identifier. Special names are represented as `NameId`s with a negative index.
 //
 // `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
 // or the named constants such as `NameId::SelfValue`.
@@ -161,10 +277,10 @@ class NameStoreWrapper {
   // `"r#name"` if `name` is a keyword.
   auto GetFormatted(NameId name_id) const -> llvm::StringRef;
 
-  // Returns a best-effort name to use as the basis for SemIR and LLVM IR
-  // names. This is always identifier-shaped, but may be ambiguous, for example
-  // if there is both a `self` and an `r#self` in the same scope. Returns ""
-  // for an invalid name.
+  // Returns a best-effort name to use as the basis for SemIR and LLVM IR names.
+  // This is always identifier-shaped, but may be ambiguous, for example if
+  // there is both a `self` and an `r#self` in the same scope. Returns "" for an
+  // invalid name.
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:
@@ -203,9 +319,9 @@ struct NameScope : Printable<NameScope> {
 
   // Whether we have diagnosed an error in a construct that would have added
   // names to this scope. For example, this can happen if an `import` failed or
-  // an `extend` declaration was ill-formed. If true, the `names` map is
-  // assumed to be missing names as a result of the error, and no further
-  // errors are produced for lookup failures in this scope.
+  // an `extend` declaration was ill-formed. If true, the `names` map is assumed
+  // to be missing names as a result of the error, and no further errors are
+  // produced for lookup failures in this scope.
   bool has_error = false;
 };
 
@@ -216,13 +332,6 @@ class NameScopeStore {
   auto Add(InstId inst_id, NameScopeId enclosing_scope_id) -> NameScopeId {
     return values_.Add(
         {.inst_id = inst_id, .enclosing_scope_id = enclosing_scope_id});
-  }
-
-  // Adds an entry to a name scope. Returns true on success, false on
-  // duplicates.
-  auto AddEntry(NameScopeId scope_id, NameId name_id, InstId target_id)
-      -> bool {
-    return values_.Get(scope_id).names.insert({name_id, target_id}).second;
   }
 
   // Returns the requested name scope.

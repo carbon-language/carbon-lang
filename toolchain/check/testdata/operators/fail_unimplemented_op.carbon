@@ -13,6 +13,11 @@ fn Main() -> i32 {
 
 // CHECK:STDOUT: --- fail_unimplemented_op.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 12 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 34 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

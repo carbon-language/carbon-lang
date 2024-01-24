@@ -64,7 +64,8 @@ File::File(SharedValueStores& value_stores)
     : value_stores_(&value_stores),
       filename_("<builtins>"),
       type_blocks_(allocator_),
-      inst_blocks_(allocator_) {
+      inst_blocks_(allocator_),
+      constants_(*this, allocator_) {
   auto builtins_id = cross_ref_irs_.Add(this);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
       << "Builtins must be the first IR, even if self-referential";
@@ -74,12 +75,17 @@ File::File(SharedValueStores& value_stores)
   // Error uses a self-referential type so that it's not accidentally treated as
   // a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                         \
-  insts_.AddInNoBlock(Builtin{BuiltinKind::Name == BuiltinKind::Error \
-                                  ? TypeId::Error                     \
-                                  : TypeId::TypeType,                 \
-                              BuiltinKind::Name});
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
+  insts_.AddInNoBlock(                                                     \
+      {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
+                                                       : TypeId::TypeType, \
+               BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
+  for (auto [i, inst] : llvm::enumerate(insts_.array_ref())) {
+    auto builtin_id = SemIR::InstId(i);
+    constant_values_.Set(builtin_id,
+                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
+  }
 
   CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount
@@ -91,7 +97,8 @@ File::File(SharedValueStores& value_stores, std::string filename,
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
-      inst_blocks_(allocator_) {
+      inst_blocks_(allocator_),
+      constants_(*this, allocator_) {
   CARBON_CHECK(builtins != nullptr);
   auto builtins_id = cross_ref_irs_.Add(builtins);
   CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
@@ -101,8 +108,14 @@ File::File(SharedValueStores& value_stores, std::string filename,
   insts_.Reserve(BuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
-    // We can reuse builtin type IDs because they're special-cased values.
-    insts_.AddInNoBlock(CrossRef{inst.type_id(), BuiltinIR, SemIR::InstId(i)});
+    // We can reuse the type IDs from the builtins IR because they're
+    // special-cased values.
+    auto type_id = inst.type_id();
+    auto builtin_id = SemIR::InstId(i);
+    insts_.AddInNoBlock(
+        {Parse::NodeId::Invalid, CrossRef{type_id, BuiltinIR, builtin_id}});
+    constant_values_.Set(builtin_id,
+                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }
 }
 
@@ -147,27 +160,38 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
   return Yaml::OutputMapping([this,
                               include_builtins](Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-              map.Add("cross_ref_irs_size",
-                      Yaml::OutputScalar(cross_ref_irs_.size()));
-              map.Add("name_scopes", name_scopes_.OutputYaml());
-              map.Add("bind_names", bind_names_.OutputYaml());
-              map.Add("functions", functions_.OutputYaml());
-              map.Add("classes", classes_.OutputYaml());
-              map.Add("types", types_.OutputYaml());
-              map.Add("type_blocks", type_blocks_.OutputYaml());
-              map.Add("insts",
-                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                        int start =
-                            include_builtins ? 0 : BuiltinKind::ValidCount;
-                        for (int i : llvm::seq(start, insts_.size())) {
-                          auto id = InstId(i);
-                          map.Add(PrintToString(id),
-                                  Yaml::OutputScalar(insts_.Get(id)));
-                        }
-                      }));
-              map.Add("inst_blocks", inst_blocks_.OutputYaml());
-            }));
+    map.Add(
+        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+          map.Add("cross_ref_irs_size",
+                  Yaml::OutputScalar(cross_ref_irs_.size()));
+          map.Add("name_scopes", name_scopes_.OutputYaml());
+          map.Add("bind_names", bind_names_.OutputYaml());
+          map.Add("functions", functions_.OutputYaml());
+          map.Add("classes", classes_.OutputYaml());
+          map.Add("types", types_.OutputYaml());
+          map.Add("type_blocks", type_blocks_.OutputYaml());
+          map.Add("insts",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    for (int i : llvm::seq(start, insts_.size())) {
+                      auto id = InstId(i);
+                      map.Add(PrintToString(id),
+                              Yaml::OutputScalar(insts_.Get(id)));
+                    }
+                  }));
+          map.Add("constant_values",
+                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                    int start = include_builtins ? 0 : BuiltinKind::ValidCount;
+                    for (int i : llvm::seq(start, insts_.size())) {
+                      auto id = InstId(i);
+                      auto value = constant_values_.Get(id);
+                      if (value.is_constant()) {
+                        map.Add(PrintToString(id), Yaml::OutputScalar(value));
+                      }
+                    }
+                  }));
+          map.Add("inst_blocks", inst_blocks_.OutputYaml());
+        }));
   });
 }
 
@@ -226,7 +250,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case IntLiteral::Kind:
     case LazyImportRef::Kind:
     case Namespace::Kind:
-    case NoOp::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
     case Return::Kind:
@@ -433,7 +456,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case IntLiteral::Kind:
       case LazyImportRef::Kind:
       case Namespace::Kind:
-      case NoOp::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
       case Return::Kind:
@@ -490,7 +512,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceDecl::Kind:
       case LazyImportRef::Kind:
       case Namespace::Kind:
-      case NoOp::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:

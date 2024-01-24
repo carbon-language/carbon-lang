@@ -22,13 +22,15 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: --- fail_deref_not_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc15: type = tuple_type ()
-// CHECK:STDOUT:   %.loc19: type = struct_type {}
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: {} = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Deref = %Deref}
-// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Deref = %Deref} [template]
+// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
@@ -36,12 +38,12 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc11: ref <error> = deref %n.ref
 // CHECK:STDOUT:   %.loc15_5.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()
-// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2
+// CHECK:STDOUT:   %.loc15_5.2: () = tuple_value () [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_5.3: () = converted %.loc15_5.1, %.loc15_5.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_3: ref <error> = deref %.loc15_5.3
 // CHECK:STDOUT:   %.loc19_5.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value ()
-// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2
+// CHECK:STDOUT:   %.loc19_5.2: {} = struct_value () [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19_5.3: {} = converted %.loc19_5.1, %.loc19_5.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc19_3: ref <error> = deref %.loc19_5.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

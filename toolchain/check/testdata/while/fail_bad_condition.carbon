@@ -14,12 +14,13 @@ fn While() {
 // CHECK:STDOUT: --- fail_bad_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String
+// CHECK:STDOUT:   %.1: type = ptr_type String [template]
+// CHECK:STDOUT:   %.2: String = string_literal "Hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.While = %While}
-// CHECK:STDOUT:   %While: <function> = fn_decl @While
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.While = %While} [template]
+// CHECK:STDOUT:   %While: <function> = fn_decl @While [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
@@ -27,7 +28,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc11: String = string_literal "Hello"
+// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.2]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

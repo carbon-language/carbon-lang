@@ -16,19 +16,19 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: --- reenter_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc10: type = struct_type {}
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class: type = class_type @Class
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
-// CHECK:STDOUT:   %G: <function> = fn_decl @G
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -37,11 +37,11 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G
-// CHECK:STDOUT:   %.loc13_11: init i32 = call %G.ref()
-// CHECK:STDOUT:   %.loc13_13.1: i32 = value_of_initializer %.loc13_11
-// CHECK:STDOUT:   %.loc13_13.2: i32 = converted %.loc13_11, %.loc13_13.1
-// CHECK:STDOUT:   return %.loc13_13.2
+// CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G [template = @Class.%G]
+// CHECK:STDOUT:   %.loc13_11.1: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc13_13: i32 = value_of_initializer %.loc13_11.1
+// CHECK:STDOUT:   %.loc13_11.2: i32 = converted %.loc13_11.1, %.loc13_13
+// CHECK:STDOUT:   return %.loc13_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

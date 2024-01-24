@@ -6,24 +6,11 @@
 #define CARBON_TOOLCHAIN_CHECK_DECL_NAME_STACK_H_
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/check/scope_index.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
-
-// An index for a pushed scope. This may correspond to a permanent scope with a
-// corresponding `NameScope`, in which case a different index will be assigned
-// each time the scope is entered. Alternatively, it may be a temporary scope
-// such as is created for a block, and will only be entered once.
-//
-// `ScopeIndex` values are comparable. Lower `ScopeIndex` values correspond to
-// scopes entered earlier in the file.
-//
-// TODO: Move this struct and the name lookup code in context.h to a separate
-// file.
-struct ScopeIndex : public IndexBase, public Printable<ScopeIndex> {
-  using IndexBase::IndexBase;
-};
 
 class Context;
 

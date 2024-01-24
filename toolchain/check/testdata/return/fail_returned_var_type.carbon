@@ -17,15 +17,19 @@ fn Mismatch() -> i32 {
 
 // CHECK:STDOUT: --- fail_returned_var_type.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: f64 = real_literal 0e-1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Mismatch = %Mismatch}
-// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Mismatch = %Mismatch} [template]
+// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1
+// CHECK:STDOUT:   %.loc14: f64 = real_literal 0e-1 [template = constants.%.1]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

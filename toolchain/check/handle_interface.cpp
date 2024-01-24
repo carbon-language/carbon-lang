@@ -27,6 +27,9 @@ static auto BuildInterfaceDecl(Context& context,
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(parse_node, "generic interface");
   }
+  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
+    context.TODO(parse_node, "generic interface");
+  }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
@@ -47,9 +50,10 @@ static auto BuildInterfaceDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
-  auto interface_decl = SemIR::InterfaceDecl{
-      parse_node, SemIR::InterfaceId::Invalid, decl_block_id};
-  auto interface_decl_id = context.AddInst(interface_decl);
+  auto interface_decl =
+      SemIR::InterfaceDecl{SemIR::InterfaceId::Invalid, decl_block_id};
+  auto interface_decl_id =
+      context.AddPlaceholderInst({parse_node, interface_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
@@ -64,7 +68,7 @@ static auto BuildInterfaceDecl(Context& context,
       // declaration.
     } else {
       // This is a redeclaration of something other than a interface.
-      context.DiagnoseDuplicateName(name_context.parse_node, existing_id);
+      context.DiagnoseDuplicateName(interface_decl_id, existing_id);
     }
   }
 
@@ -82,7 +86,8 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.insts().Set(interface_decl_id, interface_decl);
+  context.ReplaceInstBeforeConstantUse(interface_decl_id,
+                                       {parse_node, interface_decl});
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -109,8 +114,7 @@ auto HandleInterfaceDefinitionStart(
     context.emitter()
         .Build(parse_node, InterfaceRedefinition,
                context.names().GetFormatted(interface_info.name_id).str())
-        .Note(context.insts().Get(interface_info.definition_id).parse_node(),
-              InterfacePreviousDefinition)
+        .Note(interface_info.definition_id, InterfacePreviousDefinition)
         .Emit();
   } else {
     interface_info.definition_id = interface_decl_id;

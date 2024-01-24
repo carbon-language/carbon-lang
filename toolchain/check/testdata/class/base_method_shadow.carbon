@@ -32,68 +32,72 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: --- base_method_shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc9_1.1: type = struct_type {}
-// CHECK:STDOUT:   %.loc9_1.2: type = tuple_type ()
-// CHECK:STDOUT:   %.loc7: type = ptr_type {}
-// CHECK:STDOUT:   %.loc14_1.1: type = struct_type {.base: A}
-// CHECK:STDOUT:   %.loc14_1.2: type = struct_type {.base: {}*}
-// CHECK:STDOUT:   %.loc11: type = ptr_type {.base: A}
-// CHECK:STDOUT:   %.loc19_1.1: type = struct_type {.base: B}
-// CHECK:STDOUT:   %.loc19_1.2: type = struct_type {.base: {.base: A}*}
-// CHECK:STDOUT:   %.loc16: type = ptr_type {.base: B}
+// CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %.1: type = ptr_type A [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %B: type = class_type @B [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type B, A [template]
+// CHECK:STDOUT:   %.6: type = ptr_type B [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.base: A} [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: {}*} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: A} [template]
+// CHECK:STDOUT:   %.10: type = unbound_element_type C, B [template]
+// CHECK:STDOUT:   %.11: type = ptr_type C [template]
+// CHECK:STDOUT:   %.12: type = struct_type {.base: B} [template]
+// CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.13: type = unbound_element_type D, B [template]
+// CHECK:STDOUT:   %.14: type = ptr_type D [template]
+// CHECK:STDOUT:   %.15: type = struct_type {.base: {.base: A}*} [template]
+// CHECK:STDOUT:   %.16: type = ptr_type {.base: B} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call} [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %A: type = class_type @A
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %B: type = class_type @B
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %C: type = class_type @C
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %D: type = class_type @D
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A
-// CHECK:STDOUT:   %.loc12_17.1: type = unbound_element_type B, A
-// CHECK:STDOUT:   %.loc12_17.2: <unbound element of class B> = base_decl A, element0
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2
+// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %.loc12: <unbound element of class B> = base_decl A, element0 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc12_17.2
+// CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc17_17.1: type = unbound_element_type C, B
-// CHECK:STDOUT:   %.loc17_17.2: <unbound element of class C> = base_decl B, element0
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.3
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc17_17.2
+// CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B
-// CHECK:STDOUT:   %.loc22_17.1: type = unbound_element_type D, B
-// CHECK:STDOUT:   %.loc22_17.2: <unbound element of class D> = base_decl B, element0
+// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %.loc22: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %.loc22_17.2
+// CHECK:STDOUT:   .base = %.loc22
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,8 +131,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc29_9.1: ref D = deref %.loc29_4.2
 // CHECK:STDOUT:   %.loc29_9.2: ref B = class_element_access %.loc29_9.1, element0
 // CHECK:STDOUT:   %.loc29_9.3: B* = addr_of %.loc29_9.2
-// CHECK:STDOUT:   %.loc29_9.4: B* = converted %.loc29_4.2, %.loc29_9.3
-// CHECK:STDOUT:   %.loc29_9.5: init () = call %.loc29_7(%.loc29_9.4)
+// CHECK:STDOUT:   %.loc29_4.3: B* = converted %.loc29_4.2, %.loc29_9.3
+// CHECK:STDOUT:   %.loc29_9.4: init () = call %.loc29_7(%.loc29_4.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -16,14 +16,14 @@ fn F() {
 // CHECK:STDOUT: --- fail_deref_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.loc7, .F = %F}
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace A, {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.loc7, .F = %F} [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace A, {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.loc7
+// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.loc7 [template = file.%.loc7]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

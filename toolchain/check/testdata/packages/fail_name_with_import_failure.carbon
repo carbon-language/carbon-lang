@@ -16,16 +16,16 @@ var a: () = A();
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.loc7: type = tuple_type ()
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, has_error}
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, has_error} [template]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.loc7
+// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error>
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

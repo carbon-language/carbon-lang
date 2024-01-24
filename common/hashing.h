@@ -44,23 +44,24 @@ class HashCode : public Printable<HashCode> {
     return lhs.value_ != rhs.value_;
   }
 
-  // Extracts an index from the hash code that is in the range [0, size). The
-  // size and returned index are `ssize_t` for performance reasons. This is
-  // useful when using the hash code to index a hash table. It prioritizes
-  // computing the index from the bits in the hash code with the highest
-  // entropy.
-  constexpr auto ExtractIndex(ssize_t size) -> ssize_t;
+  // Extracts an index from the hash code as a `ssize_t`. This index covers the
+  // full range of that type, and may even be negative. Typical usage will
+  // involve masking this down to some positive range using a bitand with a mask
+  // computed from a power-of-two size. This routine doesn't do any masking to
+  // ensure a positive index to avoid redundant computations with the typical
+  // user of the index.
+  constexpr auto ExtractIndex() -> ssize_t;
 
   // Extracts an index and a fixed `N`-bit tag from the hash code.
   //
-  // This will both minimize overlap between the tag and the index as well as
-  // maximizing the entropy of the bits that contribute to each.
+  // This extracts these values from the position of the hash code which
+  // maximizes the entropy in the tag and the low bits of the index, as typical
+  // indices will be further masked down to fall in a smaller range.
   //
-  // The index will be in the range [0, `size`). The `size` must be a power of
-  // two, and `N` must be in the range [1, 32].
+  // `N` must be in the range [1, 32]. The returned index will be in the range
+  // [0, 2**(64-N)).
   template <int N>
-  constexpr auto ExtractIndexAndTag(ssize_t size)
-      -> std::pair<ssize_t, uint32_t>;
+  constexpr auto ExtractIndexAndTag() -> std::pair<ssize_t, uint32_t>;
 
   // Extract the full 64-bit hash code as an integer.
   //
@@ -392,11 +393,35 @@ class Hasher {
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
 
-  // The multiplicative hash constant from Knuth, derived from 2^64 / Phi. For
-  // details on its selection, see:
+  // We need a multiplicative hashing constant for both 64-bit multiplicative
+  // hashing fast paths and some other 128-bit folded multiplies. We use an
+  // empirically better constant compared to Knuth's, Rust's FxHash, and others
+  // we've tried. It was found by a search of uniformly distributed odd numbers
+  // and examining them for desirable properties when used as a multiplicative
+  // hash, however our search seems largely to have been lucky rather than
+  // having a highly effective set of criteria. We evaluated this constant by
+  // integrating this hash function with a hashtable and looking at the
+  // collision rates of several different but very fundamental patterns of keys:
+  // integers counting from 0, pointers allocated on the heap, and strings with
+  // character and size distributions matching C-style ASCII identifiers.
+  // Different constants found with this search worked better or less well, but
+  // fairly consistently across the different types of keys. At the end, far and
+  // away the best behaved constant we found was one of the first ones in the
+  // search and is what we use here.
+  //
+  // For reference, some other constants include one derived by diving 2^64 by
+  // Phi: 0x9e37'79b9'7f4a'7c15U -- see these sites for details:
   // https://probablydance.com/2018/06/16/fibonacci-hashing-the-optimization-that-the-world-forgot-or-a-better-alternative-to-integer-modulo/
   // https://book.huihoo.com/data-structures-and-algorithms-with-object-oriented-design-patterns-in-c++/html/page214.html
-  static constexpr uint64_t MulConstant = 0x9e37'79b9'7f4a'7c15U;
+  //
+  // Another very good constant derived by minimizing repeating bit patterns is
+  // 0xdcb2'2ca6'8cb1'34edU and its bit-reversed form. However, this constant
+  // has observed frequent issues at roughly 4k pointer keys, connected to a
+  // common hashtable seed also being a pointer. These issues appear to occur
+  // both more often and have a larger impact relative to the number of keys
+  // than the rare cases where some combinations of pointer seeds and pointer
+  // keys create minor quality issues with the constant we use.
+  static constexpr uint64_t MulConstant = 0x7924'f9e0'de1e'8cf5U;
 
  private:
   uint64_t buffer;
@@ -534,19 +559,14 @@ inline auto HashValue(const T& value) -> HashCode {
   return HashValue(value, Hasher::StaticRandomData[7]);
 }
 
-inline constexpr auto HashCode::ExtractIndex(ssize_t size) -> ssize_t {
-  CARBON_DCHECK(llvm::isPowerOf2_64(size));
-  return value_ & (size - 1);
-}
+inline constexpr auto HashCode::ExtractIndex() -> ssize_t { return value_; }
 
 template <int N>
-inline constexpr auto HashCode::ExtractIndexAndTag(ssize_t size)
+inline constexpr auto HashCode::ExtractIndexAndTag()
     -> std::pair<ssize_t, uint32_t> {
   static_assert(N >= 1);
   static_assert(N <= 32);
-  CARBON_DCHECK(llvm::isPowerOf2_64(size));
-  CARBON_DCHECK(1LL << (64 - N) >= size) << "Not enough bits for size and tag!";
-  return {static_cast<ssize_t>((value_ >> N) & (size - 1)),
+  return {static_cast<ssize_t>(value_ >> N),
           static_cast<uint32_t>(value_ & ((1U << (N + 1)) - 1))};
 }
 
@@ -695,7 +715,7 @@ inline auto Hasher::Hash(const T& value) -> void {
     // data to fully and densely populate all 8 bytes. For these cases we have a
     // `WeakMix` routine that is lower latency but lower quality.
     CARBON_MCA_BEGIN("fixed-8b");
-    buffer = WeakMix(ReadSmall(value));
+    buffer = WeakMix(buffer ^ ReadSmall(value));
     CARBON_MCA_END("fixed-8b");
     return;
   }

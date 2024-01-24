@@ -37,11 +37,41 @@ bazel_dep(
     version = "1.14.0.bcr.1",
     repo_name = "com_google_googletest",
 )
+
+google_benchmark_version = "1.8.3"
+
 bazel_dep(
     name = "google_benchmark",
-    version = "1.8.3",
+    version = google_benchmark_version,
     repo_name = "com_github_google_benchmark",
 )
+archive_override(
+    module_name = "google_benchmark",
+    integrity = "sha256-a8GApX0j1NlRVRn5KwyD1hsFtbqxiJYfNqx7BrDZ6c4=",
+    patch_strip = 1,
+    patches = ["@//bazel/google_benchmark:0001-Use-libpfm-by-default-on-supported-platforms.patch"],
+    strip_prefix = "benchmark-{0}".format(google_benchmark_version),
+    urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(google_benchmark_version)],
+)
+
+bazel_dep(
+    name = "libpfm",
+    # The registry only has an old version. We use that here to avoid a miss but
+    # override it with a newer version.
+    version = "4.11.0",
+)
+
+libpfm_version = "4.13.0"
+
+archive_override(
+    module_name = "libpfm",
+    integrity = "sha256-0YuXdkx1VSjBBR03bjNUXQ62DG6/hWgENoE/pbBMw9E=",
+    patch_strip = 1,
+    patches = ["@//bazel/libpfm:0001-Introduce-a-simple-native-Bazel-build.patch"],
+    strip_prefix = "libpfm-{0}".format(libpfm_version),
+    urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-{0}.tar.gz".format(libpfm_version)],
+)
+
 bazel_dep(name = "rules_bison", version = "0.2.2")
 bazel_dep(name = "rules_flex", version = "0.2.1")
 bazel_dep(name = "rules_m4", version = "0.2.3")
@@ -137,12 +167,3 @@ python.toolchain(
     python_version = "3.11",
 )
 use_repo(python, "python_versions")
-
-# Create a central repo that knows about the pip dependencies.
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "py_deps",
-    python_version = "3.11",
-    requirements_lock = "//github_tools:requirements.txt",
-)
-use_repo(pip, "py_deps")

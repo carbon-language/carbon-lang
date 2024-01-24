@@ -12,8 +12,8 @@ fn Six() -> x;
 // CHECK:STDOUT: --- fail_error_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Six = %Six}
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six
+// CHECK:STDOUT:   package: <namespace> = namespace package, {.Six = %Six} [template]
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error>;
