@@ -481,8 +481,8 @@ struct Namespace {
       InstKind::Namespace.Define<Parse::NamespaceId>("namespace");
 
   TypeId type_id;
-  NameId name_id;
   NameScopeId name_scope_id;
+  InstId import_id;
 };
 
 struct Param {

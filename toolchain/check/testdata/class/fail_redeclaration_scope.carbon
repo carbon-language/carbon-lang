@@ -35,7 +35,7 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl.loc7, .X = %X.decl, .Y = %Y.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl.loc7, .X = %X.decl, .Y = %Y.decl} [template]
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1, ()
 // CHECK:STDOUT:   %X.decl = class_decl @X, ()
 // CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1, ()

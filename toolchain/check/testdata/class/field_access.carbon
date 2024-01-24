@@ -29,7 +29,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl, .Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }

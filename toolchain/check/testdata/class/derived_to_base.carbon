@@ -69,7 +69,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .C = %C.decl, .ConvertCToB = %ConvertCToB, .ConvertBToA = %ConvertBToA, .ConvertCToA = %ConvertCToA, .ConvertValue = %ConvertValue, .ConvertRef = %ConvertRef, .ConvertInit = %ConvertInit} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .ConvertCToB = %ConvertCToB, .ConvertBToA = %ConvertBToA, .ConvertCToA = %ConvertCToA, .ConvertValue = %ConvertValue, .ConvertRef = %ConvertRef, .ConvertInit = %ConvertInit} [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A, ()
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %C.decl = class_decl @C, ()

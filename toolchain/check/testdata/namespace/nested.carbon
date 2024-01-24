@@ -21,9 +21,9 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %.loc7} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace Foo, {.Bar = %.loc8} [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace Bar, {.Wiz = %Wiz, .Baz = %Baz} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7} [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Bar = %.loc8} [template]
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace {.Wiz = %Wiz, .Baz = %Baz} [template]
 // CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz [template]
 // CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz [template]
 // CHECK:STDOUT: }

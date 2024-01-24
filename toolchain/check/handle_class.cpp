@@ -138,8 +138,8 @@ auto HandleClassDefinitionStart(Context& context,
         .Emit();
   } else {
     class_info.definition_id = class_decl_id;
-    class_info.scope_id =
-        context.name_scopes().Add(class_decl_id, class_info.enclosing_scope_id);
+    class_info.scope_id = context.name_scopes().Add(
+        class_decl_id, SemIR::NameId::Invalid, class_info.enclosing_scope_id);
   }
 
   // Enter the class scope.

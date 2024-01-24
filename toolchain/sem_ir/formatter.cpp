@@ -848,6 +848,14 @@ class Formatter {
     FormatLabel(inst.block_id);
   }
 
+  auto FormatInstructionRHS(Namespace inst) -> void {
+    if (inst.import_id.is_valid()) {
+      FormatArgs(inst.name_scope_id, inst.import_id);
+    } else {
+      FormatArgs(inst.name_scope_id);
+    }
+  }
+
   auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {
     if (!in_terminator_sequence_) {
       Indent();
