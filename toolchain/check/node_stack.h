@@ -144,6 +144,10 @@ class NodeStack {
     return true;
   }
 
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
+  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId>;
+
   // Pops a pattern from the top of the stack and returns the parse_node and
   // the ID.
   auto PopPatternWithParseNode() -> std::pair<Parse::NodeId, SemIR::InstId> {
@@ -155,10 +159,6 @@ class NodeStack {
   auto PopNameWithParseNode() -> std::pair<Parse::NodeId, SemIR::NameId> {
     return PopWithParseNode<SemIR::NameId>();
   }
-
-  // Pops an expression from the top of the stack and returns the parse_node and
-  // the ID.
-  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId>;
 
   // Pops the top of the stack and returns the parse_node and the ID.
   template <const Parse::NodeKind& RequiredParseKind>
@@ -390,6 +390,7 @@ class NodeStack {
     ClassId,
     InterfaceId,
     NameId,
+    // NOTE: Currently unused.
     TypeId,
     // No associated ID type.
     SoloParseNode,
