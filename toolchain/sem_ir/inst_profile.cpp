@@ -83,7 +83,7 @@ struct HasProfileArg {
 
 // Wrap is_invocable_v to avoid a compile error on an unused lambda operand.
 template <typename... T, typename F>
-constexpr auto IsInvocable(F /* f */) -> bool {
+constexpr auto IsInvocable(F /*f*/) -> bool {
   return std::is_invocable_v<F, T...>;
 }
 
