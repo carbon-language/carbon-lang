@@ -249,7 +249,8 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
 }
 
 auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
-  auto base_type_expr_id = context.node_stack().PopExpr();
+  auto [base_type_node_id, base_type_expr_id] =
+      context.node_stack().PopExprWithParseNode();
 
   // Process modifiers. `extend` is required, none others are allowed.
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
@@ -284,7 +285,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
     return true;
   }
 
-  auto base_info = CheckBaseType(context, parse_node, base_type_expr_id);
+  auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
