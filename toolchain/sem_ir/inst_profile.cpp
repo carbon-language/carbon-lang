@@ -65,22 +65,6 @@ static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
   id.AddBoolean(real.is_decimal);
 }
 
-// Value will be true when a matching `ProfileArg` overload exists.
-template <typename ArgT>
-struct HasProfileArg {
- private:
-  template <typename ArgT2,
-            typename = decltype(ProfileArg(
-                std::declval<llvm::FoldingSetNodeID&>(),
-                std::declval<const File&>(), std::declval<ArgT2>()))>
-  static auto Test(int) -> std::true_type;
-  template <typename ArgT2>
-  static auto Test(...) -> std::false_type;
-
- public:
-  static constexpr bool Value = decltype(Test<ArgT>(0))::value;
-};
-
 // Wrap is_invocable_v to avoid a compile error on an unused lambda operand.
 template <typename... T, typename F>
 constexpr auto IsInvocable(F /*f*/) -> bool {
