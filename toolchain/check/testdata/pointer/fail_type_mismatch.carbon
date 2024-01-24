@@ -22,7 +22,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.ConstMismatch = %ConstMismatch}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.ConstMismatch = %ConstMismatch} [template]
 // CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

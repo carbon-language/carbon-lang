@@ -15,7 +15,7 @@ var y: () = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x

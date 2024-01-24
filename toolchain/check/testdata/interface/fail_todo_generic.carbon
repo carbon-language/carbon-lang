@@ -15,7 +15,7 @@ interface I[]();
 // CHECK:STDOUT: --- fail_todo_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

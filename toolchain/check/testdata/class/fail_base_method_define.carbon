@@ -40,7 +40,7 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .D = %D.decl}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .D = %D.decl} [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, ()
 // CHECK:STDOUT:   %D.decl = class_decl @D, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]

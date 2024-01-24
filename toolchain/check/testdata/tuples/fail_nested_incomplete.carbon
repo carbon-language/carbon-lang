@@ -31,7 +31,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .t = %t, .p = %p}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .t = %t, .p = %p} [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)

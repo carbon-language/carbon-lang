@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F} [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }

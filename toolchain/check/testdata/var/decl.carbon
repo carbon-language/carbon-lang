@@ -11,7 +11,7 @@ fn Main() {
 // CHECK:STDOUT: --- decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main} [template]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

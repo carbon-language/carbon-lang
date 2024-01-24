@@ -19,7 +19,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var

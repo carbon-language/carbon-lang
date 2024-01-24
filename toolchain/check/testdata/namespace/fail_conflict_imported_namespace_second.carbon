@@ -33,7 +33,7 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %NS}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %NS} [template]
 // CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,9 +42,9 @@ fn NS.Foo();
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2} [template]
 // CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %.loc10: <namespace> = namespace {}, invalid [template]
+// CHECK:STDOUT:   %.loc10: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %.loc18: <function> = fn_decl @.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

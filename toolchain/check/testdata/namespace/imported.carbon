@@ -27,9 +27,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4}, invalid [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.ChildNS = %.loc5, .A = %A}, invalid [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {.B = %B}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.ChildNS = %.loc5, .A = %A} [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {.B = %B} [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
 // CHECK:STDOUT: }
@@ -45,7 +45,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a, .b = %b, .package_a = %package_a, .package_b = %package_b}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a, .b = %b, .package_a = %package_a, .package_b = %package_b} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.ChildNS = %.3, .A = %.4}, %lazy_import_ref.1 [template]
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+2

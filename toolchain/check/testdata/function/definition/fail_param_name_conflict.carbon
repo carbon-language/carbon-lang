@@ -15,7 +15,7 @@ fn Bar(a: i32, a: i32) {}
 // CHECK:STDOUT: --- fail_param_name_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Bar = %Bar}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Bar = %Bar} [template]
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

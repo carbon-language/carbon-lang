@@ -41,34 +41,34 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.loc4}, invalid [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
 // CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.loc5}, %lazy_import_ref [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {}, invalid [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+3
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.loc5}, %lazy_import_ref.2 [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {}, invalid [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4
@@ -90,7 +90,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .e = %e}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .e = %e} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4

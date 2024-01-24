@@ -77,7 +77,7 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl} [template]
 // CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
 // CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
 // CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()

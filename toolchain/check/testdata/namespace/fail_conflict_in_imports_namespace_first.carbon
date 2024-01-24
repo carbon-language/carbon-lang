@@ -35,8 +35,8 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4}, invalid [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.Foo = %Foo}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.Foo = %Foo} [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,7 +48,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %NS}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %NS} [template]
 // CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +60,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2} [template]
 // CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.Foo = %lazy_import_ref.2, .Bar = %Bar}, %lazy_import_ref.1 [template]
 // CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+2

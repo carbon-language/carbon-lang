@@ -19,7 +19,7 @@ var test_type: type = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.test_i32 = %test_i32, .test_f64 = %test_f64, .test_type = %test_type}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.test_i32 = %test_i32, .test_f64 = %test_f64, .test_type = %test_type} [template]
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]

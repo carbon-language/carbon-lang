@@ -25,7 +25,7 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b} [template]
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 39999999999999999993 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_34: type = array_type %.loc10_14, i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a

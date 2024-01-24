@@ -26,7 +26,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }

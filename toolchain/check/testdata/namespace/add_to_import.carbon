@@ -21,8 +21,8 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4}, invalid [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -32,7 +32,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a}, invalid [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a} [template]
 // CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.A = %A}, %lazy_import_ref [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
