@@ -57,7 +57,7 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
+  out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
 }
 
 File::File(SharedValueStores& value_stores)

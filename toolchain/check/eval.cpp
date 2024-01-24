@@ -83,6 +83,14 @@ static auto GetConstantValue(Context& context, SemIR::InstId inst_id,
   return const_id.inst_id();
 }
 
+// A type is always constant, but we still need to extract its phase.
+static auto GetConstantValue(Context& context, SemIR::TypeId type_id,
+                             Phase* phase) -> SemIR::TypeId {
+  auto const_id = context.types().GetConstantId(type_id);
+  *phase = LatestPhase(*phase, GetPhase(const_id));
+  return type_id;
+}
+
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
 static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
@@ -107,6 +115,17 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
   // TODO: If the new block is identical to the original block, return the
   // original ID.
   return context.inst_blocks().Add(const_insts);
+}
+
+// The constant value of a type block is that type block, but we still need to
+// extract its phase.
+static auto GetConstantValue(Context& context, SemIR::TypeBlockId type_block_id,
+                             Phase* phase) -> SemIR::TypeBlockId {
+  auto types = context.type_blocks().Get(type_block_id);
+  for (auto type_id : types) {
+    GetConstantValue(context, type_id, phase);
+  }
+  return type_block_id;
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -305,20 +324,33 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             }
             return true;
           },
-          &SemIR::ArrayType::bound_id);
+          &SemIR::ArrayType::bound_id, &SemIR::ArrayType::element_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::PointerType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::PointerType::pointee_id);
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructType::fields_id);
+    case SemIR::StructTypeField::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::StructTypeField::field_type_id);
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructValue::elements_id);
+    case SemIR::TupleType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::TupleType::elements_id);
     case SemIR::TupleValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::TupleValue::elements_id);
+    case SemIR::UnboundElementType::Kind:
+      return RebuildIfFieldsAreConstant(
+          context, inst, &SemIR::UnboundElementType::class_type_id,
+          &SemIR::UnboundElementType::element_type_id);
 
     // Initializers evaluate to a value of the object representation.
     case SemIR::ArrayInit::Kind:
@@ -334,14 +366,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
-    // These cases are always constants.
+    // These cases are always template constants.
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
-    case SemIR::PointerType::Kind:
-    case SemIR::StructTypeField::Kind:
-    case SemIR::TupleType::Kind:
-    case SemIR::UnboundElementType::Kind:
-      // TODO: Propagate symbolic / template nature from operands.
+      // TODO: Once classes have generic arguments, handle them.
       return MakeConstantResult(context, inst, Phase::Template);
 
     // These cases are treated as being the unique canonical definition of the

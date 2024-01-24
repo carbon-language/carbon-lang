@@ -189,16 +189,22 @@ class TypeStore : public ValueStore<TypeId> {
   explicit TypeStore(InstStore* insts) : insts_(insts) {}
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> InstId {
+  auto GetConstantId(TypeId type_id) const -> ConstantId {
     if (type_id == TypeId::TypeType) {
-      return InstId::BuiltinTypeType;
+      return ConstantId::ForTemplateConstant(InstId::BuiltinTypeType);
     } else if (type_id == TypeId::Error) {
-      return InstId::BuiltinError;
+      return ConstantId::Error;
     } else if (!type_id.is_valid()) {
-      return InstId::Invalid;
+      // TODO: Can we CHECK-fail on this?
+      return ConstantId::NotConstant;
     } else {
-      return Get(type_id).inst_id;
+      return Get(type_id).constant_id;
     }
+  }
+
+  // Returns the ID of the instruction used to define the specified type.
+  auto GetInstId(TypeId type_id) const -> InstId {
+    return GetConstantId(type_id).inst_id();
   }
 
   // Returns the instruction used to define the specified type.
@@ -214,7 +220,7 @@ class TypeStore : public ValueStore<TypeId> {
       return GetAsInst(type_id).As<InstT>();
     } else {
       // The type is not a builtin, so no need to check for special values.
-      return insts_->Get(Get(type_id).inst_id).As<InstT>();
+      return insts_->Get(Get(type_id).constant_id.inst_id()).As<InstT>();
     }
   }
 

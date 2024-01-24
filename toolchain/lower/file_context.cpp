@@ -34,7 +34,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // used.
   types_.resize(sem_ir_->types().size());
   for (auto type_id : sem_ir_->complete_types()) {
-    types_[type_id.index] = BuildType(sem_ir_->types().Get(type_id).inst_id);
+    types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
   }
 
   // Lower function declarations.
