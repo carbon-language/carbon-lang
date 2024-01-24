@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [trunk, action-test]
   pull_request:
   merge_group:
 
@@ -76,12 +76,58 @@ jobs:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
 
-      # Use LLVM following:
+      # Install and cache LLVM 16 from Homebrew.
+      # TODO: We can potentially remove this and simplify things when the
+      # Homebrew version of LLVM updates to 16 here:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+      - name: Cache Homebrew (macOS)
+        if: steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12'
+        id: cache-homebrew-macos
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-homebrew
+        with:
+          # Cover all the critical parts of Homebrew here.
+          path: |
+            /usr/local/Homebrew
+            /usr/local/Cellar
+            /usr/local/Frameworks
+            /usr/local/bin
+            /usr/local/opt
+          # Note the key needs to include all the packages we're adding.
+          key: Homebrew-Cache-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install LLVM and Clang with Homebrew (macOS)
+        if:
+          steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12' &&
+          steps.cache-homebrew-macos.outputs.cache-hit != 'true'
+        run: |
+          echo '*** Prune brew leaves'
+          # We prune all the leaf packages to have a minimal environment. This
+          # both minimizes the install space and avoids accidental dependencies
+          # on installed packages.
+          brew leaves
+          LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|wget|yq|zlib)$')
+          brew uninstall -f --ignore-dependencies $LEAVES
+          echo '*** Installing LLVM deps'
+          brew install --force-bottle --only-dependencies llvm@16
+          echo '*** Installing LLVM itself'
+          brew install --force-bottle --force --verbose llvm@16
+          echo '*** brew info llvm@16'
+          brew info llvm@16
+          echo '*** brew autoremove'
+          brew autoremove
+          echo '*** brew info'
+          brew info
+          echo '*** brew leaves'
+          brew leaves
+          echo '*** brew config'
+          brew config
+
       - name: Setup LLVM and Clang (macOS)
         if: steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12'
         run: |
-          LLVM_PATH="$(brew --prefix llvm@15)"
+          LLVM_PATH="$(brew --prefix llvm@16)"
           echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
@@ -89,18 +135,49 @@ jobs:
           echo '*** ls "${LLVM_PATH}/bin"'
           ls "${LLVM_PATH}/bin"
 
-      # Use LLVM following:
-      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
-      - name: Setup LLVM and Clang (Ubuntu)
+      # Cache and install a recent version of LLVM. This uses the GitHub action
+      # cache to avoid directly downloading on each iteration and improve
+      # reliability.
+      - name: Cache LLVM and Clang installation (Ubuntu)
+        if:
+          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
+        id: cache-llvm-ubuntu
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-llvm
+        with:
+          path: ~/llvm
+          key: LLVM-16-Cache-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Download LLVM and Clang installation (Ubuntu)
+        if:
+          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
+          && steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+        run: |
+          cd ~
+          LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
+          echo "*** Downloading $LLVM_RELEASE"
+          wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/$LLVM_RELEASE.tar.xz"
+          echo "*** Extracting $LLVM_RELEASE"
+          tar -xJf "$LLVM_RELEASE.tar.xz"
+          echo "*** Moving to 'llvm'"
+          mv "$LLVM_RELEASE" llvm
+          echo "*** Testing `clang++ --version`"
+          ~/llvm/bin/clang++ --version
+
+          # The installation contains *huge* parts of LLVM we don't need for the
+          # toolchain. Prune them here to keep our cache small.
+          echo "*** Cleaning the 'llvm' directory"
+          rm llvm/lib/{*.a,*.so,*.so.*,*.bc}
+          rm llvm/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
+          echo "*** Size of the 'llvm' directory"
+          du -hs llvm
+
+      - name: Setup LLVM and Clang paths (Ubuntu)
         if:
           steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
         run: |
-          # TODO: Re-enable once llvm-15 is working.
-          # https://github.com/actions/runner-images/issues/8253
-          # LLVM_PATH="/usr/lib/llvm-15"
-          # if [[ ! -e "${LLVM_PATH}" ]]; then
-          LLVM_PATH="/usr/lib/llvm-14"
-          # fi
+          LLVM_PATH=~/llvm
           echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
