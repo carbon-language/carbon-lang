@@ -174,7 +174,7 @@ static auto CopyEnclosingNameScopesFromImportIR(
 auto Import(Context& context, SemIR::TypeId namespace_type_id,
             Parse::NodeId import_node, const SemIR::File& import_sem_ir)
     -> void {
-  auto ir_id = context.sem_ir().cross_ref_irs().Add(&import_sem_ir);
+  auto ir_id = context.cross_ref_irs().Add(&import_sem_ir);
 
   for (const auto import_inst_id :
        import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
