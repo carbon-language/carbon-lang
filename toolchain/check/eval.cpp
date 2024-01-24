@@ -301,26 +301,27 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           context, inst,
           [&](SemIR::ArrayType result) {
             auto bound_id = inst.As<SemIR::ArrayType>().bound_id;
-            if (auto int_bound = context.insts().TryGetAs<SemIR::IntLiteral>(
-                    result.bound_id)) {
-              // TODO: We should check that the size of the resulting array type
-              // fits in 64 bits, not just that the bound does. Should we use a
-              // 32-bit limit for 32-bit targets?
-              // TODO: Also check for a negative bound, once that's something we
-              // can represent.
-              const auto& bound_val = context.ints().Get(int_bound->int_id);
-              if (bound_val.getActiveBits() > 64) {
-                CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                  "Array bound of {0} is too large.",
-                                  llvm::APInt);
-                context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
-                return false;
-              }
-            } else {
+            auto int_bound =
+                context.insts().TryGetAs<SemIR::IntLiteral>(result.bound_id);
+            if (!int_bound) {
               // TODO: Permit symbolic array bounds. This will require fixing
               // callers of `GetArrayBoundValue`.
               context.TODO(context.insts().GetParseNode(bound_id),
                            "symbolic array bound");
+              return false;
+            }
+            // TODO: We should check that the size of the resulting array type
+            // fits in 64 bits, not just that the bound does. Should we use a
+            // 32-bit limit for 32-bit targets?
+            // TODO: Also check for a negative bound, once that's something we
+            // can represent.
+            const auto& bound_val = context.ints().Get(int_bound->int_id);
+            if (bound_val.getActiveBits() > 64) {
+              CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                                "Array bound of {0} is too large.",
+                                llvm::APInt);
+              context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
+              return false;
             }
             return true;
           },
