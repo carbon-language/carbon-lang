@@ -13,8 +13,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Details](#details)
     -   [Examples](#examples)
--   [Open questions](#open-questions)
-    -   [Tuple indexing](#tuple-indexing)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -132,15 +130,6 @@ class Span(T:! type) {
   }
 }
 ```
-
-## Open questions
-
-### Tuple indexing
-
-It is not clear how tuple indexing will be modeled. When indexing a tuple, the
-index value must be a constant, and the type of the expression can depend on
-that value, but we don't yet have the tools to express those properties in a
-Carbon API.
 
 ## Alternatives considered
 

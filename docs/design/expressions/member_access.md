@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
+-   [Tuple indexing](#tuple-indexing)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -840,6 +841,32 @@ alias X3 = (i32 as Factory).Make;
 // ❌ Error, compound access without impl lookup or instance binding.
 alias X4 = i32.((i32 as Factory).Make);
 ```
+
+## Tuple indexing
+
+A tuple indexing expression is of the form:
+
+-   _expression_ `.` _integer-literal_
+-   _expression_ `->` _integer-literal_
+
+The _expression_ is required to be of tuple type, and _integer-literal_ is
+required to be less than the number of tuple elements. The result is the
+corresponding positional element of the tuple.
+
+```
+// `n == 42`.
+let n: i32 = (41, 42, 43).1;
+```
+
+In a compound member access of the form:
+
+-   _expression_ `.` `(` _expression_ `)`
+-   _expression_ `->` `(` _expression_ `)`
+
+in which the first _expression_ is a tuple and the second _expression_ is of
+integer or integer literal type, the second _expression_ is required to be a
+non-negative template constant that is less than the number of tuple elements,
+and the result is the corresponding positional element of the tuple.
 
 ## Precedence and associativity
 

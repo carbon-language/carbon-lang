@@ -70,7 +70,8 @@ or C++ octal literal (other than `0`) is invalid in Carbon.
 Real numbers are written as a decimal or hexadecimal integer followed by a
 period (`.`) followed by a sequence of one or more decimal or hexadecimal
 digits, respectively. A digit is required on each side of the period. `0.` and
-`.3` are both invalid.
+`.3` are both lexed as two separate tokens: `0.(Util.Abs)()` and `tuple.3` both
+treat the period as member or element access, not as a radix point.
 
 A real number can be followed by an exponent character, an optional `+` or `-`
 (defaulting to `+` if absent), and a character sequence matching the grammar of
