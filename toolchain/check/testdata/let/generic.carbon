@@ -13,7 +13,7 @@ fn F() {
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type T [template]
+// CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -25,7 +25,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
 // CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T [symbolic = %T]
-// CHECK:STDOUT:   %.loc9: type = ptr_type T [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
 // CHECK:STDOUT:   %T.ref.loc10: type = name_ref T, %T [symbolic = %T]

@@ -16,7 +16,7 @@
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: CrossRef, arg0: ir0, arg1: instTypeType, type: typeTypeType}

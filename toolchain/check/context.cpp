@@ -700,6 +700,9 @@ class TypeCompleter {
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
+          if (value_rep.type_id == SemIR::TypeId::Error) {
+            break;
+          }
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
           if (!context_.types().IsComplete(pointee_type_id)) {
@@ -1068,8 +1071,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   auto [it, added] = type_ids_for_type_constants_.insert(
       {constant_id, SemIR::TypeId::Invalid});
   if (added) {
-    // TODO: Store the full `constant_id` on the TypeInfo.
-    it->second = types().Add({.inst_id = constant_id.inst_id()});
+    it->second = types().Add({.constant_id = constant_id});
   }
   return it->second;
 }

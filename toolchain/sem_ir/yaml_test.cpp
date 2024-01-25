@@ -43,11 +43,11 @@ TEST(SemIRTest, YAML) {
   auto int_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"((template|symbolic) inst\+\d+)"));
+      Yaml::Scalar(MatchesRegex(R"((template|symbolic) inst(\w+|\+\d+))"));
   auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
   auto type_builtin = Pair(
-      type_id, Yaml::Mapping(ElementsAre(Pair("inst", inst_builtin),
+      type_id, Yaml::Mapping(ElementsAre(Pair("constant", constant_id),
                                          Pair("value_rep", Yaml::Mapping(_)))));
 
   auto file = Yaml::Mapping(ElementsAre(
