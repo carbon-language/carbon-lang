@@ -29,9 +29,7 @@ struct ParseNodeAndInst {
 
   // For the common case, support construction as:
   //   context.AddInst({parse_node, SemIR::MyInst{...}});
-  template <typename InstT, typename std::enable_if_t<!std::is_same_v<
-                                typename decltype(InstT::Kind)::TypedNodeId,
-                                Parse::InvalidNodeId>>* = nullptr>
+  template <HasParseNode InstT>
   // NOLINTNEXTLINE(google-explicit-constructor)
   ParseNodeAndInst(typename decltype(InstT::Kind)::TypedNodeId parse_node,
                    InstT inst)
@@ -39,9 +37,8 @@ struct ParseNodeAndInst {
 
   // For cases with no parse node, support construction as:
   //   context.AddInst({SemIR::MyInst{...}});
-  template <typename InstT, typename std::enable_if_t<std::is_same_v<
-                                typename decltype(InstT::Kind)::TypedNodeId,
-                                Parse::InvalidNodeId>>* = nullptr>
+  template <typename InstT>
+    requires(!HasParseNode<InstT>)
   // NOLINTNEXTLINE(google-explicit-constructor)
   ParseNodeAndInst(InstT inst)
       : parse_node(Parse::NodeId::Invalid), inst(inst) {}
