@@ -17,8 +17,7 @@ namespace Carbon::Check {
 
 // Returns name information for the entity, corresponding to IDs in the import
 // IR rather than the current IR. May return Invalid for a TODO.
-static auto GetImportName(Parse::NodeId parse_node, Context& context,
-                          const SemIR::File& import_sem_ir,
+static auto GetImportName(const SemIR::File& import_sem_ir,
                           SemIR::Inst import_inst)
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   switch (import_inst.kind()) {
@@ -28,10 +27,22 @@ static auto GetImportName(Parse::NodeId parse_node, Context& context,
       return {bind_name.name_id, bind_name.enclosing_scope_id};
     }
 
+    case SemIR::InstKind::ClassDecl: {
+      const auto& class_info = import_sem_ir.classes().Get(
+          import_inst.As<SemIR::ClassDecl>().class_id);
+      return {class_info.name_id, class_info.enclosing_scope_id};
+    }
+
     case SemIR::InstKind::FunctionDecl: {
       const auto& function = import_sem_ir.functions().Get(
           import_inst.As<SemIR::FunctionDecl>().function_id);
       return {function.name_id, function.enclosing_scope_id};
+    }
+
+    case SemIR::InstKind::InterfaceDecl: {
+      const auto& interface = import_sem_ir.interfaces().Get(
+          import_inst.As<SemIR::InterfaceDecl>().interface_id);
+      return {interface.name_id, interface.enclosing_scope_id};
     }
 
     case SemIR::InstKind::Namespace: {
@@ -41,10 +52,7 @@ static auto GetImportName(Parse::NodeId parse_node, Context& context,
     }
 
     default:
-      context.TODO(parse_node, (llvm::Twine("Support GetImportName of ") +
-                                import_inst.kind().name())
-                                   .str());
-      return {SemIR::NameId::Invalid, SemIR::NameScopeId::Invalid};
+      CARBON_FATAL() << "Unsupported export kind: " << import_inst;
   }
 }
 
@@ -172,15 +180,14 @@ static auto CopyEnclosingNameScopesFromImportIR(
 }
 
 auto Import(Context& context, SemIR::TypeId namespace_type_id,
-            Parse::NodeId import_node, const SemIR::File& import_sem_ir)
-    -> void {
+            const SemIR::File& import_sem_ir) -> void {
   auto ir_id = context.cross_ref_irs().Add(&import_sem_ir);
 
   for (const auto import_inst_id :
        import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
     auto import_inst = import_sem_ir.insts().Get(import_inst_id);
     auto [import_name_id, import_enclosing_scope_id] =
-        GetImportName(import_node, context, import_sem_ir, import_inst);
+        GetImportName(import_sem_ir, import_inst);
     // TODO: This should only be invalid when GetImportName for an inst
     // isn't yet implemented. Long-term this should be removed.
     if (!import_name_id.is_valid()) {

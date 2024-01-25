@@ -547,8 +547,9 @@ class Context {
   llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
       non_lexical_scope_stack_;
 
-  // The index of the next scope that will be pushed onto scope_stack_.
-  ScopeIndex next_scope_index_ = ScopeIndex(0);
+  // The index of the next scope that will be pushed onto scope_stack_. The
+  // first is always the package scope.
+  ScopeIndex next_scope_index_ = ScopeIndex::Package;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
