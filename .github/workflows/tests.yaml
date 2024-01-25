@@ -107,7 +107,7 @@ jobs:
           # both minimizes the install space and avoids accidental dependencies
           # on installed packages.
           brew leaves
-          LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|wget|yq|zlib)$')
+          LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
           brew uninstall -f --ignore-dependencies $LEAVES
           echo '*** Installing LLVM deps'
           brew install --force-bottle --only-dependencies llvm@16
