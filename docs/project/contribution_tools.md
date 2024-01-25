@@ -70,7 +70,7 @@ pre-commit install
 bazel test //...:all
 ```
 
-If the version of `clang` is earlier than 16, you may still gave version 16
+If the version of `clang` is earlier than 16, you may still have version 16
 available. You can use the following install instead:
 
 ```shell
