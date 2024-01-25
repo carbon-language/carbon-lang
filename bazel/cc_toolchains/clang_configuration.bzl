@@ -20,7 +20,7 @@ def _run(repository_ctx, cmd):
 def _clang_version(version_output):
     """Returns version information, or a (None, "unknown") tuple if not found.
 
-    Returns both the major version number (14) and the full version number for
+    Returns both the major version number (16) and the full version number for
     caching.
     """
     clang_version = None
@@ -39,7 +39,7 @@ def _clang_version(version_output):
         return (clang_version, clang_version_for_cache)
     clang_version_for_cache = version_output[version_start:version_newline]
 
-    # Find a dot to indicate something like 'clang version 14.0.6', and grab the
+    # Find a dot to indicate something like 'clang version 16.0.1', and grab the
     # major version.
     version_dot = version_output.find(".", version_start)
     if version_dot != -1 and version_dot < version_newline:
