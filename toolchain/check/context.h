@@ -491,9 +491,9 @@ class Context {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // If the passed in instruction ID is a LazyImportRef, resolves it for use.
+  // If the passed in instruction ID is a ImportRefUnused, resolves it for use.
   // Called when name lookup intends to return an inst_id.
-  auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
+  auto ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
   auto current_scope() const -> const ScopeStackEntry& {

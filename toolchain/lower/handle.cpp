@@ -200,6 +200,12 @@ auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   FatalErrorIfEncountered(inst);
 }
 
+auto HandleImportRefUnused(FunctionContext& /*context*/,
+                           SemIR::InstId /*inst_id*/,
+                           SemIR::ImportRefUnused inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
@@ -219,12 +225,6 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(inst_id, v);
-}
-
-auto HandleLazyImportRef(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
-    -> void {
-  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,

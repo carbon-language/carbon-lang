@@ -51,8 +51,8 @@ fn NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc8_13.1} [template]
-// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
-// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace {}, %lazy_import_ref [template]
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unused
+// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace {}, %import_ref [template]
 // CHECK:STDOUT:   %.loc8_13.2: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc20: <namespace> = namespace {} [template]
