@@ -100,6 +100,10 @@ class InstStore {
     parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
   }
 
+  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
+    parse_nodes_[inst_id.index] = parse_node;
+  }
+
   // Reserves space.
   auto Reserve(size_t size) -> void {
     parse_nodes_.reserve(size);
