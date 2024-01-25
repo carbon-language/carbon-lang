@@ -493,7 +493,8 @@ class InstNamer {
           add_inst_name("import");
           continue;
         }
-        case ImportRefUnused::Kind: {
+        case ImportRefUnused::Kind:
+        case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
           continue;
         }
@@ -951,6 +952,12 @@ class Formatter {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
     out_ << " " << inst.ir_id << ", " << inst.inst_id << ", unused";
+  }
+
+  auto FormatInstructionRHS(ImportRefUsed inst) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    // TODO: Consider a better way to format the InstID from other IRs.
+    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", used";
   }
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {

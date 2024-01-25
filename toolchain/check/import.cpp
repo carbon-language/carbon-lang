@@ -103,8 +103,8 @@ static auto CopySingleNameScopeFromImportIR(
   }
 
   // Produce the namespace for the entry.
-  auto ref_id = context.AddInst(
-      SemIR::ImportRefUnused{.ir_id = ir_id, .inst_id = import_inst_id});
+  auto ref_id = context.AddInst(SemIR::ImportRefUsed{
+      .type_id = namespace_type_id, .ir_id = ir_id, .inst_id = import_inst_id});
   auto namespace_inst =
       SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::Invalid, ref_id};
   // Use the invalid node because there's no node to associate with.
