@@ -188,7 +188,7 @@ class TypeStore : public ValueStore<TypeId> {
  public:
   explicit TypeStore(InstStore* insts) : insts_(insts) {}
 
-  // Returns the ID of the instruction used to define the specified type.
+  // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
     if (type_id == TypeId::TypeType) {
       return ConstantId::ForTemplateConstant(InstId::BuiltinTypeType);
