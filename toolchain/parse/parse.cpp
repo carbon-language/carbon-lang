@@ -36,8 +36,6 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.PushState(State::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (context.state_stack().back().state) {
 #define CARBON_PARSE_STATE(Name) \
   case State::Name:              \

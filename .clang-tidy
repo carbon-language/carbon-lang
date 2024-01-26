@@ -17,7 +17,7 @@ WarningsAsErrors: '*'
 #                 ^ unchecked access to optional value
 #     }
 # - bugprone-switch-missing-default-case has false positives for `enum_base.h`
-#   and is redundant with Clang's enum warnings.
+#   Clang's built-in switch warnings cover most of our risk of bugs here.
 # - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-nodiscard is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.

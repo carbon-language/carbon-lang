@@ -819,8 +819,6 @@ class TypeCompleter {
     CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
         << "TODO: Handle other kinds of inst cross-references";
 
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
@@ -939,9 +937,6 @@ class TypeCompleter {
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.
-
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
