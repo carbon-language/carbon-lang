@@ -416,6 +416,16 @@ struct Import {
   CrossRefIRId last_cross_ref_ir_id;
 };
 
+// Common representation for all kinds of `ImportRef*` node.
+struct AnyImportRef {
+  static constexpr InstKind Kinds[] = {InstKind::ImportRefUnused,
+                                       InstKind::ImportRefUsed};
+
+  InstKind kind;
+  CrossRefIRId ir_id;
+  InstId inst_id;
+};
+
 // An imported entity that hasn't yet been referenced. If referenced, it should
 // turn into an ImportRefUsed.
 // TODO: Add ImportRefUsed.
@@ -424,6 +434,17 @@ struct ImportRefUnused {
   static constexpr auto Kind =
       InstKind::ImportRefUnused.Define<Parse::InvalidNodeId>("import_ref");
 
+  CrossRefIRId ir_id;
+  InstId inst_id;
+};
+
+// An imported entity that has a reference, and thus should be emitted.
+struct ImportRefUsed {
+  // No parse node: any parse node logic must use the referenced IR.
+  static constexpr auto Kind =
+      InstKind::ImportRefUsed.Define<Parse::InvalidNodeId>("import_ref");
+
+  TypeId type_id;
   CrossRefIRId ir_id;
   InstId inst_id;
 };
