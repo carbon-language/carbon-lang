@@ -753,8 +753,6 @@ class Formatter {
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(InstT)            \
   case InstT::Kind:                               \

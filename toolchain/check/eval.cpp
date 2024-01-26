@@ -288,9 +288,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
-
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:

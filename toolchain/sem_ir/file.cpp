@@ -199,8 +199,6 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
     case BindSymbolicName::Kind:
@@ -311,8 +309,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
     }
 
     auto inst = insts().Get(step.inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case ArrayType::Kind: {
         auto array = inst.As<ArrayType>();
@@ -501,8 +497,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
   while (true) {
     auto inst = ir->insts().Get(inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
       case BaseDecl::Kind:

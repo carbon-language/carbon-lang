@@ -729,8 +729,18 @@ static auto Main(int argc, char** argv) -> int {
   // Tests might try to read from stdin. Ensure those reads fail by closing
   // stdin and reopening it as /dev/null. Note that STDIN_FILENO doesn't exist
   // on Windows, but POSIX requires it to be 0.
-  llvm::sys::Process::SafelyCloseFileDescriptor(0);
-  llvm::sys::Process::FixupStandardFileDescriptors();
+  if (std::error_code error =
+          llvm::sys::Process::SafelyCloseFileDescriptor(0)) {
+    llvm::errs() << "Unable to close standard input: " << error.message()
+                 << "\n";
+    return EXIT_FAILURE;
+  }
+  if (std::error_code error =
+          llvm::sys::Process::FixupStandardFileDescriptors()) {
+    llvm::errs() << "Unable to correct standard file descriptors: "
+                 << error.message() << "\n";
+    return EXIT_FAILURE;
+  }
 
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
