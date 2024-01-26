@@ -416,6 +416,18 @@ struct Import {
   CrossRefIRId last_cross_ref_ir_id;
 };
 
+// An imported entity that hasn't yet been referenced. If referenced, it should
+// turn into an ImportRefUsed.
+// TODO: Add ImportRefUsed.
+struct ImportRefUnused {
+  // No parse node: any parse node logic must use the referenced IR.
+  static constexpr auto Kind =
+      InstKind::ImportRefUnused.Define<Parse::InvalidNodeId>("import_ref");
+
+  CrossRefIRId ir_id;
+  InstId inst_id;
+};
+
 // Finalizes the initialization of `dest_id` from the initializer expression
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.
@@ -451,19 +463,6 @@ struct IntLiteral {
 
   TypeId type_id;
   IntId int_id;
-};
-
-// This instruction is not intended for direct use. Instead, it should be loaded
-// if it's referenced through name resolution.
-struct LazyImportRef {
-  // No parse node: an instruction's parse tree node must refer to a node in the
-  // current parse tree. This cannot use the cross-referenced instruction's
-  // parse tree node because it will be in a different parse tree.
-  static constexpr auto Kind =
-      InstKind::LazyImportRef.Define<Parse::InvalidNodeId>("lazy_import_ref");
-
-  CrossRefIRId ir_id;
-  InstId inst_id;
 };
 
 struct NameRef {

@@ -49,8 +49,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
-// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.loc5}, %lazy_import_ref [template]
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unused
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.loc5}, %import_ref [template]
 // CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,10 +58,10 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
-// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
-// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+3
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.loc5}, %lazy_import_ref.2 [template]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.loc5}, %import_ref.2 [template]
 // CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,12 +69,12 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
-// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
-// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %lazy_import_ref.2 [template]
-// CHECK:STDOUT:   %lazy_import_ref.3 = lazy_import_ref ir1, inst+5
-// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %D}, %lazy_import_ref.3 [template]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unused
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+5, unused
+// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %D}, %import_ref.3 [template]
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,12 +91,12 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .e = %e} [template]
-// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+2
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %lazy_import_ref.1 [template]
-// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir1, inst+4
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %lazy_import_ref.2 [template]
-// CHECK:STDOUT:   %lazy_import_ref.3 = lazy_import_ref ir1, inst+6
-// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %.5}, %lazy_import_ref.3 [template]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unused
+// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+6, unused
+// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %.5}, %import_ref.3 [template]
 // CHECK:STDOUT:   %.5: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]

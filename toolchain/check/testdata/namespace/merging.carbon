@@ -83,8 +83,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7_13.1, .Run = %Run} [template]
-// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
-// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %.2, .B1 = %.3, .B2 = %.4, .C = %C}, %lazy_import_ref [template]
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unused
+// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %.2, .B1 = %.3, .B2 = %.4, .C = %C}, %import_ref [template]
 // CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT:   %.3: <function> = fn_decl @.2 [template]
 // CHECK:STDOUT:   %.4: <function> = fn_decl @.3 [template]

@@ -30,7 +30,7 @@ import library "a";
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %lazy_import_ref} [template]
-// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
+// CHECK:STDOUT:   package: <namespace> = namespace {.F = %import_ref} [template]
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

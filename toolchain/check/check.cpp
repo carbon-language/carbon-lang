@@ -52,7 +52,7 @@ class SemIRLocationTranslator
 
       // If the parse node was invalid, recurse through import references when
       // possible.
-      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(
+      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::ImportRefUnused>(
               cursor_inst_id)) {
         cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
         cursor_inst_id = import_ref->inst_id;

@@ -219,9 +219,9 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
+auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
   auto inst = insts().Get(inst_id);
-  auto lazy_inst = inst.TryAs<SemIR::LazyImportRef>();
+  auto lazy_inst = inst.TryAs<SemIR::ImportRefUnused>();
   if (!lazy_inst) {
     return;
   }
@@ -296,7 +296,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     if (!lexical_results.empty()) {
       auto result = lexical_results.back();
       if (result.scope_index == current_scope_index()) {
-        ResolveIfLazyImportRef(result.inst_id);
+        ResolveIfImportRefUnused(result.inst_id);
         return result.inst_id;
       }
     }
@@ -331,7 +331,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
       auto inst_id = lexical_results.back().inst_id;
-      ResolveIfLazyImportRef(inst_id);
+      ResolveIfImportRefUnused(inst_id);
       return inst_id;
     }
 
@@ -345,7 +345,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
 
   if (!lexical_results.empty()) {
     auto inst_id = lexical_results.back().inst_id;
-    ResolveIfLazyImportRef(inst_id);
+    ResolveIfImportRefUnused(inst_id);
     return inst_id;
   }
 
@@ -360,7 +360,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfLazyImportRef(it->second);
+    ResolveIfImportRefUnused(it->second);
     return it->second;
   }
   return SemIR::InstId::Invalid;
@@ -969,7 +969,7 @@ class TypeCompleter {
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
-      case SemIR::LazyImportRef::Kind:
+      case SemIR::ImportRefUnused::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:
