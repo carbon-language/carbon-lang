@@ -10,6 +10,9 @@ cc_library(
     testonly = 1,
     srcs = ["ast_to_proto.cpp"],
     hdrs = ["ast_to_proto.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//explorer/ast",
         "//testing/fuzzing:carbon_cc_proto",
@@ -21,6 +24,9 @@ cc_binary(
     name = "ast_to_proto",
     testonly = 1,
     srcs = ["ast_to_proto_main.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast_to_proto_lib",
         "//common:bazel_working_dir",
@@ -45,6 +51,9 @@ cc_test(
         "//explorer:carbon_files",
         "//explorer:standard_libraries",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast_to_proto_lib",
         "//explorer/syntax",
@@ -61,6 +70,9 @@ cc_library(
     testonly = 1,
     srcs = ["fuzzer_util.cpp"],
     hdrs = ["fuzzer_util.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//common:check",
         "//common:error",
@@ -81,6 +93,9 @@ cc_test(
     data = [
         "//explorer:standard_libraries",
     ],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":fuzzer_util",
         "//testing/base:gtest_main",
@@ -98,10 +113,8 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     shard_count = 8,
     tags = [
-        "proto-fuzzer",
-        # Running clang-tidy is slow, and explorer is currently feature frozen,
-        # so don't spend time linting it.
         "no-clang-tidy",
+        "proto-fuzzer",
     ],
     deps = [
         ":fuzzer_util",

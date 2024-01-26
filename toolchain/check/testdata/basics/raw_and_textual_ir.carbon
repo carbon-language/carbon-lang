@@ -24,13 +24,13 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block2, return_type: type4, return_slot: inst+7, body: [block5]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
-// CHECK:STDOUT:     type0:           {inst: instNamespaceType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {inst: instIntType, value_rep: {kind: copy, type: type1}}
-// CHECK:STDOUT:     type2:           {inst: inst+3, value_rep: {kind: unknown, type: type<invalid>}}
-// CHECK:STDOUT:     type3:           {inst: instFloatType, value_rep: {kind: copy, type: type3}}
-// CHECK:STDOUT:     type4:           {inst: inst+5, value_rep: {kind: pointer, type: type5}}
-// CHECK:STDOUT:     type5:           {inst: inst+8, value_rep: {kind: copy, type: type5}}
-// CHECK:STDOUT:     type6:           {inst: instFunctionType, value_rep: {kind: copy, type: type6}}
+// CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
+// CHECK:STDOUT:     type1:           {constant: template instIntType, value_rep: {kind: copy, type: type1}}
+// CHECK:STDOUT:     type2:           {constant: template inst+3, value_rep: {kind: unknown, type: type<invalid>}}
+// CHECK:STDOUT:     type3:           {constant: template instFloatType, value_rep: {kind: copy, type: type3}}
+// CHECK:STDOUT:     type4:           {constant: template inst+5, value_rep: {kind: pointer, type: type5}}
+// CHECK:STDOUT:     type5:           {constant: template inst+8, value_rep: {kind: copy, type: type5}}
+// CHECK:STDOUT:     type6:           {constant: template instFunctionType, value_rep: {kind: copy, type: type6}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     typeBlock0:
 // CHECK:STDOUT:       0:               typeTypeType

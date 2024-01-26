@@ -52,7 +52,7 @@ class SemIRLocationTranslator
 
       // If the parse node was invalid, recurse through import references when
       // possible.
-      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(
+      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
         cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
         cursor_inst_id = import_ref->inst_id;
@@ -165,8 +165,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-      Import(context, namespace_type_id, self_import->second.node,
-             import_sem_ir);
+      Import(context, namespace_type_id, import_sem_ir);
       error_in_import = error_in_import || import_sem_ir.name_scopes()
                                                .Get(SemIR::NameScopeId::Package)
                                                .has_error;
@@ -183,6 +182,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     // Push the scope; there are no names to add.
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
   }
+  CARBON_CHECK(context.current_scope_index() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
     if (!package_id.is_valid()) {
@@ -206,8 +206,6 @@ static auto ProcessParseNodes(Context& context,
                               ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
   for (auto parse_node : context.parse_tree().postorder()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \

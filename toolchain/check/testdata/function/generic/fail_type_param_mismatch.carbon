@@ -15,7 +15,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: --- fail_type_param_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type T [template]
+// CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: fn @F(%T: type, %U: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T]
-// CHECK:STDOUT:   %.loc8: type = ptr_type T [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
 // CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = %U]

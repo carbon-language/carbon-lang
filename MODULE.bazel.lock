@@ -1658,7 +1658,7 @@
     },
     "//bazel/cc_toolchains:clang_configuration.bzl%clang_toolchain_extension": {
       "general": {
-        "bzlTransitiveDigest": "Kc8IiGDwk4jswZNBnPRlrEMAB8XGoLRpc9IHkKq/DQI=",
+        "bzlTransitiveDigest": "K2JE5G8tvZ+UBmAPF5s/YSUNg53pTvAZi2ause87buQ=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {

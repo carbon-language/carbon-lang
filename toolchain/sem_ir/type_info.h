@@ -66,8 +66,8 @@ struct ValueRepr : public Printable<ValueRepr> {
 struct TypeInfo : public Printable<TypeInfo> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // The instruction that defines this type.
-  InstId inst_id;
+  // The constant type value that defines this type.
+  ConstantId constant_id;
   // The value representation for this type. Will be `Unknown` if the type is
   // not complete.
   ValueRepr value_repr = ValueRepr();

@@ -83,7 +83,13 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                      QualifiedDeclOutsideScopeEntity);
           }
         }
-        context_->AddExport(target_id);
+
+        // Exports are only tracked when the declaration is at the file-level
+        // scope. Otherwise, it's in some other entity, such as a class.
+        if (name_context.enclosing_scope == ScopeIndex::Package) {
+          context_->AddExport(target_id);
+        }
+
         auto [_, success] = name_scope.names.insert(
             {name_context.unresolved_name_id, target_id});
         CARBON_CHECK(success)

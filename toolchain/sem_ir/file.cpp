@@ -57,7 +57,7 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
+  out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
 }
 
 File::File(SharedValueStores& value_stores)
@@ -199,13 +199,12 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
+    case ImportRefUsed::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -245,10 +244,10 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case Import::Kind:
+    case ImportRefUnused::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
     case IntLiteral::Kind:
-    case LazyImportRef::Kind:
     case Namespace::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
@@ -310,8 +309,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
     }
 
     auto inst = insts().Get(step.inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case ArrayType::Kind: {
         auto array = inst.As<ArrayType>();
@@ -355,6 +352,9 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
+      case ImportRefUsed::Kind:
+        out << "<TODO: ImportRefUsed " << step.inst_id << ">";
+        break;
       case NameRef::Kind: {
         out << names().GetFormatted(inst.As<NameRef>().name_id);
         break;
@@ -451,10 +451,10 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case IntLiteral::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
@@ -497,8 +497,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
   while (true) {
     auto inst = ir->insts().Get(inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
       case BaseDecl::Kind:
@@ -509,8 +507,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
+      case ImportRefUsed::Kind:
       case InterfaceDecl::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:

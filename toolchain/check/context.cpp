@@ -219,48 +219,28 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
+auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
   auto inst = insts().Get(inst_id);
-  auto lazy_inst = inst.TryAs<SemIR::LazyImportRef>();
-  if (!lazy_inst) {
+  auto unused_inst = inst.TryAs<SemIR::ImportRefUnused>();
+  if (!unused_inst) {
     return;
   }
-  const SemIR::File& import_ir = *cross_ref_irs().Get(lazy_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(lazy_inst->inst_id);
+  const SemIR::File& import_ir = *cross_ref_irs().Get(unused_inst->ir_id);
+  auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
   switch (import_inst.kind()) {
-    case SemIR::InstKind::FunctionDecl: {
-      // TODO: Fill this in better.
-      auto function_id =
-          functions().Add({.name_id = SemIR::NameId::Invalid,
-                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
-                           .decl_id = inst_id,
-                           .implicit_param_refs_id = SemIR::InstBlockId::Empty,
-                           .param_refs_id = SemIR::InstBlockId::Empty,
-                           .return_type_id = SemIR::TypeId::Invalid,
-                           .return_slot_id = SemIR::InstId::Invalid});
-      ReplaceInstBeforeConstantUse(
-          inst_id,
-          // TODO: For diagnostic purposes, we should provide some form of
-          // location for the function.
-          {Parse::NodeId::Invalid,
-           SemIR::FunctionDecl{GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-                               function_id}});
-      constant_values().Set(inst_id,
-                            SemIR::ConstantId::ForTemplateConstant(inst_id));
-      break;
-    }
-
     default:
       // TODO: We need more type support. For now we inject an arbitrary
       // invalid node that's unrelated to the underlying value. The TODO
       // diagnostic is used since this section shouldn't typically be able to
       // error.
       TODO(Parse::NodeId::Invalid,
-           (llvm::Twine("TODO: support ") + import_inst.kind().name()).str());
+           (llvm::Twine("TODO: ResolveIfImportRefUnused for ") +
+            import_inst.kind().name())
+               .str());
       ReplaceInstBeforeConstantUse(
-          inst_id, {Parse::NodeId::Invalid,
-                    SemIR::VarStorage{SemIR::TypeId::Error,
-                                      SemIR::NameId::PackageNamespace}});
+          inst_id,
+          {SemIR::ImportRefUsed{SemIR::TypeId::Error, unused_inst->ir_id,
+                                unused_inst->inst_id}});
       break;
   }
 }
@@ -296,7 +276,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     if (!lexical_results.empty()) {
       auto result = lexical_results.back();
       if (result.scope_index == current_scope_index()) {
-        ResolveIfLazyImportRef(result.inst_id);
+        ResolveIfImportRefUnused(result.inst_id);
         return result.inst_id;
       }
     }
@@ -331,7 +311,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
       auto inst_id = lexical_results.back().inst_id;
-      ResolveIfLazyImportRef(inst_id);
+      ResolveIfImportRefUnused(inst_id);
       return inst_id;
     }
 
@@ -345,7 +325,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
 
   if (!lexical_results.empty()) {
     auto inst_id = lexical_results.back().inst_id;
-    ResolveIfLazyImportRef(inst_id);
+    ResolveIfImportRefUnused(inst_id);
     return inst_id;
   }
 
@@ -360,7 +340,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfLazyImportRef(it->second);
+    ResolveIfImportRefUnused(it->second);
     return it->second;
   }
   return SemIR::InstId::Invalid;
@@ -704,6 +684,9 @@ class TypeCompleter {
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
+          if (value_rep.type_id == SemIR::TypeId::Error) {
+            break;
+          }
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
           if (!context_.types().IsComplete(pointee_type_id)) {
@@ -820,8 +803,6 @@ class TypeCompleter {
     CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
         << "TODO: Handle other kinds of inst cross-references";
 
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
@@ -940,9 +921,6 @@ class TypeCompleter {
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.
-
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
@@ -970,7 +948,8 @@ class TypeCompleter {
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
-      case SemIR::LazyImportRef::Kind:
+      case SemIR::ImportRefUnused::Kind:
+      case SemIR::ImportRefUsed::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:
@@ -1072,8 +1051,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   auto [it, added] = type_ids_for_type_constants_.insert(
       {constant_id, SemIR::TypeId::Invalid});
   if (added) {
-    // TODO: Store the full `constant_id` on the TypeInfo.
-    it->second = types().Add({.inst_id = constant_id.inst_id()});
+    it->second = types().Add({.constant_id = constant_id});
   }
   return it->second;
 }

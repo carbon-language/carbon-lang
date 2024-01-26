@@ -12,8 +12,7 @@ namespace Carbon::Check {
 
 // Add imports to the root block.
 auto Import(Context& context, SemIR::TypeId namespace_type_id,
-            Parse::NodeId import_node, const SemIR::File& import_sem_ir)
-    -> void;
+            const SemIR::File& import_sem_ir) -> void;
 
 }  // namespace Carbon::Check
 

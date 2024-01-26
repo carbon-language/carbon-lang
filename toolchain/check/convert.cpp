@@ -141,7 +141,7 @@ static auto MakeElementAccessInst(Context& context, Parse::NodeId parse_node,
     auto index_id = block.AddInst(
         {parse_node,
          SemIR::IntLiteral{context.GetBuiltinType(SemIR::BuiltinKind::IntType),
-                           context.sem_ir().ints().Add(llvm::APInt(32, i))}});
+                           context.ints().Add(llvm::APInt(32, i))}});
     return block.AddInst(
         {parse_node, AccessInstT{elem_type_id, aggregate_id, index_id}});
   } else {
@@ -557,6 +557,9 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                       std::string);
     context.emitter().Emit(value_id, ConstructionOfAbstractClass,
                            context.sem_ir().StringifyType(target.type_id));
+    return SemIR::InstId::BuiltinError;
+  }
+  if (class_info.object_repr_id == SemIR::TypeId::Error) {
     return SemIR::InstId::BuiltinError;
   }
   auto dest_struct_type =
@@ -1026,7 +1029,7 @@ auto Initialize(Context& context, Parse::NodeId parse_node,
   PendingBlock target_block(context);
   return Convert(context, parse_node, value_id,
                  {.kind = ConversionTarget::Initializer,
-                  .type_id = context.sem_ir().insts().Get(target_id).type_id(),
+                  .type_id = context.insts().Get(target_id).type_id(),
                   .init_id = target_id,
                   .init_block = &target_block});
 }
@@ -1035,14 +1038,14 @@ auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   return Convert(context, context.insts().GetParseNode(expr_id), expr_id,
                  {.kind = ConversionTarget::Value,
-                  .type_id = context.sem_ir().insts().Get(expr_id).type_id()});
+                  .type_id = context.insts().Get(expr_id).type_id()});
 }
 
 auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   return Convert(context, context.insts().GetParseNode(expr_id), expr_id,
                  {.kind = ConversionTarget::ValueOrRef,
-                  .type_id = context.sem_ir().insts().Get(expr_id).type_id()});
+                  .type_id = context.insts().Get(expr_id).type_id()});
 }
 
 auto ConvertToValueOfType(Context& context, Parse::NodeId parse_node,
@@ -1134,9 +1137,8 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
                      SemIR::InstId return_storage_id, SemIR::InstId callee_id,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
-  auto implicit_param_refs =
-      context.sem_ir().inst_blocks().Get(implicit_param_refs_id);
-  auto param_refs = context.sem_ir().inst_blocks().Get(param_refs_id);
+  auto implicit_param_refs = context.inst_blocks().Get(implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().Get(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
@@ -1191,7 +1193,7 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_parse_node,
   for (auto [i, arg_id, param_id] : llvm::enumerate(arg_refs, param_refs)) {
     diag_param_index = i;
 
-    auto param_type_id = context.sem_ir().insts().Get(param_id).type_id();
+    auto param_type_id = context.insts().Get(param_id).type_id();
     // TODO: Convert to the proper expression category. For now, we assume
     // parameters are all `let` bindings.
     auto converted_arg_id =

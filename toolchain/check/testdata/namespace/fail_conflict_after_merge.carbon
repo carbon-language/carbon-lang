@@ -16,15 +16,29 @@ package Example api;
 
 import library "namespace";
 
+// The conflict diagnostics should point at this declaration rather than the
+// imported declaration.
+namespace NS;
+
 // CHECK:STDERR: conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: conflict.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS();
 
-fn NS.Foo();
+// The second conflict diagnostic should still point at the earlier declaration;
+// we don't move it.
+namespace NS;
+
+// CHECK:STDERR: conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn NS();
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: conflict.carbon:[[@LINE-17]]:1: Name is previously declared here.
+// CHECK:STDERR: namespace NS;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+fn NS();
 
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
@@ -36,14 +50,16 @@ fn NS.Foo();
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc8_13.1} [template]
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.Foo = %Foo}, %import_ref [template]
-// CHECK:STDOUT:   %.loc12: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace {}, %import_ref [template]
+// CHECK:STDOUT:   %.loc8_13.2: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc20: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc28: <function> = fn_decl @.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo();
+// CHECK:STDOUT: fn @.2();
 // CHECK:STDOUT:
