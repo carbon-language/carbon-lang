@@ -165,8 +165,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-      Import(context, namespace_type_id, self_import->second.node,
-             import_sem_ir);
+      Import(context, namespace_type_id, import_sem_ir);
       error_in_import = error_in_import || import_sem_ir.name_scopes()
                                                .Get(SemIR::NameScopeId::Package)
                                                .has_error;
@@ -183,6 +182,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     // Push the scope; there are no names to add.
     context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
   }
+  CARBON_CHECK(context.current_scope_index() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
     if (!package_id.is_valid()) {

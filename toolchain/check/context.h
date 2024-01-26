@@ -14,6 +14,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/node_stack.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
@@ -113,6 +114,16 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
                                     SemIR::ParseNodeAndInst parse_node_and_inst)
       -> void;
+
+  // Sets only the parse node of an instruction. This is only used when setting
+  // the parse node of an imported namespace. Versus
+  // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
+  // in constant evaluation. It's exposed this way mainly so that `insts()` can
+  // remain const.
+  auto SetNamespaceParseNode(SemIR::InstId inst_id, Parse::NodeId parse_node)
+      -> void {
+    sem_ir().insts().SetParseNode(inst_id, parse_node);
+  }
 
   // Adds a package's imports to name lookup, with all libraries together.
   // sem_irs will all be non-null; has_load_error must be used for any errors.
@@ -536,8 +547,9 @@ class Context {
   llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
       non_lexical_scope_stack_;
 
-  // The index of the next scope that will be pushed onto scope_stack_.
-  ScopeIndex next_scope_index_ = ScopeIndex(0);
+  // The index of the next scope that will be pushed onto scope_stack_. The
+  // first is always the package scope.
+  ScopeIndex next_scope_index_ = ScopeIndex::Package;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
