@@ -211,26 +211,10 @@ class NodeStack {
   // Pops the top of the stack and returns the parse_node and the ID.
   template <Parse::NodeCategory RequiredParseCategory>
   auto PopWithParseNode() -> auto {
-    constexpr std::optional<IdKind> RequiredIdKind =
-        ParseNodeCategoryToIdKind(RequiredParseCategory);
-    static_assert(RequiredIdKind.has_value());
-    auto node_id_cast = [&](auto back) {
-      using NodeIdT = Parse::NodeIdInCategory<RequiredParseCategory>;
-      return std::pair<NodeIdT, decltype(back.second)>(back);
-    };
-    if constexpr (RequiredIdKind == IdKind::InstId) {
-      auto back = PopWithParseNode<SemIR::InstId>();
-      RequireParseCategory<RequiredParseCategory>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::NameId) {
-      auto back = PopWithParseNode<SemIR::NameId>();
-      RequireParseCategory<RequiredParseCategory>(back.first);
-      return node_id_cast(back);
-    }
-    CARBON_FATAL() << "Unpoppable IdKind for parse category: "
-                   << RequiredParseCategory
-                   << "; see value in ParseNodeCategoryToIdKind";
+    auto id = Peek<RequiredParseCategory>();
+    Parse::NodeIdInCategory<RequiredParseCategory> parse_node(
+        stack_.pop_back_val().parse_node);
+    return std::make_pair(parse_node, id);
   }
 
   // Pops the top of the stack and returns the parse_node and the ID if it is
