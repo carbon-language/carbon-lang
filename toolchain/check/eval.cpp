@@ -473,8 +473,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BranchWithArg::Kind:
     case SemIR::ClassDecl::Kind:
     case SemIR::Import::Kind:
+    case SemIR::ImportRefUnused::Kind:
+    case SemIR::ImportRefUsed::Kind:
     case SemIR::InterfaceDecl::Kind:
-    case SemIR::LazyImportRef::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:

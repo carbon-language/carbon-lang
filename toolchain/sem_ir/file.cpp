@@ -204,6 +204,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
+    case ImportRefUsed::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -243,10 +244,10 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case Import::Kind:
+    case ImportRefUnused::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
     case IntLiteral::Kind:
-    case LazyImportRef::Kind:
     case Namespace::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
@@ -351,6 +352,9 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
+      case ImportRefUsed::Kind:
+        out << "<TODO: ImportRefUsed " << step.inst_id << ">";
+        break;
       case NameRef::Kind: {
         out << names().GetFormatted(inst.As<NameRef>().name_id);
         break;
@@ -447,10 +451,10 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case IntLiteral::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
@@ -503,8 +507,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
+      case ImportRefUsed::Kind:
       case InterfaceDecl::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:

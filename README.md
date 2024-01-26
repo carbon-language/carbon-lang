@@ -291,6 +291,7 @@ sudo apt install \
   bazel \
   clang \
   libc++-dev \
+  libc++abi-dev \
   lld
 
 # Download Carbon's code.

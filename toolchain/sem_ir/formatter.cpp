@@ -493,15 +493,16 @@ class InstNamer {
           add_inst_name("import");
           continue;
         }
+        case ImportRefUnused::Kind:
+        case ImportRefUsed::Kind: {
+          add_inst_name("import_ref");
+          continue;
+        }
         case InterfaceDecl::Kind: {
           add_inst_name_id(sem_ir_.interfaces()
                                .Get(inst.As<InterfaceDecl>().interface_id)
                                .name_id,
                            ".decl");
-          continue;
-        }
-        case LazyImportRef::Kind: {
-          add_inst_name("lazy_import_ref");
           continue;
         }
         case NameRef::Kind: {
@@ -821,9 +822,9 @@ class Formatter {
     out_ << " = ";
   }
 
-  // Print LazyImportRef with type-like semantics even though it lacks a
+  // Print ImportRefUnused with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstructionLHS(InstId inst_id, LazyImportRef /*inst*/) -> void {
+  auto FormatInstructionLHS(InstId inst_id, ImportRefUnused /*inst*/) -> void {
     FormatInstName(inst_id);
     out_ << " = ";
   }
@@ -945,10 +946,16 @@ class Formatter {
     out_ << " " << inst.ir_id << ", " << inst.inst_id;
   }
 
-  auto FormatInstructionRHS(LazyImportRef inst) -> void {
+  auto FormatInstructionRHS(ImportRefUnused inst) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
-    out_ << " " << inst.ir_id << ", " << inst.inst_id;
+    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", unused";
+  }
+
+  auto FormatInstructionRHS(ImportRefUsed inst) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    // TODO: Consider a better way to format the InstID from other IRs.
+    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", used";
   }
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {

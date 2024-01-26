@@ -559,6 +559,9 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
                            context.sem_ir().StringifyType(target.type_id));
     return SemIR::InstId::BuiltinError;
   }
+  if (class_info.object_repr_id == SemIR::TypeId::Error) {
+    return SemIR::InstId::BuiltinError;
+  }
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(class_info.object_repr_id);
 
