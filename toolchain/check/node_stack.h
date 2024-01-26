@@ -213,20 +213,13 @@ class NodeStack {
   auto PopWithParseNode() -> auto {
     constexpr std::optional<IdKind> RequiredIdKind =
         ParseNodeCategoryToIdKind(RequiredParseCategory);
-    CARBON_CHECK(RequiredIdKind.has_value())
-        << "NodeCategory " << RequiredParseCategory
-        << " doesn't correspond to an IdKind";
+    static_assert(RequiredIdKind.has_value());
     auto node_id_cast = [&](auto back) {
       using NodeIdT = Parse::NodeIdInCategory<RequiredParseCategory>;
       return std::pair<NodeIdT, decltype(back.second)>(back);
     };
     if constexpr (RequiredIdKind == IdKind::InstId) {
       auto back = PopWithParseNode<SemIR::InstId>();
-      RequireParseCategory<RequiredParseCategory>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
-      auto back = PopWithParseNode<SemIR::InstBlockId>();
       RequireParseCategory<RequiredParseCategory>(back.first);
       return node_id_cast(back);
     }
@@ -361,9 +354,7 @@ class NodeStack {
     RequireParseCategory<RequiredParseCategory>(back.parse_node);
     constexpr std::optional<IdKind> RequiredIdKind =
         ParseNodeCategoryToIdKind(RequiredParseCategory);
-    CARBON_CHECK(RequiredIdKind.has_value())
-        << "NodeCategory " << RequiredParseCategory
-        << " doesn't correspond to an IdKind";
+    static_assert(RequiredIdKind.has_value());
     if constexpr (*RequiredIdKind == IdKind::InstId) {
       return back.id<SemIR::InstId>();
     }
@@ -465,29 +456,33 @@ class NodeStack {
   // provide, if it is consistent.
   static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category)
       -> std::optional<IdKind> {
-    std::optional<IdKind> id_kind;
     // TODO: Patterns should also produce an `InstId`, but currently
     // `TuplePattern` produces an `InstBlockId`.
     if (!!(category & Parse::NodeCategory::Expr)) {
-      id_kind = IdKind::InstId;
+      // Check for no consistent IdKind due to category with multiple bits set.
+      if (!!(category & ~Parse::NodeCategory::Expr)) {
+        return std::nullopt;
+      }
+      return IdKind::InstId;
     }
     if (!!(category & Parse::NodeCategory::MemberName)) {
       // Check for no consistent IdKind due to category with multiple bits set.
-      if (id_kind) {
+      if (!!(category & ~Parse::NodeCategory::MemberName)) {
         return std::nullopt;
       }
-      id_kind = IdKind::NameId;
+      return IdKind::NameId;
     }
-    if (!!(category &
-           (Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
-            Parse::NodeCategory::Modifier))) {
+    constexpr Parse::NodeCategory unused_categories =
+        Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
+        Parse::NodeCategory::Modifier;
+    if (!!(category & unused_categories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
-      if (id_kind) {
+      if (!!(category & ~unused_categories)) {
         return std::nullopt;
       }
-      id_kind = IdKind::Unused;
+      return IdKind::Unused;
     }
-    return id_kind;
+    return std::nullopt;
   }
 
   static constexpr auto ComputeIdKindTable()
@@ -526,6 +521,7 @@ class NodeStack {
           return IdKind::ClassId;
         case Parse::NodeKind::InterfaceDefinitionStart:
           return IdKind::InterfaceId;
+        case Parse::NodeKind::IdentifierName:
         case Parse::NodeKind::SelfValueName:
           return IdKind::NameId;
         case Parse::NodeKind::ArrayExprSemi:
