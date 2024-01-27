@@ -341,13 +341,11 @@ class NodeStack {
     static_assert(RequiredIdKind.has_value());
     if constexpr (*RequiredIdKind == IdKind::InstId) {
       return back.id<SemIR::InstId>();
-    }
-    if constexpr (*RequiredIdKind == IdKind::NameId) {
+    } else {
+      static_assert(*RequiredIdKind == IdKind::NameId,
+                    "Unpeekable IdKind for parse category");
       return back.id<SemIR::NameId>();
     }
-    CARBON_FATAL() << "Unpeekable IdKind for parse category: "
-                   << RequiredParseCategory
-                   << "; see value in ParseNodeCategoryToIdKind";
   }
 
   // Prints the stack for a stack dump.
