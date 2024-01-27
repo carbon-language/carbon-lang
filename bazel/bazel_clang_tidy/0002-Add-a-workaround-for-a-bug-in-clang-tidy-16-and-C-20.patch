@@ -1,0 +1,44 @@
+From f383ddf21542762b883cfa1fb39599e094647fc5 Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Sat, 27 Jan 2024 00:16:09 +0000
+Subject: [PATCH] Add a workaround for a bug in clang-tidy 16 and C++20.
+
+In that mode, the Bazel suppression of a Clang warning doesn't actually
+suppress the clang-tidy check. Neither does disabling the check in
+a `.clang-tidy` config file. Instead, disable it directly on the command
+line when running `clang-tidy`. The clang-tidy bug is:
+https://github.com/llvm/llvm-project/issues/61969
+
+This is harmless for other versions as this check is not useful with
+most Bazel configurations, and can be achieved with a compiler warning
+if truly needed.
+
+Fixes #29
+---
+ clang_tidy/run_clang_tidy.sh | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/clang_tidy/run_clang_tidy.sh b/clang_tidy/run_clang_tidy.sh
+index aa6598c..5cddb59 100755
+--- a/clang_tidy/run_clang_tidy.sh
++++ b/clang_tidy/run_clang_tidy.sh
+@@ -25,4 +25,16 @@ test -e .clang-tidy || ln -s -f $CONFIG .clang-tidy
+ logfile="$(mktemp)"
+ trap 'if (($?)); then cat "$logfile" 1>&2; fi; rm "$logfile"' EXIT
+ 
++# Prepend a flag-based disabling of a check that has a serious bug in
++# clang-tidy 16 when used with C++20. Bazel always violates this check and the
++# warning is typically disabled, but that warning disablement doesn't work
++# correctly in this circumstance and so we need to disable it at the clang-tidy
++# level both as a check and from `warnings-as-errors` to avoid it getting
++# re-promoted to an error. See the clang-tidy bug here for details:
++# https://github.com/llvm/llvm-project/issues/61969
++set -- \
++  --checks=-clang-diagnostic-builtin-macro-redefined \
++  --warnings-as-errors=-clang-diagnostic-builtin-macro-redefined \
++   "$@"
++
+ "${CLANG_TIDY_BIN}" "$@" >"$logfile" 2>&1
+-- 
+2.43.0
+

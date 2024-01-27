@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "a393ce0a748c6e5dba8435c276baa474703d6db8bd225f6ad3f5ce7722cd65f0",
+  "moduleFileHash": "4b00aec5b0cf13b729c8b36621c9c73398f70fe256428b409637c7c3c332b688",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -67,7 +67,8 @@
                   "-p1"
                 ],
                 "patches": [
-                  "@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+                  "@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch",
+                  "@carbon//bazel/bazel_clang_tidy:0002-Add-a-workaround-for-a-bug-in-clang-tidy-16-and-C-20.patch"
                 ],
                 "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
                 "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
@@ -105,7 +106,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 138,
+                "line": 141,
                 "column": 13
               }
             }
@@ -119,7 +120,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 107,
+            "line": 110,
             "column": 35
           },
           "imports": {
@@ -136,7 +137,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 153,
+            "line": 156,
             "column": 29
           },
           "imports": {
@@ -153,7 +154,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 165,
+            "line": 168,
             "column": 23
           },
           "imports": {
@@ -169,7 +170,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 166,
+                "line": 169,
                 "column": 17
               }
             }
@@ -1621,7 +1622,8 @@
                 "-p1"
               ],
               "patches": [
-                "@@//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"
+                "@@//bazel/bazel_clang_tidy:0001_Add_hdrs.patch",
+                "@@//bazel/bazel_clang_tidy:0002-Add-a-workaround-for-a-bug-in-clang-tidy-16-and-C-20.patch"
               ],
               "sha256": "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
               "strip_prefix": "bazel_clang_tidy-d2aecc583d14c9554febeab185833c1e8cce5384",
