@@ -456,12 +456,12 @@ class NodeStack {
       }
       return IdKind::NameId;
     }
-    constexpr Parse::NodeCategory unused_categories =
+    constexpr Parse::NodeCategory UnusedCategories =
         Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
         Parse::NodeCategory::Modifier;
-    if (!!(category & unused_categories)) {
+    if (!!(category & UnusedCategories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
-      if (!!(category & ~unused_categories)) {
+      if (!!(category & ~UnusedCategories)) {
         return std::nullopt;
       }
       return IdKind::Unused;
