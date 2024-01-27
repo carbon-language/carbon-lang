@@ -37,18 +37,25 @@ struct InstId : public IdBase, public Printable<InstId> {
   // The namespace for a `package` expression.
   static const InstId PackageNamespace;
 
-  // Returns the cross-reference instruction ID for a builtin. This relies on
-  // File guarantees for builtin cross-reference placement.
+  // Returns the instruction ID for a builtin. This relies on File guarantees
+  // for builtin ImportRefUsed placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
     return InstId(kind.AsInt());
   }
 
   using IdBase::IdBase;
+
+  // Returns true if the instruction is a builtin. Requires is_valid.
+  auto is_builtin() const -> bool {
+    CARBON_CHECK(is_valid());
+    return index < BuiltinKind::ValidCount;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "inst";
     if (!is_valid()) {
       IdBase::Print(out);
-    } else if (index < BuiltinKind::ValidCount) {
+    } else if (is_builtin()) {
       out << BuiltinKind::FromInt(index);
     } else {
       // Use the `+` as a small reminder that this is a delta, rather than an

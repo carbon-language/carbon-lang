@@ -364,18 +364,6 @@ struct Converted {
   InstId result_id;
 };
 
-// A cross-reference between IRs.
-struct CrossRef {
-  static constexpr auto Kind = InstKind::CrossRef.Define<Parse::NodeId>("xref");
-
-  // No parse node: an instruction's parse tree node must refer to a node in the
-  // current parse tree. This cannot use the cross-referenced instruction's
-  // parse tree node because it will be in a different parse tree.
-  TypeId type_id;
-  CrossRefIRId ir_id;
-  InstId inst_id;
-};
-
 struct Deref {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>("deref");

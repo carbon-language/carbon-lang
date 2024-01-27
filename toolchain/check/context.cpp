@@ -787,19 +787,17 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
+  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
+                                   SemIR::ImportRefUsed import_ref) const
       -> SemIR::ValueRepr {
-    auto xref_inst =
-        context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
+    CARBON_CHECK(import_ref.inst_id.is_builtin())
+        << "TODO: Handle non-builtin ImportRefUsed cases, such as functions, "
+           "classes, and interfaces";
 
-    // The canonical description of a type should only have cross-references
-    // for entities owned by another File, such as builtins, which are owned
-    // by the prelude, and named entities like classes and interfaces, which
-    // we don't support yet.
-    CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
-        << "TODO: Handle other kinds of inst cross-references";
+    const auto& import_ir = context_.cross_ref_irs().Get(import_ref.ir_id);
+    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
 
-    switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
+    switch (import_inst.As<SemIR::Builtin>().builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
@@ -945,7 +943,6 @@ class TypeCompleter {
       case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
       case SemIR::ImportRefUnused::Kind:
-      case SemIR::ImportRefUsed::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:
@@ -972,15 +969,16 @@ class TypeCompleter {
       case SemIR::VarStorage::Kind:
         CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
-      case SemIR::CrossRef::Kind:
-        return BuildCrossRefValueRepr(type_id, inst.As<SemIR::CrossRef>());
-
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
+
+      case SemIR::ImportRefUsed::Kind:
+        return BuildImportRefUsedValueRepr(type_id,
+                                           inst.As<SemIR::ImportRefUsed>());
 
       case SemIR::StructType::Kind:
         return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
@@ -1000,7 +998,7 @@ class TypeCompleter {
             SemIR::ValueRepr::ObjectAggregate);
 
       case SemIR::Builtin::Kind:
-        CARBON_FATAL() << "Builtins should be named as cross-references";
+        CARBON_FATAL() << "Builtins should be named as ImportRefUsed";
 
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:

@@ -180,11 +180,6 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::CrossRef inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
                  SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));

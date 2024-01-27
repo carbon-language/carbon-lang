@@ -57,7 +57,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   // All builtins are types, with the same empty lowered value.
-  if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
+  if (inst_id.is_builtin()) {
     return GetTypeAsValue();
   }
 
