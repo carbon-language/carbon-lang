@@ -283,9 +283,9 @@ struct ReturnType {
 };
 
 // A function signature: `fn F() -> i32`.
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct FunctionSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
 
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -296,9 +296,10 @@ struct FunctionSignature {
   std::optional<ReturnTypeId> return_type;
 };
 
-using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl>;
+using FunctionDecl =
+    FunctionSignature<NodeKind::FunctionDecl, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart, NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -484,7 +485,7 @@ struct WhileStatement {
 // Expression nodes
 // ----------------
 
-using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart, NodeCategory::Expr>;
+using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart>;
 
 // The start of an array type, `[i32;`.
 //
