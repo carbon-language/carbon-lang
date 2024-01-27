@@ -63,3 +63,9 @@ CheckOptions:
       key: readability-identifier-naming.MethodIgnoredRegexp,
       value: '^classof$',
     }
+  - {
+      # This erroneously fires in C++20 mode with LLVM 16 clang-tidy, likely due
+      # to: https://github.com/llvm/llvm-project/issues/61969
+      key: readability-identifier-naming.TemplateParameterIgnoredRegexp,
+      value: '^expr-type$',
+    }
