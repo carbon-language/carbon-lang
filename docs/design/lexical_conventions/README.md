@@ -40,3 +40,4 @@ following exception:
     intervening whitespace, a real literal is never formed. Instead, the token
     will end no later than the next `.` character. For example, `tuple.1.2` is
     five tokens, `tuple` `.` `1` `.` `2`, not three tokens, `tuple` `.` `1.2`.
+    However, `tuple . 1.2` is lexed as three tokens.

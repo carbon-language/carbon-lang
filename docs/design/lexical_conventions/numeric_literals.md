@@ -73,6 +73,10 @@ digits, respectively. A digit is required on each side of the period. `0.` and
 `.3` are both lexed as two separate tokens: `0.(Util.Abs)()` and `tuple.3` both
 treat the period as member or element access, not as a radix point.
 
+To support tuple indexing, a real number literal is never formed immediately
+following a `.` token with no intervening whitespace. Instead, the result is an
+integer literal.
+
 A real number can be followed by an exponent character, an optional `+` or `-`
 (defaulting to `+` if absent), and a character sequence matching the grammar of
 a decimal integer with some value _N_. For a decimal real number, the exponent

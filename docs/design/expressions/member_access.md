@@ -849,13 +849,20 @@ A tuple indexing expression is of the form:
 -   _expression_ `.` _integer-literal_
 -   _expression_ `->` _integer-literal_
 
-The _expression_ is required to be of tuple type, and _integer-literal_ is
-required to be less than the number of tuple elements. The result is the
-corresponding positional element of the tuple.
+The _expression_ is required to be of tuple type.
+
+Each positional element of the tuple is considered to have a name that is the
+corresponding decimal integer: `0`, `1`, and so on. The spelling of the
+_integer-literal_ is required to exactly match one of those names, and the
+result is the corresponding element of the tuple.
 
 ```
-// `n == 42`.
-let n: i32 = (41, 42, 43).1;
+// ✅ `a == 42`.
+let a: i32 = (41, 42, 43).1;
+// ❌ Error: no tuple element named `0x1`.
+let b: i32 = (1, 2, 3).0x1;
+// ❌ Error: no tuple element named `2`.
+let c: i32 = (1, 2).2;
 ```
 
 In a compound member access of the form:
