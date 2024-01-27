@@ -180,11 +180,6 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::CrossRef inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
                  SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
@@ -197,6 +192,18 @@ auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                   SemIR::Import inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleImportRefUnused(FunctionContext& /*context*/,
+                           SemIR::InstId /*inst_id*/,
+                           SemIR::ImportRefUnused inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleImportRefUsed(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/, SemIR::ImportRefUsed inst)
+    -> void {
   FatalErrorIfEncountered(inst);
 }
 
@@ -219,12 +226,6 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(inst_id, v);
-}
-
-auto HandleLazyImportRef(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
-    -> void {
-  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,

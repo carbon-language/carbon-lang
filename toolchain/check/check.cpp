@@ -52,7 +52,7 @@ class SemIRLocationTranslator
 
       // If the parse node was invalid, recurse through import references when
       // possible.
-      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(
+      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
         cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
         cursor_inst_id = import_ref->inst_id;
@@ -206,8 +206,6 @@ static auto ProcessParseNodes(Context& context,
                               ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
   for (auto parse_node : context.parse_tree().postorder()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \

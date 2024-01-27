@@ -22,6 +22,9 @@ cc_library(
     name = "main",
     srcs = ["main.cpp"],
     hdrs = ["main.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//common:error",
         "//common:ostream",
@@ -35,6 +38,9 @@ cc_binary(
     name = "explorer",
     srcs = ["main_bin.cpp"],
     env = cc_env(),
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":main",
         "//common:bazel_working_dir",

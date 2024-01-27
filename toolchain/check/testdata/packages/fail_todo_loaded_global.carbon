@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDERR: implicit.impl.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
+// CHECK:STDERR: same_package_importer.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- implicit.carbon
 
@@ -50,26 +52,22 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .a = %a, .package_a = %package_a} [template]
-// CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %import_ref, .a = %a, .package_a = %package_a} [template]
+// CHECK:STDOUT:   %import_ref: <error> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, %.2 [template = %.2]
-// CHECK:STDOUT:   %.loc4_14: init () = call %A.ref.loc4()
-// CHECK:STDOUT:   assign %a.var, %.loc4_14
+// CHECK:STDOUT:   %A.ref.loc4: <error> = name_ref A, %import_ref
+// CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %.loc6_17.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %.loc6_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref () = var package_a
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %A.ref.loc6: <function> = name_ref A, %.2 [template = %.2]
-// CHECK:STDOUT:   %.loc6_30: init () = call %A.ref.loc6()
-// CHECK:STDOUT:   assign %package_a.var, %.loc6_30
+// CHECK:STDOUT:   %A.ref.loc6: <error> = name_ref A, %import_ref
+// CHECK:STDOUT:   assign %package_a.var, <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- same_package.carbon
 // CHECK:STDOUT:
@@ -87,24 +85,20 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %.2, .b = %b, .package_b = %package_b} [template]
-// CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.B = %import_ref, .b = %b, .package_b = %package_b} [template]
+// CHECK:STDOUT:   %import_ref: <error> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %B.ref.loc6: <function> = name_ref B, %.2 [template = %.2]
-// CHECK:STDOUT:   %.loc6_14: init () = call %B.ref.loc6()
-// CHECK:STDOUT:   assign %b.var, %.loc6_14
+// CHECK:STDOUT:   %B.ref.loc6: <error> = name_ref B, %import_ref
+// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %.loc8_17.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref () = var package_b
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, %.2 [template = %.2]
-// CHECK:STDOUT:   %.loc8_30: init () = call %B.ref.loc8()
-// CHECK:STDOUT:   assign %package_b.var, %.loc8_30
+// CHECK:STDOUT:   %B.ref.loc8: <error> = name_ref B, %import_ref
+// CHECK:STDOUT:   assign %package_b.var, <error>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:

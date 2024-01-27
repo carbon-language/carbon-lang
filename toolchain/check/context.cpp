@@ -219,48 +219,28 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
+auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
   auto inst = insts().Get(inst_id);
-  auto lazy_inst = inst.TryAs<SemIR::LazyImportRef>();
-  if (!lazy_inst) {
+  auto unused_inst = inst.TryAs<SemIR::ImportRefUnused>();
+  if (!unused_inst) {
     return;
   }
-  const SemIR::File& import_ir = *cross_ref_irs().Get(lazy_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(lazy_inst->inst_id);
+  const SemIR::File& import_ir = *cross_ref_irs().Get(unused_inst->ir_id);
+  auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
   switch (import_inst.kind()) {
-    case SemIR::InstKind::FunctionDecl: {
-      // TODO: Fill this in better.
-      auto function_id =
-          functions().Add({.name_id = SemIR::NameId::Invalid,
-                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
-                           .decl_id = inst_id,
-                           .implicit_param_refs_id = SemIR::InstBlockId::Empty,
-                           .param_refs_id = SemIR::InstBlockId::Empty,
-                           .return_type_id = SemIR::TypeId::Invalid,
-                           .return_slot_id = SemIR::InstId::Invalid});
-      ReplaceInstBeforeConstantUse(
-          inst_id,
-          // TODO: For diagnostic purposes, we should provide some form of
-          // location for the function.
-          {Parse::NodeId::Invalid,
-           SemIR::FunctionDecl{GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-                               function_id}});
-      constant_values().Set(inst_id,
-                            SemIR::ConstantId::ForTemplateConstant(inst_id));
-      break;
-    }
-
     default:
       // TODO: We need more type support. For now we inject an arbitrary
       // invalid node that's unrelated to the underlying value. The TODO
       // diagnostic is used since this section shouldn't typically be able to
       // error.
       TODO(Parse::NodeId::Invalid,
-           (llvm::Twine("TODO: support ") + import_inst.kind().name()).str());
+           (llvm::Twine("TODO: ResolveIfImportRefUnused for ") +
+            import_inst.kind().name())
+               .str());
       ReplaceInstBeforeConstantUse(
-          inst_id, {Parse::NodeId::Invalid,
-                    SemIR::VarStorage{SemIR::TypeId::Error,
-                                      SemIR::NameId::PackageNamespace}});
+          inst_id,
+          {SemIR::ImportRefUsed{SemIR::TypeId::Error, unused_inst->ir_id,
+                                unused_inst->inst_id}});
       break;
   }
 }
@@ -296,7 +276,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     if (!lexical_results.empty()) {
       auto result = lexical_results.back();
       if (result.scope_index == current_scope_index()) {
-        ResolveIfLazyImportRef(result.inst_id);
+        ResolveIfImportRefUnused(result.inst_id);
         return result.inst_id;
       }
     }
@@ -331,7 +311,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     if (!lexical_results.empty() &&
         lexical_results.back().scope_index > index) {
       auto inst_id = lexical_results.back().inst_id;
-      ResolveIfLazyImportRef(inst_id);
+      ResolveIfImportRefUnused(inst_id);
       return inst_id;
     }
 
@@ -345,7 +325,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
 
   if (!lexical_results.empty()) {
     auto inst_id = lexical_results.back().inst_id;
-    ResolveIfLazyImportRef(inst_id);
+    ResolveIfImportRefUnused(inst_id);
     return inst_id;
   }
 
@@ -360,7 +340,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfLazyImportRef(it->second);
+    ResolveIfImportRefUnused(it->second);
     return it->second;
   }
   return SemIR::InstId::Invalid;
@@ -601,12 +581,16 @@ auto Context::is_current_position_reachable() -> bool {
 auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
 
 auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpr());
+  // Support expressions, parameters, and other nodes like `StructFieldValue`
+  // that produce InstIds.
+  ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
 }
 
 auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
   if (!node_stack_.PeekIs(start_kind)) {
-    ParamOrArgSave(node_stack_.PopExpr());
+    // Support expressions, parameters, and other nodes like `StructFieldValue`
+    // that produce InstIds.
+    ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
   }
 }
 
@@ -807,21 +791,17 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
+  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
+                                   SemIR::ImportRefUsed import_ref) const
       -> SemIR::ValueRepr {
-    auto xref_inst =
-        context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
+    CARBON_CHECK(import_ref.inst_id.is_builtin())
+        << "TODO: Handle non-builtin ImportRefUsed cases, such as functions, "
+           "classes, and interfaces";
 
-    // The canonical description of a type should only have cross-references
-    // for entities owned by another File, such as builtins, which are owned
-    // by the prelude, and named entities like classes and interfaces, which
-    // we don't support yet.
-    CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
-        << "TODO: Handle other kinds of inst cross-references";
+    const auto& import_ir = context_.cross_ref_irs().Get(import_ref.ir_id);
+    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
 
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
+    switch (import_inst.As<SemIR::Builtin>().builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
@@ -939,9 +919,6 @@ class TypeCompleter {
     // dedicated file-scope instruction block where possible, or somewhere else
     // that better reflects the definition of the type, rather than wherever the
     // type happens to first be required to be complete.
-
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
@@ -969,7 +946,7 @@ class TypeCompleter {
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::IntLiteral::Kind:
-      case SemIR::LazyImportRef::Kind:
+      case SemIR::ImportRefUnused::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:
@@ -996,15 +973,16 @@ class TypeCompleter {
       case SemIR::VarStorage::Kind:
         CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
-      case SemIR::CrossRef::Kind:
-        return BuildCrossRefValueRepr(type_id, inst.As<SemIR::CrossRef>());
-
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
+
+      case SemIR::ImportRefUsed::Kind:
+        return BuildImportRefUsedValueRepr(type_id,
+                                           inst.As<SemIR::ImportRefUsed>());
 
       case SemIR::StructType::Kind:
         return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
@@ -1024,7 +1002,7 @@ class TypeCompleter {
             SemIR::ValueRepr::ObjectAggregate);
 
       case SemIR::Builtin::Kind:
-        CARBON_FATAL() << "Builtins should be named as cross-references";
+        CARBON_FATAL() << "Builtins should be named as ImportRefUsed";
 
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:

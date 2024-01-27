@@ -16,6 +16,8 @@ WarningsAsErrors: '*'
 #       inst_id = name_ref->value_id;
 #                 ^ unchecked access to optional value
 #     }
+# - bugprone-switch-missing-default-case has false positives for `enum_base.h`.
+#   Clang's built-in switch warnings cover most of our risk of bugs here.
 # - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-nodiscard is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.
@@ -24,8 +26,8 @@ WarningsAsErrors: '*'
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape, -bugprone-narrowing-conversions,
-  -bugprone-unchecked-optional-access, google-*,
-  -google-readability-function-size, -google-readability-todo,
+  -bugprone-switch-missing-default-case, -bugprone-unchecked-optional-access,
+  google-*, -google-readability-function-size, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,
   misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
@@ -60,4 +62,10 @@ CheckOptions:
   - {
       key: readability-identifier-naming.MethodIgnoredRegexp,
       value: '^classof$',
+    }
+  - {
+      # This erroneously fires in C++20 mode with LLVM 16 clang-tidy, due to:
+      # https://github.com/llvm/llvm-project/issues/46097
+      key: readability-identifier-naming.TemplateParameterIgnoredRegexp,
+      value: '^expr-type$',
     }

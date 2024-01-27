@@ -74,6 +74,9 @@ cc_library(
         "ast_test_matchers_internal.h",
     ],
     hdrs = ["ast_test_matchers.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         "@com_google_googletest//:gtest",
@@ -85,6 +88,9 @@ cc_test(
     name = "ast_test_matchers_test",
     size = "small",
     srcs = ["ast_test_matchers_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         ":ast_test_matchers",
@@ -114,11 +120,17 @@ cc_test(
 cc_library(
     name = "library_name",
     hdrs = ["library_name.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
 )
 
 cc_library(
     name = "paren_contents",
     hdrs = ["paren_contents.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//explorer/base:error_builders",
         "//explorer/base:source_location",
@@ -129,6 +141,9 @@ cc_test(
     name = "element_test",
     size = "small",
     srcs = ["element_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         ":paren_contents",
@@ -160,6 +175,9 @@ cc_library(
     name = "static_scope",
     srcs = ["static_scope.cpp"],
     hdrs = ["static_scope.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":ast",
         "//common:check",
@@ -177,5 +195,8 @@ cc_library(
 cc_library(
     name = "expression_category",
     hdrs = ["expression_category.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = ["@llvm-project//llvm:Support"],
 )

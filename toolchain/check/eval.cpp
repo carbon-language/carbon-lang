@@ -288,9 +288,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
-
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
@@ -405,8 +402,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // TODO: These need special handling.
     case SemIR::BindValue::Kind:
     case SemIR::Call::Kind:
-    case SemIR::CrossRef::Kind:
     case SemIR::Deref::Kind:
+    case SemIR::ImportRefUsed::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
@@ -477,7 +474,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ClassDecl::Kind:
     case SemIR::Import::Kind:
     case SemIR::InterfaceDecl::Kind:
-    case SemIR::LazyImportRef::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
@@ -485,6 +481,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;
+
+    case SemIR::ImportRefUnused::Kind:
+      CARBON_FATAL() << "ImportRefUnused should transform to ImportRefUsed "
+                        "before TryEvalInst.";
   }
   return SemIR::ConstantId::NotConstant;
 }

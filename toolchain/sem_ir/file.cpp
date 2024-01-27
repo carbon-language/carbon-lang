@@ -112,8 +112,7 @@ File::File(SharedValueStores& value_stores, std::string filename,
     // special-cased values.
     auto type_id = inst.type_id();
     auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock(
-        {Parse::NodeId::Invalid, CrossRef{type_id, BuiltinIR, builtin_id}});
+    insts_.AddInNoBlock({ImportRefUsed{type_id, BuiltinIR, builtin_id}});
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }
@@ -199,13 +198,12 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
+    case ImportRefUsed::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -215,12 +213,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
       return -1;
     case PointerType::Kind:
       return -2;
-
-    case CrossRef::Kind:
-      // TODO: Once we support stringification of cross-references, we'll need
-      // to determine the precedence of the target of the cross-reference. For
-      // now, all cross-references refer to builtin types from the prelude.
-      return 0;
 
     case AddrOf::Kind:
     case AddrPattern::Kind:
@@ -245,10 +237,10 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case Import::Kind:
+    case ImportRefUnused::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
     case IntLiteral::Kind:
-    case LazyImportRef::Kind:
     case Namespace::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
@@ -304,14 +296,12 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
     }
 
     // Builtins have designated labels.
-    if (step.inst_id.index < BuiltinKind::ValidCount) {
+    if (step.inst_id.is_builtin()) {
       out << BuiltinKind::FromInt(step.inst_id.index).label();
       continue;
     }
 
     auto inst = insts().Get(step.inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case ArrayType::Kind: {
         auto array = inst.As<ArrayType>();
@@ -355,6 +345,9 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
         break;
       }
+      case ImportRefUsed::Kind:
+        out << "<TODO: ImportRefUsed " << step.inst_id << ">";
+        break;
       case NameRef::Kind: {
         out << names().GetFormatted(inst.As<NameRef>().name_id);
         break;
@@ -446,15 +439,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
-      case CrossRef::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case IntLiteral::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
@@ -497,8 +489,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
   while (true) {
     auto inst = ir->insts().Get(inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
       case BaseDecl::Kind:
@@ -509,18 +499,18 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case Import::Kind:
+      case ImportRefUnused::Kind:
       case InterfaceDecl::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case CrossRef::Kind: {
-        auto xref = inst.As<CrossRef>();
-        ir = ir->cross_ref_irs().Get(xref.ir_id);
-        inst_id = xref.inst_id;
+      case ImportRefUsed::Kind: {
+        auto import_ref = inst.As<ImportRefUsed>();
+        ir = ir->cross_ref_irs().Get(import_ref.ir_id);
+        inst_id = import_ref.inst_id;
         continue;
       }
 

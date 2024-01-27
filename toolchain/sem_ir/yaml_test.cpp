@@ -38,8 +38,8 @@ TEST(SemIRTest, YAML) {
   d.RunCommand(
       {"compile", "--phase=check", "--dump-raw-sem-ir", "test.carbon"});
 
-  // Matches the ID of an instruction. The numbers may change because of builtin
-  // cross-references, so this code is only doing loose structural checks.
+  // Matches the ID of an instruction. Instruction counts may change as various
+  // support changes, so this code is only doing loose structural checks.
   auto int_id = Yaml::Scalar(MatchesRegex(R"(int\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto constant_id =

@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
+// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
+// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- a.carbon
 
@@ -83,11 +86,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7_13.1, .Run = %Run} [template]
-// CHECK:STDOUT:   %lazy_import_ref = lazy_import_ref ir1, inst+1
-// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %.2, .B1 = %.3, .B2 = %.4, .C = %C}, %lazy_import_ref [template]
-// CHECK:STDOUT:   %.2: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %.3: <function> = fn_decl @.2 [template]
-// CHECK:STDOUT:   %.4: <function> = fn_decl @.3 [template]
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
+// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %import_ref.2, .B1 = %import_ref.3, .B2 = %import_ref.4, .C = %C}, %import_ref.1 [template]
+// CHECK:STDOUT:   %import_ref.2: <error> = import_ref ir1, inst+2, used
+// CHECK:STDOUT:   %import_ref.3: <error> = import_ref ir2, inst+2, used
+// CHECK:STDOUT:   %import_ref.4: <error> = import_ref ir2, inst+5, used
 // CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
@@ -101,23 +104,14 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%.2 [template = file.%.2]
-// CHECK:STDOUT:   %.loc12: init () = call %A.ref()
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, file.%import_ref.2
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%.3 [template = file.%.3]
-// CHECK:STDOUT:   %.loc13: init () = call %B1.ref()
+// CHECK:STDOUT:   %B1.ref: <error> = name_ref B1, file.%import_ref.3
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%.4 [template = file.%.4]
-// CHECK:STDOUT:   %.loc14: init () = call %B2.ref()
+// CHECK:STDOUT:   %B2.ref: <error> = name_ref B2, file.%import_ref.4
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
 // CHECK:STDOUT:   %.loc15: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.3();
 // CHECK:STDOUT:

@@ -103,8 +103,8 @@ static auto CopySingleNameScopeFromImportIR(
   }
 
   // Produce the namespace for the entry.
-  auto ref_id = context.AddInst(
-      SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id});
+  auto ref_id = context.AddInst(SemIR::ImportRefUsed{
+      .type_id = namespace_type_id, .ir_id = ir_id, .inst_id = import_inst_id});
   auto namespace_inst =
       SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::Invalid, ref_id};
   // Use the invalid node because there's no node to associate with.
@@ -211,7 +211,7 @@ auto Import(Context& context, SemIR::TypeId namespace_type_id,
     } else {
       // Leave a placeholder that the inst comes from the other IR.
       auto target_id = context.AddPlaceholderInst(
-          {SemIR::LazyImportRef{.ir_id = ir_id, .inst_id = import_inst_id}});
+          {SemIR::ImportRefUnused{.ir_id = ir_id, .inst_id = import_inst_id}});
       // TODO: When importing from other packages, the scope's names should
       // be changed to allow for ambiguous names. When importing from the
       // current package, as is currently being done, we should issue a
