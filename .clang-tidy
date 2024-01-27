@@ -64,8 +64,8 @@ CheckOptions:
       value: '^classof$',
     }
   - {
-      # This erroneously fires in C++20 mode with LLVM 16 clang-tidy, likely due
-      # to: https://github.com/llvm/llvm-project/issues/61969
+      # This erroneously fires in C++20 mode with LLVM 16 clang-tidy, due to:
+      # https://github.com/llvm/llvm-project/issues/46097
       key: readability-identifier-naming.TemplateParameterIgnoredRegexp,
       value: '^expr-type$',
     }
