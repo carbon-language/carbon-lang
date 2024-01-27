@@ -23,7 +23,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
     ],
 )

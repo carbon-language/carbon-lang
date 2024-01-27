@@ -8,7 +8,6 @@
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"

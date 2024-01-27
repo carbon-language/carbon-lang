@@ -37,7 +37,6 @@ cc_library(
     deps = [
         "//common:enum_base",
         "//toolchain/parse:node_kind",
-        "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
@@ -55,7 +54,6 @@ cc_library(
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:index_base",
-        "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -79,6 +77,7 @@ cc_library(
         ":inst_kind",
         ":type_info",
         "//common:check",
+        "//common:error",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",

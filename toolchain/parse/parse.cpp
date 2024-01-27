@@ -6,7 +6,6 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 

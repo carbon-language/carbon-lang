@@ -4,8 +4,6 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 

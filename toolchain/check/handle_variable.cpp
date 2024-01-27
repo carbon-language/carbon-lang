@@ -5,7 +5,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/modifiers.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 

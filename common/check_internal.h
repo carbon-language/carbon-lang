@@ -5,8 +5,6 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
-#include <cstdlib>
-
 #include "common/ostream.h"
 
 namespace Carbon::Internal {

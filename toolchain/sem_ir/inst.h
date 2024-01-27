@@ -12,7 +12,6 @@
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
-#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"

@@ -7,7 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/scope_index.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

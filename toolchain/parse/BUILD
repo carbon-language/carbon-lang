@@ -110,8 +110,6 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//common:struct_reflection",
-        "//toolchain/base:pretty_stack_trace_function",
-        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],

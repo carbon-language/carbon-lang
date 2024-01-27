@@ -9,7 +9,6 @@
 
 #include <forward_list>
 
-#include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
