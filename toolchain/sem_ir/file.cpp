@@ -112,8 +112,7 @@ File::File(SharedValueStores& value_stores, std::string filename,
     // special-cased values.
     auto type_id = inst.type_id();
     auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock(
-        {Parse::NodeId::Invalid, CrossRef{type_id, BuiltinIR, builtin_id}});
+    insts_.AddInNoBlock({ImportRefUsed{type_id, BuiltinIR, builtin_id}});
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }
@@ -215,12 +214,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case PointerType::Kind:
       return -2;
 
-    case CrossRef::Kind:
-      // TODO: Once we support stringification of cross-references, we'll need
-      // to determine the precedence of the target of the cross-reference. For
-      // now, all cross-references refer to builtin types from the prelude.
-      return 0;
-
     case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
@@ -303,7 +296,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
     }
 
     // Builtins have designated labels.
-    if (step.inst_id.index < BuiltinKind::ValidCount) {
+    if (step.inst_id.is_builtin()) {
       out << BuiltinKind::FromInt(step.inst_id.index).label();
       continue;
     }
@@ -446,7 +439,6 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
-      case CrossRef::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
@@ -508,7 +500,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionDecl::Kind:
       case Import::Kind:
       case ImportRefUnused::Kind:
-      case ImportRefUsed::Kind:
       case InterfaceDecl::Kind:
       case Namespace::Kind:
       case Return::Kind:
@@ -516,10 +507,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case CrossRef::Kind: {
-        auto xref = inst.As<CrossRef>();
-        ir = ir->cross_ref_irs().Get(xref.ir_id);
-        inst_id = xref.inst_id;
+      case ImportRefUsed::Kind: {
+        auto import_ref = inst.As<ImportRefUsed>();
+        ir = ir->cross_ref_irs().Get(import_ref.ir_id);
+        inst_id = import_ref.inst_id;
         continue;
       }
 

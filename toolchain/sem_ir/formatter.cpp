@@ -169,7 +169,7 @@ class InstNamer {
     }
 
     // Check for a builtin.
-    if (inst_id.index < BuiltinKind::ValidCount) {
+    if (inst_id.is_builtin()) {
       return BuiltinKind::FromInt(inst_id.index).label().str();
     }
 
@@ -938,12 +938,6 @@ class Formatter {
   auto FormatInstructionRHS(TupleInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);
-  }
-
-  auto FormatInstructionRHS(CrossRef inst) -> void {
-    // TODO: Figure out a way to make this meaningful. We'll need some way to
-    // name cross-reference IRs, perhaps by the instruction ID of the import?
-    out_ << " " << inst.ir_id << ", " << inst.inst_id;
   }
 
   auto FormatInstructionRHS(ImportRefUnused inst) -> void {
