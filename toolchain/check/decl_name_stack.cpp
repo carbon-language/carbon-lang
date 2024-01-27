@@ -23,6 +23,9 @@ auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
 
 auto DeclNameStack::PushScopeAndStartName() -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
+
+  // Create a scope for any parameters introduced in this name.
+  context_->PushScope();
 }
 
 auto DeclNameStack::FinishName() -> NameContext {
@@ -139,6 +142,26 @@ auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
   }
 }
 
+// Push a scope corresponding to a name qualifier. For example, for
+//
+//   fn Class(T:! type).F(n: i32)
+//
+// we will push the scope for `Class(T:! type)` between the scope containing the
+// declaration of `T` and the scope containing the declaration of `n`.
+static auto PushNameQualifierScope(Context& context,
+                                   SemIR::InstId scope_inst_id,
+                                   SemIR::NameScopeId scope_id,
+                                   bool has_error = false) -> void {
+  // If the qualifier has no parameters, we don't need to keep around a
+  // parameter scope.
+  context.PopScopeIfEmpty();
+
+  context.PushScope(scope_inst_id, scope_id, has_error);
+
+  // Enter a parameter scope in case the qualified name itself has parameters.
+  context.PushScope();
+}
+
 auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
   // This will only be reached for resolved instructions. We update the target
   // scope based on the resolved type.
@@ -150,7 +173,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
-        context_->PushScope(name_context.resolved_inst_id, class_info.scope_id);
+        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                               class_info.scope_id);
       } else {
         name_context.state = NameContext::State::ResolvedNonScope;
       }
@@ -160,8 +184,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
-      context_->PushScope(name_context.resolved_inst_id, scope_id,
-                          context_->name_scopes().Get(scope_id).has_error);
+      PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
+                             context_->name_scopes().Get(scope_id).has_error);
       break;
     }
     default:

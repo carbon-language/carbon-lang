@@ -4,18 +4,13 @@
 //
 // AUTOUPDATE
 
-fn F() {
+fn F(a: i32) -> i32 {
   let a: i32 = 1;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: ERROR: Duplicate name being declared in the same scope.
-  // CHECK:STDERR:   let a: i32 = 1;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: Name is previously declared here.
-  // CHECK:STDERR:   let a: i32 = 1;
-  // CHECK:STDERR:       ^
-  let a: i32 = 1;
+  // TODO: Reject this due to ambiguity.
+  return a;
 }
 
-// CHECK:STDOUT: --- fail_duplicate_decl.carbon
+// CHECK:STDOUT: --- shadowed_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
@@ -26,12 +21,11 @@ fn F() {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F(%a.loc7: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.loc8: i32 = bind_name a, %.loc8
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.loc15: i32 = bind_name a, %.loc15
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a.loc8
+// CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
