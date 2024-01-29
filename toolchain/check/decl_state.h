@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_DECL_STATE_H_
 
 #include "llvm/ADT/BitmaskEnum.h"
-#include "toolchain/parse/tree.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
 

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
+#include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"

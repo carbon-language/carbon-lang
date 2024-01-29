@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/diagnostic_kind.h"  // IWYU pragma: keep
 
 namespace Carbon {
 

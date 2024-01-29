@@ -4,9 +4,10 @@
 
 #include "common/command_line.h"
 
-#include <initializer_list>
 #include <memory>
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::CommandLine {

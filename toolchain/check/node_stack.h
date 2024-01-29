@@ -12,7 +12,7 @@
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
-#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 

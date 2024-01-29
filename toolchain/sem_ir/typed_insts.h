@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"

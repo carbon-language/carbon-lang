@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/parse/state.h"
+#include "toolchain/parse/state.h"  // IWYU pragma: keep
 
 namespace Carbon::Parse {
 
