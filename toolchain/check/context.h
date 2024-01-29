@@ -425,8 +425,8 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
-  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
-    return sem_ir().cross_ref_irs();
+  auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
+    return sem_ir().import_irs();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {

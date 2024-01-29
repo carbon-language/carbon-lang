@@ -66,8 +66,8 @@ File::File(SharedValueStores& value_stores)
       type_blocks_(allocator_),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
-  auto builtins_id = cross_ref_irs_.Add(this);
-  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+  auto builtins_id = import_irs_.Add(this);
+  CARBON_CHECK(builtins_id == ImportIRId::Builtins)
       << "Builtins must be the first IR, even if self-referential";
 
   insts_.Reserve(BuiltinKind::ValidCount);
@@ -100,19 +100,19 @@ File::File(SharedValueStores& value_stores, std::string filename,
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
   CARBON_CHECK(builtins != nullptr);
-  auto builtins_id = cross_ref_irs_.Add(builtins);
-  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
+  auto builtins_id = import_irs_.Add(builtins);
+  CARBON_CHECK(builtins_id == ImportIRId::Builtins)
       << "Builtins must be the first IR";
 
   // Copy builtins over.
   insts_.Reserve(BuiltinKind::ValidCount);
-  static constexpr auto BuiltinIR = CrossRefIRId(0);
   for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
     // We can reuse the type IDs from the builtins IR because they're
     // special-cased values.
     auto type_id = inst.type_id();
     auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock({ImportRefUsed{type_id, BuiltinIR, builtin_id}});
+    insts_.AddInNoBlock(
+        {ImportRefUsed{type_id, ImportIRId::Builtins, builtin_id}});
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }
@@ -161,8 +161,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("filename", filename_);
     map.Add(
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-          map.Add("cross_ref_irs_size",
-                  Yaml::OutputScalar(cross_ref_irs_.size()));
+          map.Add("import_irs_size", Yaml::OutputScalar(import_irs_.size()));
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("bind_names", bind_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
@@ -509,7 +508,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case ImportRefUsed::Kind: {
         auto import_ref = inst.As<ImportRefUsed>();
-        ir = ir->cross_ref_irs().Get(import_ref.ir_id);
+        ir = ir->import_irs().Get(import_ref.ir_id);
         inst_id = import_ref.inst_id;
         continue;
       }

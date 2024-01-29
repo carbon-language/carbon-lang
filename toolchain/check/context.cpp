@@ -174,20 +174,20 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
 
   auto name_id = SemIR::NameId::ForIdentifier(package_id);
 
-  SemIR::CrossRefIRId first_id(cross_ref_irs().size());
+  SemIR::ImportIRId first_id(import_irs().size());
   for (const auto* sem_ir : sem_irs) {
-    cross_ref_irs().Add(sem_ir);
+    import_irs().Add(sem_ir);
   }
   if (has_load_error) {
-    cross_ref_irs().Add(nullptr);
+    import_irs().Add(nullptr);
   }
-  SemIR::CrossRefIRId last_id(cross_ref_irs().size() - 1);
+  SemIR::ImportIRId last_id(import_irs().size() - 1);
 
   auto type_id = GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
   auto inst_id =
       AddInst({import_node, SemIR::Import{.type_id = type_id,
-                                          .first_cross_ref_ir_id = first_id,
-                                          .last_cross_ref_ir_id = last_id}});
+                                          .first_import_ir_id = first_id,
+                                          .last_import_ir_id = last_id}});
 
   // Add the import to lookup. Should always succeed because imports will be
   // uniquely named.
@@ -225,7 +225,7 @@ auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
   if (!unused_inst) {
     return;
   }
-  const SemIR::File& import_ir = *cross_ref_irs().Get(unused_inst->ir_id);
+  const SemIR::File& import_ir = *import_irs().Get(unused_inst->ir_id);
   auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
   switch (import_inst.kind()) {
     default:
@@ -798,7 +798,7 @@ class TypeCompleter {
         << "TODO: Handle non-builtin ImportRefUsed cases, such as functions, "
            "classes, and interfaces";
 
-    const auto& import_ir = context_.cross_ref_irs().Get(import_ref.ir_id);
+    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
     auto import_inst = import_ir->insts().Get(import_ref.inst_id);
 
     switch (import_inst.As<SemIR::Builtin>().builtin_kind) {

@@ -391,16 +391,16 @@ struct FunctionDecl {
 };
 
 // An import corresponds to some number of IRs. The range of imported IRs is
-// inclusive of last_cross_ref_ir_id, and will always be non-empty. If
-// there was an import error, first_cross_ref_ir_id will reference a
+// inclusive of last_import_ir_id, and will always be non-empty. If
+// there was an import error, first_import_ir_id will reference a
 // nullptr IR; there should only ever be one nullptr in the range.
 struct Import {
   // TODO: Should always be an ImportDirectiveId?
   static constexpr auto Kind = InstKind::Import.Define<Parse::NodeId>("import");
 
   TypeId type_id;
-  CrossRefIRId first_cross_ref_ir_id;
-  CrossRefIRId last_cross_ref_ir_id;
+  ImportIRId first_import_ir_id;
+  ImportIRId last_import_ir_id;
 };
 
 // Common representation for all kinds of `ImportRef*` node.
@@ -409,7 +409,7 @@ struct AnyImportRef {
                                        InstKind::ImportRefUsed};
 
   InstKind kind;
-  CrossRefIRId ir_id;
+  ImportIRId ir_id;
   InstId inst_id;
 };
 
@@ -421,7 +421,7 @@ struct ImportRefUnused {
   static constexpr auto Kind =
       InstKind::ImportRefUnused.Define<Parse::InvalidNodeId>("import_ref");
 
-  CrossRefIRId ir_id;
+  ImportIRId ir_id;
   InstId inst_id;
 };
 
@@ -432,7 +432,7 @@ struct ImportRefUsed {
       InstKind::ImportRefUsed.Define<Parse::InvalidNodeId>("import_ref");
 
   TypeId type_id;
-  CrossRefIRId ir_id;
+  ImportIRId ir_id;
   InstId inst_id;
 };
 

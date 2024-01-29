@@ -85,7 +85,7 @@ static auto CacheCopiedNamespace(
 static auto CopySingleNameScopeFromImportIR(
     Context& context,
     llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces,
-    SemIR::CrossRefIRId ir_id, SemIR::InstId import_inst_id,
+    SemIR::ImportIRId ir_id, SemIR::InstId import_inst_id,
     SemIR::NameScopeId import_scope_id, SemIR::NameScopeId enclosing_scope_id,
     SemIR::NameId name_id, SemIR::TypeId namespace_type_id)
     -> SemIR::NameScopeId {
@@ -132,7 +132,7 @@ static auto CopySingleNameScopeFromImportIR(
 // import_enclosing_scope_id.
 static auto CopyEnclosingNameScopesFromImportIR(
     Context& context, SemIR::TypeId namespace_type_id,
-    const SemIR::File& import_sem_ir, SemIR::CrossRefIRId ir_id,
+    const SemIR::File& import_sem_ir, SemIR::ImportIRId ir_id,
     SemIR::NameScopeId import_enclosing_scope_id,
     llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId>& copied_namespaces)
     -> SemIR::NameScopeId {
@@ -181,7 +181,7 @@ static auto CopyEnclosingNameScopesFromImportIR(
 
 auto Import(Context& context, SemIR::TypeId namespace_type_id,
             const SemIR::File& import_sem_ir) -> void {
-  auto ir_id = context.cross_ref_irs().Add(&import_sem_ir);
+  auto ir_id = context.import_irs().Add(&import_sem_ir);
 
   for (const auto import_inst_id :
        import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
