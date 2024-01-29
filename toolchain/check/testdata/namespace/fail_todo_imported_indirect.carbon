@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: e.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- a.carbon
 
@@ -37,6 +36,9 @@ fn A.B.C.D() {};
 package Same library "e" api;
 import library "d";
 
+// CHECK:STDERR: e.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
+// CHECK:STDERR: var e: () = A.B.C.D();
+// CHECK:STDERR:             ^~~~~~~~
 var e: () = A.B.C.D();
 
 // CHECK:STDOUT: --- a.carbon
@@ -98,15 +100,15 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+6, used
 // CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %import_ref.4}, %import_ref.3 [template]
-// CHECK:STDOUT:   %import_ref.4: <error> = import_ref ir1, inst+7, used
-// CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used
+// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, %.2 [template = %.2]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, %.3 [template = %.3]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, %.4 [template = %.4]
-// CHECK:STDOUT:   %D.ref: <error> = name_ref D, %import_ref.4
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, %import_ref.4
 // CHECK:STDOUT:   assign %e.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

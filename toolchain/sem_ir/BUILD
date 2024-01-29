@@ -94,6 +94,7 @@ cc_library(
         ":file",
         ":ids",
         ":inst_kind",
+        "//common:ostream",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
