@@ -1005,7 +1005,7 @@ class Formatter {
 
   auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
 
-  auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
+  auto FormatArg(ImportIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntId id) -> void {
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);

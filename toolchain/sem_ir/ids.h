@@ -204,11 +204,11 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
 constexpr InterfaceId InterfaceId::Invalid =
     InterfaceId(InterfaceId::InvalidIndex);
 
-// The ID of a cross-referenced IR.
-struct CrossRefIRId : public IdBase, public Printable<CrossRefIRId> {
+// The ID of an imported IR.
+struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   using ValueType = const File*;
 
-  static const CrossRefIRId Builtins;
+  static const ImportIRId Builtins;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
@@ -216,7 +216,7 @@ struct CrossRefIRId : public IdBase, public Printable<CrossRefIRId> {
   }
 };
 
-constexpr CrossRefIRId CrossRefIRId::Builtins = CrossRefIRId(0);
+constexpr ImportIRId ImportIRId::Builtins = ImportIRId(0);
 
 // A boolean value.
 struct BoolValue : public IdBase, public Printable<BoolValue> {

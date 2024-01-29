@@ -270,9 +270,9 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
-  auto cross_ref_irs() -> ValueStore<CrossRefIRId>& { return cross_ref_irs_; }
-  auto cross_ref_irs() const -> const ValueStore<CrossRefIRId>& {
-    return cross_ref_irs_;
+  auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
+  auto import_irs() const -> const ValueStore<ImportIRId>& {
+    return import_irs_;
   }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
@@ -339,10 +339,9 @@ class File : public Printable<File> {
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
 
-  // Related IRs. There will always be at least 2 entries, the builtin IR (used
-  // for references of builtins) followed by the current IR (used for references
-  // crossing instruction blocks).
-  ValueStore<CrossRefIRId> cross_ref_irs_;
+  // Related IRs. There will always be at least one entry, the builtin IR (used
+  // for references of builtins).
+  ValueStore<ImportIRId> import_irs_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
