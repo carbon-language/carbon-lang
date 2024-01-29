@@ -19,6 +19,9 @@
 
 namespace Carbon::SemIR {
 
+// InstLikeTypeInfo is an implementation detail, and not public API.
+namespace Detail {
+
 // Information about an instruction-like type, which is a type that an Inst can
 // be converted to and from. The `Enabled` parameter is used to check
 // requirements on the type in the specializations of this template.
@@ -50,9 +53,9 @@ struct InstLikeTypeInfoBase {
 
 // A particular type of instruction is instruction-like.
 template <typename TypedInst>
-  requires std::is_same_v<const InstKind::Definition<
-                              typename decltype(TypedInst::Kind)::TypedNodeId>,
-                          decltype(TypedInst::Kind)>
+  requires std::same_as<const InstKind::Definition<
+                            typename decltype(TypedInst::Kind)::TypedNodeId>,
+                        decltype(TypedInst::Kind)>
 struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
   static_assert(!HasKindMemberAsField<TypedInst>,
                 "Instruction type should not have a kind field");
@@ -66,7 +69,7 @@ struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
 
 // An instruction category is instruction-like.
 template <typename InstCat>
-  requires std::is_same_v<const InstKind&, decltype(InstCat::Kinds[0])>
+  requires std::same_as<const InstKind&, decltype(InstCat::Kinds[0])>
 struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   static_assert(HasKindMemberAsField<InstCat>,
                 "Instruction category should have a kind field");
@@ -97,6 +100,8 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
 template <typename T>
 concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 
+}  // namespace Detail
+
 // A type-erased representation of a SemIR instruction, that may be constructed
 // from the specific kinds of instruction defined in `typed_insts.h`. This
 // provides access to common fields present on most or all kinds of
@@ -118,7 +123,8 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  template <InstLikeType TypedInst>
+  template <typename TypedInst>
+    requires Detail::InstLikeType<TypedInst>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
@@ -126,15 +132,15 @@ class Inst : public Printable<Inst> {
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (HasKindMemberAsField<TypedInst>) {
+    if constexpr (Detail::HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind;
     } else {
       kind_ = TypedInst::Kind;
     }
-    if constexpr (HasTypeIdMember<TypedInst>) {
+    if constexpr (Detail::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
-    using Info = InstLikeTypeInfo<TypedInst>;
+    using Info = Detail::InstLikeTypeInfo<TypedInst>;
     if constexpr (Info::NumArgs > 0) {
       arg0_ = ToRaw(Info::template Get<0>(typed_inst));
     }
@@ -144,20 +150,22 @@ class Inst : public Printable<Inst> {
   }
 
   // Returns whether this instruction has the specified type.
-  template <InstLikeType TypedInst>
+  template <typename TypedInst>
+    requires Detail::InstLikeType<TypedInst>
   auto Is() const -> bool {
-    return InstLikeTypeInfo<TypedInst>::IsKind(kind());
+    return Detail::InstLikeTypeInfo<TypedInst>::IsKind(kind());
   }
 
   // Casts this instruction to the given typed instruction, which must match the
   // instruction's kind, and returns the typed instruction.
-  template <InstLikeType TypedInst>
+  template <typename TypedInst>
+    requires Detail::InstLikeType<TypedInst>
   auto As() const -> TypedInst {
-    using Info = InstLikeTypeInfo<TypedInst>;
+    using Info = Detail::InstLikeTypeInfo<TypedInst>;
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << Info::DebugName();
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
-      if constexpr (HasKindMemberAsField<TypedInst>) {
+      if constexpr (Detail::HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), type_id_onwards...};
       } else {
         return TypedInst{type_id_onwards...};
@@ -165,7 +173,7 @@ class Inst : public Printable<Inst> {
     };
 
     auto build_with_args = [&](auto... args) {
-      if constexpr (HasTypeIdMember<TypedInst>) {
+      if constexpr (Detail::HasTypeIdMember<TypedInst>) {
         return build_with_type_id_onwards(type_id(), args...);
       } else {
         return build_with_type_id_onwards(args...);
@@ -186,7 +194,8 @@ class Inst : public Printable<Inst> {
 
   // If this instruction is the given kind, returns a typed instruction,
   // otherwise returns nullopt.
-  template <InstLikeType TypedInst>
+  template <typename TypedInst>
+    requires Detail::InstLikeType<TypedInst>
   auto TryAs() const -> std::optional<TypedInst> {
     if (Is<TypedInst>()) {
       return As<TypedInst>();
@@ -249,7 +258,8 @@ class Inst : public Printable<Inst> {
 static_assert(sizeof(Inst) == 16, "Unexpected Inst size");
 
 // Instruction-like types can be printed by converting them to instructions.
-template <InstLikeType TypedInst>
+template <typename TypedInst>
+  requires Detail::InstLikeType<TypedInst>
 inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
     -> llvm::raw_ostream& {
   Inst(inst).Print(out);
