@@ -730,28 +730,28 @@ CARBON_PARSE_STATE_VARIANTS2(PatternListFinish, Implicit, Tuple)
 
 // Handles the processing of a `(condition)` up through the expression.
 //
-// if/while {    (invalid)
-//         ^
-//   1. ParenConditionAs(If|While)Finish
+// if/while/match {    (invalid)
+//               ^
+//   1. ParenConditionAs(If|While|Match)Finish
 //
-// if/while ( ... )
-//          ^
-// if/while ???
-//         ^
+// if/while/match ( ... )
+//                ^
+// if/while/match ???
+//               ^
 //   1. Expr
-//   2. ParenConditionAs(If|While)Finish
-CARBON_PARSE_STATE_VARIANTS2(ParenCondition, If, While)
+//   2. ParenConditionAs(If|While|Match)Finish
+CARBON_PARSE_STATE_VARIANTS3(ParenCondition, If, While, Match)
 
 // Finishes the processing of a `(condition)` after the expression.
 //
-// if/while ( expr )
-//                 ^
-// if/while {
-//         ^
-// if/while ??? {
-//             ^
+// if/while/match ( expr )
+//                       ^
+// if/while/match {
+//               ^
+// if/while/match ??? {
+//                   ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(ParenConditionFinish, If, While)
+CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
 
 // Handles the `(` of a parenthesized single expression
 //
@@ -922,6 +922,10 @@ CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
 // ^
 //   1. Expr
 //   2. ExprStatementFinish
+//
+//  match ...
+// ^
+//   1. MatchIntroducer
 CARBON_PARSE_STATE(Statement)
 
 // Handles `break` processing at the `;`.
@@ -1303,5 +1307,80 @@ CARBON_PARSE_STATE(ChoiceAlternativeFinish)
 //            ^
 //   (state done)
 CARBON_PARSE_STATE(ChoiceDefinitionFinish)
+
+// Handles a match's introducer.
+//
+// match ...
+// ^~~~~
+CARBON_PARSE_STATE(MatchIntroducer)
+
+// Handles TODO
+//
+// match ( ... ) ...
+//              ^
+CARBON_PARSE_STATE(MatchConditionFinish)
+
+// Handles TODO
+//
+// match (...) {}
+//             ^
+//   (state done)
+//
+// match (...) ???
+//             ^
+//   (state done)
+CARBON_PARSE_STATE(MatchStatementStart)
+
+// Handles TODO
+//
+// match (...) { case ...}
+//               ^~~~
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseIntroducer)
+
+// Handles TODO
+//
+// match (...) { case () => {...} }
+//                       ^~
+// match (...) { case () if (...) =>...}
+//                       ^~
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseAfterPattern)
+
+// Handles TODO
+//
+// match (...) { case () => {...} }
+//                       ^~
+// match (...) { case () if (...) =>...}
+//                                ^~
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseStart)
+
+// Handles TODO
+//
+// match (...) { case () => {...} }
+//                              ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseFinish)
+
+// Handles TODO
+//
+// match (...) { default => ...}
+//               ^~~~~~~
+CARBON_PARSE_STATE(MatchDefaultStart)
+
+// Handles TODO
+//
+// match (...) { default => {...} }
+//                              ^
+//   (state done)
+CARBON_PARSE_STATE(MatchDefaultFinish)
+
+// Finishes match statement
+//
+// match (...) {...}
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(MatchStatementFinish)
 
 #undef CARBON_PARSE_STATE

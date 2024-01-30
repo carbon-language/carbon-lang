@@ -52,6 +52,10 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::StatementWhile);
       break;
     }
+    case Lex::TokenKind::Match: {
+      context.PushState(State::MatchIntroducer);
+      break;
+    }
     default: {
       context.PushState(State::ExprStatementFinish);
       context.PushStateForExpr(PrecedenceGroup::ForExprStatement());

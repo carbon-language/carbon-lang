@@ -737,6 +737,40 @@ CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinition, ChoiceDefinitionStart,
 // ChoiceAlternativeList
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceAlternativeListComma, 0, Comma)
 
+// `match`:
+//     MatchIntroducer
+//       MatchConditionStart
+//       _external_: expression
+//     MatchCondition
+//   MatchStatementStart
+//   _optional_ _external_: MatchStatementDefault
+// MatchStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchIntroducer, 0, Match)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCondition, MatchConditionStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatementStart, MatchIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatement, MatchStatementStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// `case`:
+//     _external_: TuplePattern
+//     _optional_ _external_: IfCondition
+//   MatchCaseStart
+//   _external_: CodeBlock
+// MatchCase
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseStart, 1, EqualGreater)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCase, 2, Case)
+
+// `default`:
+//   MatchDefaultStart
+//   _external_: CodeBlock
+// MatchDefault
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefaultStart, 0, EqualGreater)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefault, 2, Default)
+
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT

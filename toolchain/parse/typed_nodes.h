@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 #define CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 
+#include <optional>
+
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -480,6 +482,54 @@ struct WhileStatement {
 
   WhileConditionId head;
   CodeBlockId body;
+};
+
+using MatchConditionStart = LeafNode<NodeKind::MatchConditionStart>;
+
+struct MatchCondition {
+  static constexpr auto Kind = NodeKind::MatchCondition.Define();
+
+  MatchConditionStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchIntroducer = LeafNode<NodeKind::MatchIntroducer>;
+struct MatchStatementStart {
+  static constexpr auto Kind = NodeKind::MatchStatementStart.Define();
+
+  MatchIntroducerId introducer;
+  MatchConditionId left_brace;
+};
+
+struct MatchCaseStart {
+  static constexpr auto Kind = NodeKind::MatchCaseStart.Define();
+  AnyPatternId pattern;
+  std::optional<IfConditionId> condition;
+};
+
+struct MatchCase {
+  static constexpr auto Kind = NodeKind::MatchCase.Define();
+  MatchCaseStartId head;
+  CodeBlockId block;
+};
+
+using MatchDefaultStart = LeafNode<NodeKind::MatchDefaultStart>;
+struct MatchDefault {
+  static constexpr auto Kind = NodeKind::MatchDefault.Define();
+
+  MatchDefaultStartId introducer;
+  CodeBlockId block;
+};
+
+// A `match` statement: `match (expr) { case (...) => {...} default => {...}}`.
+struct MatchStatement {
+  static constexpr auto Kind =
+      NodeKind::MatchStatement.Define(NodeCategory::Statement);
+
+  MatchStatementStartId head;
+
+  llvm::SmallVector<MatchCaseId> cases;
+  std::optional<MatchDefaultId> default_case;
 };
 
 // Expression nodes
