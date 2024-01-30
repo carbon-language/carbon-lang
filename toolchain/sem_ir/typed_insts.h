@@ -736,18 +736,28 @@ struct VarStorage {
   NameId name_id;
 };
 
+// These concepts are an implementation detail of the library, not public API.
+namespace Internal {
+
+// HasParseNode is true if T has an associated parse node.
+template <typename T>
+concept HasParseNode = !std::same_as<typename decltype(T::Kind)::TypedNodeId,
+                                     Parse::InvalidNodeId>;
+
 // HasKindMemberAsField<T> is true if T has a `InstKind kind` field, as opposed
 // to a `static constexpr InstKind::Definition Kind` member or no kind at all.
-template <typename T, typename KindType = InstKind T::*>
-inline constexpr bool HasKindMemberAsField = false;
 template <typename T>
-inline constexpr bool HasKindMemberAsField<T, decltype(&T::kind)> = true;
+concept HasKindMemberAsField = requires {
+  { &T::kind } -> std::same_as<InstKind T::*>;
+};
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
-template <typename T, typename TypeIdType = TypeId T::*>
-inline constexpr bool HasTypeIdMember = false;
 template <typename T>
-inline constexpr bool HasTypeIdMember<T, decltype(&T::type_id)> = true;
+concept HasTypeIdMember = requires {
+  { &T::type_id } -> std::same_as<TypeId T::*>;
+};
+
+}  // namespace Internal
 
 }  // namespace Carbon::SemIR
 

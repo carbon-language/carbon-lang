@@ -13,7 +13,6 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                              bool is_generic) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopExprWithParseNode();
-  auto type_node_copy = type_node;
   auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
   // TODO: Handle `_` bindings.
@@ -22,8 +21,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
   auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
 
   // Create the appropriate kind of binding for this pattern.
-  auto make_bind_name = [&, name_node = name_node, name_id = name_id](
-                            SemIR::TypeId type_id,
+  auto make_bind_name = [&](SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::ParseNodeAndInst {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
@@ -73,7 +71,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                           "{0} has incomplete type `{1}`.", llvm::StringLiteral,
                           std::string);
         return context.emitter().Build(
-            type_node_copy, IncompleteTypeInVarDecl,
+            type_node, IncompleteTypeInVarDecl,
             enclosing_class_decl ? llvm::StringLiteral("Field")
                                  : llvm::StringLiteral("Variable"),
             context.sem_ir().StringifyType(cast_type_id));
@@ -139,7 +137,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
                           "`let` binding has incomplete type `{0}`.",
                           std::string);
         return context.emitter().Build(
-            type_node_copy, IncompleteTypeInLetDecl,
+            type_node, IncompleteTypeInLetDecl,
             context.sem_ir().StringifyType(cast_type_id));
       });
       // Create the instruction, but don't add it to a block until after we've
