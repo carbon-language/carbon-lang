@@ -80,7 +80,7 @@ TEST_F(TreeTest, AsAndTryAs) {
   // A FunctionDecl node, so will match.
   fn_decl_id = tree.TryAs<FunctionDeclId>(n);
   ASSERT_TRUE(fn_decl_id.has_value());
-  EXPECT_TRUE(*fn_decl_id == n);
+  EXPECT_TRUE(*fn_decl_id == FunctionDeclId(n));
   // Under normal usage, this function should be used with `auto`, but for
   // a test it is nice to verify that it is returning the expected type.
   // NOLINTNEXTLINE(modernize-use-auto).
@@ -89,14 +89,14 @@ TEST_F(TreeTest, AsAndTryAs) {
 
   any_fn_decl_id = tree.TryAs<AnyFunctionDeclId>(n);
   ASSERT_TRUE(any_fn_decl_id.has_value());
-  EXPECT_TRUE(*any_fn_decl_id == n);
+  EXPECT_TRUE(*any_fn_decl_id == AnyFunctionDeclId(n));
   // NOLINTNEXTLINE(modernize-use-auto).
   AnyFunctionDeclId any_fn_decl_id2 = tree.As<AnyFunctionDeclId>(n);
   EXPECT_TRUE(*any_fn_decl_id == any_fn_decl_id2);
 
   any_decl_id = tree.TryAs<AnyDeclId>(n);
   ASSERT_TRUE(any_decl_id.has_value());
-  EXPECT_TRUE(*any_decl_id == n);
+  EXPECT_TRUE(*any_decl_id == AnyDeclId(n));
   // NOLINTNEXTLINE(modernize-use-auto).
   AnyDeclId any_decl_id2 = tree.As<AnyDeclId>(n);
   EXPECT_TRUE(*any_decl_id == any_decl_id2);
