@@ -15,6 +15,17 @@
 
 namespace Carbon {
 
+namespace Internal {
+// Checks that the type T is an acceptable node type from which an
+// OutputSegment can be constructed. We intentionally do not want to support
+// `clang::Type` because we support traversing through `clang::TypeLoc`
+// instead. However, most other types we intend to support as they become
+// necessary.
+template <typename T>
+concept IsSupportedClangASTNodeType = std::convertible_to<T*, clang::Stmt*> ||
+                                      std::convertible_to<T*, clang::Decl*>;
+}  // namespace Internal
+
 // Represents a segment of the output string. `OutputSegment`s come in two
 // flavors: Text and Node. A text segment holds string text that should be used
 // to be added to the output. A node segment holds a node in Clang's AST and
@@ -31,17 +42,6 @@ namespace Carbon {
 // determine what their output should be.
 class OutputSegment {
  public:
-  // Returns whether or not the type T is an acceptable node type from which an
-  // OutputSegment can be constructed. We intentionally do not want to support
-  // `clang::Type` because we support traversing through `clang::TypeLoc`
-  // instead. However, most other types we intend to support as they become
-  // necessary.
-  template <typename T>
-  static constexpr auto IsSupportedClangASTNodeType() -> bool {
-    return std::is_convertible_v<T*, clang::Stmt*> ||
-           std::is_convertible_v<T*, clang::Decl*>;
-  }
-
   // Creates a text-based `OutputSegment`.
   explicit OutputSegment(std::string content) : content_(std::move(content)) {}
   explicit OutputSegment(llvm::StringRef content) : content_(content.str()) {}
@@ -49,9 +49,8 @@ class OutputSegment {
 
   // Creates a node-based `OutputSegment` from `node`.
   explicit OutputSegment(const clang::DynTypedNode& node) : content_(node) {}
-  template <typename T,
-            std::enable_if_t<OutputSegment::IsSupportedClangASTNodeType<T>(),
-                             int> = 0>
+  template <typename T>
+    requires Internal::IsSupportedClangASTNodeType<T>
   explicit OutputSegment(const T* node);
 
   // Creates a TypeLoc-based `OutputSegment` from `type_loc`.
@@ -80,8 +79,8 @@ class OutputSegment {
   std::variant<std::string, clang::DynTypedNode, clang::TypeLoc> content_;
 };
 
-template <typename T, std::enable_if_t<
-                          OutputSegment::IsSupportedClangASTNodeType<T>(), int>>
+template <typename T>
+  requires Internal::IsSupportedClangASTNodeType<T>
 OutputSegment::OutputSegment(const T* node)
     : content_(clang::DynTypedNode::create(AssertNotNull(node))) {}
 
