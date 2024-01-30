@@ -738,7 +738,7 @@ struct VarStorage {
 };
 
 // These concepts are an implementation detail of the library, not public API.
-namespace Detail {
+namespace Internal {
 
 // HasParseNode is true if T has an associated parse node.
 template <typename T>
@@ -758,7 +758,7 @@ concept HasTypeIdMember = requires {
   { &T::type_id } -> std::same_as<TypeId T::*>;
 };
 
-}  // namespace Detail
+}  // namespace Internal
 
 }  // namespace Carbon::SemIR
 

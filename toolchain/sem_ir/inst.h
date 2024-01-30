@@ -20,7 +20,7 @@
 namespace Carbon::SemIR {
 
 // InstLikeTypeInfo is an implementation detail, and not public API.
-namespace Detail {
+namespace Internal {
 
 // Information about an instruction-like type, which is a type that an Inst can
 // be converted to and from. The `Enabled` parameter is used to check
@@ -100,7 +100,7 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
 template <typename T>
 concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 
-}  // namespace Detail
+}  // namespace Internal
 
 // A type-erased representation of a SemIR instruction, that may be constructed
 // from the specific kinds of instruction defined in `typed_insts.h`. This
@@ -124,7 +124,7 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 class Inst : public Printable<Inst> {
  public:
   template <typename TypedInst>
-    requires Detail::InstLikeType<TypedInst>
+    requires Internal::InstLikeType<TypedInst>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
@@ -132,15 +132,15 @@ class Inst : public Printable<Inst> {
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {
-    if constexpr (Detail::HasKindMemberAsField<TypedInst>) {
+    if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
       kind_ = typed_inst.kind;
     } else {
       kind_ = TypedInst::Kind;
     }
-    if constexpr (Detail::HasTypeIdMember<TypedInst>) {
+    if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
-    using Info = Detail::InstLikeTypeInfo<TypedInst>;
+    using Info = Internal::InstLikeTypeInfo<TypedInst>;
     if constexpr (Info::NumArgs > 0) {
       arg0_ = ToRaw(Info::template Get<0>(typed_inst));
     }
@@ -151,21 +151,21 @@ class Inst : public Printable<Inst> {
 
   // Returns whether this instruction has the specified type.
   template <typename TypedInst>
-    requires Detail::InstLikeType<TypedInst>
+    requires Internal::InstLikeType<TypedInst>
   auto Is() const -> bool {
-    return Detail::InstLikeTypeInfo<TypedInst>::IsKind(kind());
+    return Internal::InstLikeTypeInfo<TypedInst>::IsKind(kind());
   }
 
   // Casts this instruction to the given typed instruction, which must match the
   // instruction's kind, and returns the typed instruction.
   template <typename TypedInst>
-    requires Detail::InstLikeType<TypedInst>
+    requires Internal::InstLikeType<TypedInst>
   auto As() const -> TypedInst {
-    using Info = Detail::InstLikeTypeInfo<TypedInst>;
+    using Info = Internal::InstLikeTypeInfo<TypedInst>;
     CARBON_CHECK(Is<TypedInst>()) << "Casting inst of kind " << kind()
                                   << " to wrong kind " << Info::DebugName();
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
-      if constexpr (Detail::HasKindMemberAsField<TypedInst>) {
+      if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), type_id_onwards...};
       } else {
         return TypedInst{type_id_onwards...};
@@ -173,7 +173,7 @@ class Inst : public Printable<Inst> {
     };
 
     auto build_with_args = [&](auto... args) {
-      if constexpr (Detail::HasTypeIdMember<TypedInst>) {
+      if constexpr (Internal::HasTypeIdMember<TypedInst>) {
         return build_with_type_id_onwards(type_id(), args...);
       } else {
         return build_with_type_id_onwards(args...);
@@ -195,7 +195,7 @@ class Inst : public Printable<Inst> {
   // If this instruction is the given kind, returns a typed instruction,
   // otherwise returns nullopt.
   template <typename TypedInst>
-    requires Detail::InstLikeType<TypedInst>
+    requires Internal::InstLikeType<TypedInst>
   auto TryAs() const -> std::optional<TypedInst> {
     if (Is<TypedInst>()) {
       return As<TypedInst>();
@@ -259,7 +259,7 @@ static_assert(sizeof(Inst) == 16, "Unexpected Inst size");
 
 // Instruction-like types can be printed by converting them to instructions.
 template <typename TypedInst>
-  requires Detail::InstLikeType<TypedInst>
+  requires Internal::InstLikeType<TypedInst>
 inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
     -> llvm::raw_ostream& {
   Inst(inst).Print(out);

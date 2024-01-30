@@ -20,9 +20,9 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
   };
 
   switch (kind_) {
-#define CARBON_SEM_IR_INST_KIND(Name)             \
-  case Name::Kind:                                \
-    print_args(Detail::InstLikeTypeInfo<Name>()); \
+#define CARBON_SEM_IR_INST_KIND(Name)               \
+  case Name::Kind:                                  \
+    print_args(Internal::InstLikeTypeInfo<Name>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
   }

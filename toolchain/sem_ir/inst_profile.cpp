@@ -73,11 +73,11 @@ static auto RealProfileArgFunction(llvm::FoldingSetNodeID& id,
 // namely `ProfileArgs<DefaultProfileArgFunction, DefaultProfileArgFunction>`.
 template <typename InstT, int N>
 static constexpr auto SelectProfileArgFunction() -> ProfileArgFunction* {
-  if constexpr (N >= Detail::InstLikeTypeInfo<InstT>::NumArgs) {
+  if constexpr (N >= Internal::InstLikeTypeInfo<InstT>::NumArgs) {
     // This argument is not used by this instruction; don't profile it.
     return NullProfileArgFunction;
   } else {
-    using ArgT = Detail::InstLikeTypeInfo<InstT>::template ArgType<N>;
+    using ArgT = Internal::InstLikeTypeInfo<InstT>::template ArgType<N>;
     if constexpr (std::is_same_v<ArgT, InstBlockId>) {
       return InstBlockProfileArgFunction;
     } else if constexpr (std::is_same_v<ArgT, TypeBlockId>) {
