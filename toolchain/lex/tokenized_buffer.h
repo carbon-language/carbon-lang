@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
 #define CARBON_TOOLCHAIN_LEX_TOKENIZED_BUFFER_H_
 
+#include <compare>
 #include <cstdint>
 #include <iterator>
 
@@ -81,8 +82,8 @@ class TokenIterator
   auto operator==(const TokenIterator& rhs) const -> bool {
     return token_ == rhs.token_;
   }
-  auto operator<(const TokenIterator& rhs) const -> bool {
-    return token_ < rhs.token_;
+  auto operator<=>(const TokenIterator& rhs) const -> std::strong_ordering {
+    return token_ <=> rhs.token_;
   }
 
   auto operator*() const -> const TokenIndex& { return token_; }
