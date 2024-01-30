@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
-// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
-// CHECK:STDERR: c.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- a.carbon
 
@@ -39,8 +36,17 @@ namespace NS;
 fn NS.C() {}
 
 fn Run() {
+  // CHECK:STDERR: c.carbon:[[@LINE+3]]:3: ERROR: Value of type `<function>` is not callable.
+  // CHECK:STDERR:   NS.A();
+  // CHECK:STDERR:   ^~~~~
   NS.A();
+  // CHECK:STDERR: c.carbon:[[@LINE+3]]:3: ERROR: Value of type `<function>` is not callable.
+  // CHECK:STDERR:   NS.B1();
+  // CHECK:STDERR:   ^~~~~~
   NS.B1();
+  // CHECK:STDERR: c.carbon:[[@LINE+3]]:3: ERROR: Value of type `<function>` is not callable.
+  // CHECK:STDERR:   NS.B2();
+  // CHECK:STDERR:   ^~~~~~
   NS.B2();
   NS.C();
 }
@@ -88,9 +94,9 @@ fn Run() {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7_13.1, .Run = %Run} [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %import_ref.2, .B1 = %import_ref.3, .B2 = %import_ref.4, .C = %C}, %import_ref.1 [template]
-// CHECK:STDOUT:   %import_ref.2: <error> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %import_ref.3: <error> = import_ref ir2, inst+2, used
-// CHECK:STDOUT:   %import_ref.4: <error> = import_ref ir2, inst+5, used
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+2, used
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, used
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, used
 // CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
@@ -103,15 +109,15 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, file.%import_ref.2
-// CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %B1.ref: <error> = name_ref B1, file.%import_ref.3
-// CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
-// CHECK:STDOUT:   %B2.ref: <error> = name_ref B2, file.%import_ref.4
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.2
+// CHECK:STDOUT:   %NS.ref.loc19: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
+// CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%import_ref.3
+// CHECK:STDOUT:   %NS.ref.loc23: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
+// CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%import_ref.4
+// CHECK:STDOUT:   %NS.ref.loc24: <namespace> = name_ref NS, file.%.loc7_13.1 [template = file.%.loc7_13.1]
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %.loc15: init () = call %C.ref()
+// CHECK:STDOUT:   %.loc24: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -296,7 +296,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
 
     // Builtins have designated labels.
     if (step.inst_id.is_builtin()) {
-      out << BuiltinKind::FromInt(step.inst_id.index).label();
+      out << step.inst_id.builtin_kind().label();
       continue;
     }
 
