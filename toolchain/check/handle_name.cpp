@@ -44,8 +44,9 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
 
 // Given an instruction produced by a name lookup, get the value to use for that
 // result in an expression.
-static auto GetExprValueForLookupResult(
-    Context& context, SemIR::InstId lookup_result_id) -> SemIR::InstId {
+static auto GetExprValueForLookupResult(Context& context,
+                                        SemIR::InstId lookup_result_id)
+    -> SemIR::InstId {
   // If lookup finds a class declaration, the value is its `Self` type.
   auto lookup_result = context.insts().Get(lookup_result_id);
   if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {

@@ -24,16 +24,16 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
   return true;
 }
 
-auto HandleImplForall(Context& context,
-                      Parse::ImplForallId parse_node) -> bool {
+auto HandleImplForall(Context& context, Parse::ImplForallId parse_node)
+    -> bool {
   auto params_id =
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
   context.node_stack().Push(parse_node, params_id);
   return true;
 }
 
-auto HandleImplAs(Context& /*context*/,
-                  Parse::ImplAsId /*parse_node*/) -> bool {
+auto HandleImplAs(Context& /*context*/, Parse::ImplAsId /*parse_node*/)
+    -> bool {
   return true;
 }
 
@@ -77,8 +77,8 @@ auto HandleImplDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleImplDefinition(Context& context, Parse::ImplDefinitionId /*parse_node*/)
-    -> bool {
+auto HandleImplDefinition(Context& context,
+                          Parse::ImplDefinitionId /*parse_node*/) -> bool {
   context.PopScope();
   context.PopScope();
   return true;

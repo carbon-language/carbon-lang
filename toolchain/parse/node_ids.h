@@ -87,8 +87,7 @@ struct NodeIdOneOf : public NodeId {
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
 using AnyFunctionDeclId =
     NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId>;
-using AnyImplDeclId =
-    NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
+using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
 
