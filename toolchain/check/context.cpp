@@ -72,11 +72,9 @@ auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
   CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
 
   auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
-  if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
-                  << const_id.inst_id() << "\n";
-    constant_values().Set(inst_id, const_id);
-  }
+  CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+                << const_id.inst_id() << "\n";
+  constant_values().Set(inst_id, const_id);
 
   return inst_id;
 }

@@ -772,7 +772,7 @@ class Formatter {
     out_ << InstT::Kind.ir_name();
     FormatInstructionRHS(inst);
     if (auto const_id = sem_ir_.constant_values().Get(inst_id);
-        const_id.is_constant()) {
+        const_id.is_valid() && const_id.is_constant()) {
       out_ << (const_id.is_symbolic() ? " [symbolic" : " [template");
       if (const_id.inst_id() != inst_id) {
         out_ << " = ";

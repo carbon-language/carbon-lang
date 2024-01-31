@@ -94,12 +94,14 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression whose phase cannot be determined because it
   // contains an error. This is always modeled as a template constant.
   static const ConstantId Error;
+  // An explicitly invalid ID.
+  static const ConstantId Invalid;
 
   // Returns the constant ID corresponding to a template constant, which should
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
-    return ConstantId(const_id.index + 1);
+    return ConstantId(const_id.index + IndexOffset);
   }
 
   // Returns the constant ID corresponding to a symbolic constant, which should
@@ -107,27 +109,37 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // unique.
   static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
     // Avoid allocating index -1.
-    return ConstantId(-const_id.index - 1);
+    return ConstantId(-const_id.index - IndexOffset);
   }
 
   using IdBase::IdBase;
 
   // Returns whether this represents a constant.
-  auto is_constant() const -> bool { return index != 0; }
+  auto is_constant() const -> bool {
+    CARBON_CHECK(is_valid());
+    return *this != ConstantId::NotConstant;
+  }
   // Returns whether this represents a symbolic constant.
-  auto is_symbolic() const -> bool { return index < 0; }
+  auto is_symbolic() const -> bool {
+    CARBON_CHECK(is_valid());
+    return index <= IndexOffset;
+  }
   // Returns whether this represents a template constant.
-  auto is_template() const -> bool { return index > 0; }
+  auto is_template() const -> bool {
+    CARBON_CHECK(is_valid());
+    return index >= IndexOffset;
+  }
 
   // Returns the instruction that describes this constant value, or
   // InstId::Invalid for a runtime value.
   auto inst_id() const -> InstId {
-    static_assert(InstId::InvalidIndex == -1);
-    return InstId(std::abs(index) - 1);
+    return InstId(std::abs(index) - IndexOffset);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (is_template()) {
+    if (!is_valid()) {
+      IdBase::Print(out);
+    } else if (is_template()) {
       out << "template " << inst_id();
     } else if (is_symbolic()) {
       out << "symbolic " << inst_id();
@@ -137,13 +149,22 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
  private:
-  // ConstantIds don't have an invalid state.
-  using IdBase::is_valid;
+  // The offset of InstId indices to ConstantId indices.
+  static constexpr int32_t IndexOffset = 2;
+  static constexpr int32_t NotConstantIndex = IndexOffset + InvalidIndex;
+
+  // Double-check inst_id calculations work. C++23 makes std::abs constexpr, but
+  // until then we mirror std::abs logic here.
+  static_assert(NotConstantIndex > 0 &&
+                NotConstantIndex - IndexOffset == InvalidIndex);
+  static_assert(InvalidIndex < 0 &&
+                -InvalidIndex - IndexOffset == InvalidIndex);
 };
 
-constexpr ConstantId ConstantId::NotConstant = ConstantId(0);
+constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
+constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
 // The ID of a bind name.
 struct BindNameId : public IdBase, public Printable<BindNameId> {

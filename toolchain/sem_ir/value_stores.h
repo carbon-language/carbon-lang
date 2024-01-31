@@ -120,11 +120,11 @@ class InstStore {
 class ConstantValueStore {
  public:
   // Returns the constant value of the requested instruction, or
-  // `ConstantId::NotConstant` if it is not constant.
+  // `ConstantId::Invalid` if it is not constant.
   auto Get(InstId inst_id) const -> ConstantId {
     CARBON_CHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? ConstantId::NotConstant
+               ? ConstantId::Invalid
                : values_[inst_id.index];
   }
 
@@ -133,7 +133,7 @@ class ConstantValueStore {
   auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_CHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.resize(inst_id.index + 1, ConstantId::NotConstant);
+      values_.resize(inst_id.index + 1, ConstantId::Invalid);
     }
     values_[inst_id.index] = const_id;
   }
