@@ -65,6 +65,7 @@ File::File(SharedValueStores& value_stores, std::string filename,
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
+      constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
   CARBON_CHECK(builtins != nullptr);
