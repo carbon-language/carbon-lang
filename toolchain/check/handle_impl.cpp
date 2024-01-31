@@ -26,6 +26,8 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
 
 auto HandleImplForall(Context& context, Parse::ImplForallId parse_node)
     -> bool {
+  // TODO: ImplicitParamList leaves a scope behind.
+  context.PopScope();
   auto params_id =
       context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
   context.node_stack().Push(parse_node, params_id);
