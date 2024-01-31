@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 static auto ExpectAsOrTypeExpression(Carbon::Parse::Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::As)) {
     // as <expression> ...
-    context.AddLeafNode(NodeKind::ImplAs, context.Consume());
+    context.AddLeafNode(NodeKind::DefaultSelfImplAs, context.Consume());
     context.PushState(State::Expr);
   } else {
     // <expression> as <expression>...
@@ -26,7 +26,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Forall)) {
     // forall [<implicit parameter list>] ...
     context.PushState(State::ImplAfterForall);
-    context.ConsumeAndDiscard();
+    context.AddLeafNode(NodeKind::ImplForall, context.Consume());
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
       context.PushState(State::PatternListAsImplicit);
     } else {
@@ -53,8 +53,6 @@ auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
   if (state.has_error) {
     context.ReturnErrorOnState();
   }
-  context.AddNode(NodeKind::ImplForall, state.token, state.subtree_start,
-                  state.has_error);
 
   // One of:
   //   as <expression> ...
@@ -64,17 +62,16 @@ auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
 
 auto HandleImplBeforeAs(Carbon::Parse::Context& context) -> void {
   auto state = context.PopState();
-  if (state.has_error) {
-    context.ReturnErrorOnState();
-    return;
-  }
   if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
-    context.AddLeafNode(NodeKind::ImplAs, *as);
+    context.AddNode(NodeKind::TypeImplAs, *as, state.subtree_start,
+                    state.has_error);
     context.PushState(State::Expr);
   } else {
-    CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
-                      "Expected `as` in `impl` declaration.");
-    context.emitter().Emit(*context.position(), ImplExpectedAs);
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
+                        "Expected `as` in `impl` declaration.");
+      context.emitter().Emit(*context.position(), ImplExpectedAs);
+    }
     context.ReturnErrorOnState();
   }
 }

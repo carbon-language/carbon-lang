@@ -666,24 +666,30 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 // `impl ... as`:
 //     ImplIntroducer
 //     _repeated_ _external_: modifier
-//     _optional_ ImplForall (see below)
+//     _optional_ ImplForall
+//     _optional_ _external_: ImplicitParamList
 //     _optional_ _external_: expression
-//     ImplAs
+//     DefaultSelfImplAs or TypeImplAs (see below)
 //     _external_: expression
 //   ImplDefinitionStart
 //   _external_: declarations
 // ImplDefinition
 //
+// ImplForall and the following node are optional based on `forall` presence.
+//
 // The above is the structure for a definition; for a declaration,
 // ImplDefinitionStart and later nodes are removed and replaced by
 // ImplDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplIntroducer, 0, Impl)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplForall, 0, Forall)
 
-// `forall ...`:
-//   _external_: ImplicitParamList
-// ImplForall
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplForall, 1, Forall)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplAs, 0, As)
+// `... as`:
+//   _external_: expression
+// TypeImplAs
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TypeImplAs, 1, As)
+// `as` without a type before it
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultSelfImplAs, 0, As)
+
 CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinitionStart, ImplIntroducer,
                                OpenCurlyBrace)
 CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinition, ImplDefinitionStart,

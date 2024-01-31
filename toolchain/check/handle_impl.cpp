@@ -16,8 +16,14 @@ auto HandleImplForall(Context& context, Parse::ImplForallId parse_node)
   return context.TODO(parse_node, "HandleImplForall");
 }
 
-auto HandleImplAs(Context& context, Parse::ImplAsId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleImplAs");
+auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleTypeImplAs");
+}
+
+auto HandleDefaultSelfImplAs(Context& context,
+                             Parse::DefaultSelfImplAsId parse_node) -> bool {
+  return context.TODO(parse_node, "HandleDefaultSelfImplAs");
 }
 
 auto HandleImplDecl(Context& context, Parse::ImplDeclId parse_node) -> bool {
