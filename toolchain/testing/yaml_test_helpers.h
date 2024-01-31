@@ -63,10 +63,6 @@ struct EmptyComparable {
       -> bool {
     return true;
   }
-  friend auto operator!=(EmptyComparable /*lhs*/, EmptyComparable /*rhs*/)
-      -> bool {
-    return false;
-  }
 };
 
 struct Value;

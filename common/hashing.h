@@ -37,12 +37,8 @@ class HashCode : public Printable<HashCode> {
 
   constexpr explicit HashCode(uint64_t value) : value_(value) {}
 
-  friend constexpr auto operator==(HashCode lhs, HashCode rhs) -> bool {
-    return lhs.value_ == rhs.value_;
-  }
-  friend constexpr auto operator!=(HashCode lhs, HashCode rhs) -> bool {
-    return lhs.value_ != rhs.value_;
-  }
+  friend constexpr auto operator==(HashCode lhs, HashCode rhs)
+      -> bool = default;
 
   // Extracts an index from the hash code as a `ssize_t`. This index covers the
   // full range of that type, and may even be negative. Typical usage will

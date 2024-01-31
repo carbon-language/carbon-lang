@@ -9,6 +9,7 @@
 #include <ostream>
 #include <type_traits>
 
+#include "common/crtp_helpers.h"
 #include "llvm/Support/raw_os_ostream.h"
 // Libraries should include this header instead of raw_ostream.
 #include "llvm/Support/Compiler.h"
@@ -19,7 +20,7 @@ namespace Carbon {
 // CRTP base class for printable types. Children (DerivedT) must implement:
 // - auto Print(llvm::raw_ostream& out) -> void
 template <typename DerivedT>
-class Printable {
+class Printable : EmptyCRTPBase<Printable<DerivedT>> {
   // Provides simple printing for debuggers.
   LLVM_DUMP_METHOD void Dump() const {
     static_cast<const DerivedT*>(this)->Print(llvm::errs());

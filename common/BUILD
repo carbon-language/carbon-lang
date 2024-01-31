@@ -63,6 +63,11 @@ cc_test(
 )
 
 cc_library(
+    name = "crtp_helpers",
+    hdrs = ["crtp_helpers.h"],
+)
+
+cc_library(
     name = "enum_base",
     hdrs = ["enum_base.h"],
     deps = [
@@ -195,6 +200,7 @@ cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
+        ":crtp_helpers",
         "@llvm-project//llvm:Support",
     ],
 )
