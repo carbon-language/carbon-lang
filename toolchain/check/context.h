@@ -180,6 +180,13 @@ class Context {
   // lexical_lookup_.
   auto PopScope() -> void;
 
+  // Pops the top scope from scope_stack_ if it contains no names.
+  auto PopScopeIfEmpty() -> void {
+    if (scope_stack_.back().names.empty()) {
+      PopScope();
+    }
+  }
+
   // Pops scopes until we return to the specified scope index.
   auto PopToScope(ScopeIndex index) -> void;
 
@@ -193,36 +200,29 @@ class Context {
     return current_scope().scope_id;
   }
 
-  auto GetCurrentScopeParseNode() const -> Parse::NodeId {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
-      return Parse::NodeId::Invalid;
-    }
-    return sem_ir_->insts().GetParseNode(current_scope_inst_id);
+  // Returns the instruction associated with the current scope, or Invalid if
+  // there is no such instruction, such as for a block scope.
+  auto current_scope_inst_id() const -> SemIR::InstId {
+    return current_scope().scope_inst_id;
   }
 
-  // Returns true if currently at file scope.
-  auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
-
-  // Returns true if the current scope is of the specified kind.
-  template <typename InstT>
-  auto CurrentScopeIs() -> bool {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
-      return false;
+  auto GetCurrentScopeParseNode() const -> Parse::NodeId {
+    auto inst_id = current_scope_inst_id();
+    if (!inst_id.is_valid()) {
+      return Parse::NodeId::Invalid;
     }
-    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
+    return sem_ir_->insts().GetParseNode(inst_id);
   }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
+    auto inst_id = current_scope_inst_id();
+    if (!inst_id.is_valid()) {
       return std::nullopt;
     }
-    return insts().Get(current_scope_inst_id).TryAs<InstT>();
+    return insts().TryGetAs<InstT>(inst_id);
   }
 
   // If there is no `returned var` in scope, sets the given instruction to be

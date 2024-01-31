@@ -127,6 +127,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       auto param_id =
           context.AddInst({name_node, SemIR::Param{cast_type_id, name_id}});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
+      // TODO: Bindings should come into scope immediately in other contexts
+      // too.
+      context.AddNameToLookup(name_id, bind_id);
       context.node_stack().Push(parse_node, bind_id);
       break;
     }
