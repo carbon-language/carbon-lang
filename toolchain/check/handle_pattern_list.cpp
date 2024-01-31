@@ -9,7 +9,6 @@ namespace Carbon::Check {
 auto HandleImplicitParamListStart(Context& context,
                                   Parse::ImplicitParamListStartId parse_node)
     -> bool {
-  context.PushScope();
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
@@ -28,18 +27,6 @@ auto HandleImplicitParamList(Context& context,
 
 auto HandleTuplePatternStart(Context& context,
                              Parse::TuplePatternStartId parse_node) -> bool {
-  // A tuple pattern following an implicit parameter list shares the same
-  // scope.
-  //
-  // TODO: For a declaration like
-  //
-  //   fn A(T:! type).B(U:! T).C(x: X(U)) { ... }
-  //
-  // ... all the earlier parameter should be in scope in the later parameter
-  // lists too.
-  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamList>()) {
-    context.PushScope();
-  }
   context.node_stack().Push(parse_node);
   context.ParamOrArgStart();
   return true;
@@ -54,7 +41,6 @@ auto HandlePatternListComma(Context& context,
 auto HandleTuplePattern(Context& context, Parse::TuplePatternId parse_node)
     -> bool {
   auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::TuplePatternStart);
-  context.PopScope();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::TuplePatternStart>();
   context.node_stack().Push(parse_node, refs_id);

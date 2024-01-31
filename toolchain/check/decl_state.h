@@ -56,6 +56,7 @@ struct DeclState {
     Class,
     Constraint,
     Fn,
+    Impl,
     Interface,
     Let,
     Namespace,

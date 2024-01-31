@@ -158,9 +158,8 @@ struct Interface : public Printable<Interface> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
-  // TODO: TypeId self_type_id;
   // The first declaration of the interface. This is a InterfaceDecl.
-  InstId decl_id = InstId::Invalid;
+  InstId decl_id;
 
   // The following members are set at the `{` of the interface definition.
 

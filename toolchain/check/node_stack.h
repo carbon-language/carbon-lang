@@ -492,6 +492,7 @@ class NodeStack {
           return IdKind::InstId;
         case Parse::NodeKind::IfCondition:
         case Parse::NodeKind::IfExprIf:
+        case Parse::NodeKind::ImplForall:
         case Parse::NodeKind::ImplicitParamList:
         case Parse::NodeKind::TuplePattern:
         case Parse::NodeKind::WhileCondition:
@@ -513,6 +514,7 @@ class NodeStack {
         case Parse::NodeKind::FunctionIntroducer:
         case Parse::NodeKind::IfStatementElse:
         case Parse::NodeKind::ImplicitParamListStart:
+        case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetIntroducer:
         case Parse::NodeKind::QualifiedName:

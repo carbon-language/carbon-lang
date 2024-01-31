@@ -36,7 +36,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers.
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
+                             name_context.target_scope_id);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access,
                        Lex::TokenKind::Class);
