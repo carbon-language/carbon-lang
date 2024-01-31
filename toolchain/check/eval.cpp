@@ -367,7 +367,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // These cases are always template constants.
     case SemIR::Builtin::Kind:
     case SemIR::ClassType::Kind:
-      // TODO: Once classes have generic arguments, handle them.
+    case SemIR::InterfaceType::Kind:
+      // TODO: Once classes and interfaces have generic arguments, handle them.
       return MakeConstantResult(context, inst, Phase::Template);
 
     // These cases are treated as being the unique canonical definition of the

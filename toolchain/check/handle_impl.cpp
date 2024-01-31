@@ -47,10 +47,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId /*parse_node*/)
   }
 
   auto params_id = context.node_stack().PopIf<Parse::NodeKind::ImplForall>();
+  auto decl_block_id = context.inst_block_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplIntroducer>();
 
   // TODO: Build an `Impl` object.
+  static_cast<void>(decl_block_id);
   static_cast<void>(params_id);
   static_cast<void>(self_id);
   static_cast<void>(interface_id);
