@@ -31,8 +31,12 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let);
-  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let);
+  // TODO: For a qualified `let` declaration, this should use the target scope
+  // of the name introduced in the declaration. See #2590.
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Let,
+                             context.current_scope_id());
+  RequireDefaultFinalOnlyInInterfaces(context, Lex::TokenKind::Let,
+                                      context.current_scope_id());
   LimitModifiersOnDecl(
       context, KeywordModifierSet::Access | KeywordModifierSet::Interface,
       Lex::TokenKind::Let);

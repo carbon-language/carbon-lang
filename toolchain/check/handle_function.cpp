@@ -37,32 +37,17 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
-  Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  CheckAccessModifiersOnDecl(context, decl_kind);
+static auto DiagnoseModifiers(Context& context,
+                              SemIR::NameScopeId target_scope_id)
+    -> KeywordModifierSet {
+  const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
+  CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
-  // Rules for abstract, virtual, and impl, which are only allowed in classes.
-  if (auto class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
-    auto inheritance_kind =
-        context.classes().Get(class_decl->class_id).inheritance_kind;
-    if (inheritance_kind == SemIR::Class::Final) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
-                            " in a non-abstract non-base `class` definition",
-                            context.GetCurrentScopeParseNode());
-    }
-    if (inheritance_kind != SemIR::Class::Abstract) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
-                            " in a non-abstract `class` definition",
-                            context.GetCurrentScopeParseNode());
-    }
-  } else {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
-                          " outside of a class");
-  }
-  RequireDefaultFinalOnlyInInterfaces(context, decl_kind);
+  CheckMethodModifiersOnFunction(context, target_scope_id);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_kind, target_scope_id);
 
   return context.decl_state_stack().innermost().modifier_set;
 }
@@ -117,7 +102,7 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers = DiagnoseModifiers(context);
+  auto modifiers = DiagnoseModifiers(context, name_context.target_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
                  "access modifier");
@@ -261,14 +246,6 @@ auto HandleFunctionDefinitionStart(Context& context,
           param_id, IncompleteTypeInFunctionParam,
           context.sem_ir().StringifyType(param.type_id()));
     });
-
-    if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
-      context.AddNameToLookup(
-          context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
-    } else {
-      CARBON_FATAL() << "Unexpected kind of parameter in function definition "
-                     << param;
-    }
   }
 
   context.node_stack().Push(parse_node, function_id);

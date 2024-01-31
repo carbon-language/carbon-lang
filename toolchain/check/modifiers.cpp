@@ -62,16 +62,41 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
   s.modifier_set = s.modifier_set & ~forbidden;
 }
 
-auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
-    -> void {
-  if (context.at_file_scope()) {
+// Returns the instruction that owns the given scope, or Invalid if the scope is
+// not associated with an instruction.
+auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
+    -> SemIR::InstId {
+  if (!scope_id.is_valid()) {
+    return SemIR::InstId::Invalid;
+  }
+  return context.name_scopes().Get(scope_id).inst_id;
+}
+
+// Returns the instruction that owns the given scope, or Invalid if the scope is
+// not associated with an instruction.
+auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
+    -> std::optional<SemIR::Inst> {
+  auto inst_id = GetScopeInstId(context, scope_id);
+  if (!inst_id.is_valid()) {
+    return std::nullopt;
+  }
+  return context.insts().Get(inst_id);
+}
+
+auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
+                                SemIR::NameScopeId target_scope_id) -> void {
+  auto target = GetScopeInst(context, target_scope_id);
+  if (target && target->Is<SemIR::Namespace>()) {
+    // TODO: This assumes that namespaces can only be declared at file scope. If
+    // we add support for non-file-scope namespaces, we will need to check the
+    // parents of the target scope to determine whether we're at file scope.
     ForbidModifiersOnDecl(
         context, KeywordModifierSet::Protected, decl_kind,
         " at file scope, `protected` is only allowed on class members");
     return;
   }
 
-  if (context.CurrentScopeIs<SemIR::ClassDecl>()) {
+  if (target && target->Is<SemIR::ClassDecl>()) {
     // Both `private` and `protected` allowed in a class definition.
     return;
   }
@@ -84,9 +109,41 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind)
       ", `private` is only allowed on class members and at file scope");
 }
 
+// Rules for abstract, virtual, and impl, which are only allowed in classes.
+auto CheckMethodModifiersOnFunction(Context& context,
+                                    SemIR::NameScopeId target_scope_id)
+    -> void {
+  const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
+  auto target_id = GetScopeInstId(context, target_scope_id);
+  if (target_id.is_valid()) {
+    if (auto class_decl =
+            context.insts().TryGetAs<SemIR::ClassDecl>(target_id)) {
+      auto inheritance_kind =
+          context.classes().Get(class_decl->class_id).inheritance_kind;
+      if (inheritance_kind == SemIR::Class::Final) {
+        ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
+                              " in a non-abstract non-base `class` definition",
+                              context.insts().GetParseNode(target_id));
+      }
+      if (inheritance_kind != SemIR::Class::Abstract) {
+        ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
+                              " in a non-abstract `class` definition",
+                              context.insts().GetParseNode(target_id));
+      }
+      return;
+    }
+  }
+
+  ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
+                        " outside of a class");
+}
+
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
-                                         Lex::TokenKind decl_kind) -> void {
-  if (context.CurrentScopeIs<SemIR::InterfaceDecl>()) {
+                                         Lex::TokenKind decl_kind,
+                                         SemIR::NameScopeId target_scope_id)
+    -> void {
+  auto target = GetScopeInst(context, target_scope_id);
+  if (target && target->Is<SemIR::InterfaceDecl>()) {
     // Both `default` and `final` allowed in an interface definition.
     return;
   }

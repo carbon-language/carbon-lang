@@ -36,7 +36,8 @@ static auto BuildInterfaceDecl(Context& context,
       .PopAndDiscardSoloParseNode<Parse::NodeKind::InterfaceIntroducer>();
 
   // Process modifiers.
-  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface);
+  CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
+                             name_context.target_scope_id);
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Interface);
 
