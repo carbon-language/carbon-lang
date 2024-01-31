@@ -8,14 +8,11 @@ interface Simple {
   fn F();
 }
 
-// CHECK:STDERR: fail_todo_impl_forall.carbon:[[@LINE+3]]:24: ERROR: Name `T` not found.
-// CHECK:STDERR: impl forall [T:! type] T as Simple {
-// CHECK:STDERR:                        ^
 impl forall [T:! type] T as Simple {
   fn F() {}
 }
 
-// CHECK:STDOUT: --- fail_todo_impl_forall.carbon
+// CHECK:STDOUT: --- impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
