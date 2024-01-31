@@ -337,6 +337,11 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
+  auto import_ir_constant_values()
+      -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
+    return import_ir_constant_values_;
+  }
+
   // Directly expose SemIR::File data accessors for brevity in calls.
 
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -394,10 +399,6 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
-  // If the passed in instruction ID is a ImportRefUnused, resolves it for use.
-  // Called when name lookup intends to return an inst_id.
-  auto ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void;
-
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
@@ -452,6 +453,12 @@ class Context {
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Per-import constant values. These refer to the main IR and mainly serve as
+  // a lookup table for quick access.
+  //
+  // Inline 0 elements because it's expected to require heap allocation.
+  llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
 };
 
 }  // namespace Carbon::Check

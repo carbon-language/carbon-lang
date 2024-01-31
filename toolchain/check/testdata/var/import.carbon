@@ -2,9 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// When there are no more cases that can hit a TODO, remove this test. Until
-// then, update it whenever its target is implemented.
-//
 // AUTOUPDATE
 
 // --- implicit.carbon
