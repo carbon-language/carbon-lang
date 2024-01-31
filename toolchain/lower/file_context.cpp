@@ -285,6 +285,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
     case SemIR::ConstType::Kind:
       return GetType(inst.As<SemIR::ConstType>().inner_id);
+    case SemIR::InterfaceType::Kind:
+      // Return an empty struct as a placeholder.
+      // TODO: Should we model an interface as a witness table?
+      return llvm::StructType::get(*llvm_context_);
     case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {

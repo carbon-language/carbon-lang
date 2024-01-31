@@ -1015,6 +1015,10 @@ class TypeCompleter {
                 .object_repr_id,
             SemIR::ValueRepr::ObjectAggregate);
 
+      case SemIR::InterfaceType::Kind:
+        // TODO: Should we model the value representation as a witness?
+        return MakeEmptyValueRepr();
+
       case SemIR::Builtin::Kind:
         CARBON_FATAL() << "Builtins should be named as ImportRefUsed";
 

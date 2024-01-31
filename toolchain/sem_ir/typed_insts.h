@@ -464,6 +464,16 @@ struct InterfaceDecl {
   InstBlockId decl_block_id;
 };
 
+struct InterfaceType {
+  static constexpr auto Kind =
+      InstKind::InterfaceType.Define<Parse::NodeId>("interface_type");
+
+  TypeId type_id;
+  InterfaceId interface_id;
+  // TODO: Once we support generic interfaces, include the interface's arguments
+  // here.
+};
+
 struct IntLiteral {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =

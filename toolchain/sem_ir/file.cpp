@@ -203,6 +203,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Builtin::Kind:
     case ClassType::Kind:
     case ImportRefUsed::Kind:
+    case InterfaceType::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -347,6 +348,12 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ImportRefUsed::Kind:
         out << "<TODO: ImportRefUsed " << step.inst_id << ">";
         break;
+      case InterfaceType::Kind: {
+        auto interface_name_id =
+            interfaces().Get(inst.As<InterfaceType>().interface_id).name_id;
+        out << names().GetFormatted(interface_name_id);
+        break;
+      }
       case NameRef::Kind: {
         out << names().GetFormatted(inst.As<NameRef>().name_id);
         break;
@@ -533,6 +540,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoundMethod::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
+      case InterfaceType::Kind:
       case IntLiteral::Kind:
       case Param::Kind:
       case PointerType::Kind:
