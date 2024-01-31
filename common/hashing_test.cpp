@@ -7,7 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <type_traits>
+#include <concepts>
 
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
@@ -339,7 +339,8 @@ auto PrintFullWidthHex(llvm::raw_ostream& os, T value) {
                       static_cast<uint64_t>(value));
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T>
+  requires std::integral<T>
 auto operator<<(llvm::raw_ostream& os, HashedValue<T> hv)
     -> llvm::raw_ostream& {
   os << "hash " << hv.hash << " for value ";
@@ -347,9 +348,8 @@ auto operator<<(llvm::raw_ostream& os, HashedValue<T> hv)
   return os;
 }
 
-template <typename T, typename U,
-          typename = std::enable_if_t<std::is_integral_v<T>>,
-          typename = std::enable_if_t<std::is_integral_v<U>>>
+template <typename T, typename U>
+  requires std::integral<T> && std::integral<U>
 auto operator<<(llvm::raw_ostream& os, HashedValue<std::pair<T, U>> hv)
     -> llvm::raw_ostream& {
   os << "hash " << hv.hash << " for pair of ";

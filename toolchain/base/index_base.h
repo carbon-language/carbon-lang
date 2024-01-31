@@ -53,9 +53,9 @@ struct IndexBase : public IdBase {
   using IdBase::IdBase;
 };
 
-// Equality comparison for both IdBase and IndexBase, including the index type
-// on either the LHS or RHS with something convertible to it. Inequality
-// automatically uses these in C++20.
+// Support equality comparison when one operand is a child of `IdBase`
+// (including `IndexBase`) and the other operand is either the same type or
+// convertible to that type.
 template <typename IndexType>
   requires std::derived_from<IndexType, IdBase>
 auto operator==(IndexType lhs, IndexType rhs) -> bool {
@@ -67,14 +67,8 @@ template <typename IndexType, typename RHSType>
 auto operator==(IndexType lhs, RHSType rhs) -> bool {
   return lhs.index == IndexType(rhs).index;
 }
-template <typename LHSType, typename IndexType>
-  requires std::derived_from<IndexType, IdBase> &&
-           std::convertible_to<LHSType, IndexType>
-auto operator==(LHSType lhs, IndexType rhs) -> bool {
-  return IndexType(lhs).index == rhs.index;
-}
 
-// Relational comparisons for only IndexBase.
+// Relational comparisons are only supported for types derived from `IndexBase`.
 template <typename IndexType>
   requires std::derived_from<IndexType, IndexBase>
 auto operator<=>(IndexType lhs, IndexType rhs) -> std::strong_ordering {

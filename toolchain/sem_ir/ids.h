@@ -51,12 +51,18 @@ struct InstId : public IdBase, public Printable<InstId> {
     return index < BuiltinKind::ValidCount;
   }
 
+  // Returns the BuiltinKind. Requires is_builtin.
+  auto builtin_kind() const -> BuiltinKind {
+    CARBON_CHECK(is_builtin());
+    return BuiltinKind::FromInt(index);
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "inst";
     if (!is_valid()) {
       IdBase::Print(out);
     } else if (is_builtin()) {
-      out << BuiltinKind::FromInt(index);
+      out << builtin_kind();
     } else {
       // Use the `+` as a small reminder that this is a delta, rather than an
       // absolute index.

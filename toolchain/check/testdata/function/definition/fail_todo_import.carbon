@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- a.carbon
 
@@ -18,6 +17,9 @@ library "b" api;
 import library "a";
 
 fn Run() {
+  // CHECK:STDERR: b.carbon:[[@LINE+3]]:3: ERROR: Value of type `<function>` is not callable.
+  // CHECK:STDERR:   F();
+  // CHECK:STDERR:   ^~
   F();
 }
 
@@ -37,13 +39,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %import_ref, .Run = %Run} [template]
-// CHECK:STDOUT:   %import_ref: <error> = import_ref ir1, inst+1, used
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: <error> = name_ref F, file.%import_ref
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

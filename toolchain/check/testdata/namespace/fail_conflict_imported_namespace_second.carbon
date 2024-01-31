@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: conflict.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- fn.carbon
 
@@ -46,7 +45,7 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %import_ref} [template]
-// CHECK:STDOUT:   %import_ref: <error> = import_ref ir1, inst+1, used
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.loc12: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }

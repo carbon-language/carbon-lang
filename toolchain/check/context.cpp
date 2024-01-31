@@ -15,6 +15,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -227,22 +228,35 @@ auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
   }
   const SemIR::File& import_ir = *import_irs().Get(unused_inst->ir_id);
   auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
-  switch (import_inst.kind()) {
-    default:
-      // TODO: We need more type support. For now we inject an arbitrary
-      // invalid node that's unrelated to the underlying value. The TODO
-      // diagnostic is used since this section shouldn't typically be able to
-      // error.
-      TODO(Parse::NodeId::Invalid,
-           (llvm::Twine("TODO: ResolveIfImportRefUnused for ") +
-            import_inst.kind().name())
-               .str());
-      ReplaceInstBeforeConstantUse(
-          inst_id,
-          {SemIR::ImportRefUsed{SemIR::TypeId::Error, unused_inst->ir_id,
-                                unused_inst->inst_id}});
-      break;
+
+  // If the type ID isn't a normal value, forward it directly.
+  if (!import_inst.type_id().is_valid()) {
+    ReplaceInstBeforeConstantUse(
+        inst_id,
+        {SemIR::ImportRefUsed{import_inst.type_id(), unused_inst->ir_id,
+                              unused_inst->inst_id}});
+    return;
   }
+
+  auto import_type_inst_id = import_ir.types().GetInstId(import_inst.type_id());
+  CARBON_CHECK(import_type_inst_id.is_valid());
+
+  // If the type of the instruction is a builtin, use it directly.
+  auto type_id = SemIR::TypeId::Invalid;
+  if (import_type_inst_id.is_builtin()) {
+    type_id = GetBuiltinType(import_type_inst_id.builtin_kind());
+  } else {
+    // TODO: This section probably needs to TryEvalInst for the type. Similar to
+    // GetTypeImpl, but in the context of import_ir.
+    TODO(Parse::NodeId::Invalid,
+         "TODO: ResolveIfImportRefUnused for non-builtin type");
+    type_id = SemIR::TypeId::Error;
+  }
+
+  // TODO: Add breadcrumbs for lowering.
+  ReplaceInstBeforeConstantUse(
+      inst_id, {SemIR::ImportRefUsed{type_id, unused_inst->ir_id,
+                                     unused_inst->inst_id}});
 }
 
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
