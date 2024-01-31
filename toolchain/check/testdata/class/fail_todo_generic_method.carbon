@@ -9,19 +9,19 @@
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 class Class(T:! type) {
   var a: T;
-  fn F(n: T);
+  fn F[self: Self](n: T);
 }
 
 // CHECK:STDERR: fail_todo_generic_method.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn Class(T:! type).F(n: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Class(T:! type).F[self: Self](n: T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_generic_method.carbon:[[@LINE-8]]:1: Name is previously declared here.
 // CHECK:STDERR: class Class(T:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_generic_method.carbon:[[@LINE+3]]:19: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
-// CHECK:STDERR: fn Class(T:! type).F(n: T) {}
+// CHECK:STDERR: fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDERR:                   ^
-fn Class(T:! type).F(n: T) {}
+fn Class(T:! type).F[self: Self](n: T) {}
 
 // CHECK:STDOUT: --- fail_todo_generic_method.carbon
 // CHECK:STDOUT:
@@ -47,7 +47,7 @@ fn Class(T:! type).F(n: T) {}
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: T);
+// CHECK:STDOUT: fn @F[%self: Class](%n: T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1(%T: type);
 // CHECK:STDOUT:
