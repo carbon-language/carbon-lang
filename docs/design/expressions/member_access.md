@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
+-   [Tuple indexing](#tuple-indexing)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -839,6 +840,56 @@ alias X2 = Factory.(Factory.Make);
 alias X3 = (i32 as Factory).Make;
 // ❌ Error, compound access without impl lookup or instance binding.
 alias X4 = i32.((i32 as Factory).Make);
+```
+
+## Tuple indexing
+
+A tuple indexing expression is of the form:
+
+-   _expression_ `.` _integer-literal_
+-   _expression_ `->` _integer-literal_
+
+The _expression_ is required to be of tuple type.
+
+Each positional element of the tuple is considered to have a name that is the
+corresponding decimal integer: `0`, `1`, and so on. The spelling of the
+_integer-literal_ is required to exactly match one of those names, and the
+result is the corresponding element of the tuple.
+
+```
+// ✅ `a == 42`.
+let a: i32 = (41, 42, 43).1;
+// ❌ Error: no tuple element named `0x1`.
+let b: i32 = (1, 2, 3).0x1;
+// ❌ Error: no tuple element named `2`.
+let c: i32 = (1, 2).2;
+
+var t: (i32, i32, i32) = (1, 2, 3);
+let p: (i32, i32, i32)* = &t;
+// ✅ `m == 3`.
+let m: i32 = p->2;
+```
+
+In a compound member access of the form:
+
+-   _expression_ `.` `(` _expression_ `)`
+-   _expression_ `->` `(` _expression_ `)`
+
+in which the first _expression_ is a tuple and the second _expression_ is of
+integer or integer literal type, the second _expression_ is required to be a
+non-negative template constant that is less than the number of tuple elements,
+and the result is the corresponding positional element of the tuple.
+
+```
+// ✅ `d == 43`.
+let d: i32 = (41, 42, 43).(1 + 1);
+// ✅ `e == 2`.
+let template e:! i32 = (1, 2, 3).(0x1);
+// ❌ Error: no tuple element with index 4.
+let f: i32 = (1, 2).(2 * 2);
+
+// ✅ `n == 3`.
+let n: i32 = p->(e);
 ```
 
 ## Precedence and associativity

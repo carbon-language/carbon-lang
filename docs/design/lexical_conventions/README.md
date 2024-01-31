@@ -33,4 +33,11 @@ A _lexical element_ is one of the following:
 -   a [symbolic token](symbolic_tokens.md)
 
 The sequence of lexical elements is formed by repeatedly removing the longest
-initial sequence of characters that forms a valid lexical element.
+initial sequence of characters that forms a valid lexical element, with the
+following exception:
+
+-   When a numeric literal immediately follows a `.` or `->` token, with no
+    intervening whitespace, a real literal is never formed. Instead, the token
+    will end no later than the next `.` character. For example, `tuple.1.2` is
+    five tokens, `tuple` `.` `1` `.` `2`, not three tokens, `tuple` `.` `1.2`.
+    However, `tuple . 1.2` is lexed as three tokens.
