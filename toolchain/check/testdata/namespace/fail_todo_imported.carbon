@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: implicit.impl.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
-// CHECK:STDERR: implicit.impl.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for FunctionDecl`.
 
 // --- implicit.carbon
 
@@ -20,10 +18,22 @@ fn NS.ChildNS.B();
 
 package Implicit impl;
 
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
+// CHECK:STDERR: var a: () = NS.A();
+// CHECK:STDERR:             ^~~~~
 var a: () = NS.A();
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
+// CHECK:STDERR: var b: () = NS.ChildNS.B();
+// CHECK:STDERR:             ^~~~~~~~~~~~~
 var b: () = NS.ChildNS.B();
 
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:21: ERROR: Value of type `<function>` is not callable.
+// CHECK:STDERR: var package_a: () = package.NS.A();
+// CHECK:STDERR:                     ^~~~~~~~~~~~~
 var package_a: () = package.NS.A();
+// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:21: ERROR: Value of type `<function>` is not callable.
+// CHECK:STDERR: var package_b: () = package.NS.ChildNS.B();
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~
 var package_b: () = package.NS.ChildNS.B();
 
 // CHECK:STDOUT: --- implicit.carbon
@@ -52,39 +62,39 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.ChildNS = %.3, .A = %import_ref.3}, %import_ref.1 [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+2, used
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.B = %import_ref.4}, %import_ref.2 [template]
-// CHECK:STDOUT:   %import_ref.3: <error> = import_ref ir1, inst+3, used
-// CHECK:STDOUT:   %import_ref.4: <error> = import_ref ir1, inst+4, used
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+3, used
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+4, used
+// CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %NS.ref.loc4: <namespace> = name_ref NS, %.2 [template = %.2]
-// CHECK:STDOUT:   %A.ref.loc4: <error> = name_ref A, %import_ref.3
+// CHECK:STDOUT:   %NS.ref.loc7: <namespace> = name_ref NS, %.2 [template = %.2]
+// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, %import_ref.3
 // CHECK:STDOUT:   assign %a.var, <error>
-// CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %NS.ref.loc5: <namespace> = name_ref NS, %.2 [template = %.2]
-// CHECK:STDOUT:   %ChildNS.ref.loc5: <namespace> = name_ref ChildNS, %.3 [template = %.3]
-// CHECK:STDOUT:   %B.ref.loc5: <error> = name_ref B, %import_ref.4
+// CHECK:STDOUT:   %NS.ref.loc11: <namespace> = name_ref NS, %.2 [template = %.2]
+// CHECK:STDOUT:   %ChildNS.ref.loc11: <namespace> = name_ref ChildNS, %.3 [template = %.3]
+// CHECK:STDOUT:   %B.ref.loc11: <function> = name_ref B, %import_ref.4
 // CHECK:STDOUT:   assign %b.var, <error>
-// CHECK:STDOUT:   %.loc7_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_17.2: type = converted %.loc16_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref () = var package_a
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
-// CHECK:STDOUT:   %package.ref.loc7: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %NS.ref.loc7: <namespace> = name_ref NS, %.2 [template = %.2]
-// CHECK:STDOUT:   %A.ref.loc7: <error> = name_ref A, %import_ref.3
+// CHECK:STDOUT:   %package.ref.loc16: <namespace> = name_ref package, package [template = package]
+// CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %.2 [template = %.2]
+// CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, %import_ref.3
 // CHECK:STDOUT:   assign %package_a.var, <error>
-// CHECK:STDOUT:   %.loc8_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc20_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_17.2: type = converted %.loc20_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref () = var package_b
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
-// CHECK:STDOUT:   %package.ref.loc8: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %NS.ref.loc8: <namespace> = name_ref NS, %.2 [template = %.2]
-// CHECK:STDOUT:   %ChildNS.ref.loc8: <namespace> = name_ref ChildNS, %.3 [template = %.3]
-// CHECK:STDOUT:   %B.ref.loc8: <error> = name_ref B, %import_ref.4
+// CHECK:STDOUT:   %package.ref.loc20: <namespace> = name_ref package, package [template = package]
+// CHECK:STDOUT:   %NS.ref.loc20: <namespace> = name_ref NS, %.2 [template = %.2]
+// CHECK:STDOUT:   %ChildNS.ref.loc20: <namespace> = name_ref ChildNS, %.3 [template = %.3]
+// CHECK:STDOUT:   %B.ref.loc20: <function> = name_ref B, %import_ref.4
 // CHECK:STDOUT:   assign %package_b.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

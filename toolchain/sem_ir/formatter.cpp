@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/formatter.h"
 
+#include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -170,7 +171,7 @@ class InstNamer {
 
     // Check for a builtin.
     if (inst_id.is_builtin()) {
-      return BuiltinKind::FromInt(inst_id.index).label().str();
+      return inst_id.builtin_kind().label().str();
     }
 
     if (inst_id == InstId::PackageNamespace) {

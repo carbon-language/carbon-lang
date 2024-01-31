@@ -6,7 +6,6 @@
 // then, update it whenever its target is implemented.
 //
 // AUTOUPDATE
-// CHECK:STDERR: implicit.impl.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for BindName`.
 
 // --- implicit.carbon
 
@@ -18,7 +17,7 @@ var a_ref: i32 = 0;
 
 package Implicit impl;
 
-var a: () = a_ref;
+var a: i32 = a_ref;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
@@ -36,18 +35,13 @@ var a: () = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %import_ref, .a = %a} [template]
-// CHECK:STDOUT:   %import_ref: ref <error> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref () = var a
-// CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %import_ref
-// CHECK:STDOUT:   assign %a.var, <error>
+// CHECK:STDOUT:   %import_ref: ref i32 = import_ref ir1, inst+2, used
+// CHECK:STDOUT:   %a.var: ref i32 = var a
+// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a_ref.ref: ref i32 = name_ref a_ref, %import_ref
+// CHECK:STDOUT:   %.loc4: i32 = bind_value %a_ref.ref
+// CHECK:STDOUT:   assign %a.var, %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
