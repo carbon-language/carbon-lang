@@ -850,8 +850,12 @@ struct InterfaceDefinition {
 // `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer>;
 
-// `forall`
-using ImplForall = LeafNode<NodeKind::ImplForall>;
+// `forall [...]`
+struct ImplForall {
+  static constexpr auto Kind = NodeKind::ImplForall.Define();
+
+  ImplicitParamListId params;
+};
 
 // `as` with no type before it
 using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs>;
@@ -870,12 +874,7 @@ struct ImplSignature {
 
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  // `forall [...]`
-  struct Forall {
-    ImplForallId introducer;
-    ImplicitParamListId params;
-  };
-  std::optional<Forall> forall;
+  std::optional<ImplForallId> forall;
   NodeIdOneOf<DefaultSelfImplAs, TypeImplAs> as;
   AnyExprId interface;
 };
