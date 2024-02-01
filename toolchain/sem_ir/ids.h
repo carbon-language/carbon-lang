@@ -121,7 +121,7 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
     CARBON_CHECK(is_valid());
-    return index <= IndexOffset;
+    return index <= -IndexOffset;
   }
   // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
@@ -131,9 +131,9 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
   // Returns the instruction that describes this constant value, or
   // InstId::Invalid for a runtime value. Requires is_valid.
-  auto inst_id() const -> InstId {
+  constexpr auto inst_id() const -> InstId {
     CARBON_CHECK(is_valid());
-    return InstId(std::abs(index) - IndexOffset);
+    return InstId(Abs(index) - IndexOffset);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -149,17 +149,17 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
  private:
+  // TODO: C++23 makes std::abs constexpr, but until then we mirror std::abs
+  // logic here. LLVM should still optimize this.
+  static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
+
   static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
   // The offset of InstId indices to ConstantId indices.
   static constexpr int32_t IndexOffset = -NotConstantIndex + 1;
-
-  // Double-check inst_id calculations work. C++23 makes std::abs constexpr, but
-  // until then we mirror std::abs logic here.
-  static_assert(NotConstantIndex < 0 &&
-                -NotConstantIndex - IndexOffset == InstId::InvalidIndex);
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
+static_assert(ConstantId::NotConstant.inst_id() == InstId::Invalid);
 constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);

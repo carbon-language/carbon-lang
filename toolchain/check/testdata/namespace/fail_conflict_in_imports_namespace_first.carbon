@@ -63,8 +63,8 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2} [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.Foo = %import_ref.2, .Bar = %Bar}, %import_ref.1 [template]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unused [<invalid>]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+1, unused [<invalid>]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+1, unused
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

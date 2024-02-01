@@ -788,6 +788,15 @@ class Formatter {
     out_ << "\n";
   }
 
+  // Don't print a constant for ImportRefUnused.
+  auto FormatInstruction(InstId inst_id, ImportRefUnused inst) -> void {
+    Indent();
+    FormatInstructionLHS(inst_id, inst);
+    out_ << ImportRefUnused::Kind.ir_name();
+    FormatInstructionRHS(inst);
+    out_ << "\n";
+  }
+
   auto FormatInstructionLHS(InstId inst_id, Inst inst) -> void {
     switch (inst.kind().value_kind()) {
       case InstValueKind::Typed:
