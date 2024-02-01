@@ -20,14 +20,14 @@ impl i32 as;
 impl bool as bar unexpected;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:6: ERROR: Expected expression.
-// CHECK:STDERR: impl return as bar;
+// CHECK:STDERR: impl return as A;
 // CHECK:STDERR:      ^~~~~~
-impl return as bar;
+impl return as A;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:6: ERROR: Expected expression.
-// CHECK:STDERR: impl return bar;
+// CHECK:STDERR: impl return B;
 // CHECK:STDERR:      ^~~~~~
-impl return bar;
+impl return B;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+6]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
 // CHECK:STDERR: impl forall f32;
