@@ -24,39 +24,31 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
   return true;
 }
 
-auto HandleImplForall(Context& context, Parse::ImplForallId parse_node)
+auto HandleImplForall(Context& /*context*/, Parse::ImplForallId /*parse_node*/)
     -> bool {
-  auto params_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplicitParamList>();
-  context.node_stack().Push(parse_node, params_id);
   return true;
 }
 
 auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
     -> bool {
-  return context.TODO(parse_node, "HandleTypeImplAs");
+  auto self_id = context.node_stack().PopExpr();
+  context.node_stack().Push(parse_node, self_id);
+  return true;
 }
 
-auto HandleDefaultSelfImplAs(Context& context,
-                             Parse::DefaultSelfImplAsId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleDefaultSelfImplAs");
-}
-
-auto HandleTypeImplAs(Context& /*context*/, Parse::ImplAsId /*parse_node*/)
+auto HandleDefaultSelfImplAs(Context& /*context*/,
+                             Parse::DefaultSelfImplAsId /*parse_node*/)
     -> bool {
+  // TODO: Determine self_id and push it onto node stack
   return true;
 }
 
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId /*parse_node*/)
     -> SemIR::InstId {
   auto interface_id = context.node_stack().PopExpr();
-  auto self_id = SemIR::InstId::Invalid;
-  if (!context.node_stack().PeekIs<Parse::NodeKind::ImplForall>() &&
-      !context.node_stack().PeekIs<Parse::NodeKind::ImplIntroducer>()) {
-    self_id = context.node_stack().PopExpr();
-  }
-
-  auto params_id = context.node_stack().PopIf<Parse::NodeKind::ImplForall>();
+  auto self_id = context.node_stack().PopIf<Parse::NodeKind::TypeImplAs>();
+  auto params_id =
+      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>();
   auto decl_block_id = context.inst_block_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplIntroducer>();
