@@ -473,6 +473,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ClassDecl::Kind:
+    case SemIR::ImplDecl::Kind:
     case SemIR::Import::Kind:
     case SemIR::InterfaceDecl::Kind:
     case SemIR::Param::Kind:

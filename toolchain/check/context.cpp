@@ -956,6 +956,7 @@ class TypeCompleter {
       case SemIR::Deref::Kind:
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
+      case SemIR::ImplDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:

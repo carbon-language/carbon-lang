@@ -20,6 +20,7 @@ struct BindNameInfo;
 struct Class;
 struct Function;
 struct Interface;
+struct Impl;
 struct NameScope;
 struct TypeInfo;
 
@@ -209,6 +210,22 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
 
 constexpr InterfaceId InterfaceId::Invalid =
     InterfaceId(InterfaceId::InvalidIndex);
+
+// The ID of an impl.
+struct ImplId : public IdBase, public Printable<ImplId> {
+  using ValueType = Impl;
+
+  // An explicitly invalid interface ID.
+  static const ImplId Invalid;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "impl";
+    IdBase::Print(out);
+  }
+};
+
+constexpr ImplId ImplId::Invalid = ImplId(ImplId::InvalidIndex);
 
 // The ID of an imported IR.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {

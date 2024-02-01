@@ -19,9 +19,15 @@ impl i32 as Empty {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl} [template]
 // CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, ()
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
