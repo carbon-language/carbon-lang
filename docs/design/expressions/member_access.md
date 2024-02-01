@@ -60,9 +60,9 @@ or a _compound_ member access of the form:
 -   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
 -   _member-access-expression_ ::= _expression_ `->` `(` _expression_ `)`
 
-The _member name_ is the _word_, _integer-literal_, or the constant value of
-the parenthesized _expression_ in the member access expression. Compound
-member accesses allow specifying a qualified member name.
+The _member name_ is the _word_, _integer-literal_, or the constant value of the
+parenthesized _expression_ in the member access expression. Compound member
+accesses allow specifying a qualified member name.
 
 For example:
 
@@ -222,46 +222,9 @@ class Avatar {
 Simple member access `(Avatar as Cowboy).Draw` finds the `Cowboy.Draw`
 implementation for `Avatar`, ignoring `Renderable.Draw`.
 
-### Values
-
-If the first operand is not a type, package, namespace, or facet, it does not
-have member names, and a search is performed into the type of the first operand
-instead.
-
-```carbon
-interface Printable {
-  fn Print[self: Self]();
-}
-
-impl i32 as Printable;
-
-class Point {
-  var x: i32;
-  var y: i32;
-  // Extending impl injects the name `Print` into
-  // class `Point`.
-  extend impl as Printable;
-}
-
-fn PrintPointTwice() {
-  var p: Point = {.x = 0, .y = 0};
-
-  // ✅ OK, `x` found in type of `p`, namely `Point`.
-  p.x = 1;
-  // ✅ OK, `y` found in the type `Point`.
-  p.(Point.y) = 1;
-
-  // ✅ OK, `Print` found in type of `p`, namely `Point`.
-  p.Print();
-  // ✅ OK, `Print` found in the type `Printable`, and
-  // `Printable.Print` found in the type of `p`.
-  p.(Printable.Print)();
-}
-```
-
 ### Tuple indexing
 
-Tuple types have member names that are _integer-literal_s, not _word_s.
+Tuple types have member names that are *integer-literal*s, not *word*s.
 
 Each positional element of a tuple is considered to have a name that is the
 corresponding decimal integer: `0`, `1`, and so on. The spelling of the
@@ -300,6 +263,43 @@ let f: i32 = (1, 2).(2 * 2);
 
 // ✅ `n == 3`.
 let n: i32 = p->(e);
+```
+
+### Values
+
+If the first operand is not a type, package, namespace, or facet, it does not
+have member names, and a search is performed into the type of the first operand
+instead.
+
+```carbon
+interface Printable {
+  fn Print[self: Self]();
+}
+
+impl i32 as Printable;
+
+class Point {
+  var x: i32;
+  var y: i32;
+  // Extending impl injects the name `Print` into
+  // class `Point`.
+  extend impl as Printable;
+}
+
+fn PrintPointTwice() {
+  var p: Point = {.x = 0, .y = 0};
+
+  // ✅ OK, `x` found in type of `p`, namely `Point`.
+  p.x = 1;
+  // ✅ OK, `y` found in the type `Point`.
+  p.(Point.y) = 1;
+
+  // ✅ OK, `Print` found in type of `p`, namely `Point`.
+  p.Print();
+  // ✅ OK, `Print` found in the type `Printable`, and
+  // `Printable.Print` found in the type of `p`.
+  p.(Printable.Print)();
+}
 ```
 
 ### Facet binding
