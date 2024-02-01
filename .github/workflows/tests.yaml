@@ -23,19 +23,26 @@ jobs:
         # At present, these images are newer than "latest". We use them to test
         # against more recent tooling versions.
         # https://github.com/actions/runner-images
-        os: [ubuntu-22.04, macos-12]
+        os: [ubuntu-22.04, macos-14]
         build_mode: [fastbuild, opt]
-        # The clang-tidy config doesn't work on macos (missing `truncate`).
         include:
+          # The clang-tidy config doesn't work on macos (missing `truncate`).
           - os: 'ubuntu-22.04'
             build_mode: 'clang-tidy'
+          # On push (post-submit), also run on `macos-12` to get Intel macOS
+          # coverage. This is less and less critical so we skip it on the PR and
+          # merge queue path by switching to a redundant OS.
+          - os: ${{ github.event_name == 'push' && 'macos-12' || 'macos-14' }}
+            build_mode: fastbuild
+          - os: ${{ github.event_name == 'push' && 'macos-12' || 'macos-14' }}
+            build_mode: opt
     runs-on: ${{ matrix.os }}
 
     steps:
       # Ubuntu images start with 23GB available, and this adds 14GB more. For
       # comparison, MacOS images have >100GB free.
       - name: Free up disk space (Ubuntu)
-        if: matrix.os == 'ubuntu-22.04'
+        if: contains(matrix.os, 'ubuntu')
         uses: jlumbroso/free-disk-space@v1.2.0
         with:
           android: true
@@ -74,33 +81,43 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         with:
           # Match the min version listed in docs/project/contribution_tools.md
-          python-version: '3.9'
+          # or the oldest version available on the OS.
+          python-version: ${{ matrix.os == 'macos-14' && '3.11' || '3.9' }}
 
       # Install and cache LLVM 16 from Homebrew.
       # TODO: We can potentially remove this and simplify things when the
       # Homebrew version of LLVM updates to 16 here:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Cache Homebrew (macOS)
-        if: steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12'
+        if:
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'macos')
         id: cache-homebrew-macos
         uses: actions/cache@v3
         env:
           cache-name: cache-homebrew
         with:
-          # Cover all the critical parts of Homebrew here.
+          # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
+          # uses its own prefix making this easy to cover, but we need a few
+          # different paths for Intel.
           path: |
-            /usr/local/Homebrew
-            /usr/local/Cellar
-            /usr/local/Frameworks
-            /usr/local/bin
-            /usr/local/opt
+            ${{
+              runner.arch == 'ARM64' && '/opt/homebrew' ||
+              '
+                /usr/local/Homebrew
+                /usr/local/Cellar
+                /usr/local/Frameworks
+                /usr/local/bin
+                /usr/local/opt
+              '
+            }}
           # Note the key needs to include all the packages we're adding.
           key: Homebrew-Cache-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install LLVM and Clang with Homebrew (macOS)
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12' &&
-          steps.cache-homebrew-macos.outputs.cache-hit != 'true'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'macos') && steps.cache-homebrew-macos.outputs.cache-hit != 'true'
         run: |
           echo '*** Prune brew leaves'
           # We prune all the leaf packages to have a minimal environment. This
@@ -125,7 +142,9 @@ jobs:
           brew config
 
       - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12'
+        if:
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'macos')
         run: |
           LLVM_PATH="$(brew --prefix llvm@16)"
           echo "Using ${LLVM_PATH}"
@@ -140,7 +159,8 @@ jobs:
       # reliability.
       - name: Cache LLVM and Clang installation (Ubuntu)
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'ubuntu')
         id: cache-llvm-ubuntu
         uses: actions/cache@v3
         env:
@@ -151,8 +171,8 @@ jobs:
 
       - name: Download LLVM and Clang installation (Ubuntu)
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
-          && steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'ubuntu') && steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
         run: |
           cd ~
           LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
@@ -175,7 +195,8 @@ jobs:
 
       - name: Setup LLVM and Clang paths (Ubuntu)
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'ubuntu')
         run: |
           LLVM_PATH=~/llvm
           echo "Using ${LLVM_PATH}"
@@ -227,12 +248,15 @@ jobs:
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.has_code == 'true' && matrix.os == 'macos-12'
+        if:
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'macos')
         run: |
           echo "os_for_cache=macos-12" >> $GITHUB_ENV
       - name: Setup LLVM and Clang (Ubuntu)
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'ubuntu')
         run: |
           echo "os_for_cache=ubuntu-22_04" >> $GITHUB_ENV
 
@@ -396,8 +420,8 @@ jobs:
       # The `-k` flag is used to print all clang-tidy errors.
       - name: clang-tidy
         if:
-          steps.filter.outputs.has_code == 'true' && matrix.os == 'ubuntu-22.04'
-          && matrix.build_mode == 'clang-tidy'
+          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
+          'ubuntu') && matrix.build_mode == 'clang-tidy'
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
