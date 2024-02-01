@@ -314,6 +314,10 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
+  // Common File initialization.
+  explicit File(SharedValueStores& value_stores, std::string filename,
+                const File* builtins, llvm::function_ref<void()> init_builtins);
+
   bool has_errors_ = false;
 
   // Shared, compile-scoped values.
