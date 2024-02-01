@@ -666,9 +666,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 // `impl ... as`:
 //     ImplIntroducer
 //     _repeated_ _external_: modifier
-//     _optional_ ImplForall (see below)
+//     _optional_ _external_: ImplForall
 //     _optional_ _external_: expression
-//     DefaultSelfImplAs or TypeImplAs (see below)
+//     _external_: DefaultSelfImplAs or TypeImplAs
 //     _external_: expression
 //   ImplDefinitionStart
 //   _external_: declarations
@@ -678,6 +678,11 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
 // ImplDefinitionStart and later nodes are removed and replaced by
 // ImplDecl.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplIntroducer, 0, Impl)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinitionStart, ImplIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinition, ImplDefinitionStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
 
 // `forall ...`:
 //   _external_: ImplicitParamList
@@ -690,12 +695,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplForall, 1, Forall)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(TypeImplAs, 1, As)
 // `as` without a type before it
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultSelfImplAs, 0, As)
-
-CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinitionStart, ImplIntroducer,
-                               OpenCurlyBrace)
-CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinition, ImplDefinitionStart,
-                               CloseCurlyBrace)
-CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
 
 // `constraint`:
 //     NamedConstraintIntroducer

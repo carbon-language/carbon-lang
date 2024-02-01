@@ -19,6 +19,16 @@ impl i32 as;
 // CHECK:STDERR:                  ^~~~~~~~~~
 impl bool as bar unexpected;
 
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:6: ERROR: Expected expression.
+// CHECK:STDERR: impl return as bar;
+// CHECK:STDERR:      ^~~~~~
+impl return as bar;
+
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+3]]:6: ERROR: Expected expression.
+// CHECK:STDERR: impl return bar;
+// CHECK:STDERR:      ^~~~~~
+impl return bar;
+
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+6]]:13: ERROR: Expected `[` after `forall` in `impl` declaration.
 // CHECK:STDERR: impl forall f32;
 // CHECK:STDERR:             ^~~
@@ -67,7 +77,7 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+82]]:21: ERROR: Expected expression.
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+88]]:21: ERROR: Expected expression.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_impl.carbon
@@ -86,6 +96,12 @@ impl
 // CHECK:STDOUT:       {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'bar'},
 // CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'return', has_error: yes},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'return', has_error: yes},
+// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'f32', has_error: yes},
 // CHECK:STDOUT:       {kind: 'ImplForall', text: 'forall', has_error: yes, subtree_size: 2},
