@@ -60,40 +60,8 @@ auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
 }
 
-File::File(SharedValueStores& value_stores)
-    : value_stores_(&value_stores),
-      filename_("<builtins>"),
-      type_blocks_(allocator_),
-      inst_blocks_(allocator_),
-      constants_(*this, allocator_) {
-  auto builtins_id = import_irs_.Add(this);
-  CARBON_CHECK(builtins_id == ImportIRId::Builtins)
-      << "Builtins must be the first IR, even if self-referential";
-
-  insts_.Reserve(BuiltinKind::ValidCount);
-
-  // Error uses a self-referential type so that it's not accidentally treated as
-  // a normal type. Every other builtin is a type, including the
-  // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
-  insts_.AddInNoBlock(                                                     \
-      {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
-                                                       : TypeId::TypeType, \
-               BuiltinKind::Name}});
-#include "toolchain/sem_ir/builtin_kind.def"
-  for (auto [i, inst] : llvm::enumerate(insts_.array_ref())) {
-    auto builtin_id = SemIR::InstId(i);
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
-  }
-
-  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
-      << "Builtins should produce " << BuiltinKind::ValidCount
-      << " insts, actual: " << insts_.size();
-}
-
 File::File(SharedValueStores& value_stores, std::string filename,
-           const File* builtins)
+           const File* builtins, llvm::function_ref<void()> init_builtins)
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
@@ -104,19 +72,42 @@ File::File(SharedValueStores& value_stores, std::string filename,
   CARBON_CHECK(builtins_id == ImportIRId::Builtins)
       << "Builtins must be the first IR";
 
-  // Copy builtins over.
   insts_.Reserve(BuiltinKind::ValidCount);
-  for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
-    // We can reuse the type IDs from the builtins IR because they're
-    // special-cased values.
-    auto type_id = inst.type_id();
+  init_builtins();
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
+      << "Builtins should produce " << BuiltinKind::ValidCount
+      << " insts, actual: " << insts_.size();
+  for (auto i : llvm::seq(BuiltinKind::ValidCount)) {
     auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock(
-        {ImportRefUsed{type_id, ImportIRId::Builtins, builtin_id}});
     constant_values_.Set(builtin_id,
                          SemIR::ConstantId::ForTemplateConstant(builtin_id));
   }
 }
+
+File::File(SharedValueStores& value_stores)
+    : File(value_stores, "<builtins>", this, [&]() {
+// Error uses a self-referential type so that it's not accidentally treated as
+// a normal type. Every other builtin is a type, including the
+// self-referential TypeType.
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
+  insts_.AddInNoBlock(                                                     \
+      {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
+                                                       : TypeId::TypeType, \
+               BuiltinKind::Name}});
+#include "toolchain/sem_ir/builtin_kind.def"
+      }) {
+}
+
+File::File(SharedValueStores& value_stores, std::string filename,
+           const File* builtins)
+    : File(value_stores, filename, builtins, [&]() {
+        for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
+          // We can reuse the type_id from the builtin IR's inst because they're
+          // special-cased values.
+          insts_.AddInNoBlock({ImportRefUsed{
+              inst.type_id(), ImportIRId::Builtins, SemIR::InstId(i)}});
+        }
+      }) {}
 
 auto File::Verify() const -> ErrorOr<Success> {
   // Invariants don't necessarily hold for invalid IR.

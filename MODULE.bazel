@@ -24,12 +24,12 @@ http_archive = use_repo_rule(
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(
     name = "abseil-cpp",
-    version = "20230802.0",
+    version = "20240116.0",
     repo_name = "com_google_absl",
 )
 bazel_dep(
     name = "re2",
-    version = "2023-11-01",
+    version = "2024-02-01",
     repo_name = "com_googlesource_code_re2",
 )
 bazel_dep(
