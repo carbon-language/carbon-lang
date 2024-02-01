@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Types and facets](#types-and-facets)
+    -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
         -   [Compile-time bindings](#compile-time-bindings)
@@ -24,7 +25,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Instance binding](#instance-binding)
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
--   [Tuple indexing](#tuple-indexing)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -52,13 +52,17 @@ form:
 
 -   _member-access-expression_ ::= _expression_ `.` _word_
 -   _member-access-expression_ ::= _expression_ `->` _word_
+-   _member-access-expression_ ::= _expression_ `.` _integer-literal_
+-   _member-access-expression_ ::= _expression_ `->` _integer-literal_
 
 or a _compound_ member access of the form:
 
 -   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
 -   _member-access-expression_ ::= _expression_ `->` `(` _expression_ `)`
 
-Compound member accesses allow specifying a qualified member name.
+The _member name_ is the _word_, _integer-literal_, or the constant value of
+the parenthesized _expression_ in the member access expression. Compound
+member accesses allow specifying a qualified member name.
 
 For example:
 
@@ -100,7 +104,7 @@ simplicity.
 
 A member access expression is processed using the following steps:
 
--   First, the word or parenthesized expression to the right of the `.` is
+-   First, the member name to the right of the `.` is
     [resolved](#member-resolution) to a specific member entity, called `M` in
     this document.
 -   Then, if necessary, [`impl` lookup](#impl-lookup) is performed to map from a
@@ -117,24 +121,26 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, the second operand is a word. If the first operand
-is a type, facet, package, or namespace, a search for the word is performed in
-the first operand. Otherwise, a search for the word is performed in the type of
-the first operand. In either case, the search must succeed. In the latter case,
-if the result is an instance member, then [instance binding](#instance-binding)
-is performed on the first operand.
+For a simple member access, if the first operand is a type, facet, package, or
+namespace, a search for the member name is performed in the first operand.
+Otherwise, a search for the member name is performed in the type of the first
+operand. In either case, the search must succeed. In the latter case, if the
+result is an instance member, then [instance binding](#instance-binding) is
+performed on the first operand.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
-succeed and to result in a member of a type, interface, or non-type facet. If
-the result is an instance member, then [instance binding](#instance-binding) is
-always performed on the first operand.
+succeed and to result in a member of a type, interface, or non-type facet, or a
+value of an integer or integer literal type. If the result is an instance
+member, then [instance binding](#instance-binding) is always performed on the
+first operand.
 
 ### Package and namespace members
 
 If the first operand is a package or namespace name, the expression must be a
-simple member access expression. The _word_ must name a member of that package
-or namespace, and the result is the package or namespace member with that name.
+simple member access expression. The member name must be a _word_ that names a
+member of that package or namespace, and the result is the package or namespace
+member with that name.
 
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
@@ -218,7 +224,7 @@ implementation for `Avatar`, ignoring `Renderable.Draw`.
 
 ### Values
 
-If the first operand is not a type, package, namespace, or facet it does not
+If the first operand is not a type, package, namespace, or facet, it does not
 have member names, and a search is performed into the type of the first operand
 instead.
 
@@ -251,6 +257,49 @@ fn PrintPointTwice() {
   // `Printable.Print` found in the type of `p`.
   p.(Printable.Print)();
 }
+```
+
+### Tuple indexing
+
+Tuple types have member names that are _integer-literal_s, not _word_s.
+
+Each positional element of a tuple is considered to have a name that is the
+corresponding decimal integer: `0`, `1`, and so on. The spelling of the
+_integer-literal_ is required to exactly match one of those names, and the
+result of member resolution is an instance member that refers to the
+corresponding element of the tuple.
+
+```
+// ✅ `a == 42`.
+let a: i32 = (41, 42, 43).1;
+// ❌ Error: no tuple element named `0x1`.
+let b: i32 = (1, 2, 3).0x1;
+// ❌ Error: no tuple element named `2`.
+let c: i32 = (1, 2).2;
+
+var t: (i32, i32, i32) = (1, 2, 3);
+let p: (i32, i32, i32)* = &t;
+// ✅ `m == 3`.
+let m: i32 = p->2;
+```
+
+In a compound member access whose second operand is of integer or integer
+literal type, the first operand is required to be of tuple type or to extend a
+tuple type, otherwise member resolution fails. The second operand is required to
+be a non-negative template constant that is less than the number of tuple
+elements, and the result is an instance member that refers to the corresponding
+positional element of the tuple.
+
+```
+// ✅ `d == 43`.
+let d: i32 = (41, 42, 43).(1 + 1);
+// ✅ `e == 2`.
+let template e:! i32 = (1, 2, 3).(0x1);
+// ❌ Error: no tuple element with index 4.
+let f: i32 = (1, 2).(2 * 2);
+
+// ✅ `n == 3`.
+let n: i32 = p->(e);
 ```
 
 ### Facet binding
@@ -840,56 +889,6 @@ alias X2 = Factory.(Factory.Make);
 alias X3 = (i32 as Factory).Make;
 // ❌ Error, compound access without impl lookup or instance binding.
 alias X4 = i32.((i32 as Factory).Make);
-```
-
-## Tuple indexing
-
-A tuple indexing expression is of the form:
-
--   _expression_ `.` _integer-literal_
--   _expression_ `->` _integer-literal_
-
-The _expression_ is required to be of tuple type.
-
-Each positional element of the tuple is considered to have a name that is the
-corresponding decimal integer: `0`, `1`, and so on. The spelling of the
-_integer-literal_ is required to exactly match one of those names, and the
-result is the corresponding element of the tuple.
-
-```
-// ✅ `a == 42`.
-let a: i32 = (41, 42, 43).1;
-// ❌ Error: no tuple element named `0x1`.
-let b: i32 = (1, 2, 3).0x1;
-// ❌ Error: no tuple element named `2`.
-let c: i32 = (1, 2).2;
-
-var t: (i32, i32, i32) = (1, 2, 3);
-let p: (i32, i32, i32)* = &t;
-// ✅ `m == 3`.
-let m: i32 = p->2;
-```
-
-In a compound member access of the form:
-
--   _expression_ `.` `(` _expression_ `)`
--   _expression_ `->` `(` _expression_ `)`
-
-in which the first _expression_ is a tuple and the second _expression_ is of
-integer or integer literal type, the second _expression_ is required to be a
-non-negative template constant that is less than the number of tuple elements,
-and the result is the corresponding positional element of the tuple.
-
-```
-// ✅ `d == 43`.
-let d: i32 = (41, 42, 43).(1 + 1);
-// ✅ `e == 2`.
-let template e:! i32 = (1, 2, 3).(0x1);
-// ❌ Error: no tuple element with index 4.
-let f: i32 = (1, 2).(2 * 2);
-
-// ✅ `n == 3`.
-let n: i32 = p->(e);
 ```
 
 ## Precedence and associativity
