@@ -133,12 +133,10 @@ constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
 
 }  // namespace Carbon::Lex
 
-namespace llvm {
-
 // We use formatv primarily for diagnostics. In these cases, it's expected that
 // the spelling in source code should be used.
 template <>
-struct format_provider<Carbon::Lex::TokenKind> {
+struct llvm::format_provider<Carbon::Lex::TokenKind> {
   static void format(const Carbon::Lex::TokenKind& kind, raw_ostream& out,
                      StringRef /*style*/) {
     auto spelling = kind.fixed_spelling();
@@ -150,7 +148,5 @@ struct format_provider<Carbon::Lex::TokenKind> {
     }
   }
 };
-
-}  // namespace llvm
 
 #endif  // CARBON_TOOLCHAIN_LEX_TOKEN_KIND_H_
