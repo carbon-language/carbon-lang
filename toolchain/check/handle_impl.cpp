@@ -42,7 +42,7 @@ auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
 auto HandleDefaultSelfImplAs(Context& /*context*/,
                              Parse::DefaultSelfImplAsId /*parse_node*/)
     -> bool {
-  // TODO: Determine self_id and push it onto node stack
+  // TODO: Determine self_id and push it onto node stack.
   return true;
 }
 
