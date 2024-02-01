@@ -488,6 +488,7 @@ class NodeStack {
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructFieldValue:
         case Parse::NodeKind::StructFieldType:
+        case Parse::NodeKind::TypeImplAs:
         case Parse::NodeKind::VariableInitializer:
           return IdKind::InstId;
         case Parse::NodeKind::IfCondition:
