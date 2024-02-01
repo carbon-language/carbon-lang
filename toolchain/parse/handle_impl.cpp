@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-static auto ExpectAsOrTypeExpression(Carbon::Parse::Context& context) -> void {
+static auto ExpectAsOrTypeExpression(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::As)) {
     // as <expression> ...
     context.AddLeafNode(NodeKind::ImplAs, context.Consume());
@@ -18,7 +18,7 @@ static auto ExpectAsOrTypeExpression(Carbon::Parse::Context& context) -> void {
   }
 }
 
-auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
+auto HandleImplAfterIntroducer(Context& context) -> void {
   auto state = context.PopState();
   state.state = State::DeclOrDefinitionAsImpl;
   context.PushState(state);
@@ -48,7 +48,7 @@ auto HandleImplAfterIntroducer(Carbon::Parse::Context& context) -> void {
   }
 }
 
-auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
+auto HandleImplAfterForall(Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
     context.ReturnErrorOnState();
@@ -62,7 +62,7 @@ auto HandleImplAfterForall(Carbon::Parse::Context& context) -> void {
   ExpectAsOrTypeExpression(context);
 }
 
-auto HandleImplBeforeAs(Carbon::Parse::Context& context) -> void {
+auto HandleImplBeforeAs(Context& context) -> void {
   auto state = context.PopState();
   if (state.has_error) {
     context.ReturnErrorOnState();

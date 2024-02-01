@@ -71,7 +71,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   }
 };
 
-constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
+constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
   constexpr InstId InstId::Builtin##Name =    \
@@ -159,7 +159,7 @@ struct BindNameId : public IdBase, public Printable<BindNameId> {
   }
 };
 
-constexpr BindNameId BindNameId::Invalid = BindNameId(BindNameId::InvalidIndex);
+constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -175,7 +175,7 @@ struct FunctionId : public IdBase, public Printable<FunctionId> {
   }
 };
 
-constexpr FunctionId FunctionId::Invalid = FunctionId(FunctionId::InvalidIndex);
+constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
 
 // The ID of a class.
 struct ClassId : public IdBase, public Printable<ClassId> {
@@ -191,7 +191,7 @@ struct ClassId : public IdBase, public Printable<ClassId> {
   }
 };
 
-constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
+constexpr ClassId ClassId::Invalid = ClassId(InvalidIndex);
 
 // The ID of an interface.
 struct InterfaceId : public IdBase, public Printable<InterfaceId> {
@@ -207,8 +207,7 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
   }
 };
 
-constexpr InterfaceId InterfaceId::Invalid =
-    InterfaceId(InterfaceId::InvalidIndex);
+constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
 
 // The ID of an imported IR.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
@@ -302,12 +301,12 @@ struct NameId : public IdBase, public Printable<NameId> {
   }
 };
 
-constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
-constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
-constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
-constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
-constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
-constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
+constexpr NameId NameId::Invalid = NameId(InvalidIndex);
+constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
+constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
+constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 3);
+constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 4);
+constexpr NameId NameId::Base = NameId(InvalidIndex - 5);
 constexpr int NameId::NonIndexValueCount = 6;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
@@ -328,8 +327,7 @@ struct NameScopeId : public IdBase, public Printable<NameScopeId> {
   }
 };
 
-constexpr NameScopeId NameScopeId::Invalid =
-    NameScopeId(NameScopeId::InvalidIndex);
+constexpr NameScopeId NameScopeId::Invalid = NameScopeId(InvalidIndex);
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
@@ -368,10 +366,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::Invalid =
-    InstBlockId(InstBlockId::InvalidIndex);
-constexpr InstBlockId InstBlockId::Unreachable =
-    InstBlockId(InstBlockId::InvalidIndex - 1);
+constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
+constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
@@ -399,9 +395,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   }
 };
 
-constexpr TypeId TypeId::TypeType = TypeId(TypeId::InvalidIndex - 2);
-constexpr TypeId TypeId::Error = TypeId(TypeId::InvalidIndex - 1);
-constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
+constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
+constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
+constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
