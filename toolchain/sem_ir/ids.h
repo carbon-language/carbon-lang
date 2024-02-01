@@ -108,31 +108,31 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
-    // Avoid allocating index -1.
     return ConstantId(-const_id.index - IndexOffset);
   }
 
   using IdBase::IdBase;
 
-  // Returns whether this represents a constant.
+  // Returns whether this represents a constant. Requires is_valid.
   auto is_constant() const -> bool {
     CARBON_CHECK(is_valid());
     return *this != ConstantId::NotConstant;
   }
-  // Returns whether this represents a symbolic constant.
+  // Returns whether this represents a symbolic constant. Requires is_valid.
   auto is_symbolic() const -> bool {
     CARBON_CHECK(is_valid());
     return index <= IndexOffset;
   }
-  // Returns whether this represents a template constant.
+  // Returns whether this represents a template constant. Requires is_valid.
   auto is_template() const -> bool {
     CARBON_CHECK(is_valid());
     return index >= IndexOffset;
   }
 
   // Returns the instruction that describes this constant value, or
-  // InstId::Invalid for a runtime value.
+  // InstId::Invalid for a runtime value. Requires is_valid.
   auto inst_id() const -> InstId {
+    CARBON_CHECK(is_valid());
     return InstId(std::abs(index) - IndexOffset);
   }
 
@@ -149,16 +149,14 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
  private:
+  static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
   // The offset of InstId indices to ConstantId indices.
-  static constexpr int32_t IndexOffset = 2;
-  static constexpr int32_t NotConstantIndex = IndexOffset + InvalidIndex;
+  static constexpr int32_t IndexOffset = -NotConstantIndex + 1;
 
   // Double-check inst_id calculations work. C++23 makes std::abs constexpr, but
   // until then we mirror std::abs logic here.
-  static_assert(NotConstantIndex > 0 &&
-                NotConstantIndex - IndexOffset == InvalidIndex);
-  static_assert(InvalidIndex < 0 &&
-                -InvalidIndex - IndexOffset == InvalidIndex);
+  static_assert(NotConstantIndex < 0 &&
+                -NotConstantIndex - IndexOffset == InstId::InvalidIndex);
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);

@@ -50,7 +50,7 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %import_ref.1} [template]
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unused
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused [<invalid>]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unused [<invalid>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

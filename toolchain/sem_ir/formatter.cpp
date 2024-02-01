@@ -772,11 +772,16 @@ class Formatter {
     out_ << InstT::Kind.ir_name();
     FormatInstructionRHS(inst);
     if (auto const_id = sem_ir_.constant_values().Get(inst_id);
-        const_id.is_valid() && const_id.is_constant()) {
-      out_ << (const_id.is_symbolic() ? " [symbolic" : " [template");
-      if (const_id.inst_id() != inst_id) {
-        out_ << " = ";
-        FormatInstName(const_id.inst_id());
+        !const_id.is_valid() || const_id.is_constant()) {
+      out_ << " [";
+      if (const_id.is_valid()) {
+        out_ << (const_id.is_symbolic() ? "symbolic" : "template");
+        if (const_id.inst_id() != inst_id) {
+          out_ << " = ";
+          FormatInstName(const_id.inst_id());
+        }
+      } else {
+        out_ << const_id;
       }
       out_ << "]";
     }

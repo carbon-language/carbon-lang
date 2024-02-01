@@ -122,8 +122,8 @@ class ConstantValueStore {
   explicit ConstantValueStore(ConstantId default_value)
       : default_(default_value) {}
 
-  // Returns the constant value of the requested instruction, or default_ if it
-  // is not constant.
+  // Returns the constant value of the requested instruction, which is default_
+  // if unallocated.
   auto Get(InstId inst_id) const -> ConstantId {
     CARBON_CHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()

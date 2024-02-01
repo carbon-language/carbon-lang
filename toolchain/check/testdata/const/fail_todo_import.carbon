@@ -49,7 +49,7 @@ var a: const i32 = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %import_ref.1, .a_ref = %import_ref.2, .a = %a} [template]
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unused
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unused [<invalid>]
 // CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+7, used
 // CHECK:STDOUT:   %.loc4: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref const i32 = var a
