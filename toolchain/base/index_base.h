@@ -39,7 +39,7 @@ struct IdBase : public Printable<IdBase> {
     }
   }
 
-  auto is_valid() const -> bool { return index != InvalidIndex; }
+  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
 
   int32_t index;
 };
@@ -58,7 +58,7 @@ struct IndexBase : public IdBase {
 // convertible to that type.
 template <typename IndexType>
   requires std::derived_from<IndexType, IdBase>
-auto operator==(IndexType lhs, IndexType rhs) -> bool {
+constexpr auto operator==(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index == rhs.index;
 }
 template <typename IndexType, typename RHSType>
