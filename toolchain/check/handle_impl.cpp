@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -99,15 +100,15 @@ static auto ExtendImpl(Context& context, Parse::AnyImplDeclId parse_node,
   }
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
 
-  auto interface_decl =
-      context.types().TryGetAs<SemIR::InterfaceDecl>(constraint_id);
-  if (!interface_decl) {
+  auto interface_type =
+      context.types().TryGetAs<SemIR::InterfaceType>(constraint_id);
+  if (!interface_type) {
     context.TODO(parse_node, "extending non-interface constraint");
     enclosing_scope.has_error = true;
     return;
   }
 
-  auto& interface = context.interfaces().Get(interface_decl->interface_id);
+  auto& interface = context.interfaces().Get(interface_type->interface_id);
   if (!interface.scope_id.is_valid()) {
     // TODO: Should this be valid?
     context.TODO(parse_node, "extending interface without definition");
@@ -138,6 +139,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
       context.node_stack().Pop<Parse::NodeKind::ImplIntroducer>();
 
   // Convert the constraint expression to a type.
+  // TODO: Check that its constant value is a constraint.
   auto constraint_type_id = ExprAsType(context, constraint_node, constraint_id);
 
   // Process modifiers.
@@ -145,8 +147,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   // TODO: Handle `final` modifier.
   LimitModifiersOnDecl(context, KeywordModifierSet::ImplDecl,
                        Lex::TokenKind::Impl);
-
-  context.decl_state_stack().Pop(DeclState::Impl);
 
   // Add the impl declaration.
   auto impl_decl = SemIR::ImplDecl{SemIR::ImplId::Invalid, decl_block_id};
@@ -171,6 +171,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
     // TODO: Diagnose combining `extend` with an explicit self type.
     ExtendImpl(context, parse_node, constraint_type_id, enclosing_scope_id);
   }
+
+  context.decl_state_stack().Pop(DeclState::Impl);
 
   return {impl_decl.impl_id, impl_decl_id, enclosing_scope_id};
 }
