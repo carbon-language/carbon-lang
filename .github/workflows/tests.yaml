@@ -20,29 +20,27 @@ jobs:
   test:
     strategy:
       matrix:
-        # At present, these images are newer than "latest". We use them to test
-        # against more recent tooling versions.
-        # https://github.com/actions/runner-images
-        os: [ubuntu-22.04, macos-14]
+        # On PRs and in the merge queue test a recent version of each supported
+        # OS. On push (post-submit), also run on `macos-12` to get Intel macOS
+        # coverage.
+        runner:
+          ${{ fromJSON(github.event_name != 'push' && '["ubuntu-22.04",
+          "macos-14"]' || '["ubuntu-22.04", "macos-14", "macos-12"]') }}
         build_mode: [fastbuild, opt]
         include:
           # The clang-tidy config doesn't work on macos (missing `truncate`).
-          - os: 'ubuntu-22.04'
-            build_mode: 'clang-tidy'
-          # On push (post-submit), also run on `macos-12` to get Intel macOS
-          # coverage. This is less and less critical so we skip it on the PR and
-          # merge queue path by switching to a redundant OS.
-          - os: ${{ github.event_name == 'push' && 'macos-12' || 'macos-14' }}
-            build_mode: fastbuild
-          - os: ${{ github.event_name == 'push' && 'macos-12' || 'macos-14' }}
-            build_mode: opt
-    runs-on: ${{ matrix.os }}
+          - runner: ubuntu-22.04
+            build_mode: clang-tidy
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
 
     steps:
       # Ubuntu images start with 23GB available, and this adds 14GB more. For
       # comparison, MacOS images have >100GB free.
       - name: Free up disk space (Ubuntu)
-        if: contains(matrix.os, 'ubuntu')
+        if: env.os == 'ubuntu'
         uses: jlumbroso/free-disk-space@v1.2.0
         with:
           android: true
@@ -82,16 +80,14 @@ jobs:
         with:
           # Match the min version listed in docs/project/contribution_tools.md
           # or the oldest version available on the OS.
-          python-version: ${{ matrix.os == 'macos-14' && '3.11' || '3.9' }}
+          python-version: ${{ matrix.runner == 'macos-14' && '3.11' || '3.9' }}
 
       # Install and cache LLVM 16 from Homebrew.
       # TODO: We can potentially remove this and simplify things when the
       # Homebrew version of LLVM updates to 16 here:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       - name: Cache Homebrew (macOS)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'macos')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         id: cache-homebrew-macos
         uses: actions/cache@v3
         env:
@@ -112,12 +108,12 @@ jobs:
               '
             }}
           # Note the key needs to include all the packages we're adding.
-          key: Homebrew-Cache-${{ runner.os }}-${{ runner.arch }}
+          key: Homebrew-Cache-${{ matrix.runner }}-${{ runner.arch }}
 
       - name: Install LLVM and Clang with Homebrew (macOS)
         if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'macos') && steps.cache-homebrew-macos.outputs.cache-hit != 'true'
+          steps.filter.outputs.has_code == 'true' && env.os == 'macos' &&
+          steps.cache-homebrew-macos.outputs.cache-hit != 'true'
         run: |
           echo '*** Prune brew leaves'
           # We prune all the leaf packages to have a minimal environment. This
@@ -142,9 +138,7 @@ jobs:
           brew config
 
       - name: Setup LLVM and Clang (macOS)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'macos')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         run: |
           LLVM_PATH="$(brew --prefix llvm@16)"
           echo "Using ${LLVM_PATH}"
@@ -158,21 +152,19 @@ jobs:
       # cache to avoid directly downloading on each iteration and improve
       # reliability.
       - name: Cache LLVM and Clang installation (Ubuntu)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'ubuntu')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
         id: cache-llvm-ubuntu
         uses: actions/cache@v3
         env:
           cache-name: cache-llvm
         with:
           path: ~/llvm
-          key: LLVM-16-Cache-${{ runner.os }}-${{ runner.arch }}
+          key: LLVM-16-Cache-${{ env.os }}-${{ runner.arch }}
 
       - name: Download LLVM and Clang installation (Ubuntu)
         if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'ubuntu') && steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+          steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu' &&
+          steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
         run: |
           cd ~
           LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
@@ -194,9 +186,7 @@ jobs:
           du -hs llvm
 
       - name: Setup LLVM and Clang paths (Ubuntu)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'ubuntu')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
         run: |
           LLVM_PATH=~/llvm
           echo "Using ${LLVM_PATH}"
@@ -248,15 +238,11 @@ jobs:
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'macos')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         run: |
           echo "os_for_cache=macos-12" >> $GITHUB_ENV
       - name: Setup LLVM and Clang (Ubuntu)
-        if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'ubuntu')
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
         run: |
           echo "os_for_cache=ubuntu-22_04" >> $GITHUB_ENV
 
@@ -270,6 +256,8 @@ jobs:
         run: |
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI but minimize downloads.
+          # TODO: Switch to a single remote_cache bucket now that we include the
+          # OS into the per-action key. Also remove the `os_for_cache` logic.
           build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
           build --remote_download_minimal
 
@@ -370,6 +358,17 @@ jobs:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          # We import this into every action in order to key the Bazel remote
+          # cache in a way that avoids collisions between different runners.
+          # Anything that might change the system external to Bazel but not be
+          # fully captured by the sand-boxing of the build should be used as
+          # part of the key. We don't need to use the CPU target for example, as
+          # that is captured by Bazel's configuration of each action. And the
+          # Clang version is incorporated by our Clang toolchain setup. But we
+          # do need to capture any differences between GitHub runner OSes that
+          # don't impact the Bazel configuration to avoid collisions between
+          # those.
+          BAZEL_REMOTE_CACHE_KEY: github-action-${{ matrix.runner }}
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
           for i in {1..5}; do
@@ -382,6 +381,7 @@ jobs:
 
             bazel_exit=0
             bazelisk test -c ${{ matrix.build_mode }} \
+              --action_env=BAZEL_REMOTE_CACHE_KEY \
               --target_pattern_file=$TARGETS_FILE || bazel_exit=$?
 
             # If we succeed, we're done.
@@ -420,12 +420,14 @@ jobs:
       # The `-k` flag is used to print all clang-tidy errors.
       - name: clang-tidy
         if:
-          steps.filter.outputs.has_code == 'true' && contains(matrix.os,
-          'ubuntu') && matrix.build_mode == 'clang-tidy'
+          steps.filter.outputs.has_code == 'true' && matrix.build_mode ==
+          'clang-tidy'
         env:
+          BAZEL_REMOTE_CACHE_KEY: github-action-${{ matrix.runner }}
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
           bazelisk build --config=clang-tidy -k \
+            --action_env=BAZEL_REMOTE_CACHE_KEY \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build".
