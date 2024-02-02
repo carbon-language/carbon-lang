@@ -1336,6 +1336,13 @@ CARBON_PARSE_STATE(MatchStatementStart)
 // match (...) { case ...}
 //               ^~~~
 //   (state done)
+CARBON_PARSE_STATE(MatchCaseLoop)
+
+// Handles TODO
+//
+// match (...) { case ...}
+//               ^~~~
+//   (state done)
 CARBON_PARSE_STATE(MatchCaseIntroducer)
 
 // Handles TODO
@@ -1346,6 +1353,13 @@ CARBON_PARSE_STATE(MatchCaseIntroducer)
 //                       ^~
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseAfterPattern)
+
+// Handles TODO
+//
+// match (...) { case () if (...) =>...}
+//                               ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseGuardFinish)
 
 // Handles TODO
 //

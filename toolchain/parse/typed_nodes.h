@@ -501,16 +501,31 @@ struct MatchStatementStart {
   MatchConditionId left_brace;
 };
 
+using MatchCaseIntroducer = LeafNode<NodeKind::MatchCaseIntroducer>;
+using MatchCaseGuardIntroducer = LeafNode<NodeKind::MatchCaseGuardIntroducer>;
+using MatchCaseGuardStart = LeafNode<NodeKind::MatchCaseGuardStart>;
+
+struct MatchCaseGuard {
+  static constexpr auto Kind = NodeKind::MatchCaseGuard.Define();
+  MatchCaseGuardIntroducerId introducer;
+  MatchCaseGuardStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchCaseEqualGreater = LeafNode<NodeKind::MatchCaseEqualGreater>;
+
 struct MatchCaseStart {
   static constexpr auto Kind = NodeKind::MatchCaseStart.Define();
+  MatchCaseIntroducerId introducer;
   AnyPatternId pattern;
-  std::optional<IfConditionId> condition;
+  std::optional<MatchCaseGuardId> guard;
+  MatchCaseEqualGreaterId equal_greater_token;
 };
 
 struct MatchCase {
   static constexpr auto Kind = NodeKind::MatchCase.Define();
   MatchCaseStartId head;
-  CodeBlockId block;
+  llvm::SmallVector<AnyStatementId> statements;
 };
 
 using MatchDefaultStart = LeafNode<NodeKind::MatchDefaultStart>;

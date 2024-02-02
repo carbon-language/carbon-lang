@@ -29,6 +29,34 @@ auto HandleMatchStatementStart(Context& context,
   return context.TODO(parse_node, "HandleMatchStatementStart");
 }
 
+auto HandleMatchCaseIntroducer(Context& context,
+                               Parse::MatchCaseIntroducerId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleMatchCaseIntroducer");
+}
+
+auto HandleMatchCaseGuardIntroducer(
+    Context& context, Parse::MatchCaseGuardIntroducerId parse_node) -> bool {
+  return context.TODO(parse_node, "HandleMatchCaseGuardIntroducer");
+}
+
+auto HandleMatchCaseGuardStart(Context& context,
+                               Parse::MatchCaseGuardStartId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleMatchCaseGuardStart");
+}
+
+auto HandleMatchCaseGuard(Context& context, Parse::MatchCaseGuardId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleMatchCaseGuard");
+}
+
+auto HandleMatchCaseEqualGreater(Context& context,
+                                 Parse::MatchCaseEqualGreaterId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandleMatchCaseEqualGreater");
+}
+
 auto HandleMatchCaseStart(Context& context, Parse::MatchCaseStartId parse_node)
     -> bool {
   return context.TODO(parse_node, "HandleMatchCaseStart");

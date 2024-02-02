@@ -743,6 +743,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceAlternativeListComma, 0, Comma)
 //       _external_: expression
 //     MatchCondition
 //   MatchStatementStart
+//   _repeated_ _external_: MatchCase
 //   _optional_ _external_: MatchStatementDefault
 // MatchStatement
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchIntroducer, 0, Match)
@@ -756,14 +757,29 @@ CARBON_PARSE_NODE_KIND_BRACKET(MatchStatement, MatchStatementStart,
                                CARBON_IF_VALID(CloseCurlyBrace))
 
 // `case`:
-//     _external_: TuplePattern
-//     _optional_ _external_: IfCondition
+//     MatchCaseIntroducer
+//     _external_: Pattern
+//       MatchCaseGuardIntroducer
+//       MatchCaseGuardStart
+//       _external_: expression
+//     MatchCaseGuard
+//     MatchCaseEqualGreater
 //   MatchCaseStart
-//   _external_: CodeBlock
+//   _repeated_ _external_: statement
 // MatchCase
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseStart, 1,
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseIntroducer, 0, Case)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardIntroducer, 0, If)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseGuard,
+                               MatchCaseGuardIntroducer,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseEqualGreater, 0,
                                    CARBON_IF_VALID(EqualGreater))
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCase, 2, Case)
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseStart, MatchCaseIntroducer,
+                                   CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCase, MatchCaseStart,
+                                   CARBON_IF_VALID(CloseCurlyBrace))
 
 // `default`:
 //   MatchDefaultStart
