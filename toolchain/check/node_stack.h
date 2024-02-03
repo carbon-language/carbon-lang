@@ -163,49 +163,10 @@ class NodeStack {
   // Pops the top of the stack and returns the parse_node and the ID.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithParseNode() -> auto {
-    constexpr IdKind RequiredIdKind = ParseNodeKindToIdKind(RequiredParseKind);
-    auto node_id_cast = [&](auto back) {
-      using NodeIdT = Parse::NodeIdForKind<RequiredParseKind>;
-      return std::pair<NodeIdT, decltype(back.second)>(back);
-    };
-
-    if constexpr (RequiredIdKind == IdKind::InstId) {
-      auto back = PopWithParseNode<SemIR::InstId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
-      auto back = PopWithParseNode<SemIR::InstBlockId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::FunctionId) {
-      auto back = PopWithParseNode<SemIR::FunctionId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::ClassId) {
-      auto back = PopWithParseNode<SemIR::ClassId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::InterfaceId) {
-      auto back = PopWithParseNode<SemIR::InterfaceId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::NameId) {
-      auto back = PopWithParseNode<SemIR::NameId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    if constexpr (RequiredIdKind == IdKind::TypeId) {
-      auto back = PopWithParseNode<SemIR::TypeId>();
-      RequireParseKind<RequiredParseKind>(back.first);
-      return node_id_cast(back);
-    }
-    CARBON_FATAL() << "Unpoppable IdKind for parse kind: " << RequiredParseKind
-                   << "; see value in ParseNodeKindToIdKind";
+    auto id = Peek<RequiredParseKind>();
+    Parse::NodeIdForKind<RequiredParseKind> parse_node(
+        stack_.pop_back_val().parse_node);
+    return std::make_pair(parse_node, id);
   }
 
   // Pops the top of the stack and returns the parse_node and the ID.
@@ -305,30 +266,7 @@ class NodeStack {
   auto Peek() const -> auto {
     Entry back = stack_.back();
     RequireParseKind<RequiredParseKind>(back.parse_node);
-    constexpr IdKind RequiredIdKind = ParseNodeKindToIdKind(RequiredParseKind);
-    if constexpr (RequiredIdKind == IdKind::InstId) {
-      return back.id<SemIR::InstId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::InstBlockId) {
-      return back.id<SemIR::InstBlockId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::FunctionId) {
-      return back.id<SemIR::FunctionId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::ClassId) {
-      return back.id<SemIR::ClassId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::InterfaceId) {
-      return back.id<SemIR::InterfaceId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::NameId) {
-      return back.id<SemIR::NameId>();
-    }
-    if constexpr (RequiredIdKind == IdKind::TypeId) {
-      return back.id<SemIR::TypeId>();
-    }
-    CARBON_FATAL() << "Unpeekable IdKind for parse kind: " << RequiredParseKind
-                   << "; see value in ParseNodeKindToIdKind";
+    return Peek<ParseNodeKindToIdKind(RequiredParseKind)>();
   }
 
   // Peeks at the ID associated with the top of the name stack.
@@ -339,13 +277,7 @@ class NodeStack {
     constexpr std::optional<IdKind> RequiredIdKind =
         ParseNodeCategoryToIdKind(RequiredParseCategory);
     static_assert(RequiredIdKind.has_value());
-    if constexpr (*RequiredIdKind == IdKind::InstId) {
-      return back.id<SemIR::InstId>();
-    } else {
-      static_assert(*RequiredIdKind == IdKind::NameId,
-                    "Unpeekable IdKind for parse category");
-      return back.id<SemIR::NameId>();
-    }
+    return Peek<*RequiredIdKind>();
   }
 
   // Prints the stack for a stack dump.
@@ -391,25 +323,20 @@ class NodeStack {
     // Returns the appropriate ID basaed on type.
     template <typename T>
     auto id() -> T& {
-      if constexpr (std::is_same<T, SemIR::InstId>()) {
+      if constexpr (std::is_same_v<T, SemIR::InstId>) {
         return inst_id;
-      }
-      if constexpr (std::is_same<T, SemIR::InstBlockId>()) {
+      } else if constexpr (std::is_same_v<T, SemIR::InstBlockId>) {
         return inst_block_id;
-      }
-      if constexpr (std::is_same<T, SemIR::FunctionId>()) {
+      } else if constexpr (std::is_same_v<T, SemIR::FunctionId>) {
         return function_id;
-      }
-      if constexpr (std::is_same<T, SemIR::ClassId>()) {
+      } else if constexpr (std::is_same_v<T, SemIR::ClassId>) {
         return class_id;
-      }
-      if constexpr (std::is_same<T, SemIR::InterfaceId>()) {
+      } else if constexpr (std::is_same_v<T, SemIR::InterfaceId>) {
         return interface_id;
-      }
-      if constexpr (std::is_same<T, SemIR::NameId>()) {
+      } else if constexpr (std::is_same_v<T, SemIR::NameId>) {
         return name_id;
-      }
-      if constexpr (std::is_same<T, SemIR::TypeId>()) {
+      } else {
+        static_assert(std::is_same_v<T, SemIR::TypeId>, "Unsupported ID type");
         return type_id;
       }
     }
@@ -553,24 +480,41 @@ class NodeStack {
   static constexpr auto IdTypeToIdKind() -> IdKind {
     if constexpr (std::is_same_v<IdT, SemIR::InstId>) {
       return IdKind::InstId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::InstBlockId>) {
+    } else if constexpr (std::is_same_v<IdT, SemIR::InstBlockId>) {
       return IdKind::InstBlockId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::FunctionId>) {
+    } else if constexpr (std::is_same_v<IdT, SemIR::FunctionId>) {
       return IdKind::FunctionId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
+    } else if constexpr (std::is_same_v<IdT, SemIR::ClassId>) {
       return IdKind::ClassId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::InterfaceId>) {
+    } else if constexpr (std::is_same_v<IdT, SemIR::InterfaceId>) {
       return IdKind::InterfaceId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::NameId>) {
+    } else if constexpr (std::is_same_v<IdT, SemIR::NameId>) {
       return IdKind::NameId;
-    }
-    if constexpr (std::is_same_v<IdT, SemIR::TypeId>) {
+    } else {
+      static_assert(std::is_same_v<IdT, SemIR::TypeId>, "Unsupported ID type");
       return IdKind::TypeId;
+    }
+  }
+
+  // Peeks at the ID associated with the top of the name stack.
+  template <IdKind RequiredIdKind>
+  auto Peek() const -> auto {
+    Entry back = stack_.back();
+    if constexpr (RequiredIdKind == IdKind::InstId) {
+      return back.id<SemIR::InstId>();
+    } else if constexpr (RequiredIdKind == IdKind::InstBlockId) {
+      return back.id<SemIR::InstBlockId>();
+    } else if constexpr (RequiredIdKind == IdKind::FunctionId) {
+      return back.id<SemIR::FunctionId>();
+    } else if constexpr (RequiredIdKind == IdKind::ClassId) {
+      return back.id<SemIR::ClassId>();
+    } else if constexpr (RequiredIdKind == IdKind::InterfaceId) {
+      return back.id<SemIR::InterfaceId>();
+    } else if constexpr (RequiredIdKind == IdKind::NameId) {
+      return back.id<SemIR::NameId>();
+    } else {
+      static_assert(RequiredIdKind == IdKind::TypeId, "Unpeekable IdKind");
+      return back.id<SemIR::TypeId>();
     }
   }
 
