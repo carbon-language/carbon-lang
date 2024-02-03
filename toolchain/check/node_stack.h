@@ -41,10 +41,18 @@ class IdUnion {
       requires (std::same_as<IdT, IdTypes> || ...)
   constexpr auto As() const -> IdT { return IdT(index); }
 
+  // Returns the ID given its kind.
+  template <Kind K>
+    requires(static_cast<size_t>(K) < sizeof...(IdTypes))
+  constexpr auto As() const {
+    using IdT = __type_pack_element<static_cast<size_t>(K), IdTypes...>;
+    return As<IdT>();
+  }
+
   // Translates an ID type to the enum ID kind. Returns Invalid if `IdT` isn't
   // a type that can be stored in this union.
   template <typename IdT>
-  static constexpr auto TypeToKind() -> Kind {
+  static constexpr auto KindFor() -> Kind {
     // A bool for each type saying whether it matches. The result is the index
     // of the first `true` in this list. If none matches, then the result is the
     // length of the list, which is mapped to `Invalid`.
@@ -54,10 +62,6 @@ class IdUnion {
         TypeMatches;
     return static_cast<Kind>(Index);
   }
-
-  // Translates an ID kind enumerator to the corresponding ID type.
-  template <Kind K>
-  using KindToType = __type_pack_element<static_cast<size_t>(K), IdTypes...>;
 
  private:
   decltype(IdBase::index) index;
@@ -102,7 +106,7 @@ class NodeStack {
   template <typename IdT>
   auto Push(Parse::NodeId parse_node, IdT id) -> void {
     auto kind = parse_tree_->node_kind(parse_node);
-    CARBON_CHECK(ParseNodeKindToIdKind(kind) == Id::TypeToKind<IdT>())
+    CARBON_CHECK(ParseNodeKindToIdKind(kind) == Id::KindFor<IdT>())
         << "Parse kind expected a different IdT: " << kind << " -> " << id
         << "\n";
     CARBON_CHECK(id.is_valid()) << "Push called with invalid id: "
@@ -143,7 +147,7 @@ class NodeStack {
   // Returns whether there is a name on top of the stack.
   auto PeekIsName() const -> bool {
     return !stack_.empty() && ParseNodeKindToIdKind(PeekParseNodeKind()) ==
-                                  Id::TypeToKind<SemIR::NameId>();
+                                  Id::KindFor<SemIR::NameId>();
   }
 
   // Pops the top of the stack without any verification.
@@ -369,14 +373,14 @@ class NodeStack {
       if (!!(category & ~Parse::NodeCategory::Expr)) {
         return std::nullopt;
       }
-      return Id::TypeToKind<SemIR::InstId>();
+      return Id::KindFor<SemIR::InstId>();
     }
     if (!!(category & Parse::NodeCategory::MemberName)) {
       // Check for no consistent IdKind due to category with multiple bits set.
       if (!!(category & ~Parse::NodeCategory::MemberName)) {
         return std::nullopt;
       }
-      return Id::TypeToKind<SemIR::NameId>();
+      return Id::KindFor<SemIR::NameId>();
     }
     constexpr Parse::NodeCategory UnusedCategories =
         Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
@@ -419,7 +423,7 @@ class NodeStack {
               case Parse::NodeKind::StructFieldType:
               case Parse::NodeKind::TypeImplAs:
               case Parse::NodeKind::VariableInitializer:
-                return Id::TypeToKind<SemIR::InstId>();
+                return Id::KindFor<SemIR::InstId>();
               case Parse::NodeKind::IfCondition:
               case Parse::NodeKind::IfExprIf:
               case Parse::NodeKind::ImplForall:
@@ -427,16 +431,16 @@ class NodeStack {
               case Parse::NodeKind::TuplePattern:
               case Parse::NodeKind::WhileCondition:
               case Parse::NodeKind::WhileConditionStart:
-                return Id::TypeToKind<SemIR::InstBlockId>();
+                return Id::KindFor<SemIR::InstBlockId>();
               case Parse::NodeKind::FunctionDefinitionStart:
-                return Id::TypeToKind<SemIR::FunctionId>();
+                return Id::KindFor<SemIR::FunctionId>();
               case Parse::NodeKind::ClassDefinitionStart:
-                return Id::TypeToKind<SemIR::ClassId>();
+                return Id::KindFor<SemIR::ClassId>();
               case Parse::NodeKind::InterfaceDefinitionStart:
-                return Id::TypeToKind<SemIR::InterfaceId>();
+                return Id::KindFor<SemIR::InterfaceId>();
               case Parse::NodeKind::IdentifierName:
               case Parse::NodeKind::SelfValueName:
-                return Id::TypeToKind<SemIR::NameId>();
+                return Id::KindFor<SemIR::NameId>();
               case Parse::NodeKind::ArrayExprSemi:
               case Parse::NodeKind::ClassIntroducer:
               case Parse::NodeKind::CodeBlockStart:
@@ -473,8 +477,8 @@ class NodeStack {
   // Peeks at the ID associated with the top of the name stack.
   template <IdKind RequiredIdKind>
   auto Peek() const -> auto {
-    using IdT = Id::KindToType<RequiredIdKind>;
-    return stack_.back().id.template As<IdT>();
+    Id id = stack_.back().id;
+    return id.As<RequiredIdKind>();
   }
 
   // Pops an entry.
@@ -492,7 +496,7 @@ class NodeStack {
   auto PopWithParseNode() -> std::pair<Parse::NodeId, IdT> {
     Entry back = PopEntry<IdT>();
     RequireIdKind(parse_tree_->node_kind(back.parse_node),
-                  Id::TypeToKind<IdT>());
+                  Id::KindFor<IdT>());
     return {back.parse_node, back.id.template As<IdT>()};
   }
 
