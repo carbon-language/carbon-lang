@@ -331,7 +331,7 @@ class NodeStack {
     Entry back = stack_.back();
     RequireParseCategory<RequiredParseCategory>(back.parse_node);
     constexpr std::optional<IdKind> RequiredIdKind =
-        ParseNodeCategoryToIdKind(RequiredParseCategory);
+        ParseNodeCategoryToIdKind(RequiredParseCategory, false);
     static_assert(RequiredIdKind.has_value());
     return Peek<*RequiredIdKind>();
   }
@@ -364,35 +364,35 @@ class NodeStack {
 
   // Translate a parse node category to the enum ID kind it should always
   // provide, if it is consistent.
-  static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category)
+  static constexpr auto ParseNodeCategoryToIdKind(Parse::NodeCategory category,
+                                                  bool for_node_kind)
       -> std::optional<IdKind> {
+    std::optional<IdKind> result;
+    auto set_id_if_category_is = [&](Parse::NodeCategory cat, Id::Kind kind) {
+      if (!!(category & cat)) {
+        // Check for no consistent IdKind due to category with multiple bits
+        // set. When computing the IdKind for a node kind, a partial category
+        // match is OK, so long as we don't match two inconsistent categories.
+        // When computing the IdKind for a category query, the query can't have
+        // any extra bits set or we could be popping a node that is not in this
+        // category.
+        if (for_node_kind ? result.has_value() : !!(category & ~cat)) {
+          result = Id::Kind::Invalid;
+        } else {
+          result = kind;
+        }
+      }
+    };
+
     // TODO: Patterns should also produce an `InstId`, but currently
     // `TuplePattern` produces an `InstBlockId`.
-    if (!!(category & Parse::NodeCategory::Expr)) {
-      // Check for no consistent IdKind due to category with multiple bits set.
-      if (!!(category & ~Parse::NodeCategory::Expr)) {
-        return std::nullopt;
-      }
-      return Id::KindFor<SemIR::InstId>();
-    }
-    if (!!(category & Parse::NodeCategory::MemberName)) {
-      // Check for no consistent IdKind due to category with multiple bits set.
-      if (!!(category & ~Parse::NodeCategory::MemberName)) {
-        return std::nullopt;
-      }
-      return Id::KindFor<SemIR::NameId>();
-    }
-    constexpr Parse::NodeCategory UnusedCategories =
-        Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
-        Parse::NodeCategory::Modifier;
-    if (!!(category & UnusedCategories)) {
-      // Check for no consistent IdKind due to category with multiple bits set.
-      if (!!(category & ~UnusedCategories)) {
-        return std::nullopt;
-      }
-      return IdKind::None;
-    }
-    return std::nullopt;
+    set_id_if_category_is(Parse::NodeCategory::Expr, Id::KindFor<SemIR::InstId>());
+    set_id_if_category_is(Parse::NodeCategory::MemberName, Id::KindFor<SemIR::NameId>());
+    set_id_if_category_is(Parse::NodeCategory::Decl |
+                              Parse::NodeCategory::Statement |
+                              Parse::NodeCategory::Modifier,
+                          IdKind::None);
+    return result;
   }
 
   // Translate a parse node kind to the enum ID kind it should always provide.
@@ -407,7 +407,7 @@ class NodeStack {
           auto to_id_kind =
               [](const Parse::NodeKind::Definition& node_kind) -> IdKind {
             if (auto from_category =
-                    ParseNodeCategoryToIdKind(node_kind.category())) {
+                    ParseNodeCategoryToIdKind(node_kind.category(), true)) {
               return *from_category;
             }
             switch (node_kind) {
@@ -438,7 +438,6 @@ class NodeStack {
                 return Id::KindFor<SemIR::ClassId>();
               case Parse::NodeKind::InterfaceDefinitionStart:
                 return Id::KindFor<SemIR::InterfaceId>();
-              case Parse::NodeKind::IdentifierName:
               case Parse::NodeKind::SelfValueName:
                 return Id::KindFor<SemIR::NameId>();
               case Parse::NodeKind::ArrayExprSemi:
