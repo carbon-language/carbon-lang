@@ -59,25 +59,21 @@ auto HandleMatchCaseLoop(Context& context) -> void {
 }
 
 auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
-  auto state = context.PopState();
+  context.PopAndDiscardState();
 
+  std::optional<std::string> kind;
   if (context.PositionIs(Lex::TokenKind::Case)) {
-    if (!state.has_error) {
-      CARBON_DIAGNOSTIC(MatchCaseAfterDefault, Error,
-                        "Unexpected `case` after `default`.");
-      context.emitter().Emit(*context.position(), MatchCaseAfterDefault);
-      state.has_error = true;
-    }
-    context.PushState(state, State::MatchCaseLoopAfterDefault);
-    context.SkipPastLikelyEnd(*context.position());
+    kind = "case";
   } else if (context.PositionIs(Lex::TokenKind::Default)) {
-    if (!state.has_error) {
-      CARBON_DIAGNOSTIC(MatchDefaultAfterDefault, Error,
-                        "Unexpected `default` after `default`.");
-      context.emitter().Emit(*context.position(), MatchDefaultAfterDefault);
-      state.has_error = true;
-    }
-    context.PushState(state, State::MatchCaseLoopAfterDefault);
+    kind = "default";
+  }
+  if (kind) {
+    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error, "Unreachable case; {0}",
+                      std::string);
+    context.emitter().Emit(
+        *context.position(), UnreachableMatchCase,
+        std::string{"`"} + *kind + "` occurs after the `default`");
+    context.PushState(State::MatchCaseLoopAfterDefault);
     context.SkipPastLikelyEnd(*context.position());
   }
 }
