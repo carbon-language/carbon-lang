@@ -236,16 +236,6 @@ jobs:
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
               >> $GITHUB_ENV
 
-      # We need to replace the `.` with a `_` for the build cache.
-      - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
-        run: |
-          echo "os_for_cache=macos-12" >> $GITHUB_ENV
-      - name: Setup LLVM and Clang (Ubuntu)
-        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
-        run: |
-          echo "os_for_cache=ubuntu-22_04" >> $GITHUB_ENV
-
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
         if: steps.filter.outputs.has_code == 'true'
@@ -256,10 +246,20 @@ jobs:
         run: |
           cat >user.bazelrc <<EOF
           # Enable remote cache for our CI but minimize downloads.
-          # TODO: Switch to a single remote_cache bucket now that we include the
-          # OS into the per-action key. Also remove the `os_for_cache` logic.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ env.os_for_cache }}
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
           build --remote_download_minimal
+
+          # We import a special key into every action in order to key the Bazel
+          # remote cache in a way that avoids collisions between different
+          # runners. Anything that might change the system external to Bazel but
+          # not be fully captured by the sand-boxing of the build should be used
+          # as part of the key. We don't need to use the CPU target for example,
+          # as that is captured by Bazel's configuration of each action. And the
+          # Clang version is incorporated by our Clang toolchain setup. But we
+          # do need to capture any differences between GitHub runner OSes that
+          # don't impact the Bazel configuration to avoid collisions between
+          # those.
+          build --action_env=BAZEL_REMOTE_CACHE_KEY=github-action-${{ matrix.runner }}
 
           build ${{ env.remote_cache_upload }}
 
@@ -358,17 +358,6 @@ jobs:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-          # We import this into every action in order to key the Bazel remote
-          # cache in a way that avoids collisions between different runners.
-          # Anything that might change the system external to Bazel but not be
-          # fully captured by the sand-boxing of the build should be used as
-          # part of the key. We don't need to use the CPU target for example, as
-          # that is captured by Bazel's configuration of each action. And the
-          # Clang version is incorporated by our Clang toolchain setup. But we
-          # do need to capture any differences between GitHub runner OSes that
-          # don't impact the Bazel configuration to avoid collisions between
-          # those.
-          BAZEL_REMOTE_CACHE_KEY: github-action-${{ matrix.runner }}
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
           for i in {1..5}; do
@@ -381,7 +370,6 @@ jobs:
 
             bazel_exit=0
             bazelisk test -c ${{ matrix.build_mode }} \
-              --action_env=BAZEL_REMOTE_CACHE_KEY \
               --target_pattern_file=$TARGETS_FILE || bazel_exit=$?
 
             # If we succeed, we're done.
@@ -423,11 +411,9 @@ jobs:
           steps.filter.outputs.has_code == 'true' && matrix.build_mode ==
           'clang-tidy'
         env:
-          BAZEL_REMOTE_CACHE_KEY: github-action-${{ matrix.runner }}
           TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
           bazelisk build --config=clang-tidy -k \
-            --action_env=BAZEL_REMOTE_CACHE_KEY \
             --target_pattern_file=$TARGETS_FILE
 
       # See "Disk space before build".
