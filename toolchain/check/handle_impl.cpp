@@ -77,7 +77,8 @@ auto HandleDefaultSelfImplAs(Context& context,
   // TODO: This is also valid in a mixin.
   auto class_decl = AsClassScope(context, enclosing_scope_id);
   if (!class_decl) {
-    return context.TODO(parse_node, "recover from `impl as` in non-class scope");
+    return context.TODO(parse_node,
+                        "recover from `impl as` in non-class scope");
   }
 
   context.node_stack().Push(
