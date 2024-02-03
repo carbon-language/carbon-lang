@@ -75,7 +75,7 @@ auto HandleDefaultSelfImplAs(Context& context,
   }
 
   // TODO: This is also valid in a mixin.
-  auto class_decl = AsClassScope(context, enclosing_scope_id);
+  auto class_decl = TryAsClassScope(context, enclosing_scope_id);
   if (!class_decl) {
     return context.TODO(parse_node,
                         "recover from `impl as` in non-class scope");
@@ -92,7 +92,7 @@ static auto ExtendImpl(Context& context, Parse::AnyImplDeclId parse_node,
                        SemIR::TypeId constraint_id,
                        SemIR::NameScopeId enclosing_scope_id) -> void {
   // TODO: This is also valid in a mixin.
-  if (!AsClassScope(context, enclosing_scope_id)) {
+  if (!TryAsClassScope(context, enclosing_scope_id)) {
     CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
                       "`extend impl` can only be used in a class.");
     context.emitter().Emit(parse_node, ExtendImplOutsideClass);
