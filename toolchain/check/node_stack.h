@@ -38,8 +38,10 @@ class IdUnion {
 
   // Returns the ID given its type.
   template <typename IdT>
-      requires (std::same_as<IdT, IdTypes> || ...)
-  constexpr auto As() const -> IdT { return IdT(index); }
+    requires(std::same_as<IdT, IdTypes> || ...)
+  constexpr auto As() const -> IdT {
+    return IdT(index);
+  }
 
   // Returns the ID given its kind.
   template <Kind K>
@@ -386,8 +388,10 @@ class NodeStack {
 
     // TODO: Patterns should also produce an `InstId`, but currently
     // `TuplePattern` produces an `InstBlockId`.
-    set_id_if_category_is(Parse::NodeCategory::Expr, Id::KindFor<SemIR::InstId>());
-    set_id_if_category_is(Parse::NodeCategory::MemberName, Id::KindFor<SemIR::NameId>());
+    set_id_if_category_is(Parse::NodeCategory::Expr,
+                          Id::KindFor<SemIR::InstId>());
+    set_id_if_category_is(Parse::NodeCategory::MemberName,
+                          Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
@@ -496,8 +500,7 @@ class NodeStack {
   template <typename IdT>
   auto PopWithParseNode() -> std::pair<Parse::NodeId, IdT> {
     Entry back = PopEntry<IdT>();
-    RequireIdKind(parse_tree_->node_kind(back.parse_node),
-                  Id::KindFor<IdT>());
+    RequireIdKind(parse_tree_->node_kind(back.parse_node), Id::KindFor<IdT>());
     return {back.parse_node, back.id.template As<IdT>()};
   }
 
