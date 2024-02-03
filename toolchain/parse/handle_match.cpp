@@ -53,8 +53,7 @@ auto HandleMatchCaseLoop(Context& context) -> void {
     context.PushState(State::MatchCaseIntroducer);
   } else if (context.PositionIs(Lex::TokenKind::Default)) {
     context.PushState(State::MatchCaseLoopAfterDefault);
-    context.PushState(State::MatchDefaultStart);
-    context.ConsumeAndDiscard();
+    context.PushState(State::MatchDefaultIntroducer);
   }
 }
 
@@ -133,18 +132,24 @@ auto HandleMatchCaseFinish(Context& context) -> void {
                   state.subtree_start, state.has_error);
 }
 
-auto HandleMatchDefaultStart(Context& context) -> void {
+auto HandleMatchDefaultIntroducer(Context& context) -> void {
   auto state = context.PopState();
-  context.AddLeafNode(NodeKind::MatchDefaultStart,
+  context.AddLeafNode(NodeKind::MatchDefaultIntroducer,
+                      context.ConsumeChecked(Lex::TokenKind::Default));
+  context.AddLeafNode(NodeKind::MatchDefaultEqualGreater,
                       context.ConsumeChecked(Lex::TokenKind::EqualGreater));
+  context.AddNode(NodeKind::MatchDefaultStart,
+                  context.ConsumeChecked(Lex::TokenKind::OpenCurlyBrace),
+                  state.subtree_start, state.has_error);
   context.PushState(state, State::MatchDefaultFinish);
-  context.PushState(State::CodeBlock);
+  context.PushState(State::StatementScopeLoop);
 }
 
 auto HandleMatchDefaultFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::MatchDefault, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(NodeKind::MatchDefault,
+                  context.ConsumeChecked(Lex::TokenKind::CloseCurlyBrace),
+                  state.subtree_start, state.has_error);
 }
 
 auto HandleMatchStatementFinish(Context& context) -> void {

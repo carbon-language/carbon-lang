@@ -528,12 +528,20 @@ struct MatchCase {
   llvm::SmallVector<AnyStatementId> statements;
 };
 
-using MatchDefaultStart = LeafNode<NodeKind::MatchDefaultStart>;
+using MatchDefaultIntroducer = LeafNode<NodeKind::MatchDefaultIntroducer>;
+using MatchDefaultEqualGreater = LeafNode<NodeKind::MatchDefaultEqualGreater>;
+
+struct MatchDefaultStart {
+  static constexpr auto Kind = NodeKind::MatchDefaultStart.Define();
+  MatchDefaultIntroducerId introducer;
+  MatchDefaultEqualGreaterId equal_greater_token;
+};
+
 struct MatchDefault {
   static constexpr auto Kind = NodeKind::MatchDefault.Define();
 
   MatchDefaultStartId introducer;
-  CodeBlockId block;
+  llvm::SmallVector<AnyStatementId> statements;
 };
 
 // A `match` statement: `match (expr) { case (...) => {...} default => {...}}`.

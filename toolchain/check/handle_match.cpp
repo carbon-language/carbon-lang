@@ -66,6 +66,17 @@ auto HandleMatchCase(Context& context, Parse::MatchCaseId parse_node) -> bool {
   return context.TODO(parse_node, "HandleMatchCase");
 }
 
+auto HandleMatchDefaultIntroducer(Context& context,
+                                  Parse::MatchDefaultIntroducerId parse_node)
+    -> bool {
+  return context.TODO(parse_node, "MatchDefaultIntroducer");
+}
+
+auto HandleMatchDefaultEqualGreater(
+    Context& context, Parse::MatchDefaultEqualGreaterId parse_node) -> bool {
+  return context.TODO(parse_node, "MatchDefaultEqualGreater");
+}
+
 auto HandleMatchDefaultStart(Context& context,
                              Parse::MatchDefaultStartId parse_node) -> bool {
   return context.TODO(parse_node, "HandleMatchDefaultStart");

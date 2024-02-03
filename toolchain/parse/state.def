@@ -1381,7 +1381,7 @@ CARBON_PARSE_STATE(MatchCaseFinish)
 //
 // match (...) { default => ...}
 //               ^~~~~~~
-CARBON_PARSE_STATE(MatchDefaultStart)
+CARBON_PARSE_STATE(MatchDefaultIntroducer)
 
 // Handles TODO
 //
