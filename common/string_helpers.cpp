@@ -19,6 +19,7 @@ static constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
 
 // Carbon only takes uppercase hex input.
 static auto FromHex(char c) -> std::optional<char> {
+  //
   if (c >= '0' && c <= '9') {
     return c - '0';
   }
