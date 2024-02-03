@@ -397,6 +397,8 @@ class NodeStack {
 
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind) -> IdKind {
+    // To simplify this code, we make use of the C++23 feature permitting static
+    // data members in constexpr functions.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++2b-extensions"
     static constexpr std::array<IdKind, Parse::NodeKind::ValidCount> Table =
