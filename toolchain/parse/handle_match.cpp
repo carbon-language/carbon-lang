@@ -52,14 +52,39 @@ auto HandleMatchCaseLoop(Context& context) -> void {
     context.PushState(State::MatchCaseLoop);
     context.PushState(State::MatchCaseIntroducer);
   } else if (context.PositionIs(Lex::TokenKind::Default)) {
-    context.PushState(State::MatchCaseLoop);
+    context.PushState(State::MatchCaseLoopAfterDefault);
     context.PushState(State::MatchDefaultStart);
     context.ConsumeAndDiscard();
   }
 }
 
+auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (context.PositionIs(Lex::TokenKind::Case)) {
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(MatchCaseAfterDefault, Error,
+                        "Unexpected `case` after `default`.");
+      context.emitter().Emit(*context.position(), MatchCaseAfterDefault);
+      state.has_error = true;
+    }
+    context.PushState(state, State::MatchCaseLoopAfterDefault);
+    context.SkipPastLikelyEnd(*context.position());
+  } else if (context.PositionIs(Lex::TokenKind::Default)) {
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(MatchDefaultAfterDefault, Error,
+                        "Unexpected `default` after `default`.");
+      context.emitter().Emit(*context.position(), MatchDefaultAfterDefault);
+      state.has_error = true;
+    }
+    context.PushState(state, State::MatchCaseLoopAfterDefault);
+    context.SkipPastLikelyEnd(*context.position());
+  }
+}
+
 auto HandleMatchCaseIntroducer(Context& context) -> void {
   auto state = context.PopState();
+
   context.AddLeafNode(NodeKind::MatchCaseIntroducer, context.Consume());
   context.PushState(state, State::MatchCaseAfterPattern);
   context.PushState(State::Pattern);

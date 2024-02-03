@@ -1390,6 +1390,13 @@ CARBON_PARSE_STATE(MatchDefaultStart)
 //   (state done)
 CARBON_PARSE_STATE(MatchDefaultFinish)
 
+// Handles TODO
+//
+// match (...) { default => {...} case/default ... }
+//                                ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseLoopAfterDefault)
+
 // Finishes match statement
 //
 // match (...) {...}
