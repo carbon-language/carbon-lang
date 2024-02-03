@@ -339,11 +339,11 @@ class NodeStack {
     return Peek<*RequiredIdKind>();
   }
 
-  auto empty() const -> bool { return stack_.empty(); }
-  auto size() const -> size_t { return stack_.size(); }
-
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+
+  auto empty() const -> bool { return stack_.empty(); }
+  auto size() const -> size_t { return stack_.size(); }
 
  protected:
   using Id =
