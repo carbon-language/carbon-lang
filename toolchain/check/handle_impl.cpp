@@ -119,15 +119,17 @@ static auto ExtendImpl(Context& context, Parse::AnyImplDeclId parse_node,
 }
 
 namespace {
-struct ImplDeclResult {
+struct BuildImplDeclResult {
   SemIR::ImplId impl_id;
   SemIR::InstId impl_decl_id;
   SemIR::NameScopeId enclosing_scope_id;
 };
 }  // namespace
 
+// Build an ImplDecl describing the signature of an impl. This handles the
+// common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
-    -> ImplDeclResult {
+    -> BuildImplDeclResult {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithParseNode();
   auto self_type_id = context.node_stack().Pop<Parse::NodeCategory::ImplAs>();
@@ -203,9 +205,8 @@ auto HandleImplDefinitionStart(Context& context,
         .Emit();
   } else {
     impl_info.definition_id = impl_decl_id;
-    impl_info.enclosing_scope_id = enclosing_scope_id;
     impl_info.scope_id = context.name_scopes().Add(
-        impl_decl_id, SemIR::NameId::Invalid, impl_info.enclosing_scope_id);
+        impl_decl_id, SemIR::NameId::Invalid, enclosing_scope_id);
   }
 
   context.PushScope(impl_decl_id, impl_info.scope_id);

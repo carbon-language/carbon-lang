@@ -383,7 +383,7 @@ class NodeStack {
       -> std::optional<IdKind> {
     // TODO: Patterns should also produce an `InstId`, but currently
     // `TuplePattern` produces an `InstBlockId`.
-    constexpr Parse::NodeCategory InstCategories = Parse::NodeCategory::Expr;
+    constexpr auto InstCategories = Parse::NodeCategory::Expr;
     if (!!(category & InstCategories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
       if (!!(category & ~InstCategories)) {
@@ -391,8 +391,7 @@ class NodeStack {
       }
       return IdKind::InstId;
     }
-    constexpr Parse::NodeCategory NameCategories =
-        Parse::NodeCategory::MemberName;
+    constexpr auto NameCategories = Parse::NodeCategory::MemberName;
     if (!!(category & NameCategories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
       if (!!(category & ~NameCategories)) {
@@ -400,7 +399,7 @@ class NodeStack {
       }
       return IdKind::NameId;
     }
-    constexpr Parse::NodeCategory TypeCategories = Parse::NodeCategory::ImplAs;
+    constexpr auto TypeCategories = Parse::NodeCategory::ImplAs;
     if (!!(category & TypeCategories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
       if (!!(category & ~TypeCategories)) {
@@ -408,9 +407,9 @@ class NodeStack {
       }
       return IdKind::TypeId;
     }
-    constexpr Parse::NodeCategory UnusedCategories =
-        Parse::NodeCategory::Decl | Parse::NodeCategory::Statement |
-        Parse::NodeCategory::Modifier;
+    constexpr auto UnusedCategories = Parse::NodeCategory::Decl |
+                                      Parse::NodeCategory::Statement |
+                                      Parse::NodeCategory::Modifier;
     if (!!(category & UnusedCategories)) {
       // Check for no consistent IdKind due to category with multiple bits set.
       if (!!(category & ~UnusedCategories)) {
