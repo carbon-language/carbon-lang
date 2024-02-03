@@ -14,10 +14,11 @@ auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
     auto parse_node_kind = parse_tree_->node_kind(entry.parse_node);
     output << "\t" << i << ".\t" << parse_node_kind;
     if (parse_node_kind == Parse::NodeKind::BindingPattern) {
-      output << " -> " << entry.name_id;
+      output << " -> " << entry.id<SemIR::NameId>();
     } else {
-      if (entry.inst_id.is_valid()) {
-        output << " -> " << entry.inst_id;
+      // TODO: Use the appropriate Id type for the parse node.
+      if (entry.id<SemIR::InstId>().is_valid()) {
+        output << " -> " << entry.id<SemIR::InstId>();
       }
     }
     output << "\n";
