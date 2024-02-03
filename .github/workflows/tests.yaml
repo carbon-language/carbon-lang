@@ -241,7 +241,7 @@ jobs:
         if: steps.filter.outputs.has_code == 'true'
         env:
           # Add a cache version for changes that bazel won't otherwise detect,
-          # like llvm version changes .
+          # like llvm version changes.
           CACHE_VERSION: 1
         run: |
           cat >user.bazelrc <<EOF
