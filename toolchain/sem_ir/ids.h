@@ -225,7 +225,7 @@ struct ImplId : public IdBase, public Printable<ImplId> {
   }
 };
 
-constexpr ImplId ImplId::Invalid = ImplId(ImplId::InvalidIndex);
+constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
 
 // The ID of an imported IR.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {

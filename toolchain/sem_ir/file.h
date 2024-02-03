@@ -196,7 +196,7 @@ struct Impl : public Printable<Impl> {
 
   // The following members are set at the `{` of the impl definition.
 
-  // The definition of the impl. This is a ImplDecl.
+  // The definition of the impl. This is an ImplDecl.
   InstId definition_id = InstId::Invalid;
   // The enclosing scope of the `impl` definition. Because the same `impl` can
   // be declared in multiple scopes, the enclosing scope is only known when we

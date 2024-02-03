@@ -49,7 +49,7 @@ auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
 // If the specified name scope corresponds to a class, returns the corresponding
 // class declaration.
 // TODO: Should this be somewhere more central?
-static auto AsClassScope(Context& context, SemIR::NameScopeId scope_id)
+static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::ClassDecl> {
   if (!scope_id.is_valid()) {
     return std::nullopt;
@@ -77,8 +77,7 @@ auto HandleDefaultSelfImplAs(Context& context,
   // TODO: This is also valid in a mixin.
   auto class_decl = AsClassScope(context, enclosing_scope_id);
   if (!class_decl) {
-    context.TODO(parse_node, "recover from `impl as` in non-class scope");
-    return false;
+    return context.TODO(parse_node, "recover from `impl as` in non-class scope");
   }
 
   context.node_stack().Push(
