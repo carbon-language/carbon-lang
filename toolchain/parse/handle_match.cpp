@@ -23,8 +23,9 @@ auto HandleMatchStatementStart(Context& context) -> void {
 
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     if (!state.has_error) {
-      CARBON_DIAGNOSTIC(ExpectedMatchCases, Error, "Match cases expected.");
-      context.emitter().Emit(*context.position(), ExpectedMatchCases);
+      CARBON_DIAGNOSTIC(ExpectedMatchCasesBlock, Error,
+                        "Expected `{{` starting block with cases.");
+      context.emitter().Emit(*context.position(), ExpectedMatchCasesBlock);
     }
 
     context.AddNode(NodeKind::MatchStatementStart, *context.position(),
@@ -41,6 +42,12 @@ auto HandleMatchStatementStart(Context& context) -> void {
                   state.subtree_start, state.has_error);
 
   state.has_error = false;
+  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+    CARBON_DIAGNOSTIC(ExpectedMatchCases, Error, "Expected cases.");
+    context.emitter().Emit(*context.position(), ExpectedMatchCases);
+    state.has_error = true;
+  }
+
   context.PushState(state, State::MatchStatementFinish);
   context.PushState(State::MatchCaseLoop);
 }
