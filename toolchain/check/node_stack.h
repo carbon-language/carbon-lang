@@ -342,6 +342,13 @@ class NodeStack {
   auto size() const -> size_t { return stack_.size(); }
 
  protected:
+  // An ID that can be associated with a parse node.
+  //
+  // Each parse node kind has a corresponding Id::Kind indicating which kind of
+  // ID is stored, computed by ParseNodeKindToIdKind. Id::Kind::None indicates
+  // that the parse node has no associated ID, in which case the *SoloParseNode
+  // functions should be used to push and pop it. Id::Kind::Invalid indicates
+  // that the parse node should not appear in the node stack at all.
   using Id =
       IdUnion<SemIR::InstId, SemIR::InstBlockId, SemIR::FunctionId,
               SemIR::ClassId, SemIR::InterfaceId, SemIR::NameId, SemIR::TypeId>;
@@ -351,11 +358,8 @@ class NodeStack {
     // The parse node associated with the stack entry.
     Parse::NodeId parse_node;
 
-    // The entries will evaluate as invalid if and only if they're a solo
-    // parse_node. Invalid is used instead of optional to save space.
-    //
-    // A discriminator isn't needed because the caller can determine which field
-    // is used based on the Parse::NodeKind.
+    // The ID associated with this parse node. The kind of ID is determined by
+    // the kind of the parse node, so a separate discriminiator is not needed.
     Id id;
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
