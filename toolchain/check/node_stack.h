@@ -198,12 +198,8 @@ class NodeStack {
   }
 
   // Pops an expression from the top of the stack and returns the parse_node and
-  // the ID. This is a template to defer looking at the return type of
-  // PopWithParseNode until it's defined.
-  template <Parse::NodeCategory Category = Parse::NodeCategory::Expr>
-  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId> {
-    return PopWithParseNode<Category>();
-  }
+  // the ID.
+  auto PopExprWithParseNode() -> std::pair<Parse::AnyExprId, SemIR::InstId>;
 
   // Pops a pattern from the top of the stack and returns the parse_node and
   // the ID.
@@ -399,85 +395,85 @@ class NodeStack {
     return result;
   }
 
-  // Translate a parse node kind to the enum ID kind it should always provide.
-  static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind)
-      -> Id::Kind {
-    // To simplify this code, we make use of the C++23 feature permitting static
-    // data members in constexpr functions.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc++2b-extensions"
-    static constexpr std::array<Id::Kind, Parse::NodeKind::ValidCount> Table =
-#pragma clang diagnostic pop
-        [] {
-          std::array<Id::Kind, Parse::NodeKind::ValidCount> table = {};
+  using IdKindTableType = std::array<Id::Kind, Parse::NodeKind::ValidCount>;
 
-          auto to_id_kind =
-              [](const Parse::NodeKind::Definition& node_kind) -> Id::Kind {
-            if (auto from_category =
-                    ParseNodeCategoryToIdKind(node_kind.category(), true)) {
-              return *from_category;
-            }
-            switch (node_kind) {
-              case Parse::NodeKind::Addr:
-              case Parse::NodeKind::BindingPattern:
-              case Parse::NodeKind::CallExprStart:
-              case Parse::NodeKind::GenericBindingPattern:
-              case Parse::NodeKind::IfExprThen:
-              case Parse::NodeKind::ReturnType:
-              case Parse::NodeKind::ShortCircuitOperandAnd:
-              case Parse::NodeKind::ShortCircuitOperandOr:
-              case Parse::NodeKind::StructFieldValue:
-              case Parse::NodeKind::StructFieldType:
-              case Parse::NodeKind::TypeImplAs:
-              case Parse::NodeKind::VariableInitializer:
-                return Id::KindFor<SemIR::InstId>();
-              case Parse::NodeKind::IfCondition:
-              case Parse::NodeKind::IfExprIf:
-              case Parse::NodeKind::ImplForall:
-              case Parse::NodeKind::ImplicitParamList:
-              case Parse::NodeKind::TuplePattern:
-              case Parse::NodeKind::WhileCondition:
-              case Parse::NodeKind::WhileConditionStart:
-                return Id::KindFor<SemIR::InstBlockId>();
-              case Parse::NodeKind::FunctionDefinitionStart:
-                return Id::KindFor<SemIR::FunctionId>();
-              case Parse::NodeKind::ClassDefinitionStart:
-                return Id::KindFor<SemIR::ClassId>();
-              case Parse::NodeKind::InterfaceDefinitionStart:
-                return Id::KindFor<SemIR::InterfaceId>();
-              case Parse::NodeKind::SelfValueName:
-                return Id::KindFor<SemIR::NameId>();
-              case Parse::NodeKind::ArrayExprSemi:
-              case Parse::NodeKind::ClassIntroducer:
-              case Parse::NodeKind::CodeBlockStart:
-              case Parse::NodeKind::ExprOpenParen:
-              case Parse::NodeKind::FunctionIntroducer:
-              case Parse::NodeKind::IfStatementElse:
-              case Parse::NodeKind::ImplicitParamListStart:
-              case Parse::NodeKind::ImplIntroducer:
-              case Parse::NodeKind::InterfaceIntroducer:
-              case Parse::NodeKind::LetIntroducer:
-              case Parse::NodeKind::QualifiedName:
-              case Parse::NodeKind::ReturnedModifier:
-              case Parse::NodeKind::ReturnStatementStart:
-              case Parse::NodeKind::ReturnVarModifier:
-              case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
-              case Parse::NodeKind::TuplePatternStart:
-              case Parse::NodeKind::VariableIntroducer:
-                return Id::Kind::None;
-              default:
-                return Id::Kind::Invalid;
-            }
-          };
+  // Lookup table to implement `ParseNodeKindToIdKind`. Initialized to the
+  // return value of `ComputeIdKindTable()`.
+  static const IdKindTableType IdKindTable;
+
+  static constexpr auto ComputeIdKindTable() -> IdKindTableType {
+    IdKindTableType table = {};
+
+    auto to_id_kind =
+        [](const Parse::NodeKind::Definition& node_kind) -> Id::Kind {
+      if (auto from_category =
+              ParseNodeCategoryToIdKind(node_kind.category(), true)) {
+        return *from_category;
+      }
+      switch (node_kind) {
+        case Parse::NodeKind::Addr:
+        case Parse::NodeKind::BindingPattern:
+        case Parse::NodeKind::CallExprStart:
+        case Parse::NodeKind::GenericBindingPattern:
+        case Parse::NodeKind::IfExprThen:
+        case Parse::NodeKind::ReturnType:
+        case Parse::NodeKind::ShortCircuitOperandAnd:
+        case Parse::NodeKind::ShortCircuitOperandOr:
+        case Parse::NodeKind::StructFieldValue:
+        case Parse::NodeKind::StructFieldType:
+        case Parse::NodeKind::TypeImplAs:
+        case Parse::NodeKind::VariableInitializer:
+          return Id::KindFor<SemIR::InstId>();
+        case Parse::NodeKind::IfCondition:
+        case Parse::NodeKind::IfExprIf:
+        case Parse::NodeKind::ImplForall:
+        case Parse::NodeKind::ImplicitParamList:
+        case Parse::NodeKind::TuplePattern:
+        case Parse::NodeKind::WhileCondition:
+        case Parse::NodeKind::WhileConditionStart:
+          return Id::KindFor<SemIR::InstBlockId>();
+        case Parse::NodeKind::FunctionDefinitionStart:
+          return Id::KindFor<SemIR::FunctionId>();
+        case Parse::NodeKind::ClassDefinitionStart:
+          return Id::KindFor<SemIR::ClassId>();
+        case Parse::NodeKind::InterfaceDefinitionStart:
+          return Id::KindFor<SemIR::InterfaceId>();
+        case Parse::NodeKind::SelfValueName:
+          return Id::KindFor<SemIR::NameId>();
+        case Parse::NodeKind::ArrayExprSemi:
+        case Parse::NodeKind::ClassIntroducer:
+        case Parse::NodeKind::CodeBlockStart:
+        case Parse::NodeKind::ExprOpenParen:
+        case Parse::NodeKind::FunctionIntroducer:
+        case Parse::NodeKind::IfStatementElse:
+        case Parse::NodeKind::ImplicitParamListStart:
+        case Parse::NodeKind::ImplIntroducer:
+        case Parse::NodeKind::InterfaceIntroducer:
+        case Parse::NodeKind::LetIntroducer:
+        case Parse::NodeKind::QualifiedName:
+        case Parse::NodeKind::ReturnedModifier:
+        case Parse::NodeKind::ReturnStatementStart:
+        case Parse::NodeKind::ReturnVarModifier:
+        case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
+        case Parse::NodeKind::TuplePatternStart:
+        case Parse::NodeKind::VariableIntroducer:
+          return Id::Kind::None;
+        default:
+          return Id::Kind::Invalid;
+      }
+    };
 
 #define CARBON_PARSE_NODE_KIND(Name) \
   table[Parse::Name::Kind.AsInt()] = to_id_kind(Parse::Name::Kind);
 #include "toolchain/parse/node_kind.def"
 
-          return table;
-        }();
+    return table;
+  }
 
-    return Table[kind.AsInt()];
+  // Translate a parse node kind to the enum ID kind it should always provide.
+  static constexpr auto ParseNodeKindToIdKind(Parse::NodeKind kind)
+      -> Id::Kind {
+    return IdKindTable[kind.AsInt()];
   }
 
   // Peeks at the ID associated with the top of the name stack.
@@ -540,6 +536,14 @@ class NodeStack {
   // vlogging.
   llvm::SmallVector<Entry> stack_;
 };
+
+constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
+    ComputeIdKindTable();
+
+inline auto NodeStack::PopExprWithParseNode()
+    -> std::pair<Parse::AnyExprId, SemIR::InstId> {
+  return PopWithParseNode<Parse::NodeCategory::Expr>();
+}
 
 }  // namespace Carbon::Check
 
