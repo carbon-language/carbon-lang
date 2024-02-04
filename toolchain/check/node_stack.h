@@ -20,9 +20,14 @@ namespace Carbon::Check {
 template <typename... IdTypes>
 class IdUnion {
  public:
+  // The default constructor forms an invalid ID.
+  explicit constexpr IdUnion() : index(IdBase::InvalidIndex) {}
+
   template <typename IdT>
     requires(std::same_as<IdT, IdTypes> || ...)
   explicit constexpr IdUnion(IdT id) : index(id.index) {}
+
+  static constexpr std::size_t NumValidKinds = sizeof...(IdTypes);
 
   // A numbering for the associated ID types.
   enum class Kind : int8_t {
@@ -30,7 +35,7 @@ class IdUnion {
     // `IdTypes`.
 
     // An explicit invalid state.
-    Invalid = sizeof...(IdTypes),
+    Invalid = NumValidKinds,
 
     // No active union element.
     None,
@@ -101,7 +106,7 @@ class NodeStack {
                   << " -> <none>\n";
     CARBON_CHECK(stack_.size() < (1 << 20))
         << "Excessive stack size: likely infinite loop";
-    stack_.push_back(Entry{parse_node, Id(SemIR::InstId::Invalid)});
+    stack_.push_back(Entry{parse_node, Id()});
   }
 
   // Pushes a parse tree node onto the stack with an ID.
