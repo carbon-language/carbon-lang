@@ -72,6 +72,8 @@ auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
     context.emitter().Emit(
         *context.position(), UnreachableMatchCase,
         std::string{"`"} + *kind + "` occurs after the `default`");
+
+    context.ReturnErrorOnState();
     context.PushState(State::MatchCaseLoopAfterDefault);
     context.SkipPastLikelyEnd(*context.position());
   }
