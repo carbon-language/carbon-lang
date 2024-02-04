@@ -1316,12 +1316,6 @@ CARBON_PARSE_STATE(MatchIntroducer)
 
 // Handles TODO
 //
-// match ( ... ) ...
-//              ^
-CARBON_PARSE_STATE(MatchConditionFinish)
-
-// Handles TODO
-//
 // match (...) {}
 //             ^
 //   (state done)
@@ -1329,7 +1323,7 @@ CARBON_PARSE_STATE(MatchConditionFinish)
 // match (...) ???
 //             ^
 //   (state done)
-CARBON_PARSE_STATE(MatchStatementStart)
+CARBON_PARSE_STATE(MatchConditionFinish)
 
 // Handles TODO
 //
