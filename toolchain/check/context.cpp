@@ -92,6 +92,7 @@ auto Context::AddPlaceholderInstInNoBlock(
     SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
   CARBON_VLOG() << "AddPlaceholderInst: " << parse_node_and_inst.inst << "\n";
+  constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
 

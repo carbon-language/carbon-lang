@@ -72,7 +72,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   }
 };
 
-constexpr InstId InstId::Invalid = InstId(InstId::InvalidIndex);
+constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
 #define CARBON_SEM_IR_BUILTIN_KIND_NAME(Name) \
   constexpr InstId InstId::Builtin##Name =    \
@@ -95,40 +95,52 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression whose phase cannot be determined because it
   // contains an error. This is always modeled as a template constant.
   static const ConstantId Error;
+  // An explicitly invalid ID.
+  static const ConstantId Invalid;
 
   // Returns the constant ID corresponding to a template constant, which should
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForTemplateConstant(InstId const_id) -> ConstantId {
-    return ConstantId(const_id.index + 1);
+    return ConstantId(const_id.index + IndexOffset);
   }
 
   // Returns the constant ID corresponding to a symbolic constant, which should
   // either be in the `constants` block in the file or should be known to be
   // unique.
   static constexpr auto ForSymbolicConstant(InstId const_id) -> ConstantId {
-    // Avoid allocating index -1.
-    return ConstantId(-const_id.index - 1);
+    return ConstantId(-const_id.index - IndexOffset);
   }
 
   using IdBase::IdBase;
 
-  // Returns whether this represents a constant.
-  auto is_constant() const -> bool { return index != 0; }
-  // Returns whether this represents a symbolic constant.
-  auto is_symbolic() const -> bool { return index < 0; }
-  // Returns whether this represents a template constant.
-  auto is_template() const -> bool { return index > 0; }
+  // Returns whether this represents a constant. Requires is_valid.
+  auto is_constant() const -> bool {
+    CARBON_CHECK(is_valid());
+    return *this != ConstantId::NotConstant;
+  }
+  // Returns whether this represents a symbolic constant. Requires is_valid.
+  auto is_symbolic() const -> bool {
+    CARBON_CHECK(is_valid());
+    return index <= -IndexOffset;
+  }
+  // Returns whether this represents a template constant. Requires is_valid.
+  auto is_template() const -> bool {
+    CARBON_CHECK(is_valid());
+    return index >= IndexOffset;
+  }
 
   // Returns the instruction that describes this constant value, or
-  // InstId::Invalid for a runtime value.
-  auto inst_id() const -> InstId {
-    static_assert(InstId::InvalidIndex == -1);
-    return InstId(std::abs(index) - 1);
+  // InstId::Invalid for a runtime value. Requires is_valid.
+  constexpr auto inst_id() const -> InstId {
+    CARBON_CHECK(is_valid());
+    return InstId(Abs(index) - IndexOffset);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (is_template()) {
+    if (!is_valid()) {
+      IdBase::Print(out);
+    } else if (is_template()) {
       out << "template " << inst_id();
     } else if (is_symbolic()) {
       out << "symbolic " << inst_id();
@@ -138,13 +150,20 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   }
 
  private:
-  // ConstantIds don't have an invalid state.
-  using IdBase::is_valid;
+  // TODO: C++23 makes std::abs constexpr, but until then we mirror std::abs
+  // logic here. LLVM should still optimize this.
+  static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
+
+  static constexpr int32_t NotConstantIndex = InvalidIndex - 1;
+  // The offset of InstId indices to ConstantId indices.
+  static constexpr int32_t IndexOffset = -NotConstantIndex + 1;
 };
 
-constexpr ConstantId ConstantId::NotConstant = ConstantId(0);
+constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
+static_assert(ConstantId::NotConstant.inst_id() == InstId::Invalid);
 constexpr ConstantId ConstantId::Error =
     ConstantId::ForTemplateConstant(InstId::BuiltinError);
+constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
 // The ID of a bind name.
 struct BindNameId : public IdBase, public Printable<BindNameId> {
@@ -160,7 +179,7 @@ struct BindNameId : public IdBase, public Printable<BindNameId> {
   }
 };
 
-constexpr BindNameId BindNameId::Invalid = BindNameId(BindNameId::InvalidIndex);
+constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
@@ -176,7 +195,7 @@ struct FunctionId : public IdBase, public Printable<FunctionId> {
   }
 };
 
-constexpr FunctionId FunctionId::Invalid = FunctionId(FunctionId::InvalidIndex);
+constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
 
 // The ID of a class.
 struct ClassId : public IdBase, public Printable<ClassId> {
@@ -192,7 +211,7 @@ struct ClassId : public IdBase, public Printable<ClassId> {
   }
 };
 
-constexpr ClassId ClassId::Invalid = ClassId(ClassId::InvalidIndex);
+constexpr ClassId ClassId::Invalid = ClassId(InvalidIndex);
 
 // The ID of an interface.
 struct InterfaceId : public IdBase, public Printable<InterfaceId> {
@@ -208,8 +227,7 @@ struct InterfaceId : public IdBase, public Printable<InterfaceId> {
   }
 };
 
-constexpr InterfaceId InterfaceId::Invalid =
-    InterfaceId(InterfaceId::InvalidIndex);
+constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase, public Printable<ImplId> {
@@ -319,12 +337,12 @@ struct NameId : public IdBase, public Printable<NameId> {
   }
 };
 
-constexpr NameId NameId::Invalid = NameId(NameId::InvalidIndex);
-constexpr NameId NameId::SelfValue = NameId(NameId::InvalidIndex - 1);
-constexpr NameId NameId::SelfType = NameId(NameId::InvalidIndex - 2);
-constexpr NameId NameId::ReturnSlot = NameId(NameId::InvalidIndex - 3);
-constexpr NameId NameId::PackageNamespace = NameId(NameId::InvalidIndex - 4);
-constexpr NameId NameId::Base = NameId(NameId::InvalidIndex - 5);
+constexpr NameId NameId::Invalid = NameId(InvalidIndex);
+constexpr NameId NameId::SelfValue = NameId(InvalidIndex - 1);
+constexpr NameId NameId::SelfType = NameId(InvalidIndex - 2);
+constexpr NameId NameId::ReturnSlot = NameId(InvalidIndex - 3);
+constexpr NameId NameId::PackageNamespace = NameId(InvalidIndex - 4);
+constexpr NameId NameId::Base = NameId(InvalidIndex - 5);
 constexpr int NameId::NonIndexValueCount = 6;
 // Enforce the link between SpecialValueCount and the last special value.
 static_assert(NameId::NonIndexValueCount == -NameId::Base.index);
@@ -345,8 +363,7 @@ struct NameScopeId : public IdBase, public Printable<NameScopeId> {
   }
 };
 
-constexpr NameScopeId NameScopeId::Invalid =
-    NameScopeId(NameScopeId::InvalidIndex);
+constexpr NameScopeId NameScopeId::Invalid = NameScopeId(InvalidIndex);
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
@@ -385,10 +402,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::Invalid =
-    InstBlockId(InstBlockId::InvalidIndex);
-constexpr InstBlockId InstBlockId::Unreachable =
-    InstBlockId(InstBlockId::InvalidIndex - 1);
+constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
+constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
@@ -416,9 +431,9 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   }
 };
 
-constexpr TypeId TypeId::TypeType = TypeId(TypeId::InvalidIndex - 2);
-constexpr TypeId TypeId::Error = TypeId(TypeId::InvalidIndex - 1);
-constexpr TypeId TypeId::Invalid = TypeId(TypeId::InvalidIndex);
+constexpr TypeId TypeId::TypeType = TypeId(InvalidIndex - 2);
+constexpr TypeId TypeId::Error = TypeId(InvalidIndex - 1);
+constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {

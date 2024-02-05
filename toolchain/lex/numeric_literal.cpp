@@ -12,12 +12,10 @@
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 
-namespace llvm {
-
 // We use formatv primarily for diagnostics. In these cases, it's expected that
 // the spelling in source code should be used.
 template <>
-struct format_provider<Carbon::Lex::NumericLiteral::Radix> {
+struct llvm::format_provider<Carbon::Lex::NumericLiteral::Radix> {
   using Radix = Carbon::Lex::NumericLiteral::Radix;
   static void format(const Radix& radix, raw_ostream& out,
                      StringRef /*style*/) {
@@ -34,8 +32,6 @@ struct format_provider<Carbon::Lex::NumericLiteral::Radix> {
     }
   }
 };
-
-}  // namespace llvm
 
 namespace Carbon::Lex {
 

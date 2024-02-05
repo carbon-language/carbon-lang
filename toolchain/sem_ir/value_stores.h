@@ -125,12 +125,15 @@ class InstStore {
 // instructions.
 class ConstantValueStore {
  public:
-  // Returns the constant value of the requested instruction, or
-  // `ConstantId::NotConstant` if it is not constant.
+  explicit ConstantValueStore(ConstantId default_value)
+      : default_(default_value) {}
+
+  // Returns the constant value of the requested instruction, which is default_
+  // if unallocated.
   auto Get(InstId inst_id) const -> ConstantId {
     CARBON_CHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? ConstantId::NotConstant
+               ? default_
                : values_[inst_id.index];
   }
 
@@ -139,12 +142,14 @@ class ConstantValueStore {
   auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_CHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.resize(inst_id.index + 1, ConstantId::NotConstant);
+      values_.resize(inst_id.index + 1, default_);
     }
     values_[inst_id.index] = const_id;
   }
 
  private:
+  const ConstantId default_;
+
   // A mapping from `InstId::index` to the corresponding constant value. This is
   // expected to be sparse, and may be smaller than the list of instructions if
   // there are trailing non-constant instructions.

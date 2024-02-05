@@ -25,11 +25,9 @@ enum class RelativeLocation : int8_t {
 
 }  // namespace Carbon::Parse
 
-namespace llvm {
-
 // Adapts RelativeLocation for use with formatv.
 template <>
-struct format_provider<Carbon::Parse::RelativeLocation> {
+struct llvm::format_provider<Carbon::Parse::RelativeLocation> {
   using RelativeLocation = Carbon::Parse::RelativeLocation;
   static void format(const RelativeLocation& loc, raw_ostream& out,
                      StringRef /*style*/) {
@@ -46,8 +44,6 @@ struct format_provider<Carbon::Parse::RelativeLocation> {
     }
   }
 };
-
-}  // namespace llvm
 
 namespace Carbon::Parse {
 
