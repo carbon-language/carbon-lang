@@ -4,8 +4,6 @@
 
 #include "toolchain/check/node_stack.h"
 
-#include <utility>
-
 #include "llvm/ADT/STLExtras.h"
 
 namespace Carbon::Check {
