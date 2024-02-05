@@ -10,8 +10,9 @@
 namespace Carbon::Check {
 
 auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
-  return NameContext{.enclosing_scope = context_->current_scope_index(),
-                     .target_scope_id = context_->current_scope_id()};
+  return NameContext{
+      .enclosing_scope = context_->scope_stack().current_scope_index(),
+      .target_scope_id = context_->scope_stack().current_scope_id()};
 }
 
 auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
@@ -25,7 +26,7 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
 
   // Create a scope for any parameters introduced in this name.
-  context_->PushScope();
+  context_->scope_stack().Push();
 }
 
 auto DeclNameStack::FinishName() -> NameContext {
@@ -49,7 +50,7 @@ auto DeclNameStack::FinishName() -> NameContext {
 auto DeclNameStack::PopScope() -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before PopScope";
-  context_->PopToScope(decl_name_stack_.back().enclosing_scope);
+  context_->scope_stack().PopToScope(decl_name_stack_.back().enclosing_scope);
   decl_name_stack_.pop_back();
 }
 
@@ -154,12 +155,12 @@ static auto PushNameQualifierScope(Context& context,
                                    bool has_error = false) -> void {
   // If the qualifier has no parameters, we don't need to keep around a
   // parameter scope.
-  context.PopScopeIfEmpty();
+  context.scope_stack().PopIfEmpty();
 
-  context.PushScope(scope_inst_id, scope_id, has_error);
+  context.scope_stack().Push(scope_inst_id, scope_id, has_error);
 
   // Enter a parameter scope in case the qualified name itself has parameters.
-  context.PushScope();
+  context.scope_stack().Push();
 }
 
 auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {

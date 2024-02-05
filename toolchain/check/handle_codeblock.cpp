@@ -9,13 +9,13 @@ namespace Carbon::Check {
 auto HandleCodeBlockStart(Context& context, Parse::CodeBlockStartId parse_node)
     -> bool {
   context.node_stack().Push(parse_node);
-  context.PushScope();
+  context.scope_stack().Push();
   return true;
 }
 
 auto HandleCodeBlock(Context& context, Parse::CodeBlockId /*parse_node*/)
     -> bool {
-  context.PopScope();
+  context.scope_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::CodeBlockStart>();
   return true;

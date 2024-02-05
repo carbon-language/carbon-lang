@@ -220,7 +220,7 @@ auto HandleFunctionDefinitionStart(Context& context,
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
-  context.PushScope(decl_id);
+  context.scope_stack().Push(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the implicit and explicit parameters into scope.
@@ -270,7 +270,7 @@ auto HandleFunctionDefinition(Context& context,
     }
   }
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
