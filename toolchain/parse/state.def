@@ -1308,90 +1308,127 @@ CARBON_PARSE_STATE(ChoiceAlternativeFinish)
 //   (state done)
 CARBON_PARSE_STATE(ChoiceDefinitionFinish)
 
-// Handles a match's introducer.
+// Handles `match` introducer.
 //
 // match ...
 // ^~~~~
+//   1. ParenConditionAsMatch
+//   2. MatchConditionFinish
 CARBON_PARSE_STATE(MatchIntroducer)
 
-// Handles TODO
+// Handles `match` cases block start after the condition.
 //
-// match (...) {}
+// match (...) { ... }
 //             ^
-//   (state done)
+//   1. MatchCaseLoop
+//   2. MatchStatementFinish
 //
 // match (...) ???
 //             ^
 //   (state done)
 CARBON_PARSE_STATE(MatchConditionFinish)
 
-// Handles TODO
+// Handles `match` cases.
 //
 // match (...) { case ...}
-//               ^~~~
-//   (state done)
+//              ^
+//   1. MatchCaseIntroducer
+//   2. MatchCaseLoop
+// match (...) { default ...}
+//              ^
+//   1. MatchDefaultIntroducer
+//   2. MatchCaseLoopAfterDefault
 CARBON_PARSE_STATE(MatchCaseLoop)
 
-// Handles TODO
+// Handles `match` `case` introducer.
 //
 // match (...) { case ...}
 //               ^~~~
-//   (state done)
+//   1. Pattern
+//   2. MatchCaseAfterPattern
 CARBON_PARSE_STATE(MatchCaseIntroducer)
 
-// Handles TODO
+// Handles `match` case after pattern.
 //
-// match (...) { case () => {...} }
-//                       ^~
-// match (...) { case () if (...) =>...}
-//                       ^~
-//   (state done)
+// match (...) { case ... => ... }
+//                       ^
+//   1. MatchCaseStart
+// match (...) { case ... if (...) }
+//                        ^~~~
+//   1. Expr
+//   2. MatchCaseGuardFinish
+//   3. MatchCaseStart
 CARBON_PARSE_STATE(MatchCaseAfterPattern)
 
-// Handles TODO
+// Handles `match` case guard closing parenthesis.
 //
-// match (...) { case () if (...) =>...}
+// match (...) { case ... if (...) => ... }
 //                               ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseGuardFinish)
 
-// Handles TODO
+// Handles `match` case `=>` and `{` opening statements block.
 //
-// match (...) { case () => {...} }
-//                       ^~
-// match (...) { case () if (...) =>...}
-//                                ^~
+// match (...) { case ... => {...} }
+//                        ^~~~
+//   1. StatementScopeLoop
+//   2. MatchCaseFinish
+//
+// match (...) { case ... ??? }
+//                        ^
+//   (state done)
+//
+// match (...) { case ... => ??? }
+//                           ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseStart)
 
-// Handles TODO
+// Handles `match` case statements block closing `}`.
 //
-// match (...) { case () => {...} }
-//                              ^
+// match (...) { case ... => {...} }
+//                               ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseFinish)
 
-// Handles TODO
+// Handles `match` default introducer, `=>` and `{` opening statements block.
 //
-// match (...) { default => ...}
-//               ^~~~~~~
+// match (...) { default => {...} }
+//               ^~~~~~~~~~~~
+//   1. StatementScopeLoop
+//   2. MatchDefaultFinish
+//
+// match (...) { default ??? }
+//                       ^
+//   (state done)
+//
+// match (...) { default => ??? }
+//                          ^
+//   (state done)
 CARBON_PARSE_STATE(MatchDefaultIntroducer)
 
-// Handles TODO
+// Handles `match` default case statements block closing `}`.
 //
 // match (...) { default => {...} }
 //                              ^
 //   (state done)
 CARBON_PARSE_STATE(MatchDefaultFinish)
 
-// Handles TODO
+// Handles `match` cases after the `default` case.
 //
-// match (...) { default => {...} case/default ... }
+// match (...) { default => {...} case ... }
+//                                ^~~~
+//   1. MatchCaseLoopAfterDefault
+//
+// match (...) { default => {...} default ... }
+//                                ^~~~~~~
+//   1. MatchCaseLoopAfterDefault
+//
+// match (...) { default => {...} }
 //                                ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseLoopAfterDefault)
 
-// Finishes match statement
+// Finishes `match` statement.
 //
 // match (...) {...}
 //                 ^
