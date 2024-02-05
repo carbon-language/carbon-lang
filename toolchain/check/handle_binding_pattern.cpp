@@ -115,6 +115,10 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
       }
+      if (auto current_scope_id = context.current_scope_id();
+          current_scope_id == SemIR::NameScopeId::Package) {
+        context.inst_block_stack().PushInit();
+      }
       break;
     }
 

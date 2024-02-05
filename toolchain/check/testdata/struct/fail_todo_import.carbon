@@ -30,14 +30,19 @@ var a: {.a: i32} = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref} [template]
-// CHECK:STDOUT:   %.loc4_20: type = struct_type {.a: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %a_ref.var: ref {.a: i32} = var a_ref
 // CHECK:STDOUT:   %a_ref: ref {.a: i32} = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_30: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_31.1: {.a: i32} = struct_literal (%.loc4_30)
-// CHECK:STDOUT:   %.loc4_31.2: init {.a: i32} = struct_init (%.loc4_30) to %a_ref.var [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_31.2: init {.a: i32} = struct_init (%.loc4_30) to file.%a_ref.var [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_31.3: init {.a: i32} = converted %.loc4_31.1, %.loc4_31.2 [template = constants.%.3]
-// CHECK:STDOUT:   assign %a_ref.var, %.loc4_31.3
+// CHECK:STDOUT:   assign file.%a_ref.var, %.loc4_31.3
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -52,7 +57,12 @@ var a: {.a: i32} = a_ref;
 // CHECK:STDOUT:   %.loc4: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref {.a: i32} = var a
 // CHECK:STDOUT:   %a: ref {.a: i32} = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %import_ref
-// CHECK:STDOUT:   assign %a.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

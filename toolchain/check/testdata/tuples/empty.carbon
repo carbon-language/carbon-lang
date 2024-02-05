@@ -20,17 +20,22 @@ var y: () = x;
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7_14.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_14.2: init () = tuple_init () to %x.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_14.3: init () = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.2]
-// CHECK:STDOUT:   assign %x.var, %.loc7_14.3
 // CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %y.var: ref () = var y
 // CHECK:STDOUT:   %y: ref () = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref () = name_ref x, %x
-// CHECK:STDOUT:   %.loc8_13.1: init () = tuple_init () to %y.var [template = constants.%.2]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_14.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_14.2: init () = tuple_init () to file.%x.var [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_14.3: init () = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_14.3
+// CHECK:STDOUT:   %x.ref: ref () = name_ref x, file.%x
+// CHECK:STDOUT:   %.loc8_13.1: init () = tuple_init () to file.%y.var [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_13.2: init () = converted %x.ref, %.loc8_13.1 [template = constants.%.2]
-// CHECK:STDOUT:   assign %y.var, %.loc8_13.2
+// CHECK:STDOUT:   assign file.%y.var, %.loc8_13.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

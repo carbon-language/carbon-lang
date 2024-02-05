@@ -40,7 +40,7 @@ var or_: F(true or true);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc33_17: bool = block_arg <unexpected instblockref block13>
+// CHECK:STDOUT:   %.loc33_17: bool = block_arg <unexpected instblockref block14>
 // CHECK:STDOUT:   %.loc33_11.1: init type = call <unexpected instref inst+27>(%.loc33_17)
 // CHECK:STDOUT:   %.loc33_24: type = value_of_initializer %.loc33_11.1
 // CHECK:STDOUT:   %.loc33_11.2: type = converted %.loc33_11.1, %.loc33_24

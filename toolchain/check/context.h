@@ -363,6 +363,9 @@ class Context {
     inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
   }
 
+  // Finalizes the initialization function (__global_init)
+  auto FinalizeInits() -> void;
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 

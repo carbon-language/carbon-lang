@@ -35,11 +35,16 @@ var a: (i32,) = a_ref;
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a_ref.var: ref (i32,) = var a_ref
 // CHECK:STDOUT:   %a_ref: ref (i32,) = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_22: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_24.1: (i32,) = tuple_literal (%.loc4_22)
-// CHECK:STDOUT:   %.loc4_24.2: init (i32,) = tuple_init (%.loc4_22) to %a_ref.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc4_24.2: init (i32,) = tuple_init (%.loc4_22) to file.%a_ref.var [template = constants.%.4]
 // CHECK:STDOUT:   %.loc4_24.3: init (i32,) = converted %.loc4_24.1, %.loc4_24.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign %a_ref.var, %.loc4_24.3
+// CHECK:STDOUT:   assign file.%a_ref.var, %.loc4_24.3
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -56,7 +61,12 @@ var a: (i32,) = a_ref;
 // CHECK:STDOUT:   %.loc4_13.2: type = converted %.loc4_13.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a
 // CHECK:STDOUT:   %a: ref (i32,) = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %import_ref
-// CHECK:STDOUT:   assign %a.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

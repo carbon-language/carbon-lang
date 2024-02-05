@@ -18,11 +18,16 @@ var b: i32 = ((2));
 // CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b} [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   assign %a.var, %.loc7
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   assign %b.var, %.loc8
+// CHECK:STDOUT:   assign file.%b.var, %.loc8
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

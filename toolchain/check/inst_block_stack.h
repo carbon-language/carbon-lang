@@ -29,6 +29,8 @@ class InstBlockStack {
   // called in order to support lazy allocation.
   auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
 
+  auto PushInit() -> void;
+
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
 
@@ -45,6 +47,8 @@ class InstBlockStack {
   // Pops the top instruction block, and discards it if it hasn't had an ID
   // allocated.
   auto PopAndDiscard() -> void;
+
+  auto PopInit() -> void;
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
@@ -99,6 +103,8 @@ class InstBlockStack {
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
+
+  std::vector<SemIR::InstId> init_block_;
 
   // The actual stack.
   llvm::SmallVector<StackEntry> stack_;

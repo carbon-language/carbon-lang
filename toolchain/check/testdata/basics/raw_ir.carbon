@@ -21,7 +21,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:   bind_names:
 // CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block2, return_type: type4, return_slot: inst+7, body: [block5]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block3, return_type: type4, return_slot: inst+7, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -49,7 +49,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+1:          {kind: Param, arg0: name1, type: type1}
 // CHECK:STDOUT:     inst+2:          {kind: BindName, arg0: bindName0, arg1: inst+1, type: type1}
 // CHECK:STDOUT:     inst+3:          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
-// CHECK:STDOUT:     inst+4:          {kind: TupleLiteral, arg0: block3, type: type2}
+// CHECK:STDOUT:     inst+4:          {kind: TupleLiteral, arg0: block4, type: type2}
 // CHECK:STDOUT:     inst+5:          {kind: TupleType, arg0: typeBlock1, type: typeTypeType}
 // CHECK:STDOUT:     inst+6:          {kind: Converted, arg0: inst+4, arg1: inst+5, type: typeTypeType}
 // CHECK:STDOUT:     inst+7:          {kind: VarStorage, arg0: nameReturnSlot, type: type4}
@@ -60,14 +60,14 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+12:         {kind: IntLiteral, arg0: int4, type: type1}
 // CHECK:STDOUT:     inst+13:         {kind: RealLiteral, arg0: real0, type: type3}
 // CHECK:STDOUT:     inst+14:         {kind: RealLiteral, arg0: real0, type: type3}
-// CHECK:STDOUT:     inst+15:         {kind: TupleLiteral, arg0: block6, type: type4}
+// CHECK:STDOUT:     inst+15:         {kind: TupleLiteral, arg0: block7, type: type4}
 // CHECK:STDOUT:     inst+16:         {kind: TupleAccess, arg0: inst+7, arg1: element0, type: type1}
 // CHECK:STDOUT:     inst+17:         {kind: InitializeFrom, arg0: inst+10, arg1: inst+16, type: type1}
 // CHECK:STDOUT:     inst+18:         {kind: TupleAccess, arg0: inst+7, arg1: element1, type: type1}
 // CHECK:STDOUT:     inst+19:         {kind: InitializeFrom, arg0: inst+11, arg1: inst+18, type: type1}
 // CHECK:STDOUT:     inst+20:         {kind: TupleAccess, arg0: inst+7, arg1: element2, type: type3}
 // CHECK:STDOUT:     inst+21:         {kind: InitializeFrom, arg0: inst+13, arg1: inst+20, type: type3}
-// CHECK:STDOUT:     inst+22:         {kind: TupleInit, arg0: block7, arg1: inst+7, type: type4}
+// CHECK:STDOUT:     inst+22:         {kind: TupleInit, arg0: block8, arg1: inst+7, type: type4}
 // CHECK:STDOUT:     inst+23:         {kind: Converted, arg0: inst+15, arg1: inst+22, type: type4}
 // CHECK:STDOUT:     inst+24:         {kind: ReturnExpr, arg0: inst+23}
 // CHECK:STDOUT:   constant_values:
@@ -87,19 +87,20 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+9
-// CHECK:STDOUT:     block2:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     inits:           {}
 // CHECK:STDOUT:     block3:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               instIntType
 // CHECK:STDOUT:       1:               instIntType
 // CHECK:STDOUT:       2:               instFloatType
-// CHECK:STDOUT:     block4:
+// CHECK:STDOUT:     block5:
 // CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:       1:               inst+2
 // CHECK:STDOUT:       2:               inst+4
 // CHECK:STDOUT:       3:               inst+6
 // CHECK:STDOUT:       4:               inst+7
-// CHECK:STDOUT:     block5:
+// CHECK:STDOUT:     block6:
 // CHECK:STDOUT:       0:               inst+10
 // CHECK:STDOUT:       1:               inst+11
 // CHECK:STDOUT:       2:               inst+13
@@ -113,15 +114,15 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:       10:              inst+22
 // CHECK:STDOUT:       11:              inst+23
 // CHECK:STDOUT:       12:              inst+24
-// CHECK:STDOUT:     block6:
+// CHECK:STDOUT:     block7:
 // CHECK:STDOUT:       0:               inst+10
 // CHECK:STDOUT:       1:               inst+11
 // CHECK:STDOUT:       2:               inst+13
-// CHECK:STDOUT:     block7:
+// CHECK:STDOUT:     block8:
 // CHECK:STDOUT:       0:               inst+17
 // CHECK:STDOUT:       1:               inst+19
 // CHECK:STDOUT:       2:               inst+21
-// CHECK:STDOUT:     block8:
+// CHECK:STDOUT:     block9:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+9
 // CHECK:STDOUT: ...

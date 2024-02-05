@@ -21,6 +21,11 @@ auto InstBlockStack::Push(SemIR::InstBlockId id) -> void {
   ++size_;
 }
 
+auto InstBlockStack::PushInit() -> void {
+  Push(SemIR::InstBlockId::Inits);
+  stack_[size_ - 1].content = init_block_;
+}
+
 auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   CARBON_CHECK(size() > depth) << "no such block";
   int index = size() - depth - 1;
@@ -50,6 +55,14 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
     return SemIR::InstBlockId::Empty;
   }
   return back.id;
+}
+
+auto InstBlockStack::PopInit() -> void {
+  CARBON_CHECK(stack_[size_ - 1].id == SemIR::InstBlockId::Inits)
+      << "Trying to pop Inits block from " << name_
+      << " but a different block is present!";
+  init_block_ = stack_[size_ - 1].content;
+  PopAndDiscard();
 }
 
 auto InstBlockStack::PopAndDiscard() -> void {

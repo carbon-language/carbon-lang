@@ -20,7 +20,6 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .Six = %Six} [template]
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   assign %x.var, i32
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -28,5 +27,11 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   assign file.%x.var, i32
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

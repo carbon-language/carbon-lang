@@ -105,10 +105,15 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, %.2 [template = %.2]
-// CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, %.3 [template = %.3]
-// CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, %.4 [template = %.4]
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, %import_ref.4
-// CHECK:STDOUT:   assign %e.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.2 [template = file.%.2]
+// CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%.3 [template = file.%.3]
+// CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%.4 [template = file.%.4]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4
+// CHECK:STDOUT:   assign file.%e.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

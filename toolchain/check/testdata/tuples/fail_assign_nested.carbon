@@ -39,6 +39,10 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_31.2: type = converted %.loc10_31.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %x.var: ref ((i32, i32), (i32, i32)) = var x
 // CHECK:STDOUT:   %x: ref ((i32, i32), (i32, i32)) = bind_name x, %x.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_37: i32 = int_literal 1 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc10_40: i32 = int_literal 2 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_43: i32 = int_literal 3 [template = constants.%.10]
@@ -48,6 +52,7 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %.loc10_54: i32 = int_literal 6 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc10_55: (i32, i32, i32) = tuple_literal (%.loc10_48, %.loc10_51, %.loc10_54)
 // CHECK:STDOUT:   %.loc10_56: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_44, %.loc10_55)
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
