@@ -15,7 +15,7 @@ auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
     } else if constexpr (Kind == Id::Kind::Invalid) {
       CARBON_FATAL() << "Should not be in node stack";
     } else {
-      output << id.As<Kind>();
+      output << " -> " << id.As<Kind>();
     }
   };
 
