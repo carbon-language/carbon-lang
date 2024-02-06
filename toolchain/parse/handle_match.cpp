@@ -128,6 +128,7 @@ auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
     context.ReturnErrorOnState();
     context.PushState(State::MatchCaseLoopAfterDefault);
     context.SkipPastLikelyEnd(*context.position());
+    return;
   }
 }
 
@@ -155,17 +156,42 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::If)) {
     context.PushState(State::MatchCaseGuardFinish);
     context.AddLeafNode(NodeKind::MatchCaseGuardIntroducer, context.Consume());
-    context.AddLeafNode(NodeKind::MatchCaseGuardStart,
-                        context.ConsumeChecked(Lex::TokenKind::OpenParen));
-    context.PushState(State::Expr);
+    auto open_paren = context.ConsumeIf(Lex::TokenKind::OpenParen);
+    if (open_paren) {
+      context.AddLeafNode(NodeKind::MatchCaseGuardStart, *open_paren);
+      context.PushState(State::Expr);
+    } else {
+      context.AddLeafNode(NodeKind::MatchCaseGuardStart, *context.position(),
+                          true);
+      context.AddLeafNode(NodeKind::InvalidParse, *context.position(), true);
+      state = context.PopState();
+      context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
+                      state.subtree_start, true);
+      state = context.PopState();
+      context.AddNode(NodeKind::MatchCaseStart, *context.position(),
+                      state.subtree_start, true);
+      context.AddNode(NodeKind::MatchCase, *context.position(),
+                      state.subtree_start, true);
+      context.SkipPastLikelyEnd(*context.position());
+      return;
+    }
   }
 }
 
 auto HandleMatchCaseGuardFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::MatchCaseGuard,
-                  context.ConsumeChecked(Lex::TokenKind::CloseParen),
-                  state.subtree_start, state.has_error);
+
+  auto close_paren = context.ConsumeIf(Lex::TokenKind::CloseParen);
+  if (close_paren) {
+    context.AddNode(NodeKind::MatchCaseGuard, *close_paren, state.subtree_start,
+                    state.has_error);
+  } else {
+    context.AddNode(NodeKind::MatchCaseGuard, *context.position(),
+                    state.subtree_start, true);
+    context.ReturnErrorOnState();
+    context.SkipPastLikelyEnd(*context.position());
+    return;
+  }
 }
 
 auto HandleMatchCaseStart(Context& context) -> void {
