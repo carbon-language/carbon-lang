@@ -85,7 +85,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   // TODO: For a qualified `var` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Var,
-                             context.current_scope_id());
+                             context.scope_stack().PeekNameScopeId());
   LimitModifiersOnDecl(context, KeywordModifierSet::Access,
                        Lex::TokenKind::Var);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;

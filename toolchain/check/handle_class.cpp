@@ -144,7 +144,7 @@ auto HandleClassDefinitionStart(Context& context,
   }
 
   // Enter the class scope.
-  context.PushScope(class_decl_id, class_info.scope_id);
+  context.scope_stack().Push(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
   context.AddNameToLookup(SemIR::NameId::SelfType,
@@ -329,7 +329,7 @@ auto HandleClassDefinition(Context& context,
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
-  context.PopScope();
+  context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
   // The class type is now fully defined.

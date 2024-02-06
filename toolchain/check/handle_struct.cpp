@@ -10,7 +10,7 @@ namespace Carbon::Check {
 auto HandleStructLiteralOrStructTypeLiteralStart(
     Context& context, Parse::StructLiteralOrStructTypeLiteralStartId parse_node)
     -> bool {
-  context.PushScope();
+  context.scope_stack().Push();
   context.node_stack().Push(parse_node);
   // At this point we aren't sure whether this will be a value or type literal,
   // so we push onto args irrespective. It just won't be used for a type
@@ -94,7 +94,7 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
@@ -117,7 +117,7 @@ auto HandleStructTypeLiteral(Context& context,
   auto refs_id = context.ParamOrArgEnd(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();

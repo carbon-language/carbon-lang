@@ -125,7 +125,7 @@ auto HandleInterfaceDefinitionStart(
   }
 
   // Enter the interface scope.
-  context.PushScope(interface_decl_id, interface_info.scope_id);
+  context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
 
   // TODO: Introduce `Self`.
 
@@ -152,7 +152,7 @@ auto HandleInterfaceDefinition(Context& context,
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
   context.inst_block_stack().Pop();
-  context.PopScope();
+  context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
   // The interface type is now fully defined.

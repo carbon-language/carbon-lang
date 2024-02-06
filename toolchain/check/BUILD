@@ -29,6 +29,25 @@ cc_library(
 )
 
 cc_library(
+    name = "scope_stack",
+    srcs = ["scope_stack.cpp"],
+    hdrs = [
+        "lexical_lookup.h",
+        "scope_index.h",
+        "scope_stack.h",
+    ],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/base:index_base",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "context",
     srcs = [
         "context.cpp",
@@ -46,17 +65,16 @@ cc_library(
         "decl_state.h",
         "eval.h",
         "inst_block_stack.h",
-        "lexical_lookup.h",
         "modifiers.h",
         "pending_block.h",
         "return.h",
-        "scope_index.h",
     ],
     deps = [
         ":node_stack",
         "//common:check",
         "//common:vlog",
         "//toolchain/base:index_base",
+        "//toolchain/check:scope_stack",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",

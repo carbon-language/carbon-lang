@@ -20,7 +20,7 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
 
   // Create a scope for implicit parameters. We may not use it, but it's simpler
   // to create it unconditionally than to track whether it exists.
-  context.PushScope();
+  context.scope_stack().Push();
   return true;
 }
 
@@ -66,7 +66,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId /*parse_node*/)
 
 auto HandleImplDecl(Context& context, Parse::ImplDeclId parse_node) -> bool {
   BuildImplDecl(context, parse_node);
-  context.PopScope();
+  context.scope_stack().Pop();
   return true;
 }
 
@@ -77,14 +77,14 @@ auto HandleImplDefinitionStart(Context& context,
   auto enclosing_scope_id = SemIR::NameScopeId::Invalid;
   auto scope_id = context.name_scopes().Add(
       impl_decl_id, SemIR::NameId::Invalid, enclosing_scope_id);
-  context.PushScope(impl_decl_id, scope_id);
+  context.scope_stack().Push(impl_decl_id, scope_id);
   return true;
 }
 
 auto HandleImplDefinition(Context& context,
                           Parse::ImplDefinitionId /*parse_node*/) -> bool {
-  context.PopScope();
-  context.PopScope();
+  context.scope_stack().Pop();
+  context.scope_stack().Pop();
   return true;
 }
 
