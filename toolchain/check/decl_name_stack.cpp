@@ -47,6 +47,15 @@ auto DeclNameStack::FinishName() -> NameContext {
   return result;
 }
 
+auto DeclNameStack::FinishImplName() -> NameContext {
+  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Empty)
+      << "Impl has a name";
+
+  NameContext result = decl_name_stack_.back();
+  decl_name_stack_.back().state = NameContext::State::Finished;
+  return result;
+}
+
 auto DeclNameStack::PopScope() -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before PopScope";

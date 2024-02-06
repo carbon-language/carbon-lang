@@ -356,7 +356,7 @@ class NodeStack {
   // that the parse node should not appear in the node stack at all.
   using Id = IdUnion<SemIR::InstId, SemIR::InstBlockId, SemIR::FunctionId,
                      SemIR::ClassId, SemIR::InterfaceId, SemIR::ImplId,
-                     SemIR::NameId, SemIR::NameScopeId, SemIR::TypeId>;
+                     SemIR::NameId, SemIR::TypeId>;
 
   // An entry in stack_.
   struct Entry {
@@ -452,8 +452,6 @@ class NodeStack {
           return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
-        case Parse::NodeKind::ImplIntroducer:
-          return Id::KindFor<SemIR::NameScopeId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::ClassIntroducer:
         case Parse::NodeKind::CodeBlockStart:
@@ -461,6 +459,7 @@ class NodeStack {
         case Parse::NodeKind::FunctionIntroducer:
         case Parse::NodeKind::IfStatementElse:
         case Parse::NodeKind::ImplicitParamListStart:
+        case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetIntroducer:
         case Parse::NodeKind::QualifiedName:

@@ -91,11 +91,15 @@ class DeclNameStack {
       Error,
     };
 
+    // Returns whether the name resolved to an existing entity.
+    auto is_resolved() -> bool {
+      return state != State::Unresolved && state != State::Empty;
+    }
+
     // Returns the name_id for a new instruction. This is invalid when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
-      return state == State::Unresolved ? unresolved_name_id
-                                        : SemIR::NameId::Invalid;
+      return !is_resolved() ? unresolved_name_id : SemIR::NameId::Invalid;
     }
 
     // Returns the enclosing_scope_id for a new instruction. This is invalid
@@ -103,8 +107,7 @@ class DeclNameStack {
     // the NameContext, which refers to the scope of the introducer rather than
     // the scope of the name.
     auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return state == State::Unresolved ? target_scope_id
-                                        : SemIR::NameScopeId::Invalid;
+      return !is_resolved() ? target_scope_id : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will
@@ -141,12 +144,26 @@ class DeclNameStack {
   // state, `FinishName` and `PopScope` must be called, in that order.
   auto PushScopeAndStartName() -> void;
 
+  // Peeks the current target scope of the name on top of the stack. Note that
+  // if we're still processing the name qualifiers, this can change before the
+  // name is completed.
+  auto PeekTargetScope() -> SemIR::NameScopeId {
+    return decl_name_stack_.back().target_scope_id;
+  }
+
   // Finishes the current declaration name processing, returning the final
   // context for adding the name to lookup.
   //
   // This also pops the final name instruction from the instruction stack,
   // which will be applied to the declaration name if appropriate.
   auto FinishName() -> NameContext;
+
+  // Finishes the current declaration name processing for an `impl`, returning
+  // the final context for adding the name to lookup.
+  //
+  // `impl`s don't actually have names, but want the rest of the name processing
+  // logic such as building parameter scopes, so are a special case.
+  auto FinishImplName() -> NameContext;
 
   // Pops the declaration name from the declaration name stack, and pops all
   // scopes that were entered as part of handling the declaration name. These
