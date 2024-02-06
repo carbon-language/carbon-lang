@@ -12,8 +12,8 @@ impl i32 as Interface {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ImplAs', text: 'as'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},

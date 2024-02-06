@@ -40,6 +40,7 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
   } else if (constant_id.is_template()) {
     return Phase::Template;
   } else {
+    CARBON_CHECK(constant_id.is_symbolic());
     return Phase::Symbolic;
   }
 }
