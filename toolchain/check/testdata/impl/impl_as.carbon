@@ -35,8 +35,15 @@ class C {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: impl @impl: C as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+6>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }

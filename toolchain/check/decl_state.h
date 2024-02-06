@@ -36,6 +36,7 @@ enum class KeywordModifierSet : uint32_t {
   Access = Private | Protected,
   Class = Abstract | Base,
   Method = Abstract | Impl | Virtual,
+  ImplDecl = Extend | Final,
   Interface = Default | Final,
   None = 0,
 

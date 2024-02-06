@@ -89,8 +89,7 @@ class InstNamer {
     for (auto [i, class_info] : llvm::enumerate(sem_ir.classes().array_ref())) {
       auto class_id = ClassId(i);
       auto class_scope = GetScopeFor(class_id);
-      // TODO: Provide a location for the class for use as a
-      // disambiguator.
+      // TODO: Provide a location for the class for use as a disambiguator.
       auto class_loc = Parse::NodeId::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
@@ -104,8 +103,7 @@ class InstNamer {
          llvm::enumerate(sem_ir.interfaces().array_ref())) {
       auto interface_id = InterfaceId(i);
       auto interface_scope = GetScopeFor(interface_id);
-      // TODO: Provide a location for the interface for use as a
-      // disambiguator.
+      // TODO: Provide a location for the interface for use as a disambiguator.
       auto interface_loc = Parse::NodeId::Invalid;
       GetScopeInfo(interface_scope).name = globals.AllocateName(
           *this, interface_loc,
@@ -113,6 +111,19 @@ class InstNamer {
       AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                     interface_loc);
       CollectNamesInBlock(interface_scope, interface_info.body_block_id);
+    }
+
+    // Build each impl scope.
+    for (auto [i, impl_info] : llvm::enumerate(sem_ir.impls().array_ref())) {
+      auto impl_id = ImplId(i);
+      auto impl_scope = GetScopeFor(impl_id);
+      // TODO: Provide a location for the impl for use as a disambiguator.
+      auto impl_loc = Parse::NodeId::Invalid;
+      // TODO: Invent a name based on the self and constraint types.
+      GetScopeInfo(impl_scope).name =
+          globals.AllocateName(*this, impl_loc, "impl");
+      AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
+      CollectNamesInBlock(impl_scope, impl_info.body_block_id);
     }
   }
 
@@ -128,8 +139,11 @@ class InstNamer {
         index += sem_ir_.classes().size();
         if constexpr (!std::same_as<InterfaceId, IdT>) {
           index += sem_ir_.interfaces().size();
-          static_assert(std::same_as<NumberOfScopesTag, IdT>,
-                        "Unknown ID kind for scope");
+          if constexpr (!std::same_as<ImplId, IdT>) {
+            index += sem_ir_.impls().size();
+            static_assert(std::same_as<NumberOfScopesTag, IdT>,
+                          "Unknown ID kind for scope");
+          }
         }
       }
     }
@@ -560,6 +574,10 @@ class Formatter {
       FormatInterface(InterfaceId(i));
     }
 
+    for (int i : llvm::seq(sem_ir_.impls().size())) {
+      FormatImpl(ImplId(i));
+    }
+
     for (int i : llvm::seq(sem_ir_.classes().size())) {
       FormatClass(ClassId(i));
     }
@@ -615,6 +633,30 @@ class Formatter {
       FormatCodeBlock(interface_info.body_block_id);
       out_ << "\n!members:";
       FormatNameScope(interface_info.scope_id, "", "\n  ");
+      out_ << "\n}\n";
+    } else {
+      out_ << ";\n";
+    }
+  }
+
+  auto FormatImpl(ImplId id) -> void {
+    const Impl& impl_info = sem_ir_.impls().Get(id);
+
+    out_ << "\nimpl ";
+    FormatImplName(id);
+    out_ << ": ";
+    // TODO: Include the deduced parameter list if present.
+    FormatType(impl_info.self_id);
+    out_ << " as ";
+    FormatType(impl_info.constraint_id);
+
+    llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
+
+    if (impl_info.scope_id.is_valid()) {
+      out_ << " {\n";
+      FormatCodeBlock(impl_info.body_block_id);
+      out_ << "\n!members:";
+      FormatNameScope(impl_info.scope_id, "", "\n  ");
       out_ << "\n}\n";
     } else {
       out_ << ";\n";
@@ -1004,6 +1046,8 @@ class Formatter {
 
   auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
 
+  auto FormatArg(ImplId id) -> void { FormatImplName(id); }
+
   auto FormatArg(ImportIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntId id) -> void {
@@ -1086,6 +1130,8 @@ class Formatter {
   auto FormatInterfaceName(InterfaceId id) -> void {
     out_ << inst_namer_.GetNameFor(id);
   }
+
+  auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
 
   auto FormatType(TypeId id) -> void {
     if (!id.is_valid()) {

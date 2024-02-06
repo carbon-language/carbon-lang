@@ -163,6 +163,11 @@ CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(InterfaceRedefinition)
 
+// Impl checking.
+CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
+CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
+CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
+
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
 CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)

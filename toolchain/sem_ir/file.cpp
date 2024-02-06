@@ -228,6 +228,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Deref::Kind:
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
+    case ImplDecl::Kind:
     case Import::Kind:
     case ImportRefUnused::Kind:
     case InitializeFrom::Kind:
@@ -440,6 +441,7 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case Deref::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
+      case ImplDecl::Kind:
       case Import::Kind:
       case ImportRefUnused::Kind:
       case InitializeFrom::Kind:
@@ -496,6 +498,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassDecl::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
+      case ImplDecl::Kind:
       case Import::Kind:
       case ImportRefUnused::Kind:
       case InterfaceDecl::Kind:

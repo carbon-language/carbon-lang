@@ -4,30 +4,31 @@
 //
 // AUTOUPDATE
 
-interface Empty {
-}
+interface I {}
 
-impl i32 as Empty {
-}
+// CHECK:STDERR: fail_extend_impl_scope.carbon:[[@LINE+3]]:1: ERROR: `extend impl` can only be used in a class.
+// CHECK:STDERR: extend impl i32 as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+extend impl i32 as I {}
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- fail_extend_impl_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
+// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
 // CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as Empty {
+// CHECK:STDOUT: impl @impl: i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }

@@ -354,9 +354,9 @@ class NodeStack {
   // that the parse node has no associated ID, in which case the *SoloParseNode
   // functions should be used to push and pop it. Id::Kind::Invalid indicates
   // that the parse node should not appear in the node stack at all.
-  using Id =
-      IdUnion<SemIR::InstId, SemIR::InstBlockId, SemIR::FunctionId,
-              SemIR::ClassId, SemIR::InterfaceId, SemIR::NameId, SemIR::TypeId>;
+  using Id = IdUnion<SemIR::InstId, SemIR::InstBlockId, SemIR::FunctionId,
+                     SemIR::ClassId, SemIR::InterfaceId, SemIR::ImplId,
+                     SemIR::NameId, SemIR::NameScopeId, SemIR::TypeId>;
 
   // An entry in stack_.
   struct Entry {
@@ -397,6 +397,8 @@ class NodeStack {
                           Id::KindFor<SemIR::InstId>());
     set_id_if_category_is(Parse::NodeCategory::MemberName,
                           Id::KindFor<SemIR::NameId>());
+    set_id_if_category_is(Parse::NodeCategory::ImplAs,
+                          Id::KindFor<SemIR::TypeId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
@@ -430,7 +432,6 @@ class NodeStack {
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructFieldValue:
         case Parse::NodeKind::StructFieldType:
-        case Parse::NodeKind::TypeImplAs:
         case Parse::NodeKind::VariableInitializer:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
@@ -447,8 +448,12 @@ class NodeStack {
           return Id::KindFor<SemIR::ClassId>();
         case Parse::NodeKind::InterfaceDefinitionStart:
           return Id::KindFor<SemIR::InterfaceId>();
+        case Parse::NodeKind::ImplDefinitionStart:
+          return Id::KindFor<SemIR::ImplId>();
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
+        case Parse::NodeKind::ImplIntroducer:
+          return Id::KindFor<SemIR::NameScopeId>();
         case Parse::NodeKind::ArrayExprSemi:
         case Parse::NodeKind::ClassIntroducer:
         case Parse::NodeKind::CodeBlockStart:
@@ -456,7 +461,6 @@ class NodeStack {
         case Parse::NodeKind::FunctionIntroducer:
         case Parse::NodeKind::IfStatementElse:
         case Parse::NodeKind::ImplicitParamListStart:
-        case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetIntroducer:
         case Parse::NodeKind::QualifiedName:

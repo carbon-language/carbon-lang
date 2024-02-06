@@ -390,6 +390,17 @@ struct FunctionDecl {
   FunctionId function_id;
 };
 
+struct ImplDecl {
+  static constexpr auto Kind =
+      InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");
+
+  // No type: an impl declaration is not a value.
+  ImplId impl_id;
+  // The declaration block, containing the impl's deduced parameters and its
+  // self type and interface type.
+  InstBlockId decl_block_id;
+};
+
 // An import corresponds to some number of IRs. The range of imported IRs is
 // inclusive of last_import_ir_id, and will always be non-empty. If
 // there was an import error, first_import_ir_id will reference a
