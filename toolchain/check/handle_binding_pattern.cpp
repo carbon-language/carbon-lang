@@ -26,7 +26,8 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(
-        {.name_id = name_id, .enclosing_scope_id = context.current_scope_id()});
+        {.name_id = name_id,
+         .enclosing_scope_id = context.scope_stack().PeekNameScopeId()});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       return {name_node,

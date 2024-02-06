@@ -17,14 +17,15 @@ auto HandleImplIntroducer(Context& context, Parse::ImplIntroducerId parse_node)
   context.inst_block_stack().Push();
 
   // Push the bracketing node.
-  context.node_stack().Push(parse_node, context.current_scope_id());
+  context.node_stack().Push(parse_node,
+                            context.scope_stack().PeekNameScopeId());
 
   // Optional modifiers follow.
   context.decl_state_stack().Push(DeclState::Impl);
 
   // Create a scope for implicit parameters. We may not use it, but it's simpler
   // to create it unconditionally than to track whether it exists.
-  context.PushScope();
+  context.scope_stack().Push();
   return true;
 }
 
@@ -181,7 +182,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
 
 auto HandleImplDecl(Context& context, Parse::ImplDeclId parse_node) -> bool {
   BuildImplDecl(context, parse_node);
-  context.PopScope();
+  context.scope_stack().Pop();
   return true;
 }
 
@@ -210,7 +211,7 @@ auto HandleImplDefinitionStart(Context& context,
         impl_decl_id, SemIR::NameId::Invalid, enclosing_scope_id);
   }
 
-  context.PushScope(impl_decl_id, impl_info.scope_id);
+  context.scope_stack().Push(impl_decl_id, impl_info.scope_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, impl_id);
@@ -234,8 +235,8 @@ auto HandleImplDefinition(Context& context,
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
   context.inst_block_stack().Pop();
   // Pop the impl body scope and the parameter scope.
-  context.PopScope();
-  context.PopScope();
+  context.scope_stack().Pop();
+  context.scope_stack().Pop();
 
   // The impl is now fully defined.
   context.impls().Get(impl_id).defined = true;

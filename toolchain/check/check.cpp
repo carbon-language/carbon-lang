@@ -175,13 +175,13 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     if (error_in_import) {
       context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
     }
-    context.PushScope(package_inst_id, SemIR::NameScopeId::Package,
-                      error_in_import);
+    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package,
+                               error_in_import);
   } else {
     // Push the scope; there are no names to add.
-    context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
+    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
   }
-  CARBON_CHECK(context.current_scope_index() == ScopeIndex::Package);
+  CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
     if (!package_id.is_valid()) {
@@ -255,7 +255,7 @@ static auto CheckParseTree(
 
   // Pop information for the file-level scope.
   sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
-  context.PopScope();
+  context.scope_stack().Pop();
   context.FinalizeExports();
 
   context.VerifyOnFinish();
