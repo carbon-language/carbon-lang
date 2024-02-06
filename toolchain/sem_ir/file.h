@@ -172,7 +172,7 @@ struct Interface : public Printable<Interface> {
   InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the interface definition.
-  bool defined = true;
+  bool defined = false;
 };
 
 // An implementation of a constraint.
@@ -205,7 +205,7 @@ struct Impl : public Printable<Impl> {
   InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the impl definition.
-  bool defined = true;
+  bool defined = false;
 };
 
 // Provides semantic analysis on a Parse::Tree.

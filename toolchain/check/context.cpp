@@ -167,6 +167,22 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
   }
 }
 
+auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
+                                     DiagnosticBuilder& builder) -> void {
+  CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                    "Interface was forward declared here.");
+  CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+                    "Interface is currently being defined.");
+  const auto& interface_info = interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
+  if (interface_info.definition_id.is_valid()) {
+    builder.Note(interface_info.definition_id,
+                 InterfaceUndefinedWithinDefinition);
+  } else {
+    builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
+  }
+}
+
 auto Context::AddPackageImports(Parse::NodeId import_node,
                                 IdentifierId package_id,
                                 llvm::ArrayRef<const SemIR::File*> sem_irs,

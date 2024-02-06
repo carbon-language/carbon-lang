@@ -110,9 +110,16 @@ static auto ExtendImpl(Context& context, Parse::AnyImplDeclId parse_node,
   }
 
   auto& interface = context.interfaces().Get(interface_type->interface_id);
-  if (!interface.scope_id.is_valid()) {
-    // TODO: Should this be valid?
-    context.TODO(parse_node, "extending interface without definition");
+  if (!interface.is_defined()) {
+    CARBON_DIAGNOSTIC(
+        ExtendUndefinedInterface, Error,
+        "`extend impl` requires a definition for interface `{0}`.",
+        std::string);
+    auto diag =
+        context.emitter().Build(parse_node, ExtendUndefinedInterface,
+                                context.sem_ir().StringifyType(constraint_id));
+    context.NoteUndefinedInterface(interface_type->interface_id, diag);
+    diag.Emit();
     enclosing_scope.has_error = true;
     return;
   }
