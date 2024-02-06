@@ -4,19 +4,19 @@
 //
 // AUTOUPDATE
 
-interface I;
-
-class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+6]]:3: ERROR: `extend impl` requires a definition for interface `I`.
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: Interface was forward declared here.
-  // CHECK:STDERR: interface I;
-  // CHECK:STDERR: ^~~~~~~~~~~~
-  extend impl as I;
+interface I {
+  class C {
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: ERROR: `extend impl` requires a definition for interface `I`.
+    // CHECK:STDERR:     extend impl as I;
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: Interface is currently being defined.
+    // CHECK:STDERR: interface I {
+    // CHECK:STDERR: ^~~~~~~~~~~~~
+    extend impl as I;
+  }
 }
 
-// CHECK:STDOUT: --- fail_extend_undefined_interface.carbon
+// CHECK:STDOUT: --- fail_extend_partially_defined_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -25,12 +25,16 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I;
+// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as I;
 // CHECK:STDOUT:

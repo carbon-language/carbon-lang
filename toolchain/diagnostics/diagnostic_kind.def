@@ -162,9 +162,12 @@ CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(InterfaceRedefinition)
+CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
+CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 
