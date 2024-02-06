@@ -181,8 +181,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     // Push the scope; there are no names to add.
     context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
   }
-  CARBON_CHECK(context.scope_stack().current_scope_index() ==
-               ScopeIndex::Package);
+  CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
     if (!package_id.is_valid()) {

@@ -56,13 +56,13 @@ auto ScopeStack::Pop() -> void {
   }
 }
 
-auto ScopeStack::PopToScope(ScopeIndex index) -> void {
-  while (current_scope_index() > index) {
+auto ScopeStack::PopTo(ScopeIndex index) -> void {
+  while (PeekIndex() > index) {
     Pop();
   }
-  CARBON_CHECK(current_scope_index() == index)
+  CARBON_CHECK(PeekIndex() == index)
       << "Scope index " << index << " does not enclose the current scope "
-      << current_scope_index();
+      << PeekIndex();
 }
 
 auto ScopeStack::LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId {
@@ -72,7 +72,7 @@ auto ScopeStack::LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId {
   }
 
   auto result = lexical_results.back();
-  if (result.scope_index != current_scope_index()) {
+  if (result.scope_index != PeekIndex()) {
     return SemIR::InstId::Invalid;
   }
 
@@ -108,7 +108,7 @@ auto ScopeStack::LookupInEnclosingScopes(SemIR::NameId name_id)
 
 auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
     -> SemIR::InstId {
-  if (!current_scope().names.insert(name_id).second) {
+  if (!scope_stack_.back().names.insert(name_id).second) {
     auto existing = lexical_lookup_.Get(name_id).back().inst_id;
     CARBON_CHECK(existing.is_valid())
         << "Name in scope but not in lexical lookups";
@@ -119,10 +119,9 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
   // in this scope or a scope nested within it.
   auto& lexical_results = lexical_lookup_.Get(name_id);
   CARBON_CHECK(lexical_results.empty() ||
-               lexical_results.back().scope_index < current_scope_index())
+               lexical_results.back().scope_index < PeekIndex())
       << "Failed to clean up after scope nested within the current scope";
-  lexical_results.push_back(
-      {.inst_id = target_id, .scope_index = current_scope_index()});
+  lexical_results.push_back({.inst_id = target_id, .scope_index = PeekIndex()});
   return SemIR::InstId::Invalid;
 }
 
@@ -135,10 +134,10 @@ auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
   }
 
   returned_var = inst_id;
-  CARBON_CHECK(!current_scope().has_returned_var)
+  CARBON_CHECK(!scope_stack_.back().has_returned_var)
       << "Scope has returned var but none is set";
   if (inst_id.is_valid()) {
-    current_scope().has_returned_var = true;
+    scope_stack_.back().has_returned_var = true;
   }
   return SemIR::InstId::Invalid;
 }

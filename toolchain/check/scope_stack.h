@@ -67,7 +67,33 @@ class ScopeStack {
   }
 
   // Pops scopes until we return to the specified scope index.
-  auto PopToScope(ScopeIndex index) -> void;
+  auto PopTo(ScopeIndex index) -> void;
+
+  // Returns the scope index associated with the current scope.
+  auto PeekIndex() const -> ScopeIndex { return Peek().index; }
+
+  // Returns the name scope associated with the current lexical scope, if any.
+  auto PeekNameScopeId() const -> SemIR::NameScopeId { return Peek().scope_id; }
+
+  // Returns the instruction associated with the current scope, or Invalid if
+  // there is no such instruction, such as for a block scope.
+  auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
+
+  // Returns the current scope, if it is of the specified kind. Otherwise,
+  // returns nullopt.
+  template <typename InstT>
+  auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
+    auto inst_id = PeekInstId();
+    if (!inst_id.is_valid()) {
+      return std::nullopt;
+    }
+    return sem_ir.insts().TryGetAs<InstT>(inst_id);
+  }
+
+  // If there is no `returned var` in scope, sets the given instruction to be
+  // the current `returned var` and returns an invalid instruction ID. If there
+  // is already a `returned var`, returns it instead.
+  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope. Returns the existing
   // lookup result, if any.
@@ -85,38 +111,6 @@ class ScopeStack {
   // and returns Invalid.
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
       -> SemIR::InstId;
-
-  // Returns the scope index associated with the current scope.
-  auto current_scope_index() const -> ScopeIndex {
-    return current_scope().index;
-  }
-
-  // Returns the name scope associated with the current lexical scope, if any.
-  auto current_scope_id() const -> SemIR::NameScopeId {
-    return current_scope().scope_id;
-  }
-
-  // Returns the instruction associated with the current scope, or Invalid if
-  // there is no such instruction, such as for a block scope.
-  auto current_scope_inst_id() const -> SemIR::InstId {
-    return current_scope().scope_inst_id;
-  }
-
-  // Returns the current scope, if it is of the specified kind. Otherwise,
-  // returns nullopt.
-  template <typename InstT>
-  auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
-    auto inst_id = current_scope_inst_id();
-    if (!inst_id.is_valid()) {
-      return std::nullopt;
-    }
-    return sem_ir.insts().TryGetAs<InstT>(inst_id);
-  }
-
-  // If there is no `returned var` in scope, sets the given instruction to be
-  // the current `returned var` and returns an invalid instruction ID. If there
-  // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
@@ -160,10 +154,7 @@ class ScopeStack {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
-  auto current_scope() const -> const ScopeStackEntry& {
-    return scope_stack_.back();
-  }
+  auto Peek() const -> const ScopeStackEntry& { return scope_stack_.back(); }
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;

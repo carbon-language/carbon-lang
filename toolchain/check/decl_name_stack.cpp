@@ -11,8 +11,8 @@ namespace Carbon::Check {
 
 auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
   return NameContext{
-      .enclosing_scope = context_->scope_stack().current_scope_index(),
-      .target_scope_id = context_->scope_stack().current_scope_id()};
+      .enclosing_scope = context_->scope_stack().PeekIndex(),
+      .target_scope_id = context_->scope_stack().PeekNameScopeId()};
 }
 
 auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
@@ -50,7 +50,7 @@ auto DeclNameStack::FinishName() -> NameContext {
 auto DeclNameStack::PopScope() -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before PopScope";
-  context_->scope_stack().PopToScope(decl_name_stack_.back().enclosing_scope);
+  context_->scope_stack().PopTo(decl_name_stack_.back().enclosing_scope);
   decl_name_stack_.pop_back();
 }
 
