@@ -877,7 +877,7 @@ struct ImplSignature {
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ImplForallId> forall;
-  NodeIdOneOf<DefaultSelfImplAs, TypeImplAs> as;
+  AnyImplAsId as;
   AnyExprId interface;
 };
 

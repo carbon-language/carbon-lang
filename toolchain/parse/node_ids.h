@@ -64,6 +64,7 @@ struct NodeIdInCategory : public NodeId {
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
+using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
 using AnyMemberNameId = NodeIdInCategory<NodeCategory::MemberName>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
