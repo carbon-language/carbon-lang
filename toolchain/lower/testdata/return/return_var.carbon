@@ -21,7 +21,6 @@ fn Make() -> C {
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, ptr }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_30.2.data = getelementptr inbounds { i32, ptr }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 42, ptr %.loc14_30.2.data, align 4
 // CHECK:STDOUT:   %.loc14_30.4.next = getelementptr inbounds { i32, ptr }, ptr %return, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %return, ptr %.loc14_30.4.next, align 8
 // CHECK:STDOUT:   ret void

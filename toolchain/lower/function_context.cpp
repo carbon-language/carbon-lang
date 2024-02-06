@@ -46,17 +46,25 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 }
 
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
-  for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
-    auto inst = sem_ir().insts().Get(inst_id);
-    CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
-    builder_.getInserter().SetCurrentInstId(inst_id);
-    switch (inst.kind()) {
+  for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
+    // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
+    if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+      continue;
+    }
+    LowerInst(inst_id);
+  }
+}
+
+auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
+  auto inst = sem_ir().insts().Get(inst_id);
+  CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
+  builder_.getInserter().SetCurrentInstId(inst_id);
+  switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
     Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
-    }
   }
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
 }
@@ -90,7 +98,13 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
   switch (SemIR::GetInitRepr(sem_ir(), type_id).kind) {
     case SemIR::InitRepr::None:
+      break;
     case SemIR::InitRepr::InPlace:
+      if (sem_ir().constant_values().Get(source_id).is_constant()) {
+        // When initializing from a constant, emission of the source doesn't
+        // initialize the destination. Copy the constant value instead.
+        CopyValue(type_id, source_id, dest_id);
+      }
       break;
     case SemIR::InitRepr::ByCopy:
       CopyValue(type_id, source_id, dest_id);
@@ -108,22 +122,26 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
     case SemIR::ValueRepr::Copy:
       builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
-    case SemIR::ValueRepr::Pointer: {
-      const auto& layout = llvm_module().getDataLayout();
-      auto* type = GetType(type_id);
-      // TODO: Compute known alignment of the source and destination, which may
-      // be greater than the alignment computed by LLVM.
-      auto align = layout.getABITypeAlign(type);
-
-      // TODO: Attach !tbaa.struct metadata indicating which portions of the
-      // type we actually need to copy and which are padding.
-      builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id),
-                             align, layout.getTypeAllocSize(type));
+    case SemIR::ValueRepr::Pointer:
+      CopyObject(type_id, source_id, dest_id);
       break;
-    }
     case SemIR::ValueRepr::Custom:
       CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
   }
+}
+
+auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+                                 SemIR::InstId dest_id) -> void {
+  const auto& layout = llvm_module().getDataLayout();
+  auto* type = GetType(type_id);
+  // TODO: Compute known alignment of the source and destination, which may
+  // be greater than the alignment computed by LLVM.
+  auto align = layout.getABITypeAlign(type);
+
+  // TODO: Attach !tbaa.struct metadata indicating which portions of the
+  // type we actually need to copy and which are padding.
+  builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id),
+                          align, layout.getTypeAllocSize(type));
 }
 
 auto FunctionContext::Inserter::InsertHelper(

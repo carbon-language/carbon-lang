@@ -53,9 +53,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %.loc9_27.2.a, align 4
 // CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %.loc9_27.4.b, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

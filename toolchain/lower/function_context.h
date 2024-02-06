@@ -33,6 +33,9 @@ class FunctionContext {
   // Builds LLVM IR for the sequence of instructions in `block_id`.
   auto LowerBlock(SemIR::InstBlockId block_id) -> void;
 
+  // Builds LLVM IR for the specified instruction.
+  auto LowerInst(SemIR::InstId inst_id) -> void;
+
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
   auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
@@ -128,6 +131,12 @@ class FunctionContext {
   // `dest_id` must be a pointer to a `type_id` object.
   auto CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
                  SemIR::InstId dest_id) -> void;
+
+  // Emits an object representation copy for type `type_id` from `source_id` to
+  // `dest_id`. `source_id` and `dest_id` must produce pointers to `type_id`
+  // objects.
+  auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+                  SemIR::InstId dest_id) -> void;
 
   // Context for the overall lowering process.
   FileContext* file_context_;

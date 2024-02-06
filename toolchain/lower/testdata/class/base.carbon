@@ -33,9 +33,7 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_35.2.base = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc18_26.2.b = getelementptr inbounds { i32 }, ptr %.loc18_35.2.base, i32 0, i32 0
-// CHECK:STDOUT:   store i32 4, ptr %.loc18_26.2.b, align 4
 // CHECK:STDOUT:   %.loc18_35.4.d = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 7, ptr %.loc18_35.4.d, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
