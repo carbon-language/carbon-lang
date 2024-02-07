@@ -43,7 +43,7 @@ fn B() {}
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
-// CHECK:STDOUT:     inits:           {}
+// CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:     block4:
@@ -75,7 +75,7 @@ fn B() {}
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
-// CHECK:STDOUT:     inits:           {}
+// CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:     block4:

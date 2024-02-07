@@ -473,8 +473,8 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto inits_id = AddDefaultValue();
-    CARBON_CHECK(inits_id == InstBlockId::Inits);
+    auto global_init_id = AddDefaultValue();
+    CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {

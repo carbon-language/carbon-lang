@@ -83,7 +83,7 @@ TEST(SemIRTest, YAML) {
            Yaml::Mapping(ElementsAre(
                Pair("empty", Yaml::Mapping(IsEmpty())),
                Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inits", Yaml::Mapping(IsEmpty())),
+               Pair("global_init", Yaml::Mapping(IsEmpty())),
                Pair("block3", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("block4", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 

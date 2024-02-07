@@ -634,7 +634,7 @@ auto Context::FinalizeInits() -> void {
          .param_refs_id = SemIR::InstBlockId::Empty,
          .return_type_id = SemIR::TypeId::Invalid,
          .return_slot_id = SemIR::InstId::Invalid,
-         .body_block_ids = {SemIR::InstBlockId::Inits}});
+         .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
   } else {
     inst_block_stack().PopInit();
   }

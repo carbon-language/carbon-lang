@@ -87,7 +87,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+9
-// CHECK:STDOUT:     inits:           {}
+// CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+2
 // CHECK:STDOUT:     block4:
