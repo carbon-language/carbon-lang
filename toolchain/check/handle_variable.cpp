@@ -95,8 +95,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   }
 
   context.decl_state_stack().Pop(DeclState::Var);
-  if (auto current_scope_id = context.current_scope_id();
-      current_scope_id == SemIR::NameScopeId::Package) {
+  if (context.current_scope_id() == SemIR::NameScopeId::Package) {
     context.inst_block_stack().PopInit();
   }
 

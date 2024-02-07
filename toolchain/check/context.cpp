@@ -622,13 +622,13 @@ auto Context::FinalizeInits() -> void {
   inst_block_stack().PushInit();
   if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
     AddInst({Parse::NodeId::Invalid, SemIR::Return{}});
-    // Pop the Inits block here to finalize it
+    // Pop the Inits block here to finalize it.
     inst_block_stack().Pop();
 
-    // __global_init is only added if there are initialization instructions
-    auto nameid = sem_ir().identifiers().Add("__global_init");
+    // __global_init is only added if there are initialization instructions.
+    auto name_id = sem_ir().identifiers().Add("__global_init");
     sem_ir().functions().Add(
-        {.name_id = SemIR::NameId::ForIdentifier(nameid),
+        {.name_id = SemIR::NameId::ForIdentifier(name_id),
          .enclosing_scope_id = SemIR::NameScopeId::Package,
          .implicit_param_refs_id = SemIR::InstBlockId::Empty,
          .param_refs_id = SemIR::InstBlockId::Empty,

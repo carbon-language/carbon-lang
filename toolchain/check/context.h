@@ -363,7 +363,7 @@ class Context {
     inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
   }
 
-  // Finalizes the initialization function (__global_init)
+  // Finalizes the initialization function (__global_init).
   auto FinalizeInits() -> void;
 
   // Prints information for a stack dump.

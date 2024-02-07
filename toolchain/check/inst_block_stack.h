@@ -29,6 +29,11 @@ class InstBlockStack {
   // called in order to support lazy allocation.
   auto Push() -> void { Push(SemIR::InstBlockId::Invalid); }
 
+  // Pushes the `Inits` inst block onto the stack, this block is handled
+  // separately from the rest.
+  // This method shall be used in conjunction with `PopInit` method to allow
+  // emitting initialization instructions to `Inits` block from separate
+  // parts of the tree, accumulating them all in one block.
   auto PushInit() -> void;
 
   // Pushes a new unreachable code block.
@@ -48,6 +53,9 @@ class InstBlockStack {
   // allocated.
   auto PopAndDiscard() -> void;
 
+  // Pops the `Inits` inst block from the stack without finalizing it.
+  // `Pop` should be called at the end of the check phase, while `Inits`
+  // is pushed, to finalize the block.
   auto PopInit() -> void;
 
   // Adds the given instruction ID to the block at the top of the stack.
