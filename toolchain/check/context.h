@@ -364,7 +364,7 @@ class Context {
   }
 
   // Finalizes the initialization function (__global_init).
-  auto FinalizeInits() -> void;
+  auto FinalizeGlobalInit() -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

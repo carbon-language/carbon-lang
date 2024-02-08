@@ -116,7 +116,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         RegisterReturnedVar(context, bind_id);
       }
       if (context.current_scope_id() == SemIR::NameScopeId::Package) {
-        context.inst_block_stack().PushInit();
+        context.inst_block_stack().PushGlobalInit();
       }
       break;
     }

@@ -618,11 +618,11 @@ auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId {
   return ParamOrArgPop();
 }
 
-auto Context::FinalizeInits() -> void {
-  inst_block_stack().PushInit();
+auto Context::FinalizeGlobalInit() -> void {
+  inst_block_stack().PushGlobalInit();
   if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
     AddInst({Parse::NodeId::Invalid, SemIR::Return{}});
-    // Pop the Inits block here to finalize it.
+    // Pop the GlobalInit block here to finalize it.
     inst_block_stack().Pop();
 
     // __global_init is only added if there are initialization instructions.
@@ -636,7 +636,7 @@ auto Context::FinalizeInits() -> void {
          .return_slot_id = SemIR::InstId::Invalid,
          .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
   } else {
-    inst_block_stack().PopInit();
+    inst_block_stack().PopGlobalInit();
   }
 }
 

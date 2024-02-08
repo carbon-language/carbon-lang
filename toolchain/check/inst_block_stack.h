@@ -31,10 +31,10 @@ class InstBlockStack {
 
   // Pushes the `GlobalInit` inst block onto the stack, this block is handled
   // separately from the rest.
-  // This method shall be used in conjunction with `PopInit` method to allow
-  // emitting initialization instructions to `GlobalInit` block from separate
-  // parts of the tree, accumulating them all in one block.
-  auto PushInit() -> void;
+  // This method shall be used in conjunction with `PopGlobalInit` method to
+  // allow emitting initialization instructions to `GlobalInit` block from
+  // separate parts of the tree, accumulating them all in one block.
+  auto PushGlobalInit() -> void;
 
   // Pushes a new unreachable code block.
   auto PushUnreachable() -> void { Push(SemIR::InstBlockId::Unreachable); }
@@ -56,7 +56,7 @@ class InstBlockStack {
   // Pops the `GlobalInit` inst block from the stack without finalizing it.
   // `Pop` should be called at the end of the check phase, while `GlobalInit`
   // is pushed, to finalize the block.
-  auto PopInit() -> void;
+  auto PopGlobalInit() -> void;
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
