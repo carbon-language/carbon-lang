@@ -30,12 +30,12 @@ class ImportRefResolver {
 
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. When an outer
-  // instruction has unresolved inner references, it will add them to the todo
-  // list for inner evaluation and reattempt outer evaluation after.
+  // instruction has unresolved inner references, it will add them to the stack
+  // for inner evaluation and reattempt outer evaluation after.
   auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    todo_.push_back(inst_id);
-    while (!todo_.empty()) {
-      auto inst_id = todo_.back();
+    stack_.push_back(inst_id);
+    while (!stack_.empty()) {
+      auto inst_id = stack_.back();
       CARBON_CHECK(inst_id.is_valid());
 
       // Double-check that the constant still doesn't have a calculated value.
@@ -43,11 +43,11 @@ class ImportRefResolver {
       // may be added multiple times before its constant is evaluated.
       if (auto current_const_id = import_ir_constant_values_.Get(inst_id);
           current_const_id.is_valid()) {
-        todo_.pop_back();
+        stack_.pop_back();
       } else if (auto new_const_id = TryResolveInst(inst_id);
                  new_const_id.is_valid()) {
         import_ir_constant_values_.Set(inst_id, new_const_id);
-        todo_.pop_back();
+        stack_.pop_back();
       }
     }
     auto constant_id = import_ir_constant_values_.Get(inst_id);
@@ -56,19 +56,19 @@ class ImportRefResolver {
   }
 
  private:
-  // Returns the ConstantId for an instruction, or adds it to the todo list and
+  // Returns the ConstantId for an instruction, or adds it to the stack and
   // returns Invalid if the ConstantId is not ready.
   auto GetConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
     auto inst_id = import_ir_.types().GetInstId(type_id);
     auto const_id = import_ir_constant_values_.Get(inst_id);
     if (!const_id.is_valid()) {
-      todo_.push_back(inst_id);
+      stack_.push_back(inst_id);
     }
     return const_id;
   }
 
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
-  // more has been added to the todo list. A similar API is followed for all
+  // more has been added to the stack. A similar API is followed for all
   // following TryResolveTypedInst helper functions.
   //
   // Resolving will often call GetTypeIdForTypeConstant. It involves a hash
@@ -98,7 +98,7 @@ class ImportRefResolver {
       default:
         context_.TODO(
             Parse::NodeId::Invalid,
-            llvm::formatv("TryResolveNextInst on {0}", inst.kind()).str());
+            llvm::formatv("TryResolveInst on {0}", inst.kind()).str());
         return SemIR::ConstantId::Error;
     }
   }
@@ -130,8 +130,8 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::StructType inst) -> SemIR::ConstantId {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
-    // First verify that all used types are ready.
-    bool added_todos = false;
+    // Collect all constants first, locating unresolved ones in a single pass.
+    bool has_unresolved = false;
     auto orig_fields = import_ir_.inst_blocks().Get(inst.fields_id);
     llvm::SmallVector<SemIR::ConstantId> field_const_ids;
     field_const_ids.reserve(orig_fields.size());
@@ -141,10 +141,10 @@ class ImportRefResolver {
       if (field_const_id.is_valid()) {
         field_const_ids.push_back(field_const_id);
       } else {
-        added_todos = true;
+        has_unresolved = true;
       }
     }
-    if (added_todos) {
+    if (has_unresolved) {
       return SemIR::ConstantId::Invalid;
     }
 
@@ -174,37 +174,37 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::TupleType inst) -> SemIR::ConstantId {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
-    // First verify that all used types are ready.
-    bool added_todos = false;
-    auto orig_el_type_ids = import_ir_.type_blocks().Get(inst.elements_id);
-    llvm::SmallVector<SemIR::ConstantId> el_const_ids;
-    el_const_ids.reserve(orig_el_type_ids.size());
-    for (auto el_type_id : orig_el_type_ids) {
-      auto el_const_id = GetConstantId(el_type_id);
-      if (el_const_id.is_valid()) {
-        el_const_ids.push_back(el_const_id);
+    // Collect all constants first, locating unresolved ones in a single pass.
+    bool has_unresolved = false;
+    auto orig_elem_type_ids = import_ir_.type_blocks().Get(inst.elements_id);
+    llvm::SmallVector<SemIR::ConstantId> elem_const_ids;
+    elem_const_ids.reserve(orig_elem_type_ids.size());
+    for (auto elem_type_id : orig_elem_type_ids) {
+      auto elem_const_id = GetConstantId(elem_type_id);
+      if (elem_const_id.is_valid()) {
+        elem_const_ids.push_back(elem_const_id);
       } else {
-        added_todos = true;
+        has_unresolved = true;
       }
     }
-    if (added_todos) {
+    if (has_unresolved) {
       return SemIR::ConstantId::Invalid;
     }
 
     // Prepare a vector of the tuple types for GetTupleType.
-    llvm::SmallVector<SemIR::TypeId> el_type_ids;
-    el_type_ids.reserve(orig_el_type_ids.size());
-    for (auto el_const_id : el_const_ids) {
-      el_type_ids.push_back(context_.GetTypeIdForTypeConstant(el_const_id));
+    llvm::SmallVector<SemIR::TypeId> elem_type_ids;
+    elem_type_ids.reserve(orig_elem_type_ids.size());
+    for (auto elem_const_id : elem_const_ids) {
+      elem_type_ids.push_back(context_.GetTypeIdForTypeConstant(elem_const_id));
     }
 
-    return context_.types().GetConstantId(context_.GetTupleType(el_type_ids));
+    return context_.types().GetConstantId(context_.GetTupleType(elem_type_ids));
   }
 
   Context& context_;
   const SemIR::File& import_ir_;
   SemIR::ConstantValueStore& import_ir_constant_values_;
-  llvm::SmallVector<SemIR::InstId> todo_;
+  llvm::SmallVector<SemIR::InstId> stack_;
 };
 
 auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
