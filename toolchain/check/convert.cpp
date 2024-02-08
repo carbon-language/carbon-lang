@@ -485,11 +485,10 @@ static auto ConvertStructToStructOrClass(Context& context,
           CARBON_DIAGNOSTIC(StructInitMissingFieldInConversion, Error,
                             "Cannot convert from struct type `{0}` to `{1}`: "
                             "missing field `{2}` in source type.",
-                            std::string, std::string, std::string);
+                            SemIR::TypeId, SemIR::TypeId, std::string);
           context.emitter().Emit(
               value_parse_node, StructInitMissingFieldInConversion,
-              sem_ir.StringifyType(value.type_id()),
-              sem_ir.StringifyType(target.type_id),
+              value.type_id(), target.type_id,
               sem_ir.names().GetFormatted(dest_field.name_id).str());
         }
         return SemIR::InstId::BuiltinError;
@@ -554,9 +553,9 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     CARBON_DIAGNOSTIC(ConstructionOfAbstractClass, Error,
                       "Cannot construct instance of abstract class. "
                       "Consider using `partial {0}` instead.",
-                      std::string);
+                      SemIR::TypeId);
     context.emitter().Emit(value_id, ConstructionOfAbstractClass,
-                           context.sem_ir().StringifyType(target.type_id));
+                           target.type_id);
     return SemIR::InstId::BuiltinError;
   }
   if (class_info.object_repr_id == SemIR::TypeId::Error) {
@@ -865,9 +864,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   // TODO: We don't yet have rules for whether and when a class type is
   // copyable, or how to perform the copy.
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
-                    "Cannot copy value of type `{0}`.", std::string);
-  context.emitter().Emit(expr_id, CopyOfUncopyableType,
-                         context.sem_ir().StringifyType(type_id));
+                    "Cannot copy value of type `{0}`.", SemIR::TypeId);
+  context.emitter().Emit(expr_id, CopyOfUncopyableType, type_id);
   return SemIR::InstId::BuiltinError;
 }
 
@@ -897,19 +895,20 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
   if (!context.TryToCompleteType(target.type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInInit, Error,
                           "Initialization of incomplete type `{0}`.",
-                          std::string);
+                          SemIR::TypeId);
         CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
                           "Forming value of incomplete type `{0}`.",
-                          std::string);
+                          SemIR::TypeId);
         CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
-                          "Invalid use of incomplete type `{0}`.", std::string);
-        return context.emitter().Build(
-            parse_node,
-            target.is_initializer() ? IncompleteTypeInInit
-            : target.kind == ConversionTarget::Value
-                ? IncompleteTypeInValueConversion
-                : IncompleteTypeInConversion,
-            context.sem_ir().StringifyType(target.type_id));
+                          "Invalid use of incomplete type `{0}`.",
+                          SemIR::TypeId);
+        return context.emitter().Build(parse_node,
+                                       target.is_initializer()
+                                           ? IncompleteTypeInInit
+                                       : target.kind == ConversionTarget::Value
+                                           ? IncompleteTypeInValueConversion
+                                           : IncompleteTypeInConversion,
+                                       target.type_id);
       })) {
     return SemIR::InstId::BuiltinError;
   }
@@ -927,17 +926,16 @@ auto Convert(Context& context, Parse::NodeId parse_node, SemIR::InstId expr_id,
   if (expr.type_id() != target.type_id) {
     CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                       "Cannot implicitly convert from `{0}` to `{1}`.",
-                      std::string, std::string);
+                      SemIR::TypeId, SemIR::TypeId);
     CARBON_DIAGNOSTIC(ExplicitAsConversionFailure, Error,
                       "Cannot convert from `{0}` to `{1}` with `as`.",
-                      std::string, std::string);
+                      SemIR::TypeId, SemIR::TypeId);
     context.emitter()
         .Build(parse_node,
                target.kind == ConversionTarget::ExplicitAs
                    ? ExplicitAsConversionFailure
                    : ImplicitAsConversionFailure,
-               sem_ir.StringifyType(expr.type_id()),
-               sem_ir.StringifyType(target.type_id))
+               expr.type_id(), target.type_id)
         .Emit();
     return SemIR::InstId::BuiltinError;
   }

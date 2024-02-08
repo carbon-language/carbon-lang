@@ -296,10 +296,9 @@ auto HandlePrefixOperatorStar(Context& context,
   } else if (type_id != SemIR::TypeId::Error) {
     CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
                       "Cannot dereference operand of non-pointer type `{0}`.",
-                      std::string);
-    auto builder =
-        context.emitter().Build(TokenOnly(parse_node), DerefOfNonPointer,
-                                context.sem_ir().StringifyType(type_id));
+                      SemIR::TypeId);
+    auto builder = context.emitter().Build(TokenOnly(parse_node),
+                                           DerefOfNonPointer, type_id);
     // TODO: Check for any facet here, rather than only a type.
     if (type_id == SemIR::TypeId::TypeType) {
       CARBON_DIAGNOSTIC(

@@ -26,11 +26,10 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId parse_node,
     CARBON_DIAGNOSTIC(
         TupleIndexOutOfBounds, Error,
         "Tuple element index `{0}` is past the end of type `{1}`.",
-        llvm::APSInt, std::string);
-    context.emitter().Emit(
-        parse_node, TupleIndexOutOfBounds,
-        llvm::APSInt(index_val, /*isUnsigned=*/true),
-        context.sem_ir().StringifyType(operand_inst.type_id()));
+        llvm::APSInt, SemIR::TypeId);
+    context.emitter().Emit(parse_node, TupleIndexOutOfBounds,
+                           llvm::APSInt(index_val, /*isUnsigned=*/true),
+                           operand_inst.type_id());
     return nullptr;
   }
   return &index_val;
@@ -110,9 +109,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
     default: {
       if (operand_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                          "Type `{0}` does not support indexing.", std::string);
-        context.emitter().Emit(parse_node, TypeNotIndexable,
-                               context.sem_ir().StringifyType(operand_type_id));
+                          "Type `{0}` does not support indexing.",
+                          SemIR::TypeId);
+        context.emitter().Emit(parse_node, TypeNotIndexable, operand_type_id);
       }
       context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
       return true;

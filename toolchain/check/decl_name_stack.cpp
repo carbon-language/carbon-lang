@@ -231,11 +231,10 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
                                 .TryAs<SemIR::ClassDecl>()) {
         CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",
-                          std::string);
+                          SemIR::TypeId);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
-            context_->sem_ir().StringifyType(
-                context_->classes().Get(class_decl->class_id).self_type_id));
+            context_->classes().Get(class_decl->class_id).self_type_id);
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {

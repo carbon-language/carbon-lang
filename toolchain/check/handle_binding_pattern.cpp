@@ -70,12 +70,12 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                           "{0} has incomplete type `{1}`.", llvm::StringLiteral,
-                          std::string);
-        return context.emitter().Build(
-            type_node, IncompleteTypeInVarDecl,
-            enclosing_class_decl ? llvm::StringLiteral("Field")
-                                 : llvm::StringLiteral("Variable"),
-            context.sem_ir().StringifyType(cast_type_id));
+                          SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
+                                       enclosing_class_decl
+                                           ? llvm::StringLiteral("Field")
+                                           : llvm::StringLiteral("Variable"),
+                                       cast_type_id);
       });
       if (enclosing_class_decl) {
         CARBON_CHECK(context_parse_node_kind ==
@@ -139,10 +139,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                           "`let` binding has incomplete type `{0}`.",
-                          std::string);
-        return context.emitter().Build(
-            type_node, IncompleteTypeInLetDecl,
-            context.sem_ir().StringifyType(cast_type_id));
+                          SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
+                                       cast_type_id);
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.

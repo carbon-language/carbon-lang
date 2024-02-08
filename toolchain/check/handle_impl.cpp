@@ -115,10 +115,9 @@ static auto ExtendImpl(Context& context, Parse::AnyImplDeclId parse_node,
     CARBON_DIAGNOSTIC(
         ExtendUndefinedInterface, Error,
         "`extend impl` requires a definition for interface `{0}`.",
-        std::string);
-    auto diag =
-        context.emitter().Build(parse_node, ExtendUndefinedInterface,
-                                context.sem_ir().StringifyType(constraint_id));
+        SemIR::TypeId);
+    auto diag = context.emitter().Build(parse_node, ExtendUndefinedInterface,
+                                        constraint_id);
     context.NoteUndefinedInterface(interface_type->interface_id, diag);
     diag.Emit();
     enclosing_scope.has_error = true;
@@ -198,14 +197,13 @@ auto HandleImplDefinitionStart(Context& context,
 
   if (impl_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "Redefinition of `impl {0} as {1}`.", std::string,
-                      std::string);
+                      "Redefinition of `impl {0} as {1}`.", SemIR::TypeId,
+                      SemIR::TypeId);
     CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, ImplRedefinition,
-               context.sem_ir().StringifyType(impl_info.self_id),
-               context.sem_ir().StringifyType(impl_info.constraint_id))
+        .Build(parse_node, ImplRedefinition, impl_info.self_id,
+               impl_info.constraint_id)
         .Note(impl_info.definition_id, ImplPreviousDefinition)
         .Emit();
   } else {

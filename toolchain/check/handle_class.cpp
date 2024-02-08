@@ -208,9 +208,8 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId parse_node,
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
                     "Deriving from final type `{0}`. Base type must be an "
                     "`abstract` or `base` class.",
-                    std::string);
-  context.emitter().Emit(parse_node, BaseIsFinal,
-                         context.sem_ir().StringifyType(base_type_id));
+                    SemIR::TypeId);
+  context.emitter().Emit(parse_node, BaseIsFinal, base_type_id);
 }
 
 // Checks that the specified base type is valid.
@@ -219,10 +218,9 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
   auto base_type_id = ExprAsType(context, parse_node, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
-                      "Base `{0}` is an incomplete type.", std::string);
-    return context.emitter().Build(
-        parse_node, IncompleteTypeInBaseDecl,
-        context.sem_ir().StringifyType(base_type_id));
+                      "Base `{0}` is an incomplete type.", SemIR::TypeId);
+    return context.emitter().Build(parse_node, IncompleteTypeInBaseDecl,
+                                   base_type_id);
   });
 
   if (base_type_id == SemIR::TypeId::Error) {

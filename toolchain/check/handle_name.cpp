@@ -121,10 +121,9 @@ auto HandleMemberAccessExpr(Context& context,
   if (!context.TryToCompleteType(base_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "Member access into object of incomplete type `{0}`.",
-                          std::string);
-        return context.emitter().Build(
-            base_id, IncompleteTypeInMemberAccess,
-            context.sem_ir().StringifyType(base_type_id));
+                          SemIR::TypeId);
+        return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
+                                       base_type_id);
       })) {
     context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
     return true;
@@ -223,10 +222,10 @@ auto HandleMemberAccessExpr(Context& context,
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
-                        "Type `{0}` does not have a member `{1}`.", std::string,
-                        std::string);
+                        "Type `{0}` does not have a member `{1}`.",
+                        SemIR::TypeId, std::string);
       context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
-                             context.sem_ir().StringifyType(base_type_id),
+                             base_type_id,
                              context.names().GetFormatted(name_id).str());
       break;
     }
@@ -237,9 +236,9 @@ auto HandleMemberAccessExpr(Context& context,
       if (base_type_id != SemIR::TypeId::Error) {
         CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
-                          std::string);
+                          SemIR::TypeId);
         context.emitter().Emit(parse_node, QualifiedExprUnsupported,
-                               context.sem_ir().StringifyType(base_type_id));
+                               base_type_id);
       }
       break;
     }

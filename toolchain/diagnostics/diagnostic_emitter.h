@@ -136,6 +136,14 @@ class DiagnosticConsumer {
   virtual auto Flush() -> void {}
 };
 
+// Known diagnostic type translations. These are enumerated because `llvm::Any`
+// doesn't expose the contained type; instead, we infer it from a given
+// diagnostic.
+enum class DiagnosticTypeTranslation : int8_t {
+  None,
+  TypeId,
+};
+
 // An interface that can translate some representation of a location into a
 // diagnostic location.
 //
@@ -147,9 +155,45 @@ class DiagnosticLocationTranslator {
   virtual ~DiagnosticLocationTranslator() = default;
 
   virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
+
+  // Translates arg types as needed. Not all uses support translation, so the
+  // default simply errors.
+  virtual auto TranslateArg(DiagnosticTypeTranslation translation,
+                            llvm::Any /*arg*/) const -> llvm::Any {
+    CARBON_FATAL() << "Unexpected call to TranslateArg: "
+                   << static_cast<int8_t>(translation);
+  }
+};
+
+template <typename StorageTypeT, DiagnosticTypeTranslation TranslationV>
+struct DiagnosticTypeInfo {
+  using StorageType = StorageTypeT;
+  static constexpr DiagnosticTypeTranslation Translation = TranslationV;
 };
 
 namespace Internal {
+
+// Determines whether there's a DiagnosticType member on Arg.
+template <typename Arg>
+concept HasDiagnosticType =
+    requires { std::type_identity<typename Arg::DiagnosticType>(); };
+
+// The default implementation with no translation.
+template <typename Arg, typename X = int>
+struct DiagnosticTypeForArg {
+  using StorageType = Arg;
+  static constexpr DiagnosticTypeTranslation Translation =
+      DiagnosticTypeTranslation::None;
+};
+
+// Exposes a custom translation for an argument type.
+template <typename Arg>
+  requires HasDiagnosticType<Arg>
+struct DiagnosticTypeForArg<Arg> {
+  using StorageType = Arg::DiagnosticType::StorageType;
+  static constexpr DiagnosticTypeTranslation Translation =
+      Arg::DiagnosticType::Translation;
+};
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
@@ -184,16 +228,18 @@ struct DiagnosticBase {
   inline auto FormatFnImpl(const DiagnosticMessage& message,
                            std::index_sequence<N...> /*indices*/) const
       -> std::string {
-    assert(message.format_args.size() == sizeof...(Args));
-    return llvm::formatv(message.format.data(),
-                         llvm::any_cast<Args>(message.format_args[N])...);
+    CARBON_CHECK(message.format_args.size() == sizeof...(Args));
+    return llvm::formatv(
+        message.format.data(),
+        llvm::any_cast<typename DiagnosticTypeForArg<Args>::StorageType>(
+            message.format_args[N])...);
   }
 };
 
 // Disable type deduction based on `args`; the type of `diagnostic_base`
 // determines the diagnostic's parameter types.
 template <typename Arg>
-using NoTypeDeduction = std::common_type_t<Arg>;
+using NoTypeDeduction = std::type_identity_t<Arg>;
 
 }  // namespace Internal
 
@@ -232,8 +278,9 @@ class DiagnosticEmitter {
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
           << static_cast<int>(diagnostic_base.Level);
-      diagnostic_.notes.push_back(MakeMessage(
-          emitter_, location, diagnostic_base, {llvm::Any(args)...}));
+      diagnostic_.notes.push_back(
+          MakeMessage(emitter_, location, diagnostic_base,
+                      {emitter_->MakeAny<Args>(args)...}));
       return *this;
     }
 
@@ -296,7 +343,7 @@ class DiagnosticEmitter {
   auto Emit(LocationT location,
             const Internal::DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticBuilder(this, location, diagnostic_base, {llvm::Any(args)...})
+    DiagnosticBuilder(this, location, diagnostic_base, {MakeAny<Args>(args)...})
         .Emit();
   }
 
@@ -311,7 +358,7 @@ class DiagnosticEmitter {
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
     return DiagnosticBuilder(this, location, diagnostic_base,
-                             {llvm::Any(args)...});
+                             {MakeAny<Args>(args)...});
   }
 
  private:
@@ -339,6 +386,19 @@ class DiagnosticEmitter {
    private:
     DiagnosticEmitter* emitter_;
   };
+
+  // Converts an argument to llvm::Any for storage, handling input to storage
+  // type translation when needed.
+  template <typename Arg>
+  auto MakeAny(Arg arg) -> llvm::Any {
+    if constexpr (Internal::DiagnosticTypeForArg<Arg>::Translation ==
+                  DiagnosticTypeTranslation::None) {
+      return arg;
+    } else {
+      return translator_->TranslateArg(
+          Internal::DiagnosticTypeForArg<Arg>::Translation, arg);
+    }
+  }
 
   template <typename LocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;

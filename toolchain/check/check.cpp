@@ -73,6 +73,19 @@ class SemIRLocationTranslator
     }
   }
 
+  auto TranslateArg(DiagnosticTypeTranslation translation, llvm::Any arg) const
+      -> llvm::Any override {
+    switch (translation) {
+      case DiagnosticTypeTranslation::TypeId: {
+        auto type_id = llvm::any_cast<SemIR::TypeId>(arg);
+        return sem_ir_->StringifyType(type_id);
+      }
+      default:
+        return DiagnosticLocationTranslator<SemIRLocation>::TranslateArg(
+            translation, arg);
+    }
+  }
+
  private:
   auto GetLocationInFile(const SemIR::File* sem_ir,
                          Parse::NodeLocation node_location) const

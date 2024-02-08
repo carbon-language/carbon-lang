@@ -22,6 +22,7 @@ cc_library(
         "//common:ostream",
         "//toolchain/base:index_base",
         "//toolchain/base:value_store",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:builtin_kind",
     ],
 )
