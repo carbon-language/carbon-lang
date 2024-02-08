@@ -71,8 +71,17 @@ class ImportRefResolver {
   // more has been added to the stack. A similar API is followed for all
   // following TryResolveTypedInst helper functions.
   //
-  // Resolving will often call GetTypeIdForTypeConstant. It involves a hash
-  // table lookup, so only call it when ready to provide a constant.
+  // Logic for each TryResolveTypedInst will be in two phases:
+  //   1. Gather all input constants.
+  //   2. Produce an output constant.
+  //
+  // Although it's possible TryResolveTypedInst could complete in a single call
+  // when all input constants are ready, a common scenario is that some inputs
+  // will still be unresolved, and it'll return Invalid between phases. On the
+  // second call, all previously unready constants will have been resolved, so
+  // it should run to completion. As a consequence, it's important to reserve
+  // all expensive logic for the second phase; this in particular includes
+  // GetTypeIdForTypeConstant calls which do a hash table lookup.
   //
   // TODO: Error is returned when support is missing, but that should go away.
   auto TryResolveInst(SemIR::InstId inst_id) -> SemIR::ConstantId {
