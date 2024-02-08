@@ -33,9 +33,9 @@ class ImportRefResolver {
   // instruction has unresolved inner references, it will add them to the stack
   // for inner evaluation and reattempt outer evaluation after.
   auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    stack_.push_back(inst_id);
-    while (!stack_.empty()) {
-      auto inst_id = stack_.back();
+    work_stack_.push_back(inst_id);
+    while (!work_stack_.empty()) {
+      auto inst_id = work_stack_.back();
       CARBON_CHECK(inst_id.is_valid());
 
       // Double-check that the constant still doesn't have a calculated value.
@@ -43,11 +43,11 @@ class ImportRefResolver {
       // may be added multiple times before its constant is evaluated.
       if (auto current_const_id = import_ir_constant_values_.Get(inst_id);
           current_const_id.is_valid()) {
-        stack_.pop_back();
+        work_stack_.pop_back();
       } else if (auto new_const_id = TryResolveInst(inst_id);
                  new_const_id.is_valid()) {
         import_ir_constant_values_.Set(inst_id, new_const_id);
-        stack_.pop_back();
+        work_stack_.pop_back();
       }
     }
     auto constant_id = import_ir_constant_values_.Get(inst_id);
@@ -62,7 +62,7 @@ class ImportRefResolver {
     auto inst_id = import_ir_.types().GetInstId(type_id);
     auto const_id = import_ir_constant_values_.Get(inst_id);
     if (!const_id.is_valid()) {
-      stack_.push_back(inst_id);
+      work_stack_.push_back(inst_id);
     }
     return const_id;
   }
@@ -213,7 +213,7 @@ class ImportRefResolver {
   Context& context_;
   const SemIR::File& import_ir_;
   SemIR::ConstantValueStore& import_ir_constant_values_;
-  llvm::SmallVector<SemIR::InstId> stack_;
+  llvm::SmallVector<SemIR::InstId> work_stack_;
 };
 
 auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
