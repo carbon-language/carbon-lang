@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveImportRefUnused on ClassDecl`.
 // CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveImportRefUnused on ClassDecl`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveNextInst on ClassType`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveNextInst on ClassType`.
+// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on ClassType`.
+// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on ClassType`.
 
 // --- a.carbon
 
