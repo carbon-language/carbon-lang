@@ -77,6 +77,10 @@ class SemIRLocationTranslator
   auto TranslateArg(DiagnosticTypeTranslation translation, llvm::Any arg) const
       -> llvm::Any override {
     switch (translation) {
+      case DiagnosticTypeTranslation::NameId: {
+        auto name_id = llvm::any_cast<SemIR::NameId>(arg);
+        return sem_ir_->names().GetFormatted(name_id).str();
+      }
       case DiagnosticTypeTranslation::TypeId: {
         auto type_id = llvm::any_cast<SemIR::TypeId>(arg);
         return sem_ir_->StringifyType(type_id);

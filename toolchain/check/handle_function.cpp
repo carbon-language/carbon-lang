@@ -206,12 +206,11 @@ auto HandleFunctionDefinitionStart(Context& context,
   // Track that this declaration is the definition.
   if (function.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", std::string);
+                      "Redefinition of function {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, FunctionRedefinition,
-               context.names().GetFormatted(function.name_id).str())
+        .Build(parse_node, FunctionRedefinition, function.name_id)
         .Note(function.definition_id, FunctionPreviousDefinition)
         .Emit();
   } else {
