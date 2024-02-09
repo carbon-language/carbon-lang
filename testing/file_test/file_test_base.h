@@ -87,6 +87,9 @@ class FileTestBase : public testing::Test {
   // Runs the test and autoupdates checks. Returns true if updated.
   auto Autoupdate() -> ErrorOr<bool>;
 
+  // Runs the test and dumps output.
+  auto DumpOutput() -> ErrorOr<Success>;
+
   // Returns the name of the test (relative to the repo root).
   auto test_name() const -> llvm::StringRef { return test_name_; }
 
