@@ -54,6 +54,8 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "eval.cpp",
+        "import_ref.cpp",
+        "import_ref.h",
         "inst_block_stack.cpp",
         "modifiers.cpp",
         "return.cpp",

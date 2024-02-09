@@ -12,8 +12,10 @@
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
@@ -228,45 +230,6 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
-  auto inst = insts().Get(inst_id);
-  auto unused_inst = inst.TryAs<SemIR::ImportRefUnused>();
-  if (!unused_inst) {
-    return;
-  }
-  const SemIR::File& import_ir = *import_irs().Get(unused_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
-
-  // If the type ID isn't a normal value, forward it directly.
-  if (!import_inst.type_id().is_valid()) {
-    ReplaceInstBeforeConstantUse(
-        inst_id,
-        {SemIR::ImportRefUsed{import_inst.type_id(), unused_inst->ir_id,
-                              unused_inst->inst_id}});
-    return;
-  }
-
-  auto import_type_inst_id = import_ir.types().GetInstId(import_inst.type_id());
-  CARBON_CHECK(import_type_inst_id.is_valid());
-
-  // If the type of the instruction is a builtin, use it directly.
-  auto type_id = SemIR::TypeId::Invalid;
-  if (import_type_inst_id.is_builtin()) {
-    type_id = GetBuiltinType(import_type_inst_id.builtin_kind());
-  } else {
-    // TODO: This section probably needs to TryEvalInst for the type. Similar to
-    // GetTypeImpl, but in the context of import_ir.
-    TODO(Parse::NodeId::Invalid,
-         "TODO: ResolveIfImportRefUnused for non-builtin type");
-    type_id = SemIR::TypeId::Error;
-  }
-
-  // TODO: Add breadcrumbs for lowering.
-  ReplaceInstBeforeConstantUse(
-      inst_id, {SemIR::ImportRefUsed{type_id, unused_inst->ir_id,
-                                     unused_inst->inst_id}});
-}
-
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
                                SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
@@ -296,7 +259,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //    name A from the outer scope.
     auto result = scope_stack().LookupInCurrentScope(name_id);
     if (result.is_valid()) {
-      ResolveIfImportRefUnused(result);
+      TryResolveImportRefUnused(*this, result);
     }
     return result;
   } else {
@@ -333,7 +296,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   if (lexical_result.is_valid()) {
-    ResolveIfImportRefUnused(lexical_result);
+    TryResolveImportRefUnused(*this, lexical_result);
     return lexical_result;
   }
 
@@ -346,7 +309,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfImportRefUnused(it->second);
+    TryResolveImportRefUnused(*this, it->second);
     return it->second;
   }
   return SemIR::InstId::Invalid;
@@ -985,7 +948,8 @@ auto Context::TryToCompleteType(
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
-  CARBON_CHECK(constant_id.is_constant()) << "Canonicalizing non-constant type";
+  CARBON_CHECK(constant_id.is_constant())
+      << "Canonicalizing non-constant type: " << constant_id;
 
   auto [it, added] = type_ids_for_type_constants_.insert(
       {constant_id, SemIR::TypeId::Invalid});

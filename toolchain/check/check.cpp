@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -196,6 +197,10 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     context.AddPackageImports(package_imports.node, package_id, sem_irs,
                               package_imports.has_load_error);
   }
+
+  context.import_ir_constant_values().resize(
+      context.import_irs().size(),
+      SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,
