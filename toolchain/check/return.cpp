@@ -91,7 +91,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
 }
 
 auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void {
-  auto existing_id = context.SetReturnedVarOrGetExisting(bind_id);
+  auto existing_id = context.scope_stack().SetReturnedVarOrGetExisting(bind_id);
   if (existing_id.is_valid()) {
     CARBON_DIAGNOSTIC(ReturnedVarShadowed, Error,
                       "Cannot declare a `returned var` in the scope of "

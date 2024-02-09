@@ -73,6 +73,12 @@ class InstStore {
     return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
   }
 
+  // Returns whether the requested instruction is the specified type.
+  template <typename InstT>
+  auto Is(InstId inst_id) const -> bool {
+    return Get(inst_id).Is<InstT>();
+  }
+
   // Returns the requested instruction, which is known to have the specified
   // type.
   template <typename InstT>

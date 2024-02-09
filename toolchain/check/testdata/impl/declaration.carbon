@@ -4,31 +4,26 @@
 //
 // AUTOUPDATE
 
-interface Empty {
-}
+interface I {}
 
-impl i32 as Empty {
-}
+impl i32 as I;
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
+// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
 // CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as Empty {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: impl @impl: i32 as I;
 // CHECK:STDOUT:

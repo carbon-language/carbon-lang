@@ -22,11 +22,12 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 enum class NodeCategory : uint32_t {
   Decl = 1 << 0,
   Expr = 1 << 1,
-  MemberName = 1 << 2,
-  Modifier = 1 << 3,
-  NameComponent = 1 << 4,
-  Pattern = 1 << 5,
-  Statement = 1 << 6,
+  ImplAs = 1 << 2,
+  MemberName = 1 << 3,
+  Modifier = 1 << 4,
+  NameComponent = 1 << 5,
+  Pattern = 1 << 6,
+  Statement = 1 << 7,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)

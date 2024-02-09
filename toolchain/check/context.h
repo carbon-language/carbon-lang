@@ -6,14 +6,13 @@
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
-#include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/node_stack.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
@@ -50,23 +49,6 @@ class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
-
-  // A scope in which `break` and `continue` can be used.
-  struct BreakContinueScope {
-    SemIR::InstBlockId break_target;
-    SemIR::InstBlockId continue_target;
-  };
-
-  // A scope in which `return` can be used.
-  struct ReturnScope {
-    // The declaration from which we can return. Inside a function, this will
-    // be a `FunctionDecl`.
-    SemIR::InstId decl_id;
-
-    // The value corresponding to the current `returned var`, if any. Will be
-    // set and unset as `returned var`s are declared and go out of scope.
-    SemIR::InstId returned_var = SemIR::InstId::Invalid;
-  };
 
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
@@ -168,67 +150,16 @@ class Context {
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
-  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
-  // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
-  // given namespace may contain a mix of both successful and failed name
-  // imports.
-  auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-                 bool lexical_lookup_has_load_error = false) -> void;
-
-  // Pops the top scope from scope_stack_, cleaning up names from
-  // lexical_lookup_.
-  auto PopScope() -> void;
-
-  // Pops the top scope from scope_stack_ if it contains no names.
-  auto PopScopeIfEmpty() -> void {
-    if (scope_stack_.back().names.empty()) {
-      PopScope();
-    }
-  }
-
-  // Pops scopes until we return to the specified scope index.
-  auto PopToScope(ScopeIndex index) -> void;
-
-  // Returns the scope index associated with the current scope.
-  auto current_scope_index() const -> ScopeIndex {
-    return current_scope().index;
-  }
-
-  // Returns the name scope associated with the current lexical scope, if any.
-  auto current_scope_id() const -> SemIR::NameScopeId {
-    return current_scope().scope_id;
-  }
-
-  // Returns the instruction associated with the current scope, or Invalid if
-  // there is no such instruction, such as for a block scope.
-  auto current_scope_inst_id() const -> SemIR::InstId {
-    return current_scope().scope_inst_id;
-  }
-
-  auto GetCurrentScopeParseNode() const -> Parse::NodeId {
-    auto inst_id = current_scope_inst_id();
-    if (!inst_id.is_valid()) {
-      return Parse::NodeId::Invalid;
-    }
-    return sem_ir_->insts().GetParseNode(inst_id);
-  }
+  // Adds a note to a diagnostic explaining that an interface is not defined.
+  auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
+                              DiagnosticBuilder& builder) -> void;
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
-    auto inst_id = current_scope_inst_id();
-    if (!inst_id.is_valid()) {
-      return std::nullopt;
-    }
-    return insts().TryGetAs<InstT>(inst_id);
+    return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
-
-  // If there is no `returned var` in scope, sets the given instruction to be
-  // the current `returned var` and returns an invalid instruction ID. If there
-  // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
@@ -394,19 +325,25 @@ class Context {
     return args_type_info_stack_;
   }
 
-  auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
-    return return_scope_stack_;
-  }
-
-  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
-    return break_continue_stack_;
-  }
-
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
 
-  auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
+  auto scope_stack() -> ScopeStack& { return scope_stack_; }
+
+  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
+    return scope_stack().return_scope_stack();
+  }
+
+  auto break_continue_stack()
+      -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
+    return scope_stack().break_continue_stack();
+  }
+
+  auto import_ir_constant_values()
+      -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
+    return import_ir_constant_values_;
+  }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
@@ -428,6 +365,7 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto impls() -> ValueStore<SemIR::ImplId>& { return sem_ir().impls(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
   }
@@ -464,45 +402,6 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
-  // An entry in scope_stack_.
-  struct ScopeStackEntry {
-    // The sequential index of this scope entry within the file.
-    ScopeIndex index;
-
-    // The instruction associated with this entry, if any. This can be one of:
-    //
-    // - A `ClassDecl`, for a class definition scope.
-    // - A `FunctionDecl`, for the outermost scope in a function
-    //   definition.
-    // - Invalid, for any other scope.
-    SemIR::InstId scope_inst_id;
-
-    // The name scope associated with this entry, if any.
-    SemIR::NameScopeId scope_id;
-
-    // The previous state of lexical_lookup_has_load_error_, restored on pop.
-    bool prev_lexical_lookup_has_load_error;
-
-    // Names which are registered with lexical_lookup_, and will need to be
-    // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names;
-
-    // Whether a `returned var` was introduced in this scope, and needs to be
-    // unregistered when the scope ends.
-    bool has_returned_var = false;
-
-    // TODO: This likely needs to track things which need to be destructed.
-  };
-
-  // If the passed in instruction ID is a ImportRefUnused, resolves it for use.
-  // Called when name lookup intends to return an inst_id.
-  auto ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void;
-
-  auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
-  auto current_scope() const -> const ScopeStackEntry& {
-    return scope_stack_.back();
-  }
-
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
@@ -536,36 +435,14 @@ class Context {
   // for a type separate from the literal arguments.
   InstBlockStack args_type_info_stack_;
 
-  // A stack of scopes from which we can `return`.
-  llvm::SmallVector<ReturnScope> return_scope_stack_;
-
-  // A stack of `break` and `continue` targets.
-  llvm::SmallVector<BreakContinueScope> break_continue_stack_;
-
-  // A stack for scope context.
-  llvm::SmallVector<ScopeStackEntry> scope_stack_;
-
-  // Information about non-lexical scopes. This is a subset of the entries and
-  // the information in scope_stack_.
-  llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
-      non_lexical_scope_stack_;
-
-  // The index of the next scope that will be pushed onto scope_stack_. The
-  // first is always the package scope.
-  ScopeIndex next_scope_index_ = ScopeIndex::Package;
-
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
   // The stack of declarations that could have modifiers.
   DeclStateStack decl_state_stack_;
 
-  // Tracks lexical lookup results.
-  LexicalLookup lexical_lookup_;
-
-  // Whether lexical_lookup_ has load errors, updated whenever scope_stack_ is
-  // pushed or popped.
-  bool lexical_lookup_has_load_error_ = false;
+  // The stack of scopes we are currently within.
+  ScopeStack scope_stack_;
 
   // Cache of reverse mapping from type constants to types.
   //
@@ -579,6 +456,12 @@ class Context {
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Per-import constant values. These refer to the main IR and mainly serve as
+  // a lookup table for quick access.
+  //
+  // Inline 0 elements because it's expected to require heap allocation.
+  llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
 };
 
 }  // namespace Carbon::Check

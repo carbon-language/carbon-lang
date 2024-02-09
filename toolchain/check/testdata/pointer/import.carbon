@@ -2,11 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// When there are no more cases that can hit a TODO, remove this test. Until
-// then, update it whenever its target is implemented.
-//
 // AUTOUPDATE
-// CHECK:STDERR: implicit.impl.carbon: ERROR: Semantics TODO: `TODO: ResolveIfImportRefUnused for non-builtin type`.
 
 // --- implicit.carbon
 
@@ -56,7 +52,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_orig = %import_ref.1, .a_ref = %import_ref.2, .a = %a} [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+9, used
+// CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir1, inst+9, used
 // CHECK:STDOUT:   %.loc4: type = ptr_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref i32* = var a
 // CHECK:STDOUT:   %a: ref i32* = bind_name a, %a.var
@@ -64,8 +60,9 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref.2
-// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   %a_ref.ref: ref i32* = name_ref a_ref, file.%import_ref.2
+// CHECK:STDOUT:   %.loc4: i32* = bind_value %a_ref.ref
+// CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

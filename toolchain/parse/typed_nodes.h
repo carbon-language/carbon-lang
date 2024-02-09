@@ -858,11 +858,13 @@ struct ImplForall {
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs>;
+using DefaultSelfImplAs =
+    LeafNode<NodeKind::DefaultSelfImplAs, NodeCategory::ImplAs>;
 
 // `<type> as`
 struct TypeImplAs {
-  static constexpr auto Kind = NodeKind::TypeImplAs.Define();
+  static constexpr auto Kind =
+      NodeKind::TypeImplAs.Define(NodeCategory::ImplAs);
 
   std::optional<AnyExprId> type_expr;
 };
@@ -875,7 +877,7 @@ struct ImplSignature {
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ImplForallId> forall;
-  NodeIdOneOf<DefaultSelfImplAs, TypeImplAs> as;
+  AnyImplAsId as;
   AnyExprId interface;
 };
 

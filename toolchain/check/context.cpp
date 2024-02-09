@@ -12,8 +12,10 @@
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
@@ -38,7 +40,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
-      lexical_lookup_(sem_ir_->identifiers()) {
+      scope_stack_(sem_ir_->identifiers()) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.insert(
@@ -61,7 +63,7 @@ auto Context::VerifyOnFinish() -> void {
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
   // node_stack_ will still contain top-level entities.
-  CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
+  scope_stack_.VerifyOnFinish();
   CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
   CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
@@ -154,16 +156,32 @@ auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
-  CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                    "Class was forward declared here.");
-  CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                    "Class is incomplete within its definition.");
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
   if (class_info.definition_id.is_valid()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "Class is incomplete within its definition.");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "Class was forward declared here.");
     builder.Note(class_info.decl_id, ClassForwardDeclaredHere);
+  }
+}
+
+auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
+                                     DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
+  if (interface_info.definition_id.is_valid()) {
+    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+                      "Interface is currently being defined.");
+    builder.Note(interface_info.definition_id,
+                 InterfaceUndefinedWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "Interface was forward declared here.");
+    builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
   }
 }
 
@@ -206,58 +224,10 @@ auto Context::AddPackageImports(Parse::NodeId import_node,
 
 auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
     -> void {
-  if (current_scope().names.insert(name_id).second) {
-    // TODO: Reject if we previously performed a failed lookup for this name in
-    // this scope or a scope nested within it.
-    auto& lexical_results = lexical_lookup_.Get(name_id);
-    CARBON_CHECK(lexical_results.empty() ||
-                 lexical_results.back().scope_index < current_scope_index())
-        << "Failed to clean up after scope nested within the current scope";
-    lexical_results.push_back(
-        {.inst_id = target_id, .scope_index = current_scope_index()});
-  } else {
-    DiagnoseDuplicateName(target_id,
-                          lexical_lookup_.Get(name_id).back().inst_id);
+  if (auto existing = scope_stack().LookupOrAddName(name_id, target_id);
+      existing.is_valid()) {
+    DiagnoseDuplicateName(target_id, existing);
   }
-}
-
-auto Context::ResolveIfImportRefUnused(SemIR::InstId inst_id) -> void {
-  auto inst = insts().Get(inst_id);
-  auto unused_inst = inst.TryAs<SemIR::ImportRefUnused>();
-  if (!unused_inst) {
-    return;
-  }
-  const SemIR::File& import_ir = *import_irs().Get(unused_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
-
-  // If the type ID isn't a normal value, forward it directly.
-  if (!import_inst.type_id().is_valid()) {
-    ReplaceInstBeforeConstantUse(
-        inst_id,
-        {SemIR::ImportRefUsed{import_inst.type_id(), unused_inst->ir_id,
-                              unused_inst->inst_id}});
-    return;
-  }
-
-  auto import_type_inst_id = import_ir.types().GetInstId(import_inst.type_id());
-  CARBON_CHECK(import_type_inst_id.is_valid());
-
-  // If the type of the instruction is a builtin, use it directly.
-  auto type_id = SemIR::TypeId::Invalid;
-  if (import_type_inst_id.is_builtin()) {
-    type_id = GetBuiltinType(import_type_inst_id.builtin_kind());
-  } else {
-    // TODO: This section probably needs to TryEvalInst for the type. Similar to
-    // GetTypeImpl, but in the context of import_ir.
-    TODO(Parse::NodeId::Invalid,
-         "TODO: ResolveIfImportRefUnused for non-builtin type");
-    type_id = SemIR::TypeId::Error;
-  }
-
-  // TODO: Add breadcrumbs for lowering.
-  ReplaceInstBeforeConstantUse(
-      inst_id, {SemIR::ImportRefUsed{type_id, unused_inst->ir_id,
-                                     unused_inst->inst_id}});
 }
 
 auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
@@ -287,15 +257,11 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    auto& lexical_results = lexical_lookup_.Get(name_id);
-    if (!lexical_results.empty()) {
-      auto result = lexical_results.back();
-      if (result.scope_index == current_scope_index()) {
-        ResolveIfImportRefUnused(result.inst_id);
-        return result.inst_id;
-      }
+    auto result = scope_stack().LookupInCurrentScope(name_id);
+    if (result.is_valid()) {
+      TryResolveImportRefUnused(*this, result);
     }
-    return SemIR::InstId::Invalid;
+    return result;
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -316,20 +282,11 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
 
   // Find the results from enclosing lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
-  llvm::ArrayRef<LexicalLookup::Result> lexical_results =
-      lexical_lookup_.Get(name_id);
+  auto [lexical_result, non_lexical_scopes] =
+      scope_stack().LookupInEnclosingScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
-  for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scope_stack_)) {
-    // If the innermost lexical result is within this non-lexical scope, then
-    // it shadows all further non-lexical results and we're done.
-    if (!lexical_results.empty() &&
-        lexical_results.back().scope_index > index) {
-      auto inst_id = lexical_results.back().inst_id;
-      ResolveIfImportRefUnused(inst_id);
-      return inst_id;
-    }
-
+  for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
             LookupQualifiedName(parse_node, name_id, name_scope_id,
                                 /*required=*/false);
@@ -338,16 +295,13 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
     }
   }
 
-  if (!lexical_results.empty()) {
-    auto inst_id = lexical_results.back().inst_id;
-    ResolveIfImportRefUnused(inst_id);
-    return inst_id;
+  if (lexical_result.is_valid()) {
+    TryResolveImportRefUnused(*this, lexical_result);
+    return lexical_result;
   }
 
   // We didn't find anything at all.
-  if (!lexical_lookup_has_load_error_) {
-    DiagnoseNameNotFound(parse_node, name_id);
-  }
+  DiagnoseNameNotFound(parse_node, name_id);
   return SemIR::InstId::BuiltinError;
 }
 
@@ -355,7 +309,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfImportRefUnused(it->second);
+    TryResolveImportRefUnused(*this, it->second);
     return it->second;
   }
   return SemIR::InstId::Invalid;
@@ -408,76 +362,6 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
   }
 
   return result_id;
-}
-
-auto Context::PushScope(SemIR::InstId scope_inst_id,
-                        SemIR::NameScopeId scope_id,
-                        bool lexical_lookup_has_load_error) -> void {
-  scope_stack_.push_back(
-      {.index = next_scope_index_,
-       .scope_inst_id = scope_inst_id,
-       .scope_id = scope_id,
-       .prev_lexical_lookup_has_load_error = lexical_lookup_has_load_error_});
-  if (scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
-  }
-
-  lexical_lookup_has_load_error_ |= lexical_lookup_has_load_error;
-
-  // TODO: Handle this case more gracefully.
-  CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
-      << "Ran out of scopes";
-  ++next_scope_index_.index;
-}
-
-auto Context::PopScope() -> void {
-  auto scope = scope_stack_.pop_back_val();
-
-  lexical_lookup_has_load_error_ = scope.prev_lexical_lookup_has_load_error;
-
-  for (const auto& str_id : scope.names) {
-    auto& lexical_results = lexical_lookup_.Get(str_id);
-    CARBON_CHECK(lexical_results.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
-    lexical_results.pop_back();
-  }
-
-  if (scope.scope_id.is_valid()) {
-    CARBON_CHECK(non_lexical_scope_stack_.back().first == scope.index);
-    non_lexical_scope_stack_.pop_back();
-  }
-
-  if (scope.has_returned_var) {
-    CARBON_CHECK(!return_scope_stack_.empty());
-    CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
-    return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
-  }
-}
-
-auto Context::PopToScope(ScopeIndex index) -> void {
-  while (current_scope_index() > index) {
-    PopScope();
-  }
-  CARBON_CHECK(current_scope_index() == index)
-      << "Scope index " << index << " does not enclose the current scope "
-      << current_scope_index();
-}
-
-auto Context::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  CARBON_CHECK(!return_scope_stack_.empty()) << "`returned var` in no function";
-  auto& returned_var = return_scope_stack_.back().returned_var;
-  if (returned_var.is_valid()) {
-    return returned_var;
-  }
-
-  returned_var = inst_id;
-  CARBON_CHECK(!current_scope().has_returned_var)
-      << "Scope has returned var but none is set";
-  if (inst_id.is_valid()) {
-    current_scope().has_returned_var = true;
-  }
-  return SemIR::InstId::Invalid;
 }
 
 template <typename BranchNode, typename... Args>
@@ -979,6 +863,7 @@ class TypeCompleter {
       case SemIR::Deref::Kind:
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
+      case SemIR::ImplDecl::Kind:
       case SemIR::Import::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
@@ -1085,7 +970,8 @@ auto Context::TryToCompleteType(
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
-  CARBON_CHECK(constant_id.is_constant()) << "Canonicalizing non-constant type";
+  CARBON_CHECK(constant_id.is_constant())
+      << "Canonicalizing non-constant type: " << constant_id;
 
   auto [it, added] = type_ids_for_type_constants_.insert(
       {constant_id, SemIR::TypeId::Invalid});
