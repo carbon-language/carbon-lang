@@ -180,21 +180,14 @@ concept HasDiagnosticType =
     requires { std::type_identity<typename Arg::DiagnosticType>(); };
 
 // The default implementation with no translation.
-template <typename Arg, typename X = int>
-struct DiagnosticTypeForArg {
-  using StorageType = Arg;
-  static constexpr DiagnosticTypeTranslation Translation =
-      DiagnosticTypeTranslation::None;
-};
+template <typename Arg, typename /*Unused*/ = void>
+struct DiagnosticTypeForArg
+    : public DiagnosticTypeInfo<Arg, DiagnosticTypeTranslation::None> {};
 
 // Exposes a custom translation for an argument type.
 template <typename Arg>
   requires HasDiagnosticType<Arg>
-struct DiagnosticTypeForArg<Arg> {
-  using StorageType = Arg::DiagnosticType::StorageType;
-  static constexpr DiagnosticTypeTranslation Translation =
-      Arg::DiagnosticType::Translation;
-};
+struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
