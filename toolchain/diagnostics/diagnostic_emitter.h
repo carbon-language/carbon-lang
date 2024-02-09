@@ -141,6 +141,7 @@ class DiagnosticConsumer {
 // diagnostic.
 enum class DiagnosticTypeTranslation : int8_t {
   None,
+  NameId,
   TypeId,
 };
 

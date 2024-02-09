@@ -109,12 +109,11 @@ auto HandleInterfaceDefinitionStart(
   // Track that this declaration is the definition.
   if (interface_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(InterfaceRedefinition, Error,
-                      "Redefinition of interface {0}.", std::string);
+                      "Redefinition of interface {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, InterfaceRedefinition,
-               context.names().GetFormatted(interface_info.name_id).str())
+        .Build(parse_node, InterfaceRedefinition, interface_info.name_id)
         .Note(interface_info.definition_id, InterfacePreviousDefinition)
         .Emit();
   } else {

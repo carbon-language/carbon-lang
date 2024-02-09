@@ -150,8 +150,9 @@ auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
 
 auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
                                    SemIR::NameId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.", std::string);
-  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id).str());
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
+                    SemIR::NameId);
+  emitter_->Emit(parse_node, NameNotFound, name_id);
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -344,9 +345,8 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
-          std::string);
-      emitter_->Emit(parse_node, NameAmbiguousDueToExtend,
-                     names().GetFormatted(name_id).str());
+          SemIR::NameId);
+      emitter_->Emit(parse_node, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return SemIR::InstId::BuiltinError;
     }

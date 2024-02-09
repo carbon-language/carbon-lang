@@ -283,6 +283,10 @@ constexpr BoolValue BoolValue::True = BoolValue(1);
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
 struct NameId : public IdBase, public Printable<NameId> {
+  // names().GetFormatted() is used for diagnostics.
+  using DiagnosticType =
+      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::NameId>;
+
   // An explicitly invalid ID.
   static const NameId Invalid;
   // The name of `self`.

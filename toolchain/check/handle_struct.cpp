@@ -75,12 +75,12 @@ static auto DiagnoseDuplicateNames(Context& context,
     if (!added) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Duplicated field name `{1}` in {0}.", std::string,
-                        std::string);
+                        SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
       context.emitter()
           .Build(field_inst_id, StructNameDuplicate, construct.str(),
-                 sem_ir.names().GetFormatted(field_inst.name_id).str())
+                 field_inst.name_id)
           .Note(it->second, StructNamePrevious)
           .Emit();
       return true;

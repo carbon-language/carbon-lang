@@ -129,12 +129,11 @@ auto HandleClassDefinitionStart(Context& context,
   // Track that this declaration is the definition.
   if (class_info.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(ClassRedefinition, Error, "Redefinition of class {0}.",
-                      std::string);
+                      SemIR::NameId);
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, ClassRedefinition,
-               context.names().GetFormatted(class_info.name_id).str())
+        .Build(parse_node, ClassRedefinition, class_info.name_id)
         .Note(class_info.definition_id, ClassPreviousDefinition)
         .Emit();
   } else {
