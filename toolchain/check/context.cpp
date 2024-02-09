@@ -712,17 +712,9 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
-                                   SemIR::ImportRefUsed import_ref) const
-      -> SemIR::ValueRepr {
-    CARBON_CHECK(import_ref.inst_id.is_builtin())
-        << "TODO: Handle non-builtin ImportRefUsed cases, such as functions, "
-           "classes, and interfaces";
-
-    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
-    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
-
-    switch (import_inst.As<SemIR::Builtin>().builtin_kind) {
+  auto BuildBuiltinValueRepr(SemIR::TypeId type_id,
+                             SemIR::Builtin builtin) const -> SemIR::ValueRepr {
+    switch (builtin.builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
@@ -741,6 +733,16 @@ class TypeCompleter {
         return MakePointerValueRepr(type_id);
     }
     llvm_unreachable("All builtin kinds were handled above");
+  }
+
+  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
+                                   SemIR::ImportRefUsed import_ref) const
+      -> SemIR::ValueRepr {
+    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
+    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
+    CARBON_CHECK(import_inst.kind() != SemIR::InstKind::ImportRefUsed)
+        << "If ImportRefUsed can point at another, this would be recursive.";
+    return BuildValueRepr(type_id, import_inst);
   }
 
   auto BuildStructOrTupleValueRepr(std::size_t num_elements,
@@ -928,7 +930,7 @@ class TypeCompleter {
         return MakeEmptyValueRepr();
 
       case SemIR::Builtin::Kind:
-        CARBON_FATAL() << "Builtins should be named as ImportRefUsed";
+        return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
 
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:

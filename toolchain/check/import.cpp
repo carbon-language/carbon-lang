@@ -21,9 +21,10 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
                           SemIR::Inst import_inst)
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   switch (import_inst.kind()) {
-    case SemIR::InstKind::BindName: {
+    case SemIR::InstKind::BindName:
+    case SemIR::InstKind::BindSymbolicName: {
       const auto& bind_name = import_sem_ir.bind_names().Get(
-          import_inst.As<SemIR::BindName>().bind_name_id);
+          import_inst.As<SemIR::AnyBindName>().bind_name_id);
       return {bind_name.name_id, bind_name.enclosing_scope_id};
     }
 

@@ -55,6 +55,23 @@ class ImportRefResolver {
     return constant_id;
   }
 
+  // Wraps constant evaluation with logic to handle types.
+  auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId {
+    if (!import_type_id.is_valid()) {
+      return import_type_id;
+    }
+
+    auto import_type_inst_id = import_ir_.types().GetInstId(import_type_id);
+    CARBON_CHECK(import_type_inst_id.is_valid());
+
+    if (import_type_inst_id.is_builtin()) {
+      // Builtins don't require constant resolution; we can use them directly.
+      return context_.GetBuiltinType(import_type_inst_id.builtin_kind());
+    } else {
+      return context_.GetTypeIdForTypeConstant(Resolve(import_type_inst_id));
+    }
+  }
+
  private:
   // Returns the ConstantId for an instruction, or adds it to the stack and
   // returns Invalid if the ConstantId is not ready.
@@ -103,6 +120,21 @@ class ImportRefResolver {
 
       case SemIR::InstKind::TupleType:
         return TryResolveTypedInst(inst.As<SemIR::TupleType>());
+
+      case SemIR::InstKind::BindName:
+      case SemIR::InstKind::BindSymbolicName:
+        // Can use TryEvalInst because the resulting constant doesn't really use
+        // `inst`.
+        return TryEvalInst(context_, inst_id, inst);
+
+      case SemIR::InstKind::ClassDecl:
+      case SemIR::InstKind::InterfaceDecl:
+        // TODO: Not implemented.
+        return SemIR::ConstantId::Error;
+
+      case SemIR::InstKind::FunctionDecl:
+        // TODO: Allowed to work for testing, but not really implemented.
+        return SemIR::ConstantId::NotConstant;
 
       default:
         context_.TODO(
@@ -219,57 +251,36 @@ class ImportRefResolver {
 auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
     -> void {
   auto inst = context.insts().Get(inst_id);
-  auto unused_inst = inst.TryAs<SemIR::ImportRefUnused>();
-  if (!unused_inst) {
+  auto import_ref = inst.TryAs<SemIR::ImportRefUnused>();
+  if (!import_ref) {
     return;
   }
 
-  const SemIR::File& import_ir = *context.import_irs().Get(unused_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(unused_inst->inst_id);
+  const SemIR::File& import_ir = *context.import_irs().Get(import_ref->ir_id);
+  auto& import_ir_constant_values =
+      context.import_ir_constant_values()[import_ref->ir_id.index];
+  auto import_inst = import_ir.insts().Get(import_ref->inst_id);
 
-  // TODO: Types need to be specifically addressed here to prevent crashes in
-  // constant evaluation while support is incomplete. Functions are also
-  // incomplete, but are allowed to fail differently because they aren't a type.
-  // The partial function support is useful for some namespace validation.
-  if (import_inst.Is<SemIR::ClassDecl>() ||
-      import_inst.Is<SemIR::InterfaceDecl>()) {
-    context.TODO(
-        Parse::NodeId::Invalid,
-        llvm::formatv("TryResolveImportRefUnused on {0}", import_inst.kind())
-            .str());
-    context.ReplaceInstBeforeConstantUse(
-        inst_id, {SemIR::ImportRefUsed{SemIR::TypeId::Error, unused_inst->ir_id,
-                                       unused_inst->inst_id}});
-    return;
+  ImportRefResolver resolver(context, import_ir, import_ir_constant_values);
+  auto type_id = resolver.ResolveType(import_inst.type_id());
+  auto constant_id = resolver.Resolve(import_ref->inst_id);
+
+  // TODO: Once ClassDecl/InterfaceDecl are supported (no longer return Error),
+  // remove this.
+  if (constant_id == SemIR::ConstantId::Error) {
+    type_id = SemIR::TypeId::Error;
   }
 
-  // If the type ID isn't a normal value, forward it directly.
-  if (!import_inst.type_id().is_valid()) {
-    context.ReplaceInstBeforeConstantUse(
-        inst_id,
-        {SemIR::ImportRefUsed{import_inst.type_id(), unused_inst->ir_id,
-                              unused_inst->inst_id}});
-    return;
-  }
+  // Replace the ImportRefUnused instruction with an ImportRefUsed. This doesn't
+  // use ReplaceInstBeforeConstantUse because it would trigger TryEvalInst, and
+  // we're instead doing constant evaluation here in order to minimize recursion
+  // risks.
+  context.sem_ir().insts().Set(
+      inst_id,
+      SemIR::ImportRefUsed{type_id, import_ref->ir_id, import_ref->inst_id});
 
-  auto import_type_inst_id = import_ir.types().GetInstId(import_inst.type_id());
-  CARBON_CHECK(import_type_inst_id.is_valid());
-
-  auto type_id = SemIR::TypeId::Invalid;
-  if (import_type_inst_id.is_builtin()) {
-    // Builtins don't require constant resolution; we can use them directly.
-    type_id = context.GetBuiltinType(import_type_inst_id.builtin_kind());
-  } else {
-    ImportRefResolver resolver(
-        context, import_ir,
-        context.import_ir_constant_values()[unused_inst->ir_id.index]);
-    type_id =
-        context.GetTypeIdForTypeConstant(resolver.Resolve(import_type_inst_id));
-  }
-  // TODO: Add breadcrumbs for lowering.
-  context.ReplaceInstBeforeConstantUse(
-      inst_id, {SemIR::ImportRefUsed{type_id, unused_inst->ir_id,
-                                     unused_inst->inst_id}});
+  // Store the constant for both the ImportRefUsed and imported instruction.
+  context.constant_values().Set(inst_id, constant_id);
 }
 
 }  // namespace Carbon::Check
