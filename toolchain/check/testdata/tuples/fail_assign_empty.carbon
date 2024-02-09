@@ -23,7 +23,12 @@ var x: (i32,) = ();
 // CHECK:STDOUT:   %.loc10_13.2: type = converted %.loc10_13.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
 // CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_18: () = tuple_literal ()
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: () = tuple_literal ()
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

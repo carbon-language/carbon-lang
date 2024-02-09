@@ -19,7 +19,12 @@ var x: type = 42;
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x} [template]
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42 [template = constants.%.1]
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -116,6 +116,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
       }
+      if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+        context.inst_block_stack().PushGlobalInit();
+      }
       break;
     }
 

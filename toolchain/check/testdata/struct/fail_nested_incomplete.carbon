@@ -32,13 +32,18 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %s.var: ref <error> = var s
 // CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
 // CHECK:STDOUT:   %Incomplete.ref.loc17: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc17_18: type = ptr_type Incomplete [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17: type = ptr_type Incomplete [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var
-// CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, %s
-// CHECK:STDOUT:   %.loc17_22: <error> = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   assign %p.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, file.%s
+// CHECK:STDOUT:   %.loc17: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%p.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

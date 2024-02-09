@@ -502,6 +502,28 @@ auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId {
   return ParamOrArgPop();
 }
 
+auto Context::FinalizeGlobalInit() -> void {
+  inst_block_stack().PushGlobalInit();
+  if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
+    AddInst({Parse::NodeId::Invalid, SemIR::Return{}});
+    // Pop the GlobalInit block here to finalize it.
+    inst_block_stack().Pop();
+
+    // __global_init is only added if there are initialization instructions.
+    auto name_id = sem_ir().identifiers().Add("__global_init");
+    sem_ir().functions().Add(
+        {.name_id = SemIR::NameId::ForIdentifier(name_id),
+         .enclosing_scope_id = SemIR::NameScopeId::Package,
+         .implicit_param_refs_id = SemIR::InstBlockId::Empty,
+         .param_refs_id = SemIR::InstBlockId::Empty,
+         .return_type_id = SemIR::TypeId::Invalid,
+         .return_slot_id = SemIR::InstId::Invalid,
+         .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
+  } else {
+    inst_block_stack().PopGlobalInit();
+  }
+}
+
 namespace {
 // Worklist-based type completion mechanism.
 //

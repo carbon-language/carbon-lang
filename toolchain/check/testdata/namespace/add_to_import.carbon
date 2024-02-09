@@ -38,15 +38,20 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.2 [template = %.2]
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
-// CHECK:STDOUT:   %.loc6: init i32 = call %A.ref()
-// CHECK:STDOUT:   assign %a.var, %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   return %.loc4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc6: init i32 = call %A.ref()
+// CHECK:STDOUT:   assign file.%a.var, %.loc6
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

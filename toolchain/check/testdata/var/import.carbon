@@ -26,8 +26,13 @@ var a: i32 = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref} [template]
 // CHECK:STDOUT:   %a_ref.var: ref i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref i32 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %a_ref.var, %.loc4
+// CHECK:STDOUT:   assign file.%a_ref.var, %.loc4
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -37,8 +42,13 @@ var a: i32 = a_ref;
 // CHECK:STDOUT:   %import_ref: ref i32 = import_ref ir1, inst+2, used
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref i32 = name_ref a_ref, %import_ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref i32 = name_ref a_ref, file.%import_ref
 // CHECK:STDOUT:   %.loc4: i32 = bind_value %a_ref.ref
-// CHECK:STDOUT:   assign %a.var, %.loc4
+// CHECK:STDOUT:   assign file.%a.var, %.loc4
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

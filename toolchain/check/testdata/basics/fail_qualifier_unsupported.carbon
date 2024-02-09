@@ -18,7 +18,12 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, %x
-// CHECK:STDOUT:   assign %y.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
+// CHECK:STDOUT:   assign file.%y.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

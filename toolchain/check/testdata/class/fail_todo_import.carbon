@@ -67,24 +67,13 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, constants.%Empty [template = constants.%Empty]
 // CHECK:STDOUT:   %a_ref.var: ref Empty = var a_ref
 // CHECK:STDOUT:   %a_ref: ref Empty = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %.loc13_21.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc13_21.2: init Empty = class_init (), %a_ref.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_21.3: init Empty = converted %.loc13_21.1, %.loc13_21.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign %a_ref.var, %.loc13_21.3
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:   %b_ref.var: ref ForwardDeclared = var b_ref
 // CHECK:STDOUT:   %b_ref: ref ForwardDeclared = bind_name b_ref, %b_ref.var
-// CHECK:STDOUT:   %.loc14_31.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc14_31.2: init ForwardDeclared = class_init (), %b_ref.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_31.3: init ForwardDeclared = converted %.loc14_31.1, %.loc14_31.2 [template = constants.%.5]
-// CHECK:STDOUT:   assign %b_ref.var, %.loc14_31.3
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc15: type = name_ref ForwardDeclared, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
-// CHECK:STDOUT:   %.loc15_27: type = ptr_type ForwardDeclared [template = constants.%.6]
+// CHECK:STDOUT:   %.loc15: type = ptr_type ForwardDeclared [template = constants.%.6]
 // CHECK:STDOUT:   %c_ref.var: ref ForwardDeclared* = var c_ref
 // CHECK:STDOUT:   %c_ref: ref ForwardDeclared* = bind_name c_ref, %c_ref.var
-// CHECK:STDOUT:   %b_ref.ref: ref ForwardDeclared = name_ref b_ref, %b_ref
-// CHECK:STDOUT:   %.loc15_31: ForwardDeclared* = addr_of %b_ref.ref
-// CHECK:STDOUT:   assign %c_ref.var, %.loc15_31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
@@ -100,6 +89,22 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_21.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc13_21.2: init Empty = class_init (), file.%a_ref.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_21.3: init Empty = converted %.loc13_21.1, %.loc13_21.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%a_ref.var, %.loc13_21.3
+// CHECK:STDOUT:   %.loc14_31.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc14_31.2: init ForwardDeclared = class_init (), file.%b_ref.var [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_31.3: init ForwardDeclared = converted %.loc14_31.1, %.loc14_31.2 [template = constants.%.5]
+// CHECK:STDOUT:   assign file.%b_ref.var, %.loc14_31.3
+// CHECK:STDOUT:   %b_ref.ref: ref ForwardDeclared = name_ref b_ref, file.%b_ref
+// CHECK:STDOUT:   %.loc15: ForwardDeclared* = addr_of %b_ref.ref
+// CHECK:STDOUT:   assign file.%c_ref.var, %.loc15
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -118,25 +123,17 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT:   %Empty.ref: <error> = name_ref Empty, %import_ref.1
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %import_ref.3
-// CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc13: <error> = name_ref ForwardDeclared, %import_ref.2
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
-// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, %import_ref.4
-// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc14: <error> = name_ref ForwardDeclared, %import_ref.2
 // CHECK:STDOUT:   %.loc14: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
-// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, %import_ref.5
-// CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc18: <error> = name_ref ForwardDeclared, %import_ref.2
 // CHECK:STDOUT:   %.loc18: <error> = tuple_literal (%ForwardDeclared.ref.loc18)
 // CHECK:STDOUT:   %d.var: ref <error> = var d
 // CHECK:STDOUT:   %d: ref <error> = bind_name d, %d.var
-// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, <error> [template = <error>]
-// CHECK:STDOUT:   assign %d.var, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -152,6 +149,19 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT:   %.loc8: {} = struct_literal ()
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   %y.ref: ref <error> = name_ref y, %y
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref.3
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, file.%import_ref.4
+// CHECK:STDOUT:   assign file.%b.var, <error>
+// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, file.%import_ref.5
+// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, <error> [template = <error>]
+// CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

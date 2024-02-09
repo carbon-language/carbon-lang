@@ -26,8 +26,13 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}} [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref {.a: {}} = var x
 // CHECK:STDOUT:   %x: ref {.a: {}} = bind_name x, %x.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_26: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_27: {.b: {}} = struct_literal (%.loc10_26)
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

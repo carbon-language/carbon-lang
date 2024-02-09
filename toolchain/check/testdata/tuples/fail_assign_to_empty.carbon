@@ -22,7 +22,12 @@ var x: () = (66);
 // CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: ref () = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66 [template = constants.%.2]
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: i32 = int_literal 66 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

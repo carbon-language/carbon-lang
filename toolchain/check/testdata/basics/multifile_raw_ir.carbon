@@ -26,7 +26,7 @@ fn B() {}
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block2]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -43,9 +43,10 @@ fn B() {}
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
-// CHECK:STDOUT:     block2:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...
@@ -57,7 +58,7 @@ fn B() {}
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block2]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: empty, body: [block3]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
@@ -74,9 +75,10 @@ fn B() {}
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
-// CHECK:STDOUT:     block2:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
+// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
 // CHECK:STDOUT: ...

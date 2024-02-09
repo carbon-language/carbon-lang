@@ -28,14 +28,19 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_orig = %a_orig, .a_ref = %a_ref} [template]
 // CHECK:STDOUT:   %a_orig.var: ref i32 = var a_orig
 // CHECK:STDOUT:   %a_orig: ref i32 = bind_name a_orig, %a_orig.var
-// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %a_orig.var, %.loc4
-// CHECK:STDOUT:   %.loc5_15: type = ptr_type i32 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: type = ptr_type i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a_ref.var: ref i32* = var a_ref
 // CHECK:STDOUT:   %a_ref: ref i32* = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %a_orig.ref: ref i32 = name_ref a_orig, %a_orig
-// CHECK:STDOUT:   %.loc5_19: i32* = addr_of %a_orig.ref
-// CHECK:STDOUT:   assign %a_ref.var, %.loc5_19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
+// CHECK:STDOUT:   %a_orig.ref: ref i32 = name_ref a_orig, file.%a_orig
+// CHECK:STDOUT:   %.loc5: i32* = addr_of %a_orig.ref
+// CHECK:STDOUT:   assign file.%a_ref.var, %.loc5
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -48,11 +53,16 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace {.a_orig = %import_ref.1, .a_ref = %import_ref.2, .a = %a} [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir1, inst+9, used
-// CHECK:STDOUT:   %.loc4_11: type = ptr_type i32 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4: type = ptr_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref i32* = var a
 // CHECK:STDOUT:   %a: ref i32* = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref i32* = name_ref a_ref, %import_ref.2
-// CHECK:STDOUT:   %.loc4_15: i32* = bind_value %a_ref.ref
-// CHECK:STDOUT:   assign %a.var, %.loc4_15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref i32* = name_ref a_ref, file.%import_ref.2
+// CHECK:STDOUT:   %.loc4: i32* = bind_value %a_ref.ref
+// CHECK:STDOUT:   assign file.%a.var, %.loc4
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

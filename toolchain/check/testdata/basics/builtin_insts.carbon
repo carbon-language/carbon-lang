@@ -43,6 +43,7 @@
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}
-// CHECK:STDOUT:     block2:
+// CHECK:STDOUT:     global_init:     {}
+// CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...

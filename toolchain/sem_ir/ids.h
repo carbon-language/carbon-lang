@@ -379,6 +379,11 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   // fully checked; intermediate state is in the Check::Context.
   static const InstBlockId Exports;
 
+  // Global declaration initialization instructions. Empty if none are present.
+  // Otherwise, __global_init function will be generated and this block will
+  // be inserted into it.
+  static const InstBlockId GlobalInit;
+
   // An explicitly invalid ID.
   static const InstBlockId Invalid;
 
@@ -393,6 +398,8 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
       out << "empty";
     } else if (*this == Exports) {
       out << "exports";
+    } else if (*this == GlobalInit) {
+      out << "global_init";
     } else {
       out << "block";
       IdBase::Print(out);
@@ -404,6 +411,7 @@ constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
+constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {

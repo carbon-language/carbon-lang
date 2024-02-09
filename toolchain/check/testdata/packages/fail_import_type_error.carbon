@@ -67,19 +67,24 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+16, used
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, %import_ref.1
-// CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, %import_ref.2
-// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, %import_ref.3
-// CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %d.var: ref i32 = var d
 // CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
-// CHECK:STDOUT:   %d_ref.ref: ref <error> = name_ref d_ref, %import_ref.4
-// CHECK:STDOUT:   assign %d.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a_ref.ref: ref <error> = name_ref a_ref, file.%import_ref.1
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   %b_ref.ref: ref <error> = name_ref b_ref, file.%import_ref.2
+// CHECK:STDOUT:   assign file.%b.var, <error>
+// CHECK:STDOUT:   %c_ref.ref: ref <error> = name_ref c_ref, file.%import_ref.3
+// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %d_ref.ref: ref <error> = name_ref d_ref, file.%import_ref.4
+// CHECK:STDOUT:   assign file.%d.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

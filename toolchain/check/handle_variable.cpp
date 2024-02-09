@@ -95,6 +95,9 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   }
 
   context.decl_state_stack().Pop(DeclState::Var);
+  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+    context.inst_block_stack().PopGlobalInit();
+  }
 
   return true;
 }

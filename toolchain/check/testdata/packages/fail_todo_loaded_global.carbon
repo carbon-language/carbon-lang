@@ -68,15 +68,20 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, %import_ref
-// CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %.loc12_17.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_17.2: type = converted %.loc12_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref () = var package_a
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, file.%import_ref
+// CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %A.ref.loc12: <function> = name_ref A, %import_ref
-// CHECK:STDOUT:   assign %package_a.var, <error>
+// CHECK:STDOUT:   %A.ref.loc12: <function> = name_ref A, file.%import_ref
+// CHECK:STDOUT:   assign file.%package_a.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- same_package.carbon
@@ -101,14 +106,19 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %B.ref.loc9: <function> = name_ref B, %import_ref
-// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %.loc14_17.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref () = var package_b
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %B.ref.loc9: <function> = name_ref B, file.%import_ref
+// CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %B.ref.loc14: <function> = name_ref B, %import_ref
-// CHECK:STDOUT:   assign %package_b.var, <error>
+// CHECK:STDOUT:   %B.ref.loc14: <function> = name_ref B, file.%import_ref
+// CHECK:STDOUT:   assign file.%package_b.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

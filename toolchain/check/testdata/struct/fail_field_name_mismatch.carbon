@@ -24,16 +24,21 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
-// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_27: {.b: i32} = struct_literal (%.loc10_26)
-// CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.loc15: type = struct_type {.b: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %y.var: ref {.b: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32} = bind_name y, %y.var
-// CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, %x
-// CHECK:STDOUT:   assign %y.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_27: {.b: i32} = struct_literal (%.loc10_26)
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   %x.ref: ref {.a: i32} = name_ref x, file.%x
+// CHECK:STDOUT:   assign file.%y.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
