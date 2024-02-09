@@ -9,6 +9,7 @@
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 
 namespace Carbon::SemIR {
@@ -416,6 +417,9 @@ constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 // The ID of a type.
 struct TypeId : public IdBase, public Printable<TypeId> {
   using ValueType = TypeInfo;
+  // StringifyType() is used for diagnostics.
+  using DiagnosticType =
+      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::TypeId>;
 
   // The builtin TypeType.
   static const TypeId TypeType;

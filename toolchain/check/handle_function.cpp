@@ -78,10 +78,11 @@ static auto BuildFunctionDecl(Context& context,
 
     return_type_id = context.AsCompleteType(return_type_id, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "Function returns incomplete type `{0}`.", std::string);
-      return context.emitter().Build(
-          return_node_and_id->first, IncompleteTypeInFunctionReturnType,
-          context.sem_ir().StringifyType(return_type_id));
+                        "Function returns incomplete type `{0}`.",
+                        SemIR::TypeId);
+      return context.emitter().Build(return_node_and_id->first,
+                                     IncompleteTypeInFunctionReturnType,
+                                     return_type_id);
     });
 
     if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
@@ -241,10 +242,9 @@ auto HandleFunctionDefinitionStart(Context& context,
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "Parameter has incomplete type `{0}` in function definition.",
-          std::string);
-      return context.emitter().Build(
-          param_id, IncompleteTypeInFunctionParam,
-          context.sem_ir().StringifyType(param.type_id()));
+          SemIR::TypeId);
+      return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
+                                     param.type_id());
     });
   }
 

@@ -35,14 +35,13 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
 }
 
 // Produces a note describing the return type of the given function.
-static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
+static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
-                    "Return type of function is `{0}`.", std::string);
+                    "Return type of function is `{0}`.", SemIR::TypeId);
   // TODO: This is using the location of the `fn` keyword. Find the location of
   // the return type.
-  diag.Note(function.decl_id, ReturnTypeHereNote,
-            context.sem_ir().StringifyType(function.return_type_id));
+  diag.Note(function.decl_id, ReturnTypeHereNote, function.return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -73,11 +72,10 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
                       "Type `{0}` of `returned var` does not match "
                       "return type of enclosing function.",
-                      std::string);
+                      SemIR::TypeId);
     auto diag =
-        context.emitter().Build(type_node, ReturnedVarWrongType,
-                                context.sem_ir().StringifyType(type_id));
-    NoteReturnType(context, diag, function);
+        context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
+    NoteReturnType(diag, function);
     diag.Emit();
     return SemIR::InstId::BuiltinError;
   }
@@ -110,7 +108,7 @@ auto BuildReturnWithNoExpr(Context& context,
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "Missing return value.");
     auto diag = context.emitter().Build(parse_node, ReturnStatementMissingExpr);
-    NoteReturnType(context, diag, function);
+    NoteReturnType(diag, function);
     diag.Emit();
   }
 

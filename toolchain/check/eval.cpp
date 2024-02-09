@@ -257,11 +257,10 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
           context.ints().Get(bound->int_id).ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
                           "Array index `{0}` is past the end of type `{1}`.",
-                          llvm::APSInt, std::string);
-        context.emitter().Emit(
-            index_inst.index_id, ArrayIndexOutOfBounds,
-            llvm::APSInt(index_val, /*isUnsigned=*/true),
-            context.sem_ir().StringifyType(aggregate_type_id));
+                          llvm::APSInt, SemIR::TypeId);
+        context.emitter().Emit(index_inst.index_id, ArrayIndexOutOfBounds,
+                               llvm::APSInt(index_val, /*isUnsigned=*/true),
+                               aggregate_type_id);
         return SemIR::ConstantId::Error;
       }
     }
