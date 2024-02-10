@@ -17,9 +17,9 @@ fn f() -> i32 {
     // CHECK:STDERR:     ^~~~~~~
     default => { return 3; }
     // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+3]]:5: ERROR: Unreachable case; `case` occurs after the `default`
-    // CHECK:STDERR:     case (a: i32) if (a==4) => { return 4; }
+    // CHECK:STDERR:     case (a: i32) if (a == 4) => { return 4; }
     // CHECK:STDERR:     ^~~~
-    case (a: i32) if (a==4) => { return 4; }
+    case (a: i32) if (a == 4) => { return 4; }
   }
   return 0;
 }

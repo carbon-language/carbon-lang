@@ -6,10 +6,9 @@
 
 namespace Carbon::Parse {
 
-namespace {
-auto HandleStatementsBlockStart(Context& context, State finish,
-                                NodeKind equal_greater, NodeKind starter,
-                                NodeKind complete) -> void {
+static auto HandleStatementsBlockStart(Context& context, State finish,
+                                       NodeKind equal_greater, NodeKind starter,
+                                       NodeKind complete) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::EqualGreater)) {
@@ -20,11 +19,8 @@ auto HandleStatementsBlockStart(Context& context, State finish,
     }
 
     context.AddLeafNode(equal_greater, *context.position(), true);
-
     context.AddNode(starter, *context.position(), state.subtree_start, true);
-
     context.AddNode(complete, *context.position(), state.subtree_start, true);
-
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -39,9 +35,7 @@ auto HandleStatementsBlockStart(Context& context, State finish,
     }
 
     context.AddNode(starter, *context.position(), state.subtree_start, true);
-
     context.AddNode(complete, *context.position(), state.subtree_start, true);
-
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -51,7 +45,16 @@ auto HandleStatementsBlockStart(Context& context, State finish,
   context.PushState(state, finish);
   context.PushState(State::StatementScopeLoop);
 }
-}  // namespace
+
+static auto EmitUnexpectedTokenAndRecover(Context& context) -> void {
+  CARBON_DIAGNOSTIC(UnexpectedTokenInMatchCasesBlock, Error,
+                    "Unexpected `{0}`; expected `case`, `default` or `}`.",
+                    Lex::TokenKind);
+  context.emitter().Emit(*context.position(), UnexpectedTokenInMatchCasesBlock,
+                         context.PositionKind());
+  context.ReturnErrorOnState();
+  context.SkipPastLikelyEnd(*context.position());
+}
 
 auto HandleMatchIntroducer(Context& context) -> void {
   auto state = context.PopState();
@@ -75,10 +78,8 @@ auto HandleMatchConditionFinish(Context& context) -> void {
 
     context.AddNode(NodeKind::MatchStatementStart, *context.position(),
                     state.subtree_start, true);
-
     context.AddNode(NodeKind::MatchStatement, *context.position(),
                     state.subtree_start, true);
-
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
@@ -106,29 +107,29 @@ auto HandleMatchCaseLoop(Context& context) -> void {
   } else if (context.PositionIs(Lex::TokenKind::Default)) {
     context.PushState(State::MatchCaseLoopAfterDefault);
     context.PushState(State::MatchDefaultIntroducer);
+  } else if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+    EmitUnexpectedTokenAndRecover(context);
+    context.PushState(State::MatchCaseLoop);
   }
 }
 
 auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
   context.PopAndDiscardState();
 
-  std::optional<std::string> kind;
-  if (context.PositionIs(Lex::TokenKind::Case)) {
-    kind = "case";
-  } else if (context.PositionIs(Lex::TokenKind::Default)) {
-    kind = "default";
-  }
-  if (kind) {
-    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error, "Unreachable case; {0}",
-                      std::string);
-    context.emitter().Emit(
-        *context.position(), UnreachableMatchCase,
-        std::string{"`"} + *kind + "` occurs after the `default`");
+  Lex::TokenKind kind = context.PositionKind();
+  if (kind == Lex::TokenKind::Case or kind == Lex::TokenKind::Default) {
+    CARBON_DIAGNOSTIC(UnreachableMatchCase, Error, "Unreachable case; `{0}{1}",
+                      Lex::TokenKind, std::string);
+    context.emitter().Emit(*context.position(), UnreachableMatchCase, kind,
+                           "` occurs after the `default`");
 
     context.ReturnErrorOnState();
     context.PushState(State::MatchCaseLoopAfterDefault);
     context.SkipPastLikelyEnd(*context.position());
     return;
+  } else if (kind != Lex::TokenKind::CloseCurlyBrace) {
+    EmitUnexpectedTokenAndRecover(context);
+    context.PushState(State::MatchCaseLoopAfterDefault);
   }
 }
 
@@ -147,7 +148,6 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
                     state.subtree_start, true);
     context.AddNode(NodeKind::MatchCase, *context.position(),
                     state.subtree_start, true);
-
     context.SkipPastLikelyEnd(*context.position());
     return;
   }
