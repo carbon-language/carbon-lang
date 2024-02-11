@@ -737,6 +737,7 @@ A hidden subcommand.
   };
 
   TestRawOstream os;
+
   EXPECT_THAT(parse({"--flag", "--help"}, os), Eq(ParseResult::MetaSuccess));
   std::string help_flag_output = os.TakeStr();
   EXPECT_THAT(help_flag_output, StrEq(llvm::StringRef(R"""(
@@ -796,7 +797,8 @@ Build config: test-config-info
 
   EXPECT_THAT(parse({"--flag", "edit", "--option=42", "--help"}, os),
               Eq(ParseResult::MetaSuccess));
-  EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
+  std::string edit_help_output = os.TakeStr();
+  EXPECT_THAT(edit_help_output, StrEq(llvm::StringRef(R"""(
 Edit the widget.
 
 This will take the provided widgets and edit them.
@@ -818,11 +820,15 @@ Subcommand 'edit' options:
 That's all.
 
 )""")
-                                      .ltrim('\n')));
+                                          .ltrim('\n')));
+
+  EXPECT_THAT(parse({"help", "edit"}, os), Eq(ParseResult::MetaSuccess));
+  EXPECT_THAT(os.TakeStr(), StrEq(edit_help_output));
 
   EXPECT_THAT(parse({"--flag", "run", "--option=abc", "--help"}, os),
               Eq(ParseResult::MetaSuccess));
-  EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
+  std::string run_help_output = os.TakeStr();
+  EXPECT_THAT(run_help_output, StrEq(llvm::StringRef(R"""(
 Run wombats across the screen.
 
 This will cause several wombats to run across your screen.
@@ -852,7 +858,10 @@ Subcommand 'run' options:
 Or it won't, who knows.
 
 )""")
-                                      .ltrim('\n')));
+                                         .ltrim('\n')));
+
+  EXPECT_THAT(parse({"help", "run"}, os), Eq(ParseResult::MetaSuccess));
+  EXPECT_THAT(os.TakeStr(), StrEq(run_help_output));
 }
 
 TEST(ArgParserTest, HelpMarkdownLike) {
