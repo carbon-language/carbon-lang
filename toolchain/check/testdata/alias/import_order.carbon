@@ -69,20 +69,20 @@ var i32_val: i32 = a_val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   assign file.%d_val.var, %.loc6
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%d_val.var, %.loc7
 // CHECK:STDOUT:   %d_val.ref: ref i32 = name_ref d_val, file.%d_val
-// CHECK:STDOUT:   %.loc7: i32 = bind_value %d_val.ref
-// CHECK:STDOUT:   assign file.%c_val.var, %.loc7
+// CHECK:STDOUT:   %.loc8: i32 = bind_value %d_val.ref
+// CHECK:STDOUT:   assign file.%c_val.var, %.loc8
 // CHECK:STDOUT:   %c_val.ref: ref i32 = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %.loc8: i32 = bind_value %c_val.ref
-// CHECK:STDOUT:   assign file.%b_val.var, %.loc8
+// CHECK:STDOUT:   %.loc9: i32 = bind_value %c_val.ref
+// CHECK:STDOUT:   assign file.%b_val.var, %.loc9
 // CHECK:STDOUT:   %b_val.ref: ref i32 = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %.loc9: i32 = bind_value %b_val.ref
-// CHECK:STDOUT:   assign file.%a_val.var, %.loc9
+// CHECK:STDOUT:   %.loc10: i32 = bind_value %b_val.ref
+// CHECK:STDOUT:   assign file.%a_val.var, %.loc10
 // CHECK:STDOUT:   %a_val.ref: ref i32 = name_ref a_val, file.%a_val
-// CHECK:STDOUT:   %.loc10: i32 = bind_value %a_val.ref
-// CHECK:STDOUT:   assign file.%i32_val.var, %.loc10
+// CHECK:STDOUT:   %.loc11: i32 = bind_value %a_val.ref
+// CHECK:STDOUT:   assign file.%i32_val.var, %.loc11
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

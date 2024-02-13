@@ -40,7 +40,7 @@ fn F() {
 // CHECK:STDOUT:   %b.ref: ref i32* = name_ref b, %b
 // CHECK:STDOUT:   %.loc13_14: i32* = bind_value %b.ref
 // CHECK:STDOUT:   %.loc13_13: ref i32 = deref %.loc13_14
-// CHECK:STDOUT:   %c: ref <error> = bind_alias c, %.loc13_13
+// CHECK:STDOUT:   %c: <error> = bind_alias c, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

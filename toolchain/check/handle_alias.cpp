@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 #include "toolchain/sem_ir/value_stores.h"
 
@@ -52,9 +53,10 @@ auto HandleAlias(Context& context, Parse::AliasId /*parse_node*/) -> bool {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
                       "Alias initializer must be a name reference.");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
-    alias_id = context.AddInst(
-        {name_context.parse_node,
-         SemIR::BindAlias{SemIR::TypeId::Error, bind_name_id, expr_id}});
+    alias_id =
+        context.AddInst({name_context.parse_node,
+                         SemIR::BindAlias{SemIR::TypeId::Error, bind_name_id,
+                                          SemIR::InstId::BuiltinError}});
   }
 
   // Add the name of the binding to the current scope.
