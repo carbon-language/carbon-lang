@@ -31,28 +31,30 @@ auto HandleAlias(Context& context, Parse::AliasId /*parse_node*/) -> bool {
                        Lex::TokenKind::Namespace);
   context.decl_state_stack().Pop(DeclState::Alias);
 
-  auto name_id = name_context.name_id_for_new_inst();
+  auto bind_name_id = context.bind_names().Add(
+      {.name_id = name_context.name_id_for_new_inst(),
+       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst()});
 
   auto alias_id = SemIR::InstId::Invalid;
   if (expr_id.is_builtin()) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.
-    alias_id =
-        context.AddInst({name_context.parse_node,
-                         SemIR::NameRef{context.insts().Get(expr_id).type_id(),
-                                        name_id, expr_id}});
+    alias_id = context.AddInst(
+        {name_context.parse_node,
+         SemIR::BindAlias{context.insts().Get(expr_id).type_id(), bind_name_id,
+                          expr_id}});
   } else if (auto inst = context.insts().TryGetAs<SemIR::NameRef>(expr_id)) {
     // Pass through name references, albeit changing the name in use.
     alias_id = context.AddInst(
         {name_context.parse_node,
-         SemIR::NameRef{inst->type_id, name_id, inst->value_id}});
+         SemIR::BindAlias{inst->type_id, bind_name_id, inst->value_id}});
   } else {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
                       "Alias initializer must be a name reference.");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
     alias_id = context.AddInst(
         {name_context.parse_node,
-         SemIR::NameRef{SemIR::TypeId::Error, name_id, expr_id}});
+         SemIR::BindAlias{SemIR::TypeId::Error, bind_name_id, expr_id}});
   }
 
   // Add the name of the binding to the current scope.

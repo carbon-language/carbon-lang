@@ -34,8 +34,8 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   %.ref: <error> = name_ref <invalid>, %.loc16 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16_16: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16_9: <error> = bind_alias <invalid>, %.loc16_16 [template = constants.%.1]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.loc7 [template = file.%.loc7]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>

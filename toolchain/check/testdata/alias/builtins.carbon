@@ -18,13 +18,13 @@ let b_test: b = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a.ref.loc7, .b = %b.ref.loc10} [template]
-// CHECK:STDOUT:   %a.ref.loc7: type = name_ref a, i32 [template = i32]
-// CHECK:STDOUT:   %a.ref.loc8: type = name_ref a, %a.ref.loc7 [template = i32]
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b} [template]
+// CHECK:STDOUT:   %a: type = bind_alias a, i32 [template = i32]
+// CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = i32]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a_test: i32 = bind_name a_test, %.loc8
-// CHECK:STDOUT:   %b.ref.loc10: type = name_ref b, bool [template = bool]
-// CHECK:STDOUT:   %b.ref.loc11: type = name_ref b, %b.ref.loc10 [template = bool]
+// CHECK:STDOUT:   %b: type = bind_alias b, bool [template = bool]
+// CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = bool]
 // CHECK:STDOUT:   %.loc11: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   %b_test: bool = bind_name b_test, %.loc11
 // CHECK:STDOUT: }

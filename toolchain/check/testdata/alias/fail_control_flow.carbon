@@ -24,6 +24,6 @@ alias a = true or false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc16: bool = block_arg <unexpected instblockref block4>
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, %.loc16
+// CHECK:STDOUT:   %a: <error> = bind_alias a, %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

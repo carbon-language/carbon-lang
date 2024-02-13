@@ -50,11 +50,11 @@ fn F(c: Class) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .A = %A.ref, .F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .A = %A, .F = %F} [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, @Class.%WithSelf [template = @Class.%WithSelf]
+// CHECK:STDOUT:   %A: <function> = bind_alias A, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,7 +89,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.ref.loc32: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc32: Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc32: init () = call %WithSelf.ref.loc32(<invalid>)
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A.ref [template = @Class.%WithSelf]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %.loc40: init () = call %A.ref(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

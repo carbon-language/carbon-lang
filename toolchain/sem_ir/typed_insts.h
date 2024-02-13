@@ -169,7 +169,7 @@ struct BaseDecl {
 // Common representation for both kinds of `bind*name` node.
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
-  static constexpr InstKind Kinds[] = {InstKind::BindName,
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
                                        InstKind::BindSymbolicName};
 
   InstKind kind;
@@ -178,9 +178,9 @@ struct AnyBindName {
   InstId value_id;
 };
 
-struct BindSymbolicName {
+struct BindAlias {
   static constexpr auto Kind =
-      InstKind::BindSymbolicName.Define<Parse::NodeId>("bind_symbolic_name");
+      InstKind::BindAlias.Define<Parse::NodeId>("bind_alias");
 
   TypeId type_id;
   BindNameId bind_name_id;
@@ -196,6 +196,15 @@ struct BindName {
   BindNameId bind_name_id;
   // The value is inline in the inst so that value access doesn't require an
   // indirection.
+  InstId value_id;
+};
+
+struct BindSymbolicName {
+  static constexpr auto Kind =
+      InstKind::BindSymbolicName.Define<Parse::NodeId>("bind_symbolic_name");
+
+  TypeId type_id;
+  BindNameId bind_name_id;
   InstId value_id;
 };
 

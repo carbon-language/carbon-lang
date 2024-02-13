@@ -14,9 +14,10 @@ alias b = a;
 
 // --- b.carbon
 
-// CHECK:STDERR: b.carbon:[[@LINE+3]]:14: ERROR: Name `b` not found.
-// CHECK:STDERR: var c: i32 = b;
-// CHECK:STDERR:              ^
+library "b" api;
+
+import library "a";
+
 var c: i32 = b;
 
 // CHECK:STDOUT: --- a.carbon
@@ -26,11 +27,11 @@ var c: i32 = b;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b.ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b} [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, %a
+// CHECK:STDOUT:   %b: ref i32 = bind_alias b, %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -43,15 +44,18 @@ var c: i32 = b;
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.c = %c} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %import_ref.1, .b = %import_ref.2, .c = %c} [template]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir1, inst+7, used
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [template = <error>]
-// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, file.%import_ref.2
+// CHECK:STDOUT:   %.loc6: i32 = bind_value %b.ref
+// CHECK:STDOUT:   assign file.%c.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

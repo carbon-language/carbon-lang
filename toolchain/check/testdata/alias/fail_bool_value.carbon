@@ -17,10 +17,10 @@ let a_test: bool = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a.ref.loc10} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a} [template]
 // CHECK:STDOUT:   %.loc10: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   %a.ref.loc10: <error> = name_ref a, %.loc10 [template = constants.%.1]
-// CHECK:STDOUT:   %a.ref.loc11: <error> = name_ref a, %a.ref.loc10 [template = constants.%.1]
+// CHECK:STDOUT:   %a: <error> = bind_alias a, %.loc10 [template = constants.%.1]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, %a [template = constants.%.1]
 // CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

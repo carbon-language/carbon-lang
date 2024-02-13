@@ -28,9 +28,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %a.var, %.loc8
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref.loc9: ref i32 = name_ref b, %a
-// CHECK:STDOUT:   %b.ref.loc10: ref i32 = name_ref b, %b.ref.loc9
-// CHECK:STDOUT:   %.loc10: i32 = bind_value %b.ref.loc10
+// CHECK:STDOUT:   %b: ref i32 = bind_alias b, %a
+// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, %b
+// CHECK:STDOUT:   %.loc10: i32 = bind_value %b.ref
 // CHECK:STDOUT:   return %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
