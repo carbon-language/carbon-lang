@@ -254,7 +254,7 @@ CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
 
 // Alias diagnostics.
-CARBON_DIAGNOSTIC_KIND(AliasNotConstant)
+CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // ============================================================================
 // Other diagnostics
