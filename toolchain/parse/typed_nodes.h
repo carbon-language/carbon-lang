@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 #define CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 
+#include <optional>
+
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -480,6 +482,77 @@ struct WhileStatement {
 
   WhileConditionId head;
   CodeBlockId body;
+};
+
+using MatchConditionStart = LeafNode<NodeKind::MatchConditionStart>;
+
+struct MatchCondition {
+  static constexpr auto Kind = NodeKind::MatchCondition.Define();
+
+  MatchConditionStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchIntroducer = LeafNode<NodeKind::MatchIntroducer>;
+struct MatchStatementStart {
+  static constexpr auto Kind = NodeKind::MatchStatementStart.Define();
+
+  MatchIntroducerId introducer;
+  MatchConditionId left_brace;
+};
+
+using MatchCaseIntroducer = LeafNode<NodeKind::MatchCaseIntroducer>;
+using MatchCaseGuardIntroducer = LeafNode<NodeKind::MatchCaseGuardIntroducer>;
+using MatchCaseGuardStart = LeafNode<NodeKind::MatchCaseGuardStart>;
+
+struct MatchCaseGuard {
+  static constexpr auto Kind = NodeKind::MatchCaseGuard.Define();
+  MatchCaseGuardIntroducerId introducer;
+  MatchCaseGuardStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchCaseEqualGreater = LeafNode<NodeKind::MatchCaseEqualGreater>;
+
+struct MatchCaseStart {
+  static constexpr auto Kind = NodeKind::MatchCaseStart.Define();
+  MatchCaseIntroducerId introducer;
+  AnyPatternId pattern;
+  std::optional<MatchCaseGuardId> guard;
+  MatchCaseEqualGreaterId equal_greater_token;
+};
+
+struct MatchCase {
+  static constexpr auto Kind = NodeKind::MatchCase.Define();
+  MatchCaseStartId head;
+  llvm::SmallVector<AnyStatementId> statements;
+};
+
+using MatchDefaultIntroducer = LeafNode<NodeKind::MatchDefaultIntroducer>;
+using MatchDefaultEqualGreater = LeafNode<NodeKind::MatchDefaultEqualGreater>;
+
+struct MatchDefaultStart {
+  static constexpr auto Kind = NodeKind::MatchDefaultStart.Define();
+  MatchDefaultIntroducerId introducer;
+  MatchDefaultEqualGreaterId equal_greater_token;
+};
+
+struct MatchDefault {
+  static constexpr auto Kind = NodeKind::MatchDefault.Define();
+
+  MatchDefaultStartId introducer;
+  llvm::SmallVector<AnyStatementId> statements;
+};
+
+// A `match` statement: `match (expr) { case (...) => {...} default => {...}}`.
+struct MatchStatement {
+  static constexpr auto Kind =
+      NodeKind::MatchStatement.Define(NodeCategory::Statement);
+
+  MatchStatementStartId head;
+
+  llvm::SmallVector<MatchCaseId> cases;
+  std::optional<MatchDefaultId> default_case;
 };
 
 // Expression nodes

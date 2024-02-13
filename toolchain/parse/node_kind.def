@@ -737,6 +737,64 @@ CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinition, ChoiceDefinitionStart,
 // ChoiceAlternativeList
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceAlternativeListComma, 0, Comma)
 
+// `match`:
+//     MatchIntroducer
+//       MatchConditionStart
+//       _external_: expression
+//     MatchCondition
+//   MatchStatementStart
+//   _repeated_ _external_: MatchCase
+//   _optional_ _external_: MatchStatementDefault
+// MatchStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchIntroducer, 0, Match)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCondition, MatchConditionStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatementStart, MatchIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatement, MatchStatementStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// `case`:
+//     MatchCaseIntroducer
+//     _external_: Pattern
+//       MatchCaseGuardIntroducer
+//       MatchCaseGuardStart
+//       _external_: expression
+//     MatchCaseGuard
+//     MatchCaseEqualGreater
+//   MatchCaseStart
+//   _repeated_ _external_: statement
+// MatchCase
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseIntroducer, 0, Case)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardIntroducer, 0, If)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseGuard,
+                               MatchCaseGuardIntroducer,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseEqualGreater, 0,
+                                   CARBON_IF_VALID(EqualGreater))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseStart, MatchCaseIntroducer,
+                                   CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCase, MatchCaseStart,
+                                   CARBON_IF_VALID(CloseCurlyBrace))
+
+// `default`:
+//     MatchDefaultIntroducer
+//     MatchDefaultEqualGreater
+//   MatchDefaultStart
+//   _repeated_ _external_: statement
+// MatchDefault
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefaultIntroducer, 0, Default)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefaultEqualGreater, 0,
+                                   CARBON_IF_VALID(EqualGreater))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchDefaultStart, MatchDefaultIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchDefault, MatchDefaultStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET
 #undef CARBON_PARSE_NODE_KIND_CHILD_COUNT

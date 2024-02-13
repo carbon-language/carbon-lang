@@ -6,7 +6,7 @@
 
 namespace Carbon::Parse {
 
-// Handles ParenConditionAs(If|While).
+// Handles ParenConditionAs(If|While|Match).
 static auto HandleParenCondition(Context& context, NodeKind start_kind,
                                  State finish_state) -> void {
   auto state = context.PopState();
@@ -39,6 +39,11 @@ auto HandleParenConditionAsWhile(Context& context) -> void {
                        State::ParenConditionFinishAsWhile);
 }
 
+auto HandleParenConditionAsMatch(Context& context) -> void {
+  HandleParenCondition(context, NodeKind::MatchConditionStart,
+                       State::ParenConditionFinishAsMatch);
+}
+
 auto HandleParenConditionFinishAsIf(Context& context) -> void {
   auto state = context.PopState();
 
@@ -50,6 +55,13 @@ auto HandleParenConditionFinishAsWhile(Context& context) -> void {
 
   context.ConsumeAndAddCloseSymbol(state.token, state,
                                    NodeKind::WhileCondition);
+}
+
+auto HandleParenConditionFinishAsMatch(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   NodeKind::MatchCondition);
 }
 
 }  // namespace Carbon::Parse
