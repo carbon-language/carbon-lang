@@ -14,14 +14,8 @@ fn A();
 
 package Implicit impl;
 
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
-// CHECK:STDERR: var a: () = A();
-// CHECK:STDERR:             ^~
 var a: () = A();
 
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+3]]:21: ERROR: Value of type `<function>` is not callable.
-// CHECK:STDERR: var package_a: () = package.A();
-// CHECK:STDERR:                     ^~~~~~~~~~
 var package_a: () = package.A();
 
 // --- same_package.carbon
@@ -36,14 +30,8 @@ package SamePackage library "importer" api;
 
 import library default;
 
-// CHECK:STDERR: same_package_importer.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
-// CHECK:STDERR: var b: () = B();
-// CHECK:STDERR:             ^~
 var b: () = B();
 
-// CHECK:STDERR: same_package_importer.carbon:[[@LINE+3]]:21: ERROR: Value of type `<function>` is not callable.
-// CHECK:STDERR: var package_b: () = package.B();
-// CHECK:STDERR:                     ^~~~~~~~~~
 var package_b: () = package.B();
 
 // CHECK:STDOUT: --- implicit.carbon
@@ -63,24 +51,29 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %import_ref, .a = %a, .package_a = %package_a} [template]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = @__global_init.%A]
+// CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc12_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_17.2: type = converted %.loc12_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_17.2: type = converted %.loc6_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_a.var: ref () = var package_a
 // CHECK:STDOUT:   %package_a: ref () = bind_name package_a, %package_a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, file.%import_ref
-// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, file.%import_ref [template = %A]
+// CHECK:STDOUT:   %.loc4: init () = call %A.ref.loc4()
+// CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %A.ref.loc12: <function> = name_ref A, file.%import_ref
-// CHECK:STDOUT:   assign file.%package_a.var, <error>
+// CHECK:STDOUT:   %A.ref.loc6: <function> = name_ref A, file.%import_ref [template = %A]
+// CHECK:STDOUT:   %.loc6: init () = call %A.ref.loc6()
+// CHECK:STDOUT:   assign file.%package_a.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,24 +94,29 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.B = %import_ref, .b = %b, .package_b = %package_b} [template]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.loc9_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = @__global_init.%B]
+// CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc14_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_17.2: type = converted %.loc14_17.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_17.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %package_b.var: ref () = var package_b
 // CHECK:STDOUT:   %package_b: ref () = bind_name package_b, %package_b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @B();
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %B.ref.loc9: <function> = name_ref B, file.%import_ref
-// CHECK:STDOUT:   assign file.%b.var, <error>
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %B.ref.loc6: <function> = name_ref B, file.%import_ref [template = %B]
+// CHECK:STDOUT:   %.loc6: init () = call %B.ref.loc6()
+// CHECK:STDOUT:   assign file.%b.var, %.loc6
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %B.ref.loc14: <function> = name_ref B, file.%import_ref
-// CHECK:STDOUT:   assign file.%package_b.var, <error>
+// CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, file.%import_ref [template = %B]
+// CHECK:STDOUT:   %.loc8: init () = call %B.ref.loc8()
+// CHECK:STDOUT:   assign file.%package_b.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
