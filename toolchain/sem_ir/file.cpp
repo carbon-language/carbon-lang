@@ -261,25 +261,27 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   }
 }
 
-auto File::StringifyType(TypeId type_id) const -> std::string {
-  return StringifyTypeExpr(types().GetInstId(type_id));
-}
-
-auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
+// Implements File::StringifyTypeExpr. Static to prevent accidental use of
+// member functions while traversing IRs.
+static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
+                                  InstId outer_inst_id) {
   std::string str;
   llvm::raw_string_ostream out(str);
 
   struct Step {
+    // The instruction's file.
+    const File& sem_ir;
     // The instruction to print.
     InstId inst_id;
     // The index into inst_id to print. Not used by all types.
     int index = 0;
 
     auto Next() const -> Step {
-      return {.inst_id = inst_id, .index = index + 1};
+      return {.sem_ir = sem_ir, .inst_id = inst_id, .index = index + 1};
     }
   };
-  llvm::SmallVector<Step> steps = {{.inst_id = outer_inst_id}};
+  llvm::SmallVector<Step> steps = {
+      Step{.sem_ir = outer_sem_ir, .inst_id = outer_inst_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -294,29 +296,35 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       continue;
     }
 
-    auto inst = insts().Get(step.inst_id);
+    const auto& sem_ir = step.sem_ir;
+    // Helper for instructions with the current sem_ir.
+    auto push_inst_id = [&](InstId inst_id) {
+      steps.push_back({.sem_ir = sem_ir, .inst_id = inst_id});
+    };
+
+    auto inst = sem_ir.insts().Get(step.inst_id);
     switch (inst.kind()) {
       case ArrayType::Kind: {
         auto array = inst.As<ArrayType>();
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          steps.push_back(
-              {.inst_id = types().GetInstId(array.element_type_id)});
+          push_inst_id(sem_ir.types().GetInstId(array.element_type_id));
         } else if (step.index == 1) {
-          out << "; " << GetArrayBoundValue(array.bound_id) << "]";
+          out << "; " << sem_ir.GetArrayBoundValue(array.bound_id) << "]";
         }
         break;
       }
       case BindSymbolicName::Kind: {
         auto name_id = inst.As<BindSymbolicName>().bind_name_id;
-        out << names().GetFormatted(bind_names().Get(name_id).name_id);
+        out << sem_ir.names().GetFormatted(
+            sem_ir.bind_names().Get(name_id).name_id);
         break;
       }
       case ClassType::Kind: {
         auto class_name_id =
-            classes().Get(inst.As<ClassType>().class_id).name_id;
-        out << names().GetFormatted(class_name_id);
+            sem_ir.classes().Get(inst.As<ClassType>().class_id).name_id;
+        out << sem_ir.names().GetFormatted(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -325,44 +333,48 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
 
           // Add parentheses if required.
           auto inner_type_inst_id =
-              types().GetInstId(inst.As<ConstType>().inner_id);
-          if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
+              sem_ir.types().GetInstId(inst.As<ConstType>().inner_id);
+          if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
               GetTypePrecedence(inst.kind())) {
             out << "(";
             steps.push_back(step.Next());
           }
 
-          steps.push_back({.inst_id = inner_type_inst_id});
+          push_inst_id(inner_type_inst_id);
         } else if (step.index == 1) {
           out << ")";
         }
         break;
       }
-      case ImportRefUsed::Kind:
-        out << "<TODO: ImportRefUsed " << step.inst_id << ">";
+      case ImportRefUsed::Kind: {
+        auto import_ref = inst.As<ImportRefUsed>();
+        steps.push_back({.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id),
+                         .inst_id = import_ref.inst_id});
         break;
+      }
       case InterfaceType::Kind: {
-        auto interface_name_id =
-            interfaces().Get(inst.As<InterfaceType>().interface_id).name_id;
-        out << names().GetFormatted(interface_name_id);
+        auto interface_name_id = sem_ir.interfaces()
+                                     .Get(inst.As<InterfaceType>().interface_id)
+                                     .name_id;
+        out << sem_ir.names().GetFormatted(interface_name_id);
         break;
       }
       case NameRef::Kind: {
-        out << names().GetFormatted(inst.As<NameRef>().name_id);
+        out << sem_ir.names().GetFormatted(inst.As<NameRef>().name_id);
         break;
       }
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = types().GetInstId(
-                               inst.As<PointerType>().pointee_id)});
+          push_inst_id(
+              sem_ir.types().GetInstId(inst.As<PointerType>().pointee_id));
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
       case StructType::Kind: {
-        auto refs = inst_blocks().Get(inst.As<StructType>().fields_id);
+        auto refs = sem_ir.inst_blocks().Get(inst.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -376,17 +388,17 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
 
         steps.push_back(step.Next());
-        steps.push_back({.inst_id = refs[step.index]});
+        push_inst_id(refs[step.index]);
         break;
       }
       case StructTypeField::Kind: {
         auto field = inst.As<StructTypeField>();
-        out << "." << names().GetFormatted(field.name_id) << ": ";
-        steps.push_back({.inst_id = types().GetInstId(field.field_type_id)});
+        out << "." << sem_ir.names().GetFormatted(field.name_id) << ": ";
+        push_inst_id(sem_ir.types().GetInstId(field.field_type_id));
         break;
       }
       case TupleType::Kind: {
-        auto refs = type_blocks().Get(inst.As<TupleType>().elements_id);
+        auto refs = sem_ir.type_blocks().Get(inst.As<TupleType>().elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -404,15 +416,15 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
           break;
         }
         steps.push_back(step.Next());
-        steps.push_back({.inst_id = types().GetInstId(refs[step.index])});
+        push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
         break;
       }
       case UnboundElementType::Kind: {
         if (step.index == 0) {
           out << "<unbound element of class ";
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = types().GetInstId(
-                               inst.As<UnboundElementType>().class_type_id)});
+          push_inst_id(sem_ir.types().GetInstId(
+              inst.As<UnboundElementType>().class_type_id));
         } else {
           out << ">";
         }
@@ -478,6 +490,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   }
 
   return str;
+}
+
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExprImpl(*this, types().GetInstId(type_id));
+}
+
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
+  return StringifyTypeExprImpl(*this, outer_inst_id);
 }
 
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {

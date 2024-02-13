@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveImportRefUnused on ClassDecl`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveImportRefUnused on ClassDecl`.
 // CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on ClassType`.
 // CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on ClassType`.
 
@@ -114,23 +112,23 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .ForwardDeclared = %import_ref.2, .a_ref = %import_ref.3, .b_ref = %import_ref.4, .c_ref = %import_ref.5, .Run = %Run, .a = %a, .b = %b, .c = %c, .d = %d} [template]
-// CHECK:STDOUT:   %import_ref.1: <error> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %import_ref.2: <error> = import_ref ir1, inst+4, used
+// CHECK:STDOUT:   %import_ref.1: <error> = import_ref ir1, inst+1, used [template = <error>]
+// CHECK:STDOUT:   %import_ref.2: <error> = import_ref ir1, inst+4, used [template = <error>]
 // CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, used
 // CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+20, used
 // CHECK:STDOUT:   %import_ref.5: ref <error> = import_ref ir1, inst+30, used
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
-// CHECK:STDOUT:   %Empty.ref: <error> = name_ref Empty, %import_ref.1
+// CHECK:STDOUT:   %Empty.ref: <error> = name_ref Empty, %import_ref.1 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc13: <error> = name_ref ForwardDeclared, %import_ref.2
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc13: <error> = name_ref ForwardDeclared, %import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc14: <error> = name_ref ForwardDeclared, %import_ref.2
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc14: <error> = name_ref ForwardDeclared, %import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %.loc14: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc18: <error> = name_ref ForwardDeclared, %import_ref.2
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc18: <error> = name_ref ForwardDeclared, %import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %.loc18: <error> = tuple_literal (%ForwardDeclared.ref.loc18)
 // CHECK:STDOUT:   %d.var: ref <error> = var d
 // CHECK:STDOUT:   %d: ref <error> = bind_name d, %d.var
@@ -138,12 +136,12 @@ var d: (ForwardDeclared,) = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Empty.ref: <error> = name_ref Empty, file.%import_ref.1
+// CHECK:STDOUT:   %Empty.ref: <error> = name_ref Empty, file.%import_ref.1 [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc7: {} = struct_literal ()
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %ForwardDeclared.ref: <error> = name_ref ForwardDeclared, file.%import_ref.2
+// CHECK:STDOUT:   %ForwardDeclared.ref: <error> = name_ref ForwardDeclared, file.%import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %y.var: ref <error> = var y
 // CHECK:STDOUT:   %y: ref <error> = bind_name y, %y.var
 // CHECK:STDOUT:   %.loc8: {} = struct_literal ()

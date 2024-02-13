@@ -71,6 +71,9 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   // Add the name of the binding to the current scope.
   auto name_id = context.bind_names().Get(bind_name.bind_name_id).name_id;
   context.AddNameToLookup(name_id, pattern_id);
+  if (context.scope_stack().PeekNameScopeId() == SemIR::NameScopeId::Package) {
+    context.AddExport(pattern_id);
+  }
   return true;
 }
 
