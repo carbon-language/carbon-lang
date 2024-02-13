@@ -85,13 +85,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F [template = %F]
-// CHECK:STDOUT:   %A: <function> = bind_template_name A, %F.ref [template = %F]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, %F [template = %F]
 // CHECK:STDOUT:   %.loc13: <unbound element of class Class> = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .A = %A
+// CHECK:STDOUT:   .A = %A.ref
 // CHECK:STDOUT:   .k = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,7 +118,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallAlias(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc27_11: <bound method> = bound_method %c.ref, @Class.%A
+// CHECK:STDOUT:   %.loc27_11: <bound method> = bound_method %c.ref, @Class.%A.ref
 // CHECK:STDOUT:   %.loc27_13.1: init i32 = call %.loc27_11(%c.ref)
 // CHECK:STDOUT:   %.loc27_15: i32 = value_of_initializer %.loc27_13.1
 // CHECK:STDOUT:   %.loc27_13.2: i32 = converted %.loc27_13.1, %.loc27_15

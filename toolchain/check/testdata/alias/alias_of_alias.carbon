@@ -4,29 +4,32 @@
 //
 // AUTOUPDATE
 
-alias a = false;
+alias a = bool;
+// CHECK:STDERR: alias_of_alias.carbon:[[@LINE+6]]:11: ERROR: Cannot implicitly convert from `type` to `bool`.
+// CHECK:STDERR: alias b = not a;
+// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR: alias_of_alias.carbon:[[@LINE+3]]:11: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: alias b = not a;
+// CHECK:STDERR:           ^~~~~
 alias b = not a;
+// CHECK:STDERR: alias_of_alias.carbon:[[@LINE+3]]:11: ERROR: Alias initializer must be a name reference.
+// CHECK:STDERR: alias c = not b;
+// CHECK:STDERR:           ^~~~~
 alias c = not b;
 let d: bool = c;
 
 // CHECK:STDOUT: --- alias_of_alias.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b, .c = %c} [template]
-// CHECK:STDOUT:   %.loc7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   %a: bool = bind_template_name a, %.loc7 [template = constants.%.1]
-// CHECK:STDOUT:   %a.ref: bool = name_ref a, %a [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8: bool = not %a.ref [template = constants.%.2]
-// CHECK:STDOUT:   %b: bool = bind_template_name b, %.loc8 [template = constants.%.2]
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9: bool = not %b.ref [template = constants.%.1]
-// CHECK:STDOUT:   %c: bool = bind_template_name c, %.loc9 [template = constants.%.1]
-// CHECK:STDOUT:   %c.ref: bool = name_ref c, %c [template = constants.%.1]
-// CHECK:STDOUT:   %d: bool = bind_name d, %c.ref
+// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a.ref.loc7, .b = %b.ref.loc14, .c = %c.ref.loc18} [template]
+// CHECK:STDOUT:   %a.ref.loc7: type = name_ref a, bool [template = bool]
+// CHECK:STDOUT:   %a.ref.loc14: type = name_ref a, %a.ref.loc7 [template = bool]
+// CHECK:STDOUT:   %.loc14: <error> = not <error> [template = <error>]
+// CHECK:STDOUT:   %b.ref.loc14: <error> = name_ref b, %.loc14 [template = <error>]
+// CHECK:STDOUT:   %b.ref.loc18: <error> = name_ref b, %b.ref.loc14 [template = <error>]
+// CHECK:STDOUT:   %.loc18: <error> = not <error> [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc18: <error> = name_ref c, %.loc18 [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc19: <error> = name_ref c, %c.ref.loc18 [template = <error>]
+// CHECK:STDOUT:   %d: bool = bind_name d, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

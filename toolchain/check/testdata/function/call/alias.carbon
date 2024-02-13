@@ -19,10 +19,10 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B.ref, .Main = %Main} [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
-// CHECK:STDOUT:   %B: <function> = bind_template_name B, %A.ref [template = %A]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, %A [template = %A]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%A]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B.ref [template = file.%A]
 // CHECK:STDOUT:   %.loc12: init i32 = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %.loc12
 // CHECK:STDOUT:   return

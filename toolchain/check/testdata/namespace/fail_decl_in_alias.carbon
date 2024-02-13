@@ -23,10 +23,10 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .ns = %ns} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .ns = %ns.ref} [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
-// CHECK:STDOUT:   %ns: <namespace> = bind_template_name ns, %NS.ref [template = %.loc7]
+// CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %.loc17: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,6 +12,10 @@ fn NS.A() -> i32 { return 0; }
 
 fn B() -> i32 { return ns.A(); }
 
+alias C = NS.A;
+
+fn D() -> i32 { return C(); }
+
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -19,12 +23,16 @@ fn B() -> i32 { return ns.A(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .ns = %ns, .B = %B} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .ns = %ns.ref, .B = %B, .C = %C.ref, .D = %D} [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {.A = %A} [template]
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
-// CHECK:STDOUT:   %ns: <namespace> = bind_template_name ns, %NS.ref [template = %.loc7]
+// CHECK:STDOUT:   %NS.ref.loc9: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
+// CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, %A [template = %A]
+// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
@@ -35,11 +43,20 @@ fn B() -> i32 { return ns.A(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns [template = file.%.loc7]
+// CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns.ref [template = file.%.loc7]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc13_28.1: init i32 = call %A.ref()
 // CHECK:STDOUT:   %.loc13_30: i32 = value_of_initializer %.loc13_28.1
 // CHECK:STDOUT:   %.loc13_28.2: i32 = converted %.loc13_28.1, %.loc13_30
 // CHECK:STDOUT:   return %.loc13_28.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @D() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C.ref [template = file.%A]
+// CHECK:STDOUT:   %.loc17_25.1: init i32 = call %C.ref()
+// CHECK:STDOUT:   %.loc17_27: i32 = value_of_initializer %.loc17_25.1
+// CHECK:STDOUT:   %.loc17_25.2: i32 = converted %.loc17_25.1, %.loc17_27
+// CHECK:STDOUT:   return %.loc17_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

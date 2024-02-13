@@ -7,7 +7,7 @@
 fn F() {
   var a: i32 = 0;
   var b: i32* = &a;
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:13: ERROR: Alias initializer must be a template constant.
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:13: ERROR: Alias initializer must be a name reference.
   // CHECK:STDERR:   alias c = *b;
   // CHECK:STDERR:             ^~
   alias c = *b;
@@ -40,7 +40,7 @@ fn F() {
 // CHECK:STDOUT:   %b.ref: ref i32* = name_ref b, %b
 // CHECK:STDOUT:   %.loc13_14: i32* = bind_value %b.ref
 // CHECK:STDOUT:   %.loc13_13: ref i32 = deref %.loc13_14
-// CHECK:STDOUT:   %c: <error> = bind_template_name c, %.loc13_13
+// CHECK:STDOUT:   %c.ref: ref <error> = name_ref c, %.loc13_13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
