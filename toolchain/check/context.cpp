@@ -933,6 +933,7 @@ class TypeCompleter {
         return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
 
       case SemIR::BindSymbolicName::Kind:
+      case SemIR::BindTemplateName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);

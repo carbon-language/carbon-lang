@@ -416,6 +416,13 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // are treated as the same value.
       return SemIR::ConstantId::ForSymbolicConstant(inst_id);
 
+    case SemIR::BindTemplateName::Kind:
+      // TODO: Consider forming a constant value here using a de Bruijn index or
+      // similar, so that corresponding symbolic parameters in redeclarations
+      // are treated as the same value.
+      return context.constant_values().Get(
+          inst.As<SemIR::BindTemplateName>().value_id);
+
     // These semnatic wrappers don't change the constant value.
     case SemIR::NameRef::Kind:
       return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);

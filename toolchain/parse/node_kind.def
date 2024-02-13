@@ -256,6 +256,17 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
                                CARBON_IF_VALID(Semi))
 
+// `alias`:
+//   AliasIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: IdentifierName or QualifiedName
+//   AliasInitializer
+//   _external_: expression
+// Alias
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AliasIntroducer, 0, Alias)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AliasInitializer, 0, Equal)
+CARBON_PARSE_NODE_KIND_BRACKET(Alias, AliasIntroducer, CARBON_IF_VALID(Semi))
+
 // A tuple pattern:
 //   TuplePatternStart
 //     _external_: [Generic]BindingPattern
