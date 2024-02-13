@@ -61,8 +61,8 @@ CARBON_PARSE_STATE(Invalid)
 //
 // a[0]
 //  ^
-//   1. Expression
-//   2. IndexExpressionFinish
+//   1. Expr
+//   2. IndexExprFinish
 CARBON_PARSE_STATE(IndexExpr)
 
 // Handles finishing the index expression.
@@ -782,7 +782,7 @@ CARBON_PARSE_STATE(TupleLiteralFinish)
 //
 // ( ... , ... )
 //       ^
-//   1. Expression
+//   1. Expr
 //   2. TupleLiteralElementFinish
 //   SPECIAL: parent becomes TupleLiteralFinish
 //
@@ -800,7 +800,7 @@ CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
 //
 // ( ... , ... )
 //       ^
-//   1. Expression
+//   1. Expr
 //   2. TupleLiteralElementFinish
 //
 // ( ... )
