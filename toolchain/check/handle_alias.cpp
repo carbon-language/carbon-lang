@@ -40,6 +40,8 @@ auto HandleAlias(Context& context, Parse::AliasId /*parse_node*/) -> bool {
   if (expr_id.is_builtin()) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.
+    // TODO: Look into handling `false`, this doesn't do it right now because it
+    // sees a value instruction instead of a builtin.
     alias_id = context.AddInst(
         {name_context.parse_node,
          SemIR::BindAlias{context.insts().Get(expr_id).type_id(), bind_name_id,
