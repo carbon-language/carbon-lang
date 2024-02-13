@@ -466,8 +466,7 @@ class InstNamer {
           break;
         }
         case BindName::Kind:
-        case BindSymbolicName::Kind:
-        case BindTemplateName::Kind: {
+        case BindSymbolicName::Kind: {
           add_inst_name_id(sem_ir_.bind_names()
                                .Get(inst.As<AnyBindName>().bind_name_id)
                                .name_id);

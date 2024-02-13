@@ -70,13 +70,6 @@ auto HandleBindSymbolicName(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
-auto HandleBindTemplateName(FunctionContext& /*context*/,
-                            SemIR::InstId /*inst_id*/,
-                            SemIR::BindTemplateName /*inst*/) -> void {
-  CARBON_FATAL() << "TODO: Examine lowering of BindTemplateName further, but "
-                    "maybe it's not needed?";
-}
-
 auto HandleBlockArg(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BlockArg inst) -> void {
   context.SetLocal(inst_id, context.GetBlockArg(inst.block_id, inst.type_id));

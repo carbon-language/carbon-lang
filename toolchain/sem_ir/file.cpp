@@ -192,7 +192,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
     case BindSymbolicName::Kind:
-    case BindTemplateName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
     case ImportRefUsed::Kind:
@@ -316,9 +315,8 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
-      case BindSymbolicName::Kind:
-      case BindTemplateName::Kind: {
-        auto name_id = inst.As<AnyBindName>().bind_name_id;
+      case BindSymbolicName::Kind: {
+        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
         out << sem_ir.names().GetFormatted(
             sem_ir.bind_names().Get(name_id).name_id);
         break;
@@ -551,7 +549,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddrPattern::Kind:
       case ArrayType::Kind:
       case BindSymbolicName::Kind:
-      case BindTemplateName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
