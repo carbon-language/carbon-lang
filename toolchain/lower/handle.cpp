@@ -107,7 +107,7 @@ auto HandleBranchIf(FunctionContext& context, SemIR::InstId /*inst_id*/,
                     SemIR::BranchIf inst) -> void {
   llvm::Value* cond = context.GetValue(inst.cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(inst.target_id);
-  llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
+  llvm::BasicBlock* else_block = context.MakeSyntheticBlock();
   context.builder().CreateCondBr(cond, then_block, else_block);
   context.builder().SetInsertPoint(else_block);
 }

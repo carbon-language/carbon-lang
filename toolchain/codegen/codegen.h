@@ -12,8 +12,8 @@ namespace Carbon {
 
 class CodeGen {
  public:
-  static auto Create(llvm::Module& module, llvm::StringRef target_triple,
-                     llvm::raw_pwrite_stream& errors) -> std::optional<CodeGen>;
+  static auto Make(llvm::Module& module, llvm::StringRef target_triple,
+                   llvm::raw_pwrite_stream& errors) -> std::optional<CodeGen>;
 
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is

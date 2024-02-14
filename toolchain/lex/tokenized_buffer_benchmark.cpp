@@ -396,8 +396,8 @@ class LexerBenchHelper {
   auto MakeSourceBuffer(llvm::StringRef text) -> SourceBuffer {
     CARBON_CHECK(fs_.addFile(filename_, /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(text)));
-    return std::move(*SourceBuffer::CreateFromFile(
-        fs_, filename_, ConsoleDiagnosticConsumer()));
+    return std::move(*SourceBuffer::MakeFromFile(fs_, filename_,
+                                                 ConsoleDiagnosticConsumer()));
   }
 
   SharedValueStores value_stores_;

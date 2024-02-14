@@ -71,7 +71,7 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
   return phi;
 }
 
-auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
+auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return synthetic_block_;
 }

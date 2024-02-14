@@ -75,7 +75,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   static const int ValidCount;
 
   using EnumBase::AsInt;
-  using EnumBase::Create;
+  using EnumBase::Make;
 
   class Definition;
 

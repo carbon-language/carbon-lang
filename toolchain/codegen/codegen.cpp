@@ -13,9 +13,8 @@
 
 namespace Carbon {
 
-auto CodeGen::Create(llvm::Module& module, llvm::StringRef target_triple,
-                     llvm::raw_pwrite_stream& errors)
-    -> std::optional<CodeGen> {
+auto CodeGen::Make(llvm::Module& module, llvm::StringRef target_triple,
+                   llvm::raw_pwrite_stream& errors) -> std::optional<CodeGen> {
   std::string error;
   const llvm::Target* target =
       llvm::TargetRegistry::lookupTarget(target_triple, error);

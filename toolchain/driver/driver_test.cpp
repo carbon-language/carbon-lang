@@ -46,8 +46,8 @@ class DriverTest : public testing::Test {
     test_tmpdir_ = tmpdir_env;
   }
 
-  auto CreateTestFile(llvm::StringRef text,
-                      llvm::StringRef file_name = "test_file.carbon")
+  auto MakeTestFile(llvm::StringRef text,
+                    llvm::StringRef file_name = "test_file.carbon")
       -> llvm::StringRef {
     fs_.addFile(file_name, /*ModificationTime=*/0,
                 llvm::MemoryBuffer::getMemBuffer(text));
@@ -117,7 +117,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
 
   // Invalid output filename. No reliably error message here.
   // TODO: Likely want a different filename on Windows.
-  auto empty_file = CreateTestFile("");
+  auto empty_file = MakeTestFile("");
   EXPECT_FALSE(
       driver_.RunCommand({"compile", "--output=/dev/empty", empty_file}));
   EXPECT_THAT(test_error_stream_.TakeStr(),
@@ -125,7 +125,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
 }
 
 TEST_F(DriverTest, DumpTokens) {
-  auto file = CreateTestFile("Hello World");
+  auto file = MakeTestFile("Hello World");
   EXPECT_TRUE(
       driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -135,7 +135,7 @@ TEST_F(DriverTest, DumpTokens) {
 }
 
 TEST_F(DriverTest, DumpParseTree) {
-  auto file = CreateTestFile("var v: i32 = 42;");
+  auto file = MakeTestFile("var v: i32 = 42;");
   EXPECT_TRUE(driver_.RunCommand(
       {"compile", "--phase=parse", "--dump-parse-tree", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -146,7 +146,7 @@ TEST_F(DriverTest, DumpParseTree) {
 
 TEST_F(DriverTest, StdoutOutput) {
   // Use explicit filenames so we can look for those to validate output.
-  CreateTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
+  MakeTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
 
   EXPECT_TRUE(driver_.RunCommand({"compile", "--output=-", "test.carbon"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -170,7 +170,7 @@ TEST_F(DriverTest, FileOutput) {
 
   // Use explicit filenames as the default output filename is computed from
   // this, and we can use this to validate output.
-  CreateTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
+  MakeTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
 
   // Object output (the default) uses `.o`.
   // TODO: This should actually reflect the platform defaults.
