@@ -677,7 +677,7 @@ CARBON_PARSE_STATE(NamespaceFinish)
 //   (state done)
 CARBON_PARSE_STATE(Package)
 
-// Handles `alias`.
+// Handles `alias` after the introducer.
 //
 // alias ...
 //      ^
@@ -685,19 +685,19 @@ CARBON_PARSE_STATE(Package)
 //   2. AliasInitializer
 CARBON_PARSE_STATE(Alias)
 
-// Handles `alias`.
+// Handles `alias` after the name.
 //
 // alias ... = ... ;
 //           ^
-//   1. Expression
+//   1. Expr
 //   2. AliasFinish
 //
 // alias ???
 //       ^
 //   (state done)
-CARBON_PARSE_STATE(AliasInitializer)
+CARBON_PARSE_STATE(AliasAfterName)
 
-// Handles `alias` after the name.
+// Handles `alias` at the end.
 //
 // alias ... ;
 //           ^

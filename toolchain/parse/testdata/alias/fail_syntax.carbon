@@ -29,6 +29,16 @@ alias a;
 // CHECK:STDERR:       ^
 alias =;
 
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+3]]:9: ERROR: `alias` requires a `=` for the source.
+// CHECK:STDERR: alias a b c = d;
+// CHECK:STDERR:         ^
+alias a b c = d;
+
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+3]]:13: ERROR: `alias` declarations must end with a `;`.
+// CHECK:STDERR: alias a = b c d;
+// CHECK:STDERR:             ^
+alias a = b c d;
+
 fn F() {
   // CHECK:STDERR: fail_syntax.carbon:[[@LINE+3]]:8: ERROR: `alias` introducer should be followed by a name.
   // CHECK:STDERR:   alias;
@@ -48,7 +58,7 @@ fn F() {
 
 alias a = b
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+48]]:21: ERROR: `alias` declarations must end with a `;`.
+// CHECK:STDERR: fail_syntax.carbon:[[@LINE+56]]:21: ERROR: `alias` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_syntax.carbon
@@ -71,6 +81,14 @@ alias a = b
 // CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'a'},
+// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'a'},
+// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'b'},
+// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},

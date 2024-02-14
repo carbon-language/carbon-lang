@@ -13,11 +13,11 @@ namespace Carbon::Parse {
 auto HandleAlias(Context& context) -> void {
   auto state = context.PopState();
 
-  context.PushState(state, State::AliasInitializer);
+  context.PushState(state, State::AliasAfterName);
   context.PushState(State::DeclNameAndParamsAsNone, state.token);
 }
 
-auto HandleAliasInitializer(Context& context) -> void {
+auto HandleAliasAfterName(Context& context) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {

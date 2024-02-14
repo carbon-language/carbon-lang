@@ -28,8 +28,13 @@ auto HandleAlias(Context& context, Parse::AliasId /*parse_node*/) -> bool {
 
   auto name_context = context.decl_name_stack().FinishName();
 
-  LimitModifiersOnDecl(context, KeywordModifierSet::None,
-                       Lex::TokenKind::Namespace);
+  LimitModifiersOnDecl(context, KeywordModifierSet::Access,
+                       Lex::TokenKind::Alias);
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
+  if (!!(modifiers & KeywordModifierSet::Access)) {
+    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+                 "access modifier");
+  }
   context.decl_state_stack().Pop(DeclState::Alias);
 
   auto bind_name_id = context.bind_names().Add(
