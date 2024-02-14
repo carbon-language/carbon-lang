@@ -312,6 +312,25 @@ struct FunctionDefinition {
   llvm::SmallVector<AnyStatementId> body;
 };
 
+// `alias` nodes
+// -------------
+
+using AliasIntroducer = LeafNode<NodeKind::AliasIntroducer>;
+using AliasInitializer = LeafNode<NodeKind::AliasInitializer>;
+
+// An `alias` declaration: `alias a = b;`.
+struct Alias {
+  static constexpr auto Kind =
+      NodeKind::Alias.Define(NodeCategory::Decl | NodeCategory::Statement);
+
+  AliasIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  // For now, this is either an IdentifierName or a QualifiedName.
+  AnyNameComponentId name;
+  AliasInitializerId equals;
+  AnyExprId initializer;
+};
+
 // `let` nodes
 // -----------
 

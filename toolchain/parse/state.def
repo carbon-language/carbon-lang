@@ -307,6 +307,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^~~~~~~
 //   1. DeclScopeLoop
 //
+// alias ...
+// ^~~~~
+//   1. Alias
+//   2. DeclScopeLoop
+//
 // class ...
 // ^~~~~
 //   1. TypeAfterIntroducerAsClass
@@ -671,6 +676,35 @@ CARBON_PARSE_STATE(NamespaceFinish)
 // ^~~~~~~~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(Package)
+
+// Handles `alias` after the introducer.
+//
+// alias ...
+//      ^
+//   1. DeclNameAndParamsAsNone
+//   2. AliasInitializer
+CARBON_PARSE_STATE(Alias)
+
+// Handles `alias` after the name.
+//
+// alias ... = ... ;
+//           ^
+//   1. Expr
+//   2. AliasFinish
+//
+// alias ???
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(AliasAfterName)
+
+// Handles `alias` at the end.
+//
+// alias ... ;
+//           ^
+// alias ???
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(AliasFinish)
 
 // Starts parsing a pattern in a comma-separated list. The variants mark
 // whether it is part of an implicit parameter list or a tuple pattern.

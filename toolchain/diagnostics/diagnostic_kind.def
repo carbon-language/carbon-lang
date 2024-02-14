@@ -118,6 +118,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAfterForall)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
 
+// Alias diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
+
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================
@@ -249,6 +252,9 @@ CARBON_DIAGNOSTIC_KIND(ModifierRepeated)
 CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedWith)
 CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
+
+// Alias diagnostics.
+CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // ============================================================================
 // Other diagnostics

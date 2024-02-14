@@ -465,6 +465,7 @@ class InstNamer {
           CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
           break;
         }
+        case BindAlias::Kind:
         case BindName::Kind:
         case BindSymbolicName::Kind: {
           add_inst_name_id(sem_ir_.bind_names()

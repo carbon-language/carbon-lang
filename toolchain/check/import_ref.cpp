@@ -73,15 +73,20 @@ class ImportRefResolver {
   }
 
  private:
-  // Returns the ConstantId for an instruction, or adds it to the stack and
+  // Returns the ConstantId for an InstId, or adds it to the stack and
   // returns Invalid if the ConstantId is not ready.
-  auto GetConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
-    auto inst_id = import_ir_.types().GetInstId(type_id);
+  auto GetConstantId(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = import_ir_constant_values_.Get(inst_id);
     if (!const_id.is_valid()) {
       work_stack_.push_back(inst_id);
     }
     return const_id;
+  }
+
+  // Returns the ConstantId for a TypeId, or adds it to the stack and
+  // returns Invalid if the ConstantId is not ready.
+  auto GetConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
+    return GetConstantId(import_ir_.types().GetInstId(type_id));
   }
 
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
@@ -109,6 +114,9 @@ class ImportRefResolver {
 
     auto inst = import_ir_.insts().Get(inst_id);
     switch (inst.kind()) {
+      case SemIR::InstKind::BindAlias:
+        return TryResolveTypedInst(inst.As<SemIR::BindAlias>());
+
       case SemIR::InstKind::ConstType:
         return TryResolveTypedInst(inst.As<SemIR::ConstType>());
 
@@ -142,6 +150,14 @@ class ImportRefResolver {
             llvm::formatv("TryResolveInst on {0}", inst.kind()).str());
         return SemIR::ConstantId::Error;
     }
+  }
+
+  auto TryResolveTypedInst(SemIR::BindAlias inst) -> SemIR::ConstantId {
+    auto value_id = GetConstantId(inst.value_id);
+    if (!value_id.is_valid()) {
+      return SemIR::ConstantId::Invalid;
+    }
+    return value_id;
   }
 
   auto TryResolveTypedInst(SemIR::ConstType inst) -> SemIR::ConstantId {

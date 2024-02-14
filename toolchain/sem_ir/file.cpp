@@ -175,7 +175,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);
-                      if (value.is_constant()) {
+                      if (!value.is_valid() || value.is_constant()) {
                         map.Add(PrintToString(id), Yaml::OutputScalar(value));
                       }
                     }
@@ -191,6 +191,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 static auto GetTypePrecedence(InstKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
+    case BindAlias::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
@@ -315,8 +316,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case BindAlias::Kind:
       case BindSymbolicName::Kind: {
-        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
+        auto name_id = inst.As<AnyBindName>().bind_name_id;
         out << sem_ir.names().GetFormatted(
             sem_ir.bind_names().Get(name_id).name_id);
         break;
@@ -535,6 +537,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case BindAlias::Kind: {
+        inst_id = inst.As<BindAlias>().value_id;
+        continue;
+      }
       case NameRef::Kind: {
         inst_id = inst.As<NameRef>().value_id;
         continue;
