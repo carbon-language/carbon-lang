@@ -97,7 +97,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+6, used
 // CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %import_ref.4}, %import_ref.3 [template]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used [template = @__global_init.%D]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used [template = imports.%D]
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
@@ -111,8 +111,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.2 [template = file.%.2]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%.3 [template = file.%.3]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%.4 [template = file.%.4]
-// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = %D]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %.loc5: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %.loc5
 // CHECK:STDOUT:   return

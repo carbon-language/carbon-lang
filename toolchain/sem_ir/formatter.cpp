@@ -32,8 +32,9 @@ class InstNamer {
   enum class ScopeId : int32_t {
     None = -1,
     File = 0,
-    Constants = 1,
-    FirstFunction = 2,
+    ImportRef = 1,
+    Constants = 2,
+    FirstFunction = 3,
   };
   static_assert(sizeof(ScopeId) == sizeof(FunctionId));
 
@@ -56,6 +57,10 @@ class InstNamer {
     // Build the file scope.
     GetScopeInfo(ScopeId::File).name = globals.AddNameUnchecked("file");
     CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
+
+    // Build the imports scope, used only by import-related instructions without
+    // a block.
+    GetScopeInfo(ScopeId::ImportRef).name = globals.AddNameUnchecked("imports");
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -497,6 +502,13 @@ class InstNamer {
         case ImportRefUnused::Kind:
         case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
+          // When building import refs, we frequently add instructions without a
+          // block. Constants that refer to them need to be separately named.
+          auto const_id = sem_ir_.constant_values().Get(inst_id);
+          if (const_id.is_valid() && const_id.is_template() &&
+              !insts[const_id.inst_id().index].second) {
+            CollectNamesInBlock(ScopeId::ImportRef, const_id.inst_id());
+          }
           continue;
         }
         case InterfaceDecl::Kind: {
