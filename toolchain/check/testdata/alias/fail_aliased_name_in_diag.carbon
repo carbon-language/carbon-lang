@@ -6,12 +6,12 @@
 
 let a: i32 = 1;
 alias b = a;
-// CHECK:STDERR: fail_alias_misuse.carbon:[[@LINE+3]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:8: ERROR: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: let c: b = 2;
 // CHECK:STDERR:        ^
 let c: b = 2;
 
-// CHECK:STDOUT: --- fail_alias_misuse.carbon
+// CHECK:STDOUT: --- fail_aliased_name_in_diag.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]

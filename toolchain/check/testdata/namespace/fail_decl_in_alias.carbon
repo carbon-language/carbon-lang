@@ -28,12 +28,12 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %.loc7 [template = %.loc7]
-// CHECK:STDOUT:   %.loc17: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc18: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc17
+// CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   return %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
