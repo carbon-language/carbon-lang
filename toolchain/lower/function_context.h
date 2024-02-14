@@ -78,7 +78,7 @@ class FunctionContext {
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
   // single SemIR::File block.
-  auto CreateSyntheticBlock() -> llvm::BasicBlock*;
+  auto MakeSyntheticBlock() -> llvm::BasicBlock*;
 
   // Determine whether block is the most recently created synthetic block.
   auto IsCurrentSyntheticBlock(llvm::BasicBlock* block) -> bool {

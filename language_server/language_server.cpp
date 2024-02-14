@@ -99,7 +99,7 @@ void LanguageServer::OnDocumentSymbol(
   vfs.addFile(file, /*mtime=*/0,
               llvm::MemoryBuffer::getMemBufferCopy(files_.at(file)));
 
-  auto buf = SourceBuffer::CreateFromFile(vfs, file, NullDiagnosticConsumer());
+  auto buf = SourceBuffer::MakeFromFile(vfs, file, NullDiagnosticConsumer());
   auto lexed = Lex::Lex(value_stores, *buf, NullDiagnosticConsumer());
   auto parsed = Parse::Parse(lexed, NullDiagnosticConsumer(), nullptr);
   std::vector<clang::clangd::DocumentSymbol> result;

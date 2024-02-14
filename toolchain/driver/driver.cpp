@@ -410,12 +410,12 @@ class Driver::CompilationUnit {
 
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> bool {
-    LogCall("SourceBuffer::CreateFromFile", [&] {
+    LogCall("SourceBuffer::MakeFromFile", [&] {
       if (input_file_name_ == "-") {
-        source_ = SourceBuffer::CreateFromStdin(*consumer_);
+        source_ = SourceBuffer::MakeFromStdin(*consumer_);
       } else {
-        source_ = SourceBuffer::CreateFromFile(driver_->fs_, input_file_name_,
-                                               *consumer_);
+        source_ = SourceBuffer::MakeFromFile(driver_->fs_, input_file_name_,
+                                             *consumer_);
       }
     });
     if (!source_) {
@@ -514,7 +514,7 @@ class Driver::CompilationUnit {
 
     CARBON_VLOG() << "*** CodeGen ***\n";
     std::optional<CodeGen> codegen =
-        CodeGen::Create(*module_, options_.target, driver_->error_stream_);
+        CodeGen::Make(*module_, options_.target, driver_->error_stream_);
     if (!codegen) {
       return false;
     }

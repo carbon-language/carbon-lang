@@ -87,7 +87,7 @@ class [[clang::internal_linkage]] Lexer {
   // Explicitly kept out-of-line because this is a significant loop that is
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
-  [[gnu::noinline]] auto CreateLines(llvm::StringRef source_text) -> void;
+  [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
 
   auto current_line() -> LineIndex { return LineIndex(line_index_); }
 
@@ -647,7 +647,7 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   llvm::StringRef source_text = buffer_.source_->text();
 
   // First build up our line data structures.
-  CreateLines(source_text);
+  MakeLines(source_text);
 
   ssize_t position = 0;
   LexFileStart(source_text, position);
@@ -663,7 +663,7 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   return std::move(buffer_);
 }
 
-auto Lexer::CreateLines(llvm::StringRef source_text) -> void {
+auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   // We currently use `memchr` here which typically is well optimized to use
   // SIMD or other significantly faster than byte-wise scanning. We also use
   // carefully selected variables and the `ssize_t` type for performance and

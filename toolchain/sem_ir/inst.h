@@ -127,7 +127,7 @@ class Inst : public Printable<Inst> {
   // NOLINTNEXTLINE(google-explicit-constructor)
   Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
-      : kind_(InstKind::Create({})),
+      : kind_(InstKind::Make({})),
         type_id_(TypeId::Invalid),
         arg0_(InstId::InvalidIndex),
         arg1_(InstId::InvalidIndex) {

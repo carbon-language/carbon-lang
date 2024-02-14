@@ -29,7 +29,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
   auto source =
-      SourceBuffer::CreateFromFile(fs, TestFileName, NullDiagnosticConsumer());
+      SourceBuffer::MakeFromFile(fs, TestFileName, NullDiagnosticConsumer());
 
   // Lex the input.
   SharedValueStores value_stores;
