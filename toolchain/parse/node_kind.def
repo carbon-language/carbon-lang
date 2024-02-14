@@ -488,6 +488,7 @@ CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(UnsignedIntTypeLiteral,
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatTypeLiteral, FloatTypeLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringTypeLiteral, StringTypeLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(TypeTypeLiteral, Type)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(AutoTypeLiteral, Auto)
 
 // A prefix operator, such as `not`:
 //   _external_: expression

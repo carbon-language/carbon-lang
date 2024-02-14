@@ -100,4 +100,9 @@ auto HandleTypeTypeLiteral(Context& context,
   return true;
 }
 
+auto HandleAutoTypeLiteral(Context& context,
+                           Parse::AutoTypeLiteralId parse_node) -> bool {
+  return context.TODO(parse_node, "HandleAutoTypeLiteral");
+}
+
 }  // namespace Carbon::Check

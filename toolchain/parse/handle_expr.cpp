@@ -133,6 +133,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Auto: {
+      context.AddLeafNode(NodeKind::AutoTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::OpenCurlyBrace: {
       context.PushState(state);
       context.PushState(State::BraceExpr);
