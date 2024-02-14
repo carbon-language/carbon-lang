@@ -84,15 +84,15 @@ class ImportRefResolver {
   // At the start of a function, do:
   //   auto initial_work = work_stack_.size();
   // Then when determining:
-  //   if (HasUnresolved(initial_work)) { ... }
-  auto HasUnresolved(size_t initial_work) -> bool {
+  //   if (HasNewWork(initial_work)) { ... }
+  auto HasNewWork(size_t initial_work) -> bool {
     CARBON_CHECK(initial_work <= work_stack_.size());
     return initial_work < work_stack_.size();
   }
 
-  // Returns the ConstantId for an InstId. Adds it to the stack and sets
-  // has_unresolved to true if it's not ready.
-  auto GetConstantId(SemIR::InstId inst_id) -> SemIR::ConstantId {
+  // Returns the ConstantId for an InstId. Adds unresolved constants to
+  // work_stack_.
+  auto GetLocalConstantId(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = import_ir_constant_values_.Get(inst_id);
     if (!const_id.is_valid()) {
       work_stack_.push_back(inst_id);
@@ -100,15 +100,15 @@ class ImportRefResolver {
     return const_id;
   }
 
-  // Returns the ConstantId for a TypeId. Adds it to the stack and sets
-  // has_unresolved to true if it's not ready.
-  auto GetConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
-    return GetConstantId(import_ir_.types().GetInstId(type_id));
+  // Returns the ConstantId for a TypeId. Adds unresolved constants to
+  // work_stack_.
+  auto GetLocalConstantId(SemIR::TypeId type_id) -> SemIR::ConstantId {
+    return GetLocalConstantId(import_ir_.types().GetInstId(type_id));
   }
 
-  // Given a param_refs_id, returns the necessary constants to convert it. Sets
-  // has_unresolved to true if any aren't ready.
-  auto GetParamConstantIds(SemIR::InstBlockId param_refs_id)
+  // Returns the constants needed to pull in param_refs_id with
+  // GetLocalParamRefsId. Adds unresolved constants to work_stack_.
+  auto GetLocalParamConstantIds(SemIR::InstBlockId param_refs_id)
       -> llvm::SmallVector<SemIR::ConstantId> {
     if (param_refs_id == SemIR::InstBlockId::Empty) {
       return {};
@@ -118,15 +118,16 @@ class ImportRefResolver {
     const_ids.reserve(param_refs.size());
     for (auto inst_id : param_refs) {
       const_ids.push_back(
-          GetConstantId(import_ir_.insts().Get(inst_id).type_id()));
+          GetLocalConstantId(import_ir_.insts().Get(inst_id).type_id()));
     }
     return const_ids;
   }
 
-  // Given a param_refs_id and const_ids from GetParamConstantIds, returns a
-  // version localized to the current IR.
-  auto GetParamRefsId(SemIR::InstBlockId param_refs_id,
-                      const llvm::SmallVector<SemIR::ConstantId>& const_ids)
+  // Given a param_refs_id and const_ids from GetLocalParamConstantIds, returns
+  // a version of param_refs_id localized to the current IR.
+  auto GetLocalParamRefsId(
+      SemIR::InstBlockId param_refs_id,
+      const llvm::SmallVector<SemIR::ConstantId>& const_ids)
       -> SemIR::InstBlockId {
     if (param_refs_id == SemIR::InstBlockId::Empty) {
       return SemIR::InstBlockId::Empty;
@@ -142,12 +143,12 @@ class ImportRefResolver {
   }
 
   // Translates a NameId from the import IR to a local NameId.
-  auto GetNameId(SemIR::NameId name_id) -> SemIR::NameId {
-    if (auto ident_id = name_id.AsIdentifierId(); ident_id.is_valid()) {
+  auto GetLocalNameId(SemIR::NameId import_name_id) -> SemIR::NameId {
+    if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.is_valid()) {
       return SemIR::NameId::ForIdentifier(
           context_.identifiers().Add(import_ir_.identifiers().Get(ident_id)));
     }
-    return name_id;
+    return import_name_id;
   }
 
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
@@ -156,6 +157,7 @@ class ImportRefResolver {
   //
   // Logic for each TryResolveTypedInst will be in two phases:
   //   1. Gather all input constants.
+  //      - If HasNewWork, return Invalid.
   //   2. Produce an output constant.
   //
   // Although it's possible TryResolveTypedInst could complete in a single call
@@ -214,8 +216,8 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::BindAlias inst) -> SemIR::ConstantId {
     auto initial_work = work_stack_.size();
-    auto value_id = GetConstantId(inst.value_id);
-    if (HasUnresolved(initial_work)) {
+    auto value_id = GetLocalConstantId(inst.value_id);
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
     return value_id;
@@ -224,8 +226,8 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::ConstType inst) -> SemIR::ConstantId {
     auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto inner_const_id = GetConstantId(inst.inner_id);
-    if (HasUnresolved(initial_work)) {
+    auto inner_const_id = GetLocalConstantId(inst.inner_id);
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
     auto inner_type_id = context_.GetTypeIdForTypeConstant(inner_const_id);
@@ -237,23 +239,23 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::FunctionDecl inst) -> SemIR::ConstantId {
     auto initial_work = work_stack_.size();
-    auto type_const_id = GetConstantId(inst.type_id);
+    auto type_const_id = GetLocalConstantId(inst.type_id);
 
     const auto& function = import_ir_.functions().Get(inst.function_id);
     auto return_type_const_id = SemIR::ConstantId::Invalid;
     if (function.return_type_id.is_valid()) {
-      return_type_const_id = GetConstantId(function.return_type_id);
+      return_type_const_id = GetLocalConstantId(function.return_type_id);
     }
     auto return_slot_const_id = SemIR::ConstantId::Invalid;
     if (function.return_slot_id.is_valid()) {
-      return_slot_const_id = GetConstantId(function.return_slot_id);
+      return_slot_const_id = GetLocalConstantId(function.return_slot_id);
     }
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
-        GetParamConstantIds(function.implicit_param_refs_id);
+        GetLocalParamConstantIds(function.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
-        GetParamConstantIds(function.param_refs_id);
+        GetLocalParamConstantIds(function.param_refs_id);
 
-    if (HasUnresolved(initial_work)) {
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
 
@@ -275,13 +277,13 @@ class ImportRefResolver {
           import_ir_id_, function.return_slot_id}});
     }
     function_decl.function_id = context_.functions().Add(
-        {.name_id = GetNameId(function.name_id),
+        {.name_id = GetLocalNameId(function.name_id),
          .enclosing_scope_id = NoEnclosingScopeForImports,
          .decl_id = function_decl_id,
-         .implicit_param_refs_id = GetParamRefsId(
+         .implicit_param_refs_id = GetLocalParamRefsId(
              function.implicit_param_refs_id, implicit_param_const_ids),
          .param_refs_id =
-             GetParamRefsId(function.param_refs_id, param_const_ids),
+             GetLocalParamRefsId(function.param_refs_id, param_const_ids),
          .return_type_id = new_return_type_id,
          .return_slot_id = new_return_slot});
     // Write the function ID into the FunctionDecl.
@@ -293,8 +295,8 @@ class ImportRefResolver {
   auto TryResolveTypedInst(SemIR::PointerType inst) -> SemIR::ConstantId {
     auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto pointee_const_id = GetConstantId(inst.pointee_id);
-    if (HasUnresolved(initial_work)) {
+    auto pointee_const_id = GetLocalConstantId(inst.pointee_id);
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
 
@@ -312,9 +314,9 @@ class ImportRefResolver {
     field_const_ids.reserve(orig_fields.size());
     for (auto field_id : orig_fields) {
       auto field = import_ir_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      field_const_ids.push_back(GetConstantId(field.field_type_id));
+      field_const_ids.push_back(GetLocalConstantId(field.field_type_id));
     }
-    if (HasUnresolved(initial_work)) {
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
 
@@ -326,7 +328,7 @@ class ImportRefResolver {
     for (auto [field_id, field_const_id] :
          llvm::zip(orig_fields, field_const_ids)) {
       auto field = import_ir_.insts().GetAs<SemIR::StructTypeField>(field_id);
-      auto name_id = GetNameId(field.name_id);
+      auto name_id = GetLocalNameId(field.name_id);
       auto field_type_id = context_.GetTypeIdForTypeConstant(field_const_id);
       fields.push_back(context_.AddInstInNoBlock(
           {Parse::NodeId::Invalid,
@@ -347,9 +349,9 @@ class ImportRefResolver {
     llvm::SmallVector<SemIR::ConstantId> elem_const_ids;
     elem_const_ids.reserve(orig_elem_type_ids.size());
     for (auto elem_type_id : orig_elem_type_ids) {
-      elem_const_ids.push_back(GetConstantId(elem_type_id));
+      elem_const_ids.push_back(GetLocalConstantId(elem_type_id));
     }
-    if (HasUnresolved(initial_work)) {
+    if (HasNewWork(initial_work)) {
       return SemIR::ConstantId::Invalid;
     }
 
