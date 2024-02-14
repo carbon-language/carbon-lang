@@ -8,6 +8,7 @@ namespace NS;
 
 alias ns = NS;
 
+// Aliases can't be used when declaring names.
 // CHECK:STDERR: fail_decl_in_alias.carbon:[[@LINE+6]]:7: ERROR: Name qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: fn ns.A() -> i32 { return 0; }
 // CHECK:STDERR:       ^
