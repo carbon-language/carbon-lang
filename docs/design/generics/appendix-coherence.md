@@ -121,7 +121,7 @@ this:
 
     fn SomethingWeirdHappens() {
       var unchained_melody: SongLib.Song = ...;
-      var song_set: auto = Containers.HashSet(SongLib.Song).Create();
+      var song_set: auto = Containers.HashSet(SongLib.Song).Make();
       song_set.Add(unchained_melody);
       // Either this is a compile error or does something unexpected.
       if (SongUtil.IsInHashSet(unchained_melody, &song_set)) {

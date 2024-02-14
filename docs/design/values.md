@@ -940,7 +940,7 @@ class StringView {
   private var data_ptr: Char*;
   private var size: i64;
 
-  fn Create(data_ptr: Char*, size: i64) -> StringView {
+  fn Make(data_ptr: Char*, size: i64) -> StringView {
     return {.data_ptr = data_ptr, .size = size};
   }
 
@@ -962,7 +962,7 @@ class String {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
-      return StringView::Create(self->data_ptr, self->size);
+      return StringView.Make(self->data_ptr, self->size);
     }
   }
 
