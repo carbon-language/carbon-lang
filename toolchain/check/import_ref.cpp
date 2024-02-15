@@ -86,7 +86,8 @@ class ImportRefResolver {
   // Then when determining:
   //   if (HasNewWork(initial_work)) { ... }
   auto HasNewWork(size_t initial_work) -> bool {
-    CARBON_CHECK(initial_work <= work_stack_.size());
+    CARBON_CHECK(initial_work <= work_stack_.size())
+        << "Work shouldn't decrease";
     return initial_work < work_stack_.size();
   }
 
@@ -106,8 +107,8 @@ class ImportRefResolver {
     return GetLocalConstantId(import_ir_.types().GetInstId(type_id));
   }
 
-  // Returns the constants needed to pull in param_refs_id with
-  // GetLocalParamRefsId. Adds unresolved constants to work_stack_.
+  // Returns the ConstantId for each parameter's type. Adds unresolved constants
+  // to work_stack_.
   auto GetLocalParamConstantIds(SemIR::InstBlockId param_refs_id)
       -> llvm::SmallVector<SemIR::ConstantId> {
     if (param_refs_id == SemIR::InstBlockId::Empty) {
