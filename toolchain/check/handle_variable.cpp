@@ -26,18 +26,27 @@ auto HandleReturnedModifier(Context& context,
 auto HandleVariableInitializer(Context& context,
                                Parse::VariableInitializerId parse_node)
     -> bool {
-  SemIR::InstId init_id = context.node_stack().PopExpr();
-  context.node_stack().Push(parse_node, init_id);
+  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+    context.inst_block_stack().PushGlobalInit();
+  }
+  context.node_stack().Push(parse_node);
   return true;
 }
 
 auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
     -> bool {
   // Handle the optional initializer.
-  std::optional<SemIR::InstId> init_id =
-      context.node_stack().PopIf<Parse::NodeKind::VariableInitializer>();
+  std::optional<SemIR::InstId> init_id;
+  if (context.node_stack().PeekNextIs<Parse::NodeKind::VariableInitializer>()) {
+    init_id = context.node_stack().PopExpr();
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<Parse::NodeKind::VariableInitializer>();
+  }
 
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
+    if (init_id && context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+      context.inst_block_stack().PopGlobalInit();
+    }
     return context.TODO(parse_node, "tuple pattern in var");
   }
 
@@ -65,7 +74,7 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
       .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ReturnedModifier>();
 
   // If there was an initializer, assign it to the storage.
-  if (init_id.has_value()) {
+  if (init_id) {
     if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
@@ -75,6 +84,9 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
       // TODO: Consider using different instruction kinds for assignment versus
       // initialization.
       context.AddInst({parse_node, SemIR::Assign{value_id, *init_id}});
+    }
+    if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
+      context.inst_block_stack().PopGlobalInit();
     }
   }
 
@@ -95,9 +107,6 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
   }
 
   context.decl_state_stack().Pop(DeclState::Var);
-  if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-    context.inst_block_stack().PopGlobalInit();
-  }
 
   return true;
 }

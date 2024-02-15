@@ -157,6 +157,17 @@ class NodeStack {
                                   Id::KindFor<SemIR::NameId>();
   }
 
+  // Returns whether the *next* node on the stack is a given kind. This doesn't
+  // have the breadth of support versus other Peek functions because it's
+  // expected to be used in narrow circumstances when determining how to treat
+  // the *current* top of the stack.
+  template <const Parse::NodeKind& RequiredParseKind>
+  auto PeekNextIs() const -> bool {
+    CARBON_CHECK(stack_.size() >= 2);
+    return parse_tree_->node_kind(stack_[stack_.size() - 2].parse_node) ==
+           RequiredParseKind;
+  }
+
   // Pops the top of the stack without any verification.
   auto PopAndIgnore() -> void {
     Entry back = stack_.pop_back_val();
@@ -432,7 +443,6 @@ class NodeStack {
         case Parse::NodeKind::ShortCircuitOperandOr:
         case Parse::NodeKind::StructFieldValue:
         case Parse::NodeKind::StructFieldType:
-        case Parse::NodeKind::VariableInitializer:
           return Id::KindFor<SemIR::InstId>();
         case Parse::NodeKind::IfCondition:
         case Parse::NodeKind::IfExprIf:
@@ -468,6 +478,7 @@ class NodeStack {
         case Parse::NodeKind::ReturnVarModifier:
         case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
+        case Parse::NodeKind::VariableInitializer:
         case Parse::NodeKind::VariableIntroducer:
           return Id::Kind::None;
         default:

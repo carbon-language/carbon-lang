@@ -24,9 +24,9 @@ var x: {.a = 0,,} = {};
 // CHECK:STDOUT:           {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 11},
-// CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

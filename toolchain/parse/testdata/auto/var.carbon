@@ -13,8 +13,8 @@ var y: auto = false;
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'y'},
 // CHECK:STDOUT:         {kind: 'AutoTypeLiteral', text: 'auto'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '=', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
