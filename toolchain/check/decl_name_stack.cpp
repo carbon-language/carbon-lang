@@ -18,7 +18,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
 auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
-  ApplyNameQualifierTo(context, parse_node, name_id);
+  ApplyNameQualifierTo(context, parse_node, name_id, /*is_unqualified=*/true);
   return context;
 }
 
@@ -127,12 +127,14 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
 
 auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
                                        SemIR::NameId name_id) -> void {
-  ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id);
+  ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id,
+                       /*is_unqualified=*/false);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
                                          Parse::NodeId parse_node,
-                                         SemIR::NameId name_id) -> void {
+                                         SemIR::NameId name_id,
+                                         bool is_unqualified) -> void {
   if (TryResolveQualifier(name_context, parse_node)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDecl(
@@ -148,7 +150,7 @@ auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
       name_context.resolved_inst_id = resolved_inst_id;
     }
 
-    UpdateScopeIfNeeded(name_context);
+    UpdateScopeIfNeeded(name_context, is_unqualified);
   }
 }
 
@@ -172,7 +174,8 @@ static auto PushNameQualifierScope(Context& context,
   context.scope_stack().Push();
 }
 
-auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
+auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
+                                        bool is_unqualified) -> void {
   // This will only be reached for resolved instructions. We update the target
   // scope based on the resolved type.
   auto resolved_inst = context_->insts().Get(name_context.resolved_inst_id);
@@ -183,8 +186,10 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
-        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
-                               class_info.scope_id);
+        if (!is_unqualified) {
+          PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                                 class_info.scope_id);
+        }
       } else {
         name_context.state = NameContext::State::ResolvedNonScope;
       }
@@ -194,8 +199,11 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context) -> void {
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
-      PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
-                             context_->name_scopes().Get(scope_id).has_error);
+      if (!is_unqualified) {
+        PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                               scope_id,
+                               context_->name_scopes().Get(scope_id).has_error);
+      }
       break;
     }
     default:
