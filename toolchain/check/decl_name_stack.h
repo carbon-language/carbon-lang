@@ -201,7 +201,7 @@ class DeclNameStack {
 
   // Applies a Name from the name stack to given name context.
   auto ApplyNameQualifierTo(NameContext& name_context, Parse::NodeId parse_node,
-                            SemIR::NameId name_id) -> void;
+                            SemIR::NameId name_id, bool is_unqualified) -> void;
 
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
@@ -209,8 +209,11 @@ class DeclNameStack {
       -> bool;
 
   // Updates the scope on name_context as needed. This is called after
-  // resolution is complete, whether for Name or expression.
-  auto UpdateScopeIfNeeded(NameContext& name_context) -> void;
+  // resolution is complete, whether for Name or expression. When updating for
+  // an unqualified name, the resolution is noted without pushing scopes; it's
+  // instead expected this will become a name conflict.
+  auto UpdateScopeIfNeeded(NameContext& name_context, bool is_unqualified)
+      -> void;
 
   // The linked context.
   Context* context_;
