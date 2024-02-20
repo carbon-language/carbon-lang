@@ -23,11 +23,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Step 1: Arity deduction](#step-1-arity-deduction)
         -   [Step 2: Scrutinee adjustment](#step-2-scrutinee-adjustment)
         -   [Step 3: Pattern adjustment](#step-3-pattern-adjustment)
-        -   [Step 4: Representative deduction](#step-4-representative-deduction)
+        -   [Step 4: Kernel deduction](#step-4-kernel-deduction)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
+
+FIXME: Switch to new tuple indexing syntax
 
 ## Basics
 
@@ -232,8 +234,8 @@ fn StrCat[... each T:! ConvertibleToString](... each param: each T) -> String {
 
 ```carbon
 // Returns the minimum of its arguments, which must all have the same type T.
-fn Min[T:! Comparable & Value](... each(>=1) param: T) -> T {
-  let (var result: T, ... each next: T) = (... each param);
+fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
+  var result: T = first;
   ... if (each next < result) {
     result = each next;
   }
@@ -316,120 +318,674 @@ A pack binding pattern binds the name to each of the scrutinee values, in order.
 
 ## Typechecking
 
+## Background
+
+Compile-time expression evaluation consists of applying reduction rules to
+symbolic expressions. A _template constant value_ is an expression that
+does not refer to any variables, and cannot be further reduced. A _symbolic value_
+is an expression that may refer to symbolic bindings, but once those bindings'
+template constant values are known, substituting them into the symbolic value
+will produce a template constant value.
+
+FIXME examples? Notation?
+
+The type `Count` represents non-negative integers. It is used only at compile
+time, to represent certain hidden quantities like arities, and it cannot be
+referred to in user code.
+
+The only arithmetic operation it supports is addition with other `Count` values,
+and with integer literals, so a symbolic `Count` value is always a sum of
+integer literals and the names of symbolic bindings of type `Count`. As a
+result, a symbolic `Count` value can be thought of as a multiset of integer
+literals and binding names, because the order is not significant, but the number
+of repetitions is. If $X$ and $Y$ are `Count` values, $X < Y$ if the summands of
+$X$ are a strict sub-multiset of the summands of $Y$, and the other ordering
+relations can be defined similarly. This is not a total order, so for some pairs
+of values none of these relations will hold. Note that these are not
+operators within the Carbon language; they are mathematical relations
+that we use for talking _about_ `Count` values.
+
+FIXME examples?
+
+
+
 ### Generalized tuple types
 
 The `...` operator lets us form tuples out of sequences whose size is not known
 during typechecking. For example, in this code:
 
 ```carbon
-fn F[... each T:! type]((... each x: i32), (... each(>=1) y: Optional(each T))) {
+fn F[... each T:! type]((... each x: i32), (... each y: Optional(each T))) {
   let z: auto = (... each x, 0 as f32, ... each y);
 }
 ```
 
 The type of `z` is a tuple whose elements are an indeterminate number of
 repetitions of `i32`, followed by `f32`, followed by a different indeterminate
-number of types (but at least one) that all have the form `Optional(T)` for some
+number of types that all have the form `Optional(T)` for some
 type `T`. We can't represent this as an explicit list of element types until
 those indeterminate numbers are known, so we need a more general representation
 for tuple types.
 
-In this model, a tuple type consists of a sequence of _segments_, and a segment
-consists of a type called the _representative_, and an arity, both of which may
-be symbolic expressions. The arity has a type, which is an instance of one of
-two generic types, `AtLeast(template N:! Core.BigInt)` and
-`Exactly(template N:! Core.BigInt)`, which constrain the arity to be at least
-`N` or exactly `N`, respectively (`N` cannot be negative). There is a subtype
-relation between arity types: `Exactly(N)` and `AtLeast(N)` are subtypes of
-`AtLeast(M)` if `M <= N`.
+In this model, at compile time a tuple value (or tuple type) consists of a sequence of _segments_, and a segment
+consists of an expression called the _kernel_, an arity, and an _offset_. 
+The kernel can have an arbitrary type, but the arity and offset have type `Count`.
+We will use the notation `<K; A; O>` to
+represent a segment with kernel `K`, arity `A`, and offset `O`, but note
+that this is just for purposes of illustration; it isn't Carbon syntax.
+Each segment represents a subsequence of elements that share a common structure.
+The arity specifies the number of elements in that sequence, and the kernel
+and offset specify the values of those elements: to determine the i'th element
+of the sequence, we take the kernel and replace each mention of a pack
+binding with the k'th element of the pack, where k is the sum of i and the
+segment's offset. For example, if `P1` and `P2` are packs, the segment `<(P1, P2, X), 3, 2>` represents
+the element sequence
+`(P1[:2:], P2[:2:], X), (P1[:3:], P2[:3:], X), (P1[:4:], P2[:4:], X)`.
 
-Each segment is associated with a special symbolic variable called the _pack
-index_, which has type `AtLeast(0)` and is scoped to that segment's
-representative. The pack index can only be used in the subscript of an indexing
-expression on a pack, and only by adding it to an arity arithmetic expression
-(see [below](#tuple-type-equality-and-segment-algebra)) called the _offset_,
-which doesn't involve `$I`.
+FIXME: explain how the transformation to element form can occur during
+monomorphization (if not before). Maybe explain how this leads to the
+conclusion that a segment is a symbolic value iff its properties are symbolic
+values. I.e. a symbolic value is an expression which can be monomorphized.
+
+If the kernel refers to any packs, they must all have the same arity, which we will
+call the _kernel arity_.
+A segment is _heterogeneous_ if its kernel refers to at least one pack, and
+_homogeneous_ otherwise. The offset has no meaning on a homogeneous
+segment; homogeneous segments are equal if they have equal kernels and arities,
+whereas heterogeneous segments are equal only if their kernels, arities, and
+offsets are all equal.
+A segment `<K; A1+A2; O>` can be split into two consecutive segments
+`<K; A1; O>, <K; A2; O+A1>` (if `A1` and `A2` are not negative) and conversely
+two consecutive segments `<K; A1; O>, <K; A2; O+A1>` can be merged
+into a single segment `<K; A1+A2; O>`.
+
+A segment is _singular_ if its arity is known to be 1, and _variadic_
+if its arity is unknown. In contexts where all segments are known to be
+singular, we will sometimes refer to them as "elements". 
+
+The kernel arity must be
+greater than or equal to the sum of the segment's arity and offset. A segment
+is _normalized_ if all of the following hold:
+- The segment's offset is 0.
+- Either the segment is homogeneous or its arity is equal to the kernel arity.
+- If the segment's arity is a template constant, it is equal to 1.
+
+A pack or tuple value can always be written as a sequence of normalized segments.
+More precisely, any complete sequence of segments has the following invariants:
+- If a segment's arity is a template constant, it is equal to 1.
+- If a segment is heterogeneous, the sum of its arity and offset is less than or equal to the kernel
+  arity.
+- If a segment has the form `<K; A; O>` where `O` is not 0, it is immediately
+  preceded by a segment `<K; B; P>` where `O` = `B+P`.
+- If a segment has the form `<K; A; O>` where `A+O` is less than the kernel
+  arity, it is immediately followed by a segment `<K; B; A+O>`.
+FIXME: the above may not be complete, and some of the conditions apply only to
+heterogeneous segments (is there a way to make them apply to homogeneous segments
+as well?)
+
+FIXME: An alternate representation might make the invariants more intuitive.
+Maybe left-offset, arity, right-offset, which together sum to the kernel arity?
+Or a more radical change: each segment covers the whole kernel arity, and it's
+split into sub-segments (fragments?)? Or maybe we don't need sub-segments at
+all? That doesn't quite work because of homogeneous segments (where the arity
+is extrinsic).
+
+
+The
+_shape_ of a tuple type is the sequence of arities of its segments, so the shape
+of the type of `z` is `(|x|, 1, |T|)`.
+
+A segment
+is a symbolic value only if the kernel doesn't name any packs, or the
+segment's arity is equal to the arities of the packs named in the kernel.
+(FIXME explain why?)
+
+FIXME have we explained that packs are made of segments yet?
+
+Segments are a generalized form of expression pack expansion: each segment
+represents a kind of compile time loop, in which a notional "pack index" ranges
+from the offset to the sum of the offset and the arity minus one, and on each
+iteration the kernel is evaluated, using the pack index to select elements of
+the pack bindings that the kernel refers to.
+
+As a result, variable substitution works differently on segments: when the values
+of a segment's pack bindings are known, we don't textually substitute them into
+the segment's kernel. Instead, we perform pack expansion on the segment, which
+evaluates the loop in terms of those pack values.
+
+Pack expansion on a segment can be expressed symbolically: for example,
+if a pack `P` consists of the segments `<i32; 1; 0>, <Vector(each T); X; 4>`,
+and a pack `Q` consists of the segments `<f64; 1; 0>, <Optional(each U); X; 4>`,
+then the segment `<(each P, Vector(each Q)); X+1; 0>` can be expanded to
+`<(i32, Vector(f32)); 1; 0>, <(Vector(each T), Vector(Optional(each U))); X; 4>`.
+This expansion actually consists of two steps: first, we split the source segment
+into `<(each P, each Q); 1; 0>, <(each P, each Q); X; 1>` following the rule
+described above, so that its shape
+matches the shape of `P` and `Q` (which we will call the _substituted packs_).
+In the next step, we iterate over the segments in parallel, substituting the kernels
+from the `P` and `Q` segments into the kernel of the source segment,
+and replacing the source segment's offset with the corresponding substituted
+packs' offset.
+
+To perform a symbolic pack expansion, all of the following conditions
+must hold:
+- The substituted packs must have the same shape, and corresponding segments
+  of the substituted packs must have the same offsets.
+- The source segment must have offset 0.
+- The arity of the source segment must equal the sum of the arities of the
+  segments in a substituted pack.
+- All packs named in the kernel of the source segment must be substituted.
+
+Recall that a symbolic value is an expression where, if we substitute
+template constant values for its symbolic variables, the result will be a
+template constant value. Since symbolic expansion is how we perform substitution
+on a segment, that implies that a segment is a symbolic value if its
+kernel, arity, and offset are symbolic values, and the above conditions are
+guaranteed to hold.
+
+FIXME: Pin down how that works with the constraint on the substituted packs--
+does it go via their types? Maybe it follows from the sum-of-arities constraint
+and some invariant of how we create and transform packs?
+Candidate invariant: we never discard parts of a pack. If a heterogeneous segment
+has a nonzero offset, it's always preceded by a segment it's contiguous with,
+and if its offset plus arity is less than the arity of the kernel, it's
+always followed by a segment it's contiguous with. Then maybe we can merge and then split
+to make it true. Maybe "normalized" means those are all merged, so arity matches kernel arity?
+FIXME: This isn't fully true, though -- user code could choose to violate that, like the
+return type of `ZipRotate`. But maybe that's the point: within the signature,
+that property isn't violated. It could be violated by the callsite, but we
+don't let it. In other words, this invariant applies within a given scope.
+Also, I think it only applies at compile time.
+We could do something similar within a scope using local variables, but then
+they're opaque, so you still never see packs that don't have this property
+
+
+Segment expansion has an inverse operation, called _segment merging_, which
+takes an expanded pack and a set of substituted packs and computes the
+corresponding source segment. For example, given the definitions of `P` and
+`Q` given earlier, the pack `<(i32, Vector(f32)); 1; 0>, <(Vector(each T), Vector(Optional(each U))); X; 4>`
+can be merged into a single segment `<(each P, Vector(each Q)); X+1; 0>`.
+FIXME: conditions for doing that
+FIXME: degenerate case where there are no substituted packs, just a desired shape
+FIXME: build on this somewhere by explaining the use case (where the substituted packs are concatenations)
 
 Every pack expansion pattern, and every pack expansion expression in the type
-position of a binding pattern, has a hidden deduced parameter that represents
-its arity.
-
-These types, values, variables, and operations are notional, and are not
-available to user code. For purposes of illustration, the notation `<R, A:T>`
-represents a segment with representative `R` and arity `A` of type `T`, `$I`
-represents the pack index, and given a pack binding `B`, `|B|` represents the
-deduced arity parameter of the expansion pattern that contains the definition of
-`B`, and `B[:$I:]` represents the `$I`th value bound by `B`.
+position of a binding pattern, has a hidden deduced symbolic parameter that represents
+its arity. Given a pack binding `B`, we will use `|B|` to represent the
+deduced arity parameter of the expansion pattern that contains the definition
+of `B`, but this is only for purposes of illustration; it isn't Carbon syntax.
 
 So, continuing the earlier example, the type of `z` is represented symbolically
 as
-`(<i32, |x|:AtLeast(0)>, <f32, 1:Exactly(1)>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`.
+`(<i32; |x|; 0>, <f32; 1; 0>, <Optional(each T); |T|; 0>)`.
 
-A segment is _variadic_ if its arity type is an instance of `AtLeast`, and
-_singular_ if its arity type is `Exactly(1)` and its representative does not
-refer to the pack index. In contexts where all segments are known to be
-singular, we will sometimes refer to them as "elements". Segments are always
-assumed to be normalized, meaning that every segment is either singular or
-variadic. This is always possible because if a segment's arity is known to be
-some fixed value N other than 1, we can replace it with N singular segments. The
-_shape_ of a tuple type is the sequence of arities of its segments, so the shape
-of the type of `z` is `(|x|:AtLeast(0), 1:Exactly(1), |T|:AtLeast(1))`.
+A hidden arity parameter can be thought of as an integer, but its type also records
+the minimum possible value, which is typically 0, but can be
+greater in some circumstances. For example, given this code:
 
-As a notational convenience, if the arity type is omitted, it is understood to
-be `Exactly(N)` if the arity value is an integer literal `N`, and `AtLeast(0)`
-in all other cases. So the type of `z` could also be written as
-`(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`.
+```carbon
+let (... each x: auto) = (x, ... each y, z);
+```
+
+The arity of `x` must be at least the minimum arity of `y`, plus 2, and that
+fact will be recorded in the type of `|x|`. However, this applies only when
+it is not possible to forward-declare `x` (such as if it is local to a function).
+If `x` can be forward-declared, any forward-declaration of `x` also implicitly
+declares `|x|`, and without an initializer for `x`, it cannot deduce any
+minimum other than 0, so the defining declaration must have the same minimum to
+avoid inconsistency.
+
+If a tuple contains a segment `<K; A; O>` such that, if `S` is the sum of
+the arities of all earlier segments, `S` is known to be less than or equal to `I`, and
+`S` + `A` is known to be greater
+than `I`, then an indexing expression with subscript `I` symbolically reduces to `<K; 1; I-S>`. This most
+commonly applies when `I` is a known concrete value, and the tuple begins
+with at least `I`+1 singular segments. Note that it may be possible to
+satisfy this criterion by merging segments.
+FIXME: This might be more of a meta-rule that concrete reduction rules have to satisfy,
+unless we can pin down symbolic arithmetic/comparison and reduction algorithm more precisely.
+Maybe specify in terms of peeling off segments from the head/tail until we get
+down to 1, then `(<K; A; O>).I` reduces to `<K; 1; O+I>`, then 2 segment reduction rules:
+if homogeneous, reduce to `K`, otherwise reduce to `(... K).(O+I)`. Also,
+represent symbolic indices as sums of symbolic indices. No subtraction or comparison per se,
+just removing an element from the sum.
+
+(<K1; A; O1>, S).(A + C) -> (S).(C)
+
 
 In order to index into a tuple with subscript `I`, the tuple type's segment
 sequence must start with at least `I` singular segments, so that we can
-determine the type of the indexing expression. Note that this rule applies only
-to user-written subscript operations, not to the notional `[: :]` operations
-introduced by the compiler when rewriting a pack expansion.
+determine the type of the indexing expression.
+FIXME: clarify how this works during symbolic evaluation, such that it can
+support cases like matching `[T:! type](arg: T, ... each next: i32)` against
+`(... each int_pack, 1 as i32)`
 
 Similarly, in order to pattern-match a tuple pattern that does not contain a
 pack expansion subpattern (and therefore contains a separate subpattern for each
 element), the scrutinee tuple type's segments must all be singular.
 
-#### Tuple type equality and segment algebra
+#### Type expression evaluation
 
-Two generalized tuple types are _structurally equal_ if they have the same
-number of segments and the segments have equal representatives, arities, and
-arity types. They are _semantically equal_ if any instance of one is guaranteed
-to be an instance of the other, and the other way around. Generalized tuple
-types can be semantically equal without being structurally equal; for example,
-these three types are semantically equal, but all structurally different:
+Consider this example:
 
--   `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|:AtLeast(1)>)`
--   `(<i32, |x|>, <f32, 1>, <Optional(T[:0:]), 1>, <Optional(T[:$I+1:]), |T|-1>)`
--   `(<i32, |x|>, <f32, 1>, <Optional(T[:$I:]), |T|-1:AtLeast(0)>, <Optional(T[:|T|-1:]), 1>)`
+```carbon
+fn G[... each T:! C1, U:! C2, V:! C3](... each x: each T, y: U, z: V);
 
-We can use a kind of type algebra to transform generalized tuple types to
-different structural forms while preserving semantic equality.
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  let (... each Arg:! C1 & C2 & C3) = (A, B, ... each C);
+  let (... each arg: each Arg) = (a, b, ... each c)
+  G(... each arg);
+}
+```
 
-Arity types can be added and subtracted according to the following rules:
+Any possible monomorphization of this code would typecheck, so we would
+like the generic version to typecheck as well. However, when we are typechecking
+the call to `G`, we cannot compute a symbolic value for `V` to bind to: it
+will be the result of `(A, B, ... each C).(|C|+1)`, which we can reduce to
+`(B, ... each C).(|C|)` but can't reduce further until `|C|` is known
+(which will not be until monomorphization).
 
--   `Exactly(M) + Exactly(N) == Exactly(M+N)`
--   `Exactly(M) + AtLeast(N) == AtLeast(M+N)`
--   `AtLeast(M) + Exactly(N) == AtLeast(M+N)`
--   `AtLeast(M) + AtLeast(N) == AtLeast(M+N)`
--   `Exactly(M) - Exactly(N) == Exactly(M-N)`
--   `Exactly(M) - AtLeast(N)` is ill-formed.
--   `AtLeast(M) - Exactly(N) == Exactly(M-N)`
--   `AtLeast(M) - AtLeast(N)` is ill-formed. (Recall that `M` and `N` are always
-    template constants.)
+To work around this problem, we will say that symbolic bindings bind to
+symbolic _expressions_, not symbolic values, and are evaluated only when
+the typechecker needs a symbolic value. As a result, the above code can typecheck, because
+typechecking never needs the value of `V`.
 
-Arity values can also be added and subtracted, with a result type determined by
-applying the same operation to the operand types, so if we have `X:AtLeast(2)`
-and `Y:Exactly(3)`, then the type of `X+Y` is `AtLeast(2) + Exactly(3)`, or
-`AtLeast(5)`. These operations are valid if and only if the result type is
-well-formed.
+FIXME move to proposal doc, since we're explaining a change, not a state?
 
-The **splitting rule**: A segment `<R, X+Y:Xt+Yt>` can be rewritten as a
-sequence of two segments `<R, X:Xt>, <S, Y:Yt>`, where `S` is obtained by
-substituting `$I + X` for every occurrence of `$I` in `R`. Notice that rewriting
-the representative in this way preserves the invariant that a pack indexing
-expression always indexes into a user-declared pack binding, with a subscript
-that is always the sum of `$I` and an offset (or an offset alone).
+The typechecker needs the symbolic value of an expression under circumstances
+such as:
+
+- When it needs to check that values are equal, pattern match on them, or
+  query if a type satisfies a constraint. FIXME this is vague
+  For example, if the last line of the example were
+  `let result: B = G2(... each arg)`, the typechecker would need the symbolic
+  value of `V` in order to check whether it is convertible to `B`.
+
+
+> **Open question:** When else is a symbolic value needed?
+>
+> It is less clear what should happen if the last line were
+> `let result: auto = G2(... each arg)',
+> or if `H` discarded the return value of `G`. Does the typechecker
+> evaluate the return type of every function call, or only when the return value
+> is used, or only when the return value is used non-generically?
+
+#### Function call rewriting
+
+FIXME this section might belong somewhere else.
+
+FIXME: new exposition approach: Need to coerce the shapes to be equal (why?). Segments are always "born"
+with offset 0 and an unsplittable arity, so we merge as much as possible in
+order to facilitate subsequent splitting.
+
+
+
+Consider the following code:
+
+```carbon
+fn G[... each T:! C1, U:! C2, V:! C3](... each x: each T, y: U, z: V);
+
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  G(a, b, ... each c);
+}
+```
+
+Any possible monomorphization of this code would typecheck, so
+we would like the generic version to typecheck, but we don't have a way to write
+the expressions that the deduced parameters will bind to, because the arguments
+and parameters don't line up structurally. (FIXME that doesn't really explain
+the problem because they don't line up after the rewrite either. This also
+seems to presuppose "comma significance")
+
+However, we can fix that problem by
+merging the arguments:
+
+```carbon
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  let (... each Arg:! C1 & C2 & C3) = (A, B, ... each C);
+  let (... each arg: each Arg) = (a, b, ... each c)
+  G(... each arg);
+}
+```
+
+`<A; 1; 0>, <B; 1; 0>, <each C; |C|; 0>`
+
+
+
+Consider the following code:
+
+```carbon
+fn ZipAtLeastOne[First:! type, ... each Next:! type]
+      (first: Vector(First), ... each next: Vector(each Next))
+      -> Vector((First, ... each Next));
+
+fn F[... each T:! type](... each v: Vector(each T), w: Vector(i32)) -> auto {
+  return ZipAtLeastOne(... each v, w);
+}
+```
+
+We would like this code to typecheck, because any possible
+monomorphization of it would typecheck, but there's no way to construct a
+valid expression for the value that `First` binds to -- it could be either `i32`
+or the first element of `each T`, depending on whether `each T` is empty
+(which we don't know when we're typechecking `F`) (FIXME is that still accurate
+with new model for symbolic bindings? If `(... each T, i32).0` is a valid expression
+we need to explain this differently). However, consider this
+alternative way of writing the declaration of `ZipAtLeastOne`:
+
+```carbon
+fn ZipAtLeastOne[... each Arg:! type](... each arg: Vector(each Arg))
+      -> Vector((... each Arg));
+```
+
+This declaration avoids that problem, because we no longer need to worry about
+extracting the type of the first parameter. Furthermore, this declaration is
+equivalent to the original one from the caller's point of view, except that this
+one fails to reject an empty argument list.
+
+We can avoid even that problem if we
+use the segment representation, leveraging the fact that it represents arity
+explicitly. In that setting, the parameter type is
+`(<Vector(First); 1; 0>, <Vector(each Next); |Next|; 0>)`,
+and we rewrite it to `(<Vector(each Arg); |Next|+1; 0>)` by introducing a new
+deduced parameter `Next`. Recall that `|Next|` is shorthand for a
+hidden deduced parameter, which is independent of `Next` even though it happens
+to correspond to the arity of `Next`, so we can keep using `|Next|` even though
+`Next` itself was eliminated as part of the rewrite. `|Next|` cannot be negative,
+so the arity `|Next| + 1` correctly captures the fact that the parameter tuple
+must have at least one element.
+
+Notice that the original parameter type `(<Vector(First); 1; 0>, <Vector(each Next); |Next|; 0>)`
+is the result of symbolically pack-expanding the rewritten type `(<Vector(each Arg); |Next|+1; 0>)`
+when `Arg` is the concatenation of `First` and `each Next`, i.e.
+`<First; 1; 0>, <each Next; |Next|; 0>`. The original return type
+is also the result of pack-expanding the rewritten return type with the same
+value of `Arg`. 
+
+FIXME: illustrate a case where return type merging fails
+
+FIXME: example of rewriting with non-deduced-parameter. An argument rewrite
+would work, but a parameter rewrite would help motivate integrated approach that
+covers all cases.
+
+FIXME: maybe we can unify by starting with the non-deduced case, then saying if
+we replace a deducing usage, we have to replace all non-deducing usages, including
+the definition of the replacement. Which makes the replacement tautological, so
+it must itself be deduced. That also explains why all the segments must be
+deducing if any of them are.
+
+
+
+
+
+More generally, this kind of rewritten form is equivalent to
+the original form if we can obtain the original form by applying symbolic pack expansion to the rewritten form, where the substituted packs are all deduced parameters
+of the rewritten form, and each substituted pack's value is formed by
+concatenating deduced parameters of the original form that have identical constraints.
+Recall that symbolic pack expansion consists of splitting the expanded segment
+to have the appropriate shape, followed by segment-by-segment substitution, so as a degenerate
+case, this condition is satisfied if we can obtain the original form by
+splitting segments of the rewritten form without applying any substitutions
+(this enables us to do things like rewrite `fn F(x: i32, ... each y: i32)` to
+`fn F(... each arg: i32)`).
+
+This definition also points toward how we can compute such a rewritten form, by inverting
+the process of pack expansion: given a sequence of segments representing the
+parameter types, we simultaneously traverse the ASTs of
+their kernels to compute the kernel of the rewritten parameter type. At each step:
+- If the corresponding AST nodes are all identifier expressions that name
+  deduced parameters, introduce a new deduced parameter to replace them,
+  record that its value is equal to the concatenation of the original
+  deduced parameters, and return an identifier expression naming the
+  new parameter.
+- If the corresponding AST nodes all have equal kinds, equal local states,
+  and equal numbers of children, and recursively computing a rewritten form succeeds
+  for each child, return a rewritten node with the same kind
+  and local state, whose children are the rewritten children.
+- Otherwise, fail.
+
+We then rewrite any tuple types in the return type with a similar simultaneous
+traversal of the ASTs of the segment kernels, except that rather than inferring
+new deduced parameters from sequences of original deduced parameters, we
+attempt to replace sequences of deduced parameters with the new deduced parameters
+that were inferred in the previous step, and fail if we encounter any original
+deduced parameters that cannot be rewritten in this way.
+
+This algorithm can also be extended to rewrite a maximal subsequence of the
+parameter types, rather than all of them, by keeping track of the beginning and
+end of the candidate subsequence (initially all the segments), and narrowing
+those bounds whenever doing so can prevent failure.
+
+FIXME: Note that rewriting a declaration doesn't have to apply to the definition,
+because they're equivalent.
+
+
+FIXME: consider argument merging.
+
+```
+fn F[... each T:! C1, U:! C2, V:! C3](... each x: each T, y: U, z: V);
+
+impl i32 as C1 ...;
+impl i32 as C2 ...;
+impl i32 as C3 ...;
+
+fn G(a: i32, b: i32, ... each c: i32) {
+  F(a, b, ... each c);
+}
+
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  F(a, b, ... each c);
+}
+
+fn J[D:! C1 & C2 & C3, E:! C1 & C2 & C3, ... each F:! C1 & C2 & C3]
+    (d: D, e: E, ... each f: each F) {
+  let (... each Q:! C1 & C2 & C3) = (D, E, ... each F);
+  let (... each q:! ... each Q) = (d, e. ... each f);
+  F(... each q);
+}
+
+
+fn F2[... each T:! C1, U:! C2, V:! C3](... each x: each T, y: U, z: V) -> V;
+
+fn G2(a: i32, b: i32, ... each c: i32) -> i32 {
+  return F2(a, b, ... each c);
+}
+
+fn H2[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) -> B {
+  // Must reject because B only equals V when the pack is empty, non-generic.
+  return F2(a, b, ... each c);
+}
+
+fn F3[T:! C1, U:! C2, ... each V:! C3](x: T, y: U, ...each z: each V);
+
+fn G3(... each stuff: i32) {
+  F3(... each stuff, 1 as i32, 2 as i32);
+}
+```
+
+`H` is motivating example for non-homogeneous argument merging.
+Type of `F` is `(<each T; |T|; 0>, <U; 1; 0>, <V; 1; 0>)`.
+Initial argument type is `(<A; 1; 0>, <B; 1; 0>, <each C; |C|; 0>)`, where
+`A`, `B`, and `C` have identical constraints.
+
+
+FIXME Possibly this should go before ZipAtLeastOne?
+
+Consider now this somewhat more abstract example:
+
+```carbon
+fn G[... each T:! C1, U:! C2, V:! C3](... each x: each T, y: U, z: V);
+
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  G(a, b, ... each c);
+}
+```
+
+Here again, any possible monomorphization of the code would typecheck, so
+we would like the generic code to typecheck, but we don't have a way to write
+the expressions that the deduced parameters will bind to, because the arguments
+and parameters don't line up structurally. In this case we can't
+fix that problem by merging the parameters, because they have different types
+and constraints. However, we can fix the problem by merging the arguments:
+
+```carbon
+fn H[A:! C1 & C2 & C3, B:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, b: B, ... each c: each C) {
+  let (... each Arg:! C1 & C2 & C3) = (A, B, ... each C);
+  let (... each arg: each Arg) = (a, b, ... each c)
+  G(... each arg);
+}
+```
+
+
+
+
+=== OLD VERSION BELOW. NEW VERSION (02/07) ABOVE ===
+
+FIXME: re-express this in terms of separate _merge_ (inverse of split) and
+_change of variables_ (or _substitution_?) axioms?
+Exposition approach: substitution makes the merge rule more powerful.
+In the non-deduced case it's simple: you can let new variable be concatenation
+of old ones, and rewrite in terms of that at will. In deduced case, there
+are caveats: have to rewrite all uses of the old variables (since they are no
+longer deduced), and ...
+
+
+In principle, the splitting rule is invertible: if we have a sequence of two
+segments `<R, X:Xt>, <[$I + X -> $I]R, Y:Yt>`, they can be rewritten as a single
+segment `<R, X+Y:Xt+Yt>`. However, in practice that is very rarely directly applicable,
+except in the degenerate case that if `R` does not contain any occurrences of `$I`,
+we can rewrite `<R, X:Xt>, <R, Y:Yt>` as `<R, X+Y:Xt+Yt>`.
+
+There are situations that aren't covered by that rule, where we would
+nevertheless like to be able to merge adjacent segments. For example, consider
+this version of `Zip` that requires at least one argument:
+
+```carbon
+fn ZipAtLeastOne[First:! type, ... each Next:! type]
+      (first: Vector(First), ... each next: Vector(each Next))
+      -> Vector((First, ... each Next));
+```
+
+From the caller's point of view, `ZipAtLeastOne` is just a function that takes one or more
+arguments with arbitrary vector types -- there's nothing special about the
+first parameter, other than the fact that it must exist. As a result, that
+signature can almost be written so that there is only one parameter segment:
+
+```carbon
+fn ZipAtLeastOne[... each Param:! type](... each param: Vector(each Param))
+      -> Vector((... each Param));
+```
+
+The only difference is that this simpler form can be called with no arguments,
+which we could fix by making `param` have arity type `AtLeast(1)`.
+We have no Carbon syntax for doing that, but that's not a barrier if this
+rewrite is taking place in the compiler.
+
+In effect, that rewrite works by merging `First` and `each Next` into a
+composite variable `each Param`, so that `First` is
+an alias for `Param[:0:]` and `each Next` is an alias for the remaining elements of `Param`
+(i.e. `Next[:$I:]` is an alias for `Param[:$I + 1:]`), and `|Param|:AtLeast(1)` = `|Next| + 1`. As a result, the original
+parameter tuple type `(<Vector(First), 1>, <Vector(Next[:$I:]), |Next|>)`
+can be rewritten as `(<Vector(Param[:0:]), 1>, <Vector(Param[:$I + 1:]), (|Param|-1):AtLeast(0)>)`,
+and then we can apply the inverted splitting rule to get
+`(<Vector(Param[:$I:]), |Param|:AtLeast(1)>)`
+
+Notice that we also applied a similar rewrite to the return type. That isn't just
+because it makes the signature simpler: by rewriting the parameter tuple type,
+we eliminated the deducing usages of `First` and `each Next`, so we have to
+fully eliminate those variables from the signature, including their uses in
+the return type. If it weren't possible to rewrite the return type in terms of
+`Param`, we couldn't have introduced `Param` in the first place. For example,
+there's no way to rewrite this function to have a single parameter segment,
+even though its parameter list is identical:
+
+```carbon
+fn RotateZipAtLeastOne[First:! type, ... each Next:! type]
+      (first: Vector(First), ... each next: Vector(each Next))
+      -> Vector((... each Next, First));
+```
+
+FIXME explain why we're obligated to do the final inverted-split, even though we've
+gotten rid of `First` and `each Next`.
+- Connects back to discussion with Richard about symbolic values?
+  `Vector((<Param[:$I:], |Param|>))` is a symbolic value, `Vector((<Param[:$I + 1:], |Param-1|>, <Param[:0:], 1>))`
+  is not? What exactly is the problem?
+  The `[:0:]`? The `+1` in `[:$I + 1:]`? The arity `|Param-1|`? The arity `1`? All of the above?
+  Would a return type that mentioned only one of them still be bad?
+  Yes, because the callsite might not be able to compute with it symbolically.
+  `Vector((<Param[:$I:], |Param|>))` is a symbolic value because it's equivalent to
+  `Vector((... each Param))`: the caller presumptively knows the symbolic value of `Param`,
+  so they can substitute `Param` into that and the result will be a symbolic value.
+  They don't know anything more granular than `Param`, because that's the whole point
+  here: carving out a bounded exception to the rule that a `:!` binding (like `First` and `Next`)
+  must bind to a symbolic value.
+  I think that's a better way to approach this whole section: we're synthesizing
+  "composite bindings" so that we can satisfy that rule
+
+
+
+
+We will use the following notation to represent expression substitution:
+- Let $V = V_1, V_2, ...$ be a sequence of metavariables (textual placeholders that
+  will be rewritten, rather than Carbon variables).
+- Let $S = S_1, S_2, ...$ be a sequence of Carbon expressions of the
+  same size.
+- Let $E$ be a Carbon expression that may contain metavariables
+  from $V$.
+Then $[V \mapsto S]E$ is a new expression in which, for all $1 \le i
+\le |V|$, all occurrences of $V_i$ in $E$ have been replaced by $S_i$.
+
+
+
+
+
+
+Using that notation, we can make the definition of "uniform" precise as follows:
+a segment sequence $T = T_1, T_2, ...$ is uniform if there exists a Carbon
+expression $E$, a sequence of metavariables $V = V_1, V_2, ...$
+that are used in $E$, a $|T| \times |V|$ array of symbolic variables $P$,
+and a $|T| \times |V|$ array of substituted
+expressions $S$, and a non-negative initial offset `N` such that for all $1 \le i \le |T|$
+and all $1 \le j \le |V|$:
+- The kernel of $T_i$ is $[V \mapsto S_i]E$.
+- If $T_i$ is variadic, $S_{ij}$ has the form " $P_{ij}$ `[:$I + N:]` " 
+  if $i = 1$, or " $P_{ij}$ `[:$I:]` " if $i \gt 1$.
+- If $T_i$ is singular, $S_{ij}$ is an identifier expression that names $P_{ij}$.
+- For all $1 \le i' \le |T|$, $P_{ij}$ has the same type as $P_{i'j}$.
+- If $P_{ij}$ is deducible in the context of $T$, then:
+   - For all $1 \le i' \le |T|$, $P_{i'j}$ is deducible in the context of $T$,
+     and has the same scope as $P_{ij}$.
+   - $P_{ij}$ is unique in $P$, and is not named in $E$.
+   - Usages of $P_{ij}$ outside the explicit parameter list only occur as part of a
+     sequence of segments $T'$ that has the same shape as $T$, and there exists
+     some Carbon expression $E'$ such that for all
+     $1 \le i' \le |T'|$, the kernel of $T'_i$ is $[V \mapsto S_i]E'$.
+
+We can then replace $T$ with a single segment by defining a new variadic Carbon
+symbolic constant $R_j$ (for all $1 \le j \le |V|$) that can take the place of
+the variables in $P_{ij}$. If $P_{0j}$ is not deducible in the context of $T$,
+$R_j$ is bound to a sequence of segments with the same shape as $T$, where
+the $i$ th segment's kernel is $P_{ij}$. If $P_{0j}$ is deducible in
+the context of $T$, $R_j$ is declared in the same scope as $P_{0j}$, so that
+it is deducible in the same way.
+
+Then, $T$ is replaced with a single segment whose arity is the sum of the
+arities of $T$, and whose kernel is $[V \mapsto R]E$, and any
+segment sequence $T'$ (as defined earlier) is replaced with $[V \mapsto R]E'$
+(for the $E'$ associated with that $T'$).
+
+FIXME: This accommodates arguments as well as parameters, but should it?
+Want to treat identical types as homogeneous. Almost anything else seems
+like a problem because adding more type information could break it, which
+seems undesirable (and maybe against established principles?)
+
 
 ### Iterative typechecking of pack expansions
 
@@ -469,14 +1025,14 @@ In order to represent the declared type of `x`, the typechecker needs to model
 the fact that `X` consists of the concatenation of `A` and `B`, even though it
 does not yet know the arity or contents of either pack. It does this by
 representing packs as sequences of segments. For example, `X` can be represented
-as `(<A[:$I:], |A|>, <B[:$I:], |B|>)`.
+as `(<A, 0..|A|>, <B, 0..|B|>)`.
 
 Similarly, the typechecker sometimes needs to reason symbolically about values
 with generalized tuple types (like the value of `(...each A, ...each B)`).
 These, too, are represented as sequences of segments.
 
 Since type packs are sequences of segments, typechecking must iterate over those
-segments' representatives rather than over the (unknown) individual element
+segments' kernels rather than over the (unknown) individual element
 types. To ensure that this is valid, we require all sites of a given expansion
 to have the same shape. We determine the shapes of the expansion sites as
 follows:
@@ -534,22 +1090,25 @@ and variadic segments.
 Type deduction for a tuple pattern proceeds in four steps:
 
 1. Deduce the arity of the variadic pattern segment.
-2. Adjust the shape of the scrutinee so that each singular pattern segment
-   corresponds to a singular scrutinee segment.
-3. Adjust the shape of the pattern so that each remaining scrutinee segment
-   corresponds to a pattern segment with the same arity.
-4. Deduce the representative of each pattern segment from the corresponding
+2. Rewrite the pattern so that it has the same shape as the scrutinee.
+3. Deduce the kernel of each pattern segment from the corresponding
    scrutinee segment.
 
-Steps 1 and 4 are deduction steps: they apply information from the scrutinee
-type to infer the unknown properties of the pattern type. Steps 2 and 3 do not
-perform deduction; instead, they structurally transform the two types while
+FIXME: new approach:
+1. Maximally merge parameters
+2. Maximally merge arguments
+3. Deal with singular argument/parameter pairs
+4. Either the parameters or the arguments must consist of one variadic segment
+
+
+Steps 1 and 3 are deduction steps: they apply information from the scrutinee
+type to infer the unknown properties of the pattern type. Step 2 does not
+perform deduction; instead, it structurally transform the pattern type while
 preserving semantic equality (using the algebraic rules defined
-[earlier](#tuple-type-equality-and-segment-algebra)). The purpose of those steps
-is to enable the deduction in step 4, which is valid only if each segment of the
+[earlier](#tuple-type-equality-and-segment-algebra)). The purpose of step 2
+is to enable the deduction in step 3, which is valid only if each segment of the
 pattern is guaranteed to match every element of the corresponding scrutinee
-segment. Step 2 ensures that property for the singular pattern segments, and
-step 3 ensures it for the variadic pattern segment.
+segment.
 
 #### Step 1: Arity deduction
 
@@ -559,77 +1118,54 @@ equation that we can trivially solve for the unknown arity of the variadic
 pattern segment. This is why we require that there is only one variadic pattern
 segment: we cannot solve a single equation for more than one unknown.
 
-This equation is expressed in terms of _typed_ arity values, and when we solve
-for the arity of the variadic pattern segment, we are also deducing the arity
-type of that segment. And as always, the deduced type must be a valid type, and
-a subtype of the declared type. This requirement ensures that the scrutinee is
-guaranteed to have at least as many elements as the pattern expects.
+The deduced arity must be expressed as a sum of non-negative values, such
+as integer constants and the arities of scrutinee segments, in order to ensure
+that the pattern segment does not have a negative arity. If this isn't possible,
+that indicates that the scrutinee may have too few elements, so we raise an error.
+FIXME: be more explicit about how we do this (basically, we're subtracting the
+number of singular pattern segments, so we need to make sure the scrutinee has
+that many singular segments)
 
-#### Step 2: Scrutinee adjustment
+#### Step 2: Pattern transformation
 
-The purpose of step 2 is to support cases like the first line of the body of
-`Min`:
+The goal of step 2 is to transform the pattern so that it has the same shape
+as the scrutinee. We can do this by iterating simultaneously over the
+pattern and scrutinee segments, maintaining the invariant that the first $i$
+segments have the same arity (with $i$ initially 0). Let $A_i$ be the arity
+of the $i$ th scrutinee segment.
 
-```carbon
-fn Min[T:! Comparable & Value](... each(>=1) param: T) -> T {
-  let (var result: T, ... each next: T) = (... each param);
-```
+For each $i$:
+- While the arity of the $i$ th pattern segment is not greater than or equal to
+  $A_i$:
+  - Merge the segment with the segment after it, using the merging rule. If this
+    is not possible, report an error.
+- If the arity of the $i$ th pattern segment is greater than $A_i$, split
+  it into two segments, where the first has arity $A_i$, using the splitting
+  rule.
 
-Here the pattern has type `(<T, 1>, <T, |next|:AtLeast(0))` and the scrutinee
-has type `(<T, |T|:AtLeast(1)>)`, so we must transform the scrutinee to a form
-that has a leading singular segment:
-
--   `(<T, |T|:AtLeast(1)>)`
--   = `(<T, 1+(|T| - 1):(Exactly(1) + AtLeast(0))>)` (arity arithmetic)
--   = `(<T, 1:Exactly(1)>, <T, |T|-1:AtLeast(0)>)` (splitting rule) (Note that
-    in this example we don't need to rewrite the representative expressions in
-    the last step, because the representative doesn't depend on `$I`).
-
-In general, we can split out up to `N` leading or trailing singular segments
-from a variadic segment that has arity type `AtLeast(N)`. So if the pattern has
-`N` leading singular segments, and the scrutinee has `M` leading singular
-segments where `M < N`, step 2 verifies that the first variadic scrutinee
-segment's arity type is a subtype of `AtLeast(N-M)`, and splits out `N-M`
-leading singular segments from it. It then applies the same procedure to last
-variadic scrutinee segment to ensure there are enough trailing singular
-segments.
-
-The rewrites in step 2 do not take place when pattern matching as part of a
-function call: we assume that physically separate function parameters are
-logically separate as well, so if they are not separate at the callsite, that
-likely indicates a bug.
-
-#### Step 3: Pattern adjustment
-
-Step 2 ensures that at the start of step 3 we have a subsequence of scrutinee
-segments which contain all the elements that the variadic pattern segment will
-match, and which cannot match any other pattern segment. Furthermore, the arity
-of the pattern segment that we deduced in step 1 must be equal to the sum of the
-arities of that scrutinee subsequence. As a result, step 3 can apply the
-splitting rule to decompose the pattern segment into a sequence with the same
-shape as the scrutinee subsequence.
-
-Note that any pack indexing expression in the original variadic pattern segment
-is guaranteed to have the form `B[:$I:]` (with no offset), where `B` is a
-deduced pack binding. The decomposition in this step will rewrite that
-expression in each segment to `B[:$I + A:]` (or `B[:A:]` if the segment is
-singular), where `A` is the sum of the arities of the earlier segments in the
-decomposition. This has the effect of decomposing the unknown contents of `B`
-into a sequence of segments with unknown representatives that has the same shape
-as the scrutinee subsequence.
-
-#### Step 4: Representative deduction
+#### Step 3: Kernel deduction
 
 Since the pattern and scrutinee now have identical shapes, each pattern segment
 is guaranteed to match all of the elements of the corresponding scrutinee
 segment. Consequently, we can perform type deduction segment-wise, deducing the
-representative type of each pattern segment from the representative type of the
+kernel type of each pattern segment from the kernel type of the
 corresponding scrutinee segment.
 
 Within a segment, type deduction takes place as normal. The only aspect that's
 unique to variadics is that when unifying a pattern type expression
 `B[:$I + A:]` or `B[:A:]` with a scrutinee expression `S`, we deduce that `S` is
-the representative of the corresponding segment of `B`.
+the kernel of the corresponding segment of `B`.
+
+FIXME Oh hell, I think this is where associating offsets with segments fails.
+Suppose the pattern segment is `<P; |P|; 1>` and the scrutinee segment is
+`<S; |S|; 0>`. We can't just unify `P` with `S`. Maybe we need to do the
+splitting at the deduced-parameter level, like the merging? MIght not be enough
+in the rare case of a non-deduced type pack. I think the right way to do this
+is to treat the offset as context, e.g. if we're unifying
+`<(P1, P2); X; 1>` with `<(S1, S2); X; 0>`, that recursively becomes
+unifying `<P1; X; 1>` with `<S1; X; 0>` and `<P2; X; 1>` with
+`<S2; X; 0>`. That naturally bottoms out in a piecewise definition of the
+pattern parameters.
 
 ## Alternatives considered
 
