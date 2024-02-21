@@ -64,11 +64,10 @@ static auto GetExprValueForLookupResult(Context& context,
     }
     case SemIR::ImportRefUsed::Kind: {
       auto import_ref = lookup_result.As<SemIR::ImportRefUsed>();
-      auto import_kind = context.import_irs()
-                             .Get(import_ref.ir_id)
-                             ->insts()
-                             .Get(import_ref.inst_id)
-                             .kind();
+      const auto* import_ir = context.import_irs().Get(import_ref.ir_id);
+      auto import_kind = import_ir->insts().Get(import_ref.inst_id).kind();
+      // For a declared type, recurse to get the appropriate type value.
+      // Otherwise, the ImportRefUsed is sufficient.
       if (import_kind == SemIR::ClassDecl::Kind ||
           import_kind == SemIR::InterfaceDecl::Kind) {
         return GetExprValueForLookupResult(

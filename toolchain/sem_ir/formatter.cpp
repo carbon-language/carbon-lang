@@ -60,6 +60,9 @@ class InstNamer {
 
     // Build the imports scope, used only by import-related instructions without
     // a block.
+    // TODO: Consider other approaches for ImportRef constant formatting, as the
+    // actual source of these remains unclear even though they're referenced in
+    // constants.
     GetScopeInfo(ScopeId::ImportRef).name = globals.AddNameUnchecked("imports");
 
     // Build each function scope.

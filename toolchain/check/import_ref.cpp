@@ -19,6 +19,33 @@ namespace Carbon::Check {
 
 // Resolves an instruction from an imported IR into a constant referring to the
 // current IR.
+//
+// Calling Resolve on an instruction operates in an iterative manner, tracking
+// Work items on work_stack_. At a high level, the loop is:
+//
+// 1. If Work has received a constant, it's considered resolved.
+//    - If incomplete_type is marked, resolve unconditionally.
+//    - The constant check avoids performance costs of deduplication on add.
+// 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
+//    A. For cases with incomplete types, when incomplete_type isn't marked:
+//      i. Make the incomplete type with associated constant.
+//        - If the imported type is incomplete, return the constant.
+//      ii. Mark incomplete_type.
+//    B. Gather all input constants.
+//      - Gathering constants directly adds unresolved values to work_stack_.
+//    C. If any need to be resolved (HasNewWork), return Invalid; this
+//       instruction needs two calls to complete.
+//    D. Build any necessary IR structures, and return the output constant.
+//    - For trivial cases with zero or one input constants, this may return
+//      a constant (if one, potentially Invalid) directly.
+// 3. If resolving returned a non-Invalid constant, pop the work; otherwise, it
+//    needs to remain (and may no longer be at the top of the stack).
+//
+// TryResolveInst/TryResolveTypedInst can complete in one call for a given
+// instruction, but should always complete within two calls. However, due to the
+// chance of a second call, it's important to reserve all expensive logic until
+// it's been established that input constants are available; this in particular
+// includes GetTypeIdForTypeConstant calls which do a hash table lookup.
 class ImportRefResolver {
  public:
   explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
@@ -39,8 +66,9 @@ class ImportRefResolver {
       CARBON_CHECK(work.inst_id.is_valid());
 
       // Double-check that the constant still doesn't have a calculated value.
-      // This should typically be checked before adding it, but a given constant
-      // may be added multiple times before its constant is evaluated.
+      // This should typically be checked before adding it, but a given
+      // instruction may be added multiple times before its constant is
+      // evaluated.
       if (!work.incomplete_type &&
           import_ir_constant_values_.Get(work.inst_id).is_valid()) {
         work_stack_.pop_back();
@@ -74,8 +102,13 @@ class ImportRefResolver {
   }
 
  private:
+  // A step in work_stack_.
   struct Work {
+    // The instruction to work on.
     SemIR::InstId inst_id;
+
+    // True if an incomplete type has been generated; only used by instructions
+    // with incomplete types.
     bool incomplete_type = false;
   };
 
@@ -144,6 +177,7 @@ class ImportRefResolver {
     for (auto [ref_id, const_id] : llvm::zip(param_refs, const_ids)) {
       // Figure out the param structure. This echoes
       // Function::GetParamFromParamRefId.
+      // TODO: Consider a different parameter handling to simplify import logic.
       auto inst = import_ir_.insts().Get(ref_id);
       auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
       if (addr_inst) {
@@ -203,19 +237,6 @@ class ImportRefResolver {
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
   // more has been added to the stack. A similar API is followed for all
   // following TryResolveTypedInst helper functions.
-  //
-  // Logic for each TryResolveTypedInst will be in two phases:
-  //   1. Gather all input constants.
-  //      - If HasNewWork, return Invalid.
-  //   2. Produce an output constant.
-  //
-  // Although it's possible TryResolveTypedInst could complete in a single call
-  // when all input constants are ready, a common scenario is that some inputs
-  // will still be unresolved, and it'll return Invalid between phases. On the
-  // second call, all previously unready constants will have been resolved, so
-  // it should run to completion. As a consequence, it's important to reserve
-  // all expensive logic for the second phase; this in particular includes
-  // GetTypeIdForTypeConstant calls which do a hash table lookup.
   //
   // TODO: Error is returned when support is missing, but that should go away.
   auto TryResolveInst(SemIR::InstId inst_id, bool incomplete_type)
@@ -312,11 +333,11 @@ class ImportRefResolver {
     return value_id;
   }
 
-  // Creates an incomplete class. This is necessary even with classes with a
+  // Makes an incomplete class. This is necessary even with classes with a
   // complete declaration, because things such as `Self` may refer back to the
   // type.
-  auto CreateIncompleteClass(SemIR::InstId inst_id,
-                             const SemIR::Class& import_class)
+  auto MakeIncompleteClass(SemIR::InstId inst_id,
+                           const SemIR::Class& import_class)
       -> SemIR::ConstantId {
     auto class_decl =
         SemIR::ClassDecl{SemIR::ClassId::Invalid, SemIR::InstBlockId::Empty};
@@ -351,47 +372,15 @@ class ImportRefResolver {
     return const_id;
   }
 
-  auto TryResolveTypedInst(SemIR::ClassDecl inst, SemIR::InstId inst_id,
-                           bool incomplete_type) -> SemIR::ConstantId {
-    const auto& import_class = import_ir_.classes().Get(inst.class_id);
-
-    SemIR::ConstantId const_id = SemIR::ConstantId::Invalid;
-    if (!incomplete_type) {
-      // If there's no incomplete type added, start by adding one for any
-      // recursive references.
-      const_id = CreateIncompleteClass(inst_id, import_class);
-      // If there's only a forward declaration, we're done.
-      if (!import_class.object_repr_id.is_valid()) {
-        return const_id;
-      }
-      // This may not be needed because all constants might be ready, but we do
-      // it here so that we don't need to track which work item corresponds to
-      // this instruction.
-      work_stack_.back().incomplete_type = true;
-    }
-
-    CARBON_CHECK(import_class.object_repr_id.is_valid())
-        << "Only reachable when there's a definition.";
-
-    // Load constants for the definition.
-    auto initial_work = work_stack_.size();
-
-    auto object_repr_const_id = GetLocalConstantId(import_class.object_repr_id);
-    auto base_const_id = import_class.base_id.is_valid()
-                             ? GetLocalConstantId(import_class.base_id)
-                             : SemIR::ConstantId::Invalid;
-
-    if (HasNewWork(initial_work)) {
-      return SemIR::ConstantId::Invalid;
-    }
-
-    // Update the class info with the definition.
-    if (incomplete_type) {
-      CARBON_CHECK(!const_id.is_valid());
-      const_id = import_ir_constant_values_.Get(inst_id);
-    }
+  // Fills out the class definition for an incomplete class.
+  auto AddClassDefinition(const SemIR::Class& import_class,
+                          SemIR::ConstantId class_const_id,
+                          SemIR::ConstantId object_repr_const_id,
+                          SemIR::ConstantId base_const_id) -> void {
     auto& new_class = context_.classes().Get(
-        context_.insts().GetAs<SemIR::ClassType>(const_id.inst_id()).class_id);
+        context_.insts()
+            .GetAs<SemIR::ClassType>(class_const_id.inst_id())
+            .class_id);
 
     new_class.object_repr_id =
         context_.GetTypeIdForTypeConstant(object_repr_const_id);
@@ -427,8 +416,53 @@ class ImportRefResolver {
     }
     CARBON_CHECK(new_scope.extended_scopes.size() ==
                  old_scope.extended_scopes.size());
+  }
 
-    return const_id;
+  auto TryResolveTypedInst(SemIR::ClassDecl inst, SemIR::InstId inst_id,
+                           bool incomplete_type) -> SemIR::ConstantId {
+    const auto& import_class = import_ir_.classes().Get(inst.class_id);
+
+    SemIR::ConstantId class_const_id = SemIR::ConstantId::Invalid;
+    // On the first pass, there's no incomplete type; start by adding one for
+    // any recursive references.
+    if (!incomplete_type) {
+      class_const_id = MakeIncompleteClass(inst_id, import_class);
+      // If there's only a forward declaration, we're done.
+      if (!import_class.object_repr_id.is_valid()) {
+        return class_const_id;
+      }
+      // This may not be needed because all constants might be ready, but we do
+      // it here so that we don't need to track which work item corresponds to
+      // this instruction.
+      work_stack_.back().incomplete_type = true;
+    }
+
+    CARBON_CHECK(import_class.object_repr_id.is_valid())
+        << "Only reachable when there's a definition.";
+
+    // Load constants for the definition.
+    auto initial_work = work_stack_.size();
+
+    auto object_repr_const_id = GetLocalConstantId(import_class.object_repr_id);
+    auto base_const_id = import_class.base_id.is_valid()
+                             ? GetLocalConstantId(import_class.base_id)
+                             : SemIR::ConstantId::Invalid;
+
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
+
+    // On the first pass, we build the incomplete type's constant above. On the
+    // second pass, we need to fetch it.
+    if (incomplete_type) {
+      CARBON_CHECK(!class_const_id.is_valid())
+          << "Shouldn't have a const yet when resuming";
+      class_const_id = import_ir_constant_values_.Get(inst_id);
+    }
+    AddClassDefinition(import_class, class_const_id, object_repr_const_id,
+                       base_const_id);
+
+    return class_const_id;
   }
 
   auto TryResolveTypedInst(SemIR::ClassType inst) -> SemIR::ConstantId {
