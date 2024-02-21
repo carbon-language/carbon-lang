@@ -66,16 +66,10 @@ auto HandleVarAfterPattern(Context& context) -> void {
   }
 
   if (context.PositionIs(Lex::TokenKind::Equal)) {
-    context.PushState(State::VarInitializer);
-    context.ConsumeChecked(Lex::TokenKind::Equal);
+    context.AddLeafNode(NodeKind::VariableInitializer,
+                        context.ConsumeChecked(Lex::TokenKind::Equal));
     context.PushState(State::Expr);
   }
-}
-
-auto HandleVarInitializer(Context& context) -> void {
-  auto state = context.PopState();
-  context.AddNode(NodeKind::VariableInitializer, state.token,
-                  state.subtree_start, state.has_error);
 }
 
 auto HandleVarFinishAsDecl(Context& context) -> void {

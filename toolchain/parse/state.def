@@ -1227,18 +1227,11 @@ CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
 // var ... ??? = ...
 //         ^~~~~
 //   1. Expr
-//   2. VarInitializer
 //
 // var ... ...
 //        ^
 //   (state done)
 CARBON_PARSE_STATE(VarAfterPattern)
-
-// var ... = ... ;
-//              ^
-//
-//   (state done)
-CARBON_PARSE_STATE(VarInitializer)
 
 // Handles `var` parsing at the end.
 //

@@ -334,17 +334,19 @@ CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer, CARBON_IF_VALID(Semi))
 //   _repeated_ _external_: modifier
 //   _optional_ ReturnedModifier
 //   _external_: BindingPattern or TuplePattern
+//     VariableInitializer
 //     _external_: expression
-//   _optional_ VariableInitializer
+//   _optional_
 // VariableDecl
 //
 // Access and declaration modifier keywords only appear for `var` declarations,
 // whereas the returned modifier only appears on `var` statements.
+//
 // The VariableInitializer and following expression are paired: either both will
 // be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_IF_VALID(Var))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, Returned)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, Equal)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
                                CARBON_IF_VALID(Semi))
 

@@ -354,13 +354,7 @@ struct LetDecl {
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
-
-// The initializer part of a `var` declaration.
-struct VariableInitializer {
-  static constexpr auto Kind = NodeKind::VariableInitializer.Define();
-
-  AnyExprId value;
-};
+using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
@@ -372,7 +366,11 @@ struct VariableDecl {
   std::optional<ReturnedModifierId> returned;
   AnyPatternId pattern;
 
-  std::optional<VariableInitializerId> initializer;
+  struct Initializer {
+    VariableInitializerId equals;
+    AnyExprId value;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // Statement nodes
