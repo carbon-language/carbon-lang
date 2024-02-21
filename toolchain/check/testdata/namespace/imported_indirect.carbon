@@ -36,9 +36,6 @@ fn A.B.C.D() {};
 package Same library "e" api;
 import library "d";
 
-// CHECK:STDERR: e.carbon:[[@LINE+3]]:13: ERROR: Value of type `<function>` is not callable.
-// CHECK:STDERR: var e: () = A.B.C.D();
-// CHECK:STDERR:             ^~~~~~~~
 var e: () = A.B.C.D();
 
 // CHECK:STDOUT: --- a.carbon
@@ -100,20 +97,24 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+6, used
 // CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %import_ref.4}, %import_ref.3 [template]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used
-// CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used [template = @__global_init.%D]
+// CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.2 [template = file.%.2]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%.3 [template = file.%.3]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%.4 [template = file.%.4]
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4
-// CHECK:STDOUT:   assign file.%e.var, <error>
+// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = %D]
+// CHECK:STDOUT:   %.loc5: init () = call %D.ref()
+// CHECK:STDOUT:   assign file.%e.var, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
