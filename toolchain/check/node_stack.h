@@ -436,7 +436,7 @@ class NodeStack {
         case Parse::NodeKind::Addr:
         case Parse::NodeKind::BindingPattern:
         case Parse::NodeKind::CallExprStart:
-        case Parse::NodeKind::GenericBindingPattern:
+        case Parse::NodeKind::CompileTimeBindingPattern:
         case Parse::NodeKind::IfExprThen:
         case Parse::NodeKind::ReturnType:
         case Parse::NodeKind::ShortCircuitOperandAnd:

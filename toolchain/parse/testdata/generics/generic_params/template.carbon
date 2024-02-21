@@ -14,7 +14,7 @@ fn foo(template a:! i32);
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'GenericBindingPattern', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'Template', text: 'template', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},

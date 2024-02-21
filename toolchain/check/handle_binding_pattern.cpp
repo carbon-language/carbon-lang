@@ -164,9 +164,8 @@ auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
   return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/false);
 }
 
-auto HandleGenericBindingPattern(Context& context,
-                                 Parse::GenericBindingPatternId parse_node)
-    -> bool {
+auto HandleCompileTimeBindingPattern(
+    Context& context, Parse::CompileTimeBindingPatternId parse_node) -> bool {
   return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
 }
 

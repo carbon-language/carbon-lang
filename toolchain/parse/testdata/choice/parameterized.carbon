@@ -17,7 +17,7 @@ choice OptionalElement(T:! type) {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'T'},
 // CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'GenericBindingPattern', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Element'},
