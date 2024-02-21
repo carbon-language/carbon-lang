@@ -929,7 +929,7 @@ class Point {
     return Math.Sqrt(self.x * self.x + self.y * self.y);
   }
 
-  fn Create(x: f32, y: f32) -> Point {
+  fn Make(x: f32, y: f32) -> Point {
     return {.x = x, .y = y};
   }
 
@@ -943,7 +943,7 @@ These are all parsed as if they were defined outside the class scope:
 ```carbon
 class Point {
   fn Distance[self: Self]() -> f32;
-  fn Create(x: f32, y: f32) -> Point;
+  fn Make(x: f32, y: f32) -> Point;
 
   var x: f32;
   var y: f32;
@@ -953,7 +953,7 @@ fn Point.Distance[self: Self]() -> f32 {
   return Math.Sqrt(self.x * self.x + self.y * self.y);
 }
 
-fn Point.Create(x: f32, y: f32) -> Point {
+fn Point.Make(x: f32, y: f32) -> Point {
   return {.x = x, .y = y};
 }
 ```
@@ -987,14 +987,14 @@ class Square {
 
   fn GetDoubled[self: Self]() -> Square {
     // ✅ OK: performs name lookup on `Square` for `Create`.
-    return Square.Create(self.size);
+    return Square.Make(self.size);
     // ✅ OK: performs unqualified name lookup within class scope for `Create`.
-    return Create(self.size);
+    return Make(self.size);
     // ✅ OK: performs name lookup on `self` for `Create`.
-    return self.Create(self.size);
+    return self.Make(self.size);
   }
 
-  fn Create(size: f32) -> Square;
+  fn Make(size: f32) -> Square;
 
   var size: f32;
 }
@@ -1333,8 +1333,8 @@ base type.
 ```
 class MyDerivedType {
   extend base: MyBaseType;
-  fn Create() -> MyDerivedType {
-    return {.base = MyBaseType.Create(), .derived_field = ...};
+  fn Make() -> MyDerivedType {
+    return {.base = MyBaseType.Make(), .derived_field = ...};
   }
 }
 ```
@@ -1396,7 +1396,7 @@ partial facet type.
 
 ```
 base class MyBaseClass {
-  fn Create() -> partial Self {
+  fn Make() -> partial Self {
     return {.base_field_1 = ..., .base_field_2 = ...};
   }
   // ...
@@ -1406,7 +1406,7 @@ base class MyBaseClass {
 Extensible classes can be instantiated even from a partial facet value:
 
 ```
-var mbc: MyBaseClass = MyBaseClass.Create();
+var mbc: MyBaseClass = MyBaseClass.Make();
 ```
 
 The conversion from `partial MyBaseClass` to `MyBaseClass` only fills in the
@@ -1419,7 +1419,7 @@ be instantiated. Constructor functions for abstract classes should be marked
 
 ```
 abstract class MyAbstractClass {
-  protected fn Create() -> partial Self {
+  protected fn Make() -> partial Self {
     return {.base_field_1 = ..., .base_field_2 = ...};
   }
   // ...
@@ -1435,7 +1435,7 @@ function, there are two choices:
 
     ```
     base class MyBaseClass {
-      fn Create() -> Self {
+      fn Make() -> Self {
         returned var result: Self = {...};
         StoreMyPointerSomewhere(&result);
         return var;
@@ -1449,7 +1449,7 @@ function, there are two choices:
 
     ```
     abstract class MyAbstractClass {
-      protected fn Create() -> partial Self {
+      protected fn Make() -> partial Self {
         returned var result: partial Self = {...};
         // Careful! Pointer to object that isn't fully constructed!
         StoreMyPointerSomewhere(&result as Self*);
@@ -1463,27 +1463,27 @@ the class' immediate base type or the full type:
 
 ```
 abstract class MyAbstractClass {
-  protected fn Create() -> partial Self { ... }
+  protected fn Make() -> partial Self { ... }
 }
 
 // Base class returns a partial type
 base class Derived {
   extend base: MyAbstractClass;
-  protected fn Create() -> partial Self {
-    return {.base = MyAbstractClass.Create(), .derived_field = ...};
+  protected fn Make() -> partial Self {
+    return {.base = MyAbstractClass.Make(), .derived_field = ...};
   }
   ...
 }
 
 base class MyBaseClass {
-  fn Create() -> Self { ... }
+  fn Make() -> Self { ... }
 }
 
 // Base class returns a full type
 base class ExtensibleDerived {
   extend base: MyBaseClass;
-  fn Create() -> Self {
-    return {.base = MyBaseClass.Create(), .derived_field = ...};
+  fn Make() -> Self {
+    return {.base = MyBaseClass.Make(), .derived_field = ...};
   }
   ...
 }
@@ -1494,8 +1494,8 @@ And final classes will return a type that does not use the partial facet:
 ```
 class FinalDerived {
   extend base: MiddleDerived;
-  fn Create() -> Self {
-    return {.base = MiddleDerived.Create(), .derived_field = ...};
+  fn Make() -> Self {
+    return {.base = MiddleDerived.Make(), .derived_field = ...};
   }
   ...
 }
@@ -1996,7 +1996,7 @@ This design directly supports Carbon classes inheriting from a single C++ class.
 ```
 class CarbonClass {
   extend base: Cpp.CPlusPlusClass;
-  fn Create() -> Self {
+  fn Make() -> Self {
     return {.base = Cpp.CPlusPlusClass(...), .other_fields = ...};
   }
   ...
@@ -2016,7 +2016,7 @@ C++ constructors to initialize their base class:
     class Base {
     public:
         virtual ~Base() {}
-        static auto Create() -> Base;
+        static auto Make() -> Base;
     };
 
     // In C++
@@ -2028,7 +2028,7 @@ C++ constructors to initialize their base class:
         // there appear to be implementation challenges with
         // removing them. This may require an extension to make work
         // reliably without an extraneous copy of the base subobject.
-        Derived() : Base(Base::Create()) {}
+        Derived() : Base(Base::Make()) {}
     };
     ```
 
