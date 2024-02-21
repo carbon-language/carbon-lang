@@ -226,9 +226,9 @@ struct BindingPattern {
 };
 
 // `name:! Type`
-struct GenericBindingPattern {
+struct CompileTimeBindingPattern {
   static constexpr auto Kind =
-      NodeKind::GenericBindingPattern.Define(NodeCategory::Pattern);
+      NodeKind::CompileTimeBindingPattern.Define(NodeCategory::Pattern);
 
   NodeIdOneOf<IdentifierName, SelfValueName> name;
   AnyExprId type;
@@ -245,7 +245,7 @@ struct Addr {
 struct Template {
   static constexpr auto Kind = NodeKind::Template.Define(NodeCategory::Pattern);
 
-  // This is a GenericBindingPatternId in any valid program.
+  // This is a CompileTimeBindingPatternId in any valid program.
   // TODO: Should the parser enforce that?
   AnyPatternId inner;
 };
