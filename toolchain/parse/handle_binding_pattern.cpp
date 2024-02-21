@@ -85,7 +85,7 @@ static auto HandleBindingPatternFinish(Context& context, NodeKind node_kind)
 }
 
 auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
-  HandleBindingPatternFinish(context, NodeKind::GenericBindingPattern);
+  HandleBindingPatternFinish(context, NodeKind::CompileTimeBindingPattern);
 }
 
 auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
