@@ -1,0 +1,116 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+// --- a.carbon
+
+library "a" api;
+
+fn A() {}
+fn B(b: i32) -> i32 { return b; }
+fn C(c: (i32,)) -> {.c: i32} { return {.c = c[0]}; }
+
+// --- b.carbon
+
+library "b" api;
+
+import library "a";
+
+var a: () = A();
+var b: i32 = B(1);
+var c: {.c: i32} = C((1,));
+
+// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = tuple_type (type) [template]
+// CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C} [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B(%b: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   return %b.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32} {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.ref: (i32,) = name_ref c, %c
+// CHECK:STDOUT:   %.loc6_47: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_48: i32 = tuple_index %c.ref, %.loc6_47
+// CHECK:STDOUT:   %.loc6_49.1: {.c: i32} = struct_literal (%.loc6_48)
+// CHECK:STDOUT:   %.loc6_49.2: {.c: i32} = struct_value (%.loc6_48)
+// CHECK:STDOUT:   %.loc6_49.3: {.c: i32} = converted %.loc6_49.1, %.loc6_49.2
+// CHECK:STDOUT:   return %.loc6_49.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.5: (i32,) = tuple_value (%.2) [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace {.A = %import_ref.1, .B = %import_ref.2, .C = %import_ref.3, .a = %a, .b = %b, .c = %c} [template]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = @__global_init.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, used [template = @__global_init.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+20, used [template = @__global_init.%C]
+// CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %a.var: ref () = var a
+// CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc8: type = struct_type {.c: i32} [template = constants.%.3]
+// CHECK:STDOUT:   %c.var: ref {.c: i32} = var c
+// CHECK:STDOUT:   %c: ref {.c: i32} = bind_name c, %c.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B(%import_ref: i32) -> i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C(%import_ref: (i32,)) -> {.c: i32};
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = %A]
+// CHECK:STDOUT:   %.loc6: init () = call %A.ref()
+// CHECK:STDOUT:   assign file.%a.var, %.loc6
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = %B]
+// CHECK:STDOUT:   %.loc7_16: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_15: init i32 = call %B.ref(%.loc7_16)
+// CHECK:STDOUT:   assign file.%b.var, %.loc7_15
+// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = %C]
+// CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_25.1: (i32,) = tuple_literal (%.loc8_23)
+// CHECK:STDOUT:   %.loc8_25.2: (i32,) = tuple_value (%.loc8_23) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_25.3: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_21: init {.c: i32} = call %C.ref(%.loc8_25.3)
+// CHECK:STDOUT:   assign file.%c.var, %.loc8_21
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
