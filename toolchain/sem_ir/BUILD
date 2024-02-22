@@ -69,6 +69,7 @@ cc_library(
     ],
     hdrs = [
         "file.h",
+        "impl.h",
         "value_stores.h",
     ],
     deps = [

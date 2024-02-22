@@ -487,5 +487,8 @@ struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
 template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
+template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::TypeId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::TypeId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

@@ -13,6 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/value_stores.h"
 
@@ -175,39 +176,6 @@ struct Interface : public Printable<Interface> {
   bool defined = false;
 };
 
-// An implementation of a constraint.
-struct Impl : public Printable<Impl> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
-  }
-
-  // Determines whether this impl has been fully defined. This is false until we
-  // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return defined; }
-
-  // The following members always have values, and do not change throughout the
-  // lifetime of the interface.
-
-  // TODO: Track the generic parameters for `impl forall`.
-  // The type for which the impl is implementing a constraint.
-  TypeId self_id;
-  // The constraint that the impl implements.
-  TypeId constraint_id;
-
-  // The following members are set at the `{` of the impl definition.
-
-  // The definition of the impl. This is an ImplDecl.
-  InstId definition_id = InstId::Invalid;
-  // The impl scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
-  // The first block of the impl body.
-  // TODO: Handle control flow in the impl body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
-
-  // The following members are set at the `}` of the impl definition.
-  bool defined = false;
-};
-
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -302,8 +270,8 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
-  auto impls() -> ValueStore<ImplId>& { return impls_; }
-  auto impls() const -> const ValueStore<ImplId>& { return impls_; }
+  auto impls() -> ImplStore& { return impls_; }
+  auto impls() const -> const ImplStore& { return impls_; }
   auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
@@ -378,7 +346,7 @@ class File : public Printable<File> {
   ValueStore<InterfaceId> interfaces_;
 
   // Storage for impls.
-  ValueStore<ImplId> impls_;
+  ImplStore impls_;
 
   // Related IRs. There will always be at least one entry, the builtin IR (used
   // for references of builtins).

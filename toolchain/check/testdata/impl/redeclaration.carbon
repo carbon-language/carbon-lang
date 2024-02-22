@@ -6,22 +6,28 @@
 
 interface I {}
 
+impl i32 as I;
+
+class X {
+  impl i32 as I;
+}
+
 impl i32 as I {}
 
-// TODO: Reject this redefinition.
-impl i32 as I {}
-
-// CHECK:STDOUT: --- todo_redefinition.carbon
+// CHECK:STDOUT: --- redeclaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %X: type = class_type @X [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .X = %X.decl} [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I, ()
-// CHECK:STDOUT:   impl_decl @impl.1, (<unexpected instref inst+3>)
-// CHECK:STDOUT:   impl_decl @impl.2, (<unexpected instref inst+5>)
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
+// CHECK:STDOUT:   %X.decl = class_decl @X, ()
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+10>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -29,12 +35,13 @@ impl i32 as I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: i32 as I {
+// CHECK:STDOUT: impl @impl: i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: i32 as I {
+// CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+7>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
