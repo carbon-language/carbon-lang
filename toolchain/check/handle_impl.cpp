@@ -95,8 +95,8 @@ auto HandleDefaultSelfImplAs(Context& context,
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::AnyImplDeclId parse_node,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
-                       Parse::NodeId params_node,
-                       SemIR::TypeId constraint_id) -> void {
+                       Parse::NodeId params_node, SemIR::TypeId constraint_id)
+    -> void {
   auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
 

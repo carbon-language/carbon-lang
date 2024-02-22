@@ -80,9 +80,8 @@ static auto BuildFunctionDecl(Context& context,
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "Function returns incomplete type `{0}`.",
                         SemIR::TypeId);
-      return context.emitter().Build(return_node,
-                                     IncompleteTypeInFunctionReturnType,
-                                     return_type_id);
+      return context.emitter().Build(
+          return_node, IncompleteTypeInFunctionReturnType, return_type_id);
     });
 
     if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
