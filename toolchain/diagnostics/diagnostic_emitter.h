@@ -237,7 +237,7 @@ using NoTypeDeduction = std::type_identity_t<Arg>;
 
 }  // namespace Internal
 
-template <typename LocationT, typename AnnotateFn>
+template <typename LocationT>
 class DiagnosticAnnotationScope;
 
 // Manages the creation of reports, the testing if diagnostics are enabled, and
@@ -356,30 +356,8 @@ class DiagnosticEmitter {
   }
 
  private:
-  // Base class for scopes in which we perform diagnostic annotation, such as
-  // adding notes with contextual information.
-  class DiagnosticAnnotationScopeBase {
-   public:
-    virtual auto Annotate(DiagnosticBuilder& builder) -> void = 0;
-
-    DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
-        delete;
-    auto operator=(const DiagnosticAnnotationScopeBase&)
-        -> DiagnosticAnnotationScopeBase& = delete;
-
-   protected:
-    explicit DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
-        : emitter_(emitter) {
-      emitter_->annotators_.push_back(this);
-    }
-    ~DiagnosticAnnotationScopeBase() {
-      CARBON_CHECK(emitter_->annotators_.back() == this);
-      emitter_->annotators_.pop_back();
-    }
-
-   private:
-    DiagnosticEmitter* emitter_;
-  };
+  // Allow scopes to update annotators_.
+  friend class DiagnosticAnnotationScope<LocationT>;
 
   // Converts an argument to llvm::Any for storage, handling input to storage
   // type translation when needed.
@@ -394,12 +372,9 @@ class DiagnosticEmitter {
     }
   }
 
-  template <typename LocT, typename AnnotateFn>
-  friend class DiagnosticAnnotationScope;
-
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
-  llvm::SmallVector<DiagnosticAnnotationScopeBase*> annotators_;
+  llvm::SmallVector<DiagnosticAnnotationScope<LocationT>*> annotators_;
 };
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
@@ -485,31 +460,44 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
 // `DiagnosticBuilder& builder` for any diagnostic that is emitted through the
 // given emitter. That function can annotate the diagnostic by calling
 // `builder.Note` to add notes.
-template <typename LocationT, typename AnnotateFn>
-class DiagnosticAnnotationScope
-    : private DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase {
-  using Base =
-      typename DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase;
-
+template <typename LocationT>
+class DiagnosticAnnotationScope {
  public:
-  DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
-                            AnnotateFn annotate)
-      : Base(emitter), annotate_(annotate) {}
+  using AnnotateFn = llvm::function_ref<void(
+      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder&)>;
+
+  explicit DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                                     AnnotateFn annotate)
+      : emitter_(emitter), annotate_(annotate) {
+    emitter_->annotators_.push_back(this);
+  }
+  ~DiagnosticAnnotationScope() {
+    CARBON_CHECK(emitter_->annotators_.back() == this);
+    emitter_->annotators_.pop_back();
+  }
+
+  DiagnosticAnnotationScope(const DiagnosticAnnotationScope&) = delete;
+  auto operator=(const DiagnosticAnnotationScope&)
+      -> DiagnosticAnnotationScope& = delete;
 
  private:
-  auto Annotate(
-      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
-      -> void override {
+  // Allow calls to Annotate.
+  friend class DiagnosticEmitter<LocationT>;
+
+  auto Annotate(DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
+      -> void {
     annotate_(builder);
   }
 
+  DiagnosticEmitter<LocationT>* emitter_;
   AnnotateFn annotate_;
 };
 
-template <typename LocationT, typename AnnotateFn>
-DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
-                          AnnotateFn annotate)
-    -> DiagnosticAnnotationScope<LocationT, AnnotateFn>;
+template <typename LocationT>
+DiagnosticAnnotationScope(
+    DiagnosticEmitter<LocationT>* emitter,
+    typename DiagnosticAnnotationScope<LocationT>::AnnotateFn annotate)
+    -> DiagnosticAnnotationScope<LocationT>;
 
 }  // namespace Carbon
 
