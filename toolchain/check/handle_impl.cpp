@@ -65,15 +65,7 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
 
 auto HandleDefaultSelfImplAs(Context& context,
                              Parse::DefaultSelfImplAsId parse_node) -> bool {
-  // Find the enclosing scope for the `impl`.
-  // TODO: Do this without modifying the node stack.
-  auto implicit_param_list =
-      context.node_stack().PopWithParseNodeIf<Parse::NodeKind::ImplForall>();
   auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
-  if (implicit_param_list) {
-    context.node_stack().Push(implicit_param_list->first,
-                              implicit_param_list->second);
-  }
 
   // TODO: This is also valid in a mixin.
   auto class_decl = TryAsClassScope(context, enclosing_scope_id);
