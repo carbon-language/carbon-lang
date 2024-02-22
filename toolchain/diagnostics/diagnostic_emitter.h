@@ -282,8 +282,8 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
-      for (auto annotator : emitter_->annotators_) {
-        annotator(*this);
+      for (auto annotate_fn : emitter_->annotate_fns_) {
+        annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
@@ -356,8 +356,6 @@ class DiagnosticEmitter {
   }
 
  private:
-  using AnnotateFn = llvm::function_ref<auto(DiagnosticBuilder& builder)->void>;
-
   // Converts an argument to llvm::Any for storage, handling input to storage
   // type translation when needed.
   template <typename Arg>
@@ -376,7 +374,8 @@ class DiagnosticEmitter {
 
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
-  llvm::SmallVector<AnnotateFn> annotators_;
+  llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
+      annotate_fns_;
 };
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
@@ -464,18 +463,16 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
 // `builder.Note` to add notes.
 template <typename LocationT, typename AnnotateFn>
 class DiagnosticAnnotationScope {
- private:
-  using Emitter = DiagnosticEmitter<LocationT>;
-
  public:
-  DiagnosticAnnotationScope(Emitter* emitter, AnnotateFn annotate)
+  DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
+                            AnnotateFn annotate)
       : emitter_(emitter), annotate_(std::move(annotate)) {
-    emitter_->annotators_.push_back(annotate_);
+    emitter_->annotate_fns_.push_back(annotate_);
   }
-  ~DiagnosticAnnotationScope() { emitter_->annotators_.pop_back(); }
+  ~DiagnosticAnnotationScope() { emitter_->annotate_fns_.pop_back(); }
 
  private:
-  Emitter* emitter_;
+  DiagnosticEmitter<LocationT>* emitter_;
   // Make a copy of the annotation function to ensure that it lives long enough.
   AnnotateFn annotate_;
 };
