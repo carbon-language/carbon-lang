@@ -46,8 +46,6 @@ struct Impl : public Printable<Impl> {
 // A collection of `Impl`s, which can be accessed by the self type and
 // constraint implemented.
 class ImplStore {
-  using Store = ValueStore<ImplId>;
-
  public:
   // Looks up the impl with this self type and constraint, or creates a new
   // `Impl` if none exists.
@@ -76,7 +74,7 @@ class ImplStore {
   auto size() const -> size_t { return values_.size(); }
 
  private:
-  Store values_;
+  ValueStore<ImplId> values_;
   llvm::DenseMap<std::pair<TypeId, TypeId>, ImplId> lookup_;
 };
 
