@@ -365,7 +365,7 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
-  auto impls() -> ValueStore<SemIR::ImplId>& { return sem_ir().impls(); }
+  auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
   }

@@ -154,21 +154,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   auto name_context = context.decl_name_stack().FinishImplName();
   CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
 
-  // Add the impl declaration.
-  auto impl_decl = SemIR::ImplDecl{SemIR::ImplId::Invalid, decl_block_id};
-  auto impl_decl_id = context.AddPlaceholderInst({parse_node, impl_decl});
+  // TODO: Check for an orphan `impl`.
 
-  // TODO: Check whether this is a redeclaration.
+  // TODO: Check parameters. Store them on the `Impl` in some form.
   static_cast<void>(params_id);
 
-  // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_decl.impl_id.is_valid()) {
-    impl_decl.impl_id = context.impls().Add(
-        {.self_id = self_type_id, .constraint_id = constraint_type_id});
-  }
-
-  // Write the impl ID into the ImplDecl.
-  context.ReplaceInstBeforeConstantUse(impl_decl_id, {parse_node, impl_decl});
+  // Add the impl declaration.
+  // TODO: Does lookup in an impl file need to look for a prior impl declaration
+  // in the api file?
+  auto impl_id = context.impls().LookupOrAdd(self_type_id, constraint_type_id);
+  auto impl_decl = SemIR::ImplDecl{impl_id, decl_block_id};
+  auto impl_decl_id = context.AddInst({parse_node, impl_decl});
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (!!(context.decl_state_stack().innermost().modifier_set &
