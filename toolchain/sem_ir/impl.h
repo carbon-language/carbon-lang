@@ -45,29 +45,39 @@ struct Impl : public Printable<Impl> {
 
 // A collection of `Impl`s, which can be accessed by the self type and
 // constraint implemented.
-class ImplStore : private ValueStore<ImplId> {
+class ImplStore {
+  using Store = ValueStore<ImplId>;
+
  public:
   // Looks up the impl with this self type and constraint, or creates a new
   // `Impl` if none exists.
   // TODO: Handle parameters.
   auto LookupOrAdd(TypeId self_id, TypeId constraint_id) -> ImplId {
     auto [it, added] =
-        values_.insert({{self_id, constraint_id}, ImplId::Invalid});
+        lookup_.insert({{self_id, constraint_id}, ImplId::Invalid});
     if (added) {
       it->second =
-          ValueStore::Add({.self_id = self_id, .constraint_id = constraint_id});
+          values_.Add({.self_id = self_id, .constraint_id = constraint_id});
     }
     return it->second;
   }
 
-  using ValueStore::array_ref;
-  using ValueStore::Get;
-  using ValueStore::OutputYaml;
-  using ValueStore::Reserve;
-  using ValueStore::size;
+  // Returns a mutable value for an ID.
+  auto Get(ImplId id) -> Impl& { return values_.Get(id); }
+
+  // Returns the value for an ID.
+  auto Get(ImplId id) const -> const Impl& { return values_.Get(id); }
+
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return values_.OutputYaml();
+  }
+
+  auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }
+  auto size() const -> size_t { return values_.size(); }
 
  private:
-  llvm::DenseMap<std::pair<TypeId, TypeId>, ImplId> values_;
+  Store values_;
+  llvm::DenseMap<std::pair<TypeId, TypeId>, ImplId> lookup_;
 };
 
 }  // namespace Carbon::SemIR
