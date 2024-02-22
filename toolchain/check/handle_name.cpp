@@ -49,21 +49,40 @@ static auto GetExprValueForLookupResult(Context& context,
     -> SemIR::InstId {
   // If lookup finds a class declaration, the value is its `Self` type.
   auto lookup_result = context.insts().Get(lookup_result_id);
-  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {
-    return context.types().GetInstId(
-        context.classes().Get(class_decl->class_id).self_type_id);
+  switch (lookup_result.kind()) {
+    case SemIR::ClassDecl::Kind: {
+      auto class_decl = lookup_result.As<SemIR::ClassDecl>();
+      return context.types().GetInstId(
+          context.classes().Get(class_decl.class_id).self_type_id);
+    }
+    case SemIR::InterfaceDecl::Kind: {
+      auto interface_decl = lookup_result.As<SemIR::InterfaceDecl>();
+      return TryEvalInst(context, SemIR::InstId::Invalid,
+                         SemIR::InterfaceType{SemIR::TypeId::TypeType,
+                                              interface_decl.interface_id})
+          .inst_id();
+    }
+    case SemIR::ImportRefUsed::Kind: {
+      auto import_ref = lookup_result.As<SemIR::ImportRefUsed>();
+      const auto* import_ir = context.import_irs().Get(import_ref.ir_id);
+      auto import_kind = import_ir->insts().Get(import_ref.inst_id).kind();
+      // For a declared type, recurse to get the appropriate type value.
+      // Otherwise, the ImportRefUsed is sufficient.
+      if (import_kind == SemIR::ClassDecl::Kind ||
+          import_kind == SemIR::InterfaceDecl::Kind) {
+        return GetExprValueForLookupResult(
+            context, context.constant_values().Get(lookup_result_id).inst_id());
+      } else {
+        return lookup_result_id;
+      }
+    }
+    default:
+      // Anything else should be a typed value already.
+      CARBON_CHECK(lookup_result.kind().value_kind() ==
+                   SemIR::InstValueKind::Typed)
+          << "Unexpected kind for lookup result, " << lookup_result;
+      return lookup_result_id;
   }
-  if (auto interface_decl = lookup_result.TryAs<SemIR::InterfaceDecl>()) {
-    return TryEvalInst(context, SemIR::InstId::Invalid,
-                       SemIR::InterfaceType{SemIR::TypeId::TypeType,
-                                            interface_decl->interface_id})
-        .inst_id();
-  }
-
-  // Anything else should be a typed value already.
-  CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::InstValueKind::Typed)
-      << "Unexpected kind for lookup result, " << lookup_result;
-  return lookup_result_id;
 }
 
 static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)

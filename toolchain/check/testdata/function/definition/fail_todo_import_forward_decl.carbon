@@ -39,8 +39,7 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %import_ref} [template]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = %Foo]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%Foo]
 // CHECK:STDOUT:   %.loc14: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
