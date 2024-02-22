@@ -177,6 +177,7 @@ CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 
