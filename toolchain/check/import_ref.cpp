@@ -31,7 +31,7 @@ namespace Carbon::Check {
 //      A. For types which _can_ be incomplete, when not made_incomplete_type:
 //        i. Start by making an incomplete type to address circular references.
 //        ii. If the imported type is incomplete, return the constant.
-//        iii. Set made_incomplete_type.
+//        iii. Otherwise, set made_incomplete_type and continue resolving.
 //          - Creating an incomplete type will have set the constant, which
 //            influences step (1); setting made_incomplete_type gets us a second
 //            resolve pass when needed.
@@ -456,8 +456,9 @@ class ImportRefResolver {
       return SemIR::ConstantId::Invalid;
     }
 
-    // On the first pass, we build the incomplete type's constant above. On the
-    // second pass, we need to fetch it.
+    // On the first pass, we build the incomplete type's constant above. If we
+    // get here on a subsequent pass we need to fetch the one we built in the
+    // first pass.
     if (made_incomplete_type) {
       CARBON_CHECK(!class_const_id.is_valid())
           << "Shouldn't have a const yet when resuming";
