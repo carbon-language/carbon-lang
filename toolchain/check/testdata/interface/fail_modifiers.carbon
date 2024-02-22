@@ -28,12 +28,19 @@ protected interface Protected;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @Abstract [template]
+// CHECK:STDOUT:   %.2: type = interface_type @Default [template]
+// CHECK:STDOUT:   %.3: type = interface_type @Virtual [template]
+// CHECK:STDOUT:   %.4: type = interface_type @Protected [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Default = %Default.decl, .Virtual = %Virtual.decl, .Protected = %Protected.decl} [template]
-// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract, ()
-// CHECK:STDOUT:   %Default.decl = interface_decl @Default, ()
-// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual, ()
-// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected, ()
+// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract, () [template = constants.%.1]
+// CHECK:STDOUT:   %Default.decl = interface_decl @Default, () [template = constants.%.2]
+// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual, () [template = constants.%.3]
+// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected, () [template = constants.%.4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {

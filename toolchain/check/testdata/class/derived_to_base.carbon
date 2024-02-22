@@ -70,9 +70,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .ConvertCToB = %ConvertCToB, .ConvertBToA = %ConvertBToA, .ConvertCToA = %ConvertCToA, .ConvertValue = %ConvertValue, .ConvertRef = %ConvertRef, .ConvertInit = %ConvertInit} [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %A.decl = class_decl @A, () [template = constants.%A]
+// CHECK:STDOUT:   %B.decl = class_decl @B, () [template = constants.%B]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT:   %ConvertCToB: <function> = fn_decl @ConvertCToB [template]
 // CHECK:STDOUT:   %ConvertBToA: <function> = fn_decl @ConvertBToA [template]
 // CHECK:STDOUT:   %ConvertCToA: <function> = fn_decl @ConvertCToA [template]
@@ -89,7 +89,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %.loc13: <unbound element of class B> = field_decl b, element1 [template]
 // CHECK:STDOUT:
@@ -100,7 +100,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %.loc18: <unbound element of class C> = field_decl c, element1 [template]
 // CHECK:STDOUT:
@@ -143,7 +143,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c: C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
 // CHECK:STDOUT:   %.loc26_15.1: ref B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc26_15.2: ref A = class_element_access %.loc26_15.1, element0
@@ -157,7 +157,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
 // CHECK:STDOUT:   %.loc30_12.1: ref C = deref %c.ref
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc30_15.1: ref B = class_element_access %.loc30_12.1, element0
 // CHECK:STDOUT:   %.loc30_15.2: ref A = class_element_access %.loc30_15.1, element0
 // CHECK:STDOUT:   %.loc30_12.2: ref A = converted %.loc30_12.1, %.loc30_15.2
@@ -167,14 +167,14 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc34_38: i32 = int_literal 1 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc34_39.1: {.a: i32} = struct_literal (%.loc34_38)
 // CHECK:STDOUT:   %.loc34_47: i32 = int_literal 2 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc34_48.1: {.base: {.a: i32}, .b: i32} = struct_literal (%.loc34_39.1, %.loc34_47)
 // CHECK:STDOUT:   %.loc34_56: i32 = int_literal 3 [template = constants.%.22]
 // CHECK:STDOUT:   %.loc34_57.1: {.base: {.base: {.a: i32}, .b: i32}, .c: i32} = struct_literal (%.loc34_48.1, %.loc34_56)
-// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc34_57.2: ref C = temporary_storage
 // CHECK:STDOUT:   %.loc34_57.3: ref B = class_element_access %.loc34_57.2, element0
 // CHECK:STDOUT:   %.loc34_48.2: ref A = class_element_access %.loc34_57.3, element0

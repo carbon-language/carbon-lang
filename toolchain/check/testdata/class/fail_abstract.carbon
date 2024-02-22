@@ -50,8 +50,8 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access} [template]
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
+// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, () [template = constants.%Abstract]
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, () [template = constants.%Derived]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template]
 // CHECK:STDOUT: }
@@ -64,7 +64,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, constants.%Abstract [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Abstract, element0 [template]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Derived> = field_decl d, element1 [template]
 // CHECK:STDOUT:

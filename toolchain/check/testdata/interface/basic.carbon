@@ -15,11 +15,16 @@ interface ForwardDeclared {
 
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %.2: type = interface_type @ForwardDeclared [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .ForwardDeclared = %ForwardDeclared.decl.loc10} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, ()
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared, ()
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared, ()
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared, () [template = constants.%.2]
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared, () [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

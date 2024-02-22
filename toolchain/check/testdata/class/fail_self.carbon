@@ -62,10 +62,10 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .WrongSelf = %WrongSelf.decl, .CallWrongSelf = %CallWrongSelf} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, ()
+// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf, () [template = constants.%WrongSelf]
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +92,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref Class = var self
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self

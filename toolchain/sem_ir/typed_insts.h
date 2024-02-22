@@ -315,8 +315,7 @@ struct ClassDecl {
   static constexpr auto Kind =
       InstKind::ClassDecl.Define<Parse::AnyClassDeclId>("class_decl");
 
-  // No type: a class declaration is not itself a value. The name of a class
-  // declaration becomes a class type value.
+  TypeId type_id;
   // TODO: For a generic class declaration, the name of the class declaration
   // should become a parameterized entity name value.
   ClassId class_id;
@@ -474,8 +473,7 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           "interface_decl");
 
-  // No type: an interface declaration is not itself a value. The name of an
-  // interface declaration becomes a facet type value.
+  TypeId type_id;
   // TODO: For a generic interface declaration, the name of the interface
   // declaration should become a parameterized entity name value.
   InterfaceId interface_id;

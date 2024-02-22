@@ -37,9 +37,9 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Inner = %Inner.decl, .MakeInner = %MakeInner, .Outer = %Outer.decl, .MakeOuter = %MakeOuter} [template]
-// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, () [template = constants.%Inner]
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner [template]
-// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, () [template = constants.%Outer]
 // CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,9 +53,9 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref.loc15: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc15: <unbound element of class Outer> = field_decl c, element0 [template]
-// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref.loc16: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc16: <unbound element of class Outer> = field_decl d, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

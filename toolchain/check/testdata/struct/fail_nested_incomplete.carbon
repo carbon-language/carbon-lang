@@ -26,12 +26,12 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .s = %s, .p = %p} [template]
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15: type = struct_type {.a: Incomplete} [template = constants.%.1]
 // CHECK:STDOUT:   %s.var: ref <error> = var s
 // CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
-// CHECK:STDOUT:   %Incomplete.ref.loc17: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref.loc17: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc17: type = ptr_type Incomplete [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref Incomplete* = var p
 // CHECK:STDOUT:   %p: ref Incomplete* = bind_name p, %p.var

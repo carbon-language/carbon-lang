@@ -33,11 +33,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Cycle = %Cycle.decl} [template]
-// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle, ()
+// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle, () [template = constants.%Cycle]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, constants.%Cycle [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc5_15: type = ptr_type Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %.loc5_8: <unbound element of class Cycle> = field_decl a, element0 [template]
 // CHECK:STDOUT:
@@ -55,7 +55,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Cycle = %import_ref, .Run = %Run} [template]
-// CHECK:STDOUT:   %import_ref: invalid = import_ref ir1, inst+1, used [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [template = constants.%Cycle]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,8 +68,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle, ()
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, constants.%Cycle [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle, () [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref Cycle* = var a
 // CHECK:STDOUT:   %a: ref Cycle* = bind_name a, %a.var

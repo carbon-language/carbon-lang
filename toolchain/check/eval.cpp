@@ -475,10 +475,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
-    case SemIR::ClassDecl::Kind:
     case SemIR::ImplDecl::Kind:
     case SemIR::Import::Kind:
-    case SemIR::InterfaceDecl::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
@@ -486,6 +484,12 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;
+
+    case SemIR::ClassDecl::Kind:
+    case SemIR::InterfaceDecl::Kind:
+      CARBON_FATAL() << inst.kind()
+                     << " receives its constant directly from the "
+                        "corresponding Type inst.";
 
     case SemIR::ImportRefUnused::Kind:
       CARBON_FATAL() << "ImportRefUnused should transform to ImportRefUsed "

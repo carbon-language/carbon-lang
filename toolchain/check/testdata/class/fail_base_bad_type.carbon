@@ -161,26 +161,26 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Final = %Final.decl, .DeriveFromError = %DeriveFromError.decl, .AccessMemberWithInvalidBaseError = %AccessMemberWithInvalidBaseError, .DeriveFromNonType = %DeriveFromNonType.decl, .AccessMemberWithInvalidBasNonType = %AccessMemberWithInvalidBasNonType, .DeriveFromi32 = %DeriveFromi32.decl, .ConvertToBadBasei32 = %ConvertToBadBasei32, .AccessMemberWithInvalidBasei32 = %AccessMemberWithInvalidBasei32, .DeriveFromTuple = %DeriveFromTuple.decl, .ConvertToBadBaseTuple = %ConvertToBadBaseTuple, .AccessMemberWithInvalidBaseTuple = %AccessMemberWithInvalidBaseTuple, .DeriveFromStruct = %DeriveFromStruct.decl, .ConvertToBadBaseStruct = %ConvertToBadBaseStruct, .AccessMemberWithInvalidBaseStruct = %AccessMemberWithInvalidBaseStruct, .Incomplete = %Incomplete.decl, .DeriveFromIncomplete = %DeriveFromIncomplete.decl, .ConvertToBadBaseIncomplete = %ConvertToBadBaseIncomplete, .AccessMemberWithInvalidBaseIncomplete = %AccessMemberWithInvalidBaseIncomplete, .DeriveFromFinal = %DeriveFromFinal.decl, .ConvertToBadBaseFinal = %ConvertToBadBaseFinal, .AccessMemberWithInvalidBaseFinal_WithMember = %AccessMemberWithInvalidBaseFinal_WithMember, .AccessMemberWithInvalidBaseFinal_NoMember = %AccessMemberWithInvalidBaseFinal_NoMember} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Final.decl = class_decl @Final, ()
-// CHECK:STDOUT:   %DeriveFromError.decl = class_decl @DeriveFromError, ()
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
+// CHECK:STDOUT:   %Final.decl = class_decl @Final, () [template = constants.%Final]
+// CHECK:STDOUT:   %DeriveFromError.decl = class_decl @DeriveFromError, () [template = constants.%DeriveFromError]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseError: <function> = fn_decl @AccessMemberWithInvalidBaseError [template]
-// CHECK:STDOUT:   %DeriveFromNonType.decl = class_decl @DeriveFromNonType, ()
+// CHECK:STDOUT:   %DeriveFromNonType.decl = class_decl @DeriveFromNonType, () [template = constants.%DeriveFromNonType]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBasNonType: <function> = fn_decl @AccessMemberWithInvalidBasNonType [template]
-// CHECK:STDOUT:   %DeriveFromi32.decl = class_decl @DeriveFromi32, ()
+// CHECK:STDOUT:   %DeriveFromi32.decl = class_decl @DeriveFromi32, () [template = constants.%DeriveFromi32]
 // CHECK:STDOUT:   %ConvertToBadBasei32: <function> = fn_decl @ConvertToBadBasei32 [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBasei32: <function> = fn_decl @AccessMemberWithInvalidBasei32 [template]
-// CHECK:STDOUT:   %DeriveFromTuple.decl = class_decl @DeriveFromTuple, ()
+// CHECK:STDOUT:   %DeriveFromTuple.decl = class_decl @DeriveFromTuple, () [template = constants.%DeriveFromTuple]
 // CHECK:STDOUT:   %ConvertToBadBaseTuple: <function> = fn_decl @ConvertToBadBaseTuple [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseTuple: <function> = fn_decl @AccessMemberWithInvalidBaseTuple [template]
-// CHECK:STDOUT:   %DeriveFromStruct.decl = class_decl @DeriveFromStruct, ()
+// CHECK:STDOUT:   %DeriveFromStruct.decl = class_decl @DeriveFromStruct, () [template = constants.%DeriveFromStruct]
 // CHECK:STDOUT:   %ConvertToBadBaseStruct: <function> = fn_decl @ConvertToBadBaseStruct [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseStruct: <function> = fn_decl @AccessMemberWithInvalidBaseStruct [template]
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
-// CHECK:STDOUT:   %DeriveFromIncomplete.decl = class_decl @DeriveFromIncomplete, ()
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
+// CHECK:STDOUT:   %DeriveFromIncomplete.decl = class_decl @DeriveFromIncomplete, () [template = constants.%DeriveFromIncomplete]
 // CHECK:STDOUT:   %ConvertToBadBaseIncomplete: <function> = fn_decl @ConvertToBadBaseIncomplete [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseIncomplete: <function> = fn_decl @AccessMemberWithInvalidBaseIncomplete [template]
-// CHECK:STDOUT:   %DeriveFromFinal.decl = class_decl @DeriveFromFinal, ()
+// CHECK:STDOUT:   %DeriveFromFinal.decl = class_decl @DeriveFromFinal, () [template = constants.%DeriveFromFinal]
 // CHECK:STDOUT:   %ConvertToBadBaseFinal: <function> = fn_decl @ConvertToBadBaseFinal [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_WithMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_WithMember [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_NoMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_NoMember [template]
@@ -225,7 +225,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc51_22.1: (type,) = tuple_literal (%Base.ref)
 // CHECK:STDOUT:   %.loc51_22.2: type = converted %.loc51_22.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc51_23: <error> = base_decl <error>, element0 [template]
@@ -247,7 +247,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromIncomplete {
-// CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, constants.%Incomplete [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc87: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -256,7 +256,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
-// CHECK:STDOUT:   %Final.ref: type = name_ref Final, constants.%Final [template = constants.%Final]
+// CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final.decl [template = constants.%Final]
 // CHECK:STDOUT:   %.loc101: <unbound element of class DeriveFromFinal> = base_decl Final, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

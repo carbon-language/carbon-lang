@@ -36,8 +36,8 @@ class E {
 // CHECK:STDOUT: --- fail_extend_impl_type_as.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
@@ -45,10 +45,10 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .C = %C.decl, .D = %D.decl, .E = %E.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %E.decl = class_decl @E, ()
+// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
+// CHECK:STDOUT:   %D.decl = class_decl @D, () [template = constants.%D]
+// CHECK:STDOUT:   %E.decl = class_decl @E, () [template = constants.%E]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

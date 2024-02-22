@@ -23,7 +23,7 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Simple = %Simple.decl} [template]
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, ()
+// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, () [template = constants.%.1]
 // CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+4>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

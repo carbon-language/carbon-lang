@@ -48,8 +48,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, () [template = constants.%Derived]
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
@@ -63,7 +63,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]

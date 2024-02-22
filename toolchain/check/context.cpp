@@ -137,6 +137,21 @@ auto Context::ReplaceInstBeforeConstantUse(
   constant_values().Set(inst_id, const_id);
 }
 
+auto Context::ReplaceInstBeforeConstantUse(
+    SemIR::InstId inst_id, SemIR::ParseNodeAndInst parse_node_and_inst,
+    SemIR::ConstantId const_id) -> void {
+  sem_ir().insts().Set(inst_id, parse_node_and_inst);
+
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> "
+                << parse_node_and_inst.inst << "\n";
+
+  CARBON_CHECK(!constant_values().Get(inst_id).is_valid());
+  CARBON_CHECK(const_id.is_constant());
+  CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+                << const_id.inst_id() << "\n";
+  constant_values().Set(inst_id, const_id);
+}
+
 auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
                                     SemIR::InstId prev_def_id) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
@@ -986,15 +1001,15 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
 
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
-    -> SemIR::TypeId {
+    -> std::pair<SemIR::ConstantId, SemIR::TypeId> {
   // TODO: Remove inst_id parameter from TryEvalInst.
-  return context.GetTypeIdForTypeConstant(
-      TryEvalInst(context, SemIR::InstId::Invalid,
-                  InstT{SemIR::TypeId::TypeType, each_arg...}));
+  auto const_id = TryEvalInst(context, SemIR::InstId::Invalid,
+                              InstT{SemIR::TypeId::TypeType, each_arg...});
+  return {const_id, context.GetTypeIdForTypeConstant(const_id)};
 }
 
 auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::StructType>(*this, refs_id);
+  return GetTypeImpl<SemIR::StructType>(*this, refs_id).second;
 }
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
@@ -1002,7 +1017,8 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
   // TODO: Deduplicate the type block here. Currently requesting the same tuple
   // type more than once will create multiple type blocks, all but one of which
   // is unused.
-  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
+  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids))
+      .second;
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
@@ -1015,19 +1031,26 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   return type_id;
 }
 
-auto Context::GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+auto Context::GetClassType(SemIR::ClassId class_id)
+    -> std::pair<SemIR::ConstantId, SemIR::TypeId> {
   return GetTypeImpl<SemIR::ClassType>(*this, class_id);
 }
 
+auto Context::GetInterfaceTypeConstant(SemIR::InterfaceId interface_id)
+    -> SemIR::ConstantId {
+  return GetTypeImpl<SemIR::InterfaceType>(*this, interface_id).first;
+}
+
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::PointerType>(*this, pointee_type_id);
+  return GetTypeImpl<SemIR::PointerType>(*this, pointee_type_id).second;
 }
 
 auto Context::GetUnboundElementType(SemIR::TypeId class_type_id,
                                     SemIR::TypeId element_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(*this, class_type_id,
-                                                element_type_id);
+                                                element_type_id)
+      .second;
 }
 
 auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {

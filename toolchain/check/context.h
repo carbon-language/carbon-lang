@@ -97,6 +97,12 @@ class Context {
                                     SemIR::ParseNodeAndInst parse_node_and_inst)
       -> void;
 
+  // Similar to the above, but used in cases where the constant is already known
+  // and doesn't need to be recalculated.
+  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
+                                    SemIR::ParseNodeAndInst parse_node_and_inst,
+                                    SemIR::ConstantId const_id) -> void;
+
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
   // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
@@ -237,9 +243,19 @@ class Context {
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
-  // Returns a class type for the class described by `class_id`.
+  // Returns a class type for the class described by `class_id`. When forming
+  // the decl, the constant will be used as the decl's constant and the type is
+  // used for `Self`.
   // TODO: Support generic arguments.
-  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+  auto GetClassType(SemIR::ClassId class_id)
+      -> std::pair<SemIR::ConstantId, SemIR::TypeId>;
+
+  // Returns a interface type constant for the interface described by
+  // `interface_id`. This could return the type, but when forming the decl only
+  // the constant is necessary.
+  // TODO: Support generic arguments.
+  auto GetInterfaceTypeConstant(SemIR::InterfaceId interface_id)
+      -> SemIR::ConstantId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;

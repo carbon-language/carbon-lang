@@ -20,8 +20,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Simple = %Simple.decl} [template]
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, ()
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>, <unexpected instref inst+4>, <unexpected instref inst+5>, <unexpected instref inst+7>)
+// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, () [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+4>, <unexpected instref inst+5>, <unexpected instref inst+6>, <unexpected instref inst+7>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {

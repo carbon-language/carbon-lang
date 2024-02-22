@@ -51,19 +51,23 @@ static auto BuildInterfaceDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
-  auto interface_decl =
-      SemIR::InterfaceDecl{SemIR::InterfaceId::Invalid, decl_block_id};
+  auto interface_decl = SemIR::InterfaceDecl{
+      SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id =
       context.AddPlaceholderInst({parse_node, interface_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
       name_context, interface_decl_id);
+  auto const_id = SemIR::ConstantId::Invalid;
   if (existing_id.is_valid()) {
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
       // This is a redeclaration of an existing interface.
+      // TODO: class_decl = *existing_class_decl;
+      interface_decl.type_id = existing_interface_decl->type_id;
       interface_decl.interface_id = existing_interface_decl->interface_id;
+      const_id = context.constant_values().Get(existing_id);
 
       // TODO: Check that the generic parameter list agrees with the prior
       // declaration.
@@ -84,11 +88,16 @@ static auto BuildInterfaceDecl(Context& context,
         {.name_id = name_context.name_id_for_new_inst(),
          .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
          .decl_id = interface_decl_id});
+
+    // Provide the InterfaceType for name references.
+    // TODO: This may need to differ for generic types, but should still take
+    // name lookup into account.
+    const_id = context.GetInterfaceTypeConstant(interface_decl.interface_id);
   }
 
   // Write the interface ID into the InterfaceDecl.
   context.ReplaceInstBeforeConstantUse(interface_decl_id,
-                                       {parse_node, interface_decl});
+                                       {parse_node, interface_decl}, const_id);
 
   return {interface_decl.interface_id, interface_decl_id};
 }

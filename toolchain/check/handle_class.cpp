@@ -56,18 +56,21 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl = SemIR::ClassDecl{SemIR::ClassId::Invalid, decl_block_id};
+  auto class_decl = SemIR::ClassDecl{SemIR::TypeId::TypeType,
+                                     SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddPlaceholderInst({parse_node, class_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
       context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
+  auto const_id = SemIR::ConstantId::Invalid;
   if (existing_id.is_valid()) {
     if (auto existing_class_decl =
             context.insts().Get(existing_id).TryAs<SemIR::ClassDecl>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
       auto& class_info = context.classes().Get(class_decl.class_id);
+      const_id = context.constant_values().Get(existing_id);
 
       // The introducer kind must match the previous declaration.
       // TODO: The rule here is not yet decided. See #3384.
@@ -105,11 +108,19 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
 
     // Build the `Self` type.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context.GetClassType(class_decl.class_id);
+    auto [self_const_id, self_type_id] =
+        context.GetClassType(class_decl.class_id);
+    class_info.self_type_id = self_type_id;
+
+    // Provide the ClassType for name references.
+    // TODO: This may need to differ for generic types, but should still take
+    // name lookup into account.
+    const_id = self_const_id;
   }
 
   // Write the class ID into the ClassDecl.
-  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
+  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl},
+                                       const_id);
 
   return {class_decl.class_id, class_decl_id};
 }

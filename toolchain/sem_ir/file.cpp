@@ -517,13 +517,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case ClassDecl::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case Import::Kind:
       case ImportRefUnused::Kind:
-      case InterfaceDecl::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
@@ -559,8 +557,10 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoundMethod::Kind:
+      case ClassDecl::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
+      case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case IntLiteral::Kind:
       case Param::Kind:
