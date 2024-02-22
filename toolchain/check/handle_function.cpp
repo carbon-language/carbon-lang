@@ -70,17 +70,17 @@ static auto BuildFunctionDecl(Context& context,
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
-  if (auto return_node_and_id =
+  if (auto [return_node, return_storage_id] =
           context.node_stack()
-              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>()) {
-    auto return_storage_id = return_node_and_id->second;
-    return_type_id = context.insts().Get(return_storage_id).type_id();
+              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>();
+      return_storage_id) {
+    return_type_id = context.insts().Get(*return_storage_id).type_id();
 
     return_type_id = context.AsCompleteType(return_type_id, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "Function returns incomplete type `{0}`.",
                         SemIR::TypeId);
-      return context.emitter().Build(return_node_and_id->first,
+      return context.emitter().Build(return_node,
                                      IncompleteTypeInFunctionReturnType,
                                      return_type_id);
     });
@@ -89,7 +89,7 @@ static auto BuildFunctionDecl(Context& context,
              .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
-      return_slot_id = return_storage_id;
+      return_slot_id = *return_storage_id;
     }
   }
 

@@ -171,14 +171,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
       context.node_stack().PopExprWithParseNode();
   auto [self_type_node, self_type_id] =
       context.node_stack().PopWithParseNode<Parse::NodeCategory::ImplAs>();
-
-  Parse::NodeId params_node = context.node_stack().PeekParseNode();
-  auto params_id =
+  auto [params_node, params_id] =
       context.node_stack().PopWithParseNodeIf<Parse::NodeKind::ImplForall>();
-  if (!params_id) {
-    params_node = Parse::NodeId::Invalid;
-  }
-
   auto decl_block_id = context.inst_block_stack().Pop();
   context.node_stack().PopForSoloParseNode<Parse::NodeKind::ImplIntroducer>();
 
@@ -213,8 +207,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   if (!!(context.decl_state_stack().innermost().modifier_set &
          KeywordModifierSet::Extend)) {
     auto extend_node = context.decl_state_stack().innermost().saw_decl_modifier;
-    ExtendImpl(context, extend_node, parse_node,
-               self_type_node, self_type_id, params_node, constraint_type_id);
+    ExtendImpl(context, extend_node, parse_node, self_type_node, self_type_id,
+               params_node, constraint_type_id);
   }
 
   context.decl_state_stack().Pop(DeclState::Impl);
