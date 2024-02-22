@@ -12,10 +12,9 @@ interface GenericInterface(T:! type) {
 }
 
 class C {
-  // TODO: We should reject this for combining `extend` with `forall`.
-  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `extending non-interface constraint`.
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` a parameterized `impl`.
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:36: ERROR: Value of type `type` is not callable.
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~

@@ -956,7 +956,7 @@ struct TypeImplAs {
   static constexpr auto Kind =
       NodeKind::TypeImplAs.Define(NodeCategory::ImplAs);
 
-  std::optional<AnyExprId> type_expr;
+  AnyExprId type_expr;
 };
 
 // `impl T as I`
