@@ -63,19 +63,26 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
   return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id);
 }
 
-auto HandleDefaultSelfImplAs(Context& context,
-                             Parse::DefaultSelfImplAsId parse_node) -> bool {
+static auto GetDefaultSelfType(Context& context, Parse::NodeId parse_node)
+    -> SemIR::TypeId {
   auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
 
-  // TODO: This is also valid in a mixin.
-  auto class_decl = TryAsClassScope(context, enclosing_scope_id);
-  if (!class_decl) {
-    return context.TODO(parse_node,
-                        "recover from `impl as` in non-class scope");
+  if (auto class_decl = TryAsClassScope(context, enclosing_scope_id)) {
+    return context.classes().Get(class_decl->class_id).self_type_id;
   }
 
-  context.node_stack().Push(
-      parse_node, context.classes().Get(class_decl->class_id).self_type_id);
+  // TODO: This is also valid in a mixin.
+
+  CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
+                    "`impl as` can only be used in a class.");
+  context.emitter().Emit(parse_node, ImplAsOutsideClass);
+  return SemIR::TypeId::Error;
+}
+
+auto HandleDefaultSelfImplAs(Context& context,
+                             Parse::DefaultSelfImplAsId parse_node) -> bool {
+  auto self_type_id = GetDefaultSelfType(context, parse_node);
+  context.node_stack().Push(parse_node, self_type_id);
   return true;
 }
 
