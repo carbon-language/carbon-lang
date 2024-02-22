@@ -24,18 +24,22 @@ namespace Carbon::Check {
 // Work items on work_stack_. At a high level, the loop is:
 //
 // 1. If Work has received a constant, it's considered resolved.
-//    - If incomplete_type is marked, resolve unconditionally.
+//    - If made_incomplete_type, resolve unconditionally.
 //    - The constant check avoids performance costs of deduplication on add.
 // 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
-//    A. For cases with incomplete types, when incomplete_type isn't marked:
-//      i. Make the incomplete type with associated constant.
-//        - If the imported type is incomplete, return the constant.
-//      ii. Mark incomplete_type.
-//    B. Gather all input constants.
-//      - Gathering constants directly adds unresolved values to work_stack_.
-//    C. If any need to be resolved (HasNewWork), return Invalid; this
-//       instruction needs two calls to complete.
-//    D. Build any necessary IR structures, and return the output constant.
+//    - For most cases:
+//      A. For types which _can_ be incomplete, when not made_incomplete_type:
+//        i. Start by making an incomplete type to address circular references.
+//        ii. If the imported type is incomplete, return the constant.
+//        iii. Set made_incomplete_type.
+//          - Creating an incomplete type will have set the constant, which
+//            influences step (1); setting made_incomplete_type gets us a second
+//            resolve pass when needed.
+//      B. Gather all input constants.
+//        - Gathering constants directly adds unresolved values to work_stack_.
+//      C. If any need to be resolved (HasNewWork), return Invalid; this
+//         instruction needs two calls to complete.
+//      D. Build any necessary IR structures, and return the output constant.
 //    - For trivial cases with zero or one input constants, this may return
 //      a constant (if one, potentially Invalid) directly.
 // 3. If resolving returned a non-Invalid constant, pop the work; otherwise, it
@@ -69,11 +73,11 @@ class ImportRefResolver {
       // This should typically be checked before adding it, but a given
       // instruction may be added multiple times before its constant is
       // evaluated.
-      if (!work.incomplete_type &&
+      if (!work.made_incomplete_type &&
           import_ir_constant_values_.Get(work.inst_id).is_valid()) {
         work_stack_.pop_back();
       } else if (auto new_const_id =
-                     TryResolveInst(work.inst_id, work.incomplete_type);
+                     TryResolveInst(work.inst_id, work.made_incomplete_type);
                  new_const_id.is_valid()) {
         import_ir_constant_values_.Set(work.inst_id, new_const_id);
         work_stack_.pop_back();
@@ -107,9 +111,8 @@ class ImportRefResolver {
     // The instruction to work on.
     SemIR::InstId inst_id;
 
-    // True if an incomplete type has been generated; only used by instructions
-    // with incomplete types.
-    bool incomplete_type = false;
+    // True if a first pass made an incomplete type.
+    bool made_incomplete_type = false;
   };
 
   // For imported entities, we use an invalid enclosing scope. This will be okay
@@ -239,19 +242,20 @@ class ImportRefResolver {
   // following TryResolveTypedInst helper functions.
   //
   // TODO: Error is returned when support is missing, but that should go away.
-  auto TryResolveInst(SemIR::InstId inst_id, bool incomplete_type)
+  auto TryResolveInst(SemIR::InstId inst_id, bool made_incomplete_type)
       -> SemIR::ConstantId {
     if (inst_id.is_builtin()) {
-      CARBON_CHECK(!incomplete_type);
+      CARBON_CHECK(!made_incomplete_type);
       // Constants for builtins can be directly copied.
       return context_.constant_values().Get(inst_id);
     }
 
     auto inst = import_ir_.insts().Get(inst_id);
 
-    CARBON_CHECK(!incomplete_type || inst.kind() == SemIR::InstKind::ClassDecl)
+    CARBON_CHECK(!made_incomplete_type ||
+                 inst.kind() == SemIR::InstKind::ClassDecl)
         << "Currently only decls with incomplete types should need "
-           "incomplete_type states: "
+           "made_incomplete_type states: "
         << inst.kind();
 
     switch (inst.kind()) {
@@ -263,7 +267,7 @@ class ImportRefResolver {
 
       case SemIR::InstKind::ClassDecl:
         return TryResolveTypedInst(inst.As<SemIR::ClassDecl>(), inst_id,
-                                   incomplete_type);
+                                   made_incomplete_type);
 
       case SemIR::InstKind::ClassType:
         return TryResolveTypedInst(inst.As<SemIR::ClassType>());
@@ -419,13 +423,13 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst, SemIR::InstId inst_id,
-                           bool incomplete_type) -> SemIR::ConstantId {
+                           bool made_incomplete_type) -> SemIR::ConstantId {
     const auto& import_class = import_ir_.classes().Get(inst.class_id);
 
     SemIR::ConstantId class_const_id = SemIR::ConstantId::Invalid;
     // On the first pass, there's no incomplete type; start by adding one for
     // any recursive references.
-    if (!incomplete_type) {
+    if (!made_incomplete_type) {
       class_const_id = MakeIncompleteClass(inst_id, import_class);
       // If there's only a forward declaration, we're done.
       if (!import_class.object_repr_id.is_valid()) {
@@ -434,7 +438,7 @@ class ImportRefResolver {
       // This may not be needed because all constants might be ready, but we do
       // it here so that we don't need to track which work item corresponds to
       // this instruction.
-      work_stack_.back().incomplete_type = true;
+      work_stack_.back().made_incomplete_type = true;
     }
 
     CARBON_CHECK(import_class.object_repr_id.is_valid())
@@ -454,7 +458,7 @@ class ImportRefResolver {
 
     // On the first pass, we build the incomplete type's constant above. On the
     // second pass, we need to fetch it.
-    if (incomplete_type) {
+    if (made_incomplete_type) {
       CARBON_CHECK(!class_const_id.is_valid())
           << "Shouldn't have a const yet when resuming";
       class_const_id = import_ir_constant_values_.Get(inst_id);
