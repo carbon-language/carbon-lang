@@ -282,8 +282,8 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
-      for (auto* annotator : emitter_->annotators_) {
-        annotator->Annotate(*this);
+      for (auto annotate_fn : emitter_->annotate_fns_) {
+        annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
@@ -356,31 +356,6 @@ class DiagnosticEmitter {
   }
 
  private:
-  // Base class for scopes in which we perform diagnostic annotation, such as
-  // adding notes with contextual information.
-  class DiagnosticAnnotationScopeBase {
-   public:
-    virtual auto Annotate(DiagnosticBuilder& builder) -> void = 0;
-
-    DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
-        delete;
-    auto operator=(const DiagnosticAnnotationScopeBase&)
-        -> DiagnosticAnnotationScopeBase& = delete;
-
-   protected:
-    explicit DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
-        : emitter_(emitter) {
-      emitter_->annotators_.push_back(this);
-    }
-    ~DiagnosticAnnotationScopeBase() {
-      CARBON_CHECK(emitter_->annotators_.back() == this);
-      emitter_->annotators_.pop_back();
-    }
-
-   private:
-    DiagnosticEmitter* emitter_;
-  };
-
   // Converts an argument to llvm::Any for storage, handling input to storage
   // type translation when needed.
   template <typename Arg>
@@ -399,7 +374,8 @@ class DiagnosticEmitter {
 
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
-  llvm::SmallVector<DiagnosticAnnotationScopeBase*> annotators_;
+  llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
+      annotate_fns_;
 };
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
@@ -486,23 +462,18 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
 // given emitter. That function can annotate the diagnostic by calling
 // `builder.Note` to add notes.
 template <typename LocationT, typename AnnotateFn>
-class DiagnosticAnnotationScope
-    : private DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase {
-  using Base =
-      typename DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase;
-
+class DiagnosticAnnotationScope {
  public:
   DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
                             AnnotateFn annotate)
-      : Base(emitter), annotate_(annotate) {}
+      : emitter_(emitter), annotate_(std::move(annotate)) {
+    emitter_->annotate_fns_.push_back(annotate_);
+  }
+  ~DiagnosticAnnotationScope() { emitter_->annotate_fns_.pop_back(); }
 
  private:
-  auto Annotate(
-      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
-      -> void override {
-    annotate_(builder);
-  }
-
+  DiagnosticEmitter<LocationT>* emitter_;
+  // Make a copy of the annotation function to ensure that it lives long enough.
   AnnotateFn annotate_;
 };
 
