@@ -486,24 +486,31 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
 // given emitter. That function can annotate the diagnostic by calling
 // `builder.Note` to add notes.
 template <typename LocationT, typename AnnotateFn>
-class DiagnosticAnnotationScope
-    : private DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase {
-  using Base =
-      typename DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase;
+class DiagnosticAnnotationScope {
+ private:
+  using Emitter = DiagnosticEmitter<LocationT>;
 
  public:
-  DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
-                            AnnotateFn annotate)
-      : Base(emitter), annotate_(annotate) {}
+  DiagnosticAnnotationScope(Emitter* emitter, AnnotateFn annotate)
+      : impl_(emitter, std::move(annotate)) {}
 
  private:
-  auto Annotate(
-      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
-      -> void override {
-    annotate_(builder);
-  }
+  using Base = typename Emitter::DiagnosticAnnotationScopeBase;
+  class Impl : public Base {
+   public:
+    Impl(Emitter* emitter, AnnotateFn annotate)
+        : Base(emitter), annotate_(std::move(annotate)) {}
 
-  AnnotateFn annotate_;
+    auto Annotate(typename Emitter::DiagnosticBuilder& builder)
+        -> void override {
+      annotate_(builder);
+    }
+
+   private:
+    AnnotateFn annotate_;
+  };
+
+  Impl impl_;
 };
 
 template <typename LocationT, typename AnnotateFn>
