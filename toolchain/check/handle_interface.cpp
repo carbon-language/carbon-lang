@@ -63,8 +63,6 @@ static auto BuildInterfaceDecl(Context& context,
     if (auto existing_interface_decl =
             context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
       // This is a redeclaration of an existing interface.
-      // TODO: class_decl = *existing_class_decl;
-      interface_decl.type_id = existing_interface_decl->type_id;
       interface_decl.interface_id = existing_interface_decl->interface_id;
 
       // TODO: Check that the generic parameter list agrees with the prior
