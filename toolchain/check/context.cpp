@@ -813,16 +813,13 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    // TODO: This can emit new SemIR instructions. Consider emitting them into a
-    // dedicated file-scope instruction block where possible, or somewhere else
-    // that better reflects the definition of the type, rather than wherever the
-    // type happens to first be required to be complete.
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::AssociatedEntity::Kind:
       case SemIR::BaseDecl::Kind:
       case SemIR::BindAlias::Kind:
       case SemIR::BindName::Kind:
@@ -908,6 +905,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
 
+      case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:

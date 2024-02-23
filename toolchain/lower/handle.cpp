@@ -60,6 +60,12 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
+auto HandleAssociatedEntity(FunctionContext& context, SemIR::InstId inst_id,
+                            SemIR::AssociatedEntity /*inst*/) -> void {
+  context.SetLocal(inst_id,
+                   llvm::ConstantStruct::getAnon(context.llvm_context(), {}));
+}
+
 auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);

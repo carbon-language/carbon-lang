@@ -322,6 +322,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             return true;
           },
           &SemIR::ArrayType::bound_id, &SemIR::ArrayType::element_type_id);
+    case SemIR::AssociatedEntityType::Kind:
+      return RebuildIfFieldsAreConstant(
+          context, inst, &SemIR::AssociatedEntityType::entity_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
@@ -363,6 +366,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
+    case SemIR::AssociatedEntity::Kind:
     case SemIR::Builtin::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
