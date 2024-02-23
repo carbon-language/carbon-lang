@@ -7,33 +7,33 @@
 interface I {}
 
 class C {
-  // CHECK:STDERR: todo_extend_impl_type_as.carbon:[[@LINE+3]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl i32 as I {}
   // CHECK:STDERR:   ^~~~~~
   extend impl i32 as I {}
 }
 
 class D {
-  // CHECK:STDERR: todo_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: todo_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
   extend impl D as I;
 }
 
 class E {
-  // CHECK:STDERR: todo_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl Self as I {}
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: todo_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
   // CHECK:STDERR:   extend impl Self as I {}
   // CHECK:STDERR:               ^~~~
   extend impl Self as I {}
 }
 
-// CHECK:STDOUT: --- todo_extend_impl_type_as.carbon
+// CHECK:STDOUT: --- fail_extend_impl_type_as.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
