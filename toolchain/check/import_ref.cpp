@@ -353,7 +353,7 @@ class ImportRefResolver {
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
         .enclosing_scope_id = NoEnclosingScopeForImports,
-        // `.self_type_id` depends on `class_id`, so is set below.
+        // `.self_type_id` depends on the ClassType, so is set below.
         .self_type_id = SemIR::TypeId::Invalid,
         .decl_id = class_decl_id,
         .inheritance_kind = import_class.inheritance_kind,
