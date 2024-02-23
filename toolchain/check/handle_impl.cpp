@@ -120,22 +120,24 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
       Parse::NodeKind::TypeImplAs) {
     CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
                       "Cannot `extend` an `impl` with an explicit self type.");
-    CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
-                      "Remove the explicit `Self` type here.");
     auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
-    if (self_type_id == GetDefaultSelfType(context)) {
-      // If the explicit self type is the default, suggest removing it and
-      // recover.
-      if (auto self_as = context.parse_tree().ExtractAs<Parse::TypeImplAs>(
-              self_type_node)) {
-        diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);
-      }
-      diag.Emit();
-    } else {
+
+    // If the explicit self type is not the default, just bail out.
+    if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
       enclosing_scope.has_error = true;
       return;
     }
+
+    // The explicit self type is the same as the default self type, so suggest
+    // removing it and recover as if it were not present.
+    if (auto self_as =
+            context.parse_tree().ExtractAs<Parse::TypeImplAs>(self_type_node)) {
+      CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
+                        "Remove the explicit `Self` type here.");
+      diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);
+    }
+    diag.Emit();
   }
 
   auto interface_type =
