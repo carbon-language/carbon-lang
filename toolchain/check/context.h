@@ -250,13 +250,6 @@ class Context {
   auto GetClassType(SemIR::ClassId class_id)
       -> std::pair<SemIR::ConstantId, SemIR::TypeId>;
 
-  // Returns a interface type constant for the interface described by
-  // `interface_id`. This could return the type, but when forming the decl only
-  // the constant is necessary.
-  // TODO: Support generic arguments.
-  auto GetInterfaceTypeConstant(SemIR::InterfaceId interface_id)
-      -> SemIR::ConstantId;
-
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 

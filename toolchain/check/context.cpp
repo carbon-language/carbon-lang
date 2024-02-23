@@ -1036,11 +1036,6 @@ auto Context::GetClassType(SemIR::ClassId class_id)
   return GetTypeImpl<SemIR::ClassType>(*this, class_id);
 }
 
-auto Context::GetInterfaceTypeConstant(SemIR::InterfaceId interface_id)
-    -> SemIR::ConstantId {
-  return GetTypeImpl<SemIR::InterfaceType>(*this, interface_id).first;
-}
-
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(*this, pointee_type_id).second;
 }
