@@ -63,14 +63,12 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   // Check whether this is a redeclaration.
   auto existing_id =
       context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
-  auto const_id = SemIR::ConstantId::Invalid;
   if (existing_id.is_valid()) {
     if (auto existing_class_decl =
             context.insts().Get(existing_id).TryAs<SemIR::ClassDecl>()) {
       // This is a redeclaration of an existing class.
       class_decl.class_id = existing_class_decl->class_id;
       auto& class_info = context.classes().Get(class_decl.class_id);
-      const_id = context.constant_values().Get(existing_id);
 
       // The introducer kind must match the previous declaration.
       // TODO: The rule here is not yet decided. See #3384.
@@ -101,26 +99,19 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
     class_decl.class_id = context.classes().Add(
         {.name_id = name_context.name_id_for_new_inst(),
          .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-         // `.self_type_id` depends on `class_id`, so is set below.
+         // `.self_type_id` depends on the ClassType, so is set below.
          .self_type_id = SemIR::TypeId::Invalid,
          .decl_id = class_decl_id,
          .inheritance_kind = inheritance_kind});
-
-    // Build the `Self` type.
-    auto& class_info = context.classes().Get(class_decl.class_id);
-    auto [self_const_id, self_type_id] =
-        context.GetClassType(class_decl.class_id);
-    class_info.self_type_id = self_type_id;
-
-    // Provide the ClassType for name references.
-    // TODO: This may need to differ for generic types, but should still take
-    // name lookup into account.
-    const_id = self_const_id;
   }
 
   // Write the class ID into the ClassDecl.
-  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl},
-                                       const_id);
+  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
+
+  // Build the `Self` type using the resulting type constant.
+  auto& class_info = context.classes().Get(class_decl.class_id);
+  class_info.self_type_id = context.GetTypeIdForTypeConstant(
+      context.constant_values().Get(class_decl_id));
 
   return {class_decl.class_id, class_decl_id};
 }

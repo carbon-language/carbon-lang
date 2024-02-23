@@ -364,15 +364,17 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
-    // These cases are always template constants.
     case SemIR::Builtin::Kind:
-    case SemIR::ClassType::Kind:
-      // TODO: Once classes and interfaces have generic arguments, handle them.
+      // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
 
     case SemIR::ClassDecl::Kind:
-      CARBON_FATAL() << "ClassDecl receives its constant directly from "
-                        "ClassType during construction.";
+      // TODO: Once classes have generic arguments, handle them.
+      return MakeConstantResult(
+          context,
+          SemIR::ClassType{SemIR::TypeId::TypeType,
+                           inst.As<SemIR::ClassDecl>().class_id},
+          Phase::Template);
 
     case SemIR::InterfaceDecl::Kind:
       // TODO: Once interfaces have generic arguments, handle them.
@@ -382,9 +384,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                inst.As<SemIR::InterfaceDecl>().interface_id},
           Phase::Template);
 
+    case SemIR::ClassType::Kind:
     case SemIR::InterfaceType::Kind:
-      CARBON_FATAL()
-          << "InterfaceType is only created during InterfaceDecl handling.";
+      CARBON_FATAL() << inst.kind()
+                     << " is only created during corresponding Decl handling.";
 
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
