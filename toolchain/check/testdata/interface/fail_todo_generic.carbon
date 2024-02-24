@@ -14,9 +14,13 @@ interface I[]();
 
 // CHECK:STDOUT: --- fail_todo_generic.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
+// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;

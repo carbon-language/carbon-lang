@@ -43,7 +43,7 @@ fn G() -> C {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .C = %C.decl, .G = %G} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2 [template = constants.%.6]

@@ -31,14 +31,14 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
 // CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
 // CHECK:STDOUT:

@@ -23,10 +23,15 @@ private interface Private {
 
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @Modifiers [template]
+// CHECK:STDOUT:   %.2: type = interface_type @Private [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Modifiers = %Modifiers.decl, .Private = %Private.decl} [template]
-// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, ()
-// CHECK:STDOUT:   %Private.decl = interface_decl @Private, ()
+// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, () [template = constants.%.1]
+// CHECK:STDOUT:   %Private.decl = interface_decl @Private, () [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {

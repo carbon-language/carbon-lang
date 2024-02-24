@@ -54,11 +54,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A1 = %A1.decl, .A2 = %A2.decl, .B2 = %B2.decl, .ConvertUnrelated = %ConvertUnrelated, .Incomplete = %Incomplete.decl, .ConvertIncomplete = %ConvertIncomplete} [template]
-// CHECK:STDOUT:   %A1.decl = class_decl @A1, ()
-// CHECK:STDOUT:   %A2.decl = class_decl @A2, ()
-// CHECK:STDOUT:   %B2.decl = class_decl @B2, ()
+// CHECK:STDOUT:   %A1.decl = class_decl @A1, () [template = constants.%A1]
+// CHECK:STDOUT:   %A2.decl = class_decl @A2, () [template = constants.%A2]
+// CHECK:STDOUT:   %B2.decl = class_decl @B2, () [template = constants.%B2]
 // CHECK:STDOUT:   %ConvertUnrelated: <function> = fn_decl @ConvertUnrelated [template]
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, ()
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
 // CHECK:STDOUT:   %ConvertIncomplete: <function> = fn_decl @ConvertIncomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,7 +77,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %A2.ref: type = name_ref A2, constants.%A2 [template = constants.%A2]
+// CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
 // CHECK:STDOUT:   %.loc16: <unbound element of class B2> = base_decl A2, element0 [template]
 // CHECK:STDOUT:   %.loc17: <unbound element of class B2> = field_decl b, element1 [template]
 // CHECK:STDOUT:

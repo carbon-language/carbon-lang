@@ -46,8 +46,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Child = %Child.decl} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Child.decl = class_decl @Child, ()
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
+// CHECK:STDOUT:   %Child.decl = class_decl @Child, () [template = constants.%Child]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -64,7 +64,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc13: <unbound element of class Child> = base_decl Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -100,7 +100,7 @@ fn Run() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %import_ref.1, .Child = %import_ref.2, .Run = %Run} [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
-// CHECK:STDOUT:   %import_ref.2: invalid = import_ref ir1, inst+19, used [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+19, used [template = constants.%Child]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,9 +127,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Child.decl = class_decl @Child, ()
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Child.ref: type = name_ref Child, constants.%Child [template = constants.%Child]
+// CHECK:STDOUT:   %Child.decl = class_decl @Child, () [template = constants.%Child]
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
+// CHECK:STDOUT:   %Child.ref: type = name_ref Child, file.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref Child = var a
 // CHECK:STDOUT:   %a: ref Child = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_33: i32 = int_literal 0 [template = constants.%.7]

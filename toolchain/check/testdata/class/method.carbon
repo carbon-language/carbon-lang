@@ -68,7 +68,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallAlias = %CallAlias, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT:   %CallAlias: <function> = fn_decl @CallAlias [template]
@@ -129,7 +129,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc31_17: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc31_18.1: {.k: i32} = struct_literal (%.loc31_17)
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc31_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc31_18.3: ref i32 = class_element_access %.loc31_18.2, element0
 // CHECK:STDOUT:   %.loc31_18.4: init i32 = initialize_from %.loc31_17 to %.loc31_18.3 [template = constants.%.5]
@@ -146,7 +146,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWithAddr() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref Class = var c
 // CHECK:STDOUT:   %c: ref Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c

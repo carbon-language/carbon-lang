@@ -344,7 +344,8 @@ class ImportRefResolver {
                            const SemIR::Class& import_class)
       -> SemIR::ConstantId {
     auto class_decl =
-        SemIR::ClassDecl{SemIR::ClassId::Invalid, SemIR::InstBlockId::Empty};
+        SemIR::ClassDecl{SemIR::TypeId::Invalid, SemIR::ClassId::Invalid,
+                         SemIR::InstBlockId::Empty};
     auto class_decl_id =
         context_.AddPlaceholderInst({Parse::NodeId::Invalid, class_decl});
     // Regardless of whether ClassDecl is a complete type, we first need an
@@ -352,28 +353,24 @@ class ImportRefResolver {
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
         .enclosing_scope_id = NoEnclosingScopeForImports,
-        // `.self_type_id` depends on `class_id`, so is set below.
+        // `.self_type_id` depends on the ClassType, so is set below.
         .self_type_id = SemIR::TypeId::Invalid,
         .decl_id = class_decl_id,
         .inheritance_kind = import_class.inheritance_kind,
     });
+
     // Write the function ID into the ClassDecl.
     context_.ReplaceInstBeforeConstantUse(class_decl_id,
                                           {Parse::NodeId::Invalid, class_decl});
+    auto self_const_id = context_.constant_values().Get(class_decl_id);
 
-    // Build the `Self` type.
-    auto type_id = context_.GetClassType(class_decl.class_id);
-    context_.classes().Get(class_decl.class_id).self_type_id = type_id;
+    // Build the `Self` type using the resulting type constant.
+    auto& class_info = context_.classes().Get(class_decl.class_id);
+    class_info.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     // Set a constant corresponding to the incomplete class.
-    // TODO: This uses the self type's constant, but the underlying instruction
-    // is NotConstant. Need to discuss whether we want to add a type_id to
-    // ClassDecl/InterfaceDecl and change behavior, which would also help
-    // consistency with other types. See also GetExprValueForLookupResult in
-    // handle_name.cpp.
-    auto const_id = context_.types().GetConstantId(type_id);
-    import_ir_constant_values_.Set(inst_id, const_id);
-    return const_id;
+    import_ir_constant_values_.Set(inst_id, self_const_id);
+    return self_const_id;
   }
 
   // Fills out the class definition for an incomplete class.

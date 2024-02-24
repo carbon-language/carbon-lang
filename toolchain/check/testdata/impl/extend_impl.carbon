@@ -24,8 +24,8 @@ fn G(c: C) {
 // CHECK:STDOUT: --- extend_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
@@ -33,8 +33,8 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.HasF = %HasF.decl, .C = %C.decl, .G = %G} [template]
-// CHECK:STDOUT:   %HasF.decl = interface_decl @HasF, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %HasF.decl = interface_decl @HasF, () [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c: C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, constants.%C [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc20: <function> = name_ref F, @HasF.%F [template = @HasF.%F]
 // CHECK:STDOUT:   %.loc20: init () = call %F.ref.loc20()
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c

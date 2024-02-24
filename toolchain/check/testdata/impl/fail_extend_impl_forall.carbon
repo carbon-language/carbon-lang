@@ -26,15 +26,15 @@ class C {
 // CHECK:STDOUT: --- fail_extend_impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @GenericInterface [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.GenericInterface = %GenericInterface.decl, .C = %C.decl} [template]
-// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface, (<unexpected instref inst+1>, <unexpected instref inst+2>)
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface, (<unexpected instref inst+1>, <unexpected instref inst+2>) [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {
@@ -52,7 +52,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+10>, <unexpected instref inst+11>, <unexpected instref inst+13>, <unexpected instref inst+14>)
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+11>, <unexpected instref inst+12>, <unexpected instref inst+13>, <unexpected instref inst+14>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   has_error

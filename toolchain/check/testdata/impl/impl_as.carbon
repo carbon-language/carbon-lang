@@ -17,15 +17,15 @@ class C {
 // CHECK:STDOUT: --- impl_as.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Simple = %Simple.decl, .C = %C.decl} [template]
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, () [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {

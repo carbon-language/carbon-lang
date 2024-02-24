@@ -237,10 +237,6 @@ class Context {
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
-  // Returns a class type for the class described by `class_id`.
-  // TODO: Support generic arguments.
-  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
-
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 

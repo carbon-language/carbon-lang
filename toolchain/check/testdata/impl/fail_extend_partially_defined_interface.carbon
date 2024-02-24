@@ -19,18 +19,18 @@ interface I {
 // CHECK:STDOUT: --- fail_extend_partially_defined_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
+// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = %C.decl

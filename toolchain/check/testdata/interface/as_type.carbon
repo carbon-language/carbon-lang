@@ -17,7 +17,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .F = %F} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, ()
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

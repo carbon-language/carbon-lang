@@ -42,9 +42,9 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
+// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, () [template = constants.%Derived]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +58,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc18: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

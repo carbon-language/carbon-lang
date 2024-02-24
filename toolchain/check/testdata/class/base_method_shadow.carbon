@@ -56,10 +56,10 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call} [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %D.decl = class_decl @D, ()
+// CHECK:STDOUT:   %A.decl = class_decl @A, () [template = constants.%A]
+// CHECK:STDOUT:   %B.decl = class_decl @B, () [template = constants.%B]
+// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
+// CHECK:STDOUT:   %D.decl = class_decl @D, () [template = constants.%D]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -71,7 +71,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = base_decl A, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
 // CHECK:STDOUT:
@@ -82,7 +82,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc17: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
 // CHECK:STDOUT:
@@ -93,7 +93,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc22: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -14,14 +14,14 @@ impl true as I {}
 // CHECK:STDOUT: --- fail_impl_bad_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: type = interface_type @I [template]
+// CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+2>, <unexpected instref inst+5>)
+// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>, <unexpected instref inst+5>)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

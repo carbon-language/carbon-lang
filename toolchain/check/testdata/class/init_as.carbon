@@ -27,7 +27,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .F = %F} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,7 +45,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_17: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc13_25: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_26.1: {.a: i32, .b: i32} = struct_literal (%.loc13_17, %.loc13_25)
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_26.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc13_26.3: ref i32 = class_element_access %.loc13_26.2, element0
 // CHECK:STDOUT:   %.loc13_26.4: init i32 = initialize_from %.loc13_17 to %.loc13_26.3 [template = constants.%.3]

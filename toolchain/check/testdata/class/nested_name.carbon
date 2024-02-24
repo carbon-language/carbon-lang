@@ -33,13 +33,13 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
-// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, () [template = constants.%Outer]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, () [template = constants.%Inner]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
@@ -63,7 +63,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o: Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: Outer = name_ref o, %o
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref Inner = var i
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
