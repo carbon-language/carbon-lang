@@ -107,7 +107,7 @@ auto HandleInterfaceDefinitionStart(
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  if (interface_info.definition_id.is_valid()) {
+  if (interface_info.is_defined()) {
     CARBON_DIAGNOSTIC(InterfaceRedefinition, Error,
                       "Redefinition of interface {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,

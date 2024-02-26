@@ -236,6 +236,24 @@ class ImportRefResolver {
     return import_name_id;
   }
 
+  // Adds ImportRefUnused entries for members of the imported scope, for name
+  // lookup. Returns the block used for the refs, primarily for textual IR
+  // formatting.
+  auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
+                              SemIR::NameScope& new_scope)
+      -> SemIR::InstBlockId {
+    // Push a block so that we can add scoped instructions to it.
+    context_.inst_block_stack().Push();
+    for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
+      auto ref_id = context_.AddPlaceholderInst(
+          SemIR::ImportRefUnused{import_ir_id_, entry_inst_id});
+      CARBON_CHECK(
+          new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
+              .second);
+    }
+    return context_.inst_block_stack().Pop();
+  }
+
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
   // more has been added to the stack. A similar API is followed for all
   // following TryResolveTypedInst helper functions.
@@ -280,6 +298,12 @@ class ImportRefResolver {
       case SemIR::InstKind::FunctionDecl:
         return TryResolveTypedInst(inst.As<SemIR::FunctionDecl>());
 
+      case SemIR::InstKind::InterfaceDecl:
+        return TryResolveTypedInst(inst.As<SemIR::InterfaceDecl>());
+
+      case SemIR::InstKind::InterfaceType:
+        return TryResolveTypedInst(inst.As<SemIR::InterfaceType>());
+
       case SemIR::InstKind::PointerType:
         return TryResolveTypedInst(inst.As<SemIR::PointerType>());
 
@@ -297,10 +321,6 @@ class ImportRefResolver {
         // Can use TryEvalInst because the resulting constant doesn't really use
         // `inst`.
         return TryEvalInst(context_, inst_id, inst);
-
-      case SemIR::InstKind::InterfaceDecl:
-        // TODO: Not implemented.
-        return SemIR::ConstantId::Error;
 
       default:
         context_.TODO(
@@ -358,7 +378,7 @@ class ImportRefResolver {
         .inheritance_kind = import_class.inheritance_kind,
     });
 
-    // Write the function ID into the ClassDecl.
+    // Write the class ID into the ClassDecl.
     context_.ReplaceInstBeforeConstantUse(class_decl_id,
                                           {Parse::NodeId::Invalid, class_decl});
     auto self_const_id = context_.constant_values().Get(class_decl_id);
@@ -389,19 +409,9 @@ class ImportRefResolver {
         context_.name_scopes().Add(new_class.decl_id, SemIR::NameId::Invalid,
                                    new_class.enclosing_scope_id);
     auto& new_scope = context_.name_scopes().Get(new_class.scope_id);
-    const auto& old_scope = import_ir_.name_scopes().Get(import_class.scope_id);
-    // Push a block so that we can add scoped instructions to it, primarily for
-    // textual IR formatting.
-    context_.inst_block_stack().Push();
-    for (auto [entry_name_id, entry_inst_id] : old_scope.names) {
-      CARBON_CHECK(
-          new_scope.names
-              .insert({GetLocalNameId(entry_name_id),
-                       context_.AddPlaceholderInst(SemIR::ImportRefUnused{
-                           import_ir_id_, entry_inst_id})})
-              .second);
-    }
-    new_class.body_block_id = context_.inst_block_stack().Pop();
+    const auto& import_scope =
+        import_ir_.name_scopes().Get(import_class.scope_id);
+    new_class.body_block_id = AddNameScopeImportRefs(import_scope, new_scope);
 
     if (import_class.base_id.is_valid()) {
       new_class.base_id = base_const_id.inst_id();
@@ -415,7 +425,7 @@ class ImportRefResolver {
       new_scope.extended_scopes.push_back(base_class.scope_id);
     }
     CARBON_CHECK(new_scope.extended_scopes.size() ==
-                 old_scope.extended_scopes.size());
+                 import_scope.extended_scopes.size());
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst, SemIR::InstId inst_id,
@@ -428,7 +438,7 @@ class ImportRefResolver {
     if (!made_incomplete_type) {
       class_const_id = MakeIncompleteClass(inst_id, import_class);
       // If there's only a forward declaration, we're done.
-      if (!import_class.object_repr_id.is_valid()) {
+      if (!import_class.is_defined()) {
         return class_const_id;
       }
       // This may not be needed because all constants might be ready, but we do
@@ -437,7 +447,7 @@ class ImportRefResolver {
       work_stack_.back().made_incomplete_type = true;
     }
 
-    CARBON_CHECK(import_class.object_repr_id.is_valid())
+    CARBON_CHECK(import_class.is_defined())
         << "Only reachable when there's a definition.";
 
     // Load constants for the definition.
@@ -555,6 +565,56 @@ class ImportRefResolver {
     return context_.constant_values().Get(function_decl_id);
   }
 
+  auto TryResolveTypedInst(SemIR::InterfaceDecl inst) -> SemIR::ConstantId {
+    const auto& import_interface =
+        import_ir_.interfaces().Get(inst.interface_id);
+
+    auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
+                                               SemIR::InterfaceId::Invalid,
+                                               SemIR::InstBlockId::Empty};
+    auto interface_decl_id =
+        context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
+
+    // Start with an incomplete interface.
+    SemIR::Interface new_interface = {
+        .name_id = GetLocalNameId(import_interface.name_id),
+        .enclosing_scope_id = NoEnclosingScopeForImports,
+        .decl_id = interface_decl_id,
+    };
+
+    // If the interface is defined, we can complete it immediately. No constants
+    // are required. Do this before adding it to interfaces.
+    if (import_interface.is_defined()) {
+      new_interface.scope_id = context_.name_scopes().Add(
+          new_interface.decl_id, SemIR::NameId::Invalid,
+          new_interface.enclosing_scope_id);
+      auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
+      const auto& import_scope =
+          import_ir_.name_scopes().Get(import_interface.scope_id);
+      new_interface.body_block_id =
+          AddNameScopeImportRefs(import_scope, new_scope);
+      CARBON_CHECK(import_scope.extended_scopes.empty())
+          << "Interfaces don't currently have extended scopes to support.";
+
+      new_interface.defined = true;
+    }
+
+    // Write the interface ID into the InterfaceDecl.
+    interface_decl.interface_id = context_.interfaces().Add(new_interface);
+    context_.ReplaceInstBeforeConstantUse(
+        interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
+
+    return context_.constant_values().Get(interface_decl_id);
+  }
+
+  auto TryResolveTypedInst(SemIR::InterfaceType inst) -> SemIR::ConstantId {
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    // InterfaceType uses a straight reference to the constant ID generated as
+    // part of pulling in the InterfaceDecl, so there's no need to phase logic.
+    return GetLocalConstantId(
+        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+  }
+
   auto TryResolveTypedInst(SemIR::PointerType inst) -> SemIR::ConstantId {
     auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
@@ -664,12 +724,6 @@ auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
   ImportRefResolver resolver(context, import_ref->ir_id);
   auto type_id = resolver.ResolveType(import_inst.type_id());
   auto constant_id = resolver.Resolve(import_ref->inst_id);
-
-  // TODO: Once ClassDecl/InterfaceDecl are supported (no longer return Error),
-  // remove this.
-  if (constant_id == SemIR::ConstantId::Error) {
-    type_id = SemIR::TypeId::Error;
-  }
 
   // Replace the ImportRefUnused instruction with an ImportRefUsed. This doesn't
   // use ReplaceInstBeforeConstantUse because it would trigger TryEvalInst, and
