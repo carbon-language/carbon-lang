@@ -19,7 +19,6 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
