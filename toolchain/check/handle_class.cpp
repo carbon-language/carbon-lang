@@ -132,7 +132,7 @@ auto HandleClassDefinitionStart(Context& context,
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
-  if (class_info.definition_id.is_valid()) {
+  if (class_info.is_defined()) {
     CARBON_DIAGNOSTIC(ClassRedefinition, Error, "Redefinition of class {0}.",
                       SemIR::NameId);
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,

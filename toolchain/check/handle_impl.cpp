@@ -230,7 +230,7 @@ auto HandleImplDefinitionStart(Context& context,
   auto [impl_id, impl_decl_id] = BuildImplDecl(context, parse_node);
   auto& impl_info = context.impls().Get(impl_id);
 
-  if (impl_info.definition_id.is_valid()) {
+  if (impl_info.is_defined()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
                       "Redefinition of `impl {0} as {1}`.", SemIR::TypeId,
                       SemIR::TypeId);
