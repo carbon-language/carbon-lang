@@ -79,17 +79,6 @@ class ScopeStack {
   // there is no such instruction, such as for a block scope.
   auto PeekInstId() const -> SemIR::InstId { return Peek().scope_inst_id; }
 
-  // Returns the current scope, if it is of the specified kind. Otherwise,
-  // returns nullopt.
-  template <typename InstT>
-  auto GetCurrentScopeAs(const SemIR::File& sem_ir) -> std::optional<InstT> {
-    auto inst_id = PeekInstId();
-    if (!inst_id.is_valid()) {
-      return std::nullopt;
-    }
-    return sem_ir.insts().TryGetAs<InstT>(inst_id);
-  }
-
   // If there is no `returned var` in scope, sets the given instruction to be
   // the current `returned var` and returns an invalid instruction ID. If there
   // is already a `returned var`, returns it instead.

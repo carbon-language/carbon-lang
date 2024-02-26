@@ -75,7 +75,9 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId parse_node)
 
   // If there was an initializer, assign it to the storage.
   if (init_id) {
-    if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
+    if (auto scope_inst_id = context.scope_stack().PeekInstId();
+        scope_inst_id.is_valid() &&
+        context.insts().Is<SemIR::ClassDecl>(scope_inst_id)) {
       // TODO: In a class scope, we should instead save the initializer
       // somewhere so that we can use it as a default.
       context.TODO(parse_node, "Field initializer");

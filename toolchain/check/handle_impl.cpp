@@ -53,22 +53,24 @@ auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId parse_node)
 // class declaration.
 // TODO: Should this be somewhere more central?
 static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
-    -> std::optional<SemIR::ClassDecl> {
+    -> SemIR::InstId {
   if (!scope_id.is_valid()) {
-    return std::nullopt;
+    return SemIR::InstId::Invalid;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id.is_valid()) {
-    return std::nullopt;
+  if (!scope.inst_id.is_valid() ||
+      !context.insts().Is<SemIR::ClassDecl>(scope.inst_id)) {
+    return SemIR::InstId::Invalid;
   }
-  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id);
+  return scope.inst_id;
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
   auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
 
-  if (auto class_decl = TryAsClassScope(context, enclosing_scope_id)) {
-    return context.classes().Get(class_decl->class_id).self_type_id;
+  if (auto class_inst_id = TryAsClassScope(context, enclosing_scope_id);
+      class_inst_id.is_valid()) {
+    return context.GetTypeIdForTypeInstId(class_inst_id);
   }
 
   // TODO: This is also valid in a mixin.
@@ -101,7 +103,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
 
   // TODO: This is also valid in a mixin.
-  if (!TryAsClassScope(context, enclosing_scope_id)) {
+  if (!TryAsClassScope(context, enclosing_scope_id).is_valid()) {
     CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
                       "`extend impl` can only be used in a class.");
     context.emitter().Emit(parse_node, ExtendImplOutsideClass);

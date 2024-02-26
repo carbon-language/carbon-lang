@@ -242,7 +242,7 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
                           SemIR::TypeId);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
-            context_->classes().Get(class_decl->class_id).self_type_id);
+            context_->GetTypeIdForTypeInstId(name_context.resolved_inst_id));
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
       } else {

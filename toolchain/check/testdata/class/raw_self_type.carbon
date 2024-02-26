@@ -33,11 +33,11 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
 // CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
-// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref Class* = var p
 // CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var

@@ -66,7 +66,12 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
               : context.parse_tree().As<Parse::BindingPatternId>(parse_node);
 
       // A `var` declaration at class scope introduces a field.
-      auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+      auto enclosing_class_decl_id = context.scope_stack().PeekInstId();
+      auto enclosing_class_decl =
+          enclosing_class_decl_id.is_valid()
+              ? context.insts().TryGetAs<SemIR::ClassDecl>(
+                    enclosing_class_decl_id)
+              : std::nullopt;
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                           "{0} has incomplete type `{1}`.", llvm::StringLiteral,
@@ -81,10 +86,9 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         CARBON_CHECK(context_parse_node_kind ==
                      Parse::NodeKind::VariableIntroducer)
             << "`returned var` at class scope";
-        auto& class_info =
-            context.classes().Get(enclosing_class_decl->class_id);
         auto field_type_id = context.GetUnboundElementType(
-            class_info.self_type_id, cast_type_id);
+            context.GetTypeIdForTypeInstId(enclosing_class_decl_id),
+            cast_type_id);
         auto field_id = context.AddInst(
             {binding_id, SemIR::FieldDecl{
                              field_type_id, name_id,

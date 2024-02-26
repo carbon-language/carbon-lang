@@ -53,7 +53,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, () [template = constants.%Inner]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_9: <unbound element of class Outer> = field_decl po, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
@@ -71,7 +71,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc9_17: type = ptr_type Inner [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Inner> = field_decl pi, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]

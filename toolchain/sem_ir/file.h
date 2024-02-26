@@ -110,8 +110,6 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
-  // The class type, which is the type of `Self` in the class definition.
-  TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.
   InstId decl_id = InstId::Invalid;
   // The kind of inheritance that this class supports.

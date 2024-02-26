@@ -92,29 +92,19 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   }
 
   // Create a new class if this isn't a valid redeclaration.
-  bool is_new_class = !class_decl.class_id.is_valid();
-  if (is_new_class) {
+  if (!class_decl.class_id.is_valid()) {
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
     class_decl.class_id = context.classes().Add(
         {.name_id = name_context.name_id_for_new_inst(),
          .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-         // `.self_type_id` depends on the ClassType, so is set below.
-         .self_type_id = SemIR::TypeId::Invalid,
          .decl_id = class_decl_id,
          .inheritance_kind = inheritance_kind});
   }
 
   // Write the class ID into the ClassDecl.
   context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
-
-  if (is_new_class) {
-    // Build the `Self` type using the resulting type constant.
-    auto& class_info = context.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context.GetTypeIdForTypeConstant(
-        context.constant_values().Get(class_decl_id));
-  }
 
   return {class_decl.class_id, class_decl_id};
 }
@@ -151,8 +141,7 @@ auto HandleClassDefinitionStart(Context& context,
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.AddNameToLookup(SemIR::NameId::SelfType,
-                          context.types().GetInstId(class_info.self_type_id));
+  context.AddNameToLookup(SemIR::NameId::SelfType, class_decl_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);
@@ -266,7 +255,11 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Base);
 
-  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto enclosing_class_decl_id = context.scope_stack().PeekInstId();
+  auto enclosing_class_decl =
+      enclosing_class_decl_id.is_valid()
+          ? context.insts().TryGetAs<SemIR::ClassDecl>(enclosing_class_decl_id)
+          : std::nullopt;
   if (!enclosing_class_decl) {
     CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
                       "`base` declaration can only be used in a class.");
@@ -292,8 +285,9 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_id =
-      context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
+  auto field_type_id = context.GetUnboundElementType(
+      context.GetTypeIdForTypeInstId(enclosing_class_decl_id),
+      base_info.type_id);
   class_info.base_id = context.AddInst(
       {parse_node,
        SemIR::BaseDecl{field_type_id, base_info.type_id,

@@ -154,13 +154,6 @@ class Context {
   auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                               DiagnosticBuilder& builder) -> void;
 
-  // Returns the current scope, if it is of the specified kind. Otherwise,
-  // returns nullopt.
-  template <typename InstT>
-  auto GetCurrentScopeAs() -> std::optional<InstT> {
-    return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
-  }
-
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
@@ -209,6 +202,12 @@ class Context {
 
   // Returns the type ID for a constant of type `type`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
+
+  // Returns the type ID for an instruction whose constant is of type `type`.
+  // This does not require the instruction itself to be the type.
+  auto GetTypeIdForTypeInstId(SemIR::InstId inst_id) -> SemIR::TypeId {
+    return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
+  }
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has

@@ -1007,8 +1007,7 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id = GetTypeIdForTypeConstant(
-      constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
+  auto type_id = GetTypeIdForTypeInstId(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";

@@ -353,8 +353,6 @@ class ImportRefResolver {
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
         .enclosing_scope_id = NoEnclosingScopeForImports,
-        // `.self_type_id` depends on the ClassType, so is set below.
-        .self_type_id = SemIR::TypeId::Invalid,
         .decl_id = class_decl_id,
         .inheritance_kind = import_class.inheritance_kind,
     });
@@ -362,13 +360,9 @@ class ImportRefResolver {
     // Write the function ID into the ClassDecl.
     context_.ReplaceInstBeforeConstantUse(class_decl_id,
                                           {Parse::NodeId::Invalid, class_decl});
-    auto self_const_id = context_.constant_values().Get(class_decl_id);
-
-    // Build the `Self` type using the resulting type constant.
-    auto& class_info = context_.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     // Set a constant corresponding to the incomplete class.
+    auto self_const_id = context_.constant_values().Get(class_decl_id);
     import_ir_constant_values_.Set(inst_id, self_const_id);
     return self_const_id;
   }
