@@ -12,10 +12,17 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/interface.h"
+#include "toolchain/sem_ir/name.h"
+#include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::SemIR {
 
@@ -29,151 +36,6 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
-};
-
-// A function.
-struct Function : public Printable<Function> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << ", param_refs: " << param_refs_id;
-    if (return_type_id.is_valid()) {
-      out << ", return_type: " << return_type_id;
-    }
-    if (return_slot_id.is_valid()) {
-      out << ", return_slot: " << return_slot_id;
-    }
-    if (!body_block_ids.empty()) {
-      out << llvm::formatv(
-          ", body: [{0}]",
-          llvm::make_range(body_block_ids.begin(), body_block_ids.end()));
-    }
-    out << "}";
-  }
-
-  // Given a parameter reference instruction from `param_refs_id` or
-  // `implicit_param_refs_id`, returns the corresponding `Param` instruction
-  // and its ID.
-  static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-      -> std::pair<InstId, Param>;
-
-  // The function name.
-  NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
-  // The first declaration of the function. This is a FunctionDecl.
-  InstId decl_id = InstId::Invalid;
-  // The definition, if the function has been defined or is currently being
-  // defined. This is a FunctionDecl.
-  InstId definition_id = InstId::Invalid;
-  // A block containing a single reference instruction per implicit parameter.
-  InstBlockId implicit_param_refs_id;
-  // A block containing a single reference instruction per parameter.
-  InstBlockId param_refs_id;
-  // The return type. This will be invalid if the return type wasn't specified.
-  TypeId return_type_id;
-  // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. Will be invalid if the function
-  // doesn't have a return slot. If this is valid, a call to the function is
-  // expected to have an additional final argument corresponding to the return
-  // slot.
-  InstId return_slot_id;
-  // A list of the statically reachable code blocks in the body of the
-  // function, in lexical order. The first block is the entry block. This will
-  // be empty for declarations that don't have a visible definition.
-  llvm::SmallVector<InstBlockId> body_block_ids = {};
-};
-
-// A class.
-struct Class : public Printable<Class> {
-  enum InheritanceKind : int8_t {
-    // `abstract class`
-    Abstract,
-    // `base class`
-    Base,
-    // `class`
-    Final,
-  };
-
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << "}";
-  }
-
-  // Determines whether this class has been fully defined. This is false until
-  // we reach the `}` of the class definition.
-  auto is_defined() const -> bool { return object_repr_id.is_valid(); }
-
-  // The following members always have values, and do not change throughout the
-  // lifetime of the class.
-
-  // The class name.
-  NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
-  // The class type, which is the type of `Self` in the class definition.
-  TypeId self_type_id;
-  // The first declaration of the class. This is a ClassDecl.
-  InstId decl_id = InstId::Invalid;
-  // The kind of inheritance that this class supports.
-  // TODO: The rules here are not yet decided. See #3384.
-  InheritanceKind inheritance_kind;
-
-  // The following members are set at the `{` of the class definition.
-
-  // The definition of the class. This is a ClassDecl.
-  InstId definition_id = InstId::Invalid;
-  // The class scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
-  // The first block of the class body.
-  // TODO: Handle control flow in the class body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
-
-  // The following members are accumulated throughout the class definition.
-
-  // The base class declaration. Invalid if the class has no base class. This is
-  // a BaseDecl instruction.
-  InstId base_id = InstId::Invalid;
-
-  // The following members are set at the `}` of the class definition.
-
-  // The object representation type to use for this class. This is valid once
-  // the class is defined.
-  TypeId object_repr_id = TypeId::Invalid;
-};
-
-// An interface.
-struct Interface : public Printable<Interface> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << "}";
-  }
-
-  // Determines whether this interface has been fully defined. This is false
-  // until we reach the `}` of the interface definition.
-  auto is_defined() const -> bool { return defined; }
-
-  // The following members always have values, and do not change throughout the
-  // lifetime of the interface.
-
-  // The interface name.
-  NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
-  // The first declaration of the interface. This is a InterfaceDecl.
-  InstId decl_id;
-
-  // The following members are set at the `{` of the interface definition.
-
-  // The definition of the interface. This is a InterfaceDecl.
-  InstId definition_id = InstId::Invalid;
-  // The interface scope.
-  NameScopeId scope_id = NameScopeId::Invalid;
-  // The first block of the interface body.
-  // TODO: Handle control flow in the interface body, such as if-expressions.
-  InstBlockId body_block_id = InstBlockId::Invalid;
-
-  // The following members are set at the `}` of the interface definition.
-  bool defined = false;
 };
 
 // Provides semantic analysis on a Parse::Tree.

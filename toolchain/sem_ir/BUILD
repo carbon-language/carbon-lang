@@ -15,6 +15,16 @@ cc_library(
 )
 
 cc_library(
+    name = "block_value_store",
+    hdrs = ["block_value_store.h"],
+    deps = [
+        "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "ids",
     hdrs = ["ids.h"],
     deps = [
@@ -49,6 +59,7 @@ cc_library(
     srcs = ["inst.cpp"],
     hdrs = ["inst.h"],
     deps = [
+        ":block_value_store",
         ":builtin_kind",
         ":inst_kind",
         "//common:check",
@@ -62,17 +73,25 @@ cc_library(
 cc_library(
     name = "file",
     srcs = [
+        "constant.cpp",
         "file.cpp",
         "inst_profile.cpp",
         "inst_profile.h",
-        "value_stores.cpp",
+        "name.cpp",
     ],
     hdrs = [
+        "class.h",
+        "constant.h",
         "file.h",
+        "function.h",
         "impl.h",
-        "value_stores.h",
+        "interface.h",
+        "name.h",
+        "name_scope.h",
+        "type.h",
     ],
     deps = [
+        ":block_value_store",
         ":builtin_kind",
         ":ids",
         ":inst",

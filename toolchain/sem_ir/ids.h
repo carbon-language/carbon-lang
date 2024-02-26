@@ -485,6 +485,9 @@ template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::InstId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::InstId> {};
 template <>
+struct llvm::DenseMapInfo<Carbon::SemIR::NameId>
+    : public Carbon::IndexMapInfo<Carbon::SemIR::NameId> {};
+template <>
 struct llvm::DenseMapInfo<Carbon::SemIR::NameScopeId>
     : public Carbon::IndexMapInfo<Carbon::SemIR::NameScopeId> {};
 template <>
