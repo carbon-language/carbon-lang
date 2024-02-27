@@ -130,7 +130,9 @@ auto HandleInterfaceDefinitionStart(
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, interface_id);
-  // TODO: Perhaps use the args_type_info_stack for a witness table.
+
+  // We use the arg stack to build the witness table type.
+  context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:
@@ -153,10 +155,14 @@ auto HandleInterfaceDefinition(Context& context,
   context.inst_block_stack().Pop();
   context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
+  auto associated_entities_id = context.args_type_info_stack().Pop();
 
   // The interface type is now fully defined.
   auto& interface_info = context.interfaces().Get(interface_id);
-  interface_info.defined = true;
+  if (!interface_info.defined) {
+    interface_info.defined = true;
+    interface_info.associated_entities_id = associated_entities_id;
+  }
   return true;
 }
 

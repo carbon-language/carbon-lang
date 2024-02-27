@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -126,9 +127,29 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl_id =
       context.AddPlaceholderInst({parse_node, function_decl});
 
+  // At interface scope, a function declaration introduces an associated
+  // function.
+  auto lookup_result_id = function_decl_id;
+  if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
+      !name_context.has_qualifiers) {
+    // TODO: Consider adding NameScopeValueStore::GetInstIdIfValid or similar.
+    if (auto scope_inst_id =
+            context.name_scopes()
+                .Get(name_context.enclosing_scope_id_for_new_inst())
+                .inst_id;
+        scope_inst_id.is_valid()) {
+      // TODO: Consider adding InstValueStore::TryGetAsIfValid or similar.
+      if (auto interface_scope =
+              context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
+        lookup_result_id = BuildAssociatedEntity(
+            context, interface_scope->interface_id, function_decl_id);
+      }
+    }
+  }
+
   // Check whether this is a redeclaration.
   auto existing_id =
-      context.decl_name_stack().LookupOrAddName(name_context, function_decl_id);
+      context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
@@ -136,6 +157,7 @@ static auto BuildFunctionDecl(Context& context,
       function_decl.function_id = existing_function_decl->function_id;
 
       // TODO: Check that the signature matches!
+      // TODO: Disallow redeclarations within classes?
 
       // Track the signature from the definition, so that IDs in the body match
       // IDs in the signature.
@@ -149,6 +171,8 @@ static auto BuildFunctionDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a function.
+      // This includes the case where an associated function redeclares another
+      // associated function.
       context.DiagnoseDuplicateName(function_decl_id, existing_id);
     }
   }

@@ -173,7 +173,7 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                                      DiagnosticBuilder& builder) -> void {
   const auto& interface_info = interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
-  if (interface_info.definition_id.is_valid()) {
+  if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
     builder.Note(interface_info.definition_id,

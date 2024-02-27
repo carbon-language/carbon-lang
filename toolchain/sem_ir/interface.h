@@ -20,6 +20,12 @@ struct Interface : public Printable<Interface> {
   // until we reach the `}` of the interface definition.
   auto is_defined() const -> bool { return defined; }
 
+  // Determines whether we're currently defining the interface. This is true
+  // between the braces of the interface.
+  auto is_being_defined() const -> bool {
+    return definition_id.is_valid() && !defined;
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
 
@@ -40,12 +46,10 @@ struct Interface : public Printable<Interface> {
   // TODO: Handle control flow in the interface body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
 
-  // The following members are accumulated as the interface is defined.
-  // TODO: Replace this with an InstBlockId.
-  llvm::SmallVector<InstId> associated_entities;
-
   // The following members are set at the `}` of the interface definition.
   bool defined = false;
+  // The declarations of the associated entities.
+  InstBlockId associated_entities_id = InstBlockId::Invalid;
 };
 
 }  // namespace Carbon::SemIR
