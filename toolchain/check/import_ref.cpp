@@ -237,13 +237,9 @@ class ImportRefResolver {
   }
 
   // Adds ImportRefUnused entries for members of the imported scope, for name
-  // lookup. Returns the block used for the refs, primarily for textual IR
-  // formatting.
+  // lookup.
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
-                              SemIR::NameScope& new_scope)
-      -> SemIR::InstBlockId {
-    // Push a block so that we can add scoped instructions to it.
-    context_.inst_block_stack().Push();
+                              SemIR::NameScope& new_scope) -> void {
     for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
       auto ref_id = context_.AddPlaceholderInst(
           SemIR::ImportRefUnused{import_ir_id_, entry_inst_id});
@@ -251,7 +247,23 @@ class ImportRefResolver {
           new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
               .second);
     }
-    return context_.inst_block_stack().Pop();
+  }
+
+  // Given a block ID for a list of associated entities of a witness, returns a
+  // version localized to the current IR.
+  auto AddAssociatedEntities(
+      SemIR::InstBlockId associated_entities_id) -> SemIR::InstBlockId {
+    if (associated_entities_id == SemIR::InstBlockId::Empty) {
+      return SemIR::InstBlockId::Empty;
+    }
+    auto associated_entities = import_ir_.inst_blocks().Get(associated_entities_id);
+    llvm::SmallVector<SemIR::InstId> new_associated_entities;
+    new_associated_entities.reserve(associated_entities.size());
+    for (auto inst_id : associated_entities) {
+      new_associated_entities.push_back(context_.AddPlaceholderInst(
+          SemIR::ImportRefUnused{import_ir_id_, inst_id}));
+    }
+    return context_.inst_blocks().Add(new_associated_entities);
   }
 
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
@@ -411,7 +423,11 @@ class ImportRefResolver {
     auto& new_scope = context_.name_scopes().Get(new_class.scope_id);
     const auto& import_scope =
         import_ir_.name_scopes().Get(import_class.scope_id);
-    new_class.body_block_id = AddNameScopeImportRefs(import_scope, new_scope);
+
+    // Push a block so that we can add scoped instructions to it.
+    context_.inst_block_stack().Push();
+    AddNameScopeImportRefs(import_scope, new_scope);
+    new_class.body_block_id = context_.inst_block_stack().Pop();
 
     if (import_class.base_id.is_valid()) {
       new_class.base_id = base_const_id.inst_id();
@@ -591,8 +607,14 @@ class ImportRefResolver {
       auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
       const auto& import_scope =
           import_ir_.name_scopes().Get(import_interface.scope_id);
-      new_interface.body_block_id =
-          AddNameScopeImportRefs(import_scope, new_scope);
+
+      // Push a block so that we can add scoped instructions to it.
+      context_.inst_block_stack().Push();
+      AddNameScopeImportRefs(import_scope, new_scope);
+      new_interface.associated_entities_id =
+          AddAssociatedEntities(import_interface.associated_entities_id);
+      new_interface.body_block_id = context_.inst_block_stack().Pop();
+
       CARBON_CHECK(import_scope.extended_scopes.empty())
           << "Interfaces don't currently have extended scopes to support.";
 
