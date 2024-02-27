@@ -67,6 +67,7 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .H = %.loc37
+// CHECK:STDOUT:   witness = (%H)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
