@@ -35,15 +35,15 @@ struct Function : public Printable<Function> {
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
 
+  // The following members always have values, and do not change throughout the
+  // lifetime of the function.
+
   // The function name.
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
   // The first declaration of the function. This is a FunctionDecl.
-  InstId decl_id = InstId::Invalid;
-  // The definition, if the function has been defined or is currently being
-  // defined. This is a FunctionDecl.
-  InstId definition_id = InstId::Invalid;
+  InstId decl_id;
   // A block containing a single reference instruction per implicit parameter.
   InstBlockId implicit_param_refs_id;
   // A block containing a single reference instruction per parameter.
@@ -56,6 +56,15 @@ struct Function : public Printable<Function> {
   // expected to have an additional final argument corresponding to the return
   // slot.
   InstId return_slot_id;
+
+  // The following members are set at the `{` of the function definition.
+
+  // The definition, if the function has been defined or is currently being
+  // defined. This is a FunctionDecl.
+  InstId definition_id = InstId::Invalid;
+
+  // The following members are accumulated throughout the function definition.
+
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.

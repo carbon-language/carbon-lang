@@ -513,6 +513,7 @@ auto Context::FinalizeGlobalInit() -> void {
     sem_ir().functions().Add(
         {.name_id = SemIR::NameId::ForIdentifier(name_id),
          .enclosing_scope_id = SemIR::NameScopeId::Package,
+         .decl_id = SemIR::InstId::Invalid,
          .implicit_param_refs_id = SemIR::InstBlockId::Empty,
          .param_refs_id = SemIR::InstBlockId::Empty,
          .return_type_id = SemIR::TypeId::Invalid,
