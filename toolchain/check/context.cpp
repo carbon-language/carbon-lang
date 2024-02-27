@@ -36,7 +36,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
+      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()) {
@@ -64,7 +64,7 @@ auto Context::VerifyOnFinish() -> void {
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
   CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
-  CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
+  param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
 auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
@@ -474,31 +474,6 @@ auto Context::is_current_position_reachable() -> bool {
   const auto& last_inst = insts().Get(block_contents.back());
   return last_inst.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
-}
-
-auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
-
-auto Context::ParamOrArgComma() -> void {
-  // Support expressions, parameters, and other nodes like `StructFieldValue`
-  // that produce InstIds.
-  ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
-}
-
-auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
-  if (!node_stack_.PeekIs(start_kind)) {
-    // Support expressions, parameters, and other nodes like `StructFieldValue`
-    // that produce InstIds.
-    ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
-  }
-}
-
-auto Context::ParamOrArgPop() -> SemIR::InstBlockId {
-  return params_or_args_stack_.Pop();
-}
-
-auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId {
-  ParamOrArgEndNoPop(start_kind);
-  return ParamOrArgPop();
 }
 
 auto Context::FinalizeGlobalInit() -> void {
@@ -1036,7 +1011,7 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   node_stack_.PrintForStackDump(output);
   inst_block_stack_.PrintForStackDump(output);
-  params_or_args_stack_.PrintForStackDump(output);
+  param_and_arg_refs_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);
 }
 

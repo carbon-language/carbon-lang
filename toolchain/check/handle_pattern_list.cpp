@@ -10,13 +10,14 @@ auto HandleImplicitParamListStart(Context& context,
                                   Parse::ImplicitParamListStartId parse_node)
     -> bool {
   context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandleImplicitParamList(Context& context,
                              Parse::ImplicitParamListId parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ImplicitParamListStart);
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::ImplicitParamListStart);
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ImplicitParamListStart>();
   context.node_stack().Push(parse_node, refs_id);
@@ -28,19 +29,20 @@ auto HandleImplicitParamList(Context& context,
 auto HandleTuplePatternStart(Context& context,
                              Parse::TuplePatternStartId parse_node) -> bool {
   context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandlePatternListComma(Context& context,
                             Parse::PatternListCommaId /*parse_node*/) -> bool {
-  context.ParamOrArgComma();
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
 auto HandleTuplePattern(Context& context, Parse::TuplePatternId parse_node)
     -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::TuplePatternStart);
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::TuplePatternStart);
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::TuplePatternStart>();
   context.node_stack().Push(parse_node, refs_id);
