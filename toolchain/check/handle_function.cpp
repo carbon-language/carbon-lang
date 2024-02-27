@@ -132,18 +132,13 @@ static auto BuildFunctionDecl(Context& context,
   auto lookup_result_id = function_decl_id;
   if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
       !name_context.has_qualifiers) {
-    // TODO: Consider adding NameScopeValueStore::GetInstIdIfValid or similar.
-    if (auto scope_inst_id =
-            context.name_scopes()
-                .Get(name_context.enclosing_scope_id_for_new_inst())
-                .inst_id;
-        scope_inst_id.is_valid()) {
-      // TODO: Consider adding InstValueStore::TryGetAsIfValid or similar.
-      if (auto interface_scope =
-              context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
-        lookup_result_id = BuildAssociatedEntity(
-            context, interface_scope->interface_id, function_decl_id);
-      }
+    auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
+        name_context.enclosing_scope_id_for_new_inst());
+    if (auto interface_scope =
+            context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
+                scope_inst_id)) {
+      lookup_result_id = BuildAssociatedEntity(
+          context, interface_scope->interface_id, function_decl_id);
     }
   }
 

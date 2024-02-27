@@ -343,6 +343,16 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
+  // Returns the requested instruction as the specified type, if it is valid and
+  // of that type. Otherwise returns nullopt.
+  template <typename InstT>
+  auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
+    if (!inst_id.is_valid()) {
+      return std::nullopt;
+    }
+    return Get(inst_id).TryAs<InstT>();
+  }
+
   auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
     return parse_nodes_[inst_id.index];
   }
