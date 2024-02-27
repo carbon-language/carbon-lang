@@ -249,9 +249,8 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
     case NameContext::State::ResolvedNonScope: {
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier didn't resolve to a scoped entity.
-      if (auto class_decl = context_->insts()
-                                .Get(name_context.resolved_inst_id)
-                                .TryAs<SemIR::ClassDecl>()) {
+      if (auto class_decl = context_->insts().TryGetAs<SemIR::ClassDecl>(
+              name_context.resolved_inst_id)) {
         CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
                           "Cannot declare a member of incomplete class `{0}`.",
                           SemIR::TypeId);
@@ -260,16 +259,20 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
             context_->classes().Get(class_decl->class_id).self_type_id);
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
-      } else if (auto interface_decl = context_->insts()
-                                           .Get(name_context.resolved_inst_id)
-                                           .TryAs<SemIR::InterfaceDecl>()) {
+      } else if (auto interface_decl =
+                     context_->insts().TryGetAs<SemIR::InterfaceDecl>(
+                         name_context.resolved_inst_id)) {
         CARBON_DIAGNOSTIC(
             QualifiedDeclInUndefinedInterfaceScope, Error,
             "Cannot declare a member of undefined interface `{0}`.",
-            SemIR::NameId);
+            std::string);
         auto builder = context_->emitter().Build(
             name_context.parse_node, QualifiedDeclInUndefinedInterfaceScope,
-            context_->interfaces().Get(interface_decl->interface_id).name_id);
+            context_->sem_ir().StringifyTypeExpr(
+                context_->sem_ir()
+                    .constant_values()
+                    .Get(name_context.resolved_inst_id)
+                    .inst_id()));
         context_->NoteUndefinedInterface(interface_decl->interface_id, builder);
         builder.Emit();
       } else {
