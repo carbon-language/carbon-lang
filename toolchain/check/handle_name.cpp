@@ -25,6 +25,8 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
+  // TODO: Consider refactoring the near-identical class and interface support
+  // below.
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     auto& class_info = context.classes().Get(base_as_class->class_id);
     if (!class_info.is_defined()) {
@@ -38,6 +40,21 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
       builder.Emit();
     }
     return class_info.scope_id;
+  }
+  if (auto base_as_interface = base.TryAs<SemIR::InterfaceType>()) {
+    auto& interface_info =
+        context.interfaces().Get(base_as_interface->interface_id);
+    if (!interface_info.is_defined()) {
+      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
+                        "Member access into undefined interface `{0}`.",
+                        std::string);
+      auto builder = context.emitter().Build(
+          base_id, QualifiedExprInUndefinedInterfaceScope,
+          context.sem_ir().StringifyTypeExpr(base_id));
+      context.NoteUndefinedInterface(base_as_interface->interface_id, builder);
+      builder.Emit();
+    }
+    return interface_info.scope_id;
   }
   return std::nullopt;
 }
