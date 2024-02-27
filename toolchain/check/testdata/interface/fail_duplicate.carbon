@@ -40,9 +40,11 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
-// CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @Interface, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in Interface> = assoc_entity element0, @Interface.%F [template]
+// CHECK:STDOUT:   %.4: type = interface_type @.1 [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.3: type = interface_type @.2 [template]
+// CHECK:STDOUT:   %.5: type = interface_type @.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,16 +52,17 @@ interface Class { }
 // CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface, () [template = constants.%.1]
 // CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface, () [template = constants.%.1]
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template]
-// CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, () [template = constants.%.2]
+// CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, () [template = constants.%.4]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
-// CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, () [template = constants.%.3]
+// CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, () [template = constants.%.5]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %.loc16: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;

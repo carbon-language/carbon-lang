@@ -160,7 +160,7 @@ struct Assign {
 // the slot within a witness where the constant value will be found.
 struct AssociatedEntity {
   static constexpr auto Kind =
-      InstKind::AssociatedEntity.Define<Parse::AnyDeclId>("assoc_entity");
+      InstKind::AssociatedEntity.Define<Parse::NodeId>("assoc_entity");
 
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
@@ -172,7 +172,7 @@ struct AssociatedEntity {
 // `InterfaceName.Function`.
 struct AssociatedEntityType {
   static constexpr auto Kind =
-      InstKind::AssociatedEntityType.Define<Parse::AnyDeclId>(
+      InstKind::AssociatedEntityType.Define<Parse::InvalidNodeId>(
           "assoc_entity_type");
 
   TypeId type_id;

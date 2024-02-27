@@ -5,7 +5,9 @@
 #include "toolchain/check/decl_name_stack.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -63,6 +65,47 @@ auto DeclNameStack::PopScope() -> void {
   decl_name_stack_.pop_back();
 }
 
+// Given a lookup result, finds the corresponding declaration. This is usually
+// the lookup result itself.
+static auto GetDeclarationForLookupResult(
+    Context& context, SemIR::InstId lookup_result_id) -> SemIR::InstId {
+  if (auto assoc =
+          context.insts().TryGetAs<SemIR::AssociatedEntity>(lookup_result_id)) {
+    return assoc->decl_id;
+  }
+  return lookup_result_id;
+}
+
+// Checks that the declaration `decl_id` can be added to the current scope, and
+// forms the corresponding value to use for a name referring to the declaration.
+static auto CheckDeclarationInScope(Context& context,
+                                    SemIR::NameScopeId scope_id,
+                                    SemIR::InstId decl_id) -> SemIR::InstId {
+  auto scope_inst_id = context.name_scopes().Get(scope_id).inst_id;
+
+  // A declaration in an interface results in an associated entity.
+  if (auto interface =
+          context.insts().TryGetAs<SemIR::InterfaceDecl>(scope_inst_id)) {
+    auto decl = context.insts().Get(decl_id);
+
+    // TODO: Associated constants.
+    if (!decl.Is<SemIR::FunctionDecl>()) {
+      // TODO: Diagnose that this can't be declared in an interface.
+      return decl_id;
+    }
+
+    auto type_id = context.GetAssociatedEntityType(
+        interface->interface_id, context.insts().Get(decl_id).type_id());
+    auto &interface_info = context.interfaces().Get(interface->interface_id);
+    auto index = SemIR::ElementIndex(interface_info.associated_entities.size());
+    interface_info.associated_entities.push_back(decl_id);
+    return context.AddInst({context.insts().GetParseNode(decl_id),
+                            SemIR::AssociatedEntity{type_id, index, decl_id}});
+  }
+
+  return decl_id;
+}
+
 auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::InstId target_id) -> SemIR::InstId {
   switch (name_context.state) {
@@ -76,7 +119,8 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 
     case NameContext::State::Resolved:
     case NameContext::State::ResolvedNonScope:
-      return name_context.resolved_inst_id;
+      return GetDeclarationForLookupResult(*context_,
+                                           name_context.resolved_inst_id);
 
     case NameContext::State::Unresolved:
       if (!name_context.target_scope_id.is_valid()) {
@@ -103,8 +147,11 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
           context_->AddExport(target_id);
         }
 
+        auto entry_id = CheckDeclarationInScope(
+            *context_, name_context.target_scope_id, target_id);
+
         auto [_, success] = name_scope.names.insert(
-            {name_context.unresolved_name_id, target_id});
+            {name_context.unresolved_name_id, entry_id});
         CARBON_CHECK(success)
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "

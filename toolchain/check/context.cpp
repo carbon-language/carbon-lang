@@ -978,6 +978,13 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
   return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
 }
 
+auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                                      SemIR::TypeId entity_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_id,
+                                                  entity_type_id);
+}
+
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
   auto type_id = GetTypeIdForTypeConstant(

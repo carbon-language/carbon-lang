@@ -40,6 +40,10 @@ struct Interface : public Printable<Interface> {
   // TODO: Handle control flow in the interface body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
 
+  // The following members are accumulated as the interface is defined.
+  // TODO: Replace this with an InstBlockId.
+  llvm::SmallVector<InstId> associated_entities;
+
   // The following members are set at the `}` of the interface definition.
   bool defined = false;
 };

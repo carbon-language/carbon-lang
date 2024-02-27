@@ -27,8 +27,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @GenericInterface [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @GenericInterface, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in GenericInterface> = assoc_entity element0, @GenericInterface.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,9 +41,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %.loc11: <associated <function> in GenericInterface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as <error> {
@@ -52,7 +55,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+11>, <unexpected instref inst+12>, <unexpected instref inst+13>, <unexpected instref inst+14>)
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+14>, <unexpected instref inst+15>, <unexpected instref inst+16>, <unexpected instref inst+17>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   has_error
