@@ -27,8 +27,8 @@ auto InstBlockStack::PushGlobalInit() -> void {
 }
 
 auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
-  CARBON_CHECK(size() > depth) << "no such block";
-  int index = size() - depth - 1;
+  CARBON_CHECK(size_ > depth) << "no such block";
+  int index = size_ - depth - 1;
   auto& slot = stack_[index];
   if (!slot.id.is_valid()) {
     slot.id = sem_ir_->inst_blocks().AddDefaultValue();

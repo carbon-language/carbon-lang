@@ -69,9 +69,7 @@ class ParamAndArgRefsStack {
   }
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void {
-    CARBON_CHECK(stack_.empty()) << stack_.size();
-  }
+  auto VerifyOnFinish() -> void { stack_.VerifyOnFinish(); }
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void {

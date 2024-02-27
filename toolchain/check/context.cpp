@@ -63,7 +63,7 @@ auto Context::VerifyOnFinish() -> void {
   // remain.
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
-  CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
+  inst_block_stack_.VerifyOnFinish();
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
