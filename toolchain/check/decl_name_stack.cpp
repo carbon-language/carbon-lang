@@ -195,6 +195,21 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       }
       break;
     }
+    case SemIR::InterfaceDecl::Kind: {
+      const auto& interface_info = context_->interfaces().Get(
+          resolved_inst.As<SemIR::InterfaceDecl>().interface_id);
+      if (interface_info.is_defined()) {
+        name_context.state = NameContext::State::Resolved;
+        name_context.target_scope_id = interface_info.scope_id;
+        if (!is_unqualified) {
+          PushNameQualifierScope(*context_, name_context.resolved_inst_id,
+                                 interface_info.scope_id);
+        }
+      } else {
+        name_context.state = NameContext::State::ResolvedNonScope;
+      }
+      break;
+    }
     case SemIR::Namespace::Kind: {
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
@@ -244,6 +259,18 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
             name_context.parse_node, QualifiedDeclInIncompleteClassScope,
             context_->classes().Get(class_decl->class_id).self_type_id);
         context_->NoteIncompleteClass(class_decl->class_id, builder);
+        builder.Emit();
+      } else if (auto interface_decl = context_->insts()
+                                           .Get(name_context.resolved_inst_id)
+                                           .TryAs<SemIR::InterfaceDecl>()) {
+        CARBON_DIAGNOSTIC(
+            QualifiedDeclInUndefinedInterfaceScope, Error,
+            "Cannot declare a member of undefined interface `{0}`.",
+            SemIR::NameId);
+        auto builder = context_->emitter().Build(
+            name_context.parse_node, QualifiedDeclInUndefinedInterfaceScope,
+            context_->interfaces().Get(interface_decl->interface_id).name_id);
+        context_->NoteUndefinedInterface(interface_decl->interface_id, builder);
         builder.Emit();
       } else {
         CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
