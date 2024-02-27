@@ -17,6 +17,12 @@ class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 class Class {
   fn G();
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:3: ERROR: Redeclaration of function H.
+  // CHECK:STDERR:   fn H();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-14]]:3: Previous declaration was here.
+  // CHECK:STDERR:   fn H();
+  // CHECK:STDERR:   ^~~~~~~
   fn H();
 }
 
