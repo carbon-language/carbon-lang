@@ -68,6 +68,7 @@ cc_library(
         "eval.h",
         "inst_block_stack.h",
         "modifiers.h",
+        "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
     ],

@@ -9,15 +9,17 @@ namespace Carbon::Check {
 auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId parse_node)
     -> bool {
   context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandleParenExpr(Context& context, Parse::ParenExprId parse_node) -> bool {
   auto value_id = context.node_stack().PopExpr();
-  // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
-  // support for non-tuple cases.
-  context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+
+  // This always is always pushed at the open paren. It's only used for tuples,
+  // not paren exprs, but we still need to clean up.
+  context.param_and_arg_refs_stack().PopAndDiscard();
+
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
   context.node_stack().Push(parse_node, value_id);
@@ -27,13 +29,14 @@ auto HandleParenExpr(Context& context, Parse::ParenExprId parse_node) -> bool {
 auto HandleTupleLiteralComma(Context& context,
                              Parse::TupleLiteralCommaId /*parse_node*/)
     -> bool {
-  context.ParamOrArgComma();
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
 auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId parse_node)
     -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::ExprOpenParen);
 
   context.node_stack()
       .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();

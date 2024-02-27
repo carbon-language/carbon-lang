@@ -16,7 +16,7 @@ auto HandleStructLiteralOrStructTypeLiteralStart(
   // so we push onto args irrespective. It just won't be used for a type
   // literal.
   context.args_type_info_stack().Push();
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
@@ -30,7 +30,7 @@ auto HandleStructFieldDesignator(Context& context,
 
 auto HandleStructComma(Context& context, Parse::StructCommaId /*parse_node*/)
     -> bool {
-  context.ParamOrArgComma();
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
@@ -91,7 +91,7 @@ static auto DiagnoseDuplicateNames(Context& context,
 
 auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
     -> bool {
-  auto refs_id = context.ParamOrArgEnd(
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.scope_stack().Pop();
@@ -114,7 +114,7 @@ auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
 
 auto HandleStructTypeLiteral(Context& context,
                              Parse::StructTypeLiteralId parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.scope_stack().Pop();
