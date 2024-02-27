@@ -251,12 +251,13 @@ class ImportRefResolver {
 
   // Given a block ID for a list of associated entities of a witness, returns a
   // version localized to the current IR.
-  auto AddAssociatedEntities(
-      SemIR::InstBlockId associated_entities_id) -> SemIR::InstBlockId {
+  auto AddAssociatedEntities(SemIR::InstBlockId associated_entities_id)
+      -> SemIR::InstBlockId {
     if (associated_entities_id == SemIR::InstBlockId::Empty) {
       return SemIR::InstBlockId::Empty;
     }
-    auto associated_entities = import_ir_.inst_blocks().Get(associated_entities_id);
+    auto associated_entities =
+        import_ir_.inst_blocks().Get(associated_entities_id);
     llvm::SmallVector<SemIR::InstId> new_associated_entities;
     new_associated_entities.reserve(associated_entities.size());
     for (auto inst_id : associated_entities) {
