@@ -31,8 +31,7 @@ fn F() -> bool {
 // CHECK:STDOUT:     .NS = %.loc7
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   } [template]

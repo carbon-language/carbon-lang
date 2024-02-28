@@ -57,22 +57,15 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: i32 as I {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.1: i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: D as I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: E as I {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: impl @impl.3: E as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl.1 {

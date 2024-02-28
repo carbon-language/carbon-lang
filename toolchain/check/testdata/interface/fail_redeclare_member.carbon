@@ -37,8 +37,8 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%F)}
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

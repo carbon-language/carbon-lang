@@ -61,8 +61,5 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @.1 {}
 // CHECK:STDOUT:

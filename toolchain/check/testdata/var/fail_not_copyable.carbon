@@ -46,10 +46,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @X {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x: X) {
 // CHECK:STDOUT: !entry:

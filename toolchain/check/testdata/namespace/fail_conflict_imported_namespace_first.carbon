@@ -32,8 +32,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .NS = %.loc4
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon

@@ -39,8 +39,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%F)}
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: T as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]

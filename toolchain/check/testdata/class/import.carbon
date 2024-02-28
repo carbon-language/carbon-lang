@@ -72,10 +72,7 @@ fn Run() {
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete {} [template = constants.%Incomplete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @Empty {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Field> = field_decl x, element0 [template]
@@ -146,10 +143,7 @@ fn Run() {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @Empty {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
 // CHECK:STDOUT:   %import_ref: <unbound element of class Field> = import_ref ir1, inst+7, used [template = imports.%.1]

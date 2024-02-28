@@ -29,10 +29,9 @@ fn F(e: Empty) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%e: Empty) {
 // CHECK:STDOUT: !entry:

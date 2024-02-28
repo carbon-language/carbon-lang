@@ -50,8 +50,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc11: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]

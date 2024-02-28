@@ -299,10 +299,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @Base {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Final {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Final> = field_decl a, element0 [template]

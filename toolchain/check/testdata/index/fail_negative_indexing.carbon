@@ -22,6 +22,5 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.7: i32 = int_literal 10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

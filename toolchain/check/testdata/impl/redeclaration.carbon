@@ -38,21 +38,15 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as I {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

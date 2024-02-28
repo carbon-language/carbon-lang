@@ -64,16 +64,15 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = <error>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:

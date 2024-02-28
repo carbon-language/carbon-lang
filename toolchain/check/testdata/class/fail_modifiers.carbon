@@ -95,22 +95,13 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @TwoAccess {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @TwoAccess {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Virtual {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @Virtual {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @AbstractAndBase {}
 // CHECK:STDOUT:

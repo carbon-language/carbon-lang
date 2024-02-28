@@ -23,8 +23,7 @@ let b:! bool = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %.loc4: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   %a: bool = bind_symbolic_name a, %.loc4 [symbolic]
 // CHECK:STDOUT: }
