@@ -67,6 +67,10 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     return GetFunction(function_decl->function_id);
   }
 
+  if (target.Is<SemIR::AssociatedEntity>()) {
+    return llvm::ConstantStruct::getAnon(llvm_context(), {});
+  }
+
   if (target.type_id() == SemIR::TypeId::TypeType) {
     return GetTypeAsValue();
   }

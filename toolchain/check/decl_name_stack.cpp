@@ -5,9 +5,7 @@
 #include "toolchain/check/decl_name_stack.h"
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
