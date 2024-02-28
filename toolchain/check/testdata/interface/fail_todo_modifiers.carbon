@@ -33,14 +33,14 @@ private interface Private {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Modifiers = %Modifiers.decl, .Private = %Private.decl} [template]
-// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, () [template = constants.%.1]
-// CHECK:STDOUT:   %Private.decl = interface_decl @Private, () [template = constants.%.5]
+// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers {} [template = constants.%.1]
+// CHECK:STDOUT:   %Private.decl = interface_decl @Private {} [template = constants.%.5]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template]
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final {} [template]
 // CHECK:STDOUT:   %.loc11: <associated <function> in Modifiers> = assoc_entity element0, %Final [template = constants.%.3]
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template]
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default {} [template]
 // CHECK:STDOUT:   %.loc15: <associated <function> in Modifiers> = assoc_entity element1, %Default [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

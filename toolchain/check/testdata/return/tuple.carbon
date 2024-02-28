@@ -22,7 +22,11 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main} [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {
+// CHECK:STDOUT:     %.loc8_23.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc8_23.2: type = converted %.loc8_23.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     @Main.%return: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: (i32, i32) {

@@ -10,7 +10,10 @@ fn Foo(a: i32,) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
+// CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
+// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

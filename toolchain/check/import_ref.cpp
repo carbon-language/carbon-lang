@@ -550,9 +550,9 @@ class ImportRefResolver {
     }
 
     // Add the function declaration.
-    auto function_decl =
-        SemIR::FunctionDecl{context_.GetTypeIdForTypeConstant(type_const_id),
-                            SemIR::FunctionId::Invalid};
+    auto function_decl = SemIR::FunctionDecl{
+        context_.GetTypeIdForTypeConstant(type_const_id),
+        SemIR::FunctionId::Invalid, SemIR::InstBlockId::Empty};
     auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
         {Parse::NodeId::Invalid, function_decl});
 

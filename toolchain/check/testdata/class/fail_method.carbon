@@ -51,16 +51,24 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .A = %A, .F = %F} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %A: <function> = bind_alias A, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Class.ref.loc14: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.loc14_6.1: Class = param c
+// CHECK:STDOUT:     @F.%c: Class = bind_name c, %c.loc14_6.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %NoSelf: <function> = fn_decl @NoSelf [template]
-// CHECK:STDOUT:   %WithSelf: <function> = fn_decl @WithSelf [template]
+// CHECK:STDOUT:   %NoSelf: <function> = fn_decl @NoSelf {} [template]
+// CHECK:STDOUT:   %WithSelf: <function> = fn_decl @WithSelf {
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc9_15.1: Class = param self
+// CHECK:STDOUT:     %self.loc9_15.2: Class = bind_name self, %self.loc9_15.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .NoSelf = %NoSelf
@@ -69,7 +77,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[%self: Class]();
+// CHECK:STDOUT: fn @WithSelf[@Class.%self.loc9_15.2: Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c: Class) {
 // CHECK:STDOUT: !entry:

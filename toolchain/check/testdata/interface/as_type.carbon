@@ -17,8 +17,12 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .F = %F} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
+// CHECK:STDOUT:     %e.loc9_6.1: Empty = param e
+// CHECK:STDOUT:     @F.%e: Empty = bind_name e, %e.loc9_6.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

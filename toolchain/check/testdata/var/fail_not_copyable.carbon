@@ -35,8 +35,12 @@ fn F(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .F = %F} [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X, () [template = constants.%X]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %x.loc10_6.1: X = param x
+// CHECK:STDOUT:     @F.%x: X = bind_name x, %x.loc10_6.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

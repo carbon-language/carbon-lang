@@ -75,7 +75,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+5, used
 // CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %D}, %import_ref.3 [template]
-// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
+// CHECK:STDOUT:   %D: <function> = fn_decl @D {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

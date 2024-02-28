@@ -21,8 +21,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo, .Run = %Run} [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
+// CHECK:STDOUT:     %return.var: ref f64 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {

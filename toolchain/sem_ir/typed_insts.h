@@ -422,6 +422,9 @@ struct FunctionDecl {
 
   TypeId type_id;
   FunctionId function_id;
+  // The declaration block, containing the function declaration's parameters and
+  // their types.
+  InstBlockId decl_block_id;
 };
 
 struct ImplDecl {

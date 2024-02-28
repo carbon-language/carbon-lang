@@ -23,9 +23,12 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .ret_a = %ret_a, .a = %a} [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A, () [template = constants.%A]
-// CHECK:STDOUT:   %ret_a: <function> = fn_decl @ret_a [template]
-// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
+// CHECK:STDOUT:   %ret_a: <function> = fn_decl @ret_a {
+// CHECK:STDOUT:     %A.ref.loc8: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     @ret_a.%return: ref A = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref A = var a
 // CHECK:STDOUT:   %a: ref A = bind_name a, %a.var
 // CHECK:STDOUT: }

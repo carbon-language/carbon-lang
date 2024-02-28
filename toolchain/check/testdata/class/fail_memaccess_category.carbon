@@ -50,13 +50,27 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .F = %F} [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A, () [template = constants.%A]
-// CHECK:STDOUT:   %B.decl = class_decl @B, () [template = constants.%B]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
+// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc15: type = struct_type {.a: A} [template = constants.%.6]
+// CHECK:STDOUT:     %s.loc15_6.1: {.a: A} = param s
+// CHECK:STDOUT:     @F.2.%s: {.a: A} = bind_name s, %s.loc15_6.1
+// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %b.loc15_18.1: B = param b
+// CHECK:STDOUT:     @F.2.%b: B = bind_name b, %b.loc15_18.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc8_20: type = ptr_type A [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc8_13.1: A* = param self
+// CHECK:STDOUT:     %self.loc8_13.3: A* = bind_name self, %self.loc8_13.1
+// CHECK:STDOUT:     %.loc8_8: A* = addr_pattern %self.loc8_13.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -70,7 +84,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self: A*]();
+// CHECK:STDOUT: fn @F.1[addr @A.%self.loc8_13.3: A*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:

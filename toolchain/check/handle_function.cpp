@@ -60,14 +60,7 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId parse_node,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  // TODO: This contains the IR block for the parameters and return type. At
-  // present, it's just loose, but it's not strictly required for parameter
-  // refs; we should either stop constructing it completely or, if it turns out
-  // to be needed, store it. Note, the underlying issue is that the LLVM IR has
-  // nowhere clear to emit, so changing storage would require addressing that
-  // problem. For comparison with function calls, the IR needs to be emitted
-  // prior to the call.
-  context.inst_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
@@ -123,7 +116,7 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      SemIR::FunctionId::Invalid};
+      SemIR::FunctionId::Invalid, decl_block_id};
   auto function_decl_id =
       context.AddPlaceholderInst({parse_node, function_decl});
 

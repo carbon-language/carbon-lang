@@ -13,7 +13,15 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %N.loc10_6.1: i32 = param N
+// CHECK:STDOUT:     @F.%N: i32 = bind_symbolic_name N, %N.loc10_6.1 [symbolic]
+// CHECK:STDOUT:     %N.ref: i32 = name_ref N, @F.%N [symbolic = @F.%N]
+// CHECK:STDOUT:     %.loc10_25: type = array_type %N.ref, i32 [template = <error>]
+// CHECK:STDOUT:     %.loc10_26: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %a.loc10_15.1: <error> = param a
+// CHECK:STDOUT:     @F.%a: <error> = bind_name a, %a.loc10_15.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%N: i32, %a: <error>);

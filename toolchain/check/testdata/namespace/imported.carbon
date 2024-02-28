@@ -30,8 +30,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace {.ChildNS = %.loc5, .A = %A} [template]
 // CHECK:STDOUT:   %.loc5: <namespace> = namespace {.B = %B} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

@@ -44,9 +44,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .ForwardDeclared = %ForwardDeclared.decl.loc7, .f_ref = %f_ref} [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc7 = interface_decl @ForwardDeclared, () [template = constants.%.2]
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc9 = interface_decl @ForwardDeclared, () [template = constants.%.2]
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc7 = interface_decl @ForwardDeclared {} [template = constants.%.2]
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc9 = interface_decl @ForwardDeclared {} [template = constants.%.2]
 // CHECK:STDOUT:   %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl.loc7 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13: type = struct_type {.f: ForwardDeclared} [template = constants.%.5]
 // CHECK:STDOUT:   %f_ref.var: ref {.f: ForwardDeclared} = var f_ref
@@ -60,7 +60,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
 // CHECK:STDOUT:   %.loc10: <associated <function> in ForwardDeclared> = assoc_entity element0, %F [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -82,16 +82,26 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .ForwardDeclared = %import_ref.2, .f_ref = %import_ref.3, .UseEmpty = %UseEmpty, .UseForwardDeclared = %UseForwardDeclared, .f = %f} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .ForwardDeclared = %import_ref.2, .f_ref = %import_ref.3, .UseEmpty = %UseEmpty, .UseForwardDeclared = %UseForwardDeclared, .f = %f.loc9} [template]
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, used [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.3: ref {.f: ForwardDeclared} = import_ref ir1, inst+19, used
-// CHECK:STDOUT:   %UseEmpty: <function> = fn_decl @UseEmpty [template]
-// CHECK:STDOUT:   %UseForwardDeclared: <function> = fn_decl @UseForwardDeclared [template]
-// CHECK:STDOUT:   %ForwardDeclared.ref: type = name_ref ForwardDeclared, %import_ref.2 [template = constants.%.3]
+// CHECK:STDOUT:   %UseEmpty: <function> = fn_decl @UseEmpty {
+// CHECK:STDOUT:     %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %import_ref.1 [template = constants.%.1]
+// CHECK:STDOUT:     %e.loc6_13.1: Empty = param e
+// CHECK:STDOUT:     @UseEmpty.%e: Empty = bind_name e, %e.loc6_13.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %UseForwardDeclared: <function> = fn_decl @UseForwardDeclared {
+// CHECK:STDOUT:     %ForwardDeclared.decl = interface_decl @ForwardDeclared {} [template = constants.%.3]
+// CHECK:STDOUT:     %ForwardDeclared.ref.loc7: type = name_ref ForwardDeclared, %import_ref.2 [template = constants.%.3]
+// CHECK:STDOUT:     %f.loc7_23.1: ForwardDeclared = param f
+// CHECK:STDOUT:     @UseForwardDeclared.%f: ForwardDeclared = bind_name f, %f.loc7_23.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc9: type = name_ref ForwardDeclared, %import_ref.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc9: type = ptr_type ForwardDeclared [template = constants.%.4]
 // CHECK:STDOUT:   %f.var: ref ForwardDeclared* = var f
-// CHECK:STDOUT:   %f: ref ForwardDeclared* = bind_name f, %f.var
+// CHECK:STDOUT:   %f.loc9: ref ForwardDeclared* = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
