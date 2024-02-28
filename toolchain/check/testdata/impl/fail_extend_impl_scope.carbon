@@ -28,6 +28,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as I {

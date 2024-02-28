@@ -35,9 +35,11 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
 // CHECK:STDOUT:   %.2: type = interface_type @ForwardDeclared [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.f: ForwardDeclared} [template]
-// CHECK:STDOUT:   %.4: type = tuple_type () [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.f: ()} [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @ForwardDeclared, <function> [template]
+// CHECK:STDOUT:   %.4: <associated <function> in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%F [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.f: ForwardDeclared} [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.f: ()} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,7 +48,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc7 = interface_decl @ForwardDeclared {} [template = constants.%.2]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc9 = interface_decl @ForwardDeclared {} [template = constants.%.2]
 // CHECK:STDOUT:   %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl.loc7 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13: type = struct_type {.f: ForwardDeclared} [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: type = struct_type {.f: ForwardDeclared} [template = constants.%.5]
 // CHECK:STDOUT:   %f_ref.var: ref {.f: ForwardDeclared} = var f_ref
 // CHECK:STDOUT:   %f_ref: ref {.f: ForwardDeclared} = bind_name f_ref, %f_ref.var
 // CHECK:STDOUT: }
@@ -54,13 +56,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %.loc10: <associated <function> in ForwardDeclared> = assoc_entity element0, %F [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %.loc10
+// CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -80,7 +85,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .ForwardDeclared = %import_ref.2, .f_ref = %import_ref.3, .UseEmpty = %UseEmpty, .UseForwardDeclared = %UseForwardDeclared, .f = %f.loc9} [template]
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, used [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.3: ref {.f: ForwardDeclared} = import_ref ir1, inst+16, used
+// CHECK:STDOUT:   %import_ref.3: ref {.f: ForwardDeclared} = import_ref ir1, inst+19, used
 // CHECK:STDOUT:   %UseEmpty: <function> = fn_decl @UseEmpty {
 // CHECK:STDOUT:     %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %import_ref.1 [template = constants.%.1]
@@ -102,13 +107,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+6, unused
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+8, unused
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unused
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %import_ref
+// CHECK:STDOUT:   .F = %import_ref.1
+// CHECK:STDOUT:   witness = (%import_ref.2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%e: Empty) {

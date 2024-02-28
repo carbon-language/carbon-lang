@@ -46,6 +46,7 @@ protected interface Protected;
 // CHECK:STDOUT: interface @Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
@@ -53,6 +54,7 @@ protected interface Protected;
 // CHECK:STDOUT: interface @Virtual {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Protected;

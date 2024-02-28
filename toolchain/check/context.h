@@ -234,6 +234,10 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
+  // Gets the type for the name of an associated entity.
+  auto GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 

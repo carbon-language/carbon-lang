@@ -34,6 +34,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: Empty) {

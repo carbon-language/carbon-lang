@@ -27,6 +27,7 @@ impl i32 as Empty {
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Empty {

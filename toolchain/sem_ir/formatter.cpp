@@ -656,6 +656,8 @@ class Formatter {
       FormatCodeBlock(interface_info.body_block_id);
       out_ << "\n!members:";
       FormatNameScope(interface_info.scope_id, "", "\n  ");
+      out_ << "\n  witness = ";
+      FormatArg(interface_info.associated_entities_id);
       out_ << "\n}\n";
     } else {
       out_ << ";\n";
