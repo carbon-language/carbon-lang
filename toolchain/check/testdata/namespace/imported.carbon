@@ -27,9 +27,16 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.ChildNS = %.loc5, .A = %A} [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {.B = %B} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:     .ChildNS = %.loc5
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
 // CHECK:STDOUT: }
@@ -45,11 +52,22 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a, .b = %b, .package_a = %package_a, .package_b = %package_b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .package_a = %package_a
+// CHECK:STDOUT:     .package_b = %package_b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.ChildNS = %.3, .A = %import_ref.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .ChildNS = %.3
+// CHECK:STDOUT:     .A = %import_ref.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.B = %import_ref.4}, %import_ref.2 [template]
+// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:     .B = %import_ref.4
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+3, used [template = imports.%A]
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+4, used [template = imports.%B]
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()

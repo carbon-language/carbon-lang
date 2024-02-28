@@ -43,7 +43,10 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .Incomplete = %Incomplete.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %Empty.decl
+// CHECK:STDOUT:     .Incomplete = %Incomplete.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Empty.decl = class_decl @Empty, () [template = constants.%Empty]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
 // CHECK:STDOUT: }
@@ -65,7 +68,11 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .Incomplete = %import_ref.2, .a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %import_ref.1
+// CHECK:STDOUT:     .Incomplete = %import_ref.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+4, used [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.decl = class_decl @.1, (<unexpected instref inst+3>) [template = constants.%.2]

@@ -32,7 +32,9 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, (<unexpected instref inst+1>, <unexpected instref inst+2>) [template = constants.%Class]
 // CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template]
 // CHECK:STDOUT: }

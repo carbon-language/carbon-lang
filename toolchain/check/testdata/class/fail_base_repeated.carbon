@@ -46,7 +46,12 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B1 = %B1.decl, .B2 = %B2.decl, .C = %C.decl, .D = %D.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B1 = %B1.decl
+// CHECK:STDOUT:     .B2 = %B2.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B1.decl = class_decl @B1, () [template = constants.%B1]
 // CHECK:STDOUT:   %B2.decl = class_decl @B2, () [template = constants.%B2]
 // CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]

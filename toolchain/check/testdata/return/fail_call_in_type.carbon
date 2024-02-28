@@ -19,7 +19,10 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.ReturnType = %ReturnType, .Six = %Six} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .ReturnType = %ReturnType
+// CHECK:STDOUT:     .Six = %Six
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType [template]
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
 // CHECK:STDOUT: }

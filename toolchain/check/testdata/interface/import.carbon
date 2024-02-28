@@ -41,7 +41,11 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .ForwardDeclared = %ForwardDeclared.decl.loc7, .f_ref = %f_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %Empty.decl
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc7
+// CHECK:STDOUT:     .f_ref = %f_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc7 = interface_decl @ForwardDeclared, () [template = constants.%.2]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc9 = interface_decl @ForwardDeclared, () [template = constants.%.2]
@@ -77,7 +81,14 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %import_ref.1, .ForwardDeclared = %import_ref.2, .f_ref = %import_ref.3, .UseEmpty = %UseEmpty, .UseForwardDeclared = %UseForwardDeclared, .f = %f} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %import_ref.1
+// CHECK:STDOUT:     .ForwardDeclared = %import_ref.2
+// CHECK:STDOUT:     .f_ref = %import_ref.3
+// CHECK:STDOUT:     .UseEmpty = %UseEmpty
+// CHECK:STDOUT:     .UseForwardDeclared = %UseForwardDeclared
+// CHECK:STDOUT:     .f = %f
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, used [template = constants.%.3]
 // CHECK:STDOUT:   %import_ref.3: ref {.f: ForwardDeclared} = import_ref ir1, inst+16, used

@@ -53,7 +53,14 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A1 = %A1.decl, .A2 = %A2.decl, .B2 = %B2.decl, .ConvertUnrelated = %ConvertUnrelated, .Incomplete = %Incomplete.decl, .ConvertIncomplete = %ConvertIncomplete} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A1 = %A1.decl
+// CHECK:STDOUT:     .A2 = %A2.decl
+// CHECK:STDOUT:     .B2 = %B2.decl
+// CHECK:STDOUT:     .ConvertUnrelated = %ConvertUnrelated
+// CHECK:STDOUT:     .Incomplete = %Incomplete.decl
+// CHECK:STDOUT:     .ConvertIncomplete = %ConvertIncomplete
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A1.decl = class_decl @A1, () [template = constants.%A1]
 // CHECK:STDOUT:   %A2.decl = class_decl @A2, () [template = constants.%A2]
 // CHECK:STDOUT:   %B2.decl = class_decl @B2, () [template = constants.%B2]

@@ -70,7 +70,11 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Access = %Access.decl
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Access.decl = class_decl @Access, () [template = constants.%Access]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, () [template = constants.%Abstract]

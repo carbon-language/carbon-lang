@@ -19,7 +19,9 @@ interface I[]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

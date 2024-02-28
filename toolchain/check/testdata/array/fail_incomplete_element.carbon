@@ -27,7 +27,11 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Incomplete = %Incomplete.decl, .a = %a, .p = %p} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Incomplete = %Incomplete.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .p = %p
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1 [template = constants.%.1]

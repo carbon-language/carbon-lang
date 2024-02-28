@@ -49,7 +49,12 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, () [template = constants.%Abstract]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived, () [template = constants.%Derived]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]

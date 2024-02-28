@@ -45,8 +45,12 @@ fn Run() {
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.A = %A} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,10 +62,16 @@ fn Run() {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.B1 = %B1, .B2 = %B2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:     .B1 = %B1
+// CHECK:STDOUT:     .B2 = %B2
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B1: <function> = fn_decl @B1 [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B2: <function> = fn_decl @B2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,13 +92,22 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7_13.1, .Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc7_13.1
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace {.A = %import_ref.2, .B1 = %import_ref.3, .B2 = %import_ref.4, .C = %C}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.loc7_13.1: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .A = %import_ref.2
+// CHECK:STDOUT:     .B1 = %import_ref.3
+// CHECK:STDOUT:     .B2 = %import_ref.4
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+2, used [template = imports.%A]
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, used [template = imports.%B1]
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, used [template = imports.%B2]
-// CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
 // CHECK:STDOUT: }

@@ -29,7 +29,10 @@ private interface Private {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Modifiers = %Modifiers.decl, .Private = %Private.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Modifiers = %Modifiers.decl
+// CHECK:STDOUT:     .Private = %Private.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, () [template = constants.%.1]
 // CHECK:STDOUT:   %Private.decl = interface_decl @Private, () [template = constants.%.2]
 // CHECK:STDOUT: }

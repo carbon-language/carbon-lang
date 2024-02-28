@@ -21,7 +21,10 @@ fn CallStatic(T:! Interface) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl, .CallStatic = %CallStatic} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Interface = %Interface.decl
+// CHECK:STDOUT:     .CallStatic = %CallStatic
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Interface.decl = interface_decl @Interface, () [template = constants.%.1]
 // CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic [template]
 // CHECK:STDOUT: }

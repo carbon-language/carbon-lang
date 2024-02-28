@@ -67,7 +67,18 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Call = %Call, .CallAlias = %CallAlias, .CallOnConstBoundMethod = %CallOnConstBoundMethod, .CallWithAddr = %CallWithAddr, .CallFThroughPointer = %CallFThroughPointer, .CallGThroughPointer = %CallGThroughPointer, .Make = %Make, .CallFOnInitializingExpr = %CallFOnInitializingExpr, .CallGOnInitializingExpr = %CallGOnInitializingExpr} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Call = %Call
+// CHECK:STDOUT:     .CallAlias = %CallAlias
+// CHECK:STDOUT:     .CallOnConstBoundMethod = %CallOnConstBoundMethod
+// CHECK:STDOUT:     .CallWithAddr = %CallWithAddr
+// CHECK:STDOUT:     .CallFThroughPointer = %CallFThroughPointer
+// CHECK:STDOUT:     .CallGThroughPointer = %CallGThroughPointer
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:     .CallFOnInitializingExpr = %CallFOnInitializingExpr
+// CHECK:STDOUT:     .CallGOnInitializingExpr = %CallGOnInitializingExpr
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]

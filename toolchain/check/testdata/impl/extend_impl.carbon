@@ -32,7 +32,11 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.HasF = %HasF.decl, .C = %C.decl, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .HasF = %HasF.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %HasF.decl = interface_decl @HasF, () [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template]

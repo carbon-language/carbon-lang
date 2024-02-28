@@ -32,7 +32,10 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.GenericInterface = %GenericInterface.decl, .C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface, (<unexpected instref inst+1>, <unexpected instref inst+2>) [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT: }

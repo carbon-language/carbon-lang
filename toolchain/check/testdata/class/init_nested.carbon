@@ -36,7 +36,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Inner = %Inner.decl, .MakeInner = %MakeInner, .Outer = %Outer.decl, .MakeOuter = %MakeOuter} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Inner = %Inner.decl
+// CHECK:STDOUT:     .MakeInner = %MakeInner
+// CHECK:STDOUT:     .Outer = %Outer.decl
+// CHECK:STDOUT:     .MakeOuter = %MakeOuter
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner, () [template = constants.%Inner]
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner [template]
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer, () [template = constants.%Outer]

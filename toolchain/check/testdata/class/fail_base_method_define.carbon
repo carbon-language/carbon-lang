@@ -40,7 +40,10 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .D = %D.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B, () [template = constants.%B]
 // CHECK:STDOUT:   %D.decl = class_decl @D, () [template = constants.%D]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]

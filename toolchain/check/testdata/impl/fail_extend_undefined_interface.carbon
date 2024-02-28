@@ -25,7 +25,10 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
 // CHECK:STDOUT: }
