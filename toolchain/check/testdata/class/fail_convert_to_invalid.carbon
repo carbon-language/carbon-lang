@@ -24,7 +24,10 @@ fn Make() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.C = %C.decl, .Make = %Make} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]

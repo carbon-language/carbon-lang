@@ -19,7 +19,11 @@ fn And() -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .And = %And} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .And = %And
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
 // CHECK:STDOUT:   } [template]

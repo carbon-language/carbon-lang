@@ -12,7 +12,9 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: --- type_param_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %T.loc7_6.1: type = param T
 // CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic]

@@ -57,7 +57,11 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .x = %x, .y = %y} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
 // CHECK:STDOUT:   } [template]

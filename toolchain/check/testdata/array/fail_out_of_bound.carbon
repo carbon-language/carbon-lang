@@ -21,7 +21,9 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 1] = var a

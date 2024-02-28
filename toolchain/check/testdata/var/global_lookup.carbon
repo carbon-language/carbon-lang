@@ -14,7 +14,10 @@ var y: i32 = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %y.var: ref i32 = var y

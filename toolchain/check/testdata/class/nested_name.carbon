@@ -32,7 +32,11 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Outer = %Outer.decl
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Outer.decl = class_decl @Outer {} [template = constants.%Outer]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %Outer.ref.loc13: type = name_ref Outer, %Outer.decl [template = constants.%Outer]

@@ -62,7 +62,13 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C1 = %C1.decl, .C2 = %C2.decl, .C3 = %C3.decl, .C4 = %C4.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .C1 = %C1.decl
+// CHECK:STDOUT:     .C2 = %C2.decl
+// CHECK:STDOUT:     .C3 = %C3.decl
+// CHECK:STDOUT:     .C4 = %C4.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
 // CHECK:STDOUT:   %C1.decl = class_decl @C1 {} [template = constants.%C1]
 // CHECK:STDOUT:   %C2.decl = class_decl @C2 {} [template = constants.%C2]

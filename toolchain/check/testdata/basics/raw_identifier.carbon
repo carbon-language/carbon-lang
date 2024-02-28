@@ -23,7 +23,11 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT: --- raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {
 // CHECK:STDOUT:     %n.loc11_6.1: i32 = param n
 // CHECK:STDOUT:     @A.%n: i32 = bind_name n, %n.loc11_6.1

@@ -32,11 +32,19 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.loc7, .N = %.loc9} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.loc7
+// CHECK:STDOUT:     .N = %.loc9
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1 {} [template]
-// CHECK:STDOUT:   %.loc9: <namespace> = namespace {.A = %A.loc10, .M = %.loc12} [template]
+// CHECK:STDOUT:   %.loc9: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.loc10
+// CHECK:STDOUT:     .M = %.loc12
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2 {} [template]
-// CHECK:STDOUT:   %.loc12: <namespace> = namespace {.B = %B} [template]
+// CHECK:STDOUT:   %.loc12: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

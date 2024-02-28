@@ -11,7 +11,9 @@ fn Foo() {}
 // CHECK:STDOUT: --- forward_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo.loc7} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Foo = %Foo.loc7
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Foo.loc7: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT:   %Foo.loc9: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }

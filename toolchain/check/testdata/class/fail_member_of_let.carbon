@@ -26,7 +26,9 @@ fn T.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref

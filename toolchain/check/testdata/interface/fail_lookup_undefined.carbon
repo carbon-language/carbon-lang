@@ -51,7 +51,11 @@ interface BeingDefined {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Undefined = %Undefined.decl, .Test = %Test, .BeingDefined = %BeingDefined.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Undefined = %Undefined.decl
+// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Undefined.decl = interface_decl @Undefined {} [template = constants.%.1]
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test {} [template]
@@ -71,8 +75,8 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .H = %.loc37
-// CHECK:STDOUT:   witness = (%H)
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%H)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:

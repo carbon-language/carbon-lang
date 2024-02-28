@@ -44,7 +44,12 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .C = %C.decl, .D = %D.decl, .E = %E.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     .E = %E.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
@@ -54,8 +59,8 @@ class E {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: i32 as I {
 // CHECK:STDOUT:

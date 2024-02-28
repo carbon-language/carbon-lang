@@ -21,7 +21,9 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.If = %If} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .If = %If
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %If: <function> = fn_decl @If {
 // CHECK:STDOUT:     %b.loc7_7.1: bool = param b
 // CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc7_7.1

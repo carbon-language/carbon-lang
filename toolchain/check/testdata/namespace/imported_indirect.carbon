@@ -41,40 +41,63 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.loc5}, %import_ref [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, {
+// CHECK:STDOUT:     .B = %.loc5
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+3, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.loc5}, %import_ref.2 [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:     .C = %.loc5
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+4, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
+// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:     .C = %.4
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+5, used
-// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %D}, %import_ref.3 [template]
+// CHECK:STDOUT:   %.4: <namespace> = namespace %import_ref.3, {
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %D: <function> = fn_decl @D {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,13 +113,22 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %.2, .e = %e} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:     .e = %e
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.B = %.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+4, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.C = %.4}, %import_ref.2 [template]
+// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:     .C = %.4
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+6, used
-// CHECK:STDOUT:   %.4: <namespace> = namespace {.D = %import_ref.4}, %import_ref.3 [template]
+// CHECK:STDOUT:   %.4: <namespace> = namespace %import_ref.3, {
+// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used [template = imports.%D]
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]

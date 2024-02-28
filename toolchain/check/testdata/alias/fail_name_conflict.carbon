@@ -30,7 +30,10 @@ alias b = i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a.loc7, .b = %b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %a.loc7
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %a.loc7: type = bind_alias a, i32 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a.loc14: ref i32 = bind_name a, %a.var

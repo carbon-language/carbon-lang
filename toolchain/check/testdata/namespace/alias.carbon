@@ -23,8 +23,16 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .ns = %ns, .B = %B, .C = %C, .D = %D} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.A = %A} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc7
+// CHECK:STDOUT:     .ns = %ns
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %NS.ref.loc9: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {

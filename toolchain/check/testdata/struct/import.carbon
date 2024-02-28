@@ -38,7 +38,10 @@ var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref, .b_ref = %b_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_ref = %a_ref
+// CHECK:STDOUT:     .b_ref = %b_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc4: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %a_ref.var: ref {.a: i32} = var a_ref
 // CHECK:STDOUT:   %a_ref: ref {.a: i32} = bind_name a_ref, %a_ref.var
@@ -94,7 +97,12 @@ var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %import_ref.1, .b_ref = %import_ref.2, .a = %a, .b = %b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_ref = %import_ref.1
+// CHECK:STDOUT:     .b_ref = %import_ref.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: ref {.a: i32} = import_ref ir1, inst+6, used
 // CHECK:STDOUT:   %import_ref.2: ref {.a: {.b: i32, .c: (i32,)}, .d: i32} = import_ref ir1, inst+37, used
 // CHECK:STDOUT:   %.loc4: type = struct_type {.a: i32} [template = constants.%.1]

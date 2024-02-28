@@ -32,7 +32,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.UnrelatedScopes = %UnrelatedScopes, .EnclosingButAfter = %EnclosingButAfter} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .UnrelatedScopes = %UnrelatedScopes
+// CHECK:STDOUT:     .EnclosingButAfter = %EnclosingButAfter
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes {
 // CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

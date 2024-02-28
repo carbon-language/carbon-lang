@@ -29,7 +29,17 @@ fn While() {
 // CHECK:STDOUT: --- break_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C, .D = %D, .E = %E, .F = %F, .G = %G, .H = %H, .While = %While} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:     .E = %E
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .H = %H
+// CHECK:STDOUT:     .While = %While
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {
 // CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
 // CHECK:STDOUT:   } [template]

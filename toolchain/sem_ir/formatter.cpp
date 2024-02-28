@@ -135,7 +135,7 @@ class InstNamer {
     }
   }
 
-  // Returns the scope index corresponding to an ID of a function, class, or
+  // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
   template <typename IdT>
   auto GetScopeFor(IdT id) -> ScopeId {
@@ -635,9 +635,9 @@ class Formatter {
     if (class_info.scope_id.is_valid()) {
       out_ << " {\n";
       FormatCodeBlock(class_info.body_block_id);
-      out_ << "\n!members:";
-      FormatNameScope(class_info.scope_id, "", "\n  ");
-      out_ << "\n}\n";
+      out_ << "\n!members:\n";
+      FormatNameScope(class_info.scope_id);
+      out_ << "}\n";
     } else {
       out_ << ";\n";
     }
@@ -654,11 +654,11 @@ class Formatter {
     if (interface_info.scope_id.is_valid()) {
       out_ << " {\n";
       FormatCodeBlock(interface_info.body_block_id);
-      out_ << "\n!members:";
-      FormatNameScope(interface_info.scope_id, "", "\n  ");
+      out_ << "\n!members:\n";
+      FormatNameScope(interface_info.scope_id);
       out_ << "\n  witness = ";
       FormatArg(interface_info.associated_entities_id);
-      out_ << "\n}\n";
+      out_ << "}\n";
     } else {
       out_ << ";\n";
     }
@@ -680,9 +680,9 @@ class Formatter {
     if (impl_info.scope_id.is_valid()) {
       out_ << " {\n";
       FormatCodeBlock(impl_info.body_block_id);
-      out_ << "\n!members:";
-      FormatNameScope(impl_info.scope_id, "", "\n  ");
-      out_ << "\n}\n";
+      out_ << "\n!members:\n";
+      FormatNameScope(impl_info.scope_id);
+      out_ << "}\n";
     } else {
       out_ << ";\n";
     }
@@ -775,8 +775,7 @@ class Formatter {
     out_ << "}";
   }
 
-  auto FormatNameScope(NameScopeId id, llvm::StringRef separator,
-                       llvm::StringRef prefix) -> void {
+  auto FormatNameScope(NameScopeId id) -> void {
     const auto& scope = sem_ir_.name_scopes().Get(id);
 
     // Name scopes aren't kept in any particular order. Sort the entries before
@@ -788,21 +787,24 @@ class Formatter {
     llvm::sort(entries,
                [](auto a, auto b) { return a.first.index < b.first.index; });
 
-    llvm::ListSeparator sep(separator);
     for (auto [inst_id, name_id] : entries) {
-      out_ << sep << prefix << ".";
+      Indent();
+      out_ << ".";
       FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
+      out_ << "\n";
     }
 
     for (auto extended_scope_id : scope.extended_scopes) {
       // TODO: Print this scope in a better way.
-      out_ << sep << prefix << "extend " << extended_scope_id;
+      Indent();
+      out_ << "extend " << extended_scope_id << "\n";
     }
 
     if (scope.has_error) {
-      out_ << sep << prefix << "has_error";
+      Indent();
+      out_ << "has_error\n";
     }
   }
 
@@ -927,7 +929,7 @@ class Formatter {
 
   auto FormatInstructionRHS(Namespace inst) -> void {
     if (inst.import_id.is_valid()) {
-      FormatArgs(inst.name_scope_id, inst.import_id);
+      FormatArgs(inst.import_id, inst.name_scope_id);
     } else {
       FormatArgs(inst.name_scope_id);
     }
@@ -1106,8 +1108,11 @@ class Formatter {
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
-    out_ << '{';
-    FormatNameScope(id, ", ", "");
+    out_ << "{\n";
+    indent_ += 2;
+    FormatNameScope(id);
+    indent_ -= 2;
+    Indent();
     out_ << '}';
   }
 

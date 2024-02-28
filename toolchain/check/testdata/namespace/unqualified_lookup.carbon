@@ -33,9 +33,20 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.OuterN = %.loc7, .A = %A, .CallA = %CallA} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.InnerN = %.loc8, .B = %B, .CallAB = %CallAB} [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {.C = %C, .CallABC = %CallABC} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .OuterN = %.loc7
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .CallA = %CallA
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
+// CHECK:STDOUT:     .InnerN = %.loc8
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .CallAB = %CallAB
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .CallABC = %CallABC
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
 // CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
 // CHECK:STDOUT:   %C: <function> = fn_decl @C {} [template]

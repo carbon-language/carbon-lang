@@ -19,7 +19,9 @@ let not_false: bool = not false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Not = %Not} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Not = %Not
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc7_8.1

@@ -19,7 +19,11 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

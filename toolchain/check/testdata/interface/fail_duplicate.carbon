@@ -46,7 +46,11 @@ interface Class { }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Interface = %Interface.decl.loc7
+// CHECK:STDOUT:     .Function = %Function
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface {} [template = constants.%.1]
 // CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface {} [template = constants.%.1]
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function {} [template]
@@ -60,16 +64,16 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = <error>
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:

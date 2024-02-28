@@ -16,7 +16,9 @@ var a: [1; 1];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error> [template = <error>]

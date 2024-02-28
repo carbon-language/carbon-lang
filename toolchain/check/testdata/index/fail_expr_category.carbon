@@ -41,7 +41,10 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %.loc7_17: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_18: type = array_type %.loc7_17, i32 [template = constants.%.2]

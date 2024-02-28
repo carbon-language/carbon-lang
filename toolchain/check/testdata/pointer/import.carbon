@@ -25,7 +25,10 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_orig = %a_orig, .a_ref = %a_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_orig = %a_orig
+// CHECK:STDOUT:     .a_ref = %a_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %a_orig.var: ref i32 = var a_orig
 // CHECK:STDOUT:   %a_orig: ref i32 = bind_name a_orig, %a_orig.var
 // CHECK:STDOUT:   %.loc5: type = ptr_type i32 [template = constants.%.2]
@@ -50,7 +53,11 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_orig = %import_ref.1, .a_ref = %import_ref.2, .a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_orig = %import_ref.1
+// CHECK:STDOUT:     .a_ref = %import_ref.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir1, inst+9, used
 // CHECK:STDOUT:   %.loc4: type = ptr_type i32 [template = constants.%.1]

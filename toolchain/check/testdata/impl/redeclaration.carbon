@@ -23,7 +23,10 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .X = %X.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:     .X = %X.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, %I.decl [template = constants.%.1]
@@ -37,8 +40,8 @@ impl i32 as I {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as I {
 // CHECK:STDOUT:

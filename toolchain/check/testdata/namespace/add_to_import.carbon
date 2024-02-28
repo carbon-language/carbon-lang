@@ -21,8 +21,11 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -32,9 +35,14 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.A = %A}, %import_ref [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

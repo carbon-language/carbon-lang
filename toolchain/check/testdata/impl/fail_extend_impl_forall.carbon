@@ -34,7 +34,10 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.GenericInterface = %GenericInterface.decl, .C = %C.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface {
 // CHECK:STDOUT:     %T.loc10_28.1: type = param T
 // CHECK:STDOUT:     %T.loc10_28.2: type = bind_symbolic_name T, %T.loc10_28.1 [symbolic]
@@ -52,8 +55,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc11
-// CHECK:STDOUT:   witness = (%F)
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%F)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as <error> {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {

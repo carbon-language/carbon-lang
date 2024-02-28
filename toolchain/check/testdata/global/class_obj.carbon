@@ -18,7 +18,10 @@ var a: A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .a = %a} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref A = var a

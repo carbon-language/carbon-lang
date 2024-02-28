@@ -24,7 +24,9 @@ impl as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Simple = %Simple.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Simple = %Simple.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Simple.decl = interface_decl @Simple {} [template = constants.%.1]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
@@ -37,8 +39,8 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:   witness = (%F)
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%F)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: <error> as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]

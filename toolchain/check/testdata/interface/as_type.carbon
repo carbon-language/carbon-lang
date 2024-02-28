@@ -16,7 +16,10 @@ fn F(e: Empty) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %Empty.decl
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
@@ -28,8 +31,8 @@ fn F(e: Empty) {}
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%e: Empty) {
 // CHECK:STDOUT: !entry:

@@ -138,7 +138,9 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
 // CHECK:STDOUT:     %n.loc11_8.1: i32 = param n
 // CHECK:STDOUT:     @Foo.%n: i32 = bind_name n, %n.loc11_8.1

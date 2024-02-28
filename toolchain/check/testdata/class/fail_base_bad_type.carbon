@@ -160,7 +160,31 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Final = %Final.decl, .DeriveFromError = %DeriveFromError.decl, .AccessMemberWithInvalidBaseError = %AccessMemberWithInvalidBaseError, .DeriveFromNonType = %DeriveFromNonType.decl, .AccessMemberWithInvalidBasNonType = %AccessMemberWithInvalidBasNonType, .DeriveFromi32 = %DeriveFromi32.decl, .ConvertToBadBasei32 = %ConvertToBadBasei32, .AccessMemberWithInvalidBasei32 = %AccessMemberWithInvalidBasei32, .DeriveFromTuple = %DeriveFromTuple.decl, .ConvertToBadBaseTuple = %ConvertToBadBaseTuple, .AccessMemberWithInvalidBaseTuple = %AccessMemberWithInvalidBaseTuple, .DeriveFromStruct = %DeriveFromStruct.decl, .ConvertToBadBaseStruct = %ConvertToBadBaseStruct, .AccessMemberWithInvalidBaseStruct = %AccessMemberWithInvalidBaseStruct, .Incomplete = %Incomplete.decl, .DeriveFromIncomplete = %DeriveFromIncomplete.decl, .ConvertToBadBaseIncomplete = %ConvertToBadBaseIncomplete, .AccessMemberWithInvalidBaseIncomplete = %AccessMemberWithInvalidBaseIncomplete, .DeriveFromFinal = %DeriveFromFinal.decl, .ConvertToBadBaseFinal = %ConvertToBadBaseFinal, .AccessMemberWithInvalidBaseFinal_WithMember = %AccessMemberWithInvalidBaseFinal_WithMember, .AccessMemberWithInvalidBaseFinal_NoMember = %AccessMemberWithInvalidBaseFinal_NoMember} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Final = %Final.decl
+// CHECK:STDOUT:     .DeriveFromError = %DeriveFromError.decl
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseError = %AccessMemberWithInvalidBaseError
+// CHECK:STDOUT:     .DeriveFromNonType = %DeriveFromNonType.decl
+// CHECK:STDOUT:     .AccessMemberWithInvalidBasNonType = %AccessMemberWithInvalidBasNonType
+// CHECK:STDOUT:     .DeriveFromi32 = %DeriveFromi32.decl
+// CHECK:STDOUT:     .ConvertToBadBasei32 = %ConvertToBadBasei32
+// CHECK:STDOUT:     .AccessMemberWithInvalidBasei32 = %AccessMemberWithInvalidBasei32
+// CHECK:STDOUT:     .DeriveFromTuple = %DeriveFromTuple.decl
+// CHECK:STDOUT:     .ConvertToBadBaseTuple = %ConvertToBadBaseTuple
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseTuple = %AccessMemberWithInvalidBaseTuple
+// CHECK:STDOUT:     .DeriveFromStruct = %DeriveFromStruct.decl
+// CHECK:STDOUT:     .ConvertToBadBaseStruct = %ConvertToBadBaseStruct
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseStruct = %AccessMemberWithInvalidBaseStruct
+// CHECK:STDOUT:     .Incomplete = %Incomplete.decl
+// CHECK:STDOUT:     .DeriveFromIncomplete = %DeriveFromIncomplete.decl
+// CHECK:STDOUT:     .ConvertToBadBaseIncomplete = %ConvertToBadBaseIncomplete
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseIncomplete = %AccessMemberWithInvalidBaseIncomplete
+// CHECK:STDOUT:     .DeriveFromFinal = %DeriveFromFinal.decl
+// CHECK:STDOUT:     .ConvertToBadBaseFinal = %ConvertToBadBaseFinal
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseFinal_WithMember = %AccessMemberWithInvalidBaseFinal_WithMember
+// CHECK:STDOUT:     .AccessMemberWithInvalidBaseFinal_NoMember = %AccessMemberWithInvalidBaseFinal_NoMember
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
 // CHECK:STDOUT:   %Final.decl = class_decl @Final {} [template = constants.%Final]
 // CHECK:STDOUT:   %DeriveFromError.decl = class_decl @DeriveFromError {} [template = constants.%DeriveFromError]

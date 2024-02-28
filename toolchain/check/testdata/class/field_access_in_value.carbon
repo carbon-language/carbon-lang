@@ -30,7 +30,10 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Test = %Test} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test {} [template]
 // CHECK:STDOUT: }

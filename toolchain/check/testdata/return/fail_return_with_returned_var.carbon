@@ -41,7 +41,11 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .C = %C.decl, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

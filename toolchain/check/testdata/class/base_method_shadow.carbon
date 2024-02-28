@@ -55,7 +55,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl, .B = %B.decl, .C = %C.decl, .D = %D.decl, .Call = %Call} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     .Call = %Call
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
 // CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
 // CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]

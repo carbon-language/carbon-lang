@@ -28,7 +28,9 @@ fn Interface.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Interface = %Interface.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Interface = %Interface.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Interface.decl = interface_decl @Interface {} [template = constants.%.1]
 // CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
@@ -39,8 +41,8 @@ fn Interface.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc11
-// CHECK:STDOUT:   witness = (%F)
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%F)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

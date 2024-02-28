@@ -23,7 +23,10 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A {
 // CHECK:STDOUT:     %.loc7_9: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_18: type = ptr_type const i32 [template = constants.%.2]

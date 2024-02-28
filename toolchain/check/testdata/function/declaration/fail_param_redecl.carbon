@@ -15,7 +15,9 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT: --- fail_param_redecl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %n.loc13_6.1: i32 = param n
 // CHECK:STDOUT:     @F.%n.loc13_6: i32 = bind_name n, %n.loc13_6.1

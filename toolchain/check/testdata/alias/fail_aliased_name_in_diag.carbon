@@ -17,7 +17,9 @@ let c: b = 2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.b = %b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %b: type = bind_alias b, bool [template = bool]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = bool]
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 2 [template = constants.%.1]

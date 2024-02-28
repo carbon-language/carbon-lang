@@ -32,7 +32,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %n.loc17_12.1: i32 = param n

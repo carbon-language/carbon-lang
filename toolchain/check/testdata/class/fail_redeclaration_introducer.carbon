@@ -88,7 +88,15 @@ base class G;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl.loc7, .B = %B.decl.loc16, .C = %C.decl.loc25, .D = %D.decl.loc34, .E = %E.decl.loc43, .F = %F.decl.loc52, .G = %G.decl.loc61} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .B = %B.decl.loc16
+// CHECK:STDOUT:     .C = %C.decl.loc25
+// CHECK:STDOUT:     .D = %D.decl.loc34
+// CHECK:STDOUT:     .E = %E.decl.loc43
+// CHECK:STDOUT:     .F = %F.decl.loc52
+// CHECK:STDOUT:     .G = %G.decl.loc61
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A.decl.loc7 = class_decl @A {} [template = constants.%A]
 // CHECK:STDOUT:   %A.decl.loc14 = class_decl @A {} [template = constants.%A]
 // CHECK:STDOUT:   %B.decl.loc16 = class_decl @B {} [template = constants.%B]

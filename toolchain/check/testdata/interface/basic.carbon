@@ -23,7 +23,10 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Empty = %Empty.decl, .ForwardDeclared = %ForwardDeclared.decl.loc10} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Empty = %Empty.decl
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc10
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared {} [template = constants.%.2]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared {} [template = constants.%.2]
@@ -32,8 +35,8 @@ interface ForwardDeclared {
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
@@ -41,8 +44,8 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc13
-// CHECK:STDOUT:   witness = (%F)
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%F)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

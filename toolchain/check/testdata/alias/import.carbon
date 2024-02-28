@@ -27,7 +27,10 @@ var c: i32 = b;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %a, .b = %b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
@@ -44,7 +47,11 @@ var c: i32 = b;
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %import_ref.1, .b = %import_ref.2, .c = %c} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %import_ref.1
+// CHECK:STDOUT:     .b = %import_ref.2
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir1, inst+7, used
 // CHECK:STDOUT:   %c.var: ref i32 = var c

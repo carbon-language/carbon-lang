@@ -61,7 +61,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .WrongSelf = %WrongSelf.decl, .CallWrongSelf = %CallWrongSelf} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .WrongSelf = %WrongSelf.decl
+// CHECK:STDOUT:     .CallWrongSelf = %CallWrongSelf
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
 // CHECK:STDOUT:     %Class.ref.loc25: type = name_ref Class, %Class.decl [template = constants.%Class]

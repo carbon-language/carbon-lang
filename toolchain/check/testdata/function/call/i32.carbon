@@ -19,7 +19,10 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Echo = %Echo, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Echo = %Echo
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo {
 // CHECK:STDOUT:     %a.loc7_9.1: i32 = param a
 // CHECK:STDOUT:     @Echo.%a: i32 = bind_name a, %a.loc7_9.1

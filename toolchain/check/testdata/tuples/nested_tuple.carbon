@@ -24,7 +24,9 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7_18.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.1: ((type, type), type) = tuple_literal (%.loc7_18.1, i32)
 // CHECK:STDOUT:   %.loc7_18.2: type = converted %.loc7_18.1, constants.%.3 [template = constants.%.3]

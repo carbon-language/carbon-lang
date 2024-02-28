@@ -20,7 +20,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %.loc7_16.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %.loc7_16.1, constants.%.2 [template = constants.%.2]

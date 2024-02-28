@@ -21,7 +21,9 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main {
 // CHECK:STDOUT:     %.loc8_23.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:     %.loc8_23.2: type = converted %.loc8_23.1, constants.%.2 [template = constants.%.2]

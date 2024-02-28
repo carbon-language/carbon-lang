@@ -64,7 +64,12 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Run0 = %Run0, .Run1 = %Run1, .Run2 = %Run2, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Run0 = %Run0
+// CHECK:STDOUT:     .Run1 = %Run1
+// CHECK:STDOUT:     .Run2 = %Run2
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0 {} [template]
 // CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1 {
 // CHECK:STDOUT:     %a.loc8_9.1: i32 = param a

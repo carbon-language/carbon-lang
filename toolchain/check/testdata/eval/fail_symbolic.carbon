@@ -15,7 +15,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT: --- fail_symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %N.loc8_6.1: i32 = param N
 // CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N, %N.loc8_6.1 [symbolic]

@@ -11,7 +11,10 @@ fn G(a: i32);
 // CHECK:STDOUT: --- param_same_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {
 // CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
 // CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc7_6.1

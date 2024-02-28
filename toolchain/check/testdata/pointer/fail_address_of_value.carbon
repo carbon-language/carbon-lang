@@ -108,7 +108,16 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .H = %H, .AddressOfLiteral = %AddressOfLiteral, .AddressOfOperator = %AddressOfOperator, .AddressOfCall = %AddressOfCall, .AddressOfType = %AddressOfType, .AddressOfTupleElementValue = %AddressOfTupleElementValue, .AddressOfParam = %AddressOfParam} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .H = %H
+// CHECK:STDOUT:     .AddressOfLiteral = %AddressOfLiteral
+// CHECK:STDOUT:     .AddressOfOperator = %AddressOfOperator
+// CHECK:STDOUT:     .AddressOfCall = %AddressOfCall
+// CHECK:STDOUT:     .AddressOfType = %AddressOfType
+// CHECK:STDOUT:     .AddressOfTupleElementValue = %AddressOfTupleElementValue
+// CHECK:STDOUT:     .AddressOfParam = %AddressOfParam
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
 // CHECK:STDOUT:   } [template]

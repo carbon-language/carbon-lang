@@ -25,7 +25,9 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %.loc10_16: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_9: type = const_type const i32 [template = constants.%.1]

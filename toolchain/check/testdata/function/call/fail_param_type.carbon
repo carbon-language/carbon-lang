@@ -24,7 +24,10 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
 // CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc7_6.1

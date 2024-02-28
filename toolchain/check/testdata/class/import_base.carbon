@@ -45,7 +45,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Child = %Child.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Child = %Child.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
 // CHECK:STDOUT:   %Child.decl = class_decl @Child {} [template = constants.%Child]
 // CHECK:STDOUT: }
@@ -106,7 +109,11 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %import_ref.1, .Child = %import_ref.2, .Run = %Run} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %import_ref.1
+// CHECK:STDOUT:     .Child = %import_ref.2
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+19, used [template = constants.%Child]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]

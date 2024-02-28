@@ -23,7 +23,10 @@ fn F(cond: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.G = %G, .F = %F} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
 // CHECK:STDOUT:     %.loc7: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:     %s.loc7_6.1: {.a: i32, .b: i32} = param s

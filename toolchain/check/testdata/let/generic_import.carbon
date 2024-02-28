@@ -20,7 +20,8 @@ var b: T = *a;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -31,7 +32,11 @@ var b: T = *a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.T = %import_ref, .a = %a, .b = %b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .T = %import_ref
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic]
 // CHECK:STDOUT:   %T.ref.loc4: type = name_ref T, %import_ref [symbolic = %import_ref]
 // CHECK:STDOUT:   %.loc4: type = ptr_type T [symbolic = constants.%.1]

@@ -32,7 +32,10 @@ fn Derived.H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
 // CHECK:STDOUT:   %Derived.decl = class_decl @Derived {} [template = constants.%Derived]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]

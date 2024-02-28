@@ -36,7 +36,12 @@ protected interface Protected;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Default = %Default.decl, .Virtual = %Virtual.decl, .Protected = %Protected.decl} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:     .Default = %Default.decl
+// CHECK:STDOUT:     .Virtual = %Virtual.decl
+// CHECK:STDOUT:     .Protected = %Protected.decl
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract {} [template = constants.%.1]
 // CHECK:STDOUT:   %Default.decl = interface_decl @Default {} [template = constants.%.2]
 // CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual {} [template = constants.%.3]
@@ -46,16 +51,16 @@ protected interface Protected;
 // CHECK:STDOUT: interface @Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Virtual {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Protected;
 // CHECK:STDOUT:
