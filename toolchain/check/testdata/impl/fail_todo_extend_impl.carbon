@@ -15,20 +15,28 @@ class C {
 }
 
 fn G(c: C) {
-  // TODO: These don't do impl lookup, and so refer to the interface members
-  // rather than to the impl members.
+  // TODO: These should do impl lookup. Because that's not implemented yet, they
+  // refer to the interface members rather than to the impl members.
+  // CHECK:STDERR: fail_todo_extend_impl.carbon:[[@LINE+3]]:3: ERROR: Value of type `<associated <function> in HasF>` is not callable.
+  // CHECK:STDERR:   C.F();
+  // CHECK:STDERR:   ^~~~
   C.F();
+  // CHECK:STDERR: fail_todo_extend_impl.carbon:[[@LINE+3]]:3: ERROR: Value of type `<associated <function> in HasF>` is not callable.
+  // CHECK:STDERR:   c.F();
+  // CHECK:STDERR:   ^~~~
   c.F();
 }
 
-// CHECK:STDOUT: --- extend_impl.carbon
+// CHECK:STDOUT: --- fail_todo_extend_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @HasF, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in HasF> = assoc_entity element0, @HasF.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,9 +48,11 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %.loc8: <associated <function> in HasF> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %.loc8
+// CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as HasF {
@@ -53,7 +63,7 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+6>)
+// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+9>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend name_scope1
@@ -69,11 +79,9 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @G(%c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc20: <function> = name_ref F, @HasF.%F [template = @HasF.%F]
-// CHECK:STDOUT:   %.loc20: init () = call %F.ref.loc20()
+// CHECK:STDOUT:   %F.ref.loc23: <associated <function> in HasF> = name_ref F, @HasF.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc21: <function> = name_ref F, @HasF.%F [template = @HasF.%F]
-// CHECK:STDOUT:   %.loc21: init () = call %F.ref.loc21()
+// CHECK:STDOUT:   %F.ref.loc27: <associated <function> in HasF> = name_ref F, @HasF.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

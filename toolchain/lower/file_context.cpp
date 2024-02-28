@@ -11,6 +11,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -64,6 +65,10 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   auto target = sem_ir().insts().Get(inst_id);
   if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
+  }
+
+  if (target.Is<SemIR::AssociatedEntity>()) {
+    return llvm::ConstantStruct::getAnon(llvm_context(), {});
   }
 
   if (target.type_id() == SemIR::TypeId::TypeType) {
@@ -274,6 +279,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
+    case SemIR::AssociatedEntityType::Kind:
+      // No runtime operations are provided on an associated entity name, so use
+      // an empty representation.
+      return llvm::StructType::get(*llvm_context_);
     case SemIR::BindSymbolicName::Kind:
       // Treat non-monomorphized type bindings as opaque.
       return llvm::StructType::get(*llvm_context_);

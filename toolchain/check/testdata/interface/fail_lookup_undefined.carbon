@@ -46,6 +46,8 @@ interface BeingDefined {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Undefined [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @BeingDefined, <function> [template]
+// CHECK:STDOUT:   %.4: <associated <function> in BeingDefined> = assoc_entity element0, @BeingDefined.%H [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,10 +62,12 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   %.loc37: <associated <function> in BeingDefined> = assoc_entity element0, %H [template = constants.%.4]
 // CHECK:STDOUT:   %.loc41: <function> = fn_decl @.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .H = %H
+// CHECK:STDOUT:   .H = %.loc37
+// CHECK:STDOUT:   witness = (%H)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

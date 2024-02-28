@@ -60,6 +60,12 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
+auto HandleAssociatedEntity(FunctionContext& /*context*/,
+                            SemIR::InstId /*inst_id*/,
+                            SemIR::AssociatedEntity inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
@@ -229,9 +235,9 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInterfaceDecl(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::InterfaceDecl /*inst*/) -> void {
-  // No action to perform.
+                         SemIR::InstId /*inst_id*/, SemIR::InterfaceDecl inst)
+    -> void {
+  FatalErrorIfEncountered(inst);
 }
 
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
