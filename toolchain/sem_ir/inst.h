@@ -350,7 +350,7 @@ class InstStore {
     if (!inst_id.is_valid()) {
       return std::nullopt;
     }
-    return Get(inst_id).TryAs<InstT>();
+    return TryGetAs<InstT>(inst_id);
   }
 
   auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
