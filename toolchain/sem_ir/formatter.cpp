@@ -481,22 +481,28 @@ class InstNamer {
                                .name_id);
           continue;
         }
-        case FunctionDecl::Kind: {
-          add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDecl>().function_id)
-                               .name_id);
-          continue;
-        }
         case ClassDecl::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
               ".decl");
+          CollectNamesInBlock(scope_id, inst.As<ClassDecl>().decl_block_id);
           continue;
         }
         case ClassType::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
+        }
+        case FunctionDecl::Kind: {
+          add_inst_name_id(sem_ir_.functions()
+                               .Get(inst.As<FunctionDecl>().function_id)
+                               .name_id);
+          CollectNamesInBlock(scope_id, inst.As<FunctionDecl>().decl_block_id);
+          continue;
+        }
+        case ImplDecl::Kind: {
+          CollectNamesInBlock(scope_id, inst.As<ImplDecl>().decl_block_id);
+          break;
         }
         case Import::Kind: {
           add_inst_name("import");
@@ -519,6 +525,7 @@ class InstNamer {
                                .Get(inst.As<InterfaceDecl>().interface_id)
                                .name_id,
                            ".decl");
+          CollectNamesInBlock(scope_id, inst.As<InterfaceDecl>().decl_block_id);
           continue;
         }
         case NameRef::Kind: {
@@ -752,6 +759,18 @@ class Formatter {
     for (const InstId inst_id : block) {
       FormatInstruction(inst_id);
     }
+  }
+
+  auto FormatTrailingBlock(InstBlockId block_id) -> void {
+    out_ << " {";
+    if (!sem_ir_.inst_blocks().Get(block_id).empty()) {
+      out_ << "\n";
+      indent_ += 2;
+      FormatCodeBlock(block_id);
+      indent_ -= 2;
+      Indent();
+    }
+    out_ << "}";
   }
 
   auto FormatNameScope(NameScopeId id, llvm::StringRef separator,
@@ -997,6 +1016,26 @@ class Formatter {
     FormatReturnSlot(init.dest_id);
   }
 
+  auto FormatInstructionRHS(FunctionDecl inst) -> void {
+    FormatArgs(inst.function_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(ClassDecl inst) -> void {
+    FormatArgs(inst.class_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(ImplDecl inst) -> void {
+    FormatArgs(inst.impl_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(InterfaceDecl inst) -> void {
+    FormatArgs(inst.interface_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
   auto FormatInstructionRHS(ImportRefUnused inst) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
@@ -1011,15 +1050,7 @@ class Formatter {
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
-    out_ << " {";
-    if (!sem_ir_.inst_blocks().Get(inst.block_id).empty()) {
-      out_ << "\n";
-      indent_ += 2;
-      FormatCodeBlock(inst.block_id);
-      indent_ -= 2;
-      Indent();
-    }
-    out_ << "}";
+    FormatTrailingBlock(inst.block_id);
   }
 
   // StructTypeFields are formatted as part of their StructType.

@@ -34,7 +34,7 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.ForwardDecl = %ForwardDecl.decl} [template]
-// CHECK:STDOUT:   %ForwardDecl.decl = class_decl @ForwardDecl, () [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %ForwardDecl.decl = class_decl @ForwardDecl {} [template = constants.%ForwardDecl]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
@@ -50,7 +50,9 @@ class ForwardDecl {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.ForwardDecl = %import_ref} [template]
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [template = constants.%ForwardDecl]
-// CHECK:STDOUT:   %.decl = class_decl @.1, (<unexpected instref inst+2>) [template = constants.%.1]
+// CHECK:STDOUT:   %.decl = class_decl @.1 {
+// CHECK:STDOUT:     %ForwardDecl.decl = class_decl @ForwardDecl {} [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   } [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;

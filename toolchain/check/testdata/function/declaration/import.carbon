@@ -32,9 +32,20 @@ var c: {.c: i32} = C((1,));
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:     %b.loc5_6.1: i32 = param b
+// CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_6.1
+// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C {
+// CHECK:STDOUT:     %.loc6_14.1: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:     %.loc6_14.2: type = converted %.loc6_14.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %c.loc6_6.1: (i32,) = param c
+// CHECK:STDOUT:     @C.%c: (i32,) = bind_name c, %c.loc6_6.1
+// CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.3]
+// CHECK:STDOUT:     %return.var.loc6: ref {.c: i32} = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

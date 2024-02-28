@@ -29,8 +29,18 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %.loc7_17: i32 = int_literal 3 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc7_18: type = array_type %.loc7_17, i32 [template = constants.%.2]
+// CHECK:STDOUT:     %arr.loc7_6.1: [i32; 3] = param arr
+// CHECK:STDOUT:     @F.%arr: [i32; 3] = bind_name arr, %arr.loc7_6.1
+// CHECK:STDOUT:     %i.loc7_21.1: i32 = param i
+// CHECK:STDOUT:     @F.%i: i32 = bind_name i, %i.loc7_21.1
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%arr: [i32; 3], %i: i32) -> i32 {

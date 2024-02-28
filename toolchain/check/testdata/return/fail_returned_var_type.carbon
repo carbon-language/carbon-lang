@@ -23,7 +23,9 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Mismatch = %Mismatch} [template]
-// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch [template]
+// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> i32 {

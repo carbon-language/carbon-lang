@@ -30,7 +30,7 @@ fn Main() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc7, .Main = %Main} [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

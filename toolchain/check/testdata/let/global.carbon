@@ -18,7 +18,9 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

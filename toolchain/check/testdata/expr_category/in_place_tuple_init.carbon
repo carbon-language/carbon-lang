@@ -27,9 +27,19 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .G = %G, .H = %H} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %.loc7_20.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc7_20.2: type = converted %.loc7_20.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     @F.%return: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %.loc9_20.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc9_20.2: type = converted %.loc9_20.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     @G.%return: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {
+// CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32);

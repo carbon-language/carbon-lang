@@ -44,8 +44,12 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.SameScope = %SameScope, .DifferentScopes = %DifferentScopes} [template]
-// CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope [template]
-// CHECK:STDOUT:   %DifferentScopes: <function> = fn_decl @DifferentScopes [template]
+// CHECK:STDOUT:   %SameScope: <function> = fn_decl @SameScope {
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %DifferentScopes: <function> = fn_decl @DifferentScopes {
+// CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SameScope() -> i32 {

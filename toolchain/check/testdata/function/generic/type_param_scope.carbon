@@ -13,7 +13,15 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.F = %F} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %T.loc7_6.1: type = param T
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic]
+// CHECK:STDOUT:     %T.ref.loc7_19: type = name_ref T, @F.%T [symbolic = @F.%T]
+// CHECK:STDOUT:     %n.loc7_16.1: T = param n
+// CHECK:STDOUT:     @F.%n: T = bind_name n, %n.loc7_16.1
+// CHECK:STDOUT:     %T.ref.loc7_25: type = name_ref T, @F.%T [symbolic = @F.%T]
+// CHECK:STDOUT:     %return.var: ref T = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %n: T) -> T {

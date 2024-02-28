@@ -20,19 +20,21 @@ impl i32 as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Simple = %Simple.decl} [template]
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple, () [template = constants.%.1]
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+4>)
+// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple {} [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Simple {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

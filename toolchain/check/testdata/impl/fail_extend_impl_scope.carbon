@@ -19,8 +19,10 @@ extend impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
+// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

@@ -26,8 +26,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl, .C = %C.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
-// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
+// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
@@ -35,7 +35,9 @@ class C {
 // CHECK:STDOUT: impl @impl: C as I;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+5>)
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   has_error

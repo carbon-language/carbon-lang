@@ -54,7 +54,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+6:          {kind: Converted, arg0: inst+4, arg1: inst+5, type: typeTypeType}
 // CHECK:STDOUT:     inst+7:          {kind: VarStorage, arg0: nameReturnSlot, type: type4}
 // CHECK:STDOUT:     inst+8:          {kind: PointerType, arg0: type4, type: typeTypeType}
-// CHECK:STDOUT:     inst+9:          {kind: FunctionDecl, arg0: function0, type: type6}
+// CHECK:STDOUT:     inst+9:          {kind: FunctionDecl, arg0: function0, arg1: block5, type: type6}
 // CHECK:STDOUT:     inst+10:         {kind: NameRef, arg0: name1, arg1: inst+2, type: type1}
 // CHECK:STDOUT:     inst+11:         {kind: IntLiteral, arg0: int4, type: type1}
 // CHECK:STDOUT:     inst+12:         {kind: IntLiteral, arg0: int4, type: type1}

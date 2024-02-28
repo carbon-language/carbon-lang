@@ -35,7 +35,9 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a} [template]
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %.2: <namespace> = namespace {.A = %A}, %import_ref [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT: }

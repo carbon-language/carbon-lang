@@ -13,7 +13,10 @@ fn Six() -> x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {.Six = %Six} [template]
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six {
+// CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error>;
