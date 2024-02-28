@@ -75,14 +75,14 @@ abstract class Abstract {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Access.decl = class_decl @Access, () [template = constants.%Access]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, () [template = constants.%Base]
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, () [template = constants.%Abstract]
+// CHECK:STDOUT:   %Access.decl = class_decl @Access {} [template = constants.%Access]
+// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
+// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract {} [template = constants.%Abstract]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {} [template]
 // CHECK:STDOUT:   %.loc22: <unbound element of class Access> = field_decl k, element0 [template]
 // CHECK:STDOUT:   %.loc27: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
@@ -94,8 +94,8 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %I: <function> = fn_decl @I [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
+// CHECK:STDOUT:   %I: <function> = fn_decl @I {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .H = %H
@@ -103,9 +103,9 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %J: <function> = fn_decl @J [template]
-// CHECK:STDOUT:   %K: <function> = fn_decl @K [template]
-// CHECK:STDOUT:   %L: <function> = fn_decl @L [template]
+// CHECK:STDOUT:   %J: <function> = fn_decl @J {} [template]
+// CHECK:STDOUT:   %K: <function> = fn_decl @K {} [template]
+// CHECK:STDOUT:   %L: <function> = fn_decl @L {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .J = %J

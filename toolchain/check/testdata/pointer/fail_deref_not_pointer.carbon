@@ -32,7 +32,10 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Deref = %Deref
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref [template]
+// CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref {
+// CHECK:STDOUT:     %n.loc7_10.1: i32 = param n
+// CHECK:STDOUT:     @Deref.%n: i32 = bind_name n, %n.loc7_10.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {

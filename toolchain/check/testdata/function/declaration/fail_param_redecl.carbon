@@ -18,7 +18,12 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %n.loc13_6.1: i32 = param n
+// CHECK:STDOUT:     @F.%n.loc13_6: i32 = bind_name n, %n.loc13_6.1
+// CHECK:STDOUT:     %n.loc13_14.1: i32 = param n
+// CHECK:STDOUT:     @F.%n.loc13_14: i32 = bind_name n, %n.loc13_14.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.loc13_6: i32, %n.loc13_14: i32);

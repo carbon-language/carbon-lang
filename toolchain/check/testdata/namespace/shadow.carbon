@@ -36,16 +36,18 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:     .A = %A.loc7
 // CHECK:STDOUT:     .N = %.loc9
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1 [template]
+// CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1 {} [template]
 // CHECK:STDOUT:   %.loc9: <namespace> = namespace {
 // CHECK:STDOUT:     .A = %A.loc10
 // CHECK:STDOUT:     .M = %.loc12
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2 [template]
+// CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2 {} [template]
 // CHECK:STDOUT:   %.loc12: <namespace> = namespace {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1();

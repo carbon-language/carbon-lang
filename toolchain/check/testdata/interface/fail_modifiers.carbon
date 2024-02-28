@@ -42,23 +42,25 @@ protected interface Protected;
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract, () [template = constants.%.1]
-// CHECK:STDOUT:   %Default.decl = interface_decl @Default, () [template = constants.%.2]
-// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual, () [template = constants.%.3]
-// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected, () [template = constants.%.4]
+// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract {} [template = constants.%.1]
+// CHECK:STDOUT:   %Default.decl = interface_decl @Default {} [template = constants.%.2]
+// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual {} [template = constants.%.3]
+// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected {} [template = constants.%.4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Virtual {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Protected;
 // CHECK:STDOUT:

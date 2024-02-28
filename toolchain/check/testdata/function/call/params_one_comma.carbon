@@ -23,8 +23,11 @@ fn Main() {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
+// CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
+// CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc7_8.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

@@ -18,7 +18,13 @@ struct Interface : public Printable<Interface> {
 
   // Determines whether this interface has been fully defined. This is false
   // until we reach the `}` of the interface definition.
-  auto is_defined() const -> bool { return defined; }
+  auto is_defined() const -> bool { return associated_entities_id.is_valid(); }
+
+  // Determines whether we're currently defining the interface. This is true
+  // between the braces of the interface.
+  auto is_being_defined() const -> bool {
+    return definition_id.is_valid() && !is_defined();
+  }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the interface.
@@ -41,7 +47,7 @@ struct Interface : public Printable<Interface> {
   InstBlockId body_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the interface definition.
-  bool defined = false;
+  InstBlockId associated_entities_id = InstBlockId::Invalid;
 };
 
 }  // namespace Carbon::SemIR

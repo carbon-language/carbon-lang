@@ -28,8 +28,11 @@ fn F() {
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
+// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc7_6.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {

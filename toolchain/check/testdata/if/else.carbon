@@ -30,10 +30,13 @@ fn If(b: bool) {
 // CHECK:STDOUT:     .H = %H
 // CHECK:STDOUT:     .If = %If
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %If: <function> = fn_decl @If [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {} [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
+// CHECK:STDOUT:   %If: <function> = fn_decl @If {
+// CHECK:STDOUT:     %b.loc11_7.1: bool = param b
+// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc11_7.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

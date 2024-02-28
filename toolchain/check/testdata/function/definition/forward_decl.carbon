@@ -14,8 +14,8 @@ fn Foo() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Foo = %Foo.loc7
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo.loc7: <function> = fn_decl @Foo [template]
-// CHECK:STDOUT:   %Foo.loc9: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Foo.loc7: <function> = fn_decl @Foo {} [template]
+// CHECK:STDOUT:   %Foo.loc9: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

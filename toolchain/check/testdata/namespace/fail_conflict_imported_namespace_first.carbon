@@ -46,8 +46,8 @@ fn NS.Foo();
 // CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc12: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %.loc12: <function> = fn_decl @.1 {} [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

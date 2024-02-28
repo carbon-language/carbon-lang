@@ -95,6 +95,16 @@ class NameScopeStore {
     return values_.Get(scope_id);
   }
 
+  // Returns the instruction owning the requested name scope, or an invalid
+  // instruction if the scope is either invalid or has no associated
+  // instruction.
+  auto GetInstIdIfValid(NameScopeId scope_id) const -> InstId {
+    if (!scope_id.is_valid()) {
+      return InstId::Invalid;
+    }
+    return Get(scope_id).inst_id;
+  }
+
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
   }

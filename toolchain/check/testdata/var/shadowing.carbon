@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

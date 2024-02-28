@@ -29,14 +29,16 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
-// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

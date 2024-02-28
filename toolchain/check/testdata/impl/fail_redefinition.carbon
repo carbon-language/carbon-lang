@@ -26,15 +26,20 @@ impl i32 as I {}
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, () [template = constants.%.1]
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+5>)
+// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %I.ref.loc17: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as I {
 // CHECK:STDOUT:

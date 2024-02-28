@@ -15,7 +15,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc10: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc10: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {

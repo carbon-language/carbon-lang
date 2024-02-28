@@ -33,8 +33,8 @@ fn Run() {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

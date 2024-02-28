@@ -27,7 +27,11 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %a.loc8_6.1: i32 = param a
+// CHECK:STDOUT:     @F.%a: i32 = bind_name a, %a.loc8_6.1
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: i32) -> i32 {

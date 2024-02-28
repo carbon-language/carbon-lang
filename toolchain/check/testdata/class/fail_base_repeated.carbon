@@ -52,10 +52,10 @@ class D {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B1.decl = class_decl @B1, () [template = constants.%B1]
-// CHECK:STDOUT:   %B2.decl = class_decl @B2, () [template = constants.%B2]
-// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
-// CHECK:STDOUT:   %D.decl = class_decl @D, () [template = constants.%D]
+// CHECK:STDOUT:   %B1.decl = class_decl @B1 {} [template = constants.%B1]
+// CHECK:STDOUT:   %B2.decl = class_decl @B2 {} [template = constants.%B2]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {

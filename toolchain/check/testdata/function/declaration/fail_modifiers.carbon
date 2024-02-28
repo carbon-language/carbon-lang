@@ -81,12 +81,12 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDOUT:     .InvalidModifier = %InvalidModifier
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder [template]
-// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual [template]
-// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess [template]
-// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict [template]
-// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier [template]
-// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2 [template]
+// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder {} [template]
+// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual {} [template]
+// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess {} [template]
+// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict {} [template]
+// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier {} [template]
+// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongOrder();

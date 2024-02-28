@@ -25,7 +25,7 @@ fn Procedure() {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Procedure = %Procedure
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure [template]
+// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {

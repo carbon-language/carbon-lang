@@ -27,8 +27,8 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {
 // CHECK:STDOUT:     .Baz = %Baz.loc9
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz [template]
-// CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz [template]
+// CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz {} [template]
+// CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

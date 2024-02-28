@@ -40,10 +40,13 @@ fn Var() {
 // CHECK:STDOUT:     .Let = %Let
 // CHECK:STDOUT:     .Var = %Var
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X, () [template = constants.%X]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
-// CHECK:STDOUT:   %Let: <function> = fn_decl @Let [template]
-// CHECK:STDOUT:   %Var: <function> = fn_decl @Var [template]
+// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     @Make.%return: ref X = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Let: <function> = fn_decl @Let {} [template]
+// CHECK:STDOUT:   %Var: <function> = fn_decl @Var {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

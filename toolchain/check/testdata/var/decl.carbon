@@ -14,7 +14,7 @@ fn Main() {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

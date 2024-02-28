@@ -40,7 +40,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -88,7 +88,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();

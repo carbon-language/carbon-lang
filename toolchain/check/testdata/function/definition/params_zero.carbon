@@ -12,7 +12,7 @@ fn Foo() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

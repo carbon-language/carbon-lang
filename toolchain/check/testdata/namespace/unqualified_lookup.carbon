@@ -47,12 +47,12 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .CallABC = %CallABC
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
-// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA [template]
-// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB [template]
-// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C {} [template]
+// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA {} [template]
+// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB {} [template]
+// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

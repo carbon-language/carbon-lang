@@ -32,7 +32,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete, () [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete {} [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_21: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc15_22: type = array_type %.loc15_21, Incomplete [template = constants.%.2]

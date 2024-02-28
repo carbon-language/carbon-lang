@@ -22,13 +22,13 @@ class C {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, ()
+// CHECK:STDOUT:   impl_decl @impl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   has_error

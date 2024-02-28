@@ -79,22 +79,72 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     .CallFOnInitializingExpr = %CallFOnInitializingExpr
 // CHECK:STDOUT:     .CallGOnInitializingExpr = %CallGOnInitializingExpr
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, () [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
-// CHECK:STDOUT:   %CallAlias: <function> = fn_decl @CallAlias [template]
-// CHECK:STDOUT:   %CallOnConstBoundMethod: <function> = fn_decl @CallOnConstBoundMethod [template]
-// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr [template]
-// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer [template]
-// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer [template]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
-// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr [template]
-// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr [template]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc16_12.1: Class = param self
+// CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc16_12.1
+// CHECK:STDOUT:     %return.var.loc16: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call {
+// CHECK:STDOUT:     %Class.ref.loc20: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.loc20_9.1: Class = param c
+// CHECK:STDOUT:     @Call.%c: Class = bind_name c, %c.loc20_9.1
+// CHECK:STDOUT:     %return.var.loc20: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallAlias: <function> = fn_decl @CallAlias {
+// CHECK:STDOUT:     %Class.ref.loc26: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %c.loc26_14.1: Class = param c
+// CHECK:STDOUT:     @CallAlias.%c: Class = bind_name c, %c.loc26_14.1
+// CHECK:STDOUT:     %return.var.loc26: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallOnConstBoundMethod: <function> = fn_decl @CallOnConstBoundMethod {
+// CHECK:STDOUT:     %return.var.loc30: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallWithAddr: <function> = fn_decl @CallWithAddr {
+// CHECK:STDOUT:     %return.var.loc34: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallFThroughPointer: <function> = fn_decl @CallFThroughPointer {
+// CHECK:STDOUT:     %Class.ref.loc39: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc39: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %p.loc39_24.1: Class* = param p
+// CHECK:STDOUT:     @CallFThroughPointer.%p: Class* = bind_name p, %p.loc39_24.1
+// CHECK:STDOUT:     %return.var.loc39: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallGThroughPointer: <function> = fn_decl @CallGThroughPointer {
+// CHECK:STDOUT:     %Class.ref.loc43: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc43: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %p.loc43_24.1: Class* = param p
+// CHECK:STDOUT:     @CallGThroughPointer.%p: Class* = bind_name p, %p.loc43_24.1
+// CHECK:STDOUT:     %return.var.loc43: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallFOnInitializingExpr: <function> = fn_decl @CallFOnInitializingExpr {
+// CHECK:STDOUT:     %return.var.loc49: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %CallGOnInitializingExpr: <function> = fn_decl @CallGOnInitializingExpr {
+// CHECK:STDOUT:     %return.var.loc53: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc8_8.1: Class = param self
+// CHECK:STDOUT:     %self.loc8_8.2: Class = bind_name self, %self.loc8_8.1
+// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc9_24: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc9_13.1: Class* = param self
+// CHECK:STDOUT:     %self.loc9_13.3: Class* = bind_name self, %self.loc9_13.1
+// CHECK:STDOUT:     %.loc9_8: Class* = addr_pattern %self.loc9_13.3
+// CHECK:STDOUT:     %return.var.loc9: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F [template = %F]
 // CHECK:STDOUT:   %A: <function> = bind_alias A, %F [template = %F]
 // CHECK:STDOUT:   %.loc13: <unbound element of class Class> = field_decl k, element0 [template]
@@ -114,7 +164,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc17_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self: Class*]() -> i32;
+// CHECK:STDOUT: fn @G[addr @Class.%self.loc9_13.3: Class*]() -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c: Class) -> i32 {
 // CHECK:STDOUT: !entry:

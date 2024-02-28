@@ -27,8 +27,15 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %.loc7: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %s.loc7_6.1: {.a: i32, .b: i32} = param s
+// CHECK:STDOUT:     @G.%s: {.a: i32, .b: i32} = bind_name s, %s.loc7_6.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %cond.loc9_6.1: bool = param cond
+// CHECK:STDOUT:     @F.%cond: bool = bind_name cond, %cond.loc9_6.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%s: {.a: i32, .b: i32});

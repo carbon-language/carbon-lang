@@ -27,8 +27,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @GenericInterface [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @GenericInterface, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in GenericInterface> = assoc_entity element0, @GenericInterface.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,34 +38,52 @@ class C {
 // CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface, (<unexpected instref inst+1>, <unexpected instref inst+2>) [template = constants.%.1]
-// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
+// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface {
+// CHECK:STDOUT:     %T.loc10_28.1: type = param T
+// CHECK:STDOUT:     %T.loc10_28.2: type = bind_symbolic_name T, %T.loc10_28.1 [symbolic]
+// CHECK:STDOUT:   } [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc10_28.2 [symbolic = file.%T.loc10_28.2]
+// CHECK:STDOUT:     %x.loc11_8.1: T = param x
+// CHECK:STDOUT:     %x.loc11_8.2: T = bind_name x, %x.loc11_8.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc11: <associated <function> in GenericInterface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
-// CHECK:STDOUT: }
+// CHECK:STDOUT:   .F = %.loc11
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%F)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as <error> {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc21_23.2 [symbolic = @C.%T.loc21_23.2]
+// CHECK:STDOUT:     %x.loc22_10.1: T = param x
+// CHECK:STDOUT:     %x.loc22_10.2: T = bind_name x, %x.loc22_10.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+11>, <unexpected instref inst+12>, <unexpected instref inst+13>, <unexpected instref inst+14>)
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %T.loc21_23.1: type = param T
+// CHECK:STDOUT:     %T.loc21_23.2: type = bind_symbolic_name T, %T.loc21_23.1 [symbolic]
+// CHECK:STDOUT:     %GenericInterface.ref: type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc21_23.2 [symbolic = %T.loc21_23.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%x: T);
+// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc11_8.2: T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x: T) {
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc22_10.2: T) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

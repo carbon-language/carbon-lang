@@ -20,7 +20,7 @@ var y: i32 = x;
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
 // CHECK:STDOUT: }

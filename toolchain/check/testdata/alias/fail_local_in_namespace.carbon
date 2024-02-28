@@ -33,7 +33,9 @@ fn F() -> bool {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %return.var: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {

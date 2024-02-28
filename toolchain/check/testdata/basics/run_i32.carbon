@@ -16,7 +16,9 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {

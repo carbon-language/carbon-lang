@@ -98,7 +98,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.4: <namespace> = namespace %import_ref.3, {
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
+// CHECK:STDOUT:   %D: <function> = fn_decl @D {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

@@ -46,9 +46,21 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     .If2 = %If2
 // CHECK:STDOUT:     .If3 = %If3
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %If1: <function> = fn_decl @If1 [template]
-// CHECK:STDOUT:   %If2: <function> = fn_decl @If2 [template]
-// CHECK:STDOUT:   %If3: <function> = fn_decl @If3 [template]
+// CHECK:STDOUT:   %If1: <function> = fn_decl @If1 {
+// CHECK:STDOUT:     %b.loc7_8.1: bool = param b
+// CHECK:STDOUT:     @If1.%b: bool = bind_name b, %b.loc7_8.1
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %If2: <function> = fn_decl @If2 {
+// CHECK:STDOUT:     %b.loc17_8.1: bool = param b
+// CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc17_8.1
+// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %If3: <function> = fn_decl @If3 {
+// CHECK:STDOUT:     %b.loc27_8.1: bool = param b
+// CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc27_8.1
+// CHECK:STDOUT:     %return.var.loc27: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {

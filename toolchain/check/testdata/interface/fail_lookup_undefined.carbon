@@ -46,6 +46,8 @@ interface BeingDefined {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Undefined [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @BeingDefined, <function> [template]
+// CHECK:STDOUT:   %.4: <associated <function> in BeingDefined> = assoc_entity element0, @BeingDefined.%H [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,21 +56,27 @@ interface BeingDefined {
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Undefined.decl = interface_decl @Undefined, () [template = constants.%.1]
-// CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template]
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
-// CHECK:STDOUT:   %BeingDefined.decl = interface_decl @BeingDefined, () [template = constants.%.2]
+// CHECK:STDOUT:   %Undefined.decl = interface_decl @Undefined {} [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 {} [template]
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test {} [template]
+// CHECK:STDOUT:   %BeingDefined.decl = interface_decl @BeingDefined {} [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %.loc41: <function> = fn_decl @.2 [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {
+// CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.2]
+// CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
+// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc37: <associated <function> in BeingDefined> = assoc_entity element0, %H [template = constants.%.4]
+// CHECK:STDOUT:   %.loc41: <function> = fn_decl @.2 {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .H = %H
-// CHECK:STDOUT: }
+// CHECK:STDOUT:   .H = %.loc37
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = (%H)}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:

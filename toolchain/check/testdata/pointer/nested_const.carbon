@@ -23,7 +23,17 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %.loc8_23: type = const_type i32 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc8_32: type = ptr_type const i32 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc8_16: type = const_type const i32* [template = constants.%.3]
+// CHECK:STDOUT:     %.loc8_34: type = ptr_type const (const i32*) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc8_9: type = const_type const (const i32*)* [template = constants.%.5]
+// CHECK:STDOUT:     %p.loc8_6.1: const (const (const i32*)*) = param p
+// CHECK:STDOUT:     @F.%p: const (const (const i32*)*) = bind_name p, %p.loc8_6.1
+// CHECK:STDOUT:     %.loc8_41: type = const_type i32 [template = constants.%.1]
+// CHECK:STDOUT:     %return.var: ref const i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {

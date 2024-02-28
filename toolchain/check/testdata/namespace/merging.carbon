@@ -51,7 +51,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -69,10 +69,10 @@ fn Run() {
 // CHECK:STDOUT:     .B1 = %B1
 // CHECK:STDOUT:     .B2 = %B2
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B1: <function> = fn_decl @B1 [template]
+// CHECK:STDOUT:   %B1: <function> = fn_decl @B1 {} [template]
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B2: <function> = fn_decl @B2 [template]
+// CHECK:STDOUT:   %B2: <function> = fn_decl @B2 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B1() {
@@ -108,8 +108,8 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, used [template = imports.%B2]
 // CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C {} [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {

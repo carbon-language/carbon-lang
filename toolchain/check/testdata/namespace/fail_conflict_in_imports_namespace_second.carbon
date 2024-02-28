@@ -38,7 +38,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template]
+// CHECK:STDOUT:   %NS: <function> = fn_decl @NS {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS() {
@@ -55,7 +55,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   %.loc10: <namespace> = namespace {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -76,7 +76,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unused
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {

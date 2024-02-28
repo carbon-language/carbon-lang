@@ -32,9 +32,9 @@ fn Bar() {
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {
 // CHECK:STDOUT:     .Baz = %Baz.loc13
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1 [template]
-// CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2 [template]
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template]
+// CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1 {} [template]
+// CHECK:STDOUT:   %Baz.loc13: <function> = fn_decl @Baz.2 {} [template]
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {

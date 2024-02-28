@@ -28,8 +28,11 @@ fn Make() -> C {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %C.decl = class_decl @C, () [template = constants.%C]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     @Make.%return: ref C = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

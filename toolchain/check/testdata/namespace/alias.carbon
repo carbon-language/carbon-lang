@@ -35,12 +35,18 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %NS.ref.loc9: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %.loc7 [template = %.loc7]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:     %return.var.loc13: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
 // CHECK:STDOUT:   %C: <function> = bind_alias C, %A [template = %A]
-// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
+// CHECK:STDOUT:   %D: <function> = fn_decl @D {
+// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {

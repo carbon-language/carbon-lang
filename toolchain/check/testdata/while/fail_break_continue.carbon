@@ -37,7 +37,7 @@ fn While() {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .While = %While
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %While: <function> = fn_decl @While [template]
+// CHECK:STDOUT:   %While: <function> = fn_decl @While {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {

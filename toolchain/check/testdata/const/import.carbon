@@ -35,7 +35,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .a_ptr_ref = %a_ptr_ref
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %.loc4: type = const_type i32 [template = constants.%.1]
+// CHECK:STDOUT:     %return.var: ref const i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc6: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a_ref.var: ref const i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref const i32 = bind_name a_ref, %a_ref.var

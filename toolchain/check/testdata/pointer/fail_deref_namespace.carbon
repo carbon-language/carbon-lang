@@ -22,7 +22,7 @@ fn F() {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace {
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

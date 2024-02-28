@@ -24,8 +24,16 @@ fn Main() {
 // CHECK:STDOUT:     .Echo = %Echo
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo {
+// CHECK:STDOUT:     %.loc7_13.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_13.2: type = converted %.loc7_13.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %a.loc7_9.1: () = param a
+// CHECK:STDOUT:     @Echo.%a: () = bind_name a, %a.loc7_9.1
+// CHECK:STDOUT:     %.loc7_20.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_20.2: type = converted %.loc7_20.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %return.var: ref () = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {

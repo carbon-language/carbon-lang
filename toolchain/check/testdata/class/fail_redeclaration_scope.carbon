@@ -40,29 +40,29 @@ class Y {
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1, () [template = constants.%A.1]
-// CHECK:STDOUT:   %X.decl = class_decl @X, () [template = constants.%X]
-// CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1, () [template = constants.%A.1]
-// CHECK:STDOUT:   %Y.decl = class_decl @Y, () [template = constants.%Y]
+// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1 {} [template = constants.%A.1]
+// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1 {} [template = constants.%A.1]
+// CHECK:STDOUT:   %Y.decl = class_decl @Y {} [template = constants.%Y]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   %B.decl = class_decl @B.2, () [template = constants.%B.2]
+// CHECK:STDOUT:   %B.decl = class_decl @B.2 {} [template = constants.%B.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %A.decl = class_decl @A.2, () [template = constants.%A.2]
-// CHECK:STDOUT:   %B.decl = class_decl @B.1, () [template = constants.%B.1]
+// CHECK:STDOUT:   %A.decl = class_decl @A.2 {} [template = constants.%A.2]
+// CHECK:STDOUT:   %B.decl = class_decl @B.1 {} [template = constants.%B.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %B.decl = class_decl @B.1, () [template = constants.%B.1]
+// CHECK:STDOUT:   %B.decl = class_decl @B.1 {} [template = constants.%B.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %B.decl
@@ -76,7 +76,7 @@ class Y {
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   %.decl = class_decl @.1, () [template = constants.%.2]
+// CHECK:STDOUT:   %.decl = class_decl @.1 {} [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT: }

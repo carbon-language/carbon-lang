@@ -85,12 +85,12 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
 // CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, () [template = constants.%DuplicatePrivate]
-// CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, () [template = constants.%TwoAccess]
-// CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, () [template = constants.%TwoAbstract]
-// CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, () [template = constants.%Virtual]
-// CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, () [template = constants.%WrongOrder]
-// CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, () [template = constants.%AbstractAndBase]
+// CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate {} [template = constants.%DuplicatePrivate]
+// CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess {} [template = constants.%TwoAccess]
+// CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract {} [template = constants.%TwoAbstract]
+// CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual {} [template = constants.%Virtual]
+// CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder {} [template = constants.%WrongOrder]
+// CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase {} [template = constants.%AbstractAndBase]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;

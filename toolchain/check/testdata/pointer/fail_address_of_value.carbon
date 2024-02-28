@@ -118,14 +118,22 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     .AddressOfTupleElementValue = %AddressOfTupleElementValue
 // CHECK:STDOUT:     .AddressOfParam = %AddressOfParam
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral [template]
-// CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator [template]
-// CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall [template]
-// CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType [template]
-// CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue [template]
-// CHECK:STDOUT:   %AddressOfParam: <function> = fn_decl @AddressOfParam [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {
+// CHECK:STDOUT:     %.loc9: type = struct_type {.a: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %return.var.loc9: ref {.a: i32} = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral {} [template]
+// CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator {} [template]
+// CHECK:STDOUT:   %AddressOfCall: <function> = fn_decl @AddressOfCall {} [template]
+// CHECK:STDOUT:   %AddressOfType: <function> = fn_decl @AddressOfType {} [template]
+// CHECK:STDOUT:   %AddressOfTupleElementValue: <function> = fn_decl @AddressOfTupleElementValue {} [template]
+// CHECK:STDOUT:   %AddressOfParam: <function> = fn_decl @AddressOfParam {
+// CHECK:STDOUT:     %param.loc78_19.1: i32 = param param
+// CHECK:STDOUT:     @AddressOfParam.%param: i32 = bind_name param, %param.loc78_19.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

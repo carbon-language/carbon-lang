@@ -173,7 +173,7 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                                      DiagnosticBuilder& builder) -> void {
   const auto& interface_info = interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
-  if (interface_info.definition_id.is_valid()) {
+  if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
     builder.Note(interface_info.definition_id,
@@ -813,16 +813,13 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    // TODO: This can emit new SemIR instructions. Consider emitting them into a
-    // dedicated file-scope instruction block where possible, or somewhere else
-    // that better reflects the definition of the type, rather than wherever the
-    // type happens to first be required to be complete.
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::AssociatedEntity::Kind:
       case SemIR::BaseDecl::Kind:
       case SemIR::BindAlias::Kind:
       case SemIR::BindName::Kind:
@@ -908,6 +905,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
 
+      case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
@@ -978,6 +976,13 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
   // type more than once will create multiple type blocks, all but one of which
   // is unused.
   return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
+}
+
+auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                                      SemIR::TypeId entity_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_id,
+                                                  entity_type_id);
 }
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {

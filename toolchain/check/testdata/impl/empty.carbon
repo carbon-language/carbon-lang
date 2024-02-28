@@ -20,14 +20,17 @@ impl i32 as Empty {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty, () [template = constants.%.1]
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+3>)
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   witness = ()}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Empty {
 // CHECK:STDOUT:

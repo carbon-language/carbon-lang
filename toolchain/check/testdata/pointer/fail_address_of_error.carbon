@@ -24,7 +24,7 @@ fn Test() {
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
