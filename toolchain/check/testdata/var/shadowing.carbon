@@ -32,8 +32,7 @@ fn Main() {
 // CHECK:STDOUT:     .NS = %.loc7
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

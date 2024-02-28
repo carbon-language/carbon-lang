@@ -44,8 +44,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   package: <namespace> = namespace {
 // CHECK:STDOUT:     .A = %.loc4
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -58,8 +57,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, {
 // CHECK:STDOUT:     .B = %.loc5
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
@@ -76,8 +74,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
 // CHECK:STDOUT:     .C = %.loc5
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon

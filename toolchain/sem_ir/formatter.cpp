@@ -583,7 +583,9 @@ class Formatter {
 
     FormatConstants();
 
-    out_ << "file {\n";
+    out_ << "file ";
+    OpenBrace();
+
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
@@ -591,7 +593,9 @@ class Formatter {
       llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
       FormatCodeBlock(block_id);
     }
-    out_ << "}\n";
+
+    CloseBrace();
+    out_ << '\n';
 
     for (int i : llvm::seq(sem_ir_.interfaces().size())) {
       FormatInterface(InterfaceId(i));
@@ -613,15 +617,56 @@ class Formatter {
     out_ << "\n";
   }
 
+  // Begins a braced block. Writes an open brace, and prepares to insert a
+  // newline after it if the braced block is non-empty.
+  auto OpenBrace() -> void {
+    out_ << '{';
+    indent_ += 2;
+    after_open_brace_ = true;
+  }
+
+  // Ends a braced block by writing a close brace.
+  auto CloseBrace() -> void {
+    indent_ -= 2;
+    if (!after_open_brace_) {
+      Indent();
+    }
+    out_ << '}';
+    after_open_brace_ = false;
+  }
+
+  // Adds beginning-of-line indentation. If we're at the start of a braced
+  // block, first starts a new line.
+  auto Indent(int offset = 0) -> void {
+    if (after_open_brace_) {
+      out_ << '\n';
+      after_open_brace_ = false;
+    }
+    out_.indent(indent_ + offset);
+  }
+
+  // Adds beginning-of-label indentation. This is one level less than normal
+  // indentation. Labels also get a preceding blank line unless they're at the
+  // start of a block.
+  auto IndentLabel() -> void {
+    CARBON_CHECK(indent_ >= 2);
+    if (!after_open_brace_) {
+      out_ << '\n';
+    }
+    Indent(-2);
+  }
+
   auto FormatConstants() -> void {
     if (!sem_ir_.constants().size()) {
       return;
     }
 
     llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
-    out_ << "constants {\n";
+    out_ << "constants ";
+    OpenBrace();
     FormatCodeBlock(sem_ir_.constants().GetAsVector());
-    out_ << "}\n\n";
+    CloseBrace();
+    out_ << "\n\n";
   }
 
   auto FormatClass(ClassId id) -> void {
@@ -633,11 +678,12 @@ class Formatter {
     llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
-      out_ << " {\n";
+      out_ << ' ';
+      OpenBrace();
       FormatCodeBlock(class_info.body_block_id);
-      out_ << "\n!members:\n";
-      FormatNameScope(class_info.scope_id);
-      out_ << "}\n";
+      FormatNameScope(class_info.scope_id, "!members:\n");
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -652,13 +698,23 @@ class Formatter {
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (interface_info.scope_id.is_valid()) {
-      out_ << " {\n";
+      out_ << ' ';
+      OpenBrace();
       FormatCodeBlock(interface_info.body_block_id);
-      out_ << "\n!members:\n";
+
+      // Always include the !members label because we always list the witness in
+      // this section.
+      IndentLabel();
+      out_ << "!members:\n";
       FormatNameScope(interface_info.scope_id);
-      out_ << "\n  witness = ";
+
+      Indent();
+      out_ << "witness = ";
       FormatArg(interface_info.associated_entities_id);
-      out_ << "}\n";
+      out_ << "\n";
+
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -678,11 +734,12 @@ class Formatter {
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (impl_info.scope_id.is_valid()) {
-      out_ << " {\n";
+      out_ << ' ';
+      OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
-      out_ << "\n!members:\n";
-      FormatNameScope(impl_info.scope_id);
-      out_ << "}\n";
+      FormatNameScope(impl_info.scope_id, "!members:\n");
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -716,18 +773,19 @@ class Formatter {
     }
 
     if (!fn.body_block_ids.empty()) {
-      out_ << " {";
+      out_ << ' ';
+      OpenBrace();
 
       for (auto block_id : fn.body_block_ids) {
-        out_ << "\n";
-
+        IndentLabel();
         FormatLabel(block_id);
         out_ << ":\n";
 
         FormatCodeBlock(block_id);
       }
 
-      out_ << "}\n";
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -764,19 +822,25 @@ class Formatter {
   }
 
   auto FormatTrailingBlock(InstBlockId block_id) -> void {
-    out_ << " {";
-    if (!sem_ir_.inst_blocks().Get(block_id).empty()) {
-      out_ << "\n";
-      indent_ += 2;
-      FormatCodeBlock(block_id);
-      indent_ -= 2;
-      Indent();
-    }
-    out_ << "}";
+    out_ << ' ';
+    OpenBrace();
+    FormatCodeBlock(block_id);
+    CloseBrace();
   }
 
-  auto FormatNameScope(NameScopeId id) -> void {
+  auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void {
     const auto& scope = sem_ir_.name_scopes().Get(id);
+
+    if (scope.names.empty() && scope.extended_scopes.empty() &&
+        !scope.has_error) {
+      // Name scope is empty.
+      return;
+    }
+
+    if (!label.empty()) {
+      IndentLabel();
+      out_ << label;
+    }
 
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
@@ -827,8 +891,6 @@ class Formatter {
 #include "toolchain/sem_ir/inst_kind.def"
     }
   }
-
-  auto Indent() -> void { out_.indent(indent_); }
 
   template <typename InstT>
   auto FormatInstruction(InstId inst_id, InstT inst) -> void {
@@ -1108,12 +1170,9 @@ class Formatter {
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
-    out_ << "{\n";
-    indent_ += 2;
+    OpenBrace();
     FormatNameScope(id);
-    indent_ -= 2;
-    Indent();
-    out_ << '}';
+    CloseBrace();
   }
 
   auto FormatArg(InstId id) -> void { FormatInstName(id); }
@@ -1201,7 +1260,8 @@ class Formatter {
   InstNamer inst_namer_;
   InstNamer::ScopeId scope_ = InstNamer::ScopeId::None;
   bool in_terminator_sequence_ = false;
-  int indent_ = 2;
+  int indent_ = 0;
+  bool after_open_brace_ = false;
 };
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,

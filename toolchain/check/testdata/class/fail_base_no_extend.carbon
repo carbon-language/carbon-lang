@@ -34,10 +34,7 @@ class C {
 // CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]

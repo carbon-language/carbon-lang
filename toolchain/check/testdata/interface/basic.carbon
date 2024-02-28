@@ -33,10 +33,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
@@ -44,8 +43,8 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc13
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%F)}
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

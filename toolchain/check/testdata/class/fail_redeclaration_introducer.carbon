@@ -114,38 +114,17 @@ base class G;
 // CHECK:STDOUT:   %G.decl.loc75 = class_decl @G {} [template = constants.%G]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @C {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @D {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @E {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @F {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @D {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @E {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @F {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @G {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @G {}
 // CHECK:STDOUT:

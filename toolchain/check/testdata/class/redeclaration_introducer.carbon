@@ -35,18 +35,9 @@ abstract class C {}
 // CHECK:STDOUT:   %C.decl.loc13 = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @C {}
 // CHECK:STDOUT:

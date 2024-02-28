@@ -19,6 +19,5 @@ fn G() { return {.return = 5}; };
 
 // CHECK:STDOUT: --- fail_keyword_name.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

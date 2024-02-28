@@ -70,8 +70,7 @@ fn Run() {
 // CHECK:STDOUT:     .B2 = %B2
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %B1: <function> = fn_decl @B1 {} [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %B2: <function> = fn_decl @B2 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,8 +105,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+2, used [template = imports.%A]
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, used [template = imports.%B1]
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, used [template = imports.%B2]
-// CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7_13.2: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %C: <function> = fn_decl @C {} [template]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }

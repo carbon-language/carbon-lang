@@ -58,15 +58,9 @@ class D {
 // CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B1 {
+// CHECK:STDOUT: class @B1 {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B2 {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]

@@ -49,14 +49,13 @@ private interface Private {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Final = %.loc11
 // CHECK:STDOUT:   .Default = %.loc15
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%Final, %Default)}
+// CHECK:STDOUT:   witness = (%Final, %Default)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Private {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = ()}
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Final() {
 // CHECK:STDOUT: !entry:

@@ -42,9 +42,7 @@ impl namespace Bar;
 // CHECK:STDOUT:     .Foo = %.loc31
 // CHECK:STDOUT:     .Bar = %.loc36
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc31: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc36: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc31: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   %.loc36: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

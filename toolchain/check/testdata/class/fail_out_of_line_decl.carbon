@@ -27,7 +27,6 @@ fn C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT: }

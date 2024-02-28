@@ -23,8 +23,7 @@ let a: T = 0;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

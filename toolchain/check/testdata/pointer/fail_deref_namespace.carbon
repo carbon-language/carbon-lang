@@ -20,8 +20,7 @@ fn F() {
 // CHECK:STDOUT:     .A = %.loc7
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

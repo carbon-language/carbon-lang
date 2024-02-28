@@ -20,8 +20,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.2: f64 = real_literal 34e-1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:

@@ -41,8 +41,8 @@ fn Interface.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc11
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%F)}
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:

@@ -68,21 +68,13 @@ class Y {
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B.1 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B.1 {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
 // CHECK:STDOUT:   %.decl = class_decl @.1 {} [template = constants.%.2]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @.1 {}
 // CHECK:STDOUT:

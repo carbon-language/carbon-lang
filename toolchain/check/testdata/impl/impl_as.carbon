@@ -39,8 +39,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:
-// CHECK:STDOUT:   witness = (%F)}
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
@@ -53,8 +53,6 @@ class C {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
