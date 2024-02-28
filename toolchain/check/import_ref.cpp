@@ -618,8 +618,6 @@ class ImportRefResolver {
 
       CARBON_CHECK(import_scope.extended_scopes.empty())
           << "Interfaces don't currently have extended scopes to support.";
-
-      new_interface.defined = true;
     }
 
     // Write the interface ID into the InterfaceDecl.

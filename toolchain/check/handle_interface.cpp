@@ -159,8 +159,7 @@ auto HandleInterfaceDefinition(Context& context,
 
   // The interface type is now fully defined.
   auto& interface_info = context.interfaces().Get(interface_id);
-  if (!interface_info.defined) {
-    interface_info.defined = true;
+  if (!interface_info.associated_entities_id.is_valid()) {
     interface_info.associated_entities_id = associated_entities_id;
   }
   return true;
