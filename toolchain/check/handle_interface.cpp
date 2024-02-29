@@ -51,8 +51,8 @@ static auto BuildInterfaceDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
-  auto interface_decl =
-      SemIR::InterfaceDecl{SemIR::InterfaceId::Invalid, decl_block_id};
+  auto interface_decl = SemIR::InterfaceDecl{
+      SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id =
       context.AddPlaceholderInst({parse_node, interface_decl});
 
@@ -107,7 +107,7 @@ auto HandleInterfaceDefinitionStart(
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  if (interface_info.definition_id.is_valid()) {
+  if (interface_info.is_defined()) {
     CARBON_DIAGNOSTIC(InterfaceRedefinition, Error,
                       "Redefinition of interface {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,
@@ -130,7 +130,9 @@ auto HandleInterfaceDefinitionStart(
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, interface_id);
-  // TODO: Perhaps use the args_type_info_stack for a witness table.
+
+  // We use the arg stack to build the witness table type.
+  context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:
@@ -153,10 +155,13 @@ auto HandleInterfaceDefinition(Context& context,
   context.inst_block_stack().Pop();
   context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
+  auto associated_entities_id = context.args_type_info_stack().Pop();
 
   // The interface type is now fully defined.
   auto& interface_info = context.interfaces().Get(interface_id);
-  interface_info.defined = true;
+  if (!interface_info.associated_entities_id.is_valid()) {
+    interface_info.associated_entities_id = associated_entities_id;
+  }
   return true;
 }
 

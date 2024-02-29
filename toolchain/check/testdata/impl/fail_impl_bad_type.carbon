@@ -14,23 +14,25 @@ impl true as I {}
 // CHECK:STDOUT: --- fail_impl_bad_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: type = interface_type @I [template]
+// CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.I = %I.decl} [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I, ()
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+2>, <unexpected instref inst+5>)
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %.loc12: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: <error> as I {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: impl @impl: <error> as I {}
 // CHECK:STDOUT:

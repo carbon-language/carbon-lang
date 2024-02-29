@@ -47,12 +47,33 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Call = %Call} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
-// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .Call = %Call
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived {} [template = constants.%Derived]
+// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase {
+// CHECK:STDOUT:     %Base.ref.loc18: type = name_ref Base, %Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %self.loc18_21.1: Base = param self
+// CHECK:STDOUT:     @SelfBase.%self: Base = bind_name self, %self.loc18_21.1
+// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase {
+// CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, %Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %.loc22_40: type = ptr_type Base [template = constants.%.5]
+// CHECK:STDOUT:     %self.loc22_30.1: Base* = param self
+// CHECK:STDOUT:     @AddrSelfBase.%self: Base* = bind_name self, %self.loc22_30.1
+// CHECK:STDOUT:     @AddrSelfBase.%.loc22: Base* = addr_pattern @AddrSelfBase.%self
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc26: type = ptr_type Derived [template = constants.%.8]
+// CHECK:STDOUT:     %p.loc26_9.1: Derived* = param p
+// CHECK:STDOUT:     @Call.%p: Derived* = bind_name p, %p.loc26_9.1
+// CHECK:STDOUT:     %return.var.loc26: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -63,10 +84,21 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref.loc12: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Base, element0 [template]
-// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase [template]
-// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template]
+// CHECK:STDOUT:   %SelfBase: <function> = fn_decl @SelfBase {
+// CHECK:STDOUT:     %Base.ref.loc14: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %self.loc14_15.1: Base = param self
+// CHECK:STDOUT:     %self.loc14_15.2: Base = bind_name self, %self.loc14_15.1
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase {
+// CHECK:STDOUT:     %Base.ref.loc15: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:     %.loc15_34: type = ptr_type Base [template = constants.%.5]
+// CHECK:STDOUT:     %self.loc15_24.1: Base* = param self
+// CHECK:STDOUT:     %self.loc15_24.3: Base* = bind_name self, %self.loc15_24.1
+// CHECK:STDOUT:     %.loc15_19: Base* = addr_pattern %self.loc15_24.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .base = %.loc12

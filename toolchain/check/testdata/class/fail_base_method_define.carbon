@@ -40,16 +40,19 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .D = %D.decl} [template]
-// CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %D.decl = class_decl @D, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template]
-// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
+// CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.3 {} [template]
+// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {} [template]
+// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -57,14 +60,14 @@ fn D.C.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc16: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -49,11 +49,26 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Abstract = %Abstract.decl, .Derived = %Derived.decl, .Make = %Make, .Access = %Access} [template]
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract {} [template = constants.%Abstract]
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived {} [template = constants.%Derived]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %Derived.ref.loc17: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     @Make.%return: ref Derived = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Access: <function> = fn_decl @Access {
+// CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %d.loc25_11.1: Derived = param d
+// CHECK:STDOUT:     @Access.%d: Derived = bind_name d, %d.loc25_11.1
+// CHECK:STDOUT:     %.loc25_35.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc25_35.2: type = converted %.loc25_35.1, constants.%.14 [template = constants.%.14]
+// CHECK:STDOUT:     @Access.%return: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
@@ -64,7 +79,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, constants.%Abstract [template = constants.%Abstract]
+// CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Abstract, element0 [template]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Derived> = field_decl d, element1 [template]
 // CHECK:STDOUT:

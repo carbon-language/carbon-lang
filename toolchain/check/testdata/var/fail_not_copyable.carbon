@@ -34,15 +34,19 @@ fn F(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .F = %F} [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .X = %X.decl
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %x.loc10_6.1: X = param x
+// CHECK:STDOUT:     @F.%x: X = bind_name x, %x.loc10_6.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @X {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x: X) {
 // CHECK:STDOUT: !entry:
@@ -50,7 +54,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %.loc16: String = string_literal "hello" [template = constants.%.5]
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref: type = name_ref X, constants.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref X = var y
 // CHECK:STDOUT:   %y: ref X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: X = name_ref x, %x

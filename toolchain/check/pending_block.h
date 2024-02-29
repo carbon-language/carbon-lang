@@ -7,7 +7,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 

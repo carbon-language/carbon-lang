@@ -23,10 +23,26 @@ fn C(r#if: i32) -> i32 {
 // CHECK:STDOUT: --- raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:     %n.loc11_6.1: i32 = param n
+// CHECK:STDOUT:     @A.%n: i32 = bind_name n, %n.loc11_6.1
+// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:     %n.loc15_6.1: i32 = param n
+// CHECK:STDOUT:     @B.%n: i32 = bind_name n, %n.loc15_6.1
+// CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C {
+// CHECK:STDOUT:     %if.loc19_6.1: i32 = param r#if
+// CHECK:STDOUT:     @C.%if: i32 = bind_name r#if, %if.loc19_6.1
+// CHECK:STDOUT:     %return.var.loc19: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%n: i32) -> i32 {

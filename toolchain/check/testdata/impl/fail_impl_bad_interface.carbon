@@ -17,11 +17,10 @@ impl i32 as false {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   impl_decl @impl, (<unexpected instref inst+1>)
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %.loc10: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as <error> {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: impl @impl: i32 as <error> {}
 // CHECK:STDOUT:

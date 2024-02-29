@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -264,6 +265,145 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   Inst(inst).Print(out);
   return out;
 }
+
+// Associates a NodeId and Inst in order to provide type-checking that the
+// TypedNodeId corresponds to the InstT.
+struct ParseNodeAndInst {
+  // In cases where the NodeId is untyped or the InstT is unknown, the check
+  // can't be done at compile time.
+  // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
+  // corresponds.
+  static auto Untyped(Parse::NodeId parse_node, Inst inst) -> ParseNodeAndInst {
+    return ParseNodeAndInst(parse_node, inst, /*is_untyped=*/true);
+  }
+
+  // For the common case, support construction as:
+  //   context.AddInst({parse_node, SemIR::MyInst{...}});
+  template <typename InstT>
+    requires(Internal::HasParseNode<InstT>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(decltype(InstT::Kind)::TypedNodeId parse_node, InstT inst)
+      : parse_node(parse_node), inst(inst) {}
+
+  // For cases with no parse node, support construction as:
+  //   context.AddInst({SemIR::MyInst{...}});
+  template <typename InstT>
+    requires(!Internal::HasParseNode<InstT>)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ParseNodeAndInst(InstT inst)
+      : parse_node(Parse::NodeId::Invalid), inst(inst) {}
+
+  Parse::NodeId parse_node;
+  Inst inst;
+
+ private:
+  explicit ParseNodeAndInst(Parse::NodeId parse_node, Inst inst,
+                            bool /*is_untyped*/)
+      : parse_node(parse_node), inst(inst) {}
+};
+
+// Provides a ValueStore wrapper for an API specific to instructions.
+class InstStore {
+ public:
+  // Adds an instruction to the instruction list, returning an ID to reference
+  // the instruction. Note that this doesn't add the instruction to any
+  // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
+  // should usually be used instead, to add the instruction to the current
+  // block.
+  auto AddInNoBlock(ParseNodeAndInst parse_node_and_inst) -> InstId {
+    parse_nodes_.push_back(parse_node_and_inst.parse_node);
+    return values_.Add(parse_node_and_inst.inst);
+  }
+
+  // Returns the requested instruction.
+  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
+
+  // Returns the requested instruction and its parse node.
+  auto GetWithParseNode(InstId inst_id) const -> ParseNodeAndInst {
+    return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
+  }
+
+  // Returns whether the requested instruction is the specified type.
+  template <typename InstT>
+  auto Is(InstId inst_id) const -> bool {
+    return Get(inst_id).Is<InstT>();
+  }
+
+  // Returns the requested instruction, which is known to have the specified
+  // type.
+  template <typename InstT>
+  auto GetAs(InstId inst_id) const -> InstT {
+    return Get(inst_id).As<InstT>();
+  }
+
+  // Returns the requested instruction as the specified type, if it is of that
+  // type.
+  template <typename InstT>
+  auto TryGetAs(InstId inst_id) const -> std::optional<InstT> {
+    return Get(inst_id).TryAs<InstT>();
+  }
+
+  // Returns the requested instruction as the specified type, if it is valid and
+  // of that type. Otherwise returns nullopt.
+  template <typename InstT>
+  auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
+    if (!inst_id.is_valid()) {
+      return std::nullopt;
+    }
+    return TryGetAs<InstT>(inst_id);
+  }
+
+  auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
+    return parse_nodes_[inst_id.index];
+  }
+
+  // Overwrites a given instruction and parse node with a new value.
+  auto Set(InstId inst_id, ParseNodeAndInst parse_node_and_inst) -> void {
+    values_.Get(inst_id) = parse_node_and_inst.inst;
+    parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
+  }
+
+  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
+    parse_nodes_[inst_id.index] = parse_node;
+  }
+
+  // Reserves space.
+  auto Reserve(size_t size) -> void {
+    parse_nodes_.reserve(size);
+    values_.Reserve(size);
+  }
+
+  auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
+  auto size() const -> int { return values_.size(); }
+
+ private:
+  llvm::SmallVector<Parse::NodeId> parse_nodes_;
+  ValueStore<InstId> values_;
+};
+
+// Adapts BlockValueStore for instruction blocks.
+class InstBlockStore : public BlockValueStore<InstBlockId> {
+ public:
+  using BaseType = BlockValueStore<InstBlockId>;
+
+  using BaseType::AddDefaultValue;
+  using BaseType::AddUninitialized;
+
+  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
+      : BaseType(allocator) {
+    auto empty_id = AddDefaultValue();
+    CARBON_CHECK(empty_id == InstBlockId::Empty);
+    auto exports_id = AddDefaultValue();
+    CARBON_CHECK(exports_id == InstBlockId::Exports);
+    auto global_init_id = AddDefaultValue();
+    CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
+  }
+
+  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
+    CARBON_CHECK(block_id != InstBlockId::Unreachable);
+    BlockValueStore<InstBlockId>::Set(block_id, content);
+  }
+};
 
 }  // namespace Carbon::SemIR
 

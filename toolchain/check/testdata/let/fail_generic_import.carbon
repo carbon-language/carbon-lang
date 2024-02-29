@@ -34,7 +34,9 @@ let a: T = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.T = %import_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .T = %import_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = %import_ref]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]

@@ -21,10 +21,14 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %.loc7} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {.Baz = %Baz.loc9} [template]
-// CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz [template]
-// CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Foo = %.loc7
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
+// CHECK:STDOUT:     .Baz = %Baz.loc9
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz {} [template]
+// CHECK:STDOUT:   %Baz.loc18: <function> = fn_decl @Baz {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

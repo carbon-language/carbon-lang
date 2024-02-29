@@ -29,16 +29,42 @@ fn While() {
 // CHECK:STDOUT: --- break_continue.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A, .B = %B, .C = %C, .D = %D, .E = %E, .F = %F, .G = %G, .H = %H, .While = %While} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template]
-// CHECK:STDOUT:   %D: <function> = fn_decl @D [template]
-// CHECK:STDOUT:   %E: <function> = fn_decl @E [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %While: <function> = fn_decl @While [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .D = %D
+// CHECK:STDOUT:     .E = %E
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .H = %H
+// CHECK:STDOUT:     .While = %While
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %C: <function> = fn_decl @C {
+// CHECK:STDOUT:     %return.var.loc9: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %D: <function> = fn_decl @D {
+// CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %E: <function> = fn_decl @E {
+// CHECK:STDOUT:     %return.var.loc11: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %return.var.loc12: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %return.var.loc13: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H {
+// CHECK:STDOUT:     %return.var.loc14: ref bool = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %While: <function> = fn_decl @While {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> bool;

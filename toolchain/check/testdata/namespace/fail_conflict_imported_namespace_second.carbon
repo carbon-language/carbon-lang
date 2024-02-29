@@ -35,8 +35,10 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %NS} [template]
-// CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %NS: <function> = fn_decl @NS {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
@@ -44,11 +46,12 @@ fn NS.Foo();
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %import_ref} [template]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = %NS]
-// CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %import_ref
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%NS]
 // CHECK:STDOUT:   %.loc12: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();

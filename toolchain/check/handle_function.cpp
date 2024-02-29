@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -59,37 +60,29 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId parse_node,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  // TODO: This contains the IR block for the parameters and return type. At
-  // present, it's just loose, but it's not strictly required for parameter
-  // refs; we should either stop constructing it completely or, if it turns out
-  // to be needed, store it. Note, the underlying issue is that the LLVM IR has
-  // nowhere clear to emit, so changing storage would require addressing that
-  // problem. For comparison with function calls, the IR needs to be emitted
-  // prior to the call.
-  context.inst_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
-  if (auto return_node_and_id =
+  if (auto [return_node, return_storage_id] =
           context.node_stack()
-              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>()) {
-    auto return_storage_id = return_node_and_id->second;
-    return_type_id = context.insts().Get(return_storage_id).type_id();
+              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>();
+      return_storage_id) {
+    return_type_id = context.insts().Get(*return_storage_id).type_id();
 
     return_type_id = context.AsCompleteType(return_type_id, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "Function returns incomplete type `{0}`.",
                         SemIR::TypeId);
-      return context.emitter().Build(return_node_and_id->first,
-                                     IncompleteTypeInFunctionReturnType,
-                                     return_type_id);
+      return context.emitter().Build(
+          return_node, IncompleteTypeInFunctionReturnType, return_type_id);
     });
 
     if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
              .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
-      return_slot_id = return_storage_id;
+      return_slot_id = *return_storage_id;
     }
   }
 
@@ -123,13 +116,28 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      SemIR::FunctionId::Invalid};
+      SemIR::FunctionId::Invalid, decl_block_id};
   auto function_decl_id =
       context.AddPlaceholderInst({parse_node, function_decl});
 
+  // At interface scope, a function declaration introduces an associated
+  // function.
+  auto lookup_result_id = function_decl_id;
+  if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
+      !name_context.has_qualifiers) {
+    auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
+        name_context.enclosing_scope_id_for_new_inst());
+    if (auto interface_scope =
+            context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
+                scope_inst_id)) {
+      lookup_result_id = BuildAssociatedEntity(
+          context, interface_scope->interface_id, function_decl_id);
+    }
+  }
+
   // Check whether this is a redeclaration.
   auto existing_id =
-      context.decl_name_stack().LookupOrAddName(name_context, function_decl_id);
+      context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
@@ -137,6 +145,7 @@ static auto BuildFunctionDecl(Context& context,
       function_decl.function_id = existing_function_decl->function_id;
 
       // TODO: Check that the signature matches!
+      // TODO: Disallow redeclarations within classes?
 
       // Track the signature from the definition, so that IDs in the body match
       // IDs in the signature.
@@ -150,6 +159,8 @@ static auto BuildFunctionDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a function.
+      // This includes the case where an associated function redeclares another
+      // associated function.
       context.DiagnoseDuplicateName(function_decl_id, existing_id);
     }
   }

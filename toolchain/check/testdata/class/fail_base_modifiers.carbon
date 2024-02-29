@@ -62,21 +62,24 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B.decl, .C1 = %C1.decl, .C2 = %C2.decl, .C3 = %C3.decl, .C4 = %C4.decl} [template]
-// CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %C1.decl = class_decl @C1, ()
-// CHECK:STDOUT:   %C2.decl = class_decl @C2, ()
-// CHECK:STDOUT:   %C3.decl = class_decl @C3, ()
-// CHECK:STDOUT:   %C4.decl = class_decl @C4, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .C1 = %C1.decl
+// CHECK:STDOUT:     .C2 = %C2.decl
+// CHECK:STDOUT:     .C3 = %C3.decl
+// CHECK:STDOUT:     .C4 = %C4.decl
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
+// CHECK:STDOUT:   %C1.decl = class_decl @C1 {} [template = constants.%C1]
+// CHECK:STDOUT:   %C2.decl = class_decl @C2 {} [template = constants.%C2]
+// CHECK:STDOUT:   %C3.decl = class_decl @C3 {} [template = constants.%C3]
+// CHECK:STDOUT:   %C4.decl = class_decl @C4 {} [template = constants.%C4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc13: <unbound element of class C1> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -85,7 +88,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc23: <unbound element of class C2> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -93,7 +96,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc33: <unbound element of class C3> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -102,7 +105,7 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
-// CHECK:STDOUT:   %B.ref: type = name_ref B, constants.%B [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc43: <unbound element of class C4> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

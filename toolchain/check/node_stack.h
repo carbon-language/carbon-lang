@@ -9,6 +9,7 @@
 
 #include "common/vlog.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -247,28 +248,6 @@ class NodeStack {
     return std::make_pair(parse_node, id);
   }
 
-  // Pops the top of the stack and returns the parse_node and the ID if it is
-  // of the specified kind.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PopWithParseNodeIf()
-      -> std::optional<decltype(PopWithParseNode<RequiredParseKind>())> {
-    if (!PeekIs<RequiredParseKind>()) {
-      return std::nullopt;
-    }
-    return PopWithParseNode<RequiredParseKind>();
-  }
-
-  // Pops the top of the stack and returns the parse_node and the ID if it is
-  // of the specified category
-  template <Parse::NodeCategory RequiredParseCategory>
-  auto PopWithParseNodeIf()
-      -> std::optional<decltype(PopWithParseNode<RequiredParseCategory>())> {
-    if (!PeekIs<RequiredParseCategory>()) {
-      return std::nullopt;
-    }
-    return PopWithParseNode<RequiredParseCategory>();
-  }
-
   // Pops an expression from the top of the stack and returns the ID.
   // Expressions always map Parse::NodeCategory::Expr nodes to SemIR::InstId.
   auto PopExpr() -> SemIR::InstId { return PopExprWithParseNode().second; }
@@ -318,6 +297,30 @@ class NodeStack {
       return Pop<RequiredParseCategory>();
     }
     return std::nullopt;
+  }
+
+  // Pops the top of the stack and returns the parse_node and the ID if it is
+  // of the specified kind.
+  template <const Parse::NodeKind& RequiredParseKind>
+  auto PopWithParseNodeIf()
+      -> std::pair<Parse::NodeIdForKind<RequiredParseKind>,
+                   decltype(PopIf<RequiredParseKind>())> {
+    if (!PeekIs<RequiredParseKind>()) {
+      return {Parse::NodeId::Invalid, std::nullopt};
+    }
+    return PopWithParseNode<RequiredParseKind>();
+  }
+
+  // Pops the top of the stack and returns the parse_node and the ID if it is
+  // of the specified category.
+  template <Parse::NodeCategory RequiredParseCategory>
+  auto PopWithParseNodeIf()
+      -> std::pair<Parse::NodeIdInCategory<RequiredParseCategory>,
+                   decltype(PopIf<RequiredParseCategory>())> {
+    if (!PeekIs<RequiredParseCategory>()) {
+      return {Parse::NodeId::Invalid, std::nullopt};
+    }
+    return PopWithParseNode<RequiredParseCategory>();
   }
 
   // Peeks at the parse node of the top of the node stack.

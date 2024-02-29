@@ -3,11 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
 auto HandleArrayType(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::ArrayType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
+}
+
+auto HandleAssociatedEntityType(FunctionContext& context, SemIR::InstId inst_id,
+                                SemIR::AssociatedEntityType /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 

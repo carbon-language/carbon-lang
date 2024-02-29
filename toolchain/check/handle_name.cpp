@@ -25,6 +25,8 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
     return base_as_namespace->name_scope_id;
   }
+  // TODO: Consider refactoring the near-identical class and interface support
+  // below.
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
     auto& class_info = context.classes().Get(base_as_class->class_id);
     if (!class_info.is_defined()) {
@@ -39,31 +41,22 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
     }
     return class_info.scope_id;
   }
+  if (auto base_as_interface = base.TryAs<SemIR::InterfaceType>()) {
+    auto& interface_info =
+        context.interfaces().Get(base_as_interface->interface_id);
+    if (!interface_info.is_defined()) {
+      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
+                        "Member access into undefined interface `{0}`.",
+                        std::string);
+      auto builder = context.emitter().Build(
+          base_id, QualifiedExprInUndefinedInterfaceScope,
+          context.sem_ir().StringifyTypeExpr(base_id));
+      context.NoteUndefinedInterface(base_as_interface->interface_id, builder);
+      builder.Emit();
+    }
+    return interface_info.scope_id;
+  }
   return std::nullopt;
-}
-
-// Given an instruction produced by a name lookup, get the value to use for that
-// result in an expression.
-static auto GetExprValueForLookupResult(Context& context,
-                                        SemIR::InstId lookup_result_id)
-    -> SemIR::InstId {
-  // If lookup finds a class declaration, the value is its `Self` type.
-  auto lookup_result = context.insts().Get(lookup_result_id);
-  if (auto class_decl = lookup_result.TryAs<SemIR::ClassDecl>()) {
-    return context.types().GetInstId(
-        context.classes().Get(class_decl->class_id).self_type_id);
-  }
-  if (auto interface_decl = lookup_result.TryAs<SemIR::InterfaceDecl>()) {
-    return TryEvalInst(context, SemIR::InstId::Invalid,
-                       SemIR::InterfaceType{SemIR::TypeId::TypeType,
-                                            interface_decl->interface_id})
-        .inst_id();
-  }
-
-  // Anything else should be a typed value already.
-  CARBON_CHECK(lookup_result.kind().value_kind() == SemIR::InstValueKind::Typed)
-      << "Unexpected kind for lookup result, " << lookup_result;
-  return lookup_result_id;
 }
 
 static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
@@ -108,7 +101,6 @@ auto HandleMemberAccessExpr(Context& context,
         name_scope_id->is_valid()
             ? context.LookupQualifiedName(parse_node, name_id, *name_scope_id)
             : SemIR::InstId::BuiltinError;
-    inst_id = GetExprValueForLookupResult(context, inst_id);
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(
@@ -142,7 +134,6 @@ auto HandleMemberAccessExpr(Context& context,
                                 .scope_id;
       auto member_id =
           context.LookupQualifiedName(parse_node, name_id, class_scope_id);
-      member_id = GetExprValueForLookupResult(context, member_id);
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.insts().Get(member_id).type_id();
@@ -269,7 +260,6 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId parse_node)
 static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
                              SemIR::NameId name_id) -> bool {
   auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
-  value_id = GetExprValueForLookupResult(context, value_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(
       {parse_node, SemIR::NameRef{value.type_id(), name_id, value_id}});

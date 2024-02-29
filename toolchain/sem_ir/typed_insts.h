@@ -154,6 +154,32 @@ struct Assign {
   InstId rhs_id;
 };
 
+// An associated entity declared in an interface. This is either an associated
+// function or a non-function associated constant such as an associated type.
+// This represents the entity before impl lookup is performed, and identifies
+// the slot within a witness where the constant value will be found.
+struct AssociatedEntity {
+  static constexpr auto Kind =
+      InstKind::AssociatedEntity.Define<Parse::NodeId>("assoc_entity");
+
+  // The type of the associated entity. This is an AssociatedEntityType.
+  TypeId type_id;
+  ElementIndex index;
+  InstId decl_id;
+};
+
+// The type of an expression that names an associated entity, such as
+// `InterfaceName.Function`.
+struct AssociatedEntityType {
+  static constexpr auto Kind =
+      InstKind::AssociatedEntityType.Define<Parse::InvalidNodeId>(
+          "assoc_entity_type");
+
+  TypeId type_id;
+  InterfaceId interface_id;
+  TypeId entity_type_id;
+};
+
 // A base in a class, of the form `base: base_type;`. A base class is an
 // element of the derived class, and the type of the `BaseDecl` instruction is
 // an `UnboundElementType`.
@@ -315,8 +341,7 @@ struct ClassDecl {
   static constexpr auto Kind =
       InstKind::ClassDecl.Define<Parse::AnyClassDeclId>("class_decl");
 
-  // No type: a class declaration is not itself a value. The name of a class
-  // declaration becomes a class type value.
+  TypeId type_id;
   // TODO: For a generic class declaration, the name of the class declaration
   // should become a parameterized entity name value.
   ClassId class_id;
@@ -397,6 +422,9 @@ struct FunctionDecl {
 
   TypeId type_id;
   FunctionId function_id;
+  // The declaration block, containing the function declaration's parameters and
+  // their types.
+  InstBlockId decl_block_id;
 };
 
 struct ImplDecl {
@@ -474,8 +502,7 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           "interface_decl");
 
-  // No type: an interface declaration is not itself a value. The name of an
-  // interface declaration becomes a facet type value.
+  TypeId type_id;
   // TODO: For a generic interface declaration, the name of the interface
   // declaration should become a parameterized entity name value.
   InterfaceId interface_id;

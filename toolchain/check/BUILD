@@ -68,6 +68,7 @@ cc_library(
         "eval.h",
         "inst_block_stack.h",
         "modifiers.h",
+        "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
     ],
@@ -101,6 +102,7 @@ cc_library(
     deps = [
         ":context",
         ":import",
+        ":interface",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
@@ -139,6 +141,20 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "interface",
+    srcs = ["interface.cpp"],
+    hdrs = ["interface.h"],
+    deps = [
+        ":context",
+        "//common:check",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",

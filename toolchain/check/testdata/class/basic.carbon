@@ -32,15 +32,32 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Run = %Run} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %n.loc17_12.1: i32 = param n
+// CHECK:STDOUT:     @G.%n: i32 = bind_name n, %n.loc17_12.1
+// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {
+// CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %n.loc8_8.1: i32 = param n
+// CHECK:STDOUT:     %n.loc8_8.2: i32 = bind_name n, %n.loc8_8.1
+// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %n.loc12_8.1: i32 = param n
+// CHECK:STDOUT:     %n.loc12_8.2: i32 = bind_name n, %n.loc12_8.1
+// CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Class> = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -49,9 +66,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n: i32) -> i32 {
+// CHECK:STDOUT: fn @F(@Class.%n.loc8_8.2: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: i32 = name_ref n, @Class.%n.loc8_8.2
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,7 +80,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
 // CHECK:STDOUT:   %.loc22_18: i32 = int_literal 4 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc22_17.1: init i32 = call %F.ref(%.loc22_18)

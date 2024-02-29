@@ -17,8 +17,10 @@ fn B() {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -29,8 +31,10 @@ fn B() {}
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.B = %B} [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

@@ -32,15 +32,51 @@ fn Class.G[self: Class](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Class.ref.loc13: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc13_28: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc13_17.1: Class* = param self
+// CHECK:STDOUT:     @F.%self.loc13_17: Class* = bind_name self, %self.loc13_17.1
+// CHECK:STDOUT:     @F.%.loc13: Class* = addr_pattern @F.%self.loc13_17
+// CHECK:STDOUT:     %self.loc13_31.1: i32 = param r#self
+// CHECK:STDOUT:     @F.%self.loc13_31: i32 = bind_name r#self, %self.loc13_31.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %Class.ref.loc17: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc17_12.1: Class = param self
+// CHECK:STDOUT:     @G.%self.loc17_12: Class = bind_name self, %self.loc17_12.1
+// CHECK:STDOUT:     %self.loc17_25.1: i32 = param r#self
+// CHECK:STDOUT:     @G.%self.loc17_25: i32 = bind_name r#self, %self.loc17_25.1
+// CHECK:STDOUT:     %.loc17_50.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc17_50.2: type = converted %.loc17_50.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     @G.%return: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc8_24: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc8_13.1: Class* = param self
+// CHECK:STDOUT:     %self.loc8_13.3: Class* = bind_name self, %self.loc8_13.1
+// CHECK:STDOUT:     %.loc8_8: Class* = addr_pattern %self.loc8_13.3
+// CHECK:STDOUT:     %self.loc8_27.1: i32 = param r#self
+// CHECK:STDOUT:     %self.loc8_27.2: i32 = bind_name r#self, %self.loc8_27.1
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc9_8.1: Class = param self
+// CHECK:STDOUT:     %self.loc9_8.2: Class = bind_name self, %self.loc9_8.1
+// CHECK:STDOUT:     %self.loc9_21.1: i32 = param r#self
+// CHECK:STDOUT:     %self.loc9_21.2: i32 = bind_name r#self, %self.loc9_21.1
+// CHECK:STDOUT:     %.loc9_46.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:     %.loc9_46.2: type = converted %.loc9_46.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %return.var: ref (i32, i32) = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc10: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

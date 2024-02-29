@@ -39,7 +39,12 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %a_ref, .b_ref = %b_ref, .c_ref = %c_ref, .d_ref = %d_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_ref = %a_ref
+// CHECK:STDOUT:     .b_ref = %b_ref
+// CHECK:STDOUT:     .c_ref = %c_ref
+// CHECK:STDOUT:     .d_ref = %d_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %x.ref.loc7: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
 // CHECK:STDOUT:   %a_ref: ref <error> = bind_name a_ref, %a_ref.var
@@ -60,7 +65,16 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a_ref = %import_ref.1, .b_ref = %import_ref.2, .c_ref = %import_ref.3, .d_ref = %import_ref.4, .a = %a, .b = %b, .c = %c, .d = %d} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a_ref = %import_ref.1
+// CHECK:STDOUT:     .b_ref = %import_ref.2
+// CHECK:STDOUT:     .c_ref = %import_ref.3
+// CHECK:STDOUT:     .d_ref = %import_ref.4
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+3, used
 // CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+8, used
 // CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, used

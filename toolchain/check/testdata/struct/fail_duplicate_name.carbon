@@ -57,8 +57,14 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.F = %F, .x = %x, .y = %y} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc21_36: {.a: i32} = struct_literal (%.loc21_35)
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>

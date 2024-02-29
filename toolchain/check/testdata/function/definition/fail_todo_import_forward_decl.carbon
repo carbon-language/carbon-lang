@@ -29,8 +29,10 @@ fn Foo() {}
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %Foo} [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
@@ -38,10 +40,11 @@ fn Foo() {}
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Foo = %import_ref} [template]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = %Foo]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
-// CHECK:STDOUT:   %.loc14: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Foo = %import_ref
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%Foo]
+// CHECK:STDOUT:   %.loc14: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();

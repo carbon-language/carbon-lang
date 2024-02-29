@@ -17,8 +17,13 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Main = %Main} [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {
+// CHECK:STDOUT:     %.loc7: type = struct_type {.a: i32} [template = constants.%.1]
+// CHECK:STDOUT:     %return.var: ref {.a: i32} = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> {.a: i32} {

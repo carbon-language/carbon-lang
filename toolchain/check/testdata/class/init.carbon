@@ -30,15 +30,37 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Class = %Class.decl, .Make = %Make, .MakeReorder = %MakeReorder} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
-// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:     .MakeReorder = %MakeReorder
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %n.loc12_9.1: i32 = param n
+// CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc12_9.1
+// CHECK:STDOUT:     %Class.ref.loc12_23: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc12: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:     %next.loc12_17.1: Class* = param next
+// CHECK:STDOUT:     @Make.%next: Class* = bind_name next, %next.loc12_17.1
+// CHECK:STDOUT:     %Class.ref.loc12_34: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder {
+// CHECK:STDOUT:     %n.loc16_16.1: i32 = param n
+// CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc16_16.1
+// CHECK:STDOUT:     %Class.ref.loc16_30: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc16: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:     %next.loc16_24.1: Class* = param next
+// CHECK:STDOUT:     @MakeReorder.%next: Class* = bind_name next, %next.loc16_24.1
+// CHECK:STDOUT:     %Class.ref.loc16_41: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     @MakeReorder.%return: ref Class = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
 // CHECK:STDOUT:

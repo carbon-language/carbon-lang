@@ -27,11 +27,18 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace {.ChildNS = %.loc5, .A = %A} [template]
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace {.B = %B} [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc4: <namespace> = namespace {
+// CHECK:STDOUT:     .ChildNS = %.loc5
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %.loc5: <namespace> = namespace {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
+// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -45,13 +52,24 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.2, .a = %a, .b = %b, .package_a = %package_a, .package_b = %package_b} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.2
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .package_a = %package_a
+// CHECK:STDOUT:     .package_b = %package_b
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace {.ChildNS = %.3, .A = %import_ref.3}, %import_ref.1 [template]
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, {
+// CHECK:STDOUT:     .ChildNS = %.3
+// CHECK:STDOUT:     .A = %import_ref.3
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace {.B = %import_ref.4}, %import_ref.2 [template]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+3, used [template = @__global_init.%A]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+4, used [template = @__global_init.%B]
+// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:     .B = %import_ref.4
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+3, used [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+4, used [template = imports.%B]
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -77,25 +95,23 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc4: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template]
-// CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, file.%import_ref.3 [template = %A]
+// CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, file.%import_ref.3 [template = imports.%A]
 // CHECK:STDOUT:   %.loc4: init () = call %A.ref.loc4()
 // CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   %NS.ref.loc5: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
 // CHECK:STDOUT:   %ChildNS.ref.loc5: <namespace> = name_ref ChildNS, file.%.3 [template = file.%.3]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template]
-// CHECK:STDOUT:   %B.ref.loc5: <function> = name_ref B, file.%import_ref.4 [template = %B]
+// CHECK:STDOUT:   %B.ref.loc5: <function> = name_ref B, file.%import_ref.4 [template = imports.%B]
 // CHECK:STDOUT:   %.loc5: init () = call %B.ref.loc5()
 // CHECK:STDOUT:   assign file.%b.var, %.loc5
 // CHECK:STDOUT:   %package.ref.loc7: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref.loc7: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
-// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, file.%import_ref.3 [template = %A]
+// CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, file.%import_ref.3 [template = imports.%A]
 // CHECK:STDOUT:   %.loc7: init () = call %A.ref.loc7()
 // CHECK:STDOUT:   assign file.%package_a.var, %.loc7
 // CHECK:STDOUT:   %package.ref.loc8: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref.loc8: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
 // CHECK:STDOUT:   %ChildNS.ref.loc8: <namespace> = name_ref ChildNS, file.%.3 [template = file.%.3]
-// CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, file.%import_ref.4 [template = %B]
+// CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, file.%import_ref.4 [template = imports.%B]
 // CHECK:STDOUT:   %.loc8: init () = call %B.ref.loc8()
 // CHECK:STDOUT:   assign file.%package_b.var, %.loc8
 // CHECK:STDOUT:   return

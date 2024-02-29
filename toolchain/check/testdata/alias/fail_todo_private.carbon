@@ -12,7 +12,9 @@ private alias A = i32;
 // CHECK:STDOUT: --- fail_todo_private.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %A: type = bind_alias A, i32 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

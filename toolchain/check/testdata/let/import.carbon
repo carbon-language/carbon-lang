@@ -31,7 +31,9 @@ let b:! bool = a;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.a = %import_ref} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .a = %import_ref
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: bool = import_ref ir1, inst+1, used [symbolic]
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %import_ref [symbolic = %import_ref]
 // CHECK:STDOUT:   %b: bool = bind_symbolic_name b, %a.ref [symbolic]

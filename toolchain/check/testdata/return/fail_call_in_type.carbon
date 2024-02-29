@@ -19,9 +19,20 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.ReturnType = %ReturnType, .Six = %Six} [template]
-// CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType [template]
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .ReturnType = %ReturnType
+// CHECK:STDOUT:     .Six = %Six
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType {
+// CHECK:STDOUT:     %return.var.loc9: ref type = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six {
+// CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType [template = %ReturnType]
+// CHECK:STDOUT:     %.loc13_23.1: init type = call %ReturnType.ref()
+// CHECK:STDOUT:     %.loc13_24: type = value_of_initializer %.loc13_23.1
+// CHECK:STDOUT:     %.loc13_23.2: type = converted %.loc13_23.1, %.loc13_24
+// CHECK:STDOUT:     %return.var.loc13: ref <error> = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnType() -> type {

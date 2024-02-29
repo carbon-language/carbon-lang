@@ -79,8 +79,10 @@ class InstBlockStack {
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
-  auto empty() const -> bool { return size() == 0; }
-  auto size() const -> int { return size_; }
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() const -> void { CARBON_CHECK(empty()) << size_; }
+
+  auto empty() const -> bool { return size_ == 0; }
 
  private:
   struct StackEntry {

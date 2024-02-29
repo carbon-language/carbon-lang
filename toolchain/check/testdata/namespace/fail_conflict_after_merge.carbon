@@ -43,20 +43,24 @@ fn NS();
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc4} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.NS = %.loc8_13.1} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .NS = %.loc8_13.1
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace {}, %import_ref [template]
+// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace %import_ref, {} [template]
 // CHECK:STDOUT:   %.loc8_13.2: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 {} [template]
 // CHECK:STDOUT:   %.loc20: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %.loc28: <function> = fn_decl @.2 [template]
+// CHECK:STDOUT:   %.loc28: <function> = fn_decl @.2 {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

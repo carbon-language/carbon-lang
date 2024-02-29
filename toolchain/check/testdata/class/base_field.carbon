@@ -40,10 +40,21 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Base = %Base.decl, .Derived = %Derived.decl, .Access = %Access} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived {} [template = constants.%Derived]
+// CHECK:STDOUT:   %Access: <function> = fn_decl @Access {
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc20_21: type = ptr_type Derived [template = constants.%.7]
+// CHECK:STDOUT:     %p.loc20_11.1: Derived* = param p
+// CHECK:STDOUT:     @Access.%p: Derived* = bind_name p, %p.loc20_11.1
+// CHECK:STDOUT:     %.loc20_30: type = ptr_type i32 [template = constants.%.8]
+// CHECK:STDOUT:     %return.var: ref i32* = var <return slot>
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -58,7 +69,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc14: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %.loc16: <unbound element of class Derived> = field_decl d, element1 [template]
 // CHECK:STDOUT:   %.loc17: <unbound element of class Derived> = field_decl e, element2 [template]

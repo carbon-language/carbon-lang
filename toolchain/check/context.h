@@ -12,6 +12,7 @@
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
+#include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -19,7 +20,6 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -234,12 +234,12 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
+  // Gets the type for the name of an associated entity.
+  auto GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
-
-  // Returns a class type for the class described by `class_id`.
-  // TODO: Support generic arguments.
-  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
@@ -257,34 +257,6 @@ class Context {
 
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
-
-  // Starts handling parameters or arguments.
-  auto ParamOrArgStart() -> void;
-
-  // On a comma, pushes the entry. On return, the top of node_stack_ will be
-  // start_kind.
-  auto ParamOrArgComma() -> void;
-
-  // Detects whether there's an entry to push from the end of a parameter or
-  // argument list, and if so, moves it to the current parameter or argument
-  // list. Does not pop the list. `start_kind` is the node kind at the start
-  // of the parameter or argument list, and will be at the top of the parse node
-  // stack when this function returns.
-  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
-
-  // Pops the current parameter or argument list. Should only be called after
-  // `ParamOrArgEndNoPop`.
-  auto ParamOrArgPop() -> SemIR::InstBlockId;
-
-  // Detects whether there's an entry to push. Pops and returns the argument
-  // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId;
-
-  // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_.
-  auto ParamOrArgSave(SemIR::InstId inst_id) -> void {
-    params_or_args_stack_.AddInstId(inst_id);
-  }
 
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
@@ -317,8 +289,8 @@ class Context {
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
 
-  auto params_or_args_stack() -> InstBlockStack& {
-    return params_or_args_stack_;
+  auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
+    return param_and_arg_refs_stack_;
   }
 
   auto args_type_info_stack() -> InstBlockStack& {
@@ -423,16 +395,14 @@ class Context {
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
 
-  // The stack of instruction blocks being used for per-element tracking of
-  // instructions in parameter and argument instruction blocks. Versus
-  // inst_block_stack_, an element will have 1 or more instructions in blocks in
-  // inst_block_stack_, but only ever 1 instruction in blocks here.
-  InstBlockStack params_or_args_stack_;
+  // The stack of instruction blocks being used for param and arg ref blocks.
+  ParamAndArgRefsStack param_and_arg_refs_stack_;
 
   // The stack of instruction blocks being used for type information while
-  // processing arguments. This is used in parallel with params_or_args_stack_.
-  // It's currently only used for struct literals, where we need to track names
-  // for a type separate from the literal arguments.
+  // processing arguments. This is used in parallel with
+  // param_and_arg_refs_stack_. It's currently only used for struct literals,
+  // where we need to track names for a type separate from the literal
+  // arguments.
   InstBlockStack args_type_info_stack_;
 
   // The stack used for qualified declaration name construction.

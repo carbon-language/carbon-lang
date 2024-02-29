@@ -21,7 +21,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_35: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2 [template = constants.%.4]

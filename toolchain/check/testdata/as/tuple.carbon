@@ -34,24 +34,29 @@ fn Var() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.X = %X.decl, .Make = %Make, .Let = %Let, .Var = %Var} [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template]
-// CHECK:STDOUT:   %Let: <function> = fn_decl @Let [template]
-// CHECK:STDOUT:   %Var: <function> = fn_decl @Var [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .X = %X.decl
+// CHECK:STDOUT:     .Make = %Make
+// CHECK:STDOUT:     .Let = %Let
+// CHECK:STDOUT:     .Var = %Var
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     @Make.%return: ref X = var <return slot>
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Let: <function> = fn_decl @Let {} [template]
+// CHECK:STDOUT:   %Var: <function> = fn_decl @Var {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @X {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @X {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: X;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %X.ref.loc15_11: type = name_ref X, constants.%X [template = constants.%X]
-// CHECK:STDOUT:   %X.ref.loc15_14: type = name_ref X, constants.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc15_11: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc15_14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc15_15.1: (type, type) = tuple_literal (%X.ref.loc15_11, %X.ref.loc15_14)
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %.loc15_15.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %Make.ref.loc15_20: <function> = name_ref Make, file.%Make [template = file.%Make]
@@ -61,8 +66,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc15_32.1: ref X = temporary_storage
 // CHECK:STDOUT:   %.loc15_32.2: init X = call %Make.ref.loc15_28() to %.loc15_32.1
 // CHECK:STDOUT:   %.loc15_34.1: (X, X) = tuple_literal (%.loc15_24.2, %.loc15_32.2)
-// CHECK:STDOUT:   %X.ref.loc15_40: type = name_ref X, constants.%X [template = constants.%X]
-// CHECK:STDOUT:   %X.ref.loc15_43: type = name_ref X, constants.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc15_40: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc15_43: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc15_44.1: (type, type) = tuple_literal (%X.ref.loc15_40, %X.ref.loc15_43)
 // CHECK:STDOUT:   %.loc15_44.2: type = converted %.loc15_44.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_24.3: ref X = temporary %.loc15_24.1, %.loc15_24.2
@@ -77,8 +82,8 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %X.ref.loc20_11: type = name_ref X, constants.%X [template = constants.%X]
-// CHECK:STDOUT:   %X.ref.loc20_14: type = name_ref X, constants.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc20_11: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc20_14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc20_15.1: (type, type) = tuple_literal (%X.ref.loc20_11, %X.ref.loc20_14)
 // CHECK:STDOUT:   %.loc20_15.2: type = converted %.loc20_15.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %b.var: ref (X, X) = var b
@@ -90,8 +95,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc20_34.2: ref X = tuple_access %b.var, element1
 // CHECK:STDOUT:   %.loc20_32: init X = call %Make.ref.loc20_28() to %.loc20_34.2
 // CHECK:STDOUT:   %.loc20_34.3: (X, X) = tuple_literal (%.loc20_24, %.loc20_32)
-// CHECK:STDOUT:   %X.ref.loc20_40: type = name_ref X, constants.%X [template = constants.%X]
-// CHECK:STDOUT:   %X.ref.loc20_43: type = name_ref X, constants.%X [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc20_40: type = name_ref X, file.%X.decl [template = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc20_43: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc20_44.1: (type, type) = tuple_literal (%X.ref.loc20_40, %X.ref.loc20_43)
 // CHECK:STDOUT:   %.loc20_44.2: type = converted %.loc20_44.1, constants.%.5 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc20_34.4: init (X, X) = tuple_init (%.loc20_24, %.loc20_32) to %b.var

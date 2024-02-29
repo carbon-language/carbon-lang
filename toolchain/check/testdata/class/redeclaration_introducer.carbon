@@ -22,27 +22,22 @@ abstract class C {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.A = %A.decl.loc7, .B = %B.decl.loc8, .C = %C.decl.loc9} [template]
-// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl.loc8 = class_decl @B, ()
-// CHECK:STDOUT:   %C.decl.loc9 = class_decl @C, ()
-// CHECK:STDOUT:   %A.decl.loc11 = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl.loc12 = class_decl @B, ()
-// CHECK:STDOUT:   %C.decl.loc13 = class_decl @C, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .B = %B.decl.loc8
+// CHECK:STDOUT:     .C = %C.decl.loc9
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A {} [template = constants.%A]
+// CHECK:STDOUT:   %B.decl.loc8 = class_decl @B {} [template = constants.%B]
+// CHECK:STDOUT:   %C.decl.loc9 = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   %A.decl.loc11 = class_decl @A {} [template = constants.%A]
+// CHECK:STDOUT:   %B.decl.loc12 = class_decl @B {} [template = constants.%B]
+// CHECK:STDOUT:   %C.decl.loc13 = class_decl @C {} [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @B {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: class @C {}
 // CHECK:STDOUT:

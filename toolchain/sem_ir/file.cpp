@@ -191,6 +191,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 static auto GetTypePrecedence(InstKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
+    case AssociatedEntityType::Kind:
     case BindAlias::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
@@ -212,6 +213,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case AssociatedEntity::Kind:
     case BaseDecl::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -313,6 +315,20 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           push_inst_id(sem_ir.types().GetInstId(array.element_type_id));
         } else if (step.index == 1) {
           out << "; " << sem_ir.GetArrayBoundValue(array.bound_id) << "]";
+        }
+        break;
+      }
+      case AssociatedEntityType::Kind: {
+        auto assoc = inst.As<AssociatedEntityType>();
+        if (step.index == 0) {
+          out << "<associated ";
+          steps.push_back(step.Next());
+          push_inst_id(sem_ir.types().GetInstId(assoc.entity_type_id));
+        } else {
+          auto interface_name_id =
+              sem_ir.interfaces().Get(assoc.interface_id).name_id;
+          out << " in " << sem_ir.names().GetFormatted(interface_name_id)
+              << ">";
         }
         break;
       }
@@ -437,6 +453,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case AssociatedEntity::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -517,13 +534,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case ClassDecl::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case Import::Kind:
       case ImportRefUnused::Kind:
-      case InterfaceDecl::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
@@ -554,13 +569,17 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
+      case AssociatedEntity::Kind:
+      case AssociatedEntityType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoundMethod::Kind:
+      case ClassDecl::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
+      case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case IntLiteral::Kind:
       case Param::Kind:

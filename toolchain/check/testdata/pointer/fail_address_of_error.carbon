@@ -21,8 +21,10 @@ fn Test() {
 // CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Test = %Test} [template]
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {

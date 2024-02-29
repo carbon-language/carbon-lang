@@ -23,7 +23,6 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -37,7 +36,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
+      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()) {
@@ -64,8 +63,8 @@ auto Context::VerifyOnFinish() -> void {
   // remain.
   // node_stack_ will still contain top-level entities.
   scope_stack_.VerifyOnFinish();
-  CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
-  CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
+  inst_block_stack_.VerifyOnFinish();
+  param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
 auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
@@ -174,7 +173,7 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                                      DiagnosticBuilder& builder) -> void {
   const auto& interface_info = interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
-  if (interface_info.definition_id.is_valid()) {
+  if (interface_info.is_being_defined()) {
     CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
                       "Interface is currently being defined.");
     builder.Note(interface_info.definition_id,
@@ -477,31 +476,6 @@ auto Context::is_current_position_reachable() -> bool {
          SemIR::TerminatorKind::Terminator;
 }
 
-auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
-
-auto Context::ParamOrArgComma() -> void {
-  // Support expressions, parameters, and other nodes like `StructFieldValue`
-  // that produce InstIds.
-  ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
-}
-
-auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
-  if (!node_stack_.PeekIs(start_kind)) {
-    // Support expressions, parameters, and other nodes like `StructFieldValue`
-    // that produce InstIds.
-    ParamOrArgSave(node_stack_.Pop<SemIR::InstId>());
-  }
-}
-
-auto Context::ParamOrArgPop() -> SemIR::InstBlockId {
-  return params_or_args_stack_.Pop();
-}
-
-auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId {
-  ParamOrArgEndNoPop(start_kind);
-  return ParamOrArgPop();
-}
-
 auto Context::FinalizeGlobalInit() -> void {
   inst_block_stack().PushGlobalInit();
   if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
@@ -514,6 +488,7 @@ auto Context::FinalizeGlobalInit() -> void {
     sem_ir().functions().Add(
         {.name_id = SemIR::NameId::ForIdentifier(name_id),
          .enclosing_scope_id = SemIR::NameScopeId::Package,
+         .decl_id = SemIR::InstId::Invalid,
          .implicit_param_refs_id = SemIR::InstBlockId::Empty,
          .param_refs_id = SemIR::InstBlockId::Empty,
          .return_type_id = SemIR::TypeId::Invalid,
@@ -838,16 +813,13 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    // TODO: This can emit new SemIR instructions. Consider emitting them into a
-    // dedicated file-scope instruction block where possible, or somewhere else
-    // that better reflects the definition of the type, rather than wherever the
-    // type happens to first be required to be complete.
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::AssociatedEntity::Kind:
       case SemIR::BaseDecl::Kind:
       case SemIR::BindAlias::Kind:
       case SemIR::BindName::Kind:
@@ -933,6 +905,7 @@ class TypeCompleter {
       case SemIR::Builtin::Kind:
         return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
 
+      case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
@@ -1005,6 +978,13 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
   return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
 }
 
+auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                                      SemIR::TypeId entity_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_id,
+                                                  entity_type_id);
+}
+
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
   auto type_id = GetTypeIdForTypeConstant(
@@ -1013,10 +993,6 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";
   return type_id;
-}
-
-auto Context::GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::ClassType>(*this, class_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
@@ -1040,7 +1016,7 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   node_stack_.PrintForStackDump(output);
   inst_block_stack_.PrintForStackDump(output);
-  params_or_args_stack_.PrintForStackDump(output);
+  param_and_arg_refs_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);
 }
 

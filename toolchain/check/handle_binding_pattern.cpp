@@ -5,7 +5,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 

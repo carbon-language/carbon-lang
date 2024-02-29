@@ -13,22 +13,22 @@ auto HandleCallExprStart(Context& context, Parse::CallExprStartId parse_node)
     -> bool {
   auto name_id = context.node_stack().PopExpr();
   context.node_stack().Push(parse_node, name_id);
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandleCallExprComma(Context& context,
                          Parse::CallExprCommaId /*parse_node*/) -> bool {
-  context.ParamOrArgComma();
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
 auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
-  context.ParamOrArgEndNoPop(Parse::NodeKind::CallExprStart);
+  context.param_and_arg_refs_stack().EndNoPop(Parse::NodeKind::CallExprStart);
   auto discard_args_block = llvm::make_scope_exit(
-      [&] { context.params_or_args_stack().PopAndDiscard(); });
+      [&] { context.param_and_arg_refs_stack().PopAndDiscard(); });
 
   auto [call_expr_parse_node, callee_id] =
       context.node_stack().PopWithParseNode<Parse::NodeKind::CallExprStart>();
@@ -87,11 +87,11 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   }
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id =
-      ConvertCallArgs(context, call_expr_parse_node, self_id,
-                      context.params_or_args_stack().PeekCurrentBlockContents(),
-                      return_storage_id, function_decl_id.inst_id(),
-                      callable.implicit_param_refs_id, callable.param_refs_id);
+  auto converted_args_id = ConvertCallArgs(
+      context, call_expr_parse_node, self_id,
+      context.param_and_arg_refs_stack().PeekCurrentBlockContents(),
+      return_storage_id, function_decl_id.inst_id(),
+      callable.implicit_param_refs_id, callable.param_refs_id);
   auto call_inst_id =
       context.AddInst({call_expr_parse_node,
                        SemIR::Call{type_id, callee_id, converted_args_id}});

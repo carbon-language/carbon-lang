@@ -23,24 +23,38 @@ private interface Private {
 
 // CHECK:STDOUT: --- fail_todo_modifiers.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @Modifiers [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @Modifiers, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in Modifiers> = assoc_entity element0, @Modifiers.%Final [template]
+// CHECK:STDOUT:   %.4: <associated <function> in Modifiers> = assoc_entity element1, @Modifiers.%Default [template]
+// CHECK:STDOUT:   %.5: type = interface_type @Private [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.Modifiers = %Modifiers.decl, .Private = %Private.decl} [template]
-// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers, ()
-// CHECK:STDOUT:   %Private.decl = interface_decl @Private, ()
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .Modifiers = %Modifiers.decl
+// CHECK:STDOUT:     .Private = %Private.decl
+// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers {} [template = constants.%.1]
+// CHECK:STDOUT:   %Private.decl = interface_decl @Private {} [template = constants.%.5]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template]
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template]
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final {} [template]
+// CHECK:STDOUT:   %.loc11: <associated <function> in Modifiers> = assoc_entity element0, %Final [template = constants.%.3]
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default {} [template]
+// CHECK:STDOUT:   %.loc15: <associated <function> in Modifiers> = assoc_entity element1, %Default [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Final = %Final
-// CHECK:STDOUT:   .Default = %Default
+// CHECK:STDOUT:   .Final = %.loc11
+// CHECK:STDOUT:   .Default = %.loc15
+// CHECK:STDOUT:   witness = (%Final, %Default)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Private {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Final() {

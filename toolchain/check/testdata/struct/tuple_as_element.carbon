@@ -21,7 +21,10 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {.x = %x, .y = %y} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %.loc7_27.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)} [template = constants.%.3]
