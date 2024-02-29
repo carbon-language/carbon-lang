@@ -61,6 +61,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc14: <unbound element of class Class> = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .k = %.loc14

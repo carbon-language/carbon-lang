@@ -58,6 +58,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .a = %.loc11
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }

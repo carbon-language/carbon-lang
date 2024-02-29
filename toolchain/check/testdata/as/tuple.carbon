@@ -49,7 +49,10 @@ fn Var() {
 // CHECK:STDOUT:   %Var: <function> = fn_decl @Var {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @X {}
+// CHECK:STDOUT: class @X {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: X;
 // CHECK:STDOUT:

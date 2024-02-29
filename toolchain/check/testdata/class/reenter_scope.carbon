@@ -10,6 +10,7 @@ class Class {
 }
 
 fn Class.F() -> i32 {
+  Self.G();
   return G();
 }
 
@@ -39,17 +40,21 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G [template = @Class.%G]
-// CHECK:STDOUT:   %.loc13_11.1: init i32 = call %G.ref()
-// CHECK:STDOUT:   %.loc13_13: i32 = value_of_initializer %.loc13_11.1
-// CHECK:STDOUT:   %.loc13_11.2: i32 = converted %.loc13_11.1, %.loc13_13
-// CHECK:STDOUT:   return %.loc13_11.2
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %G.ref.loc13: <function> = name_ref G, @Class.%G [template = @Class.%G]
+// CHECK:STDOUT:   %.loc13: init i32 = call %G.ref.loc13()
+// CHECK:STDOUT:   %G.ref.loc14: <function> = name_ref G, @Class.%G [template = @Class.%G]
+// CHECK:STDOUT:   %.loc14_11.1: init i32 = call %G.ref.loc14()
+// CHECK:STDOUT:   %.loc14_13: i32 = value_of_initializer %.loc14_11.1
+// CHECK:STDOUT:   %.loc14_11.2: i32 = converted %.loc14_11.1, %.loc14_13
+// CHECK:STDOUT:   return %.loc14_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

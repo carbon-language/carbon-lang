@@ -131,6 +131,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc8: <unbound element of class A> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -140,6 +141,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc13: <unbound element of class B> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT:   extend name_scope1
@@ -151,6 +153,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc18: <unbound element of class C> = field_decl c, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT:   .c = %.loc18
 // CHECK:STDOUT:   extend name_scope2

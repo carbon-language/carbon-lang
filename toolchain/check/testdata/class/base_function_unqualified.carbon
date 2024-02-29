@@ -45,6 +45,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,6 +56,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .H = %H

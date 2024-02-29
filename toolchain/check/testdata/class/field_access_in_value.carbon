@@ -43,6 +43,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl k, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc8
 // CHECK:STDOUT:   .k = %.loc9
 // CHECK:STDOUT: }

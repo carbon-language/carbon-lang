@@ -61,6 +61,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc18_28: <unbound element of class C> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .a = %.loc18_16
 // CHECK:STDOUT:   .b = %.loc18_28
 // CHECK:STDOUT: }

@@ -68,6 +68,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Base> = field_decl unused, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .Unused = %Unused
 // CHECK:STDOUT:   .x = %.loc8
@@ -79,6 +80,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13: <unbound element of class Child> = base_decl Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Child
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -120,24 +122,28 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+24, unused
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+20, unused
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+24, unused
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .base = %import_ref
+// CHECK:STDOUT:   .Self = %import_ref.1
+// CHECK:STDOUT:   .base = %import_ref.2
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+6, used [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.2: <unbound element of class Base> = import_ref ir1, inst+12, used [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unused
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+15, unused
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %import_ref.3: <unbound element of class Base> = import_ref ir1, inst+12, used [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+10, unused
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %import_ref.1
-// CHECK:STDOUT:   .x = %import_ref.2
-// CHECK:STDOUT:   .Unused = %import_ref.3
-// CHECK:STDOUT:   .unused = %import_ref.4
+// CHECK:STDOUT:   .Self = %import_ref.2
+// CHECK:STDOUT:   .x = %import_ref.3
+// CHECK:STDOUT:   .Unused = %import_ref.4
+// CHECK:STDOUT:   .unused = %import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

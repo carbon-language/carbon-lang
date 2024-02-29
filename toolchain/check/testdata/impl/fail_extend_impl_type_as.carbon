@@ -73,6 +73,7 @@ class E {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,6 +84,7 @@ class E {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -93,6 +95,7 @@ class E {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

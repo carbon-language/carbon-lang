@@ -72,12 +72,16 @@ fn Run() {
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete {} [template = constants.%Incomplete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {}
+// CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Empty
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Field> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Field
 // CHECK:STDOUT:   .x = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,6 +100,7 @@ fn Run() {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%ForwardDeclared
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
@@ -143,22 +148,31 @@ fn Run() {
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Field {
-// CHECK:STDOUT:   %import_ref: <unbound element of class Field> = import_ref ir1, inst+7, used [template = imports.%.1]
+// CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .x = %import_ref
+// CHECK:STDOUT:   .Self = %import_ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Field {
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+5, unused
+// CHECK:STDOUT:   %import_ref.2: <unbound element of class Field> = import_ref ir1, inst+7, used [template = imports.%.1]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %import_ref.1
+// CHECK:STDOUT:   .x = %import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+24, used [template = imports.%G]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+17, used [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+12, unused
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+24, used [template = imports.%G]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%F]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .G = %import_ref.1
-// CHECK:STDOUT:   .F = %import_ref.2
+// CHECK:STDOUT:   .Self = %import_ref.1
+// CHECK:STDOUT:   .G = %import_ref.2
+// CHECK:STDOUT:   .F = %import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -197,11 +211,11 @@ fn Run() {
 // CHECK:STDOUT:   %.loc12_29.3: init ForwardDeclared = converted %.loc12_29.1, %.loc12_29.2 [template = constants.%.11]
 // CHECK:STDOUT:   assign %c.var, %.loc12_29.3
 // CHECK:STDOUT:   %c.ref.loc13: ref ForwardDeclared = name_ref c, %c
-// CHECK:STDOUT:   %.loc13_4: <bound method> = bound_method %c.ref.loc13, @ForwardDeclared.%import_ref.2
+// CHECK:STDOUT:   %.loc13_4: <bound method> = bound_method %c.ref.loc13, @ForwardDeclared.%import_ref.3
 // CHECK:STDOUT:   %.loc13_3: ForwardDeclared = bind_value %c.ref.loc13
 // CHECK:STDOUT:   %.loc13_6: init () = call %.loc13_4(%.loc13_3)
 // CHECK:STDOUT:   %c.ref.loc14: ref ForwardDeclared = name_ref c, %c
-// CHECK:STDOUT:   %.loc14_4: <bound method> = bound_method %c.ref.loc14, @ForwardDeclared.%import_ref.1
+// CHECK:STDOUT:   %.loc14_4: <bound method> = bound_method %c.ref.loc14, @ForwardDeclared.%import_ref.2
 // CHECK:STDOUT:   %.loc14_3: ForwardDeclared* = addr_of %c.ref.loc14
 // CHECK:STDOUT:   %.loc14_6: init () = call %.loc14_4(%.loc14_3)
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, file.%import_ref.3 [template = constants.%ForwardDeclared]

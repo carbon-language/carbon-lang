@@ -28,6 +28,7 @@ fn C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

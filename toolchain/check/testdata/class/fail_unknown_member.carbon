@@ -43,6 +43,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

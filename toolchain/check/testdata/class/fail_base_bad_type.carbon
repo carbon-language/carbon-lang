@@ -299,12 +299,16 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Base {}
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Final {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Final> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Final
 // CHECK:STDOUT:   .a = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -313,6 +317,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc16: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromError
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -322,6 +327,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc26_18: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromNonType
 // CHECK:STDOUT:   .base = %.loc26_18
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -330,6 +336,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc35: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromi32
 // CHECK:STDOUT:   .base = %.loc35
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -341,6 +348,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc51_23: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromTuple
 // CHECK:STDOUT:   .base = %.loc51_23
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -350,6 +358,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc67_34: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromStruct
 // CHECK:STDOUT:   .base = %.loc67_34
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -361,6 +370,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc87: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromIncomplete
 // CHECK:STDOUT:   .base = %.loc87
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
@@ -370,6 +380,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc101: <unbound element of class DeriveFromFinal> = base_decl Final, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%DeriveFromFinal
 // CHECK:STDOUT:   .base = %.loc101
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }

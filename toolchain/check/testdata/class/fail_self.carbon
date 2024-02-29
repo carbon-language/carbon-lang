@@ -6,30 +6,30 @@
 
 class Class {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:8: ERROR: `self` can only be declared in an implicit parameter list.
-  // CHECK:STDERR:   fn F(self: Class);
-  // CHECK:STDERR:        ^~~~~~~~~~~
-  fn F(self: Class);
+  // CHECK:STDERR:   fn F(self: Self);
+  // CHECK:STDERR:        ^~~~~~~~~~
+  fn F(self: Self);
 
   // CHECK:STDERR: fail_self.carbon:[[@LINE+6]]:10: ERROR: Function returns incomplete type `Class`.
-  // CHECK:STDERR:   fn G() -> Class;
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:   fn G() -> Self;
+  // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR: fail_self.carbon:[[@LINE-9]]:1: Class is incomplete within its definition.
   // CHECK:STDERR: class Class {
   // CHECK:STDERR: ^~~~~~~~~~~~~
-  fn G() -> Class;
+  fn G() -> Self;
 }
 
 // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:12: ERROR: `self` can only be declared in an implicit parameter list.
-// CHECK:STDERR: fn Class.F(self: Class) {
-// CHECK:STDERR:            ^~~~~~~~~~~
-fn Class.F(self: Class) {
+// CHECK:STDERR: fn Class.F(self: Self) {
+// CHECK:STDERR:            ^~~~~~~~~~
+fn Class.F(self: Self) {
 }
 
-fn Class.G() -> Class {
+fn Class.G() -> Self {
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:7: ERROR: `self` can only be declared in an implicit parameter list.
-  // CHECK:STDERR:   var self: Class;
-  // CHECK:STDERR:       ^~~~~~~~~~~
-  var self: Class;
+  // CHECK:STDERR:   var self: Self;
+  // CHECK:STDERR:       ^~~~~~~~~~
+  var self: Self;
   // CHECK:STDERR: fail_self.carbon:[[@LINE+3]]:10: ERROR: Cannot copy value of type `Class`.
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
@@ -68,12 +68,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
-// CHECK:STDOUT:     %Class.ref.loc25: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc25_12.1: Class = param self
 // CHECK:STDOUT:     @F.1.%self: Class = bind_name self, %self.loc25_12.1
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
-// CHECK:STDOUT:     %Class.ref.loc28: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     @G.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf {} [template = constants.%WrongSelf]
@@ -86,16 +86,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
-// CHECK:STDOUT:     %Class.ref.loc11: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc11: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc11_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc11_8.2: Class = bind_name self, %self.loc11_8.1
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G {
-// CHECK:STDOUT:     %Class.ref.loc19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc19: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.var: ref Class = var <return slot>
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
@@ -108,6 +109,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%WrongSelf
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,7 +120,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref Class = var self
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self

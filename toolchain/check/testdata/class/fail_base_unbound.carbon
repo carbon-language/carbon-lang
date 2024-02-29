@@ -40,13 +40,17 @@ let b: B = C.base;
 // CHECK:STDOUT:   %b: B = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {}
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc10: <unbound element of class C> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc10
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
