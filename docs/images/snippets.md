@@ -55,7 +55,7 @@ struct Circle {
 
 void PrintTotalArea(std::span<Circle> circles) {
   std::float32_t area = 0;
-  for (Circle c : circles) {
+  for (const Circle& c : circles) {
     area += std::numbers::pi * c.r * c.r;
   }
   std::print("Total area: {}\n", area);
@@ -101,8 +101,9 @@ fn Main() -> i32 {
 
 ```cpp
 // C++ code used in both Carbon and C++:
+import std;
 struct Circle {
-  float r;
+  std::float32_t r;
 };
 
 // Carbon exposing a function for C++:
@@ -119,9 +120,9 @@ fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
 }
 
 // C++ calling Carbon:
-#include <vector>
-#include "circle.h"
-#include "geometry.carbon.h"
+import std;
+import "circle.h";
+import "geometry.carbon.h";
 
 auto main() -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
