@@ -40,6 +40,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   %.loc11: <error> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .a = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

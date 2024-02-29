@@ -47,6 +47,7 @@ fn Class.H() {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = <unexpected instref inst+3>
 // CHECK:STDOUT:   .H = <unexpected instref inst+4>
 // CHECK:STDOUT:   .G = %G

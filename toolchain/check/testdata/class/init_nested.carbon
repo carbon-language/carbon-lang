@@ -59,6 +59,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Inner> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT:   .b = %.loc9
 // CHECK:STDOUT: }
@@ -70,6 +71,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc16: <unbound element of class Outer> = field_decl d, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .c = %.loc15
 // CHECK:STDOUT:   .d = %.loc16
 // CHECK:STDOUT: }

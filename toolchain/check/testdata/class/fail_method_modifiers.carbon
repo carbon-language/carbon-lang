@@ -80,6 +80,7 @@ base class BaseClass {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%FinalClass
 // CHECK:STDOUT:   .Abstract = %Abstract
 // CHECK:STDOUT:   .Virtual = %Virtual
 // CHECK:STDOUT: }
@@ -97,6 +98,7 @@ base class BaseClass {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AbstractClass
 // CHECK:STDOUT:   .Default = %Default
 // CHECK:STDOUT:   .Final = %Final
 // CHECK:STDOUT: }
@@ -109,6 +111,7 @@ base class BaseClass {
 // CHECK:STDOUT:   } [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%BaseClass
 // CHECK:STDOUT:   .Abstract = %Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

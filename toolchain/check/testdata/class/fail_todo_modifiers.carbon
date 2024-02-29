@@ -87,6 +87,7 @@ abstract class Abstract {
 // CHECK:STDOUT:   %.loc27: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Access
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .k = %.loc22
@@ -98,6 +99,7 @@ abstract class Abstract {
 // CHECK:STDOUT:   %I: <function> = fn_decl @I {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .H = %H
 // CHECK:STDOUT:   .I = %I
 // CHECK:STDOUT: }
@@ -108,6 +110,7 @@ abstract class Abstract {
 // CHECK:STDOUT:   %L: <function> = fn_decl @L {} [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT:   .J = %J
 // CHECK:STDOUT:   .K = %K
 // CHECK:STDOUT:   .L = %L

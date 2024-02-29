@@ -53,6 +53,7 @@ class C {
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .n = <unexpected instref inst+21>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

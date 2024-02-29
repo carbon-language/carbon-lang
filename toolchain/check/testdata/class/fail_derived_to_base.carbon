@@ -89,6 +89,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %.loc8: <unbound element of class A1> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A1
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,6 +97,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %.loc12: <unbound element of class A2> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A2
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,6 +107,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %.loc17: <unbound element of class B2> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17
 // CHECK:STDOUT:   extend name_scope2

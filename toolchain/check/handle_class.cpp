@@ -151,8 +151,10 @@ auto HandleClassDefinitionStart(Context& context,
   context.scope_stack().Push(class_decl_id, class_info.scope_id);
 
   // Introduce `Self`.
-  context.AddNameToLookup(SemIR::NameId::SelfType,
-                          context.types().GetInstId(class_info.self_type_id));
+  context.name_scopes()
+      .Get(class_info.scope_id)
+      .names.insert({SemIR::NameId::SelfType,
+                     context.types().GetInstId(class_info.self_type_id)});
 
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, class_id);

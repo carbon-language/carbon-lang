@@ -56,6 +56,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Inner.decl = class_decl @Inner {} [template = constants.%Inner]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -63,6 +64,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Inner> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .n = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

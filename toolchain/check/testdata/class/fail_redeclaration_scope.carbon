@@ -50,6 +50,7 @@ class Y {
 // CHECK:STDOUT:   %B.decl = class_decl @B.2 {} [template = constants.%B.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A.1
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,6 +59,7 @@ class Y {
 // CHECK:STDOUT:   %B.decl = class_decl @B.1 {} [template = constants.%B.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT:   .A = %A.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,16 +67,26 @@ class Y {
 // CHECK:STDOUT:   %B.decl = class_decl @B.1 {} [template = constants.%B.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A.2
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B.1 {}
+// CHECK:STDOUT: class @B.1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B.1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
 // CHECK:STDOUT:   %.decl = class_decl @.1 {} [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {}
+// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
