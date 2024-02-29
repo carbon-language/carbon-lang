@@ -25,25 +25,25 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Class.ref.loc11: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc11: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc11_13.1: Class* = param a
 // CHECK:STDOUT:     %a.loc11_13.2: Class* = bind_name a, %a.loc11_13.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc16: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %b.loc16_13.1: Class* = param b
 // CHECK:STDOUT:     %b.loc16_13.2: Class* = bind_name b, %b.loc16_13.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

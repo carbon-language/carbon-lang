@@ -19,17 +19,17 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .Main = %Main
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
 // CHECK:STDOUT:   %B: <function> = bind_alias B, %A [template = %A]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {

@@ -28,24 +28,24 @@ library "Bar" impl;
 // CHECK:STDOUT: --- no_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- no_api_lib.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- no_api_main_lib.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

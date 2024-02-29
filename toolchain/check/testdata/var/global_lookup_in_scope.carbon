@@ -17,13 +17,13 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .Main = %Main
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -22,28 +22,28 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %Class.decl.loc9 = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc9 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_12.1: Class = param self
 // CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc13_12.1
 // CHECK:STDOUT:     %b.loc13_24.1: bool = param b
 // CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc13_24.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc10_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc10_8.2: Class = bind_name self, %self.loc10_8.1
 // CHECK:STDOUT:     %b.loc10_20.1: bool = param b
 // CHECK:STDOUT:     %b.loc10_20.2: bool = bind_name b, %b.loc10_20.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

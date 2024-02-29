@@ -23,20 +23,20 @@ fn CallStatic(T:! Interface) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .CallStatic = %CallStatic
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface {} [template = constants.%.1]
-// CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic [template] {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc9_15.1: Interface = param T
 // CHECK:STDOUT:     @CallStatic.%T: Interface = bind_symbolic_name T, %T.loc9_15.1 [symbolic]
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc7: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

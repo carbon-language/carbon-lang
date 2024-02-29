@@ -30,13 +30,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .MakeReorder = %MakeReorder
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %n.loc12_9.1: i32 = param n
 // CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc12_9.1
 // CHECK:STDOUT:     %Class.ref.loc12_23: type = name_ref Class, %Class.decl [template = constants.%Class]
@@ -45,8 +45,8 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     @Make.%next: Class* = bind_name next, %next.loc12_17.1
 // CHECK:STDOUT:     %Class.ref.loc12_34: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template] {
 // CHECK:STDOUT:     %n.loc16_16.1: i32 = param n
 // CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc16_16.1
 // CHECK:STDOUT:     %Class.ref.loc16_30: type = name_ref Class, %Class.decl [template = constants.%Class]
@@ -55,7 +55,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     @MakeReorder.%next: Class* = bind_name next, %next.loc16_24.1
 // CHECK:STDOUT:     %Class.ref.loc16_41: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @MakeReorder.%return: ref Class = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

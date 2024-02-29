@@ -25,10 +25,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %.loc10_16: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_9: type = const_type const i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc10_26: type = ptr_type const i32 [template = constants.%.2]
@@ -38,7 +38,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %.loc10_36: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc10_37: type = ptr_type i32* [template = constants.%.5]
 // CHECK:STDOUT:     %return.var: ref i32** = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {

@@ -26,20 +26,20 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .G = %G
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

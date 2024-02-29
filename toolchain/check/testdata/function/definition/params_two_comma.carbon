@@ -9,15 +9,15 @@ fn Foo(a: i32, b: i32,) {}
 // CHECK:STDOUT: --- params_two_comma.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
 // CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
 // CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:     %b.loc7_16.1: i32 = param b
 // CHECK:STDOUT:     @Foo.%b: i32 = bind_name b, %b.loc7_16.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {

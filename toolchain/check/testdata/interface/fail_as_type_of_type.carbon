@@ -22,16 +22,16 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty [template = constants.%.1] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc9_6.1: Empty = param T
 // CHECK:STDOUT:     @F.%T: Empty = bind_symbolic_name T, %T.loc9_6.1 [symbolic]
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

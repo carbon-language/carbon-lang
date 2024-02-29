@@ -25,14 +25,14 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = %C.decl

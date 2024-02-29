@@ -19,11 +19,11 @@ var z: i32 = y;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:     .z = %z
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: type = struct_type {.a: f64, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %x.var: ref {.a: f64, .b: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64, .b: i32} = bind_name x, %x.var

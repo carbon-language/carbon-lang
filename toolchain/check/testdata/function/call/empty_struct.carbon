@@ -21,11 +21,11 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Echo = %Echo
 // CHECK:STDOUT:     .Main = %Main
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template] {
 // CHECK:STDOUT:     %.loc7_13.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_13.2: type = converted %.loc7_13.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %a.loc7_9.1: {} = param a
@@ -33,8 +33,8 @@ fn Main() {
 // CHECK:STDOUT:     %.loc7_20.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_20.2: type = converted %.loc7_20.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref {} = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {}) -> {} {

@@ -23,20 +23,20 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .Run = %Run
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

@@ -73,60 +73,60 @@ package SwappedExt impl;
 // CHECK:STDOUT: --- main.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_redundant_with_swapped_ext.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib_impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_lib.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_lib_impl.incorrect
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- swapped_ext.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- swapped_ext.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

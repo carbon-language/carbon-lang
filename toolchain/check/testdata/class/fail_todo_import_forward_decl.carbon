@@ -33,10 +33,10 @@ class ForwardDecl {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ForwardDecl.decl = class_decl @ForwardDecl {} [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ForwardDecl.decl = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
@@ -50,13 +50,13 @@ class ForwardDecl {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ForwardDecl = %import_ref
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [template = constants.%ForwardDecl]
-// CHECK:STDOUT:   %.decl = class_decl @.1 {
-// CHECK:STDOUT:     %ForwardDecl.decl = class_decl @ForwardDecl {} [template = constants.%ForwardDecl]
-// CHECK:STDOUT:   } [template = constants.%.1]
+// CHECK:STDOUT:   %.decl = class_decl @.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %ForwardDecl.decl = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;

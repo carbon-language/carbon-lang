@@ -22,16 +22,16 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface {} [template = constants.%.1]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc7: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

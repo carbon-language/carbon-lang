@@ -21,18 +21,18 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %.loc7
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Bar = %.loc8
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Wiz = %Wiz
 // CHECK:STDOUT:     .Baz = %Baz
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz {} [template]
-// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Wiz: <function> = fn_decl @Wiz [template] {}
+// CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {

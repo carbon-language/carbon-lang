@@ -23,15 +23,15 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
+// CHECK:STDOUT:   %X.decl = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }

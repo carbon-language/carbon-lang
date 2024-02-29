@@ -28,15 +28,15 @@ fn Interface.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface {} [template = constants.%.1]
-// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc11: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

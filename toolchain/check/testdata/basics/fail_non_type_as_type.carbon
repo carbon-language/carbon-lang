@@ -16,9 +16,9 @@ var x: type = 42;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT: }

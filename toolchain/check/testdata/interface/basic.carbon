@@ -23,13 +23,13 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc10
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty {} [template = constants.%.1]
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared {} [template = constants.%.2]
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared {} [template = constants.%.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty [template = constants.%.1] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -38,7 +38,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc13: <associated <function> in ForwardDeclared> = assoc_entity element0, %F [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

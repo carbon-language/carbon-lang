@@ -27,14 +27,14 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %b.loc7_6.1: bool = param b
 // CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc7_6.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {

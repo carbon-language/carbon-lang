@@ -37,10 +37,10 @@ var package_b: () = package.B();
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -52,11 +52,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %import_ref
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .package_a = %package_a
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%A]
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
@@ -85,10 +85,10 @@ var package_b: () = package.B();
 // CHECK:STDOUT: --- same_package.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
@@ -100,11 +100,11 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %import_ref
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .package_b = %package_b
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%B]
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]

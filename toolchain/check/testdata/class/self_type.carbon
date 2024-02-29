@@ -24,25 +24,25 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc12_12.1: Class = param self
 // CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc12_12.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref.loc8: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc8_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc8_8.2: Class = bind_name self, %self.loc8_8.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc9_14: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_8: <unbound element of class Class> = field_decl p, element0 [template]

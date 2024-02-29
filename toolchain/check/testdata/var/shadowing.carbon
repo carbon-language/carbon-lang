@@ -28,12 +28,12 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %.loc7
 // CHECK:STDOUT:     .Main = %Main
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

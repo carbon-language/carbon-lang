@@ -33,26 +33,26 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .OuterN = %.loc7
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .CallA = %CallA
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .InnerN = %.loc8
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .CallAB = %CallAB
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .CallABC = %CallABC
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A {} [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B {} [template]
-// CHECK:STDOUT:   %C: <function> = fn_decl @C {} [template]
-// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA {} [template]
-// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB {} [template]
-// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {}
+// CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
+// CHECK:STDOUT:   %CallA: <function> = fn_decl @CallA [template] {}
+// CHECK:STDOUT:   %CallAB: <function> = fn_decl @CallAB [template] {}
+// CHECK:STDOUT:   %CallABC: <function> = fn_decl @CallABC [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

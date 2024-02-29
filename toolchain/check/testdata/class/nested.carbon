@@ -45,21 +45,21 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Outer.decl = class_decl @Outer {} [template = constants.%Outer]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Outer.decl = class_decl @Outer [template = constants.%Outer] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     %.loc19: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:     %a.loc19_6.1: Outer* = param a
 // CHECK:STDOUT:     @F.%a: Outer* = bind_name a, %a.loc19_6.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl = class_decl @Inner {} [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.decl = class_decl @Inner [template = constants.%Inner] {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
 // CHECK:STDOUT:   %.loc14_15: type = ptr_type Outer [template = constants.%.3]
 // CHECK:STDOUT:   %.loc14_9: <unbound element of class Outer> = field_decl po, element0 [template]

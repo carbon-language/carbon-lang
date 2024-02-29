@@ -17,9 +17,9 @@ var x: (1, );
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12: (i32,) = tuple_literal (%.loc10_9)
 // CHECK:STDOUT:   %x.var: ref <error> = var x

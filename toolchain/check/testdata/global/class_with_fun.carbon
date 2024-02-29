@@ -22,16 +22,16 @@ var a: A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .ret_a = %ret_a
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
-// CHECK:STDOUT:   %ret_a: <function> = fn_decl @ret_a {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %ret_a: <function> = fn_decl @ret_a [template] {
 // CHECK:STDOUT:     %A.ref.loc8: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     @ret_a.%return: ref A = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref A = var a
 // CHECK:STDOUT:   %a: ref A = bind_name a, %a.var

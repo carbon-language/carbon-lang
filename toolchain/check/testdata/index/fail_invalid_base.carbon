@@ -42,18 +42,18 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .N = %.loc11
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c

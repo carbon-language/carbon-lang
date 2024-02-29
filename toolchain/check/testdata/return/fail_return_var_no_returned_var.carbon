@@ -14,12 +14,12 @@ fn Procedure() -> i32 {
 // CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Procedure = %Procedure
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() -> i32 {

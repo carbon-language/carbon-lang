@@ -35,30 +35,30 @@ fn Initializing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Value = %Value
 // CHECK:STDOUT:     .Reference = %Reference
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .Initializing = %Initializing
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
-// CHECK:STDOUT:   %Value: <function> = fn_decl @Value {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.decl = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %Value: <function> = fn_decl @Value [template] {
 // CHECK:STDOUT:     %X.ref.loc13: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %n.loc13_10.1: X = param n
 // CHECK:STDOUT:     @Value.%n: X = bind_name n, %n.loc13_10.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Reference: <function> = fn_decl @Reference [template] {
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %.loc17: type = ptr_type X [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc17_14.1: X* = param p
 // CHECK:STDOUT:     @Reference.%p: X* = bind_name p, %p.loc17_14.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     @Make.%return: ref X = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Initializing: <function> = fn_decl @Initializing {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Initializing: <function> = fn_decl @Initializing [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {

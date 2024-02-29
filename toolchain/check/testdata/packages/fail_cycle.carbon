@@ -50,7 +50,7 @@ import B;
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
 // CHECK:STDOUT: }
@@ -58,7 +58,7 @@ import B;
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %C: <namespace> = bind_name C, %import
 // CHECK:STDOUT: }
@@ -66,7 +66,7 @@ import B;
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %A: <namespace> = bind_name A, %import
 // CHECK:STDOUT: }
@@ -74,15 +74,15 @@ import B;
 // CHECK:STDOUT: --- c.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- cycle_child.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
 // CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
 // CHECK:STDOUT: }

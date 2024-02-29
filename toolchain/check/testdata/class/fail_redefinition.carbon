@@ -32,19 +32,19 @@ fn Class.H() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {} [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {} [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {} [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H {} [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

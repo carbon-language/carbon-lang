@@ -29,12 +29,12 @@ var i32_val: i32 = a_val;
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: type = bind_alias a, i32 [template = i32]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = i32]
 // CHECK:STDOUT:   %b: type = bind_alias b, %a [template = i32]
@@ -51,7 +51,7 @@ var i32_val: i32 = a_val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %import_ref.1
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %import_ref.3
@@ -61,7 +61,7 @@ var i32_val: i32 = a_val;
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:     .i32_val = %i32_val
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = i32]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, used [template = i32]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+5, used [template = i32]

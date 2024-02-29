@@ -44,16 +44,16 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .E = %E.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %I.decl = interface_decl @I {} [template = constants.%.1]
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
-// CHECK:STDOUT:   %D.decl = class_decl @D {} [template = constants.%D]
-// CHECK:STDOUT:   %E.decl = class_decl @E {} [template = constants.%E]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %E.decl = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

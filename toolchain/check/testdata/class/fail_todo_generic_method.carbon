@@ -32,30 +32,30 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {
 // CHECK:STDOUT:     %T.loc10_13.1: type = param T
 // CHECK:STDOUT:     %T.loc10_13.2: type = bind_symbolic_name T, %T.loc10_13.1 [symbolic]
-// CHECK:STDOUT:   } [template = constants.%Class]
-// CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template] {
 // CHECK:STDOUT:     %T.loc24_10.1: type = param T
 // CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T, %T.loc24_10.1 [symbolic]
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %T.ref.loc11: type = name_ref T, file.%T.loc10_13.2 [symbolic = file.%T.loc10_13.2]
 // CHECK:STDOUT:   %.loc11: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc12_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc12_8.2: Class = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, file.%T.loc10_13.2 [symbolic = file.%T.loc10_13.2]
 // CHECK:STDOUT:     %n.loc12_20.1: T = param n
 // CHECK:STDOUT:     %n.loc12_20.2: T = bind_name n, %n.loc12_20.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

@@ -38,11 +38,11 @@ impl namespace Bar;
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %.loc31
 // CHECK:STDOUT:     .Bar = %.loc36
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc31: <namespace> = namespace {} [template]
-// CHECK:STDOUT:   %.loc36: <namespace> = namespace {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc31: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc36: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

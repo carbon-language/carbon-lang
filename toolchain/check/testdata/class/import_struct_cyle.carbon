@@ -38,17 +38,17 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cycle = %Cycle.decl.loc4
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Cycle.decl.loc4 = class_decl @Cycle {} [template = constants.%Cycle]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cycle.decl.loc4 = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc6_18: type = ptr_type Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_19: type = struct_type {.b: Cycle*} [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref {.b: Cycle*} = var a
 // CHECK:STDOUT:   %a: ref {.b: Cycle*} = bind_name a, %a.var
-// CHECK:STDOUT:   %Cycle.decl.loc8 = class_decl @Cycle {} [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.decl.loc8 = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
@@ -74,14 +74,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cycle = %import_ref.1
 // CHECK:STDOUT:     .a = %import_ref.2
 // CHECK:STDOUT:     .Run = %Run
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
 // CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir1, inst+11, used
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
@@ -95,7 +95,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle {} [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %a.ref.loc7_3: ref {.b: Cycle*} = name_ref a, file.%import_ref.2
 // CHECK:STDOUT:   %.loc7_4: ref Cycle* = struct_access %a.ref.loc7_3, element0
 // CHECK:STDOUT:   %a.ref.loc7_11: ref {.b: Cycle*} = name_ref a, file.%import_ref.2

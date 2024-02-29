@@ -16,12 +16,12 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Class.ref.loc9_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc9_14: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %p.loc9_6.1: Class* = param p
@@ -29,7 +29,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     %Class.ref.loc9_20: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc9_25: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref Class* = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;

@@ -22,10 +22,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ConstMismatch = %ConstMismatch
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch [template] {
 // CHECK:STDOUT:     %.loc7_28.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %.loc7_28.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_21: type = const_type {} [template = constants.%.2]
@@ -37,7 +37,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %.loc7_44: type = ptr_type {} [template = constants.%.4]
 // CHECK:STDOUT:     %.loc7_35: type = const_type {}* [template = constants.%.5]
 // CHECK:STDOUT:     %return.var: ref const ({}*) = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {

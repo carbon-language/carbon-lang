@@ -23,10 +23,10 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a

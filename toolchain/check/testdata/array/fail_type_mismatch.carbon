@@ -49,14 +49,14 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .t1 = %t1
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .t2 = %t2
 // CHECK:STDOUT:     .d = %d
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a
