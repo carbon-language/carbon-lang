@@ -566,6 +566,8 @@ class InstNamer {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
+  enum class AddSpace : bool { Before, After };
+
   explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
                      const Parse::Tree& parse_tree, const File& sem_ir,
                      llvm::raw_ostream& out)
@@ -622,7 +624,7 @@ class Formatter {
   auto OpenBrace() -> void {
     // Put the constant value of an instruction before any braced block, rather
     // than at the end.
-    FormatPendingConstantValue(/*space_before=*/false);
+    FormatPendingConstantValue(AddSpace::After);
 
     out_ << '{';
     indent_ += 2;
@@ -905,7 +907,7 @@ class Formatter {
     pending_constant_value_is_self_ =
         pending_constant_value_.inst_id() == inst_id;
     FormatInstructionRHS(inst);
-    FormatPendingConstantValue(/*space_before=*/true);
+    FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
   }
 
@@ -918,27 +920,31 @@ class Formatter {
     out_ << "\n";
   }
 
-  auto FormatPendingConstantValue(bool space_before) -> void {
-    if (!pending_constant_value_.is_valid() ||
-        pending_constant_value_.is_constant()) {
-      if (space_before) {
-        out_ << ' ';
+  // If there is a pending constant value attached to the current instruction,
+  // print it now and clear it out. The constant value gets printed before the
+  // first braced block argument, or at the end of the instruction if there are
+  // no such arguments.
+  auto FormatPendingConstantValue(AddSpace space_where) -> void {
+    if (pending_constant_value_ == ConstantId::NotConstant) {
+      return;
+    }
+
+    if (space_where == AddSpace::Before) {
+      out_ << ' ';
+    }
+    out_ << '[';
+    if (pending_constant_value_.is_valid()) {
+      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
+      if (!pending_constant_value_is_self_) {
+        out_ << " = ";
+        FormatInstName(pending_constant_value_.inst_id());
       }
-      out_ << '[';
-      if (pending_constant_value_.is_valid()) {
-        out_ << (pending_constant_value_.is_symbolic() ? "symbolic"
-                                                       : "template");
-        if (!pending_constant_value_is_self_) {
-          out_ << " = ";
-          FormatInstName(pending_constant_value_.inst_id());
-        }
-      } else {
-        out_ << pending_constant_value_;
-      }
-      out_ << ']';
-      if (!space_before) {
-        out_ << ' ';
-      }
+    } else {
+      out_ << pending_constant_value_;
+    }
+    out_ << ']';
+    if (space_where == AddSpace::After) {
+      out_ << ' ';
     }
     pending_constant_value_ = ConstantId::NotConstant;
   }
@@ -1277,11 +1283,31 @@ class Formatter {
   const File& sem_ir_;
   llvm::raw_ostream& out_;
   InstNamer inst_namer_;
+
+  // The current scope that we are formatting within. References to names in
+  // this scope will not have a `@scope.` prefix added.
   InstNamer::ScopeId scope_ = InstNamer::ScopeId::None;
+
+  // Whether we are formatting in a terminator sequence, that is, a sequence of
+  // branches at the end of a block. The entirety of a terminator sequence is
+  // formatted on a single line, despite being multiple instructions.
   bool in_terminator_sequence_ = false;
+
+  // The indent depth to use for new instructions.
   int indent_ = 0;
+
+  // Whether we are currently formatting immediately after an open brace. If so,
+  // a newline will be inserted before the next line indent.
   bool after_open_brace_ = false;
+
+  // The constant value of the current instruction, if it has one that has not
+  // yet been printed. The value `NotConstant` is used as a sentinel to indicate
+  // there is nothing to print.
   ConstantId pending_constant_value_ = ConstantId::NotConstant;
+
+  // Whether `pending_constant_value_`'s instruction is the same as the
+  // instruction currently being printed. If true, only the phase of the
+  // constant is printed, and the value is omitted.
   bool pending_constant_value_is_self_ = false;
 };
 
