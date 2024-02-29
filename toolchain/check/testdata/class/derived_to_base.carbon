@@ -69,7 +69,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
@@ -79,11 +79,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:     .ConvertValue = %ConvertValue
 // CHECK:STDOUT:     .ConvertRef = %ConvertRef
 // CHECK:STDOUT:     .ConvertInit = %ConvertInit
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A {} [template = constants.%A]
-// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
-// CHECK:STDOUT:   %ConvertCToB: <function> = fn_decl @ConvertCToB {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %ConvertCToB: <function> = fn_decl @ConvertCToB [template] {
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc21_20: type = ptr_type C [template = constants.%.13]
 // CHECK:STDOUT:     %p.loc21_16.1: C* = param p
@@ -91,8 +91,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %B.ref.loc21: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc21_27: type = ptr_type B [template = constants.%.14]
 // CHECK:STDOUT:     %return.var.loc21: ref B* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConvertBToA: <function> = fn_decl @ConvertBToA {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConvertBToA: <function> = fn_decl @ConvertBToA [template] {
 // CHECK:STDOUT:     %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc22_20: type = ptr_type B [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc22_16.1: B* = param p
@@ -100,8 +100,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %A.ref.loc22: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc22_27: type = ptr_type A [template = constants.%.18]
 // CHECK:STDOUT:     %return.var.loc22: ref A* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConvertCToA: <function> = fn_decl @ConvertCToA {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConvertCToA: <function> = fn_decl @ConvertCToA [template] {
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc23_20: type = ptr_type C [template = constants.%.13]
 // CHECK:STDOUT:     %p.loc23_16.1: C* = param p
@@ -109,13 +109,13 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %A.ref.loc23: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc23_27: type = ptr_type A [template = constants.%.18]
 // CHECK:STDOUT:     %return.var.loc23: ref A* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConvertValue: <function> = fn_decl @ConvertValue {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConvertValue: <function> = fn_decl @ConvertValue [template] {
 // CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc25_17.1: C = param c
 // CHECK:STDOUT:     @ConvertValue.%c: C = bind_name c, %c.loc25_17.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConvertRef: <function> = fn_decl @ConvertRef {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConvertRef: <function> = fn_decl @ConvertRef [template] {
 // CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc29_19: type = ptr_type C [template = constants.%.13]
 // CHECK:STDOUT:     %c.loc29_15.1: C* = param c
@@ -123,8 +123,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %A.ref.loc29: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc29_26: type = ptr_type A [template = constants.%.18]
 // CHECK:STDOUT:     %return.var.loc29: ref A* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ConvertInit: <function> = fn_decl @ConvertInit {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ConvertInit: <function> = fn_decl @ConvertInit [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

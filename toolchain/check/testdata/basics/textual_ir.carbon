@@ -23,16 +23,16 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
 // CHECK:STDOUT:     %n.loc11_8.1: i32 = param n
 // CHECK:STDOUT:     @Foo.%n: i32 = bind_name n, %n.loc11_8.1
 // CHECK:STDOUT:     %.loc11_33.1: (type, type, type) = tuple_literal (i32, i32, f64)
 // CHECK:STDOUT:     %.loc11_33.2: type = converted %.loc11_33.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @Foo.%return: ref (i32, i32, f64) = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, i32, f64) {

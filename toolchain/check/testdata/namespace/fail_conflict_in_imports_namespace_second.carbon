@@ -35,10 +35,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %NS: <function> = fn_decl @NS {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS() {
@@ -49,13 +49,13 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %.loc10
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %.loc10: <namespace> = namespace {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -66,17 +66,17 @@ fn NS.Bar() {}
 // CHECK:STDOUT: --- conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %.2
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir2, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.2, {
+// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.3
 // CHECK:STDOUT:     .Bar = %Bar
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unused
-// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar {} [template]
+// CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {

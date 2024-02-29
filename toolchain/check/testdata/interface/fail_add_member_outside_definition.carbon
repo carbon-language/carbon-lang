@@ -34,13 +34,13 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .Outer = %Outer.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface {} [template = constants.%.1]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {} [template]
-// CHECK:STDOUT:   %Outer.decl = interface_decl @Outer {} [template = constants.%.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
+// CHECK:STDOUT:   %Outer.decl = interface_decl @Outer [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -50,8 +50,8 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
-// CHECK:STDOUT:   %Inner.decl = interface_decl @Inner {} [template = constants.%.3]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
+// CHECK:STDOUT:   %Inner.decl = interface_decl @Inner [template = constants.%.3] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Inner = %Inner.decl
@@ -59,7 +59,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inner {
-// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 {} [template]
+// CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = @Outer.%F

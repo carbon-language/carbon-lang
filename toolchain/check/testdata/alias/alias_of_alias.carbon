@@ -16,11 +16,11 @@ let d: c = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: type = bind_alias a, bool [template = bool]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = bool]
 // CHECK:STDOUT:   %b: type = bind_alias b, %a [template = bool]

@@ -34,19 +34,19 @@ fn Var() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .Let = %Let
 // CHECK:STDOUT:     .Var = %Var
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %X.decl = class_decl @X {} [template = constants.%X]
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %X.decl = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     @Make.%return: ref X = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Let: <function> = fn_decl @Let {} [template]
-// CHECK:STDOUT:   %Var: <function> = fn_decl @Var {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Let: <function> = fn_decl @Let [template] {}
+// CHECK:STDOUT:   %Var: <function> = fn_decl @Var [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {}

@@ -17,17 +17,17 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .Six = %Six
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six {
+// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
 // CHECK:STDOUT:     %.loc11: type = bind_value %x.ref
 // CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {

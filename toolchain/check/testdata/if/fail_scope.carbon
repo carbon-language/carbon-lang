@@ -22,14 +22,14 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .VarScope = %VarScope
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope [template] {
 // CHECK:STDOUT:     %b.loc7_13.1: bool = param b
 // CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc7_13.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {

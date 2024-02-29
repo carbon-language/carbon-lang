@@ -620,6 +620,10 @@ class Formatter {
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
   auto OpenBrace() -> void {
+    // Put the constant value of an instruction before any braced block, rather
+    // than at the end.
+    FormatPendingConstantValue(/*space_before=*/false);
+
     out_ << '{';
     indent_ += 2;
     after_open_brace_ = true;
@@ -897,21 +901,11 @@ class Formatter {
     Indent();
     FormatInstructionLHS(inst_id, inst);
     out_ << InstT::Kind.ir_name();
+    pending_constant_value_ = sem_ir_.constant_values().Get(inst_id);
+    pending_constant_value_is_self_ =
+        pending_constant_value_.inst_id() == inst_id;
     FormatInstructionRHS(inst);
-    if (auto const_id = sem_ir_.constant_values().Get(inst_id);
-        !const_id.is_valid() || const_id.is_constant()) {
-      out_ << " [";
-      if (const_id.is_valid()) {
-        out_ << (const_id.is_symbolic() ? "symbolic" : "template");
-        if (const_id.inst_id() != inst_id) {
-          out_ << " = ";
-          FormatInstName(const_id.inst_id());
-        }
-      } else {
-        out_ << const_id;
-      }
-      out_ << "]";
-    }
+    FormatPendingConstantValue(/*space_before=*/true);
     out_ << "\n";
   }
 
@@ -922,6 +916,31 @@ class Formatter {
     out_ << ImportRefUnused::Kind.ir_name();
     FormatInstructionRHS(inst);
     out_ << "\n";
+  }
+
+  auto FormatPendingConstantValue(bool space_before) -> void {
+    if (!pending_constant_value_.is_valid() ||
+        pending_constant_value_.is_constant()) {
+      if (space_before) {
+        out_ << ' ';
+      }
+      out_ << '[';
+      if (pending_constant_value_.is_valid()) {
+        out_ << (pending_constant_value_.is_symbolic() ? "symbolic"
+                                                       : "template");
+        if (!pending_constant_value_is_self_) {
+          out_ << " = ";
+          FormatInstName(pending_constant_value_.inst_id());
+        }
+      } else {
+        out_ << pending_constant_value_;
+      }
+      out_ << ']';
+      if (!space_before) {
+        out_ << ' ';
+      }
+    }
+    pending_constant_value_ = ConstantId::NotConstant;
   }
 
   auto FormatInstructionLHS(InstId inst_id, Inst inst) -> void {
@@ -1262,6 +1281,8 @@ class Formatter {
   bool in_terminator_sequence_ = false;
   int indent_ = 0;
   bool after_open_brace_ = false;
+  ConstantId pending_constant_value_ = ConstantId::NotConstant;
+  bool pending_constant_value_is_self_ = false;
 };
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,

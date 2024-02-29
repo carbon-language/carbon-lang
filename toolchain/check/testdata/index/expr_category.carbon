@@ -43,28 +43,28 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .ValueBinding = %ValueBinding
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc7_17: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_18: type = array_type %.loc7_17, i32 [template = constants.%.2]
 // CHECK:STDOUT:     @F.%return: ref [i32; 3] = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %.loc9_15: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc9_16: type = array_type %.loc9_15, i32 [template = constants.%.2]
 // CHECK:STDOUT:     %b.loc9_6.1: [i32; 3] = param b
 // CHECK:STDOUT:     @G.%b: [i32; 3] = bind_name b, %b.loc9_6.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ValueBinding: <function> = fn_decl @ValueBinding [template] {
 // CHECK:STDOUT:     %.loc17_26: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc17_27: type = array_type %.loc17_26, i32 [template = constants.%.2]
 // CHECK:STDOUT:     %b.loc17_17.1: [i32; 3] = param b
 // CHECK:STDOUT:     @ValueBinding.%b: [i32; 3] = bind_name b, %b.loc17_17.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: [i32; 3];

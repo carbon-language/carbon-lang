@@ -26,12 +26,12 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {}

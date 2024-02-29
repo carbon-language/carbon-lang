@@ -30,41 +30,41 @@ fn Class.G[addr self: Class*]() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Class.ref.loc14: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc14_12.1: Class = param self
 // CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc14_12.1
 // CHECK:STDOUT:     %return.var.loc14: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc18_28: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc18_17.1: Class* = param self
 // CHECK:STDOUT:     @G.%self: Class* = bind_name self, %self.loc18_17.1
 // CHECK:STDOUT:     @G.%.loc18: Class* = addr_pattern @G.%self
 // CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc8_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc8_8.2: Class = bind_name self, %self.loc8_8.1
 // CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc9_24: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc9_13.1: Class* = param self
 // CHECK:STDOUT:     %self.loc9_13.3: Class* = bind_name self, %self.loc9_13.1
 // CHECK:STDOUT:     %.loc9_8: Class* = addr_pattern %self.loc9_13.3
 // CHECK:STDOUT:     %return.var.loc9: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -160,7 +160,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Final = %Final.decl
 // CHECK:STDOUT:     .DeriveFromError = %DeriveFromError.decl
@@ -184,43 +184,43 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     .ConvertToBadBaseFinal = %ConvertToBadBaseFinal
 // CHECK:STDOUT:     .AccessMemberWithInvalidBaseFinal_WithMember = %AccessMemberWithInvalidBaseFinal_WithMember
 // CHECK:STDOUT:     .AccessMemberWithInvalidBaseFinal_NoMember = %AccessMemberWithInvalidBaseFinal_NoMember
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
-// CHECK:STDOUT:   %Final.decl = class_decl @Final {} [template = constants.%Final]
-// CHECK:STDOUT:   %DeriveFromError.decl = class_decl @DeriveFromError {} [template = constants.%DeriveFromError]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseError: <function> = fn_decl @AccessMemberWithInvalidBaseError {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Final.decl = class_decl @Final [template = constants.%Final] {}
+// CHECK:STDOUT:   %DeriveFromError.decl = class_decl @DeriveFromError [template = constants.%DeriveFromError] {}
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseError: <function> = fn_decl @AccessMemberWithInvalidBaseError [template] {
 // CHECK:STDOUT:     %DeriveFromError.ref: type = name_ref DeriveFromError, %DeriveFromError.decl [template = constants.%DeriveFromError]
 // CHECK:STDOUT:     %.loc20: type = ptr_type DeriveFromError [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc20_37.1: DeriveFromError* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseError.%p: DeriveFromError* = bind_name p, %p.loc20_37.1
 // CHECK:STDOUT:     %return.var.loc20: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DeriveFromNonType.decl = class_decl @DeriveFromNonType {} [template = constants.%DeriveFromNonType]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBasNonType: <function> = fn_decl @AccessMemberWithInvalidBasNonType {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DeriveFromNonType.decl = class_decl @DeriveFromNonType [template = constants.%DeriveFromNonType] {}
+// CHECK:STDOUT:   %AccessMemberWithInvalidBasNonType: <function> = fn_decl @AccessMemberWithInvalidBasNonType [template] {
 // CHECK:STDOUT:     %DeriveFromNonType.ref: type = name_ref DeriveFromNonType, %DeriveFromNonType.decl [template = constants.%DeriveFromNonType]
 // CHECK:STDOUT:     %.loc29: type = ptr_type DeriveFromNonType [template = constants.%.6]
 // CHECK:STDOUT:     %p.loc29_38.1: DeriveFromNonType* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBasNonType.%p: DeriveFromNonType* = bind_name p, %p.loc29_38.1
 // CHECK:STDOUT:     %return.var.loc29: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DeriveFromi32.decl = class_decl @DeriveFromi32 {} [template = constants.%DeriveFromi32]
-// CHECK:STDOUT:   %ConvertToBadBasei32: <function> = fn_decl @ConvertToBadBasei32 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DeriveFromi32.decl = class_decl @DeriveFromi32 [template = constants.%DeriveFromi32] {}
+// CHECK:STDOUT:   %ConvertToBadBasei32: <function> = fn_decl @ConvertToBadBasei32 [template] {
 // CHECK:STDOUT:     %DeriveFromi32.ref.loc43: type = name_ref DeriveFromi32, %DeriveFromi32.decl [template = constants.%DeriveFromi32]
 // CHECK:STDOUT:     %.loc43_40: type = ptr_type DeriveFromi32 [template = constants.%.7]
 // CHECK:STDOUT:     %p.loc43_24.1: DeriveFromi32* = param p
 // CHECK:STDOUT:     @ConvertToBadBasei32.%p: DeriveFromi32* = bind_name p, %p.loc43_24.1
 // CHECK:STDOUT:     %.loc43_49: type = ptr_type i32 [template = constants.%.8]
 // CHECK:STDOUT:     %return.var.loc43: ref i32* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBasei32: <function> = fn_decl @AccessMemberWithInvalidBasei32 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBasei32: <function> = fn_decl @AccessMemberWithInvalidBasei32 [template] {
 // CHECK:STDOUT:     %DeriveFromi32.ref.loc45: type = name_ref DeriveFromi32, %DeriveFromi32.decl [template = constants.%DeriveFromi32]
 // CHECK:STDOUT:     %.loc45: type = ptr_type DeriveFromi32 [template = constants.%.7]
 // CHECK:STDOUT:     %p.loc45_35.1: DeriveFromi32* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBasei32.%p: DeriveFromi32* = bind_name p, %p.loc45_35.1
 // CHECK:STDOUT:     %return.var.loc45: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DeriveFromTuple.decl = class_decl @DeriveFromTuple {} [template = constants.%DeriveFromTuple]
-// CHECK:STDOUT:   %ConvertToBadBaseTuple: <function> = fn_decl @ConvertToBadBaseTuple {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DeriveFromTuple.decl = class_decl @DeriveFromTuple [template = constants.%DeriveFromTuple] {}
+// CHECK:STDOUT:   %ConvertToBadBaseTuple: <function> = fn_decl @ConvertToBadBaseTuple [template] {
 // CHECK:STDOUT:     %DeriveFromTuple.ref.loc57: type = name_ref DeriveFromTuple, %DeriveFromTuple.decl [template = constants.%DeriveFromTuple]
 // CHECK:STDOUT:     %.loc57_44: type = ptr_type DeriveFromTuple [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc57_26.1: DeriveFromTuple* = param p
@@ -230,16 +230,16 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %.loc57_56.2: type = converted %.loc57_56.1, constants.%.10 [template = constants.%.10]
 // CHECK:STDOUT:     %.loc57_57: type = ptr_type (Base,) [template = constants.%.15]
 // CHECK:STDOUT:     %return.var.loc57: ref (Base,)* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseTuple: <function> = fn_decl @AccessMemberWithInvalidBaseTuple {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseTuple: <function> = fn_decl @AccessMemberWithInvalidBaseTuple [template] {
 // CHECK:STDOUT:     %DeriveFromTuple.ref.loc59: type = name_ref DeriveFromTuple, %DeriveFromTuple.decl [template = constants.%DeriveFromTuple]
 // CHECK:STDOUT:     %.loc59: type = ptr_type DeriveFromTuple [template = constants.%.14]
 // CHECK:STDOUT:     %p.loc59_37.1: DeriveFromTuple* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseTuple.%p: DeriveFromTuple* = bind_name p, %p.loc59_37.1
 // CHECK:STDOUT:     %return.var.loc59: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DeriveFromStruct.decl = class_decl @DeriveFromStruct {} [template = constants.%DeriveFromStruct]
-// CHECK:STDOUT:   %ConvertToBadBaseStruct: <function> = fn_decl @ConvertToBadBaseStruct {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DeriveFromStruct.decl = class_decl @DeriveFromStruct [template = constants.%DeriveFromStruct] {}
+// CHECK:STDOUT:   %ConvertToBadBaseStruct: <function> = fn_decl @ConvertToBadBaseStruct [template] {
 // CHECK:STDOUT:     %DeriveFromStruct.ref.loc73: type = name_ref DeriveFromStruct, %DeriveFromStruct.decl [template = constants.%DeriveFromStruct]
 // CHECK:STDOUT:     %.loc73_46: type = ptr_type DeriveFromStruct [template = constants.%.18]
 // CHECK:STDOUT:     %p.loc73_27.1: DeriveFromStruct* = param p
@@ -247,17 +247,17 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %.loc73_69: type = struct_type {.a: i32, .b: i32} [template = constants.%.16]
 // CHECK:STDOUT:     %.loc73_70: type = ptr_type {.a: i32, .b: i32} [template = constants.%.17]
 // CHECK:STDOUT:     %return.var.loc73: ref {.a: i32, .b: i32}* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseStruct: <function> = fn_decl @AccessMemberWithInvalidBaseStruct {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseStruct: <function> = fn_decl @AccessMemberWithInvalidBaseStruct [template] {
 // CHECK:STDOUT:     %DeriveFromStruct.ref.loc76: type = name_ref DeriveFromStruct, %DeriveFromStruct.decl [template = constants.%DeriveFromStruct]
 // CHECK:STDOUT:     %.loc76: type = ptr_type DeriveFromStruct [template = constants.%.18]
 // CHECK:STDOUT:     %p.loc76_38.1: DeriveFromStruct* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseStruct.%p: DeriveFromStruct* = bind_name p, %p.loc76_38.1
 // CHECK:STDOUT:     %return.var.loc76: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete {} [template = constants.%Incomplete]
-// CHECK:STDOUT:   %DeriveFromIncomplete.decl = class_decl @DeriveFromIncomplete {} [template = constants.%DeriveFromIncomplete]
-// CHECK:STDOUT:   %ConvertToBadBaseIncomplete: <function> = fn_decl @ConvertToBadBaseIncomplete {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %DeriveFromIncomplete.decl = class_decl @DeriveFromIncomplete [template = constants.%DeriveFromIncomplete] {}
+// CHECK:STDOUT:   %ConvertToBadBaseIncomplete: <function> = fn_decl @ConvertToBadBaseIncomplete [template] {
 // CHECK:STDOUT:     %DeriveFromIncomplete.ref.loc93: type = name_ref DeriveFromIncomplete, %DeriveFromIncomplete.decl [template = constants.%DeriveFromIncomplete]
 // CHECK:STDOUT:     %.loc93_54: type = ptr_type DeriveFromIncomplete [template = constants.%.19]
 // CHECK:STDOUT:     %p.loc93_31.1: DeriveFromIncomplete* = param p
@@ -265,16 +265,16 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:     %.loc93_70: type = ptr_type Incomplete [template = constants.%.20]
 // CHECK:STDOUT:     %return.var.loc93: ref Incomplete* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseIncomplete: <function> = fn_decl @AccessMemberWithInvalidBaseIncomplete {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseIncomplete: <function> = fn_decl @AccessMemberWithInvalidBaseIncomplete [template] {
 // CHECK:STDOUT:     %DeriveFromIncomplete.ref.loc95: type = name_ref DeriveFromIncomplete, %DeriveFromIncomplete.decl [template = constants.%DeriveFromIncomplete]
 // CHECK:STDOUT:     %.loc95: type = ptr_type DeriveFromIncomplete [template = constants.%.19]
 // CHECK:STDOUT:     %p.loc95_42.1: DeriveFromIncomplete* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseIncomplete.%p: DeriveFromIncomplete* = bind_name p, %p.loc95_42.1
 // CHECK:STDOUT:     %return.var.loc95: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %DeriveFromFinal.decl = class_decl @DeriveFromFinal {} [template = constants.%DeriveFromFinal]
-// CHECK:STDOUT:   %ConvertToBadBaseFinal: <function> = fn_decl @ConvertToBadBaseFinal {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DeriveFromFinal.decl = class_decl @DeriveFromFinal [template = constants.%DeriveFromFinal] {}
+// CHECK:STDOUT:   %ConvertToBadBaseFinal: <function> = fn_decl @ConvertToBadBaseFinal [template] {
 // CHECK:STDOUT:     %DeriveFromFinal.ref.loc105: type = name_ref DeriveFromFinal, %DeriveFromFinal.decl [template = constants.%DeriveFromFinal]
 // CHECK:STDOUT:     %.loc105_44: type = ptr_type DeriveFromFinal [template = constants.%.24]
 // CHECK:STDOUT:     %p.loc105_26.1: DeriveFromFinal* = param p
@@ -282,21 +282,21 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %Final.ref: type = name_ref Final, %Final.decl [template = constants.%Final]
 // CHECK:STDOUT:     %.loc105_55: type = ptr_type Final [template = constants.%.25]
 // CHECK:STDOUT:     %return.var.loc105: ref Final* = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_WithMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_WithMember {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_WithMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_WithMember [template] {
 // CHECK:STDOUT:     %DeriveFromFinal.ref.loc109: type = name_ref DeriveFromFinal, %DeriveFromFinal.decl [template = constants.%DeriveFromFinal]
 // CHECK:STDOUT:     %.loc109: type = ptr_type DeriveFromFinal [template = constants.%.24]
 // CHECK:STDOUT:     %p.loc109_48.1: DeriveFromFinal* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseFinal_WithMember.%p: DeriveFromFinal* = bind_name p, %p.loc109_48.1
 // CHECK:STDOUT:     %return.var.loc109: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_NoMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_NoMember {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessMemberWithInvalidBaseFinal_NoMember: <function> = fn_decl @AccessMemberWithInvalidBaseFinal_NoMember [template] {
 // CHECK:STDOUT:     %DeriveFromFinal.ref.loc113: type = name_ref DeriveFromFinal, %DeriveFromFinal.decl [template = constants.%DeriveFromFinal]
 // CHECK:STDOUT:     %.loc113: type = ptr_type DeriveFromFinal [template = constants.%.24]
 // CHECK:STDOUT:     %p.loc113_46.1: DeriveFromFinal* = param p
 // CHECK:STDOUT:     @AccessMemberWithInvalidBaseFinal_NoMember.%p: DeriveFromFinal* = bind_name p, %p.loc113_46.1
 // CHECK:STDOUT:     %return.var.loc113: ref i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {}

@@ -49,12 +49,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Class.ref.loc12_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc12_6.1: Class = param c
 // CHECK:STDOUT:     @F.2.%c: Class = bind_name c, %c.loc12_6.1
@@ -62,23 +62,23 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %.loc12: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %p.loc12_16.1: Class* = param p
 // CHECK:STDOUT:     @F.2.%p: Class* = bind_name p, %p.loc12_16.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc8_24: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc8_13.1: Class* = param self
 // CHECK:STDOUT:     %self.loc8_13.3: Class* = bind_name self, %self.loc8_13.1
 // CHECK:STDOUT:     %.loc8_8: Class* = addr_pattern %self.loc8_13.3
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc9_13.1: Class = param self
 // CHECK:STDOUT:     %self.loc9_13.3: Class = bind_name self, %self.loc9_13.1
 // CHECK:STDOUT:     %.loc9: Class = addr_pattern %self.loc9_13.3
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

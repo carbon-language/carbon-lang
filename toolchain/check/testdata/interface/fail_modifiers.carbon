@@ -36,16 +36,16 @@ protected interface Protected;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Default = %Default.decl
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract {} [template = constants.%.1]
-// CHECK:STDOUT:   %Default.decl = interface_decl @Default {} [template = constants.%.2]
-// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual {} [template = constants.%.3]
-// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected {} [template = constants.%.4]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract [template = constants.%.1] {}
+// CHECK:STDOUT:   %Default.decl = interface_decl @Default [template = constants.%.2] {}
+// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual [template = constants.%.3] {}
+// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {

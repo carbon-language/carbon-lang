@@ -57,27 +57,27 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .FinalClass = %FinalClass.decl
 // CHECK:STDOUT:     .AbstractClass = %AbstractClass.decl
 // CHECK:STDOUT:     .BaseClass = %BaseClass.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass {} [template = constants.%FinalClass]
-// CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass {} [template = constants.%AbstractClass]
-// CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass {} [template = constants.%BaseClass]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass [template = constants.%FinalClass] {}
+// CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass [template = constants.%AbstractClass] {}
+// CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass [template = constants.%BaseClass] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.1 {
+// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.1 [template] {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.loc15_24.1: FinalClass = param self
 // CHECK:STDOUT:     %self.loc15_24.2: FinalClass = bind_name self, %self.loc15_24.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Virtual: <function> = fn_decl @Virtual {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Virtual: <function> = fn_decl @Virtual [template] {
 // CHECK:STDOUT:     %Self.ref.loc23: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.loc23_22.1: FinalClass = param self
 // CHECK:STDOUT:     %self.loc23_22.2: FinalClass = bind_name self, %self.loc23_22.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Abstract = %Abstract
@@ -85,16 +85,16 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default {
+// CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template] {
 // CHECK:STDOUT:     %Self.ref.loc31: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.loc31_22.1: AbstractClass = param self
 // CHECK:STDOUT:     %self.loc31_22.2: AbstractClass = bind_name self, %self.loc31_22.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template] {
 // CHECK:STDOUT:     %Self.ref.loc36: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.loc36_18.1: AbstractClass = param self
 // CHECK:STDOUT:     %self.loc36_18.2: AbstractClass = bind_name self, %self.loc36_18.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Default = %Default
@@ -102,11 +102,11 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.2 {
+// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.2 [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT:     %self.loc47_24.1: BaseClass = param self
 // CHECK:STDOUT:     %self.loc47_24.2: BaseClass = bind_name self, %self.loc47_24.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Abstract = %Abstract

@@ -23,11 +23,11 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %A: <function> = fn_decl @A {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
 // CHECK:STDOUT:     %.loc7_9: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_18: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_19: type = ptr_type const i32* [template = constants.%.3]
@@ -37,8 +37,8 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc7_34: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_35: type = ptr_type const i32* [template = constants.%.3]
 // CHECK:STDOUT:     %return.var.loc7: ref const i32** = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B: <function> = fn_decl @B {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %.loc11_19: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_9: type = const_type i32* [template = constants.%.5]
 // CHECK:STDOUT:     %p.loc11_6.1: const (i32*) = param p
@@ -46,7 +46,7 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc11_36: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_26: type = const_type i32* [template = constants.%.5]
 // CHECK:STDOUT:     %return.var.loc11: ref const (i32*) = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p: const i32**) -> const i32** {

@@ -61,39 +61,39 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .WrongSelf = %WrongSelf.decl
 // CHECK:STDOUT:     .CallWrongSelf = %CallWrongSelf
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class {} [template = constants.%Class]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Class.ref.loc25: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc25_12.1: Class = param self
 // CHECK:STDOUT:     @F.1.%self: Class = bind_name self, %self.loc25_12.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc28: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @G.%return: ref Class = var <return slot>
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf {} [template = constants.%WrongSelf]
-// CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf [template = constants.%WrongSelf] {}
+// CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf [template] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %ws.loc43_18.1: WrongSelf = param ws
 // CHECK:STDOUT:     @CallWrongSelf.%ws: WrongSelf = bind_name ws, %ws.loc43_18.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Class.ref.loc11: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc11_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc11_8.2: Class = bind_name self, %self.loc11_8.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref.loc19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %return.var: ref Class = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -101,11 +101,11 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongSelf {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc40_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc40_8.2: Class = bind_name self, %self.loc40_8.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

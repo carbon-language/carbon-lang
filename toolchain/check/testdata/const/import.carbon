@@ -30,15 +30,15 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .a_ptr_ref = %a_ptr_ref
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc4: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref const i32 = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a_ref.var: ref const i32 = var a_ref
 // CHECK:STDOUT:   %a_ref: ref const i32 = bind_name a_ref, %a_ref.var
@@ -69,13 +69,13 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %import_ref.1
 // CHECK:STDOUT:     .a_ref = %import_ref.2
 // CHECK:STDOUT:     .a_ptr_ref = %import_ref.3
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unused
 // CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir1, inst+7, used
 // CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir1, inst+15, used

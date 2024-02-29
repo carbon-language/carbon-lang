@@ -45,25 +45,25 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Child = %Child.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
-// CHECK:STDOUT:   %Child.decl = class_decl @Child {} [template = constants.%Child]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Child.decl = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc5_8.1: Base = param self
 // CHECK:STDOUT:     %self.loc5_8.2: Base = bind_name self, %self.loc5_8.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Unused: <function> = fn_decl @Unused {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Unused: <function> = fn_decl @Unused [template] {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc6_13.1: Base = param self
 // CHECK:STDOUT:     %self.loc6_13.2: Base = bind_name self, %self.loc6_13.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl x, element0 [template]
 // CHECK:STDOUT:   %.loc9: <unbound element of class Base> = field_decl unused, element1 [template]
 // CHECK:STDOUT:
@@ -109,14 +109,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Base = %import_ref.1
 // CHECK:STDOUT:     .Child = %import_ref.2
 // CHECK:STDOUT:     .Run = %Run
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+19, used [template = constants.%Child]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run {} [template]
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
@@ -142,8 +142,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Child.decl = class_decl @Child {} [template = constants.%Child]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
+// CHECK:STDOUT:   %Child.decl = class_decl @Child [template = constants.%Child] {}
+// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, file.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref Child = var a
 // CHECK:STDOUT:   %a: ref Child = bind_name a, %a.var

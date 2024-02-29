@@ -16,11 +16,11 @@ var y: i32 = x;
 // CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:     .y = %y
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
 // CHECK:STDOUT: }

@@ -41,37 +41,37 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Call = %Call
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base {} [template = constants.%Base]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc13_26: type = ptr_type Base [template = constants.%.2]
 // CHECK:STDOUT:     %self.loc13_16.1: Base* = param self
 // CHECK:STDOUT:     @F.%self: Base* = bind_name self, %self.loc13_16.1
 // CHECK:STDOUT:     @F.%.loc13: Base* = addr_pattern @F.%self
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived {} [template = constants.%Derived]
-// CHECK:STDOUT:   %Call: <function> = fn_decl @Call {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Derived.decl = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc21: type = ptr_type Derived [template = constants.%.8]
 // CHECK:STDOUT:     %p.loc21_9.1: Derived* = param p
 // CHECK:STDOUT:     @Call.%p: Derived* = bind_name p, %p.loc21_9.1
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %.loc10_23: type = ptr_type Base [template = constants.%.2]
 // CHECK:STDOUT:     %self.loc10_13.1: Base* = param self
 // CHECK:STDOUT:     %self.loc10_13.3: Base* = bind_name self, %self.loc10_13.1
 // CHECK:STDOUT:     %.loc10_8: Base* = addr_pattern %self.loc10_13.3
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .a = %.loc8

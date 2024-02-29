@@ -19,14 +19,14 @@ let not_false: bool = not false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Not = %Not
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Not: <function> = fn_decl @Not {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Not: <function> = fn_decl @Not [template] {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc7_8.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
-// CHECK:STDOUT:   } [template]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.2]
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22

@@ -25,16 +25,16 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple {} [template = constants.%.1]
-// CHECK:STDOUT:   %C.decl = class_decl @C {} [template = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in Simple> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -43,7 +43,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Simple {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 {} [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

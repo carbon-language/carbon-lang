@@ -62,18 +62,18 @@ class C4 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:     .C3 = %C3.decl
 // CHECK:STDOUT:     .C4 = %C4.decl
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %B.decl = class_decl @B {} [template = constants.%B]
-// CHECK:STDOUT:   %C1.decl = class_decl @C1 {} [template = constants.%C1]
-// CHECK:STDOUT:   %C2.decl = class_decl @C2 {} [template = constants.%C2]
-// CHECK:STDOUT:   %C3.decl = class_decl @C3 {} [template = constants.%C3]
-// CHECK:STDOUT:   %C4.decl = class_decl @C4 {} [template = constants.%C4]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C1.decl = class_decl @C1 [template = constants.%C1] {}
+// CHECK:STDOUT:   %C2.decl = class_decl @C2 [template = constants.%C2] {}
+// CHECK:STDOUT:   %C3.decl = class_decl @C3 [template = constants.%C3] {}
+// CHECK:STDOUT:   %C4.decl = class_decl @C4 [template = constants.%C4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {}

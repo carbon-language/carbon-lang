@@ -64,24 +64,24 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Run0 = %Run0
 // CHECK:STDOUT:     .Run1 = %Run1
 // CHECK:STDOUT:     .Run2 = %Run2
 // CHECK:STDOUT:     .Main = %Main
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0 {} [template]
-// CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Run0: <function> = fn_decl @Run0 [template] {}
+// CHECK:STDOUT:   %Run1: <function> = fn_decl @Run1 [template] {
 // CHECK:STDOUT:     %a.loc8_9.1: i32 = param a
 // CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc8_9.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2 {
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Run2: <function> = fn_decl @Run2 [template] {
 // CHECK:STDOUT:     %a.loc9_9.1: i32 = param a
 // CHECK:STDOUT:     @Run2.%a: i32 = bind_name a, %a.loc9_9.1
 // CHECK:STDOUT:     %b.loc9_17.1: i32 = param b
 // CHECK:STDOUT:     @Run2.%b: i32 = bind_name b, %b.loc9_17.1
-// CHECK:STDOUT:   } [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main {} [template]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
