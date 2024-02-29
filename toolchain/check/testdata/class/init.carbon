@@ -65,6 +65,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT:   .next = %.loc9_11
 // CHECK:STDOUT: }

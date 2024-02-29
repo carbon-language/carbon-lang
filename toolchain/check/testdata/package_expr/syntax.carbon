@@ -144,6 +144,7 @@ fn Main() {
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Foo = %Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

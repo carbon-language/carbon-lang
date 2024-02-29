@@ -74,6 +74,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
@@ -83,6 +84,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc18: <unbound element of class Derived> = base_decl Base, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }

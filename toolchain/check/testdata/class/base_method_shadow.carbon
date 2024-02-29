@@ -96,6 +96,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -111,6 +112,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope1
@@ -128,6 +130,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   extend name_scope2
@@ -138,6 +141,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc22: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc22
 // CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }

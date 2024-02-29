@@ -61,7 +61,10 @@ fn Initializing() {
 // CHECK:STDOUT:   %Initializing: <function> = fn_decl @Initializing [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @X {}
+// CHECK:STDOUT: class @X {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Value(%n: X) {
 // CHECK:STDOUT: !entry:

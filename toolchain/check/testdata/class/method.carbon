@@ -5,15 +5,15 @@
 // AUTOUPDATE
 
 class Class {
-  fn F[self: Class]() -> i32;
-  fn G[addr self: Class*]() -> i32;
+  fn F[self: Self]() -> i32;
+  fn G[addr self: Self*]() -> i32;
 
   alias A = F;
 
   var k: i32;
 }
 
-fn Class.F[self: Class]() -> i32 {
+fn Class.F[self: Self]() -> i32 {
   return self.k;
 }
 
@@ -81,7 +81,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %Class.ref.loc16: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc16_12.1: Class = param self
 // CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc16_12.1
 // CHECK:STDOUT:     %return.var.loc16: ref i32 = var <return slot>
@@ -132,14 +132,14 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %Class.ref.loc8: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc8: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc8_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc8_8.2: Class = bind_name self, %self.loc8_8.1
 // CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %Class.ref.loc9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc9_24: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:     %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %.loc9_23: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc9_13.1: Class* = param self
 // CHECK:STDOUT:     %self.loc9_13.3: Class* = bind_name self, %self.loc9_13.1
 // CHECK:STDOUT:     %.loc9_8: Class* = addr_pattern %self.loc9_13.3
@@ -150,6 +150,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc13: <unbound element of class Class> = field_decl k, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .A = %A

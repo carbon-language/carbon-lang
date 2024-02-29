@@ -51,7 +51,10 @@ var a: Incomplete;
 // CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {}
+// CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Empty
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
@@ -81,9 +84,17 @@ var a: Incomplete;
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {}
+// CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {}
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %import_ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:

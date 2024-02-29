@@ -77,6 +77,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,6 +86,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

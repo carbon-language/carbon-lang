@@ -55,6 +55,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT: }
@@ -63,6 +64,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -71,6 +73,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %.loc16: <unbound element of class D> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT:   extend name_scope1

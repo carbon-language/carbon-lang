@@ -95,13 +95,22 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @TwoAccess {}
+// CHECK:STDOUT: class @TwoAccess {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%TwoAccess
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Virtual {}
+// CHECK:STDOUT: class @Virtual {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Virtual
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @AbstractAndBase {}
+// CHECK:STDOUT: class @AbstractAndBase {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AbstractAndBase
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

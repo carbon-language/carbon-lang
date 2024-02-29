@@ -75,6 +75,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .NoSelf = %NoSelf
 // CHECK:STDOUT:   .WithSelf = %WithSelf
 // CHECK:STDOUT: }

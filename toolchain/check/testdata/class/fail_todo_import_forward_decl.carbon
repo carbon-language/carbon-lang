@@ -61,5 +61,8 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {}
+// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%.1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

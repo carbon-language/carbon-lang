@@ -80,6 +80,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,6 +102,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .SelfBase = %SelfBase
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase

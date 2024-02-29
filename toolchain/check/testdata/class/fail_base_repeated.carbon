@@ -58,9 +58,15 @@ class D {
 // CHECK:STDOUT:   %D.decl = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B1 {}
+// CHECK:STDOUT: class @B1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B2 {}
+// CHECK:STDOUT: class @B2 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
@@ -68,6 +74,7 @@ class D {
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc11
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -78,6 +85,7 @@ class D {
 // CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc23
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }

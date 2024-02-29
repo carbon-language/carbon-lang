@@ -58,6 +58,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_8: <unbound element of class Cycle> = field_decl c, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .c = %.loc10_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,10 +85,12 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %import_ref: <unbound element of class Cycle> = import_ref ir1, inst+18, used [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %import_ref.2: <unbound element of class Cycle> = import_ref ir1, inst+18, used [template = imports.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .c = %import_ref
+// CHECK:STDOUT:   .Self = %import_ref.1
+// CHECK:STDOUT:   .c = %import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

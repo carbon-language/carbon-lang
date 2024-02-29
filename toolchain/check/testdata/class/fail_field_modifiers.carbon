@@ -53,6 +53,7 @@ class Class {
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc12
 // CHECK:STDOUT:   .k = %.loc17
 // CHECK:STDOUT: }

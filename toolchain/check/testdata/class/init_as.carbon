@@ -41,6 +41,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Class> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .a = %.loc8
 // CHECK:STDOUT:   .b = %.loc9
 // CHECK:STDOUT: }

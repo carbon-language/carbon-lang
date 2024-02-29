@@ -76,13 +76,17 @@ class C4 {
 // CHECK:STDOUT:   %C4.decl = class_decl @C4 [template = constants.%C4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {}
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc13: <unbound element of class C1> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -92,6 +96,7 @@ class C4 {
 // CHECK:STDOUT:   %.loc23: <unbound element of class C2> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT:   .base = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,6 +105,7 @@ class C4 {
 // CHECK:STDOUT:   %.loc33: <unbound element of class C3> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT:   .base = %.loc33
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
@@ -109,6 +115,7 @@ class C4 {
 // CHECK:STDOUT:   %.loc43: <unbound element of class C4> = base_decl B, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C4
 // CHECK:STDOUT:   .base = %.loc43
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
