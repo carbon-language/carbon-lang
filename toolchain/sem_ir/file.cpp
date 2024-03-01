@@ -213,6 +213,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case AssociatedConstantDecl::Kind:
     case AssociatedEntity::Kind:
     case BaseDecl::Kind:
     case BindName::Kind:
@@ -453,6 +454,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
@@ -569,6 +571,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
+      case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case AssociatedEntityType::Kind:
       case BindSymbolicName::Kind:

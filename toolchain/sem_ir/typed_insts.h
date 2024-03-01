@@ -154,6 +154,14 @@ struct Assign {
   InstId rhs_id;
 };
 
+struct AssociatedConstantDecl {
+  static constexpr auto Kind =
+      InstKind::AssociatedConstantDecl.Define<Parse::NodeId>("assoc_const_decl");
+
+  TypeId type_id;
+  NameId name_id;
+};
+
 // An associated entity declared in an interface. This is either an associated
 // function or a non-function associated constant such as an associated type.
 // This represents the entity before impl lookup is performed, and identifies
