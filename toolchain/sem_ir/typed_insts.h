@@ -156,7 +156,8 @@ struct Assign {
 
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
-      InstKind::AssociatedConstantDecl.Define<Parse::NodeId>("assoc_const_decl");
+      InstKind::AssociatedConstantDecl.Define<Parse::NodeId>(
+          "assoc_const_decl");
 
   TypeId type_id;
   NameId name_id;

@@ -20,8 +20,8 @@ auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
   return true;
 }
 
-auto HandleLetInitializer(Context& context,
-                          Parse::LetInitializerId parse_node) -> bool {
+auto HandleLetInitializer(Context& context, Parse::LetInitializerId parse_node)
+    -> bool {
   context.node_stack().Push(parse_node);
   return true;
 }
@@ -48,13 +48,12 @@ static auto BuildAssociatedConstantDecl(
       context.bind_names().Get(binding_pattern->bind_name_id).name_id;
   context.ReplaceInstBeforeConstantUse(
       pattern_id, {parse_node, SemIR::AssociatedConstantDecl{
-                                    binding_pattern->type_id, name_id}});
+                                   binding_pattern->type_id, name_id}});
   auto decl_id = pattern_id;
   context.inst_block_stack().AddInstId(decl_id);
 
   // Add an associated entity name to the interface scope.
-  auto assoc_id =
-      BuildAssociatedEntity(context, interface_id, decl_id);
+  auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context = context.decl_name_stack().MakeUnqualifiedName(
       pattern.parse_node, name_id);
   context.decl_name_stack().AddNameToLookup(name_context, assoc_id);
