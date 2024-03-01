@@ -1203,6 +1203,11 @@ class Formatter {
   auto FormatArg(InstId id) -> void { FormatInstName(id); }
 
   auto FormatArg(InstBlockId id) -> void {
+    if (!id.is_valid()) {
+      out_ << "invalid";
+      return;
+    }
+
     out_ << '(';
     llvm::ListSeparator sep;
     for (auto inst_id : sem_ir_.inst_blocks().Get(id)) {

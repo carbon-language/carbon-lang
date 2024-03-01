@@ -1265,6 +1265,10 @@ CARBON_PARSE_STATE(Let)
 //         ^~~~~
 //   1. Expr
 //
+// let ... ;
+//        ^
+//   (state done)
+//
 // let ... ??? ;
 //         ^~~
 //   (state done)
