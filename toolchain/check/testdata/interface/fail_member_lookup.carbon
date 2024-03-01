@@ -59,7 +59,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc17: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in Interface> = name_ref F, @Interface.%.loc8 [template = constants.%.3]
-// CHECK:STDOUT:   %Interface.ref.loc19: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc10_15.2 [template = constants.%.5]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var

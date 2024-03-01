@@ -118,7 +118,8 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "Expected `=`; `let` declaration must have an initializer.");
-    context.emitter().Emit(parse_node, ExpectedInitializerAfterLet);
+    context.emitter().Emit(Parse::TokenOnly(parse_node),
+                           ExpectedInitializerAfterLet);
     value_id = SemIR::InstId::BuiltinError;
   }
 

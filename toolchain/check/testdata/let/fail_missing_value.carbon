@@ -4,15 +4,15 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:1: ERROR: Expected `=`; `let` declaration must have an initializer.
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:11: ERROR: Expected `=`; `let` declaration must have an initializer.
 // CHECK:STDERR: let n: i32;
-// CHECK:STDERR: ^~~~~~~~~~~
+// CHECK:STDERR:           ^
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:3: ERROR: Expected `=`; `let` declaration must have an initializer.
+  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: ERROR: Expected `=`; `let` declaration must have an initializer.
   // CHECK:STDERR:   let n: i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:             ^
   let n: i32;
 }
 
