@@ -375,7 +375,7 @@ class Hasher {
   // which will generate 8 64-bit values and one more digit. The `bc` command's
   // decimal based scaling means that without getting at least some extra hex
   // digits rendered there will be rounding that we don't want so the script
-  // below goes on to produce one more hex digit ensuring the the 8 initializers
+  // below goes on to produce one more hex digit ensuring the 8 initializers
   // aren't rounded in any way. Using a higher scale won't cause the 8
   // initializers here to change further.
   //

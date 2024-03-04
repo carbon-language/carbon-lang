@@ -4560,7 +4560,7 @@ declarations are selected.
     impl and `Z(i16)` for `i8` using the second. In this case,
     `(i8 as Z(i16)).Cond == Y`.
 
-There is no reason to to prefer one of these outcomes over the other.
+There is no reason to prefer one of these outcomes over the other.
 
 **Example:** Further, cycles can create contradictions in the type system:
 
