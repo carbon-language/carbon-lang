@@ -314,15 +314,19 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CompileTimeBindingPattern, 2, ColonExclaim)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Addr, 1, Addr)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, Template)
 
-// `let`:
+// `let` declarations, including associated constant declarations:
 //   LetIntroducer
 //   _repeated_ _external_: modifier
 //   _external_: BindingPattern or TuplePattern
-//   LetInitializer
-//   _external_: expression
+//     LetInitializer
+//     _external_: expression
+//   _optional_
 // LetDecl
 //
 // Modifier keywords only appear for `let` declarations, not `let` statements.
+//
+// The LetInitializer and following expression are paired: either both will be
+// present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, Let)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, Equal)
 CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer, CARBON_IF_VALID(Semi))

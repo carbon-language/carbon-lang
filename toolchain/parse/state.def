@@ -1257,7 +1257,9 @@ CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
 //   3. LetFinish
 CARBON_PARSE_STATE(Let)
 
-// Handles `let` after the pattern, followed by an initializer.
+// Handles `let` after the pattern, optionally followed by an initializer. The
+// initializer is required except in an associated constant declaration, but
+// that is enforced by check.
 //
 // let ... = ...
 //         ^
@@ -1267,8 +1269,6 @@ CARBON_PARSE_STATE(Let)
 //
 // let ... ;
 //        ^
-//   (state done)
-//
 // let ... ??? ;
 //         ^~~
 //   (state done)
