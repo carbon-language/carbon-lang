@@ -14,9 +14,9 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, type [template]
-// CHECK:STDOUT:   %.3: <associated type in I> = assoc_entity element0, @I.%.loc8_15.1 [template]
+// CHECK:STDOUT:   %.3: <associated type in I> = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type @I, i32 [template]
-// CHECK:STDOUT:   %.5: <associated i32 in I> = assoc_entity element1, @I.%.loc9_14.1 [template]
+// CHECK:STDOUT:   %.5: <associated i32 in I> = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,14 +27,14 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %.loc8_15.1: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc8_15.2: <associated type in I> = assoc_entity element0, %.loc8_15.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_14.1: i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc9_14.2: <associated i32 in I> = assoc_entity element1, %.loc9_14.1 [template = constants.%.5]
+// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %.loc8: <associated type in I> = assoc_entity element0, %T [template = constants.%.3]
+// CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
+// CHECK:STDOUT:   %.loc9: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .T = %.loc8_15.2
-// CHECK:STDOUT:   .N = %.loc9_14.2
-// CHECK:STDOUT:   witness = (%.loc8_15.1, %.loc9_14.1)
+// CHECK:STDOUT:   .T = %.loc8
+// CHECK:STDOUT:   .N = %.loc9
+// CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

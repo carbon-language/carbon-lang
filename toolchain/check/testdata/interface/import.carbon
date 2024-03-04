@@ -43,12 +43,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Basic [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Basic, type [template]
-// CHECK:STDOUT:   %.4: <associated type in Basic> = assoc_entity element0, @Basic.%.loc8_15.1 [template]
+// CHECK:STDOUT:   %.4: <associated type in Basic> = assoc_entity element0, @Basic.%T [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Basic, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Basic> = assoc_entity element1, @Basic.%F [template]
 // CHECK:STDOUT:   %.7: type = interface_type @ForwardDeclared [template]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @ForwardDeclared, type [template]
-// CHECK:STDOUT:   %.9: <associated type in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%.loc15_15.1 [template]
+// CHECK:STDOUT:   %.9: <associated type in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%T [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @ForwardDeclared, <function> [template]
 // CHECK:STDOUT:   %.11: <associated <function> in ForwardDeclared> = assoc_entity element1, @ForwardDeclared.%F [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.f: ForwardDeclared} [template]
@@ -79,27 +79,27 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
-// CHECK:STDOUT:   %.loc8_15.1: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc8_15.2: <associated type in Basic> = assoc_entity element0, %.loc8_15.1 [template = constants.%.4]
+// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %.loc8: <associated type in Basic> = assoc_entity element0, %T [template = constants.%.4]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc9: <associated <function> in Basic> = assoc_entity element1, %F [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .T = %.loc8_15.2
+// CHECK:STDOUT:   .T = %.loc8
 // CHECK:STDOUT:   .F = %.loc9
-// CHECK:STDOUT:   witness = (%.loc8_15.1, %F)
+// CHECK:STDOUT:   witness = (%T, %F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %.loc15_15.1: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc15_15.2: <associated type in ForwardDeclared> = assoc_entity element0, %.loc15_15.1 [template = constants.%.9]
+// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %.loc15: <associated type in ForwardDeclared> = assoc_entity element0, %T [template = constants.%.9]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:   %.loc16: <associated <function> in ForwardDeclared> = assoc_entity element1, %F [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .T = %.loc15_15.2
+// CHECK:STDOUT:   .T = %.loc15
 // CHECK:STDOUT:   .F = %.loc16
-// CHECK:STDOUT:   witness = (%.loc15_15.1, %F)
+// CHECK:STDOUT:   witness = (%T, %F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

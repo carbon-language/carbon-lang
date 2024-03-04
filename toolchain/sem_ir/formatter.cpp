@@ -469,9 +469,9 @@ class InstNamer {
           CollectNamesInBlock(scope_id, inst.As<AddrPattern>().inner_id);
           break;
         }
-        case SpliceBlock::Kind: {
-          CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
-          break;
+        case AssociatedConstantDecl::Kind: {
+          add_inst_name_id(inst.As<AssociatedConstantDecl>().name_id);
+          continue;
         }
         case BindAlias::Kind:
         case BindName::Kind:
@@ -535,6 +535,10 @@ class InstNamer {
         case Param::Kind: {
           add_inst_name_id(inst.As<Param>().name_id);
           continue;
+        }
+        case SpliceBlock::Kind: {
+          CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
+          break;
         }
         case VarStorage::Kind: {
           add_inst_name_id(inst.As<VarStorage>().name_id, ".var");

@@ -29,7 +29,7 @@ fn F() {
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Interface, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Interface> = assoc_entity element0, @Interface.%F [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type @Interface, type [template]
-// CHECK:STDOUT:   %.5: <associated type in Interface> = assoc_entity element1, @Interface.%.loc10_15.1 [template]
+// CHECK:STDOUT:   %.5: <associated type in Interface> = assoc_entity element1, @Interface.%T [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,13 +44,13 @@ fn F() {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_15.1: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc10_15.2: <associated type in Interface> = assoc_entity element1, %.loc10_15.1 [template = constants.%.5]
+// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %.loc10: <associated type in Interface> = assoc_entity element1, %T [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:   .T = %.loc10_15.2
-// CHECK:STDOUT:   witness = (%F, %.loc10_15.1)
+// CHECK:STDOUT:   .T = %.loc10
+// CHECK:STDOUT:   witness = (%F, %T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
@@ -60,7 +60,7 @@ fn F() {
 // CHECK:STDOUT:   %Interface.ref.loc17: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in Interface> = name_ref F, @Interface.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc10_15.2 [template = constants.%.5]
+// CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc10 [template = constants.%.5]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   return
