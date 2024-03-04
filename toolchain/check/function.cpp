@@ -25,13 +25,13 @@ static auto FunctionSignatureHasError(Context& context,
   return false;
 }
 
-// Returns true if the params are equal. The caller is expected to provide a
+// Returns true if a param matches. The caller is expected to provide a
 // diagnostic.
 // TODO: Consider moving diagnostics here, particularly to differentiate
 // between type and name mistakes. For now, taking the simpler approach because
 // I also think we may want to refactor params.
-static auto IsParamEqual(Context& context, SemIR::InstId new_param_ref_id,
-                         SemIR::InstId prev_param_ref_id) -> bool {
+static auto MatchParam(Context& context, SemIR::InstId new_param_ref_id,
+                       SemIR::InstId prev_param_ref_id) -> bool {
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
@@ -65,12 +65,12 @@ static auto IsParamEqual(Context& context, SemIR::InstId new_param_ref_id,
   return new_param.name_id == prev_param.name_id;
 }
 
-// Returns true if two param refs are equal.
-static auto AreParamsEqual(Context& context, SemIR::InstId new_decl_id,
-                           SemIR::InstBlockId new_param_refs_id,
-                           SemIR::InstId prev_decl_id,
-                           SemIR::InstBlockId prev_param_refs_id,
-                           llvm::StringLiteral param_diag_label) -> bool {
+// Returns true if two param refs match.
+static auto MatchParams(Context& context, SemIR::InstId new_decl_id,
+                        SemIR::InstBlockId new_param_refs_id,
+                        SemIR::InstId prev_decl_id,
+                        SemIR::InstBlockId prev_param_refs_id,
+                        llvm::StringLiteral param_diag_label) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -94,7 +94,7 @@ static auto AreParamsEqual(Context& context, SemIR::InstId new_decl_id,
   }
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
-    if (!IsParamEqual(context, new_param_ref_id, prev_param_ref_id)) {
+    if (!MatchParam(context, new_param_ref_id, prev_param_ref_id)) {
       CARBON_DIAGNOSTIC(FunctionSignatureParamMismatch, Error,
                         "Declaration of{1} parameter {0} doesn't match.",
                         int32_t, llvm::StringLiteral);
@@ -113,22 +113,21 @@ static auto AreParamsEqual(Context& context, SemIR::InstId new_decl_id,
   return true;
 }
 
-// Returns true if the provided function signatures are equal, in the sense that
+// Returns true if the provided function signatures match, in the sense that
 // declarations can be merged.
-static auto IsFunctionSignatureEqual(Context& context,
-                                     const SemIR::Function& new_function,
-                                     const SemIR::Function& prev_function)
+static auto MatchFunctionSignature(Context& context,
+                                   const SemIR::Function& new_function,
+                                   const SemIR::Function& prev_function)
     -> bool {
   if (FunctionSignatureHasError(context, new_function) ||
       FunctionSignatureHasError(context, prev_function)) {
     return false;
   }
-  if (!AreParamsEqual(context, new_function.decl_id,
-                      new_function.implicit_param_refs_id,
-                      prev_function.decl_id,
-                      prev_function.implicit_param_refs_id, " implicit") ||
-      !AreParamsEqual(context, new_function.decl_id, new_function.param_refs_id,
-                      prev_function.decl_id, prev_function.param_refs_id, "")) {
+  if (!MatchParams(context, new_function.decl_id,
+                   new_function.implicit_param_refs_id, prev_function.decl_id,
+                   prev_function.implicit_param_refs_id, " implicit") ||
+      !MatchParams(context, new_function.decl_id, new_function.param_refs_id,
+                   prev_function.decl_id, prev_function.param_refs_id, "")) {
     return false;
   }
   if (new_function.return_type_id != prev_function.return_type_id) {
@@ -171,7 +170,7 @@ auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
   auto& prev_function = context.functions().Get(prev_function_id);
 
   // TODO: Disallow redeclarations within classes?
-  if (!IsFunctionSignatureEqual(context, new_function, prev_function)) {
+  if (!MatchFunctionSignature(context, new_function, prev_function)) {
     return false;
   }
 
