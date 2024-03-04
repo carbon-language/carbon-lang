@@ -47,7 +47,12 @@ fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
 
 ```cpp
 // C++:
-import std;
+#include <numbers>
+#include <print>
+#include <span>
+#include <stdfloat>
+#include <vector>
+// or: import std;
 
 struct Circle {
   std::float32_t r;
@@ -101,7 +106,7 @@ fn Main() -> i32 {
 
 ```cpp
 // C++ code used in both Carbon and C++:
-import std;
+#include <stdfloat>
 struct Circle {
   std::float32_t r;
 };
@@ -120,9 +125,9 @@ fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
 }
 
 // C++ calling Carbon:
-import std;
-import "circle.h";
-import "geometry.carbon.h";
+#include <vector>
+#include "circle.h"
+#include "geometry.carbon.h"
 
 auto main() -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
