@@ -819,6 +819,7 @@ class TypeCompleter {
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::AssociatedConstantDecl::Kind:
       case SemIR::AssociatedEntity::Kind:
       case SemIR::BaseDecl::Kind:
       case SemIR::BindAlias::Kind:

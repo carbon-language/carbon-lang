@@ -396,6 +396,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // corresponding constant value.
     // TODO: This doesn't properly handle redeclarations. Consider adding a
     // corresponding `Value` inst for each of these cases.
+    case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:

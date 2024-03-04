@@ -60,6 +60,12 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
+auto HandleAssociatedConstantDecl(FunctionContext& /*context*/,
+                                  SemIR::InstId /*inst_id*/,
+                                  SemIR::AssociatedConstantDecl inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleAssociatedEntity(FunctionContext& /*context*/,
                             SemIR::InstId /*inst_id*/,
                             SemIR::AssociatedEntity inst) -> void {

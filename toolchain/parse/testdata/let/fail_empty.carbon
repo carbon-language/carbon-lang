@@ -16,6 +16,6 @@ let;
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: ';', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

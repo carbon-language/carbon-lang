@@ -111,7 +111,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedElseAfterIf)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclSemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclSemiOrDefinition)
-CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredAfterImplicit)
 CARBON_DIAGNOSTIC_KIND(ParamsRequiredByIntroducer)
 CARBON_DIAGNOSTIC_KIND(ExpectedAfterBase)
@@ -183,6 +182,10 @@ CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
+
+// Let declaration checking.
+CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
+CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
 
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)

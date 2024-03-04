@@ -345,8 +345,12 @@ struct LetDecl {
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   AnyPatternId pattern;
-  LetInitializerId equals;
-  AnyExprId initializer;
+
+  struct Initializer {
+    LetInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // `var` nodes
