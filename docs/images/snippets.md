@@ -47,26 +47,28 @@ fn QuickSort[T:! Comparable & Movable](s: Slice(T)) {
 
 ```cpp
 // C++:
-#include <math.h>
-#include <iostream>
+#include <numbers>
+#include <print>
 #include <span>
+#include <stdfloat>
 #include <vector>
+// or: import std;
 
 struct Circle {
-  float r;
+  std::float32_t r;
 };
 
 void PrintTotalArea(std::span<Circle> circles) {
-  float area = 0;
+  std::float32_t area = 0;
   for (const Circle& c : circles) {
-    area += M_PI * c.r * c.r;
+    area += std::numbers::pi * c.r * c.r;
   }
-  std::cout << "Total area: " << area << "\n";
+  std::print("Total area: {}\n", area);
 }
 
-auto main(int argc, char** argv) -> int {
-  std::vector<Circle> circles = {{1.0}, {2.0}};
-  // Implicitly constructors `span` from `vector`.
+auto main() -> int {
+  std::vector<Circle> circles{{.r = 1.0}, {.r = 2.0}};
+  // Implicitly converts `vector` to `span`.
   PrintTotalArea(circles);
   return 0;
 }
@@ -104,8 +106,9 @@ fn Main() -> i32 {
 
 ```cpp
 // C++ code used in both Carbon and C++:
+#include <stdfloat>
 struct Circle {
-  float r;
+  std::float32_t r;
 };
 
 // Carbon exposing a function for C++:
@@ -126,7 +129,7 @@ fn PrintTotalArea(circles: Slice(Cpp.Circle)) {
 #include "circle.h"
 #include "geometry.carbon.h"
 
-auto main(int argc, char** argv) -> int {
+auto main() -> int {
   std::vector<Circle> circles = {{1.0}, {2.0}};
   // Carbon's `Slice` supports implicit construction from `std::vector`,
   // similar to `std::span`.
