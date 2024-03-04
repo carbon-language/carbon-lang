@@ -198,7 +198,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 }
 
 // Compute the printed width of a number. When numbers are printed in decimal,
-// the number of digits needed is is one more than the log-base-10 of the
+// the number of digits needed is one more than the log-base-10 of the
 // value. We handle a value of `zero` explicitly.
 //
 // This routine requires its argument to be *non-negative*.
