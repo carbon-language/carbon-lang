@@ -31,7 +31,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.
-  if (!driver.RunCommand({"compile", "--phase=parse", TestFileName})) {
+  if (!driver.RunCommand({"compile", "--phase=parse", TestFileName}).success) {
     return 0;
   }
   driver.RunCommand({"compile", "--phase=check", TestFileName});

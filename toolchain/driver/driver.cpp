@@ -333,13 +333,13 @@ auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 }
 
-auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
   Options options;
   CommandLine::ParseResult result = ParseArgs(args, options);
   if (result == CommandLine::ParseResult::Error) {
-    return false;
+    return {.success = false};
   } else if (result == CommandLine::ParseResult::MetaSuccess) {
-    return true;
+    return {.success = true};
   }
 
   if (options.verbose) {
@@ -589,6 +589,8 @@ class Driver::CompilationUnit {
                 value_stores_.OutputYaml(input_file_name_));
   }
 
+  auto input_file_name() -> llvm::StringRef { return input_file_name_; }
+
   auto has_source() -> bool { return source_.has_value(); }
 
  private:
@@ -622,9 +624,9 @@ class Driver::CompilationUnit {
   std::unique_ptr<llvm::Module> module_;
 };
 
-auto Driver::Compile(const CompileOptions& options) -> bool {
+auto Driver::Compile(const CompileOptions& options) -> RunResult {
   if (!ValidateCompileOptions(options)) {
-    return false;
+    return {.success = false};
   }
 
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
@@ -644,18 +646,22 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
       }
     }
   });
+  RunResult result = {.success = true};
   for (const auto& input_file_name : options.input_file_names) {
     units.push_back(
         std::make_unique<CompilationUnit>(this, options, input_file_name));
+    result.per_file_success[input_file_name] = true;
   }
 
   // Lex.
-  bool success_before_lower = true;
   for (auto& unit : units) {
-    success_before_lower &= unit->RunLex();
+    if (!unit->RunLex()) {
+      result.success = false;
+      result.per_file_success[unit->input_file_name()] = false;
+    }
   }
   if (options.phase == CompileOptions::Phase::Lex) {
-    return success_before_lower;
+    return result;
   }
   // Parse and check phases examine `has_source` because they want to proceed if
   // lex failed, but not if source doesn't exist. Later steps are skipped if
@@ -663,12 +669,13 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
 
   // Parse.
   for (auto& unit : units) {
-    if (unit->has_source()) {
-      success_before_lower &= unit->RunParse();
+    if (unit->has_source() && !unit->RunParse()) {
+      result.success = false;
+      result.per_file_success[unit->input_file_name()] = false;
     }
   }
   if (options.phase == CompileOptions::Phase::Parse) {
-    return success_before_lower;
+    return result;
   }
 
   // Check.
@@ -685,18 +692,19 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
                          vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
-    if (unit->has_source()) {
-      success_before_lower &= unit->PostCheck();
+    if (unit->has_source() && !unit->PostCheck()) {
+      result.success = false;
+      result.per_file_success[unit->input_file_name()] = false;
     }
   }
   if (options.phase == CompileOptions::Phase::Check) {
-    return success_before_lower;
+    return result;
   }
 
   // Unlike previous steps, errors block further progress.
-  if (!success_before_lower) {
+  if (!result.success) {
     CARBON_VLOG() << "*** Stopping before lowering due to errors ***";
-    return false;
+    return result;
   }
 
   // Lower.
@@ -704,17 +712,19 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     unit->RunLower();
   }
   if (options.phase == CompileOptions::Phase::Lower) {
-    return true;
+    return result;
   }
   CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen)
       << "CodeGen should be the last stage";
 
   // Codegen.
-  bool codegen_success = true;
   for (auto& unit : units) {
-    codegen_success &= unit->RunCodeGen();
+    if (!unit->RunCodeGen()) {
+      result.success = false;
+      result.per_file_success[unit->input_file_name()] = false;
+    }
   }
-  return codegen_success;
+  return result;
 }
 
 }  // namespace Carbon

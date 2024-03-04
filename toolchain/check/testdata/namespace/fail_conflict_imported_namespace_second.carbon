@@ -10,13 +10,13 @@ package Example library "fn" api;
 
 fn NS();
 
-// --- conflict.carbon
+// --- fail_conflict.carbon
 
 package Example api;
 
 import library "fn";
 
-// CHECK:STDERR: conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
@@ -24,10 +24,10 @@ import library "fn";
 // CHECK:STDERR: ^~~~~~~~
 namespace NS;
 
-// CHECK:STDERR: conflict.carbon:[[@LINE+6]]:7: ERROR: Name qualifiers are only allowed for entities that provide a scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:7: ERROR: Name qualifiers are only allowed for entities that provide a scope.
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:       ^~~
-// CHECK:STDERR: conflict.carbon:[[@LINE+3]]:4: Non-scope entity referenced here.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:4: Non-scope entity referenced here.
 // CHECK:STDERR: fn NS.Foo();
 // CHECK:STDERR:    ^~
 fn NS.Foo();
@@ -43,7 +43,7 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

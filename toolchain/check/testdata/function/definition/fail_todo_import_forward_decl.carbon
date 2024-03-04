@@ -10,7 +10,7 @@ library "a" api;
 
 fn Foo();
 
-// --- b.carbon
+// --- fail_b.carbon
 
 library "b" api;
 
@@ -18,7 +18,7 @@ import library "a";
 
 // TODO: This should be an error until we can be clear whether `a` or `b` should
 // own the definition, as there might be a separate definition in `a`'s impl.
-// CHECK:STDERR: b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Foo() {}
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
@@ -37,7 +37,7 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

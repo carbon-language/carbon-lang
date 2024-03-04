@@ -10,13 +10,13 @@ package Example library "namespace" api;
 
 namespace NS;
 
-// --- conflict.carbon
+// --- fail_conflict.carbon
 
 package Example api;
 
 import library "namespace";
 
-// CHECK:STDERR: conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
@@ -35,7 +35,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   %.loc4: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

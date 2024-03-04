@@ -15,6 +15,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "common/init_llvm.h"
+#include "gmock/gmock.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -41,7 +42,6 @@ ABSL_FLAG(bool, dump_output, false,
 
 namespace Carbon::Testing {
 
-using ::testing::Eq;
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
@@ -64,6 +64,20 @@ static auto SplitOutput(llvm::StringRef output)
   llvm::SmallVector<llvm::StringRef> lines;
   llvm::StringRef(output).split(lines, "\n");
   return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
+}
+
+// Verify that the success and `fail_` prefix use correspond. Separately handle
+// both cases for clearer test failures.
+static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
+  if (success) {
+    EXPECT_FALSE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` succeeded; if this is correct, add a `fail_` prefix.";
+  } else {
+    EXPECT_TRUE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` failed; if this is correct, remove the `fail_` prefix.";
+  }
 }
 
 // Runs a test and compares output. This keeps output split by line so that
@@ -95,10 +109,30 @@ auto FileTestBase::TestBody() -> void {
   ASSERT_TRUE(run_result.ok()) << run_result.error();
   ValidateRun();
   auto test_filename = std::filesystem::path(test_name_.str()).filename();
-  EXPECT_THAT(!llvm::StringRef(test_filename).starts_with("fail_"),
-              Eq(context.exit_with_success))
-      << "Tests should be prefixed with `fail_` if and only if running them "
-         "is expected to fail.";
+
+  // Check success/failure against `fail_` prefixes.
+  if (context.run_result.per_file_success.empty()) {
+    CompareFailPrefix(test_filename.string(), context.run_result.success);
+  } else {
+    bool require_overall_failure = false;
+    for (const auto& [filename, success] :
+         context.run_result.per_file_success) {
+      CompareFailPrefix(filename, success);
+      if (!success) {
+        require_overall_failure = true;
+      }
+    }
+
+    if (require_overall_failure) {
+      EXPECT_FALSE(context.run_result.success)
+          << "There is a per-file failure expectation, so the overall result "
+             "should have been a failure.";
+    } else {
+      // Individual files all succeeded, so the prefix is enforced on the main
+      // test file.
+      CompareFailPrefix(test_filename.string(), context.run_result.success);
+    }
+  }
 
   // Check results. Include a reminder of the autoupdate command for any
   // stdout/stderr differences.
@@ -194,7 +228,7 @@ auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
   llvm::errs() << banner << "= stderr\n"
                << banner << context.stderr << banner << "= stdout\n"
                << banner << context.stdout << banner << "= Exit with success: "
-               << (context.exit_with_success ? "true" : "false") << "\n"
+               << (context.run_result.success ? "true" : "false") << "\n"
                << banner;
   return Success();
 }
@@ -254,7 +288,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
   llvm::raw_svector_ostream stderr(context.stderr);
-  CARBON_ASSIGN_OR_RETURN(context.exit_with_success,
+  CARBON_ASSIGN_OR_RETURN(context.run_result,
                           Run(test_args_ref, fs, stdout, stderr));
   return Success();
 }

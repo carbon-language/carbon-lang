@@ -7,6 +7,7 @@
 
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -20,13 +21,21 @@ namespace Carbon {
 // with the language.
 class Driver {
  public:
+  // The result of RunCommand().
+  struct RunResult {
+    // Overall success result.
+    bool success;
+
+    // Per-file success results. May be empty if files aren't individually
+    // processed.
+    llvm::StringMap<bool> per_file_success;
+  };
+
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
   Driver(llvm::vfs::FileSystem& fs, llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
-      : fs_(fs), output_stream_(output_stream), error_stream_(error_stream) {
-    (void)fs_;
-  }
+      : fs_(fs), output_stream_(output_stream), error_stream_(error_stream) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -34,7 +43,7 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
-  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult;
 
  private:
   struct Options;
@@ -51,7 +60,7 @@ class Driver {
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
-  auto Compile(const CompileOptions& options) -> bool;
+  auto Compile(const CompileOptions& options) -> RunResult;
 
   llvm::vfs::FileSystem& fs_;
   llvm::raw_pwrite_stream& output_stream_;

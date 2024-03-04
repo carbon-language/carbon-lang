@@ -23,7 +23,7 @@ package Example library "fn" api;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS() {}
 
-// --- conflict.carbon
+// --- fail_conflict.carbon
 
 package Example library "namespace_then_fn" api;
 
@@ -63,7 +63,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

@@ -22,7 +22,7 @@ package Example library "var" api;
 // CHECK:STDERR: ^~~~~~~~~
 var Foo: i32;
 
-// --- conflict.carbon
+// --- fail_conflict.carbon
 
 package Example library "conflict" api;
 
@@ -50,7 +50,7 @@ import library "var";
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

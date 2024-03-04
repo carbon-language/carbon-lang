@@ -20,7 +20,7 @@ class FileTestBaseTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
-           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
     llvm::ArrayRef<llvm::StringRef> args = test_args;
 
     llvm::ListSeparator sep;
@@ -34,7 +34,7 @@ class FileTestBaseTest : public FileTestBase {
     if (filename == "args.carbon") {
       // 'args.carbon' has custom arguments, so don't do regular argument
       // validation for it.
-      return true;
+      return {{.success = true}};
     }
 
     if (args.empty() || args.front() != "default_args") {
@@ -56,10 +56,10 @@ class FileTestBaseTest : public FileTestBase {
              << "example.carbon:" << delta_line << ": Negative line delta\n"
              << "+*[]{}\n"
              << "Foo baz\n";
-      return true;
+      return {{.success = true}};
     } else if (filename == "fail_example.carbon") {
       stderr << "Oops\n";
-      return false;
+      return {{.success = false}};
     } else if (filename == "two_files.carbon" ||
                filename == "not_split.carbon") {
       for (auto arg : args) {
@@ -74,7 +74,7 @@ class FileTestBaseTest : public FileTestBase {
         stdout.write_escaped(content.take_front(40));
         stdout << "\", length " << content.count('\n') << " lines\n";
       }
-      return true;
+      return {{.success = true}};
     } else if (filename == "alternating_files.carbon") {
       stdout << "unattached message 1\n"
              << "a.carbon:2: message 2\n"
@@ -88,19 +88,19 @@ class FileTestBaseTest : public FileTestBase {
              << "a.carbon:2: message 4\n"
              << "b.carbon:5: message 5\n"
              << "unattached message 6\n";
-      return true;
+      return {{.success = true}};
     } else if (filename == "unattached_multi_file.carbon") {
       stdout << "unattached message 1\n"
              << "unattached message 2\n";
       stderr << "unattached message 3\n"
              << "unattached message 4\n";
-      return true;
+      return {{.success = true}};
     } else if (filename == "file_only_re_one_file.carbon") {
       stdout << "unattached message 1\n"
              << "file: file_only_re_one_file.carbon\n"
              << "line: 1\n"
              << "unattached message 2\n";
-      return true;
+      return {{.success = true}};
     } else if (filename == "file_only_re_multi_file.carbon") {
       int msg_count = 0;
       stdout << "unattached message " << ++msg_count << "\n"
@@ -115,7 +115,22 @@ class FileTestBaseTest : public FileTestBase {
              << "unattached message " << ++msg_count << "\n"
              << "line: 7: late message " << ++msg_count << "\n"
              << "unattached message " << ++msg_count << "\n";
-      return true;
+      return {{.success = true}};
+    } else if (filename == "fail_multi_success_overall_fail.carbon") {
+      RunResult result = {.success = false};
+      result.per_file_success["a.carbon"] = true;
+      result.per_file_success["b.carbon"] = true;
+      return result;
+    } else if (filename == "multi_success.carbon") {
+      RunResult result = {.success = true};
+      result.per_file_success["a.carbon"] = true;
+      result.per_file_success["b.carbon"] = true;
+      return result;
+    } else if (filename == "multi_success_and_fail.carbon") {
+      RunResult result = {.success = false};
+      result.per_file_success["a.carbon"] = true;
+      result.per_file_success["fail_b.carbon"] = false;
+      return result;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
     }

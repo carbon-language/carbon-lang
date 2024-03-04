@@ -4,28 +4,28 @@
 //
 // AUTOUPDATE
 
-// --- no_api.impl.carbon
+// --- fail_no_api.impl.carbon
 
-// CHECK:STDERR: no_api.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: fail_no_api.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo impl;
 // CHECK:STDERR: ^~~~~~~
 package Foo impl;
 
-// --- no_api_lib.impl.carbon
+// --- fail_no_api_lib.impl.carbon
 
-// CHECK:STDERR: no_api_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo library "Bar" impl;
 // CHECK:STDERR: ^~~~~~~
 package Foo library "Bar" impl;
 
-// --- no_api_main_lib.impl.carbon
+// --- fail_no_api_main_lib.impl.carbon
 
-// CHECK:STDERR: no_api_main_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: library "Bar" impl;
 // CHECK:STDERR: ^~~~~~~
 library "Bar" impl;
 
-// CHECK:STDOUT: --- no_api.impl.carbon
+// CHECK:STDOUT: --- fail_no_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
@@ -33,7 +33,7 @@ library "Bar" impl;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_api_lib.impl.carbon
+// CHECK:STDOUT: --- fail_no_api_lib.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
@@ -41,7 +41,7 @@ library "Bar" impl;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_api_main_lib.impl.carbon
+// CHECK:STDOUT: --- fail_no_api_main_lib.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
