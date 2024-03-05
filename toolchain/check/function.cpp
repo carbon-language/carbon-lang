@@ -25,13 +25,13 @@ static auto FunctionSignatureHasError(Context& context,
   return false;
 }
 
-// Returns true if a param matches. The caller is expected to provide a
+// Returns true if a param agrees. The caller is expected to provide a
 // diagnostic.
 // TODO: Consider moving diagnostics here, particularly to differentiate
 // between type and name mistakes. For now, taking the simpler approach because
 // I also think we may want to refactor params.
-static auto MatchParam(Context& context, SemIR::InstId new_param_ref_id,
-                       SemIR::InstId prev_param_ref_id) -> bool {
+static auto DoesParamAgree(Context& context, SemIR::InstId new_param_ref_id,
+                           SemIR::InstId prev_param_ref_id) -> bool {
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
@@ -65,12 +65,12 @@ static auto MatchParam(Context& context, SemIR::InstId new_param_ref_id,
   return new_param.name_id == prev_param.name_id;
 }
 
-// Returns true if two param refs match.
-static auto MatchParams(Context& context, SemIR::InstId new_decl_id,
-                        SemIR::InstBlockId new_param_refs_id,
-                        SemIR::InstId prev_decl_id,
-                        SemIR::InstBlockId prev_param_refs_id,
-                        llvm::StringLiteral param_diag_label) -> bool {
+// Returns true if two param refs agree.
+static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
+                          SemIR::InstBlockId new_param_refs_id,
+                          SemIR::InstId prev_decl_id,
+                          SemIR::InstBlockId prev_param_refs_id,
+                          llvm::StringLiteral param_diag_label) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -78,14 +78,14 @@ static auto MatchParams(Context& context, SemIR::InstId new_decl_id,
   const auto new_param_ref_ids = context.inst_blocks().Get(new_param_refs_id);
   const auto prev_param_ref_ids = context.inst_blocks().Get(prev_param_refs_id);
   if (new_param_ref_ids.size() != prev_param_ref_ids.size()) {
-    CARBON_DIAGNOSTIC(FunctionSignatureParamCountMismatch, Error,
+    CARBON_DIAGNOSTIC(FunctionSignatureParamCountDisagree, Error,
                       "Function declared with {0}{1} parameter(s).", int32_t,
                       llvm::StringLiteral);
     CARBON_DIAGNOSTIC(FunctionSignatureParamCountPrevious, Note,
                       "Function previously declared with {0}{1} parameter(s).",
                       int32_t, llvm::StringLiteral);
     context.emitter()
-        .Build(new_decl_id, FunctionSignatureParamCountMismatch,
+        .Build(new_decl_id, FunctionSignatureParamCountDisagree,
                new_param_ref_ids.size(), param_diag_label)
         .Note(prev_decl_id, FunctionSignatureParamCountPrevious,
               prev_param_ref_ids.size(), param_diag_label)
@@ -94,15 +94,15 @@ static auto MatchParams(Context& context, SemIR::InstId new_decl_id,
   }
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
-    if (!MatchParam(context, new_param_ref_id, prev_param_ref_id)) {
-      CARBON_DIAGNOSTIC(FunctionSignatureParamMismatch, Error,
-                        "Declaration of{1} parameter {0} doesn't match.",
-                        int32_t, llvm::StringLiteral);
+    if (!DoesParamAgree(context, new_param_ref_id, prev_param_ref_id)) {
+      CARBON_DIAGNOSTIC(FunctionSignatureParamDisagree, Error,
+                        "Declaration of{1} parameter {0} disagrees.", int32_t,
+                        llvm::StringLiteral);
       CARBON_DIAGNOSTIC(FunctionSignatureParamPrevious, Note,
                         "Previous declaration of{1} parameter {0}.", int32_t,
                         llvm::StringLiteral);
       context.emitter()
-          .Build(new_param_ref_id, FunctionSignatureParamMismatch,
+          .Build(new_param_ref_id, FunctionSignatureParamDisagree,
                  new_param_ref_ids.size(), param_diag_label)
           .Note(prev_param_ref_id, FunctionSignatureParamPrevious,
                 prev_param_ref_ids.size(), param_diag_label)
@@ -113,37 +113,37 @@ static auto MatchParams(Context& context, SemIR::InstId new_decl_id,
   return true;
 }
 
-// Returns true if the provided function signatures match, in the sense that
+// Returns true if the provided function signatures agrees, in the sense that
 // declarations can be merged.
-static auto MatchFunctionSignature(Context& context,
-                                   const SemIR::Function& new_function,
-                                   const SemIR::Function& prev_function)
+static auto DoesFunctionSignatureAgree(Context& context,
+                                       const SemIR::Function& new_function,
+                                       const SemIR::Function& prev_function)
     -> bool {
   if (FunctionSignatureHasError(context, new_function) ||
       FunctionSignatureHasError(context, prev_function)) {
     return false;
   }
-  if (!MatchParams(context, new_function.decl_id,
-                   new_function.implicit_param_refs_id, prev_function.decl_id,
-                   prev_function.implicit_param_refs_id, " implicit") ||
-      !MatchParams(context, new_function.decl_id, new_function.param_refs_id,
-                   prev_function.decl_id, prev_function.param_refs_id, "")) {
+  if (!DoParamAgrees(context, new_function.decl_id,
+                     new_function.implicit_param_refs_id, prev_function.decl_id,
+                     prev_function.implicit_param_refs_id, " implicit") ||
+      !DoParamAgrees(context, new_function.decl_id, new_function.param_refs_id,
+                     prev_function.decl_id, prev_function.param_refs_id, "")) {
     return false;
   }
   if (new_function.return_type_id != prev_function.return_type_id) {
-    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeMismatch, Error,
+    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeDisagree, Error,
                       "Function declares a return type of `{0}`.",
                       SemIR::TypeId);
-    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeMismatchNoReturn, Error,
+    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeDisagreeNoReturn, Error,
                       "Function declared with no return type.");
     auto diag =
         new_function.return_type_id.is_valid()
             ? context.emitter().Build(new_function.decl_id,
-                                      FunctionSignatureReturnTypeMismatch,
+                                      FunctionSignatureReturnTypeDisagree,
                                       new_function.return_type_id)
             : context.emitter().Build(
                   new_function.decl_id,
-                  FunctionSignatureReturnTypeMismatchNoReturn);
+                  FunctionSignatureReturnTypeDisagreeNoReturn);
     if (prev_function.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionSignatureReturnTypePrevious, Note,
                         "Function previously declared with return type `{0}`.",
@@ -170,7 +170,7 @@ auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
   auto& prev_function = context.functions().Get(prev_function_id);
 
   // TODO: Disallow redeclarations within classes?
-  if (!MatchFunctionSignature(context, new_function, prev_function)) {
+  if (!DoesFunctionSignatureAgree(context, new_function, prev_function)) {
     return false;
   }
 
