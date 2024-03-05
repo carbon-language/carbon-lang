@@ -36,10 +36,12 @@ fn Interface.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc11: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc11
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

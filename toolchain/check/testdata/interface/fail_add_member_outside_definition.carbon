@@ -44,24 +44,31 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
+// CHECK:STDOUT:   %Self: Outer = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %Inner.decl = interface_decl @Inner [template = constants.%.3] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inner {
+// CHECK:STDOUT:   %Self: Inner = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.loc20: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = @Outer.%F
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

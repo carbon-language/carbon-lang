@@ -27,6 +27,11 @@ auto HandleConstType(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
+auto HandleFacetTypeAccess(FunctionContext& context, SemIR::InstId inst_id,
+                           SemIR::FacetTypeAccess /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
+}
+
 auto HandleInterfaceType(FunctionContext& context, SemIR::InstId inst_id,
                          SemIR::InterfaceType /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
