@@ -23,7 +23,7 @@ fn G(x: i32);
 fn G() {}
 
 fn H(x: i32);
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Declaration of parameter 1 doesn't match.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Declaration of parameter 1 disagrees.
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:      ^
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Previous declaration of parameter 1.
