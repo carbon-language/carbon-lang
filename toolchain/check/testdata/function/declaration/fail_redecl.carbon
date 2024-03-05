@@ -26,7 +26,7 @@ fn C();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 1 parameter(s) disagrees.
 // CHECK:STDERR: fn C(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched function declaration has 0 parameter(s).
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched function declaration with 0 parameter(s).
 // CHECK:STDERR: fn C();
 // CHECK:STDERR: ^~~~~~~
 fn C(x: i32);

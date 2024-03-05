@@ -83,7 +83,7 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
         "Function declaration with {0}{1} parameter(s) disagrees.", int32_t,
         llvm::StringLiteral);
     CARBON_DIAGNOSTIC(FunctionSignatureParamCountPrevious, Note,
-                      "Matched function declaration has {0}{1} parameter(s).",
+                      "Matched function declaration with {0}{1} parameter(s).",
                       int32_t, llvm::StringLiteral);
     context.emitter()
         .Build(new_decl_id, FunctionSignatureParamCountDisagree,
@@ -96,13 +96,13 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!DoesParamAgree(context, new_param_ref_id, prev_param_ref_id)) {
-      CARBON_DIAGNOSTIC(
-          FunctionSignatureParamDisagree, Error,
-          "Function declaration with {1} parameter {0} disagrees.", int32_t,
-          llvm::StringLiteral);
+      CARBON_DIAGNOSTIC(FunctionSignatureParamDisagree, Error,
+                        "Function declaration with{1} parameter {0} disagrees.",
+                        int32_t, llvm::StringLiteral);
       CARBON_DIAGNOSTIC(FunctionSignatureParamPrevious, Note,
-                        "Matched declaration has {1} parameter {0}.", int32_t,
-                        llvm::StringLiteral);
+                        "Checked agreement with matched function "
+                        "declaration{1} parameter here.",
+                        int32_t, llvm::StringLiteral);
       context.emitter()
           .Build(new_param_ref_id, FunctionSignatureParamDisagree,
                  new_param_ref_ids.size(), param_diag_label)

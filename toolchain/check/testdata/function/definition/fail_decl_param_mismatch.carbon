@@ -8,7 +8,7 @@ fn F();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 1 parameter(s) disagrees.
 // CHECK:STDERR: fn F(x: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration has 0 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration with 0 parameter(s).
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 fn F(x: i32) {}
@@ -17,16 +17,16 @@ fn G(x: i32);
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 0 parameter(s) disagrees.
 // CHECK:STDERR: fn G() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration has 1 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration with 1 parameter(s).
 // CHECK:STDERR: fn G(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn G() {}
 
 fn H(x: i32);
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Function declaration with  parameter 1 disagrees.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Function declaration with parameter 1 disagrees.
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:      ^
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Matched declaration has  parameter 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Checked agreement with matched function declaration parameter here.
 // CHECK:STDERR: fn H(x: i32);
 // CHECK:STDERR:      ^
 fn H(x: bool) {}
