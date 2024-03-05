@@ -843,8 +843,6 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
     // combining the above conversions and this one in a single conversion.
     if (auto src_interface_type =
             sem_ir.types().TryGetAs<SemIR::InterfaceType>(value_type_id)) {
-      // TODO: Form a suitable new value. In particular, if we model a facet as
-      // a (type, witness) pair, we should drop the witness when forming a type.
       return context.AddInst(
           {parse_node, SemIR::FacetTypeAccess{target.type_id, value_id}});
     }
