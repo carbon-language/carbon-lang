@@ -5,55 +5,55 @@
 // AUTOUPDATE
 
 fn F();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declared with 1 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 1 parameter(s) disagrees.
 // CHECK:STDERR: fn F(x: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Function previously declared with 0 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration has 0 parameter(s).
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 fn F(x: i32) {}
 
 fn G(x: i32);
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declared with 0 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 0 parameter(s) disagrees.
 // CHECK:STDERR: fn G() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Function previously declared with 1 parameter(s).
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration has 1 parameter(s).
 // CHECK:STDERR: fn G(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn G() {}
 
 fn H(x: i32);
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Declaration of parameter 1 disagrees.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:6: ERROR: Function declaration with  parameter 1 disagrees.
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:      ^
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Previous declaration of parameter 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Matched declaration has  parameter 1.
 // CHECK:STDERR: fn H(x: i32);
 // CHECK:STDERR:      ^
 fn H(x: bool) {}
 
 fn I();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declares a return type of `i32`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with return type of `i32` disagrees.
 // CHECK:STDERR: fn I() -> i32 { return 0; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Function previously declared with no return type.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration with no return type.
 // CHECK:STDERR: fn I();
 // CHECK:STDERR: ^~~~~~~
 fn I() -> i32 { return 0; }
 
 fn J() -> i32;
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declared with no return type.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with no return type disagrees.
 // CHECK:STDERR: fn J() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Function previously declared with return type `i32`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration with return type `i32`.
 // CHECK:STDERR: fn J() -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn J() {}
 
 fn K() -> i32;
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declares a return type of `bool`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: ERROR: Function declaration with return type of `bool` disagrees.
 // CHECK:STDERR: fn K() -> bool { return false; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Function previously declared with return type `i32`.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Matched function declaration with return type `i32`.
 // CHECK:STDERR: fn K() -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn K() -> bool { return false; }

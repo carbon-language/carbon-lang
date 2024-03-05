@@ -78,11 +78,12 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
   const auto new_param_ref_ids = context.inst_blocks().Get(new_param_refs_id);
   const auto prev_param_ref_ids = context.inst_blocks().Get(prev_param_refs_id);
   if (new_param_ref_ids.size() != prev_param_ref_ids.size()) {
-    CARBON_DIAGNOSTIC(FunctionSignatureParamCountDisagree, Error,
-                      "Function declared with {0}{1} parameter(s).", int32_t,
-                      llvm::StringLiteral);
+    CARBON_DIAGNOSTIC(
+        FunctionSignatureParamCountDisagree, Error,
+        "Function declaration with {0}{1} parameter(s) disagrees.", int32_t,
+        llvm::StringLiteral);
     CARBON_DIAGNOSTIC(FunctionSignatureParamCountPrevious, Note,
-                      "Function previously declared with {0}{1} parameter(s).",
+                      "Matched function declaration has {0}{1} parameter(s).",
                       int32_t, llvm::StringLiteral);
     context.emitter()
         .Build(new_decl_id, FunctionSignatureParamCountDisagree,
@@ -95,11 +96,12 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!DoesParamAgree(context, new_param_ref_id, prev_param_ref_id)) {
-      CARBON_DIAGNOSTIC(FunctionSignatureParamDisagree, Error,
-                        "Declaration of{1} parameter {0} disagrees.", int32_t,
-                        llvm::StringLiteral);
+      CARBON_DIAGNOSTIC(
+          FunctionSignatureParamDisagree, Error,
+          "Function declaration with {1} parameter {0} disagrees.", int32_t,
+          llvm::StringLiteral);
       CARBON_DIAGNOSTIC(FunctionSignatureParamPrevious, Note,
-                        "Previous declaration of{1} parameter {0}.", int32_t,
+                        "Matched declaration has {1} parameter {0}.", int32_t,
                         llvm::StringLiteral);
       context.emitter()
           .Build(new_param_ref_id, FunctionSignatureParamDisagree,
@@ -131,11 +133,12 @@ static auto DoesFunctionSignatureAgree(Context& context,
     return false;
   }
   if (new_function.return_type_id != prev_function.return_type_id) {
-    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeDisagree, Error,
-                      "Function declares a return type of `{0}`.",
-                      SemIR::TypeId);
+    CARBON_DIAGNOSTIC(
+        FunctionSignatureReturnTypeDisagree, Error,
+        "Function declaration with return type of `{0}` disagrees.",
+        SemIR::TypeId);
     CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeDisagreeNoReturn, Error,
-                      "Function declared with no return type.");
+                      "Function declaration with no return type disagrees.");
     auto diag =
         new_function.return_type_id.is_valid()
             ? context.emitter().Build(new_function.decl_id,
@@ -146,13 +149,13 @@ static auto DoesFunctionSignatureAgree(Context& context,
                   FunctionSignatureReturnTypeDisagreeNoReturn);
     if (prev_function.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionSignatureReturnTypePrevious, Note,
-                        "Function previously declared with return type `{0}`.",
+                        "Matched function declaration with return type `{0}`.",
                         SemIR::TypeId);
       diag.Note(prev_function.decl_id, FunctionSignatureReturnTypePrevious,
                 prev_function.return_type_id);
     } else {
       CARBON_DIAGNOSTIC(FunctionSignatureReturnTypePreviousNoReturn, Note,
-                        "Function previously declared with no return type.");
+                        "Matched function declaration with no return type.");
       diag.Note(prev_function.decl_id,
                 FunctionSignatureReturnTypePreviousNoReturn);
     }
@@ -178,7 +181,7 @@ auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
     CARBON_DIAGNOSTIC(FunctionRedeclaration, Error,
                       "Redeclaration of function {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousDeclaration, Note,
-                      "Previous declaration was here.");
+                      "Matched declaration here.");
     context.emitter()
         .Build(parse_node, FunctionRedeclaration, prev_function.name_id)
         .Note(prev_function.decl_id, FunctionPreviousDeclaration)
@@ -191,7 +194,7 @@ auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
     CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
                       "Redefinition of function {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                      "Previous definition was here.");
+                      "Matched definition here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition, prev_function.name_id)
         .Note(prev_function.definition_id, FunctionPreviousDefinition)
