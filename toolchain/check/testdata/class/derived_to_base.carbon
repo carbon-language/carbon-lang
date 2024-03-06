@@ -80,9 +80,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:     .ConvertRef = %ConvertRef
 // CHECK:STDOUT:     .ConvertInit = %ConvertInit
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %ConvertCToB: <function> = fn_decl @ConvertCToB [template] {
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc21_20: type = ptr_type C [template = constants.%.13]

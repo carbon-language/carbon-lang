@@ -35,7 +35,7 @@ fn Run() {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cycle = %Cycle.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle [template = constants.%Cycle] {}
+// CHECK:STDOUT:   %Cycle.decl: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
@@ -76,7 +76,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cycle.decl = class_decl @Cycle [template = constants.%Cycle] {}
+// CHECK:STDOUT:   %Cycle.decl: invalid = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref Cycle* = var a

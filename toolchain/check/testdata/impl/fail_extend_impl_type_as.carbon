@@ -50,10 +50,10 @@ class E {
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %E.decl = class_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %E.decl: type = class_decl @E [template = constants.%E] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

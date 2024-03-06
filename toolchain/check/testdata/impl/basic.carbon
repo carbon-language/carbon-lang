@@ -24,7 +24,7 @@ impl i32 as Simple {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple [template = constants.%.1] {}
+// CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }

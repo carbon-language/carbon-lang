@@ -35,7 +35,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .MakeReorder = %MakeReorder
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %n.loc12_9.1: i32 = param n
 // CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc12_9.1

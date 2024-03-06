@@ -66,7 +66,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     .WrongSelf = %WrongSelf.decl
 // CHECK:STDOUT:     .CallWrongSelf = %CallWrongSelf
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc25_12.1: Class = param self
@@ -76,7 +76,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     @.1.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %WrongSelf.decl = class_decl @WrongSelf [template = constants.%WrongSelf] {}
+// CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {}
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf [template] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
 // CHECK:STDOUT:     %ws.loc43_18.1: WrongSelf = param ws

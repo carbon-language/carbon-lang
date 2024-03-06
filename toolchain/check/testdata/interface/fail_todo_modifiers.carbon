@@ -36,8 +36,8 @@ private interface Private {
 // CHECK:STDOUT:     .Modifiers = %Modifiers.decl
 // CHECK:STDOUT:     .Private = %Private.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Modifiers.decl = interface_decl @Modifiers [template = constants.%.1] {}
-// CHECK:STDOUT:   %Private.decl = interface_decl @Private [template = constants.%.5] {}
+// CHECK:STDOUT:   %Modifiers.decl: type = interface_decl @Modifiers [template = constants.%.1] {}
+// CHECK:STDOUT:   %Private.decl: type = interface_decl @Private [template = constants.%.5] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {

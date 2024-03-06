@@ -36,8 +36,8 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .MemberNamedSelf = %MemberNamedSelf.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %MemberNamedSelf.decl = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc20_25: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc20_22.1: MemberNamedSelf = param x
@@ -57,7 +57,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
-// CHECK:STDOUT:   %Self.decl = class_decl @Self [template = constants.%Self] {}
+// CHECK:STDOUT:   %Self.decl: type = class_decl @Self [template = constants.%Self] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc17_11: type = name_ref Self, constants.%MemberNamedSelf [template = constants.%MemberNamedSelf]
 // CHECK:STDOUT:     %x.loc17_8.1: MemberNamedSelf = param x

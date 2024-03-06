@@ -75,9 +75,9 @@ abstract class Abstract {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Access.decl = class_decl @Access [template = constants.%Access] {}
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract [template = constants.%Abstract] {}
+// CHECK:STDOUT:   %Access.decl: type = class_decl @Access [template = constants.%Access] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
