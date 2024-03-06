@@ -143,6 +143,8 @@ auto HandleInterfaceDefinitionStart(
         context.constant_values().Get(interface_decl_id));
 
     // We model `Self` as a symbolic binding whose type is the interface.
+    // Because there is no equivalent non-symbolic value, we use `Invalid` as
+    // the `value_id` on the `BindSymbolicName`.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = SemIR::NameId::SelfType,
          .enclosing_scope_id = interface_info.scope_id});
