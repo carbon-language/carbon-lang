@@ -841,8 +841,7 @@ static auto PerformBuiltinConversion(Context& context, Parse::NodeId parse_node,
     // the case where F1 is an interface type and F2 is `type`.
     // TODO: Support converting tuple and struct values to facet types,
     // combining the above conversions and this one in a single conversion.
-    if (auto src_interface_type =
-            sem_ir.types().TryGetAs<SemIR::InterfaceType>(value_type_id)) {
+    if (sem_ir.types().Is<SemIR::InterfaceType>(value_type_id)) {
       return context.AddInst(
           {parse_node, SemIR::FacetTypeAccess{target.type_id, value_id}});
     }

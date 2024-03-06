@@ -143,14 +143,13 @@ auto HandleInterfaceDefinitionStart(
         context.constant_values().Get(interface_decl_id));
 
     // We model `Self` as a symbolic binding whose type is the interface.
-    interface_info.self_param_id = context.AddInst(
-        {Parse::NodeId::Invalid,
-         SemIR::BindSymbolicName{
-             self_type_id,
-             context.bind_names().Add(
-                 {.name_id = SemIR::NameId::SelfType,
-                  .enclosing_scope_id = interface_info.scope_id}),
-             SemIR::InstId::Invalid}});
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = SemIR::NameId::SelfType,
+         .enclosing_scope_id = interface_info.scope_id});
+    interface_info.self_param_id =
+        context.AddInst({Parse::NodeId::Invalid,
+                         SemIR::BindSymbolicName{self_type_id, bind_name_id,
+                                                 SemIR::InstId::Invalid}});
     context.name_scopes()
         .Get(interface_info.scope_id)
         .names.insert({SemIR::NameId::SelfType, interface_info.self_param_id});
