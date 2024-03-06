@@ -5,11 +5,14 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -117,12 +120,21 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid, decl_block_id};
-  auto function_decl_id =
-      context.AddPlaceholderInst({parse_node, function_decl});
+  auto function_info = SemIR::Function{
+      .name_id = name_context.name_id_for_new_inst(),
+      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .decl_id = context.AddPlaceholderInst({parse_node, function_decl}),
+      .implicit_param_refs_id = implicit_param_refs_id,
+      .param_refs_id = param_refs_id,
+      .return_type_id = return_type_id,
+      .return_slot_id = return_slot_id};
+  if (is_definition) {
+    function_info.definition_id = function_info.decl_id;
+  }
 
   // At interface scope, a function declaration introduces an associated
   // function.
-  auto lookup_result_id = function_decl_id;
+  auto lookup_result_id = function_info.decl_id;
   if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
       !name_context.has_qualifiers) {
     auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
@@ -131,7 +143,7 @@ static auto BuildFunctionDecl(Context& context,
             context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
                 scope_inst_id)) {
       lookup_result_id = BuildAssociatedEntity(
-          context, interface_scope->interface_id, function_decl_id);
+          context, interface_scope->interface_id, function_info.decl_id);
     }
   }
 
@@ -141,44 +153,27 @@ static auto BuildFunctionDecl(Context& context,
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
-      // This is a redeclaration of an existing function.
-      function_decl.function_id = existing_function_decl->function_id;
-
-      // TODO: Check that the signature matches!
-      // TODO: Disallow redeclarations within classes?
-
-      // Track the signature from the definition, so that IDs in the body match
-      // IDs in the signature.
-      if (is_definition) {
-        auto& function_info =
-            context.functions().Get(function_decl.function_id);
-        function_info.implicit_param_refs_id = implicit_param_refs_id;
-        function_info.param_refs_id = param_refs_id;
-        function_info.return_type_id = return_type_id;
-        function_info.return_slot_id = return_slot_id;
+      if (MergeFunctionRedecl(context, parse_node, function_info,
+                              existing_function_decl->function_id,
+                              is_definition)) {
+        // When merging, use the existing function rather than adding a new one.
+        function_decl.function_id = existing_function_decl->function_id;
       }
     } else {
-      // This is a redeclaration of something other than a function.
-      // This includes the case where an associated function redeclares another
+      // This is a redeclaration of something other than a function. This
+      // includes the case where an associated function redeclares another
       // associated function.
-      context.DiagnoseDuplicateName(function_decl_id, existing_id);
+      context.DiagnoseDuplicateName(function_info.decl_id, existing_id);
     }
   }
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    function_decl.function_id = context.functions().Add(
-        {.name_id = name_context.name_id_for_new_inst(),
-         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-         .decl_id = function_decl_id,
-         .implicit_param_refs_id = implicit_param_refs_id,
-         .param_refs_id = param_refs_id,
-         .return_type_id = return_type_id,
-         .return_slot_id = return_slot_id});
+    function_decl.function_id = context.functions().Add(function_info);
   }
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_decl_id,
+  context.ReplaceInstBeforeConstantUse(function_info.decl_id,
                                        {parse_node, function_decl});
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
@@ -196,7 +191,7 @@ static auto BuildFunctionDecl(Context& context,
     }
   }
 
-  return {function_decl.function_id, function_decl_id};
+  return {function_decl.function_id, function_info.decl_id};
 }
 
 auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId parse_node)
@@ -213,20 +208,6 @@ auto HandleFunctionDefinitionStart(Context& context,
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, parse_node, /*is_definition=*/true);
   auto& function = context.functions().Get(function_id);
-
-  // Track that this declaration is the definition.
-  if (function.definition_id.is_valid()) {
-    CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", SemIR::NameId);
-    CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                      "Previous definition was here.");
-    context.emitter()
-        .Build(parse_node, FunctionRedefinition, function.name_id)
-        .Note(function.definition_id, FunctionPreviousDefinition)
-        .Emit();
-  } else {
-    function.definition_id = decl_id;
-  }
 
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});

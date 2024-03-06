@@ -101,6 +101,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":function",
         ":import",
         ":interface",
         "//common:check",
@@ -130,6 +131,17 @@ cc_fuzz_test(
     deps = [
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "function",
+    srcs = ["function.cpp"],
+    hdrs = ["function.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
     ],
 )
 
