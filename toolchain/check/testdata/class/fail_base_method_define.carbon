@@ -44,15 +44,15 @@ fn D.C.F() {}
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %D.decl = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template] {}
 // CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B

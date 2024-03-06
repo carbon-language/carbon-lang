@@ -20,7 +20,7 @@ interface UseSelf {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .UseSelf = %UseSelf.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %UseSelf.decl = interface_decl @UseSelf [template = constants.%.1] {}
+// CHECK:STDOUT:   %UseSelf.decl: type = interface_decl @UseSelf [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {

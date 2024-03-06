@@ -62,10 +62,10 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .Call = %Call
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc25_13: type = ptr_type A [template = constants.%.1]

@@ -53,7 +53,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Class.ref.loc12_9: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc12_6.1: Class = param c

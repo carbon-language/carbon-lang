@@ -34,7 +34,7 @@ fn Test() {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -54,8 +54,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %.loc15: type = struct_type {.a: A} [template = constants.%.6]

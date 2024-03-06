@@ -55,7 +55,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.ref.loc12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %A: <function> = bind_alias A, @Class.%WithSelf [template = @Class.%WithSelf]

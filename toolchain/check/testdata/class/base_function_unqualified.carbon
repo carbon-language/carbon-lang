@@ -36,8 +36,8 @@ fn Derived.H() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

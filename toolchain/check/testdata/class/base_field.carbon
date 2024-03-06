@@ -45,8 +45,8 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Access = %Access
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc20_21: type = ptr_type Derived [template = constants.%.7]

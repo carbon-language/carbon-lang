@@ -38,9 +38,9 @@ interface Outer {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
-// CHECK:STDOUT:   %Outer.decl = interface_decl @Outer [template = constants.%.2] {}
+// CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -54,7 +54,7 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
 // CHECK:STDOUT:   %Self: Outer = bind_symbolic_name Self [symbolic]
-// CHECK:STDOUT:   %Inner.decl = interface_decl @Inner [template = constants.%.3] {}
+// CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%.3] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

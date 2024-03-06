@@ -20,7 +20,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty [template = constants.%.1] {}
+// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
 // CHECK:STDOUT:   }

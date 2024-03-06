@@ -56,10 +56,10 @@ interface BeingDefined {
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Undefined.decl = interface_decl @Undefined [template = constants.%.1] {}
+// CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%.1] {}
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {}
-// CHECK:STDOUT:   %BeingDefined.decl = interface_decl @BeingDefined [template = constants.%.2] {}
+// CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Undefined;

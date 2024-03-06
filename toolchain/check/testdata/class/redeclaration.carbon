@@ -25,8 +25,8 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Class.decl.loc9 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc9: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_12.1: Class = param self

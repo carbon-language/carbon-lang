@@ -55,8 +55,8 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .Access = %Access
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract [template = constants.%Abstract] {}
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %Derived.ref.loc17: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     @Make.%return: ref Derived = var <return slot>

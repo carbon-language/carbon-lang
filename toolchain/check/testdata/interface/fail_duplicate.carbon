@@ -51,12 +51,12 @@ interface Class { }
 // CHECK:STDOUT:     .Function = %Function
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc7: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc15: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template] {}
-// CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1 [template = constants.%.2] {}
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.decl.loc27: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %.decl.loc37: type = interface_decl @.2 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {

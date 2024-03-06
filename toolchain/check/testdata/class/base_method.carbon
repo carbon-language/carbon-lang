@@ -46,7 +46,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Call = %Call
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc13_26: type = ptr_type Base [template = constants.%.2]
@@ -54,7 +54,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:     @F.%self: Base* = bind_name self, %self.loc13_16.1
 // CHECK:STDOUT:     @F.%.loc13: Base* = addr_pattern @F.%self
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Call: <function> = fn_decl @Call [template] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc21: type = ptr_type Derived [template = constants.%.8]

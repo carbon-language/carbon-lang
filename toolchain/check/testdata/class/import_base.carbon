@@ -49,8 +49,8 @@ fn Run() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Child = %Child.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %Child.decl = class_decl @Child [template = constants.%Child] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Child.decl: type = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -148,8 +148,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Child.decl = class_decl @Child [template = constants.%Child] {}
-// CHECK:STDOUT:   %Base.decl = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Child.decl: invalid = class_decl @Child [template = constants.%Child] {}
+// CHECK:STDOUT:   %Base.decl: invalid = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, file.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref Child = var a
 // CHECK:STDOUT:   %a: ref Child = bind_name a, %a.var

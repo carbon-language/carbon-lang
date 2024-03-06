@@ -62,9 +62,9 @@ base class BaseClass {
 // CHECK:STDOUT:     .AbstractClass = %AbstractClass.decl
 // CHECK:STDOUT:     .BaseClass = %BaseClass.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %FinalClass.decl = class_decl @FinalClass [template = constants.%FinalClass] {}
-// CHECK:STDOUT:   %AbstractClass.decl = class_decl @AbstractClass [template = constants.%AbstractClass] {}
-// CHECK:STDOUT:   %BaseClass.decl = class_decl @BaseClass [template = constants.%BaseClass] {}
+// CHECK:STDOUT:   %FinalClass.decl: type = class_decl @FinalClass [template = constants.%FinalClass] {}
+// CHECK:STDOUT:   %AbstractClass.decl: type = class_decl @AbstractClass [template = constants.%AbstractClass] {}
+// CHECK:STDOUT:   %BaseClass.decl: type = class_decl @BaseClass [template = constants.%BaseClass] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {

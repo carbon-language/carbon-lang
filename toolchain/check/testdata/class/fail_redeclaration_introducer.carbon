@@ -97,21 +97,21 @@ base class G;
 // CHECK:STDOUT:     .F = %F.decl.loc52
 // CHECK:STDOUT:     .G = %G.decl.loc61
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %A.decl.loc14 = class_decl @A [template = constants.%A] {}
-// CHECK:STDOUT:   %B.decl.loc16 = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %B.decl.loc23 = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %C.decl.loc25 = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc32 = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %D.decl.loc34 = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %D.decl.loc41 = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %E.decl.loc43 = class_decl @E [template = constants.%E] {}
-// CHECK:STDOUT:   %E.decl.loc50 = class_decl @E [template = constants.%E] {}
-// CHECK:STDOUT:   %F.decl.loc52 = class_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %F.decl.loc59 = class_decl @F [template = constants.%F] {}
-// CHECK:STDOUT:   %G.decl.loc61 = class_decl @G [template = constants.%G] {}
-// CHECK:STDOUT:   %G.decl.loc68 = class_decl @G [template = constants.%G] {}
-// CHECK:STDOUT:   %G.decl.loc75 = class_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %A.decl.loc14: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl.loc16: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %B.decl.loc23: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %C.decl.loc25: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc32: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl.loc34: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %D.decl.loc41: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %E.decl.loc43: type = class_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %E.decl.loc50: type = class_decl @E [template = constants.%E] {}
+// CHECK:STDOUT:   %F.decl.loc52: type = class_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %F.decl.loc59: type = class_decl @F [template = constants.%F] {}
+// CHECK:STDOUT:   %G.decl.loc61: type = class_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %G.decl.loc68: type = class_decl @G [template = constants.%G] {}
+// CHECK:STDOUT:   %G.decl.loc75: type = class_decl @G [template = constants.%G] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

@@ -38,11 +38,11 @@ class C {
 // CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface [template = constants.%.1] {
+// CHECK:STDOUT:   %GenericInterface.decl: type = interface_decl @GenericInterface [template = constants.%.1] {
 // CHECK:STDOUT:     %T.loc10_28.1: type = param T
 // CHECK:STDOUT:     %T.loc10_28.2: type = bind_symbolic_name T, %T.loc10_28.1 [symbolic]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {

@@ -47,8 +47,8 @@ var a: Incomplete;
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.decl = class_decl @Empty [template = constants.%Empty] {}
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
@@ -75,10 +75,10 @@ var a: Incomplete;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+4, used [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.decl = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %Empty.decl = class_decl @Empty [template = constants.%Empty] {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:     %Empty.decl: invalid = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: invalid = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, %import_ref.2 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var

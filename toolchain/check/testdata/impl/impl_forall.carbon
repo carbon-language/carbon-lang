@@ -24,7 +24,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.decl = interface_decl @Simple [template = constants.%.1] {}
+// CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.loc11_14.1: type = param T
 // CHECK:STDOUT:     %T.loc11_14.2: type = bind_symbolic_name T, %T.loc11_14.1 [symbolic]

@@ -27,7 +27,7 @@ interface Interface {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {

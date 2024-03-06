@@ -27,9 +27,9 @@ interface ForwardDeclared {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty [template = constants.%.1] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared [template = constants.%.2] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc10: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc12: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

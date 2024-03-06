@@ -45,8 +45,8 @@ fn G(c: C) {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.decl = interface_decl @HasF [template = constants.%.1] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc17_6.1: C = param c

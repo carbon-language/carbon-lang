@@ -35,7 +35,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {
 // CHECK:STDOUT:     %T.loc10_13.1: type = param T
 // CHECK:STDOUT:     %T.loc10_13.2: type = bind_symbolic_name T, %T.loc10_13.1 [symbolic]
 // CHECK:STDOUT:   }
