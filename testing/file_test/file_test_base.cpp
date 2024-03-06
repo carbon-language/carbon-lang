@@ -777,7 +777,8 @@ static auto Main(int argc, char** argv) -> int {
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
-    llvm::ThreadPool pool({.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    llvm::DefaultThreadPool pool(
+        {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
     std::mutex errs_mutex;
 
     for (const auto& test_name : tests) {
