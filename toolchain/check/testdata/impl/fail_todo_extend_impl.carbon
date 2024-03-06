@@ -55,10 +55,12 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
+// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in HasF> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc8
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

@@ -196,6 +196,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
+    case FacetTypeAccess::Kind:
     case ImportRefUsed::Kind:
     case InterfaceType::Kind:
     case NameRef::Kind:
@@ -363,6 +364,11 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         } else if (step.index == 1) {
           out << ")";
         }
+        break;
+      }
+      case FacetTypeAccess::Kind: {
+        // Print `T as type` as simply `T`.
+        push_inst_id(inst.As<FacetTypeAccess>().facet_id);
         break;
       }
       case ImportRefUsed::Kind: {
@@ -582,6 +588,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassDecl::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
+      case FacetTypeAccess::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case IntLiteral::Kind:

@@ -13,6 +13,13 @@ fn CallStatic(T:! Interface) {
   T.F();
 }
 
+fn CallFacet(T:! Interface, x: T) {
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: ERROR: Type `T` does not support qualified expressions.
+  // CHECK:STDERR:   x.F();
+  // CHECK:STDERR:   ^~~
+  x.F();
+}
+
 // CHECK:STDOUT: --- fail_todo_facet_lookup.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -26,20 +33,33 @@ fn CallStatic(T:! Interface) {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .CallStatic = %CallStatic
+// CHECK:STDOUT:     .CallFacet = %CallFacet
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic [template] {
-// CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, %Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:     %Interface.ref.loc9: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc9_15.1: Interface = param T
 // CHECK:STDOUT:     @CallStatic.%T: Interface = bind_symbolic_name T, %T.loc9_15.1 [symbolic]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CallFacet: <function> = fn_decl @CallFacet [template] {
+// CHECK:STDOUT:     %Interface.ref.loc16: type = name_ref Interface, %Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.loc16_14.1: Interface = param T
+// CHECK:STDOUT:     @CallFacet.%T: Interface = bind_symbolic_name T, %T.loc16_14.1 [symbolic]
+// CHECK:STDOUT:     %T.ref: Interface = name_ref T, @CallFacet.%T [symbolic = @CallFacet.%T]
+// CHECK:STDOUT:     %.loc16_32.1: type = facet_type_access %T.ref [symbolic = @CallFacet.%T]
+// CHECK:STDOUT:     %.loc16_32.2: type = converted %T.ref, %.loc16_32.1 [symbolic = @CallFacet.%T]
+// CHECK:STDOUT:     %x.loc16_29.1: T = param x
+// CHECK:STDOUT:     @CallFacet.%x: T = bind_name x, %x.loc16_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc7: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc7
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }
@@ -49,6 +69,12 @@ fn CallStatic(T:! Interface) {
 // CHECK:STDOUT: fn @CallStatic(%T: Interface) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: Interface = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallFacet(%T: Interface, %x: T) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.ref: T = name_ref x, %x
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

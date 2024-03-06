@@ -64,13 +64,17 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = <error>
+// CHECK:STDOUT:   .Self = <unexpected instref inst+3>
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

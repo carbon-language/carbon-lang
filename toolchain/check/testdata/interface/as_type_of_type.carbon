@@ -7,14 +7,10 @@
 interface Empty {}
 
 fn F(T:! Empty) {
-  // TODO: Support conversion from `T` to `type`.
-  // CHECK:STDERR: fail_as_type_of_type.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `Empty` to `type`.
-  // CHECK:STDERR:   var x: T;
-  // CHECK:STDERR:          ^
   var x: T;
 }
 
-// CHECK:STDOUT: --- fail_as_type_of_type.carbon
+// CHECK:STDOUT: --- as_type_of_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
@@ -35,15 +31,20 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: Empty) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: Empty = name_ref T, %T [symbolic = %T]
-// CHECK:STDOUT:   %x.var: ref <error> = var x
-// CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc10_10.1: type = facet_type_access %T.ref [symbolic = %T]
+// CHECK:STDOUT:   %.loc10_10.2: type = converted %T.ref, %.loc10_10.1 [symbolic = %T]
+// CHECK:STDOUT:   %x.var: ref T = var x
+// CHECK:STDOUT:   %x: ref T = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

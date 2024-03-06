@@ -39,7 +39,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
