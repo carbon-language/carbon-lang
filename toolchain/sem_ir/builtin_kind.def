@@ -73,6 +73,9 @@ CARBON_SEM_IR_BUILTIN_KIND(BoundMethodType, "<bound method>")
 // The type of namespace and imported package names.
 CARBON_SEM_IR_BUILTIN_KIND(NamespaceType, "<namespace>")
 
+// The type of witnesses.
+CARBON_SEM_IR_BUILTIN_KIND(WitnessType, "<witness>")
+
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
 CARBON_SEM_IR_BUILTIN_KIND_NAME(Invalid)

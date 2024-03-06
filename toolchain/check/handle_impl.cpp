@@ -271,16 +271,14 @@ auto HandleImplDefinition(Context& context,
                           Parse::ImplDefinitionId /*parse_node*/) -> bool {
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
-  context.inst_block_stack().Pop();
-  context.decl_name_stack().PopScope();
 
-  if (context.impls().Get(impl_id).is_defined()) {
-    // This is an (invalid) impl redefinition, the impl is already fully
-    // defined.
-    return true;
+  if (!context.impls().Get(impl_id).is_defined()) {
+    context.impls().Get(impl_id).witness_id =
+        BuildImplWitness(context, impl_id);
   }
 
-  context.impls().Get(impl_id).witness_id = BuildImplWitness(context, impl_id);
+  context.inst_block_stack().Pop();
+  context.decl_name_stack().PopScope();
   return true;
 }
 
