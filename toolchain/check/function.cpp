@@ -27,15 +27,33 @@ static auto FunctionDeclHasError(Context& context, const SemIR::Function& fn)
 
 // Returns false if a param differs for a redeclaration. The caller is expected
 // to provide a diagnostic.
-// TODO: Consider moving diagnostics here, particularly to differentiate
-// between type and name mistakes. For now, taking the simpler approach because
-// I also think we may want to refactor params.
-static auto CheckRedeclParam(Context& context, SemIR::InstId new_param_ref_id,
+static auto CheckRedeclParam(Context& context,
+                             llvm::StringLiteral param_diag_label,
+                             int32_t param_index,
+                             SemIR::InstId new_param_ref_id,
                              SemIR::InstId prev_param_ref_id) -> bool {
+  // TODO: Consider differentiating between type and name mistakes. For now,
+  // taking the simpler approach because I also think we may want to refactor
+  // params.
+  auto diagnose = [&]() {
+    CARBON_DIAGNOSTIC(FunctionRedeclParamDiffers, Error,
+                      "Function redeclaration differs at {0}parameter {1}.",
+                      llvm::StringLiteral, int32_t);
+    CARBON_DIAGNOSTIC(FunctionRedeclParamPrevious, Note,
+                      "Previous declaration's corresponding {0}parameter here.",
+                      llvm::StringLiteral);
+    context.emitter()
+        .Build(new_param_ref_id, FunctionRedeclParamDiffers, param_diag_label,
+               param_index + 1)
+        .Note(prev_param_ref_id, FunctionRedeclParamPrevious, param_diag_label)
+        .Emit();
+  };
+
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
       new_param_ref.type_id() != prev_param_ref.type_id()) {
+    diagnose();
     return false;
   }
 
@@ -45,6 +63,7 @@ static auto CheckRedeclParam(Context& context, SemIR::InstId new_param_ref_id,
     prev_param_ref =
         context.insts().Get(prev_param_ref.As<SemIR::AddrPattern>().inner_id);
     if (new_param_ref.kind() != prev_param_ref.kind()) {
+      diagnose();
       return false;
     }
   }
@@ -58,7 +77,12 @@ static auto CheckRedeclParam(Context& context, SemIR::InstId new_param_ref_id,
 
   auto new_param = new_param_ref.As<SemIR::Param>();
   auto prev_param = prev_param_ref.As<SemIR::Param>();
-  return new_param.name_id == prev_param.name_id;
+  if (new_param.name_id != prev_param.name_id) {
+    diagnose();
+    return false;
+  }
+
+  return true;
 }
 
 // Returns false if the param refs differ for a redeclaration.
@@ -91,20 +115,8 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
   }
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
-    if (!CheckRedeclParam(context, new_param_ref_id, prev_param_ref_id)) {
-      CARBON_DIAGNOSTIC(FunctionRedeclParamDiffers, Error,
-                        "Function redeclaration differs at {0}parameter {1}.",
-                        llvm::StringLiteral, int32_t);
-      CARBON_DIAGNOSTIC(
-          FunctionRedeclParamPrevious, Note,
-          "Previous declaration's corresponding {0}parameter here.",
-          llvm::StringLiteral);
-      context.emitter()
-          .Build(new_param_ref_id, FunctionRedeclParamDiffers, param_diag_label,
-                 new_param_ref_ids.size())
-          .Note(prev_param_ref_id, FunctionRedeclParamPrevious,
-                param_diag_label)
-          .Emit();
+    if (!CheckRedeclParam(context, param_diag_label, index, new_param_ref_id,
+                          prev_param_ref_id)) {
       return false;
     }
   }
