@@ -34,5 +34,8 @@ impl true as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: <error> as I {}
+// CHECK:STDOUT: impl @impl: <error> as I {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

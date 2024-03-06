@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
@@ -273,8 +274,13 @@ auto HandleImplDefinition(Context& context,
   context.inst_block_stack().Pop();
   context.decl_name_stack().PopScope();
 
-  // The impl is now fully defined.
-  context.impls().Get(impl_id).defined = true;
+  if (context.impls().Get(impl_id).is_defined()) {
+    // This is an (invalid) impl redefinition, the impl is already fully
+    // defined.
+    return true;
+  }
+
+  context.impls().Get(impl_id).witness_id = BuildImplWitness(context, impl_id);
   return true;
 }
 
