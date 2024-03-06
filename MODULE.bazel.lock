@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "a678258017137eb32b5857aca1ae0d8c752d0a4d222709f595f16c91e0454851",
+  "moduleFileHash": "1e5fd738dfb368b107a4de0de60d2855d02194e868c5b86031d157353b45f1f5",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -96,10 +96,10 @@
                   "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                   "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch"
                 ],
-                "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
-                "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
+                "sha256": "1e6cc2eb634438a59fb5e1b87e7bb35883fb680dc2934f431150db22fb3a6c09",
+                "strip_prefix": "llvm-project-be15a6b3b68bed7b9d982f25b2e10a273302002a",
                 "urls": [
-                  "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
+                  "https://github.com/llvm/llvm-project/archive/be15a6b3b68bed7b9d982f25b2e10a273302002a.tar.gz"
                 ],
                 "name": "llvm-raw"
               },
@@ -1662,10 +1662,10 @@
                 "@@//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
                 "@@//bazel/llvm_project:0003_Add_library_for_clangd.patch"
               ],
-              "sha256": "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
-              "strip_prefix": "llvm-project-82e33d6203f62c0be16f8da8d4178e7fa9e790ea",
+              "sha256": "1e6cc2eb634438a59fb5e1b87e7bb35883fb680dc2934f431150db22fb3a6c09",
+              "strip_prefix": "llvm-project-be15a6b3b68bed7b9d982f25b2e10a273302002a",
               "urls": [
-                "https://github.com/llvm/llvm-project/archive/82e33d6203f62c0be16f8da8d4178e7fa9e790ea.tar.gz"
+                "https://github.com/llvm/llvm-project/archive/be15a6b3b68bed7b9d982f25b2e10a273302002a.tar.gz"
               ],
               "name": "_main~_repo_rules~llvm-raw"
             }
