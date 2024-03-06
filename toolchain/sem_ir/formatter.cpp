@@ -980,19 +980,6 @@ class Formatter {
     }
   }
 
-  // Print ClassDecl with type-like semantics even though it lacks a type_id.
-  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
-  // Print InterfaceDecl with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstructionLHS(InstId inst_id, InterfaceDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
   // Print ImportRefUnused with type-like semantics even though it lacks a
   // type_id.
   auto FormatInstructionLHS(InstId inst_id, ImportRefUnused /*inst*/) -> void {
