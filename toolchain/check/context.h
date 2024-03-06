@@ -210,6 +210,12 @@ class Context {
   // Returns the type ID for a constant of type `type`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
 
+  // Returns the type ID for an instruction whose constant value is of type
+  // `type`.
+  auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
+    return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
+  }
+
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
   // known object and value representations.
