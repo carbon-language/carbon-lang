@@ -65,6 +65,7 @@ interface BeingDefined {
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
+// CHECK:STDOUT:   %Self: BeingDefined = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.2]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
@@ -74,6 +75,7 @@ interface BeingDefined {
 // CHECK:STDOUT:   %.loc41: <function> = fn_decl @.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .H = %.loc37
 // CHECK:STDOUT:   witness = (%H)
 // CHECK:STDOUT: }

@@ -41,19 +41,24 @@ private interface Private {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
+// CHECK:STDOUT:   %Self: Modifiers = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template] {}
 // CHECK:STDOUT:   %.loc11: <associated <function> in Modifiers> = assoc_entity element0, %Final [template = constants.%.3]
 // CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template] {}
 // CHECK:STDOUT:   %.loc15: <associated <function> in Modifiers> = assoc_entity element1, %Default [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Final = %.loc11
 // CHECK:STDOUT:   .Default = %.loc15
 // CHECK:STDOUT:   witness = (%Final, %Default)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Private {
+// CHECK:STDOUT:   %Self: Private = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

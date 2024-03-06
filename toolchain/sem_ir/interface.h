@@ -45,6 +45,8 @@ struct Interface : public Printable<Interface> {
   // The first block of the interface body.
   // TODO: Handle control flow in the interface body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
+  // The implicit `Self` parameter. This is a BindSymbolicName instruction.
+  InstId self_param_id = InstId::Invalid;
 
   // The following members are set at the `}` of the interface definition.
   InstBlockId associated_entities_id = InstBlockId::Invalid;

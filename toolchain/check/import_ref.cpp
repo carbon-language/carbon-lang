@@ -330,9 +330,15 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst.As<SemIR::UnboundElementType>());
 
       case SemIR::InstKind::BindName:
+        // TODO: This always returns `ConstantId::NotConstant`.
+        return TryEvalInst(context_, inst_id, inst);
+
       case SemIR::InstKind::BindSymbolicName:
-        // Can use TryEvalInst because the resulting constant doesn't really use
-        // `inst`.
+        // TODO: This will return a `ConstantId` referring to the `inst_id` from
+        // the import IR. But we need all references to the same
+        // `BindSymbolicName` in the imported IR to resolve to the same constant
+        // value in the local IR, so we can't just create a new local
+        // `BindSymbolicName` here.
         return TryEvalInst(context_, inst_id, inst);
 
       default:
@@ -615,6 +621,7 @@ class ImportRefResolver {
       new_interface.associated_entities_id =
           AddAssociatedEntities(import_interface.associated_entities_id);
       new_interface.body_block_id = context_.inst_block_stack().Pop();
+      // TODO: Import new_interface.self_param_id.
 
       CARBON_CHECK(import_scope.extended_scopes.empty())
           << "Interfaces don't currently have extended scopes to support.";

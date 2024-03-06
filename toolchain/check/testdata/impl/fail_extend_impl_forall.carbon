@@ -46,6 +46,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {
+// CHECK:STDOUT:   %Self: GenericInterface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc10_28.2 [symbolic = file.%T.loc10_28.2]
 // CHECK:STDOUT:     %x.loc11_8.1: T = param x
@@ -54,6 +55,7 @@ class C {
 // CHECK:STDOUT:   %.loc11: <associated <function> in GenericInterface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc11
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

@@ -41,6 +41,13 @@ class TypeStore : public ValueStore<TypeId> {
     return insts_->Get(GetInstId(type_id));
   }
 
+  // Returns whether the specified kind of instruction was used to define the
+  // type.
+  template <typename InstT>
+  auto Is(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).Is<InstT>();
+  }
+
   // Returns the instruction used to define the specified type, which is known
   // to be a particular kind of instruction.
   template <typename InstT>

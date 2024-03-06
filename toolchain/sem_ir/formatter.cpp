@@ -1000,6 +1000,16 @@ class Formatter {
     }
   }
 
+  auto FormatInstructionRHS(BindSymbolicName inst) -> void {
+    // A BindSymbolicName with no value is a purely symbolic binding, such as
+    // the `Self` in an interface. Don't print out `invalid` for the value.
+    if (inst.value_id.is_valid()) {
+      FormatArgs(inst.bind_name_id, inst.value_id);
+    } else {
+      FormatArgs(inst.bind_name_id);
+    }
+  }
+
   auto FormatInstructionRHS(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
