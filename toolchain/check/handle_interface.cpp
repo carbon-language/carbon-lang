@@ -139,8 +139,7 @@ auto HandleInterfaceDefinitionStart(
     // TODO: Once we support parameterized interfaces, this won't be the right
     // type. For `interface X(T:! type)`, the type of `Self` is `X(T)`, whereas
     // this will be simply `X`.
-    auto self_type_id = context.GetTypeIdForTypeConstant(
-        context.constant_values().Get(interface_decl_id));
+    auto self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
 
     // We model `Self` as a symbolic binding whose type is the interface.
     // Because there is no equivalent non-symbolic value, we use `Invalid` as

@@ -112,8 +112,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   if (is_new_class) {
     // Build the `Self` type using the resulting type constant.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context.GetTypeIdForTypeConstant(
-        context.constant_values().Get(class_decl_id));
+    class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
   }
 
   return {class_decl.class_id, class_decl_id};
