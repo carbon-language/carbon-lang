@@ -6,10 +6,10 @@
 
 namespace Carbon::Check {
 
-// Returns true if the function signature has an error, which will have
+// Returns true if there was an error in declaring the function, which will have
 // previously been diagnosed.
-static auto FunctionSignatureHasError(Context& context,
-                                      const SemIR::Function& fn) -> bool {
+static auto FunctionDeclHasError(Context& context, const SemIR::Function& fn)
+    -> bool {
   if (fn.return_type_id == SemIR::TypeId::Error) {
     return true;
   }
@@ -25,13 +25,13 @@ static auto FunctionSignatureHasError(Context& context,
   return false;
 }
 
-// Returns true if a param agrees. The caller is expected to provide a
-// diagnostic.
+// Returns false if a param differs for a redeclaration. The caller is expected
+// to provide a diagnostic.
 // TODO: Consider moving diagnostics here, particularly to differentiate
 // between type and name mistakes. For now, taking the simpler approach because
 // I also think we may want to refactor params.
-static auto DoesParamAgree(Context& context, SemIR::InstId new_param_ref_id,
-                           SemIR::InstId prev_param_ref_id) -> bool {
+static auto CheckRedeclParam(Context& context, SemIR::InstId new_param_ref_id,
+                             SemIR::InstId prev_param_ref_id) -> bool {
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
@@ -44,10 +44,9 @@ static auto DoesParamAgree(Context& context, SemIR::InstId new_param_ref_id,
         context.insts().Get(new_param_ref.As<SemIR::AddrPattern>().inner_id);
     prev_param_ref =
         context.insts().Get(prev_param_ref.As<SemIR::AddrPattern>().inner_id);
-  }
-
-  if (new_param_ref.kind() != prev_param_ref.kind()) {
-    return false;
+    if (new_param_ref.kind() != prev_param_ref.kind()) {
+      return false;
+    }
   }
 
   if (new_param_ref.Is<SemIR::AnyBindName>()) {
@@ -57,20 +56,17 @@ static auto DoesParamAgree(Context& context, SemIR::InstId new_param_ref_id,
         context.insts().Get(prev_param_ref.As<SemIR::AnyBindName>().value_id);
   }
 
-  CARBON_CHECK(new_param_ref.Is<SemIR::Param>()) << new_param_ref;
-  CARBON_CHECK(prev_param_ref.Is<SemIR::Param>()) << prev_param_ref;
-
   auto new_param = new_param_ref.As<SemIR::Param>();
   auto prev_param = prev_param_ref.As<SemIR::Param>();
   return new_param.name_id == prev_param.name_id;
 }
 
-// Returns true if two param refs agree.
-static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
-                          SemIR::InstBlockId new_param_refs_id,
-                          SemIR::InstId prev_decl_id,
-                          SemIR::InstBlockId prev_param_refs_id,
-                          llvm::StringLiteral param_diag_label) -> bool {
+// Returns false if the param refs differ for a redeclaration.
+static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
+                              SemIR::InstBlockId new_param_refs_id,
+                              SemIR::InstId prev_decl_id,
+                              SemIR::InstBlockId prev_param_refs_id,
+                              llvm::StringLiteral param_diag_label) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -79,35 +75,35 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
   const auto prev_param_ref_ids = context.inst_blocks().Get(prev_param_refs_id);
   if (new_param_ref_ids.size() != prev_param_ref_ids.size()) {
     CARBON_DIAGNOSTIC(
-        FunctionSignatureParamCountDisagree, Error,
-        "Function declaration with {0}{1} parameter(s) disagrees.", int32_t,
-        llvm::StringLiteral);
-    CARBON_DIAGNOSTIC(FunctionSignatureParamCountPrevious, Note,
-                      "Matched function declaration with {0}{1} parameter(s).",
-                      int32_t, llvm::StringLiteral);
+        FunctionRedeclParamCountDiffers, Error,
+        "Function redeclaration differs because of {0}parameter count of {1}.",
+        llvm::StringLiteral, int32_t);
+    CARBON_DIAGNOSTIC(FunctionRedeclParamCountPrevious, Note,
+                      "Previously declared with {0}parameter count of {1}.",
+                      llvm::StringLiteral, int32_t);
     context.emitter()
-        .Build(new_decl_id, FunctionSignatureParamCountDisagree,
-               new_param_ref_ids.size(), param_diag_label)
-        .Note(prev_decl_id, FunctionSignatureParamCountPrevious,
-              prev_param_ref_ids.size(), param_diag_label)
+        .Build(new_decl_id, FunctionRedeclParamCountDiffers, param_diag_label,
+               new_param_ref_ids.size())
+        .Note(prev_decl_id, FunctionRedeclParamCountPrevious, param_diag_label,
+              prev_param_ref_ids.size())
         .Emit();
     return false;
   }
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
-    if (!DoesParamAgree(context, new_param_ref_id, prev_param_ref_id)) {
-      CARBON_DIAGNOSTIC(FunctionSignatureParamDisagree, Error,
-                        "Function declaration with{1} parameter {0} disagrees.",
-                        int32_t, llvm::StringLiteral);
-      CARBON_DIAGNOSTIC(FunctionSignatureParamPrevious, Note,
-                        "Checked agreement with matched function "
-                        "declaration{1} parameter here.",
-                        int32_t, llvm::StringLiteral);
+    if (!CheckRedeclParam(context, new_param_ref_id, prev_param_ref_id)) {
+      CARBON_DIAGNOSTIC(FunctionRedeclParamDiffers, Error,
+                        "Function redeclaration differs at {0}parameter {1}.",
+                        llvm::StringLiteral, int32_t);
+      CARBON_DIAGNOSTIC(
+          FunctionRedeclParamPrevious, Note,
+          "Previous declaration's corresponding {0}parameter here.",
+          llvm::StringLiteral);
       context.emitter()
-          .Build(new_param_ref_id, FunctionSignatureParamDisagree,
-                 new_param_ref_ids.size(), param_diag_label)
-          .Note(prev_param_ref_id, FunctionSignatureParamPrevious,
-                prev_param_ref_ids.size(), param_diag_label)
+          .Build(new_param_ref_id, FunctionRedeclParamDiffers, param_diag_label,
+                 new_param_ref_ids.size())
+          .Note(prev_param_ref_id, FunctionRedeclParamPrevious,
+                param_diag_label)
           .Emit();
       return false;
     }
@@ -115,49 +111,48 @@ static auto DoParamAgrees(Context& context, SemIR::InstId new_decl_id,
   return true;
 }
 
-// Returns true if the provided function signatures agrees, in the sense that
-// declarations can be merged.
-static auto DoesFunctionSignatureAgree(Context& context,
-                                       const SemIR::Function& new_function,
-                                       const SemIR::Function& prev_function)
-    -> bool {
-  if (FunctionSignatureHasError(context, new_function) ||
-      FunctionSignatureHasError(context, prev_function)) {
+// Returns false if the provided function declarations differ.
+static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
+                        const SemIR::Function& prev_function) -> bool {
+  if (FunctionDeclHasError(context, new_function) ||
+      FunctionDeclHasError(context, prev_function)) {
     return false;
   }
-  if (!DoParamAgrees(context, new_function.decl_id,
-                     new_function.implicit_param_refs_id, prev_function.decl_id,
-                     prev_function.implicit_param_refs_id, " implicit") ||
-      !DoParamAgrees(context, new_function.decl_id, new_function.param_refs_id,
-                     prev_function.decl_id, prev_function.param_refs_id, "")) {
+  if (!CheckRedeclParams(context, new_function.decl_id,
+                         new_function.implicit_param_refs_id,
+                         prev_function.decl_id,
+                         prev_function.implicit_param_refs_id, "implicit ") ||
+      !CheckRedeclParams(context, new_function.decl_id,
+                         new_function.param_refs_id, prev_function.decl_id,
+                         prev_function.param_refs_id, "")) {
     return false;
   }
   if (new_function.return_type_id != prev_function.return_type_id) {
     CARBON_DIAGNOSTIC(
-        FunctionSignatureReturnTypeDisagree, Error,
-        "Function declaration with return type of `{0}` disagrees.",
+        FunctionRedeclReturnTypeDiffers, Error,
+        "Function redeclaration differs because return type is `{0}`.",
         SemIR::TypeId);
-    CARBON_DIAGNOSTIC(FunctionSignatureReturnTypeDisagreeNoReturn, Error,
-                      "Function declaration with no return type disagrees.");
+    CARBON_DIAGNOSTIC(
+        FunctionRedeclReturnTypeDiffersNoReturn, Error,
+        "Function redeclaration differs because no return type is provided.");
     auto diag =
         new_function.return_type_id.is_valid()
             ? context.emitter().Build(new_function.decl_id,
-                                      FunctionSignatureReturnTypeDisagree,
+                                      FunctionRedeclReturnTypeDiffers,
                                       new_function.return_type_id)
-            : context.emitter().Build(
-                  new_function.decl_id,
-                  FunctionSignatureReturnTypeDisagreeNoReturn);
+            : context.emitter().Build(new_function.decl_id,
+                                      FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_function.return_type_id.is_valid()) {
-      CARBON_DIAGNOSTIC(FunctionSignatureReturnTypePrevious, Note,
-                        "Matched function declaration with return type `{0}`.",
+      CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
+                        "Previously declared with return type `{0}`.",
                         SemIR::TypeId);
-      diag.Note(prev_function.decl_id, FunctionSignatureReturnTypePrevious,
+      diag.Note(prev_function.decl_id, FunctionRedeclReturnTypePrevious,
                 prev_function.return_type_id);
     } else {
-      CARBON_DIAGNOSTIC(FunctionSignatureReturnTypePreviousNoReturn, Note,
-                        "Matched function declaration with no return type.");
+      CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
+                        "Previously declared with no return type.");
       diag.Note(prev_function.decl_id,
-                FunctionSignatureReturnTypePreviousNoReturn);
+                FunctionRedeclReturnTypePreviousNoReturn);
     }
     diag.Emit();
     return false;
@@ -166,35 +161,33 @@ static auto DoesFunctionSignatureAgree(Context& context,
   return true;
 }
 
-auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
-                       SemIR::Function& new_function,
-                       SemIR::FunctionId prev_function_id, bool is_definition)
+auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
+                         SemIR::Function& new_function,
+                         SemIR::FunctionId prev_function_id, bool is_definition)
     -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
   // TODO: Disallow redeclarations within classes?
-  if (!DoesFunctionSignatureAgree(context, new_function, prev_function)) {
+  if (!CheckRedecl(context, new_function, prev_function)) {
     return false;
   }
 
   if (!is_definition) {
-    CARBON_DIAGNOSTIC(FunctionRedeclaration, Error,
-                      "Redeclaration of function {0}.", SemIR::NameId);
-    CARBON_DIAGNOSTIC(FunctionPreviousDeclaration, Note,
-                      "Matched declaration here.");
+    CARBON_DIAGNOSTIC(FunctionRedecl, Error,
+                      "Redundant redeclaration of function {0}.",
+                      SemIR::NameId);
+    CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
     context.emitter()
-        .Build(parse_node, FunctionRedeclaration, prev_function.name_id)
-        .Note(prev_function.decl_id, FunctionPreviousDeclaration)
+        .Build(parse_node, FunctionRedecl, prev_function.name_id)
+        .Note(prev_function.decl_id, FunctionPreviousDecl)
         .Emit();
     // The diagnostic doesn't prevent a merge.
     return true;
-  }
-
-  if (prev_function.definition_id.is_valid()) {
+  } else if (prev_function.definition_id.is_valid()) {
     CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
                       "Redefinition of function {0}.", SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                      "Matched definition here.");
+                      "Previously defined here.");
     context.emitter()
         .Build(parse_node, FunctionRedefinition, prev_function.name_id)
         .Note(prev_function.definition_id, FunctionPreviousDefinition)

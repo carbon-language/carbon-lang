@@ -16,9 +16,9 @@ namespace Carbon::Check {
 //
 // If merging is successful, updates the FunctionId on new_function and returns
 // true. Otherwise, returns false. Prints a diagnostic when appropriate.
-auto MergeFunctionDecl(Context& context, Parse::NodeId parse_node,
-                       SemIR::Function& new_function,
-                       SemIR::FunctionId prev_function_id, bool is_definition)
+auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
+                         SemIR::Function& new_function,
+                         SemIR::FunctionId prev_function_id, bool is_definition)
     -> bool;
 
 }  // namespace Carbon::Check

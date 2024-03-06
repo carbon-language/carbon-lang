@@ -5,37 +5,37 @@
 // AUTOUPDATE
 
 fn A();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of function A.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redundant redeclaration of function A.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched declaration here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 fn A();
 
 fn B(x: i32);
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of function B.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redundant redeclaration of function B.
 // CHECK:STDERR: fn B(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched declaration here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: fn B(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
 fn B(x: i32);
 
 fn C();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Function declaration with 1 parameter(s) disagrees.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Function redeclaration differs because of parameter count of 1.
 // CHECK:STDERR: fn C(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched function declaration with 0 parameter(s).
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 0.
 // CHECK:STDERR: fn C();
 // CHECK:STDERR: ^~~~~~~
 fn C(x: i32);
 
 fn D() {}
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of function D.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redundant redeclaration of function D.
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched declaration here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
 fn D();
@@ -44,7 +44,7 @@ fn E() {}
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function E.
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Matched definition here.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously defined here.
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
 fn E() {}

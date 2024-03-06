@@ -153,9 +153,9 @@ static auto BuildFunctionDecl(Context& context,
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
-      if (MergeFunctionDecl(context, parse_node, function_info,
-                            existing_function_decl->function_id,
-                            is_definition)) {
+      if (MergeFunctionRedecl(context, parse_node, function_info,
+                              existing_function_decl->function_id,
+                              is_definition)) {
         // When merging, use the existing function rather than adding a new one.
         function_decl.function_id = existing_function_decl->function_id;
       }

@@ -8,7 +8,7 @@ fn F() {}
 // CHECK:STDERR: fail_redef.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function F.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: Matched definition here.
+// CHECK:STDERR: fail_redef.carbon:[[@LINE-4]]:1: Previously defined here.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 fn F() {}
