@@ -46,6 +46,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected instref inst+5>
+// CHECK:STDOUT:   witness = <unexpected instref inst+6>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
