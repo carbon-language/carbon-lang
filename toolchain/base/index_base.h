@@ -26,12 +26,7 @@ class DataIterator;
 // reference or pointer. They are also designed to be small and efficient to
 // store in data structures.
 struct IdBase : public Printable<IdBase> {
-  static constexpr int32_t InvalidIndex = -1;
-
-  IdBase() = delete;
-  constexpr explicit IdBase(int index) : index(index) {}
-
-  auto Print(llvm::raw_ostream& output) const -> void {
+  static constexpr int32_t InvalidIndex = -1; IdBase() = delete; constexpr explicit IdBase(int index) : index(index) {} auto Print(llvm::raw_ostream& output) const -> void {
     if (is_valid()) {
       output << index;
     } else {
