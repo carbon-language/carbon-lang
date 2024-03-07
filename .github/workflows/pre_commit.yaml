@@ -6,9 +6,6 @@ name: pre-commit
 
 on:
   pull_request:
-  merge_group:
-  push:
-    branches: [trunk]
 
 jobs:
   pre-commit:
@@ -17,3 +14,14 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
       - uses: pre-commit/action@v3.0.0
+      - name: Collect pre-commit output
+        if: ${{ failure() }}
+        run: |
+          mkdir -p pre-commit-output
+          git diff > pre-commit-output/diff
+          cp $GITHUB_EVENT_PATH pre-commit-output/event
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: pre-commit output
+          path: pre-commit-output/*
