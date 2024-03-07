@@ -152,6 +152,7 @@ cc_library(
     hdrs = ["impl.h"],
     deps = [
         ":context",
+        ":function",
         "//common:check",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",

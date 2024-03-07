@@ -173,6 +173,12 @@ static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
   return true;
 }
 
+auto CheckFunctionRedecl(Context& context, SemIR::FunctionId new_function_id,
+                         SemIR::FunctionId prev_function_id) -> bool {
+  return CheckRedecl(context, context.functions().Get(new_function_id),
+                     context.functions().Get(prev_function_id));
+}
+
 auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
                          SemIR::Function& new_function,
                          SemIR::FunctionId prev_function_id, bool is_definition)
