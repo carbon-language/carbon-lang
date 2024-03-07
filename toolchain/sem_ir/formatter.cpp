@@ -748,8 +748,8 @@ class Formatter {
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
 
-      // Print the !members label even if the name scope is empty because we always list the witness in
-      // this section.
+      // Print the !members label even if the name scope is empty because we
+      // always list the witness in this section.
       IndentLabel();
       out_ << "!members:\n";
       FormatNameScope(impl_info.scope_id);
