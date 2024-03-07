@@ -30,6 +30,10 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
       - name: Download pre-commit output
         uses: actions/download-artifact@v4
         with:
@@ -37,11 +41,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      # Use https://github.com/tido64/suggestion-bot to create PR suggestions
+      # Use https://github.com/reviewdog/reviewdog to create PR suggestions
       # matching the diff that pre-commit created.
       - name: Create suggestions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           GITHUB_EVENT_PATH=./event cat ./diff | \
-          npx suggestion-bot -f -m "pre-commit checks made changes to the following files:"
+          reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review
