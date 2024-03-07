@@ -30,7 +30,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc11_6.1: Class = param c

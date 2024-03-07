@@ -42,7 +42,7 @@ fn Initializing() {
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .Initializing = %Initializing
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value [template] {
 // CHECK:STDOUT:     %X.ref.loc13: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     %n.loc13_10.1: X = param n

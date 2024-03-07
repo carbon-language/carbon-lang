@@ -41,8 +41,8 @@ fn Class.H() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc18: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}

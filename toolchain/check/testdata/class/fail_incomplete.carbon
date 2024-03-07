@@ -138,7 +138,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     .CallTakeIncomplete = %CallTakeIncomplete
 // CHECK:STDOUT:     .CallReturnIncomplete = %CallReturnIncomplete
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction [template] {}
 // CHECK:STDOUT:   %Class.ref.loc33: type = name_ref Class, %Class.decl [template = constants.%Class]

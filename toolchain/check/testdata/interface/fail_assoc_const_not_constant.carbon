@@ -29,7 +29,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:     .UseA = %UseA
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
@@ -39,7 +39,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

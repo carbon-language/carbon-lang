@@ -27,21 +27,26 @@ interface ForwardDeclared {
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Empty.decl = interface_decl @Empty [template = constants.%.1] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc10 = interface_decl @ForwardDeclared [template = constants.%.2] {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc12 = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc10: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc12: type = interface_decl @ForwardDeclared [template = constants.%.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
+// CHECK:STDOUT:   %Self: ForwardDeclared = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc13: <associated <function> in ForwardDeclared> = assoc_entity element0, %F [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc13
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

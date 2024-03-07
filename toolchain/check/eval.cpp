@@ -459,6 +459,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ValueOfInitializer::Kind:
       return context.constant_values().Get(
           inst.As<SemIR::ValueOfInitializer>().init_id);
+    case SemIR::FacetTypeAccess::Kind:
+      // TODO: Once we start tracking the witness in the facet value, remove it
+      // here. For now, we model a facet value as just a type.
+      return context.constant_values().Get(
+          inst.As<SemIR::FacetTypeAccess>().facet_id);
 
     // `not true` -> `false`, `not false` -> `true`.
     // All other uses of unary `not` are non-constant.

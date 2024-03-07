@@ -32,10 +32,11 @@ interface I {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.loc11_35.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc11_35.2: type = converted %.loc11_35.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
@@ -45,6 +46,7 @@ interface I {
 // CHECK:STDOUT:   %.loc15_27: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = %.loc11_36
 // CHECK:STDOUT:   .N = %.loc15_27
 // CHECK:STDOUT:   witness = (%T, %N)

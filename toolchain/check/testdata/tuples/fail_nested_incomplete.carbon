@@ -32,7 +32,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:     .t = %t
 // CHECK:STDOUT:     .p = %p
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Incomplete.decl = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %Incomplete.ref.loc15: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %.loc15_24.1: (type, type) = tuple_literal (i32, %Incomplete.ref.loc15)
 // CHECK:STDOUT:   %.loc15_24.2: type = converted %.loc15_24.1, constants.%.2 [template = constants.%.2]

@@ -838,6 +838,7 @@ class TypeCompleter {
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
+      case SemIR::FacetTypeAccess::Kind:
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
@@ -990,8 +991,7 @@ auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
 
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id = GetTypeIdForTypeConstant(
-      constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
+  auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";

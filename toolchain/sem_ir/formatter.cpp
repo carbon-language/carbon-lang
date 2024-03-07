@@ -991,19 +991,6 @@ class Formatter {
     }
   }
 
-  // Print ClassDecl with type-like semantics even though it lacks a type_id.
-  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
-  // Print InterfaceDecl with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstructionLHS(InstId inst_id, InterfaceDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
   // Print ImportRefUnused with type-like semantics even though it lacks a
   // type_id.
   auto FormatInstructionLHS(InstId inst_id, ImportRefUnused /*inst*/) -> void {
@@ -1021,6 +1008,16 @@ class Formatter {
       FormatArgs(Info::template Get<0>(inst));
     } else {
       FormatArgs();
+    }
+  }
+
+  auto FormatInstructionRHS(BindSymbolicName inst) -> void {
+    // A BindSymbolicName with no value is a purely symbolic binding, such as
+    // the `Self` in an interface. Don't print out `invalid` for the value.
+    if (inst.value_id.is_valid()) {
+      FormatArgs(inst.bind_name_id, inst.value_id);
+    } else {
+      FormatArgs(inst.bind_name_id);
     }
   }
 

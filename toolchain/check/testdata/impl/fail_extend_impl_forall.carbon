@@ -41,14 +41,15 @@ class C {
 // CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GenericInterface.decl = interface_decl @GenericInterface [template = constants.%.1] {
+// CHECK:STDOUT:   %GenericInterface.decl: type = interface_decl @GenericInterface [template = constants.%.1] {
 // CHECK:STDOUT:     %T.loc10_28.1: type = param T
 // CHECK:STDOUT:     %T.loc10_28.2: type = bind_symbolic_name T, %T.loc10_28.1 [symbolic]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @GenericInterface {
+// CHECK:STDOUT:   %Self: GenericInterface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc10_28.2 [symbolic = file.%T.loc10_28.2]
 // CHECK:STDOUT:     %x.loc11_8.1: T = param x
@@ -57,6 +58,7 @@ class C {
 // CHECK:STDOUT:   %.loc11: <associated <function> in GenericInterface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc11
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

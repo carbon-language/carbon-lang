@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -126,13 +128,33 @@ auto HandleInterfaceDefinitionStart(
   // Enter the interface scope.
   context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
 
-  // TODO: Introduce `Self`.
-
   context.inst_block_stack().Push();
   context.node_stack().Push(parse_node, interface_id);
 
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
+
+  // Declare and introduce `Self`.
+  if (!interface_info.is_defined()) {
+    // TODO: Once we support parameterized interfaces, this won't be the right
+    // type. For `interface X(T:! type)`, the type of `Self` is `X(T)`, whereas
+    // this will be simply `X`.
+    auto self_type_id = context.GetTypeIdForTypeInst(interface_decl_id);
+
+    // We model `Self` as a symbolic binding whose type is the interface.
+    // Because there is no equivalent non-symbolic value, we use `Invalid` as
+    // the `value_id` on the `BindSymbolicName`.
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = SemIR::NameId::SelfType,
+         .enclosing_scope_id = interface_info.scope_id});
+    interface_info.self_param_id =
+        context.AddInst({Parse::NodeId::Invalid,
+                         SemIR::BindSymbolicName{self_type_id, bind_name_id,
+                                                 SemIR::InstId::Invalid}});
+    context.name_scopes()
+        .Get(interface_info.scope_id)
+        .names.insert({SemIR::NameId::SelfType, interface_info.self_param_id});
+  }
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:

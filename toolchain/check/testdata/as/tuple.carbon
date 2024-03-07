@@ -40,7 +40,7 @@ fn Var() {
 // CHECK:STDOUT:     .Let = %Let
 // CHECK:STDOUT:     .Var = %Var
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.decl = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, %X.decl [template = constants.%X]
 // CHECK:STDOUT:     @Make.%return: ref X = var <return slot>

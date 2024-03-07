@@ -42,21 +42,27 @@ protected interface Protected;
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Abstract.decl = interface_decl @Abstract [template = constants.%.1] {}
-// CHECK:STDOUT:   %Default.decl = interface_decl @Default [template = constants.%.2] {}
-// CHECK:STDOUT:   %Virtual.decl = interface_decl @Virtual [template = constants.%.3] {}
-// CHECK:STDOUT:   %Protected.decl = interface_decl @Protected [template = constants.%.4] {}
+// CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%.1] {}
+// CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%.2] {}
+// CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%.3] {}
+// CHECK:STDOUT:   %Protected.decl: type = interface_decl @Protected [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {
+// CHECK:STDOUT:   %Self: Abstract = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Virtual {
+// CHECK:STDOUT:   %Self: Virtual = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -46,8 +46,8 @@ fn G(c: C) {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.decl = interface_decl @HasF [template = constants.%.1] {}
-// CHECK:STDOUT:   %C.decl = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.loc17_6.1: C = param c
@@ -56,10 +56,12 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
+// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in HasF> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc8
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }

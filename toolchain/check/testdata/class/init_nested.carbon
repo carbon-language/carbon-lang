@@ -42,12 +42,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:     .MakeOuter = %MakeOuter
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Inner.decl = class_decl @Inner [template = constants.%Inner] {}
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
 // CHECK:STDOUT:   %MakeInner: <function> = fn_decl @MakeInner [template] {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:     @MakeInner.%return: ref Inner = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Outer.decl = class_decl @Outer [template = constants.%Outer] {}
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
 // CHECK:STDOUT:   %MakeOuter: <function> = fn_decl @MakeOuter [template] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:     @MakeOuter.%return: ref Outer = var <return slot>

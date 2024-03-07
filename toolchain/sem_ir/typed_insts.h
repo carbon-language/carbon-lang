@@ -414,6 +414,16 @@ struct Deref {
   InstId pointer_id;
 };
 
+// Represents accessing the `type` field in a facet value, which is notionally a
+// pair of a type and a witness.
+struct FacetTypeAccess {
+  static constexpr auto Kind =
+      InstKind::FacetTypeAccess.Define<Parse::NodeId>("facet_type_access");
+
+  TypeId type_id;
+  InstId facet_id;
+};
+
 // A field in a class, of the form `var field: field_type;`. The type of the
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
