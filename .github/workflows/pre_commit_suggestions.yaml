@@ -5,6 +5,14 @@
 # Create PR suggestions based on problems found by pre-commit action.
 name: pre-commit-suggestions
 
+# This action is run whenever the `pre-commit` action finishes. Because the
+# `pre-commit` action is an unprivileged action running on (for example) the
+# `pull_request` event, it's run without write permissions to the repository, so
+# we use a separate privileged `workflow_run` action here to pick up its results
+# and convert them into suggestion comments.
+#
+# This action is only run from the workflow file on the trunk branch. Changes to
+# this file will not take effect until they are merged to trunk.
 on:
   workflow_run:
     workflows: [pre-commit]
@@ -16,42 +24,21 @@ permissions:
 
 jobs:
   pull-request-suggestions:
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    # Only generate suggestions if pre-commit for a PR failed.
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'failure' }} &&
+      ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Print event
-        run: cat $GITHUB_EVENT_PATH
-
       - name: Download pre-commit output
-        uses: actions/github-script@v6
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
+          name: pre-commit output
+          run-id: ${{ github.event.workflow_run.id }}
 
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "pre-commit output"
-            })[0];
-
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
-
-            let fs = require('fs');
-            fs.writeFileSync(`${process.env.HOME}/output.zip`, Buffer.from(download.data));
-
-      - name: Unzip output
-        run: |
-          mkdir -p ~/output
-          unzip -d ~/output ~/output.zip diff event
-
+      # Use https://github.com/tido64/suggestion-bot to create PR suggestions
+      # matching the diff that pre-commit created.
       - name: Create suggestions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: GITHUB_EVENT_PATH=~/output/event npx suggestion-bot ~/output/diff
+        run: GITHUB_EVENT_PATH=./event npx suggestion-bot ./diff
