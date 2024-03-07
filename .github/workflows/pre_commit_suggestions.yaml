@@ -25,6 +25,7 @@ permissions:
 jobs:
   pull-request-suggestions:
     # Only generate suggestions if pre-commit for a PR failed.
+    # prettier-ignore
     if: >
       ${{ github.event.workflow_run.conclusion == 'failure' }} &&
       ${{ github.event.workflow_run.event == 'pull_request' }}
