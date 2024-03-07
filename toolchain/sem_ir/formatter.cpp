@@ -747,7 +747,18 @@ class Formatter {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
-      FormatNameScope(impl_info.scope_id, "!members:\n");
+
+      // Print the !members label even if the name scope is empty because we
+      // always list the witness in this section.
+      IndentLabel();
+      out_ << "!members:\n";
+      FormatNameScope(impl_info.scope_id);
+
+      Indent();
+      out_ << "witness = ";
+      FormatArg(impl_info.witness_id);
+      out_ << "\n";
+
       CloseBrace();
       out_ << '\n';
     } else {

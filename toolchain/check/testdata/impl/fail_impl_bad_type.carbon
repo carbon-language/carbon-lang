@@ -16,6 +16,7 @@ impl true as I {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness @I, () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,5 +38,10 @@ impl true as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: <error> as I {}
+// CHECK:STDOUT: impl @impl: <error> as I {
+// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, () [template = constants.%.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,6 +15,7 @@ extend impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness @I, () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,5 +36,10 @@ extend impl i32 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as I {}
+// CHECK:STDOUT: impl @impl: i32 as I {
+// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, () [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

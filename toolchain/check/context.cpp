@@ -699,6 +699,7 @@ class TypeCompleter {
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
       case SemIR::BuiltinKind::BoundMethodType:
+      case SemIR::BuiltinKind::WitnessType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinKind::StringType:
@@ -842,10 +843,11 @@ class TypeCompleter {
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
       case SemIR::Import::Kind:
+      case SemIR::ImportRefUnused::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
+      case SemIR::InterfaceWitness::Kind:
       case SemIR::IntLiteral::Kind:
-      case SemIR::ImportRefUnused::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:

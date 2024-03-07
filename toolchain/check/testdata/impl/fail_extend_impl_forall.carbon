@@ -12,9 +12,12 @@ interface GenericInterface(T:! type) {
 }
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` a parameterized `impl`.
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+9]]:3: ERROR: Cannot `extend` a parameterized `impl`.
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `impl as non-interface`.
+  // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:36: ERROR: Value of type `type` is not callable.
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~
@@ -62,21 +65,22 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as <error> {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc21_23.2 [symbolic = @C.%T.loc21_23.2]
-// CHECK:STDOUT:     %x.loc22_10.1: T = param x
-// CHECK:STDOUT:     %x.loc22_10.2: T = bind_name x, %x.loc22_10.1
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc24_23.2 [symbolic = @C.%T.loc24_23.2]
+// CHECK:STDOUT:     %x.loc25_10.1: T = param x
+// CHECK:STDOUT:     %x.loc25_10.2: T = bind_name x, %x.loc25_10.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl {
-// CHECK:STDOUT:     %T.loc21_23.1: type = param T
-// CHECK:STDOUT:     %T.loc21_23.2: type = bind_symbolic_name T, %T.loc21_23.1 [symbolic]
+// CHECK:STDOUT:     %T.loc24_23.1: type = param T
+// CHECK:STDOUT:     %T.loc24_23.2: type = bind_symbolic_name T, %T.loc24_23.1 [symbolic]
 // CHECK:STDOUT:     %GenericInterface.ref: type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc21_23.2 [symbolic = %T.loc21_23.2]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc24_23.2 [symbolic = %T.loc24_23.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -86,7 +90,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc11_8.2: T);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(@impl.%x.loc22_10.2: T) {
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc25_10.2: T) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

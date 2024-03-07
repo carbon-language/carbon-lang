@@ -246,6 +246,12 @@ auto HandleInterfaceDecl(FunctionContext& /*context*/,
   FatalErrorIfEncountered(inst);
 }
 
+auto HandleInterfaceWitness(FunctionContext& /*context*/,
+                            SemIR::InstId /*inst_id*/,
+                            SemIR::InterfaceWitness inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::IntLiteral inst) -> void {
   const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);

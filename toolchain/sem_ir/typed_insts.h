@@ -540,6 +540,17 @@ struct InterfaceType {
   // here.
 };
 
+// A witness that a type implements an interface.
+struct InterfaceWitness {
+  static constexpr auto Kind =
+      InstKind::InterfaceWitness.Define<Parse::InvalidNodeId>(
+          "interface_witness");
+
+  TypeId type_id;
+  InterfaceId interface_id;
+  InstBlockId table_id;
+};
+
 struct IntLiteral {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =

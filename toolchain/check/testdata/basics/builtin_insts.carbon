@@ -28,6 +28,7 @@
 // CHECK:STDOUT:     instFunctionType: {kind: ImportRefUsed, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: ImportRefUsed, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: ImportRefUsed, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: ImportRefUsed, arg0: ir0, arg1: instWitnessType, type: typeTypeType}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
@@ -39,6 +40,7 @@
 // CHECK:STDOUT:     instFunctionType: template instFunctionType
 // CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
 // CHECK:STDOUT:     instNamespaceType: template instNamespaceType
+// CHECK:STDOUT:     instWitnessType: template instWitnessType
 // CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}

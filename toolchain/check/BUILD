@@ -102,6 +102,7 @@ cc_library(
     deps = [
         ":context",
         ":function",
+        ":impl",
         ":import",
         ":interface",
         "//common:check",
@@ -142,6 +143,20 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/sem_ir:file",
+    ],
+)
+
+cc_library(
+    name = "impl",
+    srcs = ["impl.cpp"],
+    hdrs = ["impl.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
     ],
 )
 

@@ -329,6 +329,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::InterfaceWitness::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::InterfaceWitness::table_id);
     case SemIR::PointerType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::PointerType::pointee_id);
