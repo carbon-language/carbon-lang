@@ -1,0 +1,57 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Create PR suggestions based on problems found by pre-commit action.
+name: pre-commit-suggestions
+
+on:
+  workflow_run:
+    workflows: [pre-commit]
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+
+jobs:
+  pull-request-suggestions:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print event
+        run: cat $GITHUB_EVENT_PATH
+
+      - name: Download pre-commit output
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pre-commit output"
+            })[0];
+
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.HOME}/output.zip`, Buffer.from(download.data));
+
+      - name: Unzip output
+        run: |
+          mkdir -p ~/output
+          unzip -d ~/output ~/output.zip diff event
+
+      - name: Create suggestions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: GITHUB_EVENT_PATH=~/output/event npx suggestion-bot ~/output/diff
