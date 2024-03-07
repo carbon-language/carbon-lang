@@ -45,7 +45,7 @@ jobs:
       # matching the diff that pre-commit created.
       - name: Create suggestions
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           GITHUB_EVENT_PATH=./event cat ./diff | \
           reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review
