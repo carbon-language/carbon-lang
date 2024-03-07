@@ -25,13 +25,13 @@ jobs:
       # we upload the diffs and event configuration to an artifact for use by
       # that action.
       - name: Collect pre-commit output
-        if: ${{ failure() }}
+        if: failure()
         run: |
           mkdir -p pre-commit-output
           git diff > pre-commit-output/diff
           cp $GITHUB_EVENT_PATH pre-commit-output/event
       - uses: actions/upload-artifact@v4
-        if: ${{ failure() }}
+        if: failure()
         with:
           name: pre-commit output
           path: pre-commit-output/*
