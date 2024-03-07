@@ -42,4 +42,4 @@ jobs:
       - name: Create suggestions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: GITHUB_EVENT_PATH=./event npx suggestion-bot ./diff
+        run: GITHUB_EVENT_PATH=./event cat ./diff | npx suggestion-bot -f -m "pre-commit checks made changes to the following files:"
