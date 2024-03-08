@@ -198,6 +198,9 @@ CARBON_DIAGNOSTIC_KIND(ExtendUndefinedInterface)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
+CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
+CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
+CARBON_DIAGNOSTIC_KIND(ImplAssociatedFunctionHere)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)

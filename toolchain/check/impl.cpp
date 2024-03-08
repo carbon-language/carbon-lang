@@ -6,11 +6,22 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/function.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+static auto NoteAssociatedFunction(Context& context,
+                                   Context::DiagnosticBuilder& builder,
+                                   SemIR::FunctionId function_id) -> void {
+  CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
+                    "Associated function {0} declared here.", SemIR::NameId);
+  const auto& function = context.functions().Get(function_id);
+  builder.Note(context.insts().GetParseNode(function.decl_id),
+               ImplAssociatedFunctionHere, function.name_id);
+}
 
 // Checks that `impl_function_id` is a valid implementation of the function
 // described in the interface as `interface_function_id`. Returns the value to
@@ -19,11 +30,18 @@ namespace Carbon::Check {
 static auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionId interface_function_id,
     SemIR::InstId impl_decl_id) -> SemIR::InstId {
-  auto decl_node = context.insts().GetParseNode(impl_decl_id);
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
-    context.TODO(decl_node, "diagnose non-function implementing function");
+    CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
+                      "Associated function {0} implemented by non-function.",
+                      SemIR::NameId);
+    auto builder = context.emitter().Build(
+        context.insts().GetParseNode(impl_decl_id), ImplFunctionWithNonFunction,
+        context.functions().Get(interface_function_id).name_id);
+    NoteAssociatedFunction(context, builder, interface_function_id);
+    builder.Emit();
+
     return SemIR::InstId::BuiltinError;
   }
 
@@ -65,8 +83,16 @@ static auto BuildInterfaceWitness(
         table.push_back(CheckAssociatedFunctionImplementation(
             context, fn_decl->function_id, impl_decl_id));
       } else {
-        context.TODO(context.insts().GetParseNode(impl.definition_id),
-                     "diagnose missing decl in impl");
+        CARBON_DIAGNOSTIC(
+            ImplMissingFunction, Error,
+            "Missing implementation of {0} in impl of interface {1}.",
+            SemIR::NameId, SemIR::NameId);
+        auto builder = context.emitter().Build(
+            context.insts().GetParseNode(impl.definition_id),
+            ImplMissingFunction, fn.name_id, interface.name_id);
+        NoteAssociatedFunction(context, builder, fn_decl->function_id);
+        builder.Emit();
+
         table.push_back(SemIR::InstId::BuiltinError);
       }
     } else if (auto const_decl = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
