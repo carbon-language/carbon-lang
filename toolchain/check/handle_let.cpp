@@ -87,11 +87,13 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Access),
                  "access modifier");
   }
   if (!!(modifiers & KeywordModifierSet::Interface)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Decl),
                  "interface modifier");
   }
   context.decl_state_stack().Pop(DeclState::Let);

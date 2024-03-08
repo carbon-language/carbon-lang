@@ -101,17 +101,25 @@ static auto BuildFunctionDecl(Context& context,
   // Process modifiers.
   auto modifiers = DiagnoseModifiers(context, name_context.target_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Access),
                  "access modifier");
   }
+  if (!!(modifiers & KeywordModifierSet::Extern)) {
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Extern),
+                 "extern modifier");
+  }
   if (!!(modifiers & KeywordModifierSet::Method)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Decl),
                  "method modifier");
   }
   if (!!(modifiers & KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Decl),
                  "interface modifier");
   }
   context.decl_state_stack().Pop(DeclState::Fn);

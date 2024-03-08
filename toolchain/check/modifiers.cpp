@@ -4,6 +4,8 @@
 
 #include "toolchain/check/modifiers.h"
 
+#include "toolchain/check/decl_state.h"
+
 namespace Carbon::Check {
 
 static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
@@ -24,22 +26,16 @@ static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
   diag.Emit();
 }
 
-auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
-                          Lex::TokenKind decl_kind) -> void {
-  auto& s = context.decl_state_stack().innermost();
-  auto not_allowed = s.modifier_set & ~allowed;
-  if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, "",
-                     Parse::NodeId::Invalid);
-    not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::NodeId::Invalid;
+// Returns the KeywordModifierSet corresponding to the ModifierOrder entry.
+static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
+  switch (order) {
+    case ModifierOrder::Access:
+      return KeywordModifierSet::Access;
+    case ModifierOrder::Extern:
+      return KeywordModifierSet::Extern;
+    case ModifierOrder::Decl:
+      return KeywordModifierSet::Decl;
   }
-  if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, "",
-                     Parse::NodeId::Invalid);
-    s.saw_decl_modifier = Parse::NodeId::Invalid;
-  }
-  s.modifier_set &= allowed;
 }
 
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
@@ -48,23 +44,26 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Parse::NodeId context_node) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
-  if (!!(not_allowed & KeywordModifierSet::Access)) {
-    ReportNotAllowed(context, s.saw_access_modifier, decl_kind, context_string,
-                     context_node);
-    not_allowed = not_allowed & ~KeywordModifierSet::Access;
-    s.saw_access_modifier = Parse::NodeId::Invalid;
+  if (!not_allowed) {
+    return;
   }
-  if (!!not_allowed) {
-    ReportNotAllowed(context, s.saw_decl_modifier, decl_kind, context_string,
-                     context_node);
-    s.saw_decl_modifier = Parse::NodeId::Invalid;
+
+  for (auto order_index = 0;
+       order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
+    auto order = static_cast<ModifierOrder>(order_index);
+    if (!!(not_allowed & ModifierOrderAsSet(order))) {
+      ReportNotAllowed(context, s.modifier_node_id(order), decl_kind,
+                       context_string, context_node);
+      s.set_modifier_node_id(order, Parse::NodeId::Invalid);
+    }
   }
-  s.modifier_set = s.modifier_set & ~forbidden;
+
+  s.modifier_set &= ~forbidden;
 }
 
 // Returns the instruction that owns the given scope, or Invalid if the scope is
 // not associated with an instruction.
-auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
+static auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
     -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     return SemIR::InstId::Invalid;
@@ -74,7 +73,7 @@ auto GetScopeInstId(Context& context, SemIR::NameScopeId scope_id)
 
 // Returns the instruction that owns the given scope, or Invalid if the scope is
 // not associated with an instruction.
-auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
+static auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<SemIR::Inst> {
   auto inst_id = GetScopeInstId(context, scope_id);
   if (!inst_id.is_valid()) {
@@ -109,7 +108,6 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
       ", `private` is only allowed on class members and at file scope");
 }
 
-// Rules for abstract, virtual, and impl, which are only allowed in classes.
 auto CheckMethodModifiersOnFunction(Context& context,
                                     SemIR::NameScopeId target_scope_id)
     -> void {
