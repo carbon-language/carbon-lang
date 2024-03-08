@@ -342,7 +342,7 @@ class NodeStack {
     Entry back = stack_.back();
     RequireParseCategory<RequiredParseCategory>(back.node_id);
     constexpr std::optional<Id::Kind> RequiredIdKind =
-        NodeIdCategoryToIdKind(RequiredParseCategory, false);
+        NodeCategoryToIdKind(RequiredParseCategory, false);
     static_assert(RequiredIdKind.has_value());
     return Peek<*RequiredIdKind>();
   }
@@ -378,8 +378,8 @@ class NodeStack {
 
   // Translate a parse node category to the enum ID kind it should always
   // provide, if it is consistent.
-  static constexpr auto NodeIdCategoryToIdKind(Parse::NodeCategory category,
-                                               bool for_node_kind)
+  static constexpr auto NodeCategoryToIdKind(Parse::NodeCategory category,
+                                             bool for_node_kind)
       -> std::optional<Id::Kind> {
     std::optional<Id::Kind> result;
     auto set_id_if_category_is = [&](Parse::NodeCategory cat, Id::Kind kind) {
@@ -425,7 +425,7 @@ class NodeStack {
     auto to_id_kind =
         [](const Parse::NodeKind::Definition& node_kind) -> Id::Kind {
       if (auto from_category =
-              NodeIdCategoryToIdKind(node_kind.category(), true)) {
+              NodeCategoryToIdKind(node_kind.category(), true)) {
         return *from_category;
       }
       switch (node_kind) {
