@@ -208,7 +208,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId parse_node)
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (!!(context.decl_state_stack().innermost().modifier_set &
          KeywordModifierSet::Extend)) {
-    auto extend_node = context.decl_state_stack().innermost().saw_decl_modifier;
+    auto extend_node = context.decl_state_stack().innermost().modifier_node_id(
+        ModifierOrder::Decl);
     ExtendImpl(context, extend_node, parse_node, self_type_node, self_type_id,
                params_node, constraint_type_id);
   }

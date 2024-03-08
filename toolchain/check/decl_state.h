@@ -22,15 +22,18 @@ enum class KeywordModifierSet : uint32_t {
   Private = 1 << 0,
   Protected = 1 << 1,
 
+  // Extern is standalone.
+  Extern = 1 << 2,
+
   // At most one of these declaration modifiers allowed for a given
   // declaration:
-  Abstract = 1 << 2,
-  Base = 1 << 3,
-  Default = 1 << 4,
-  Extend = 1 << 5,
-  Final = 1 << 6,
-  Impl = 1 << 7,
-  Virtual = 1 << 8,
+  Abstract = 1 << 3,
+  Base = 1 << 4,
+  Default = 1 << 5,
+  Extend = 1 << 6,
+  Final = 1 << 7,
+  Impl = 1 << 8,
+  Virtual = 1 << 9,
 
   // Sets of modifiers:
   Access = Private | Protected,
@@ -38,14 +41,24 @@ enum class KeywordModifierSet : uint32_t {
   Method = Abstract | Impl | Virtual,
   ImplDecl = Extend | Final,
   Interface = Default | Final,
+  Decl = Class | Method | ImplDecl | Interface,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Virtual)
 };
 
-inline auto operator!(KeywordModifierSet k) -> bool {
+inline constexpr auto operator!(KeywordModifierSet k) -> bool {
   return !static_cast<uint32_t>(k);
 }
+
+// The order of modifiers. Each of these corresponds to a group on
+// KeywordModifierSet, and can be used as an array index.
+enum class ModifierOrder : int8_t { Access, Extern, Decl, Last = Decl };
+
+static_assert(!(KeywordModifierSet::Access & KeywordModifierSet::Extern) &&
+                  !((KeywordModifierSet::Access | KeywordModifierSet::Extern) &
+                    KeywordModifierSet::Decl),
+              "Order-related sets must not overlap");
 
 // State stored for each declaration we are currently in: the kind of
 // declaration and the keyword modifiers that apply to that declaration.
@@ -67,15 +80,24 @@ struct DeclState {
 
   explicit DeclState(DeclKind decl_kind) : kind(decl_kind) {}
 
+  auto modifier_node_id(ModifierOrder order) -> Parse::NodeId {
+    return ordered_modifier_node_ids[static_cast<int8_t>(order)];
+  }
+  auto set_modifier_node_id(ModifierOrder order, Parse::NodeId node_id)
+      -> void {
+    ordered_modifier_node_ids[static_cast<int8_t>(order)] = node_id;
+  }
+
   DeclKind kind;
 
-  // Nodes of modifiers on this declaration. `Invalid` if no modifier of that
-  // kind is present.
-  Parse::NodeId saw_access_modifier = Parse::NodeId::Invalid;
-  Parse::NodeId saw_decl_modifier = Parse::NodeId::Invalid;
+  // Nodes of modifiers on this declaration, in expected order. `Invalid` if no
+  // modifier of that kind is present.
+  Parse::NodeId
+      ordered_modifier_node_ids[static_cast<int8_t>(ModifierOrder::Decl) + 1] =
+          {Parse::NodeId::Invalid, Parse::NodeId::Invalid,
+           Parse::NodeId::Invalid};
 
-  // Invariant: contains just the modifiers represented by `saw_access_modifier`
-  // and `saw_other_modifier`.
+  // Invariant: contains just the modifiers represented by `saw_*_modifier`.
   KeywordModifierSet modifier_set = KeywordModifierSet::None;
 };
 

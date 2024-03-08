@@ -37,35 +37,62 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
 static auto HandleModifier(Context& context, Parse::NodeId parse_node,
                            KeywordModifierSet keyword) -> bool {
   auto& s = context.decl_state_stack().innermost();
-  bool is_access = !!(keyword & KeywordModifierSet::Access);
-  auto& saw_modifier = is_access ? s.saw_access_modifier : s.saw_decl_modifier;
+
+  ModifierOrder order;
+  KeywordModifierSet later_modifiers;
+  if (!!(keyword & KeywordModifierSet::Access)) {
+    order = ModifierOrder::Access;
+    later_modifiers = KeywordModifierSet::Extern | KeywordModifierSet::Decl;
+  } else if (keyword == KeywordModifierSet::Extern) {
+    order = ModifierOrder::Extern;
+    later_modifiers = KeywordModifierSet::Decl;
+  } else {
+    order = ModifierOrder::Decl;
+    later_modifiers = KeywordModifierSet::None;
+  }
+
+  auto current_modifier_node_id = s.modifier_node_id(order);
   if (!!(s.modifier_set & keyword)) {
-    EmitRepeatedDiagnostic(context, saw_modifier, parse_node);
-  } else if (saw_modifier.is_valid()) {
-    EmitNotAllowedWithDiagnostic(context, saw_modifier, parse_node);
-  } else if (is_access && s.saw_decl_modifier.is_valid()) {
+    EmitRepeatedDiagnostic(context, current_modifier_node_id, parse_node);
+  } else if (current_modifier_node_id.is_valid()) {
+    EmitNotAllowedWithDiagnostic(context, current_modifier_node_id, parse_node);
+  } else if (auto later_modifier_set = s.modifier_set & later_modifiers;
+             !!later_modifier_set) {
+    // At least one later modifier is present. Diagnose using the closest.
+    Parse::NodeId closest_later_modifier = Parse::NodeId::Invalid;
+    for (auto later_order = static_cast<int8_t>(order) + 1;
+         later_order <= static_cast<int8_t>(ModifierOrder::Last);
+         ++later_order) {
+      if (s.ordered_modifier_node_ids[later_order] != Parse::NodeId::Invalid) {
+        closest_later_modifier = s.ordered_modifier_node_ids[later_order];
+        break;
+      }
+    }
+    CARBON_CHECK(closest_later_modifier.is_valid());
+
     CARBON_DIAGNOSTIC(ModifierMustAppearBefore, Error,
                       "`{0}` must appear before `{1}`.", Lex::TokenKind,
                       Lex::TokenKind);
     context.emitter()
         .Build(parse_node, ModifierMustAppearBefore,
                context.token_kind(parse_node),
-               context.token_kind(s.saw_decl_modifier))
-        .Note(s.saw_decl_modifier, ModifierPrevious,
-              context.token_kind(s.saw_decl_modifier))
+               context.token_kind(closest_later_modifier))
+        .Note(closest_later_modifier, ModifierPrevious,
+              context.token_kind(closest_later_modifier))
         .Emit();
   } else {
     s.modifier_set |= keyword;
-    saw_modifier = parse_node;
+    s.set_modifier_node_id(order, parse_node);
   }
   return true;
 }
 
 #define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                    \
-  auto Handle##Name##Modifier(Context& context,                             \
-                              Parse::Name##ModifierId parse_node) -> bool { \
-    return HandleModifier(context, parse_node, KeywordModifierSet::Name);   \
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                  \
+  auto Handle##Name##Modifier(Context& context,                           \
+                              Parse::Name##ModifierId parse_node)         \
+      ->bool {                                                            \
+    return HandleModifier(context, parse_node, KeywordModifierSet::Name); \
   }
 #include "toolchain/parse/node_kind.def"
 

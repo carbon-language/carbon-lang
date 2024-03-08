@@ -7,10 +7,12 @@
 class A;
 base class B;
 abstract class C;
+extern class D;
 
 class A {}
 base class B {}
 abstract class C {}
+extern class D {}
 
 // CHECK:STDOUT: - filename: introducer.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -26,6 +28,10 @@ abstract class C {}
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
+// CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'D'},
+// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'A'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
@@ -38,6 +44,11 @@ abstract class C {}
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'AbstractModifier', text: 'abstract'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
+// CHECK:STDOUT:         {kind: 'ExternModifier', text: 'extern'},
+// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'D'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
