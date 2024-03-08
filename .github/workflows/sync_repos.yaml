@@ -22,7 +22,7 @@ jobs:
     steps:
       # Checkout our main repository.
       - name: Checkout the main repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Run the sync script.
       - name: Sync to other repositories

@@ -34,7 +34,7 @@ jobs:
         with:
           reviewdog_version: latest
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download pre-commit output
         uses: actions/download-artifact@v4

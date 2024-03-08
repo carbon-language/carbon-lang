@@ -56,13 +56,13 @@ jobs:
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Tests should only run on applicable paths, but we still need to have an
       # action run for the merge queue. We filter steps based on the paths here,
