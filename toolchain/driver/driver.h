@@ -7,7 +7,6 @@
 
 #include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
@@ -28,7 +27,7 @@ class Driver {
 
     // Per-file success results. May be empty if files aren't individually
     // processed.
-    llvm::StringMap<bool> per_file_success;
+    llvm::SmallVector<std::pair<llvm::StringRef, bool>> per_file_success;
   };
 
   // Constructs a driver with any error or informational output directed to a

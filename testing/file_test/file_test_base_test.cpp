@@ -118,18 +118,18 @@ class FileTestBaseTest : public FileTestBase {
       return {{.success = true}};
     } else if (filename == "fail_multi_success_overall_fail.carbon") {
       RunResult result = {.success = false};
-      result.per_file_success["a.carbon"] = true;
-      result.per_file_success["b.carbon"] = true;
+      result.per_file_success.push_back({"a.carbon", true});
+      result.per_file_success.push_back({"b.carbon", true});
       return result;
     } else if (filename == "multi_success.carbon") {
       RunResult result = {.success = true};
-      result.per_file_success["a.carbon"] = true;
-      result.per_file_success["b.carbon"] = true;
+      result.per_file_success.push_back({"a.carbon", true});
+      result.per_file_success.push_back({"b.carbon", true});
       return result;
     } else if (filename == "multi_success_and_fail.carbon") {
       RunResult result = {.success = false};
-      result.per_file_success["a.carbon"] = true;
-      result.per_file_success["fail_b.carbon"] = false;
+      result.per_file_success.push_back({"a.carbon", true});
+      result.per_file_success.push_back({"fail_b.carbon", false});
       return result;
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;

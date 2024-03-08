@@ -14,7 +14,6 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/autoupdate.h"
@@ -48,11 +47,11 @@ class FileTestBase : public testing::Test {
   // - The prefix of split files is unused.
   //
   // If per_file_success is non-empty:
-  // - Each file has a `fail_` prefix if !per_file_success[filename].
+  // - Each file has a `fail_` prefix if !per_file_success[i].second.
   //   - Files may be in per_file_success that aren't part of the main test
   //     file. This allows tracking success in handling files that are
   //     well-known, such as standard libraries. It is still the responsibility
-  //     of callers to use a `fail_` prefix if !per_file_success[filename].
+  //     of callers to use a `fail_` prefix if !per_file_success[i].second.
   // - If any file has a `fail_` prefix, success must be false, and the prefix
   //   of the main file is unused.
   // - If no file has a `fail_` prefix, the main file has a `fail_` prefix if
@@ -60,8 +59,8 @@ class FileTestBase : public testing::Test {
   struct RunResult {
     bool success;
 
-    // Per-file success results. May be empty
-    llvm::StringMap<bool> per_file_success;
+    // Per-file success results. May be empty.
+    llvm::SmallVector<std::pair<llvm::StringRef, bool>> per_file_success;
   };
 
   explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}

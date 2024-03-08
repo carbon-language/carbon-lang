@@ -37,7 +37,7 @@ class ToolchainFileTest : public FileTestBase {
       return {{.success = driver_result.success}};
     } else {
       return {{.success = driver_result.success,
-               .per_file_success = driver_result.per_file_success}};
+               .per_file_success = std::move(driver_result.per_file_success)}};
     }
   }
 
