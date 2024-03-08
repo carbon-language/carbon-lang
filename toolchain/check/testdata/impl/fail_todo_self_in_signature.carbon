@@ -12,16 +12,16 @@ class C {}
 
 impl C as UseSelf {
   // TODO: Use `Self` below once it's supported.
-  // CHECK:STDERR: self_in_signature.carbon:[[@LINE+6]]:8: ERROR: Function redeclaration differs at implicit parameter 1.
+  // CHECK:STDERR: fail_todo_self_in_signature.carbon:[[@LINE+6]]:8: ERROR: Function redeclaration differs at implicit parameter 1.
   // CHECK:STDERR:   fn F[self: C](x: C) -> C { return {}; }
   // CHECK:STDERR:        ^~~~
-  // CHECK:STDERR: self_in_signature.carbon:[[@LINE-10]]:8: Previous declaration's corresponding implicit parameter here.
+  // CHECK:STDERR: fail_todo_self_in_signature.carbon:[[@LINE-10]]:8: Previous declaration's corresponding implicit parameter here.
   // CHECK:STDERR:   fn F[self: Self](x: Self) -> Self;
   // CHECK:STDERR:        ^~~~
   fn F[self: C](x: C) -> C { return {}; }
 }
 
-// CHECK:STDOUT: --- self_in_signature.carbon
+// CHECK:STDOUT: --- fail_todo_self_in_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @UseSelf [template]
