@@ -152,7 +152,9 @@ cc_library(
     hdrs = ["impl.h"],
     deps = [
         ":context",
+        ":function",
         "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
