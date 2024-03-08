@@ -179,7 +179,7 @@ auto CheckFunctionRedecl(Context& context, SemIR::FunctionId new_function_id,
                      context.functions().Get(prev_function_id));
 }
 
-auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
+auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
                          SemIR::Function& new_function,
                          SemIR::FunctionId prev_function_id, bool is_definition)
     -> bool {
@@ -196,7 +196,7 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
                       SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
     context.emitter()
-        .Build(parse_node, FunctionRedecl, prev_function.name_id)
+        .Build(node_id, FunctionRedecl, prev_function.name_id)
         .Note(prev_function.decl_id, FunctionPreviousDecl)
         .Emit();
     // The diagnostic doesn't prevent a merge.
@@ -207,7 +207,7 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
     CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
                       "Previously defined here.");
     context.emitter()
-        .Build(parse_node, FunctionRedefinition, prev_function.name_id)
+        .Build(node_id, FunctionRedefinition, prev_function.name_id)
         .Note(prev_function.definition_id, FunctionPreviousDefinition)
         .Emit();
     // The second definition will be unused as a consequence of the error.

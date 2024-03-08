@@ -10,14 +10,14 @@
 namespace Carbon::Check {
 
 auto HandleIndexExprStart(Context& /*context*/,
-                          Parse::IndexExprStartId /*parse_node*/) -> bool {
+                          Parse::IndexExprStartId /*node_id*/) -> bool {
   // Leave the expression on the stack for IndexExpr.
   return true;
 }
 
 // Validates that the index (required to be an IntLiteral) is valid within the
 // tuple size. Returns the index on success, or nullptr on failure.
-static auto ValidateTupleIndex(Context& context, Parse::NodeId parse_node,
+static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
                                SemIR::Inst operand_inst,
                                SemIR::IntLiteral index_inst, int size)
     -> const llvm::APInt* {
@@ -27,7 +27,7 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId parse_node,
         TupleIndexOutOfBounds, Error,
         "Tuple element index `{0}` is past the end of type `{1}`.",
         llvm::APSInt, SemIR::TypeId);
-    context.emitter().Emit(parse_node, TupleIndexOutOfBounds,
+    context.emitter().Emit(node_id, TupleIndexOutOfBounds,
                            llvm::APSInt(index_val, /*isUnsigned=*/true),
                            operand_inst.type_id());
     return nullptr;
@@ -35,7 +35,7 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId parse_node,
   return &index_val;
 }
 
-auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
+auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
   auto index_inst_id = context.node_stack().PopExpr();
   auto operand_inst_id = context.node_stack().PopExpr();
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
@@ -46,9 +46,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
   switch (operand_type_inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = operand_type_inst.As<SemIR::ArrayType>();
-      auto index_parse_node = context.insts().GetParseNode(index_inst_id);
+      auto index_node_id = context.insts().GetNodeId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_parse_node, index_inst_id,
+          context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
@@ -56,13 +56,13 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         // If the operand is an array value, convert it to an ephemeral
         // reference to an array so we can perform a primitive indexing into it.
         operand_inst_id = context.AddInst(
-            {parse_node, SemIR::ValueAsRef{operand_type_id, operand_inst_id}});
+            {node_id, SemIR::ValueAsRef{operand_type_id, operand_inst_id}});
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
       auto elem_id = context.AddInst(
-          {parse_node, SemIR::ArrayIndex{array_type.element_type_id,
-                                         operand_inst_id, cast_index_id}});
+          {node_id, SemIR::ArrayIndex{array_type.element_type_id,
+                                      operand_inst_id, cast_index_id}});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.
@@ -70,14 +70,14 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         // and `IndirectIndexWith`.
         elem_id = ConvertToValueExpr(context, elem_id);
       }
-      context.node_stack().Push(parse_node, elem_id);
+      context.node_stack().Push(node_id, elem_id);
       return true;
     }
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      auto index_parse_node = context.insts().GetParseNode(index_inst_id);
+      auto index_node_id = context.insts().GetNodeId(index_inst_id);
       index_inst_id = ConvertToValueOfType(
-          context, index_parse_node, index_inst_id,
+          context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
       auto index_const_id = context.constant_values().Get(index_inst_id);
       if (index_const_id == SemIR::ConstantId::Error) {
@@ -86,7 +86,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         // TODO: Decide what to do if the index is a symbolic constant.
         CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
                           "Tuple index must be a constant.");
-        context.emitter().Emit(parse_node, TupleIndexNotConstant);
+        context.emitter().Emit(node_id, TupleIndexNotConstant);
         index_inst_id = SemIR::InstId::BuiltinError;
       } else {
         auto index_literal =
@@ -94,7 +94,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         auto type_block = context.type_blocks().Get(
             operand_type_inst.As<SemIR::TupleType>().elements_id);
         if (const auto* index_val =
-                ValidateTupleIndex(context, parse_node, operand_inst,
+                ValidateTupleIndex(context, node_id, operand_inst,
                                    index_literal, type_block.size())) {
           element_type_id = type_block[index_val->getZExtValue()];
         } else {
@@ -102,7 +102,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         }
       }
       context.AddInstAndPush(
-          {parse_node,
+          {node_id,
            SemIR::TupleIndex{element_type_id, operand_inst_id, index_inst_id}});
       return true;
     }
@@ -111,9 +111,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId parse_node) -> bool {
         CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
                           "Type `{0}` does not support indexing.",
                           SemIR::TypeId);
-        context.emitter().Emit(parse_node, TypeNotIndexable, operand_type_id);
+        context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
       }
-      context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+      context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
       return true;
     }
   }

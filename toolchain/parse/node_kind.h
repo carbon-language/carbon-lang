@@ -52,7 +52,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/node_kind.def"
 
-  // Validates that a `parse_node_kind` parser node can be generated for a
+  // Validates that a `node_kind` parser node can be generated for a
   // `lex_token_kind` lexer token.
   auto CheckMatchesTokenKind(Lex::TokenKind lex_token_kind, bool has_error)
       -> void;

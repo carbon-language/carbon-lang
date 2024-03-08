@@ -21,13 +21,12 @@ auto NodeStack::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 
   output << "NodeStack:\n";
   for (auto [i, entry] : llvm::enumerate(stack_)) {
-    auto parse_node_kind = parse_tree_->node_kind(entry.parse_node);
-    output << "\t" << i << ".\t" << parse_node_kind;
-    switch (parse_node_kind) {
-#define CARBON_PARSE_NODE_KIND(Kind)                                   \
-  case Parse::NodeKind::Kind:                                          \
-    print_id.operator()<ParseNodeKindToIdKind(Parse::NodeKind::Kind)>( \
-        entry.id);                                                     \
+    auto node_kind = parse_tree_->node_kind(entry.node_id);
+    output << "\t" << i << ".\t" << node_kind;
+    switch (node_kind) {
+#define CARBON_PARSE_NODE_KIND(Kind)                                        \
+  case Parse::NodeKind::Kind:                                               \
+    print_id.operator()<NodeKindToIdKind(Parse::NodeKind::Kind)>(entry.id); \
     break;
 #include "toolchain/parse/node_kind.def"
     }

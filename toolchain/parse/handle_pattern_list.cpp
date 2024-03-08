@@ -53,14 +53,14 @@ auto HandlePatternListElementFinishAsTuple(Context& context) -> void {
 }
 
 // Handles PatternListAs(Implicit|Tuple).
-static auto HandlePatternList(Context& context, NodeKind parse_node_kind,
+static auto HandlePatternList(Context& context, NodeKind node_kind,
                               Lex::TokenKind open_token_kind,
                               Lex::TokenKind close_token_kind,
                               State param_state, State finish_state) -> void {
   context.PopAndDiscardState();
 
   context.PushState(finish_state);
-  context.AddLeafNode(parse_node_kind, context.ConsumeChecked(open_token_kind));
+  context.AddLeafNode(node_kind, context.ConsumeChecked(open_token_kind));
 
   if (!context.PositionIs(close_token_kind)) {
     context.PushState(param_state);
@@ -82,11 +82,11 @@ auto HandlePatternListAsTuple(Context& context) -> void {
 }
 
 // Handles PatternListFinishAs(Implicit|Tuple).
-static auto HandlePatternListFinish(Context& context, NodeKind parse_node_kind,
+static auto HandlePatternListFinish(Context& context, NodeKind node_kind,
                                     Lex::TokenKind token_kind) -> void {
   auto state = context.PopState();
 
-  context.AddNode(parse_node_kind, context.ConsumeChecked(token_kind),
+  context.AddNode(node_kind, context.ConsumeChecked(token_kind),
                   state.subtree_start, state.has_error);
 }
 

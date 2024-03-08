@@ -9,31 +9,31 @@
 
 namespace Carbon::Check {
 
-auto HandleClassIntroducer(Context& context,
-                           Parse::ClassIntroducerId parse_node) -> bool {
+auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
+    -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
   context.decl_state_stack().Push(DeclState::Class);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
+static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    context.TODO(parse_node, "generic class");
+    context.TODO(node_id, "generic class");
   }
   if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
-    context.TODO(parse_node, "generic class");
+    context.TODO(node_id, "generic class");
   }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ClassIntroducer>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
@@ -59,7 +59,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   // Add the class declaration.
   auto class_decl = SemIR::ClassDecl{SemIR::TypeId::TypeType,
                                      SemIR::ClassId::Invalid, decl_block_id};
-  auto class_decl_id = context.AddPlaceholderInst({parse_node, class_decl});
+  auto class_decl_id = context.AddPlaceholderInst({node_id, class_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id =
@@ -79,7 +79,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
         CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
                           "Previously declared here.");
         context.emitter()
-            .Build(parse_node, ClassRedeclarationDifferentIntroducer)
+            .Build(node_id, ClassRedeclarationDifferentIntroducer)
             .Note(existing_id, ClassRedeclarationDifferentIntroducerPrevious)
             .Emit();
       }
@@ -108,7 +108,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   }
 
   // Write the class ID into the ClassDecl.
-  context.ReplaceInstBeforeConstantUse(class_decl_id, {parse_node, class_decl});
+  context.ReplaceInstBeforeConstantUse(class_decl_id, {node_id, class_decl});
 
   if (is_new_class) {
     // Build the `Self` type using the resulting type constant.
@@ -119,16 +119,15 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId parse_node)
   return {class_decl.class_id, class_decl_id};
 }
 
-auto HandleClassDecl(Context& context, Parse::ClassDeclId parse_node) -> bool {
-  BuildClassDecl(context, parse_node);
+auto HandleClassDecl(Context& context, Parse::ClassDeclId node_id) -> bool {
+  BuildClassDecl(context, node_id);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleClassDefinitionStart(Context& context,
-                                Parse::ClassDefinitionStartId parse_node)
-    -> bool {
-  auto [class_id, class_decl_id] = BuildClassDecl(context, parse_node);
+                                Parse::ClassDefinitionStartId node_id) -> bool {
+  auto [class_id, class_decl_id] = BuildClassDecl(context, node_id);
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
@@ -138,7 +137,7 @@ auto HandleClassDefinitionStart(Context& context,
     CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, ClassRedefinition, class_info.name_id)
+        .Build(node_id, ClassRedefinition, class_info.name_id)
         .Note(class_info.definition_id, ClassPreviousDefinition)
         .Emit();
   } else {
@@ -157,7 +156,7 @@ auto HandleClassDefinitionStart(Context& context,
                      context.types().GetInstId(class_info.self_type_id)});
 
   context.inst_block_stack().Push();
-  context.node_stack().Push(parse_node, class_id);
+  context.node_stack().Push(node_id, class_id);
   context.args_type_info_stack().Push();
 
   // TODO: Handle the case where there's control flow in the class body. For
@@ -173,13 +172,13 @@ auto HandleClassDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleBaseIntroducer(Context& context,
-                          Parse::BaseIntroducerId /*parse_node*/) -> bool {
+auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
+    -> bool {
   context.decl_state_stack().Push(DeclState::Base);
   return true;
 }
 
-auto HandleBaseColon(Context& /*context*/, Parse::BaseColonId /*parse_node*/)
+auto HandleBaseColon(Context& /*context*/, Parse::BaseColonId /*node_id*/)
     -> bool {
   return true;
 }
@@ -209,23 +208,23 @@ static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
 }
 
 // Diagnoses an attempt to derive from a final type.
-static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId parse_node,
+static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
                                 SemIR::TypeId base_type_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
                     "Deriving from final type `{0}`. Base type must be an "
                     "`abstract` or `base` class.",
                     SemIR::TypeId);
-  context.emitter().Emit(parse_node, BaseIsFinal, base_type_id);
+  context.emitter().Emit(node_id, BaseIsFinal, base_type_id);
 }
 
 // Checks that the specified base type is valid.
-static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
+static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                           SemIR::InstId base_expr_id) -> BaseInfo {
-  auto base_type_id = ExprAsType(context, parse_node, base_expr_id);
+  auto base_type_id = ExprAsType(context, node_id, base_expr_id);
   base_type_id = context.AsCompleteType(base_type_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
                       "Base `{0}` is an incomplete type.", SemIR::TypeId);
-    return context.emitter().Build(parse_node, IncompleteTypeInBaseDecl,
+    return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
                                    base_type_id);
   });
 
@@ -241,11 +240,11 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
     // classes, produce a better diagnostic for deriving from a non-class type.
-    DiagnoseBaseIsFinal(context, parse_node, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_id);
     return BaseInfo::Error;
   }
   if (base_class_info->inheritance_kind == SemIR::Class::Final) {
-    DiagnoseBaseIsFinal(context, parse_node, base_type_id);
+    DiagnoseBaseIsFinal(context, node_id, base_type_id);
   }
 
   CARBON_CHECK(base_class_info->scope_id.is_valid())
@@ -253,9 +252,9 @@ static auto CheckBaseType(Context& context, Parse::NodeId parse_node,
   return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
 }
 
-auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
+auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   auto [base_type_node_id, base_type_expr_id] =
-      context.node_stack().PopExprWithParseNode();
+      context.node_stack().PopExprWithNodeId();
 
   // Process modifiers. `extend` is required, none others are allowed.
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
@@ -264,7 +263,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   if (!(modifiers & KeywordModifierSet::Extend)) {
     CARBON_DIAGNOSTIC(BaseMissingExtend, Error,
                       "Missing `extend` before `base` declaration in class.");
-    context.emitter().Emit(parse_node, BaseMissingExtend);
+    context.emitter().Emit(node_id, BaseMissingExtend);
   }
   context.decl_state_stack().Pop(DeclState::Base);
 
@@ -272,7 +271,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   if (!enclosing_class_decl) {
     CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
                       "`base` declaration can only be used in a class.");
-    context.emitter().Emit(parse_node, BaseOutsideClass);
+    context.emitter().Emit(node_id, BaseOutsideClass);
     return true;
   }
 
@@ -284,7 +283,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
     CARBON_DIAGNOSTIC(BasePrevious, Note,
                       "Previous `base` declaration is here.");
     context.emitter()
-        .Build(parse_node, BaseRepeated)
+        .Build(node_id, BaseRepeated)
         .Note(class_info.base_id, BasePrevious)
         .Emit();
     return true;
@@ -297,7 +296,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   auto field_type_id =
       context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
   class_info.base_id = context.AddInst(
-      {parse_node,
+      {node_id,
        SemIR::BaseDecl{field_type_id, base_info.type_id,
                        SemIR::ElementIndex(context.args_type_info_stack()
                                                .PeekCurrentBlockContents()
@@ -306,12 +305,12 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
   context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
-      {parse_node,
+      {node_id,
        SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
 
   // Bind the name `base` in the class to the base field.
   context.decl_name_stack().AddNameToLookup(
-      context.decl_name_stack().MakeUnqualifiedName(parse_node,
+      context.decl_name_stack().MakeUnqualifiedName(node_id,
                                                     SemIR::NameId::Base),
       class_info.base_id);
 
@@ -328,7 +327,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId parse_node) -> bool {
 }
 
 auto HandleClassDefinition(Context& context,
-                           Parse::ClassDefinitionId /*parse_node*/) -> bool {
+                           Parse::ClassDefinitionId /*node_id*/) -> bool {
   auto fields_id = context.args_type_info_stack().Pop();
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();

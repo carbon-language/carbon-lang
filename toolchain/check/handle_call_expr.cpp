@@ -9,40 +9,40 @@
 
 namespace Carbon::Check {
 
-auto HandleCallExprStart(Context& context, Parse::CallExprStartId parse_node)
+auto HandleCallExprStart(Context& context, Parse::CallExprStartId node_id)
     -> bool {
   auto name_id = context.node_stack().PopExpr();
-  context.node_stack().Push(parse_node, name_id);
+  context.node_stack().Push(node_id, name_id);
   context.param_and_arg_refs_stack().Push();
   return true;
 }
 
-auto HandleCallExprComma(Context& context,
-                         Parse::CallExprCommaId /*parse_node*/) -> bool {
+auto HandleCallExprComma(Context& context, Parse::CallExprCommaId /*node_id*/)
+    -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
+auto HandleCallExpr(Context& context, Parse::CallExprId node_id) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
   context.param_and_arg_refs_stack().EndNoPop(Parse::NodeKind::CallExprStart);
   auto discard_args_block = llvm::make_scope_exit(
       [&] { context.param_and_arg_refs_stack().PopAndDiscard(); });
 
-  auto [call_expr_parse_node, callee_id] =
-      context.node_stack().PopWithParseNode<Parse::NodeKind::CallExprStart>();
+  auto [call_expr_node_id, callee_id] =
+      context.node_stack().PopWithNodeId<Parse::NodeKind::CallExprStart>();
 
-  auto diagnose_not_callable = [&, call_expr_parse_node = call_expr_parse_node,
+  auto diagnose_not_callable = [&, call_expr_node_id = call_expr_node_id,
                                 callee_id = callee_id] {
     auto callee_type_id = context.insts().Get(callee_id).type_id();
     if (callee_type_id != SemIR::TypeId::Error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", SemIR::TypeId);
-      context.emitter().Emit(call_expr_parse_node, CallToNonCallable,
+      context.emitter().Emit(call_expr_node_id, CallToNonCallable,
                              callee_type_id);
     }
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   };
 
@@ -81,22 +81,20 @@ auto HandleCallExpr(Context& context, Parse::CallExprId parse_node) -> bool {
   if (callable.return_slot_id.is_valid()) {
     // Tentatively put storage for a temporary in the function's return slot.
     // This will be replaced if necessary when we perform initialization.
-    return_storage_id =
-        context.AddInst({call_expr_parse_node,
-                         SemIR::TemporaryStorage{callable.return_type_id}});
+    return_storage_id = context.AddInst(
+        {call_expr_node_id, SemIR::TemporaryStorage{callable.return_type_id}});
   }
 
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, call_expr_parse_node, self_id,
+      context, call_expr_node_id, self_id,
       context.param_and_arg_refs_stack().PeekCurrentBlockContents(),
       return_storage_id, function_decl_id.inst_id(),
       callable.implicit_param_refs_id, callable.param_refs_id);
-  auto call_inst_id =
-      context.AddInst({call_expr_parse_node,
-                       SemIR::Call{type_id, callee_id, converted_args_id}});
+  auto call_inst_id = context.AddInst(
+      {call_expr_node_id, SemIR::Call{type_id, callee_id, converted_args_id}});
 
-  context.node_stack().Push(parse_node, call_inst_id);
+  context.node_stack().Push(node_id, call_inst_id);
   return true;
 }
 

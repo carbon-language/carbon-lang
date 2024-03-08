@@ -56,29 +56,28 @@ class Context {
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(Parse::NodeId parse_node, std::string label) -> bool;
+  auto TODO(Parse::NodeId node_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
-      -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+  auto AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely. The instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+  auto AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
@@ -86,15 +85,15 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst) -> void;
+  auto AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `parse_node_and_inst`.
+  // Replaces the value of the instruction `inst_id` with `node_id_and_inst`.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
   // as a return slot.
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
-                                    SemIR::ParseNodeAndInst parse_node_and_inst)
+                                    SemIR::NodeIdAndInst node_id_and_inst)
       -> void;
 
   // Sets only the parse node of an instruction. This is only used when setting
@@ -102,9 +101,9 @@ class Context {
   // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
   // in constant evaluation. It's exposed this way mainly so that `insts()` can
   // remain const.
-  auto SetNamespaceParseNode(SemIR::InstId inst_id, Parse::NodeId parse_node)
+  auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
       -> void {
-    sem_ir().insts().SetParseNode(inst_id, parse_node);
+    sem_ir().insts().SetNodeId(inst_id, node_id);
   }
 
   // Adds a package's imports to name lookup, with all libraries together.
@@ -119,11 +118,11 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
+  auto LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id)
+  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
       -> SemIR::InstId;
 
   // Performs a name lookup in a specified scope, returning the referenced
@@ -134,7 +133,7 @@ class Context {
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id,
+  auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
@@ -143,7 +142,7 @@ class Context {
                              SemIR::InstId prev_def_id) -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::NodeId parse_node, SemIR::NameId name_id)
+  auto DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
@@ -164,27 +163,26 @@ class Context {
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId parse_node)
-      -> SemIR::InstBlockId;
+  auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
 
   // Adds a `Branch` instruction branching to a new instruction block with a
   // value, and returns the ID of the new block. All paths to the branch target
   // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
 
   // Adds a `BranchIf` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+  auto AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
                                     SemIR::InstId cond_id)
       -> SemIR::InstBlockId;
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the instruction block stack to a new block, pops the
   // existing blocks, and pushes the new block onto the instruction block stack.
-  auto AddConvergenceBlockAndPush(Parse::NodeId parse_node, int num_blocks)
+  auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
@@ -194,15 +192,15 @@ class Context {
   // corresponding result values are the elements of `block_args`. Returns an
   // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+      Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
-  // TODO: The parse_node is taken for expressions, which can occur in
+  // TODO: The node_id is taken for expressions, which can occur in
   // non-function contexts. This should be refactored to support non-function
-  // contexts, and parse_node removed.
+  // contexts, and node_id removed.
   auto AddCurrentCodeBlockToFunction(
-      Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void;
+      Parse::NodeId node_id = Parse::NodeId::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
@@ -279,8 +277,8 @@ class Context {
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
   // Get the Lex::TokenKind of a node for diagnostics.
-  auto token_kind(Parse::NodeId parse_node) -> Lex::TokenKind {
-    return tokens().GetKind(parse_tree().node_token(parse_node));
+  auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
+    return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }

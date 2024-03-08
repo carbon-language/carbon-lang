@@ -12,23 +12,23 @@
 
 namespace Carbon::Check {
 
-auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId parse_node)
+auto HandleLetIntroducer(Context& context, Parse::LetIntroducerId node_id)
     -> bool {
   context.decl_state_stack().Push(DeclState::Let);
   // Push a bracketing node to establish the pattern context.
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleLetInitializer(Context& context, Parse::LetInitializerId parse_node)
+auto HandleLetInitializer(Context& context, Parse::LetInitializerId node_id)
     -> bool {
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   return true;
 }
 
 static auto BuildAssociatedConstantDecl(
-    Context& context, Parse::LetDeclId parse_node, SemIR::InstId pattern_id,
-    SemIR::ParseNodeAndInst pattern, SemIR::InterfaceId interface_id) -> void {
+    Context& context, Parse::LetDeclId node_id, SemIR::InstId pattern_id,
+    SemIR::NodeIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
@@ -36,7 +36,7 @@ static auto BuildAssociatedConstantDecl(
     CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                       "Pattern in associated constant declaration must be a "
                       "single `:!` binding.");
-    context.emitter().Emit(pattern.parse_node,
+    context.emitter().Emit(pattern.node_id,
                            ExpectedSymbolicBindingInAssociatedConstant);
     context.name_scopes().Get(interface_info.scope_id).has_error = true;
     return;
@@ -47,33 +47,33 @@ static auto BuildAssociatedConstantDecl(
   auto name_id =
       context.bind_names().Get(binding_pattern->bind_name_id).name_id;
   context.ReplaceInstBeforeConstantUse(
-      pattern_id, {parse_node, SemIR::AssociatedConstantDecl{
-                                   binding_pattern->type_id, name_id}});
+      pattern_id, {node_id, SemIR::AssociatedConstantDecl{
+                                binding_pattern->type_id, name_id}});
   auto decl_id = pattern_id;
   context.inst_block_stack().AddInstId(decl_id);
 
   // Add an associated entity name to the interface scope.
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
-  auto name_context = context.decl_name_stack().MakeUnqualifiedName(
-      pattern.parse_node, name_id);
+  auto name_context =
+      context.decl_name_stack().MakeUnqualifiedName(pattern.node_id, name_id);
   context.decl_name_stack().AddNameToLookup(name_context, assoc_id);
 }
 
-auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
+auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   // Pop the optional initializer.
   std::optional<SemIR::InstId> value_id;
   if (context.node_stack().PeekNextIs<Parse::NodeKind::LetInitializer>()) {
     value_id = context.node_stack().PopExpr();
     context.node_stack()
-        .PopAndDiscardSoloParseNode<Parse::NodeKind::LetInitializer>();
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::LetInitializer>();
   }
 
   if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
-    return context.TODO(parse_node, "tuple pattern in let");
+    return context.TODO(node_id, "tuple pattern in let");
   }
   SemIR::InstId pattern_id = context.node_stack().PopPattern();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::LetIntroducer>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::LetIntroducer>();
   // Process declaration modifiers.
   // TODO: For a qualified `let` declaration, this should use the target scope
   // of the name introduced in the declaration. See #2590.
@@ -98,19 +98,19 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Let);
 
-  auto pattern = context.insts().GetWithParseNode(pattern_id);
+  auto pattern = context.insts().GetWithNodeId(pattern_id);
   auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
 
   if (value_id) {
     // Convert the value to match the type of the pattern.
-    value_id = ConvertToValueOfType(context, parse_node, *value_id,
+    value_id = ConvertToValueOfType(context, node_id, *value_id,
                                     pattern.inst.type_id());
   }
 
   // At interface scope, we are forming an associated constant, which has
   // different rules.
   if (interface_scope) {
-    BuildAssociatedConstantDecl(context, parse_node, pattern_id, pattern,
+    BuildAssociatedConstantDecl(context, node_id, pattern_id, pattern,
                                 interface_scope->interface_id);
     return true;
   }
@@ -119,7 +119,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId parse_node) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "Expected `=`; `let` declaration must have an initializer.");
-    context.emitter().Emit(Parse::TokenOnly(parse_node),
+    context.emitter().Emit(Parse::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
     value_id = SemIR::InstId::BuiltinError;
   }

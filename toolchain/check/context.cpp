@@ -50,10 +50,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
        SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(Parse::NodeId parse_node, std::string label) -> bool {
+auto Context::TODO(Parse::NodeId node_id, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
-  emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
+  emitter_->Emit(node_id, SemanticsTodo, std::move(label));
   return false;
 }
 
@@ -67,14 +67,14 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
-auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
+  auto inst_id = sem_ir().insts().AddInNoBlock(node_id_and_inst);
+  CARBON_VLOG() << "AddInst: " << node_id_and_inst.inst << "\n";
 
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, node_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << node_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
     constant_values().Set(inst_id, const_id);
   }
@@ -82,24 +82,23 @@ auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
   return inst_id;
 }
 
-auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(parse_node_and_inst);
+auto Context::AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(node_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInstInNoBlock(
-    SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddPlaceholderInst: " << parse_node_and_inst.inst << "\n";
+auto Context::AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = sem_ir().insts().AddInNoBlock(node_id_and_inst);
+  CARBON_VLOG() << "AddPlaceholderInst: " << node_id_and_inst.inst << "\n";
   constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = AddPlaceholderInstInNoBlock(parse_node_and_inst);
+  auto inst_id = AddPlaceholderInstInNoBlock(node_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
@@ -111,26 +110,24 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
   return const_id;
 }
 
-auto Context::AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  auto inst_id = AddInst(parse_node_and_inst);
-  node_stack_.Push(parse_node_and_inst.parse_node, inst_id);
+auto Context::AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void {
+  auto inst_id = AddInst(node_id_and_inst);
+  node_stack_.Push(node_id_and_inst.node_id, inst_id);
 }
 
 auto Context::ReplaceInstBeforeConstantUse(
-    SemIR::InstId inst_id, SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  sem_ir().insts().Set(inst_id, parse_node_and_inst);
+    SemIR::InstId inst_id, SemIR::NodeIdAndInst node_id_and_inst) -> void {
+  sem_ir().insts().Set(inst_id, node_id_and_inst);
 
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> "
-                << parse_node_and_inst.inst << "\n";
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << node_id_and_inst.inst
+                << "\n";
 
   // Redo evaluation. This is only safe to do if this instruction has not
   // already been used as a constant, which is the caller's responsibility to
   // ensure.
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, node_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << node_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
   }
   constant_values().Set(inst_id, const_id);
@@ -147,11 +144,11 @@ auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
-                                   SemIR::NameId name_id) -> void {
+auto Context::DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
+    -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     SemIR::NameId);
-  emitter_->Emit(parse_node, NameNotFound, name_id);
+  emitter_->Emit(node_id, NameNotFound, name_id);
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -230,8 +227,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
-                               SemIR::NameId name_id,
+auto Context::LookupNameInDecl(Parse::NodeId /*node_id*/, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
@@ -276,7 +272,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
   }
 }
 
-auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
+auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                     SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
@@ -288,7 +284,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
-            LookupQualifiedName(parse_node, name_id, name_scope_id,
+            LookupQualifiedName(node_id, name_id, name_scope_id,
                                 /*required=*/false);
         non_lexical_result.is_valid()) {
       return non_lexical_result;
@@ -301,7 +297,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
   }
 
   // We didn't find anything at all.
-  DiagnoseNameNotFound(parse_node, name_id);
+  DiagnoseNameNotFound(node_id, name_id);
   return SemIR::InstId::BuiltinError;
 }
 
@@ -315,8 +311,7 @@ auto Context::LookupNameInExactScope(SemIR::NameId name_id,
   return SemIR::InstId::Invalid;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId parse_node,
-                                  SemIR::NameId name_id,
+auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
@@ -345,7 +340,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
           SemIR::NameId);
-      emitter_->Emit(parse_node, NameAmbiguousDueToExtend, name_id);
+      emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return SemIR::InstId::BuiltinError;
     }
@@ -355,7 +350,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
   if (required && !result_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(parse_node, name_id);
+      DiagnoseNameNotFound(node_id, name_id);
     }
     return SemIR::InstId::BuiltinError;
   }
@@ -365,37 +360,37 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::NodeId parse_node,
-                                           Args... args) -> SemIR::InstBlockId {
+                                           Parse::NodeId node_id, Args... args)
+    -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst({parse_node, BranchNode{block_id, args...}});
+  context.AddInst({node_id, BranchNode{block_id, args...}});
   return block_id;
 }
 
-auto Context::AddDominatedBlockAndBranch(Parse::NodeId parse_node)
+auto Context::AddDominatedBlockAndBranch(Parse::NodeId node_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
+  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, node_id);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                                 SemIR::InstId arg_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, node_id,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
                                            SemIR::InstId cond_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, node_id,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
-                                         int num_blocks) -> void {
+auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
+    -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -404,7 +399,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::Branch{new_block_id}});
+      AddInst({node_id, SemIR::Branch{new_block_id}});
     }
     inst_block_stack().Pop();
   }
@@ -412,7 +407,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+    Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
@@ -422,7 +417,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::BranchWithArg{new_block_id, arg_id}});
+      AddInst({node_id, SemIR::BranchWithArg{new_block_id, arg_id}});
     }
     inst_block_stack().Pop();
   }
@@ -430,17 +425,17 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst({parse_node, SemIR::BlockArg{result_type_id, new_block_id}});
+  return AddInst({node_id, SemIR::BlockArg{result_type_id, new_block_id}});
 }
 
 // Add the current code block to the enclosing function.
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId parse_node) -> void {
+auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
 
   if (return_scope_stack().empty()) {
-    CARBON_CHECK(parse_node.is_valid())
-        << "No current function, but parse_node not provided";
-    TODO(parse_node,
+    CARBON_CHECK(node_id.is_valid())
+        << "No current function, but node_id not provided";
+    TODO(node_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
     return;

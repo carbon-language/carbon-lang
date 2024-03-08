@@ -21,7 +21,7 @@ auto CheckFunctionRedecl(Context& context, SemIR::FunctionId new_function_id,
 //
 // If merging is successful, updates the FunctionId on new_function and returns
 // true. Otherwise, returns false. Prints a diagnostic when appropriate.
-auto MergeFunctionRedecl(Context& context, Parse::NodeId parse_node,
+auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
                          SemIR::Function& new_function,
                          SemIR::FunctionId prev_function_id, bool is_definition)
     -> bool;

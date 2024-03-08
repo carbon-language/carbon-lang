@@ -10,64 +10,62 @@ namespace Carbon::Check {
 // checking logic is needed here.
 
 auto HandleImportIntroducer(Context& /*context*/,
-                            Parse::ImportIntroducerId /*parse_node*/) -> bool {
+                            Parse::ImportIntroducerId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandleImportDirective(Context& /*context*/,
-                           Parse::ImportDirectiveId /*parse_node*/) -> bool {
+                           Parse::ImportDirectiveId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandleLibraryIntroducer(Context& /*context*/,
-                             Parse::LibraryIntroducerId /*parse_node*/)
-    -> bool {
+                             Parse::LibraryIntroducerId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandleLibraryDirective(Context& /*context*/,
-                            Parse::LibraryDirectiveId /*parse_node*/) -> bool {
+                            Parse::LibraryDirectiveId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandlePackageIntroducer(Context& /*context*/,
-                             Parse::PackageIntroducerId /*parse_node*/)
-    -> bool {
+                             Parse::PackageIntroducerId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandlePackageDirective(Context& /*context*/,
-                            Parse::PackageDirectiveId /*parse_node*/) -> bool {
+                            Parse::PackageDirectiveId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandleLibrarySpecifier(Context& /*context*/,
-                            Parse::LibrarySpecifierId /*parse_node*/) -> bool {
+                            Parse::LibrarySpecifierId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandlePackageName(Context& /*context*/,
-                       Parse::PackageNameId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleLibraryName(Context& /*context*/,
-                       Parse::LibraryNameId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandleDefaultLibrary(Context& /*context*/,
-                          Parse::DefaultLibraryId /*parse_node*/) -> bool {
-  return true;
-}
-
-auto HandlePackageApi(Context& /*context*/, Parse::PackageApiId /*parse_node*/)
+auto HandlePackageName(Context& /*context*/, Parse::PackageNameId /*node_id*/)
     -> bool {
   return true;
 }
 
-auto HandlePackageImpl(Context& /*context*/,
-                       Parse::PackageImplId /*parse_node*/) -> bool {
+auto HandleLibraryName(Context& /*context*/, Parse::LibraryNameId /*node_id*/)
+    -> bool {
+  return true;
+}
+
+auto HandleDefaultLibrary(Context& /*context*/,
+                          Parse::DefaultLibraryId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandlePackageApi(Context& /*context*/, Parse::PackageApiId /*node_id*/)
+    -> bool {
+  return true;
+}
+
+auto HandlePackageImpl(Context& /*context*/, Parse::PackageImplId /*node_id*/)
+    -> bool {
   return true;
 }
 

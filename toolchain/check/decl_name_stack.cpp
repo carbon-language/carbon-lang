@@ -15,10 +15,10 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
       .target_scope_id = context_->scope_stack().PeekNameScopeId()};
 }
 
-auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId parse_node,
+auto DeclNameStack::MakeUnqualifiedName(Parse::NodeId node_id,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
-  ApplyNameQualifierTo(context, parse_node, name_id, /*is_unqualified=*/true);
+  ApplyNameQualifierTo(context, node_id, name_id, /*is_unqualified=*/true);
   return context;
 }
 
@@ -33,13 +33,13 @@ auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
   if (context_->node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::QualifiedName>()) {
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::QualifiedName>()) {
     // Any parts from a QualifiedName will already have been processed
     // into the name.
   } else {
     // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, name_id] = context_->node_stack().PopNameWithParseNode();
-    ApplyNameQualifier(parse_node, name_id);
+    auto [node_id, name_id] = context_->node_stack().PopNameWithNodeId();
+    ApplyNameQualifier(node_id, name_id);
   }
 
   NameContext result = decl_name_stack_.back();
@@ -92,7 +92,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
                 QualifiedDeclOutsideScopeEntity, Error,
                 "Out-of-line declaration requires a declaration in "
                 "scoped entity.");
-            context_->emitter().Emit(name_context.parse_node,
+            context_->emitter().Emit(name_context.node_id,
                                      QualifiedDeclOutsideScopeEntity);
           }
         }
@@ -125,20 +125,20 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclNameStack::ApplyNameQualifier(Parse::NodeId parse_node,
+auto DeclNameStack::ApplyNameQualifier(Parse::NodeId node_id,
                                        SemIR::NameId name_id) -> void {
-  ApplyNameQualifierTo(decl_name_stack_.back(), parse_node, name_id,
+  ApplyNameQualifierTo(decl_name_stack_.back(), node_id, name_id,
                        /*is_unqualified=*/false);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         Parse::NodeId parse_node,
+                                         Parse::NodeId node_id,
                                          SemIR::NameId name_id,
                                          bool is_unqualified) -> void {
-  if (TryResolveQualifier(name_context, parse_node)) {
+  if (TryResolveQualifier(name_context, node_id)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDecl(
-        name_context.parse_node, name_id, name_context.target_scope_id);
+        name_context.node_id, name_id, name_context.target_scope_id);
     if (!resolved_inst_id.is_valid()) {
       // Invalid indicates an unresolved name. Store it and return.
       name_context.state = NameContext::State::Unresolved;
@@ -228,7 +228,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
 }
 
 auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
-                                        Parse::NodeId parse_node) -> bool {
+                                        Parse::NodeId node_id) -> bool {
   // Update has_qualifiers based on the state before any possible changes. If
   // this is the first qualifier, it may just be the name.
   name_context.has_qualifiers = name_context.state != NameContext::State::Empty;
@@ -242,7 +242,7 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
       name_context.state = NameContext::State::Error;
-      context_->DiagnoseNameNotFound(name_context.parse_node,
+      context_->DiagnoseNameNotFound(name_context.node_id,
                                      name_context.unresolved_name_id);
       return false;
 
@@ -255,7 +255,7 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
                           "Cannot declare a member of incomplete class `{0}`.",
                           SemIR::TypeId);
         auto builder = context_->emitter().Build(
-            name_context.parse_node, QualifiedDeclInIncompleteClassScope,
+            name_context.node_id, QualifiedDeclInIncompleteClassScope,
             context_->classes().Get(class_decl->class_id).self_type_id);
         context_->NoteIncompleteClass(class_decl->class_id, builder);
         builder.Emit();
@@ -267,7 +267,7 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
             "Cannot declare a member of undefined interface `{0}`.",
             std::string);
         auto builder = context_->emitter().Build(
-            name_context.parse_node, QualifiedDeclInUndefinedInterfaceScope,
+            name_context.node_id, QualifiedDeclInUndefinedInterfaceScope,
             context_->sem_ir().StringifyTypeExpr(
                 context_->sem_ir()
                     .constant_values()
@@ -282,8 +282,8 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
         CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
                           "Non-scope entity referenced here.");
         context_->emitter()
-            .Build(parse_node, QualifiedNameInNonScope)
-            .Note(name_context.parse_node, QualifiedNameNonScopeEntity)
+            .Build(node_id, QualifiedNameInNonScope)
+            .Note(name_context.node_id, QualifiedNameNonScopeEntity)
             .Emit();
       }
       name_context.state = NameContext::State::Error;
@@ -292,7 +292,7 @@ auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
 
     case NameContext::State::Empty:
     case NameContext::State::Resolved: {
-      name_context.parse_node = parse_node;
+      name_context.node_id = node_id;
       return true;
     }
 

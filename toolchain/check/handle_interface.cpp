@@ -10,13 +10,12 @@
 namespace Carbon::Check {
 
 auto HandleInterfaceIntroducer(Context& context,
-                               Parse::InterfaceIntroducerId parse_node)
-    -> bool {
+                               Parse::InterfaceIntroducerId node_id) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // interface signature, such as generic parameters.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
   context.decl_state_stack().Push(DeclState::Interface);
   context.decl_name_stack().PushScopeAndStartName();
@@ -24,18 +23,18 @@ auto HandleInterfaceIntroducer(Context& context,
 }
 
 static auto BuildInterfaceDecl(Context& context,
-                               Parse::AnyInterfaceDeclId parse_node)
+                               Parse::AnyInterfaceDeclId node_id)
     -> std::tuple<SemIR::InterfaceId, SemIR::InstId> {
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    context.TODO(parse_node, "generic interface");
+    context.TODO(node_id, "generic interface");
   }
   if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
-    context.TODO(parse_node, "generic interface");
+    context.TODO(node_id, "generic interface");
   }
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::InterfaceIntroducer>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Interface,
@@ -57,7 +56,7 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl = SemIR::InterfaceDecl{
       SemIR::TypeId::TypeType, SemIR::InterfaceId::Invalid, decl_block_id};
   auto interface_decl_id =
-      context.AddPlaceholderInst({parse_node, interface_decl});
+      context.AddPlaceholderInst({node_id, interface_decl});
 
   // Check whether this is a redeclaration.
   auto existing_id = context.decl_name_stack().LookupOrAddName(
@@ -91,22 +90,22 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Write the interface ID into the InterfaceDecl.
   context.ReplaceInstBeforeConstantUse(interface_decl_id,
-                                       {parse_node, interface_decl});
+                                       {node_id, interface_decl});
 
   return {interface_decl.interface_id, interface_decl_id};
 }
 
-auto HandleInterfaceDecl(Context& context, Parse::InterfaceDeclId parse_node)
+auto HandleInterfaceDecl(Context& context, Parse::InterfaceDeclId node_id)
     -> bool {
-  BuildInterfaceDecl(context, parse_node);
+  BuildInterfaceDecl(context, node_id);
   context.decl_name_stack().PopScope();
   return true;
 }
 
-auto HandleInterfaceDefinitionStart(
-    Context& context, Parse::InterfaceDefinitionStartId parse_node) -> bool {
-  auto [interface_id, interface_decl_id] =
-      BuildInterfaceDecl(context, parse_node);
+auto HandleInterfaceDefinitionStart(Context& context,
+                                    Parse::InterfaceDefinitionStartId node_id)
+    -> bool {
+  auto [interface_id, interface_decl_id] = BuildInterfaceDecl(context, node_id);
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
@@ -116,7 +115,7 @@ auto HandleInterfaceDefinitionStart(
     CARBON_DIAGNOSTIC(InterfacePreviousDefinition, Note,
                       "Previous definition was here.");
     context.emitter()
-        .Build(parse_node, InterfaceRedefinition, interface_info.name_id)
+        .Build(node_id, InterfaceRedefinition, interface_info.name_id)
         .Note(interface_info.definition_id, InterfacePreviousDefinition)
         .Emit();
   } else {
@@ -130,7 +129,7 @@ auto HandleInterfaceDefinitionStart(
   context.scope_stack().Push(interface_decl_id, interface_info.scope_id);
 
   context.inst_block_stack().Push();
-  context.node_stack().Push(parse_node, interface_id);
+  context.node_stack().Push(node_id, interface_id);
 
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
@@ -171,7 +170,7 @@ auto HandleInterfaceDefinitionStart(
 }
 
 auto HandleInterfaceDefinition(Context& context,
-                               Parse::InterfaceDefinitionId /*parse_node*/)
+                               Parse::InterfaceDefinitionId /*node_id*/)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();

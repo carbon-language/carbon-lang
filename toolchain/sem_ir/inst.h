@@ -268,38 +268,36 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 
 // Associates a NodeId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
-struct ParseNodeAndInst {
+struct NodeIdAndInst {
   // In cases where the NodeId is untyped or the InstT is unknown, the check
   // can't be done at compile time.
   // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
   // corresponds.
-  static auto Untyped(Parse::NodeId parse_node, Inst inst) -> ParseNodeAndInst {
-    return ParseNodeAndInst(parse_node, inst, /*is_untyped=*/true);
+  static auto Untyped(Parse::NodeId node_id, Inst inst) -> NodeIdAndInst {
+    return NodeIdAndInst(node_id, inst, /*is_untyped=*/true);
   }
 
   // For the common case, support construction as:
-  //   context.AddInst({parse_node, SemIR::MyInst{...}});
+  //   context.AddInst({node_id, SemIR::MyInst{...}});
   template <typename InstT>
-    requires(Internal::HasParseNode<InstT>)
+    requires(Internal::HasNodeId<InstT>)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ParseNodeAndInst(decltype(InstT::Kind)::TypedNodeId parse_node, InstT inst)
-      : parse_node(parse_node), inst(inst) {}
+  NodeIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      : node_id(node_id), inst(inst) {}
 
   // For cases with no parse node, support construction as:
   //   context.AddInst({SemIR::MyInst{...}});
   template <typename InstT>
-    requires(!Internal::HasParseNode<InstT>)
+    requires(!Internal::HasNodeId<InstT>)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ParseNodeAndInst(InstT inst)
-      : parse_node(Parse::NodeId::Invalid), inst(inst) {}
+  NodeIdAndInst(InstT inst) : node_id(Parse::NodeId::Invalid), inst(inst) {}
 
-  Parse::NodeId parse_node;
+  Parse::NodeId node_id;
   Inst inst;
 
  private:
-  explicit ParseNodeAndInst(Parse::NodeId parse_node, Inst inst,
-                            bool /*is_untyped*/)
-      : parse_node(parse_node), inst(inst) {}
+  explicit NodeIdAndInst(Parse::NodeId node_id, Inst inst, bool /*is_untyped*/)
+      : node_id(node_id), inst(inst) {}
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
@@ -310,17 +308,17 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(ParseNodeAndInst parse_node_and_inst) -> InstId {
-    parse_nodes_.push_back(parse_node_and_inst.parse_node);
-    return values_.Add(parse_node_and_inst.inst);
+  auto AddInNoBlock(NodeIdAndInst node_id_and_inst) -> InstId {
+    node_ids_.push_back(node_id_and_inst.node_id);
+    return values_.Add(node_id_and_inst.inst);
   }
 
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
   // Returns the requested instruction and its parse node.
-  auto GetWithParseNode(InstId inst_id) const -> ParseNodeAndInst {
-    return ParseNodeAndInst::Untyped(GetParseNode(inst_id), Get(inst_id));
+  auto GetWithNodeId(InstId inst_id) const -> NodeIdAndInst {
+    return NodeIdAndInst::Untyped(GetNodeId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -353,23 +351,23 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetParseNode(InstId inst_id) const -> Parse::NodeId {
-    return parse_nodes_[inst_id.index];
+  auto GetNodeId(InstId inst_id) const -> Parse::NodeId {
+    return node_ids_[inst_id.index];
   }
 
   // Overwrites a given instruction and parse node with a new value.
-  auto Set(InstId inst_id, ParseNodeAndInst parse_node_and_inst) -> void {
-    values_.Get(inst_id) = parse_node_and_inst.inst;
-    parse_nodes_[inst_id.index] = parse_node_and_inst.parse_node;
+  auto Set(InstId inst_id, NodeIdAndInst node_id_and_inst) -> void {
+    values_.Get(inst_id) = node_id_and_inst.inst;
+    node_ids_[inst_id.index] = node_id_and_inst.node_id;
   }
 
-  auto SetParseNode(InstId inst_id, Parse::NodeId parse_node) -> void {
-    parse_nodes_[inst_id.index] = parse_node;
+  auto SetNodeId(InstId inst_id, Parse::NodeId node_id) -> void {
+    node_ids_[inst_id.index] = node_id;
   }
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
-    parse_nodes_.reserve(size);
+    node_ids_.reserve(size);
     values_.Reserve(size);
   }
 
@@ -377,7 +375,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<Parse::NodeId> parse_nodes_;
+  llvm::SmallVector<Parse::NodeId> node_ids_;
   ValueStore<InstId> values_;
 };
 

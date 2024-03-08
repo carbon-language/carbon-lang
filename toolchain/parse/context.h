@@ -291,7 +291,7 @@ class Context {
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
-  auto RecoverFromDeclError(StateStackEntry state, NodeKind parse_node_kind,
+  auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
   // Sets the package directive information. Called at most once.

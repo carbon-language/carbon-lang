@@ -89,8 +89,8 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-auto HandleMemberAccessExpr(Context& context,
-                            Parse::MemberAccessExprId parse_node) -> bool {
+auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
+    -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
   auto base_id = context.node_stack().PopExpr();
 
@@ -99,12 +99,12 @@ auto HandleMemberAccessExpr(Context& context,
   if (auto name_scope_id = GetAsNameScope(context, base_id)) {
     auto inst_id =
         name_scope_id->is_valid()
-            ? context.LookupQualifiedName(parse_node, name_id, *name_scope_id)
+            ? context.LookupQualifiedName(node_id, name_id, *name_scope_id)
             : SemIR::InstId::BuiltinError;
     auto inst = context.insts().Get(inst_id);
     // TODO: Track that this instruction was named within `base_id`.
     context.AddInstAndPush(
-        {parse_node, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
+        {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
     return true;
   }
 
@@ -117,7 +117,7 @@ auto HandleMemberAccessExpr(Context& context,
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_type_id);
       })) {
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
 
@@ -133,7 +133,7 @@ auto HandleMemberAccessExpr(Context& context,
                                 .Get(base_type.As<SemIR::ClassType>().class_id)
                                 .scope_id;
       auto member_id =
-          context.LookupQualifiedName(parse_node, name_id, class_scope_id);
+          context.LookupQualifiedName(node_id, name_id, class_scope_id);
 
       // Perform instance binding if we found an instance member.
       auto member_type_id = context.insts().Get(member_id).type_id();
@@ -142,7 +142,7 @@ auto HandleMemberAccessExpr(Context& context,
                   member_type_id)) {
         // Convert the base to the type of the element if necessary.
         base_id = ConvertToValueOrRefOfType(
-            context, parse_node, base_id, unbound_element_type->class_type_id);
+            context, node_id, base_id, unbound_element_type->class_type_id);
 
         // Find the specified element, which could be either a field or a base
         // class, and build an element access expression.
@@ -151,10 +151,10 @@ auto HandleMemberAccessExpr(Context& context,
             << "Non-constant value " << context.insts().Get(member_id)
             << " of unbound element type";
         auto index = GetClassElementIndex(context, element_id.inst_id());
-        auto access_id = context.AddInst(
-            {parse_node,
-             SemIR::ClassElementAccess{unbound_element_type->element_type_id,
-                                       base_id, index}});
+        auto access_id =
+            context.AddInst({node_id, SemIR::ClassElementAccess{
+                                          unbound_element_type->element_type_id,
+                                          base_id, index}});
         if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
                 SemIR::ExprCategory::Value &&
             SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -166,7 +166,7 @@ auto HandleMemberAccessExpr(Context& context,
           // matches the expression category of the base.
           access_id = ConvertToValueExpr(context, access_id);
         }
-        context.node_stack().Push(parse_node, access_id);
+        context.node_stack().Push(node_id, access_id);
         return true;
       }
       if (member_type_id ==
@@ -185,7 +185,7 @@ auto HandleMemberAccessExpr(Context& context,
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
           context.AddInstAndPush(
-              {parse_node,
+              {node_id,
                SemIR::BoundMethod{
                    context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
                    base_id, member_id}});
@@ -196,7 +196,7 @@ auto HandleMemberAccessExpr(Context& context,
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.
       context.AddInstAndPush(
-          {parse_node, SemIR::NameRef{member_type_id, name_id, member_id}});
+          {node_id, SemIR::NameRef{member_type_id, name_id, member_id}});
       return true;
     }
     case SemIR::StructType::Kind: {
@@ -207,16 +207,16 @@ auto HandleMemberAccessExpr(Context& context,
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
           context.AddInstAndPush(
-              {parse_node, SemIR::StructAccess{field.field_type_id, base_id,
-                                               SemIR::ElementIndex(i)}});
+              {node_id, SemIR::StructAccess{field.field_type_id, base_id,
+                                            SemIR::ElementIndex(i)}});
           return true;
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.",
                         SemIR::TypeId, SemIR::NameId);
-      context.emitter().Emit(parse_node, QualifiedExprNameNotFound,
-                             base_type_id, name_id);
+      context.emitter().Emit(node_id, QualifiedExprNameNotFound, base_type_id,
+                             name_id);
       break;
     }
     // TODO: `ConstType` should support member access just like the
@@ -227,29 +227,28 @@ auto HandleMemberAccessExpr(Context& context,
         CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                           "Type `{0}` does not support qualified expressions.",
                           SemIR::TypeId);
-        context.emitter().Emit(parse_node, QualifiedExprUnsupported,
-                               base_type_id);
+        context.emitter().Emit(node_id, QualifiedExprUnsupported, base_type_id);
       }
       break;
     }
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+  context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
   return true;
 }
 
 auto HandlePointerMemberAccessExpr(Context& context,
-                                   Parse::PointerMemberAccessExprId parse_node)
+                                   Parse::PointerMemberAccessExprId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandlePointerMemberAccessExpr");
+  return context.TODO(node_id, "HandlePointerMemberAccessExpr");
 }
 
-static auto GetIdentifierAsName(Context& context, Parse::NodeId parse_node)
+static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
     -> std::optional<SemIR::NameId> {
-  auto token = context.parse_tree().node_token(parse_node);
+  auto token = context.parse_tree().node_token(node_id);
   if (context.tokens().GetKind(token) != Lex::TokenKind::Identifier) {
-    CARBON_CHECK(context.parse_tree().node_has_error(parse_node));
+    CARBON_CHECK(context.parse_tree().node_has_error(node_id));
     return std::nullopt;
   }
   return SemIR::NameId::ForIdentifier(context.tokens().GetIdentifier(token));
@@ -257,62 +256,62 @@ static auto GetIdentifierAsName(Context& context, Parse::NodeId parse_node)
 
 // Handle a name that is used as an expression by performing unqualified name
 // lookup.
-static auto HandleNameAsExpr(Context& context, Parse::NodeId parse_node,
+static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> bool {
-  auto value_id = context.LookupUnqualifiedName(parse_node, name_id);
+  auto value_id = context.LookupUnqualifiedName(node_id, name_id);
   auto value = context.insts().Get(value_id);
   context.AddInstAndPush(
-      {parse_node, SemIR::NameRef{value.type_id(), name_id, value_id}});
+      {node_id, SemIR::NameRef{value.type_id(), name_id, value_id}});
   return true;
 }
 
-auto HandleIdentifierName(Context& context, Parse::IdentifierNameId parse_node)
+auto HandleIdentifierName(Context& context, Parse::IdentifierNameId node_id)
     -> bool {
   // The parent is responsible for binding the name.
-  auto name_id = GetIdentifierAsName(context, parse_node);
+  auto name_id = GetIdentifierAsName(context, node_id);
   if (!name_id) {
-    return context.TODO(parse_node, "Error recovery from keyword name.");
+    return context.TODO(node_id, "Error recovery from keyword name.");
   }
-  context.node_stack().Push(parse_node, *name_id);
+  context.node_stack().Push(node_id, *name_id);
   return true;
 }
 
 auto HandleIdentifierNameExpr(Context& context,
-                              Parse::IdentifierNameExprId parse_node) -> bool {
-  auto name_id = GetIdentifierAsName(context, parse_node);
+                              Parse::IdentifierNameExprId node_id) -> bool {
+  auto name_id = GetIdentifierAsName(context, node_id);
   if (!name_id) {
-    return context.TODO(parse_node, "Error recovery from keyword name.");
+    return context.TODO(node_id, "Error recovery from keyword name.");
   }
-  return HandleNameAsExpr(context, parse_node, *name_id);
+  return HandleNameAsExpr(context, node_id, *name_id);
 }
 
-auto HandleBaseName(Context& context, Parse::BaseNameId parse_node) -> bool {
-  context.node_stack().Push(parse_node, SemIR::NameId::Base);
+auto HandleBaseName(Context& context, Parse::BaseNameId node_id) -> bool {
+  context.node_stack().Push(node_id, SemIR::NameId::Base);
   return true;
 }
 
-auto HandleSelfTypeNameExpr(Context& context,
-                            Parse::SelfTypeNameExprId parse_node) -> bool {
-  return HandleNameAsExpr(context, parse_node, SemIR::NameId::SelfType);
+auto HandleSelfTypeNameExpr(Context& context, Parse::SelfTypeNameExprId node_id)
+    -> bool {
+  return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfType);
 }
 
-auto HandleSelfValueName(Context& context, Parse::SelfValueNameId parse_node)
+auto HandleSelfValueName(Context& context, Parse::SelfValueNameId node_id)
     -> bool {
-  context.node_stack().Push(parse_node, SemIR::NameId::SelfValue);
+  context.node_stack().Push(node_id, SemIR::NameId::SelfValue);
   return true;
 }
 
 auto HandleSelfValueNameExpr(Context& context,
-                             Parse::SelfValueNameExprId parse_node) -> bool {
-  return HandleNameAsExpr(context, parse_node, SemIR::NameId::SelfValue);
+                             Parse::SelfValueNameExprId node_id) -> bool {
+  return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
 }
 
-auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
+auto HandleQualifiedName(Context& context, Parse::QualifiedNameId node_id)
     -> bool {
-  auto [parse_node2, name_id2] = context.node_stack().PopNameWithParseNode();
+  auto [node_id2, name_id2] = context.node_stack().PopNameWithNodeId();
 
-  Parse::NodeId parse_node1 = context.node_stack().PeekParseNode();
-  switch (context.parse_tree().node_kind(parse_node1)) {
+  Parse::NodeId node_id1 = context.node_stack().PeekNodeId();
+  switch (context.parse_tree().node_kind(node_id1)) {
     case Parse::NodeKind::QualifiedName:
       // This is the second or subsequent QualifiedName in a chain.
       // Nothing to do: the first QualifiedName remains as a
@@ -324,9 +323,9 @@ auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
       // identifier name.
       auto name_id =
           context.node_stack().Pop<Parse::NodeKind::IdentifierName>();
-      context.decl_name_stack().ApplyNameQualifier(parse_node1, name_id);
+      context.decl_name_stack().ApplyNameQualifier(node_id1, name_id);
       // Add the QualifiedName so that it can be used for bracketing.
-      context.node_stack().Push(parse_node);
+      context.node_stack().Push(node_id);
       break;
     }
 
@@ -335,14 +334,13 @@ auto HandleQualifiedName(Context& context, Parse::QualifiedNameId parse_node)
                         "declaration name";
   }
 
-  context.decl_name_stack().ApplyNameQualifier(parse_node2, name_id2);
+  context.decl_name_stack().ApplyNameQualifier(node_id2, name_id2);
   return true;
 }
 
-auto HandlePackageExpr(Context& context, Parse::PackageExprId parse_node)
-    -> bool {
+auto HandlePackageExpr(Context& context, Parse::PackageExprId node_id) -> bool {
   context.AddInstAndPush(
-      {parse_node,
+      {node_id,
        SemIR::NameRef{context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType),
                       SemIR::NameId::PackageNamespace,
                       SemIR::InstId::PackageNamespace}});

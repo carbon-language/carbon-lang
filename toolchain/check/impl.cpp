@@ -127,7 +127,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   auto interface_type =
       context.types().TryGetAs<SemIR::InterfaceType>(impl.constraint_id);
   if (!interface_type) {
-    context.TODO(context.insts().GetParseNode(impl.definition_id),
+    context.TODO(context.insts().GetNodeId(impl.definition_id),
                  "impl as non-interface");
     return SemIR::InstId::BuiltinError;
   }

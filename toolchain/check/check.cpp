@@ -21,7 +21,7 @@ namespace Carbon::Check {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
+  auto Handle##Name(Context& context, Parse::Name##Id node_id) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
@@ -44,9 +44,9 @@ class SemIRLocationTranslator
     auto cursor_inst_id = loc.inst_id;
     while (true) {
       // If the parse node is valid, use it for the location.
-      if (auto parse_node = cursor_ir->insts().GetParseNode(cursor_inst_id);
-          parse_node.is_valid()) {
-        return GetLocationInFile(cursor_ir, parse_node);
+      if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
+          node_id.is_valid()) {
+        return GetLocationInFile(cursor_ir, node_id);
       }
 
       // If the parse node was invalid, recurse through import references when
@@ -222,14 +222,14 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
-static auto ProcessParseNodes(Context& context,
-                              ErrorTrackingDiagnosticConsumer& err_tracker)
+static auto ProcessNodeIds(Context& context,
+                           ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
-  for (auto parse_node : context.parse_tree().postorder()) {
-    switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
+  for (auto node_id : context.parse_tree().postorder()) {
+    switch (auto parse_kind = context.parse_tree().node_kind(node_id)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
-    if (!Check::Handle##Name(context, Parse::Name##Id(parse_node))) {        \
+    if (!Check::Handle##Name(context, Parse::Name##Id(node_id))) {           \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
       return false;                                                          \
@@ -269,7 +269,7 @@ static auto CheckParseTree(
 
   InitPackageScopeAndImports(context, unit_info);
 
-  if (!ProcessParseNodes(context, unit_info.err_tracker)) {
+  if (!ProcessNodeIds(context, unit_info.err_tracker)) {
     context.sem_ir().set_has_errors(true);
     return;
   }
