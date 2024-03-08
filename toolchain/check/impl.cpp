@@ -74,7 +74,7 @@ static auto BuildInterfaceWitness(
 
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
 
-  llvm::SmallVector<SemIR::InstId, 32> table;
+  llvm::SmallVector<SemIR::InstId> table;
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   table.reserve(assoc_entities.size());
@@ -132,7 +132,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
     return SemIR::InstId::BuiltinError;
   }
 
-  llvm::SmallVector<SemIR::InstId, 32> used_decl_ids;
+  llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   auto witness_id = BuildInterfaceWitness(
       context, impl, interface_type->interface_id, used_decl_ids);
