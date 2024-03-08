@@ -13,13 +13,13 @@ class Empty {
 
 class Incomplete;
 
-// --- b.carbon
+// --- fail_b.carbon
 
 library "b" api;
 
 import library "a";
 
-// CHECK:STDERR: b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
@@ -28,10 +28,10 @@ import library "a";
 class Empty {
 }
 
-// CHECK:STDERR: b.carbon:[[@LINE+4]]:8: ERROR: Variable has incomplete type `Incomplete`.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:8: ERROR: Variable has incomplete type `Incomplete`.
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: b.carbon: Class was forward declared here.
+// CHECK:STDERR: fail_b.carbon: Class was forward declared here.
 var a: Incomplete;
 
 // CHECK:STDOUT: --- a.carbon
@@ -58,7 +58,7 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]

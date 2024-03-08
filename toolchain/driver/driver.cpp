@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/driver.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -333,13 +334,13 @@ auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 }
 
-auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
   Options options;
   CommandLine::ParseResult result = ParseArgs(args, options);
   if (result == CommandLine::ParseResult::Error) {
-    return false;
+    return {.success = false};
   } else if (result == CommandLine::ParseResult::MetaSuccess) {
-    return true;
+    return {.success = true};
   }
 
   if (options.verbose) {
@@ -409,7 +410,7 @@ class Driver::CompilationUnit {
   }
 
   // Loads source and lexes it. Returns true on success.
-  auto RunLex() -> bool {
+  auto RunLex() -> void {
     LogCall("SourceBuffer::MakeFromFile", [&] {
       if (input_file_name_ == "-") {
         source_ = SourceBuffer::MakeFromStdin(*consumer_);
@@ -419,7 +420,8 @@ class Driver::CompilationUnit {
       }
     });
     if (!source_) {
-      return false;
+      success_ = false;
+      return;
     }
     CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
                   << source_->text() << "\n```\n";
@@ -431,11 +433,13 @@ class Driver::CompilationUnit {
       driver_->output_stream_ << tokens_;
     }
     CARBON_VLOG() << "*** Lex::TokenizedBuffer ***\n" << tokens_;
-    return !tokens_->has_errors();
+    if (tokens_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Parses tokens. Returns true on success.
-  auto RunParse() -> bool {
+  auto RunParse() -> void {
     CARBON_CHECK(tokens_);
 
     LogCall("Parse::Parse", [&] {
@@ -446,7 +450,9 @@ class Driver::CompilationUnit {
       parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
     }
     CARBON_VLOG() << "*** Parse::Tree ***\n" << parse_tree_;
-    return !parse_tree_->has_errors();
+    if (parse_tree_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Returns information needed to check this unit.
@@ -460,7 +466,7 @@ class Driver::CompilationUnit {
   }
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
-  auto PostCheck() -> bool {
+  auto PostCheck() -> void {
     CARBON_CHECK(sem_ir_);
 
     // We've finished all steps that can produce diagnostics. Emit the
@@ -484,7 +490,9 @@ class Driver::CompilationUnit {
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
                         driver_->output_stream_);
     }
-    return !sem_ir_->has_errors();
+    if (sem_ir_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Lower SemIR to LLVM IR.
@@ -508,11 +516,26 @@ class Driver::CompilationUnit {
     }
   }
 
-  // Do codegen. Returns true on success.
-  auto RunCodeGen() -> bool {
+  auto RunCodeGen() -> void {
     CARBON_CHECK(module_);
+    LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
+  }
 
-    CARBON_VLOG() << "*** CodeGen ***\n";
+  // Flushes output.
+  auto Flush() -> void { consumer_->Flush(); }
+
+  auto PrintSharedValues() const -> void {
+    Yaml::Print(driver_->output_stream_,
+                value_stores_.OutputYaml(input_file_name_));
+  }
+
+  auto input_file_name() -> llvm::StringRef { return input_file_name_; }
+  auto success() -> bool { return success_; }
+  auto has_source() -> bool { return source_.has_value(); }
+
+ private:
+  // Do codegen. Returns true on success.
+  auto RunCodeGenHelper() -> bool {
     std::optional<CodeGen> codegen =
         CodeGen::Make(*module_, options_.target, driver_->error_stream_);
     if (!codegen) {
@@ -577,21 +600,9 @@ class Driver::CompilationUnit {
         }
       }
     }
-    CARBON_VLOG() << "*** CodeGen done ***\n";
     return true;
   }
 
-  // Flushes output.
-  auto Flush() -> void { consumer_->Flush(); }
-
-  auto PrintSharedValues() const -> void {
-    Yaml::Print(driver_->output_stream_,
-                value_stores_.OutputYaml(input_file_name_));
-  }
-
-  auto has_source() -> bool { return source_.has_value(); }
-
- private:
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
       -> void {
@@ -613,6 +624,8 @@ class Driver::CompilationUnit {
   std::optional<SortingDiagnosticConsumer> sorting_consumer_;
   DiagnosticConsumer* consumer_;
 
+  bool success_ = true;
+
   // These are initialized as steps are run.
   std::optional<SourceBuffer> source_;
   std::optional<Lex::TokenizedBuffer> tokens_;
@@ -622,12 +635,21 @@ class Driver::CompilationUnit {
   std::unique_ptr<llvm::Module> module_;
 };
 
-auto Driver::Compile(const CompileOptions& options) -> bool {
+auto Driver::Compile(const CompileOptions& options) -> RunResult {
   if (!ValidateCompileOptions(options)) {
-    return false;
+    return {.success = false};
   }
 
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  auto make_result = [&]() {
+    RunResult result = {.success = true};
+    for (const auto& unit : units) {
+      result.success &= unit->success();
+      result.per_file_success.push_back(
+          {unit->input_file_name(), unit->success()});
+    }
+    return result;
+  };
   auto flush = llvm::make_scope_exit([&]() {
     // The diagnostics consumer must be flushed before compilation artifacts are
     // destructed, because diagnostics can refer to their state. This ensures
@@ -650,12 +672,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
 
   // Lex.
-  bool success_before_lower = true;
   for (auto& unit : units) {
-    success_before_lower &= unit->RunLex();
+    unit->RunLex();
   }
   if (options.phase == CompileOptions::Phase::Lex) {
-    return success_before_lower;
+    return make_result();
   }
   // Parse and check phases examine `has_source` because they want to proceed if
   // lex failed, but not if source doesn't exist. Later steps are skipped if
@@ -664,11 +685,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   // Parse.
   for (auto& unit : units) {
     if (unit->has_source()) {
-      success_before_lower &= unit->RunParse();
+      unit->RunParse();
     }
   }
   if (options.phase == CompileOptions::Phase::Parse) {
-    return success_before_lower;
+    return make_result();
   }
 
   // Check.
@@ -686,17 +707,18 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {
-      success_before_lower &= unit->PostCheck();
+      unit->PostCheck();
     }
   }
   if (options.phase == CompileOptions::Phase::Check) {
-    return success_before_lower;
+    return make_result();
   }
 
   // Unlike previous steps, errors block further progress.
-  if (!success_before_lower) {
+  if (std::any_of(units.begin(), units.end(),
+                  [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG() << "*** Stopping before lowering due to errors ***";
-    return false;
+    return make_result();
   }
 
   // Lower.
@@ -704,17 +726,16 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     unit->RunLower();
   }
   if (options.phase == CompileOptions::Phase::Lower) {
-    return true;
+    return make_result();
   }
   CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen)
       << "CodeGen should be the last stage";
 
   // Codegen.
-  bool codegen_success = true;
   for (auto& unit : units) {
-    codegen_success &= unit->RunCodeGen();
+    unit->RunCodeGen();
   }
-  return codegen_success;
+  return make_result();
 }
 
 }  // namespace Carbon

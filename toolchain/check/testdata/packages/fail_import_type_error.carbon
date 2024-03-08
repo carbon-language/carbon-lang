@@ -4,23 +4,23 @@
 //
 // AUTOUPDATE
 
-// --- implicit.carbon
+// --- fail_implicit.carbon
 
 package Implicit api;
 
-// CHECK:STDERR: implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
 // CHECK:STDERR: var a_ref: x;
 // CHECK:STDERR:            ^
 var a_ref: x;
-// CHECK:STDERR: implicit.carbon:[[@LINE+3]]:18: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:18: ERROR: Name `x` not found.
 // CHECK:STDERR: var b_ref: {.a = x};
 // CHECK:STDERR:                  ^
 var b_ref: {.a = x};
-// CHECK:STDERR: implicit.carbon:[[@LINE+3]]:13: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:13: ERROR: Name `x` not found.
 // CHECK:STDERR: var c_ref: (x,);
 // CHECK:STDERR:             ^
 var c_ref: (x,);
-// CHECK:STDERR: implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
 var d_ref: x*;
@@ -36,7 +36,7 @@ var b: i32 = b_ref;
 var c: i32 = c_ref;
 var d: i32 = d_ref;
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {

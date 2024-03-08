@@ -26,9 +26,19 @@ class ToolchainFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
-           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
     Driver driver(fs, stdout, stderr);
-    return driver.RunCommand(test_args);
+    auto driver_result = driver.RunCommand(test_args);
+    if (std::find(test_args.begin(), test_args.end(), "%s") ==
+        test_args.end()) {
+      // Files weren't forwarded as an argument, so don't use per_file_success.
+      // This primarily occurs in driver tests with invalid filename arguments,
+      // which we wouldn't want to try validating.
+      return {{.success = driver_result.success}};
+    } else {
+      return {{.success = driver_result.success,
+               .per_file_success = std::move(driver_result.per_file_success)}};
+    }
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {

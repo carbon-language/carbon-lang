@@ -28,7 +28,7 @@ class ExplorerFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
-           llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> override {
+           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
         llvm::MemoryBuffer::getFile("explorer/data/prelude.carbon");
@@ -53,7 +53,7 @@ class ExplorerFileTest : public FileTestBase {
         args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
         stderr, check_trace_output() ? stdout : trace_stream_, fs);
 
-    return exit_code == EXIT_SUCCESS;
+    return {{.success = exit_code == EXIT_SUCCESS}};
   }
 
   auto ValidateRun() -> void override {

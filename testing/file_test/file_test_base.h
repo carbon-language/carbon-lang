@@ -39,6 +39,30 @@ class FileTestBase : public testing::Test {
   // Provided for child class convenience.
   using LineNumberReplacement = FileTestAutoupdater::LineNumberReplacement;
 
+  // The result of Run(), used to detect errors. Failing test files should be
+  // named with a `fail_` prefix to indicate an expectation of failure.
+  //
+  // If per_file_success is empty:
+  // - The main file has a `fail_` prefix if !success.
+  // - The prefix of split files is unused.
+  //
+  // If per_file_success is non-empty:
+  // - Each file has a `fail_` prefix if !per_file_success[i].second.
+  //   - Files may be in per_file_success that aren't part of the main test
+  //     file. This allows tracking success in handling files that are
+  //     well-known, such as standard libraries. It is still the responsibility
+  //     of callers to use a `fail_` prefix if !per_file_success[i].second.
+  // - If any file has a `fail_` prefix, success must be false, and the prefix
+  //   of the main file is unused.
+  // - If no file has a `fail_` prefix, the main file has a `fail_` prefix if
+  //   !success.
+  struct RunResult {
+    bool success;
+
+    // Per-file success results. May be empty.
+    llvm::SmallVector<std::pair<llvm::StringRef, bool>> per_file_success;
+  };
+
   explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}
 
   // Implemented by children to run the test. For example, TestBody validates
@@ -47,13 +71,12 @@ class FileTestBase : public testing::Test {
   //
   // Any test expectations should be called from ValidateRun, not Run.
   //
-  // The return value should be an error if there was an abnormal error. It
-  // should be true if a binary would return EXIT_SUCCESS, and false for
-  // EXIT_FAILURE (which is a test success for `fail_*` tests).
+  // The return value should be an error if there was an abnormal error, and
+  // RunResult otherwise.
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
                    llvm::vfs::InMemoryFileSystem& fs,
                    llvm::raw_pwrite_stream& stdout,
-                   llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> = 0;
+                   llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> = 0;
 
   // Implemented by children to do post-Run test expectations. Only called when
   // testing. Does not need to be provided if only CHECK test expectations are
@@ -130,8 +153,7 @@ class FileTestBase : public testing::Test {
     llvm::SmallString<16> stdout;
     llvm::SmallString<16> stderr;
 
-    // Whether Run exited with success.
-    bool exit_with_success = false;
+    RunResult run_result = {.success = false};
   };
 
   // Processes the test file and runs the test. Returns an error if something

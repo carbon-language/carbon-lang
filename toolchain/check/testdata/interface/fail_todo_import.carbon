@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
 
 // --- a.carbon
 
@@ -33,7 +33,7 @@ interface ForwardDeclared {
 
 var f_ref: {.f: ForwardDeclared};
 
-// --- b.carbon
+// --- fail_b.carbon
 
 library "b" api;
 
@@ -127,7 +127,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
