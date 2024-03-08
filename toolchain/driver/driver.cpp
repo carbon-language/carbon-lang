@@ -503,7 +503,8 @@ class Driver::CompilationUnit {
                      /*IsForDebug=*/true);
     }
     if (options_.dump_llvm_ir) {
-      module_->print(driver_->output_stream_, /*AAW=*/nullptr, /*ShouldPreserveUsListOrder=*/true);
+      module_->print(driver_->output_stream_, /*AAW=*/nullptr,
+                     /*ShouldPreserveUsListOrder=*/true);
     }
   }
 
