@@ -13,13 +13,14 @@
 
 namespace Carbon::Check {
 
+// Adds the location of the associated function to a diagnostic.
 static auto NoteAssociatedFunction(Context& context,
                                    Context::DiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
                     "Associated function {0} declared here.", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(context.insts().GetParseNode(function.decl_id),
+  builder.Note(function.decl_id,
                ImplAssociatedFunctionHere, function.name_id);
 }
 
@@ -37,7 +38,7 @@ static auto CheckAssociatedFunctionImplementation(
                       "Associated function {0} implemented by non-function.",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
-        context.insts().GetParseNode(impl_decl_id), ImplFunctionWithNonFunction,
+        impl_decl_id, ImplFunctionWithNonFunction,
         context.functions().Get(interface_function_id).name_id);
     NoteAssociatedFunction(context, builder, interface_function_id);
     builder.Emit();
@@ -66,7 +67,7 @@ static auto BuildInterfaceWitness(
                       "Implementation of undefined interface {0}.",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
-        context.insts().GetParseNode(impl.definition_id),
+        impl.definition_id,
         ImplOfUndefinedInterface, interface.name_id);
     context.NoteUndefinedInterface(interface_id, builder);
     builder.Emit();
@@ -96,7 +97,7 @@ static auto BuildInterfaceWitness(
             "Missing implementation of {0} in impl of interface {1}.",
             SemIR::NameId, SemIR::NameId);
         auto builder = context.emitter().Build(
-            context.insts().GetParseNode(impl.definition_id),
+            impl.definition_id,
             ImplMissingFunction, fn.name_id, interface.name_id);
         NoteAssociatedFunction(context, builder, fn_decl->function_id);
         builder.Emit();
