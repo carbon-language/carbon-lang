@@ -20,8 +20,7 @@ static auto NoteAssociatedFunction(Context& context,
   CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
                     "Associated function {0} declared here.", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.decl_id,
-               ImplAssociatedFunctionHere, function.name_id);
+  builder.Note(function.decl_id, ImplAssociatedFunctionHere, function.name_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function
@@ -67,8 +66,7 @@ static auto BuildInterfaceWitness(
                       "Implementation of undefined interface {0}.",
                       SemIR::NameId);
     auto builder = context.emitter().Build(
-        impl.definition_id,
-        ImplOfUndefinedInterface, interface.name_id);
+        impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
     context.NoteUndefinedInterface(interface_id, builder);
     builder.Emit();
     return SemIR::InstId::BuiltinError;
@@ -96,9 +94,9 @@ static auto BuildInterfaceWitness(
             ImplMissingFunction, Error,
             "Missing implementation of {0} in impl of interface {1}.",
             SemIR::NameId, SemIR::NameId);
-        auto builder = context.emitter().Build(
-            impl.definition_id,
-            ImplMissingFunction, fn.name_id, interface.name_id);
+        auto builder =
+            context.emitter().Build(impl.definition_id, ImplMissingFunction,
+                                    fn.name_id, interface.name_id);
         NoteAssociatedFunction(context, builder, fn_decl->function_id);
         builder.Emit();
 
