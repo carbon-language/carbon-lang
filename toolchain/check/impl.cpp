@@ -62,22 +62,30 @@ static auto BuildInterfaceWitness(
     llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_id);
   if (!interface.is_defined()) {
-    context.TODO(context.insts().GetParseNode(impl.definition_id),
-                 "impl of non-defined interface");
+    CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
+                      "Implementation of undefined interface {0}.",
+                      SemIR::NameId);
+    auto builder = context.emitter().Build(
+        context.insts().GetParseNode(impl.definition_id),
+        ImplOfUndefinedInterface, interface.name_id);
+    context.NoteUndefinedInterface(interface_id, builder);
+    builder.Emit();
     return SemIR::InstId::BuiltinError;
   }
 
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
 
   llvm::SmallVector<SemIR::InstId, 32> table;
-  auto assoc_entities = context.inst_blocks().Get(interface.associated_entities_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
   table.reserve(assoc_entities.size());
 
   for (auto decl_id : assoc_entities) {
     auto decl = context.insts().Get(decl_id);
     if (auto fn_decl = decl.TryAs<SemIR::FunctionDecl>()) {
       auto& fn = context.functions().Get(fn_decl->function_id);
-      auto impl_decl_id = context.LookupNameInExactScope(fn.name_id, impl_scope);
+      auto impl_decl_id =
+          context.LookupNameInExactScope(fn.name_id, impl_scope);
       if (impl_decl_id.is_valid()) {
         used_decl_ids.push_back(impl_decl_id);
         table.push_back(CheckAssociatedFunctionImplementation(
@@ -112,7 +120,7 @@ static auto BuildInterfaceWitness(
 }
 
 auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
-	-> SemIR::InstId {
+    -> SemIR::InstId {
   auto& impl = context.impls().Get(impl_id);
   CARBON_CHECK(impl.is_being_defined());
 
@@ -127,8 +135,8 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
 
   llvm::SmallVector<SemIR::InstId, 32> used_decl_ids;
 
-  auto witness_id =
-      BuildInterfaceWitness(context, impl, interface_type->interface_id, used_decl_ids);
+  auto witness_id = BuildInterfaceWitness(
+      context, impl, interface_type->interface_id, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 
