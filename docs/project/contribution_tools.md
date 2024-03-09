@@ -107,12 +107,9 @@ brew install \
   bazelisk \
   gh \
   llvm \
-  python@3.10
+  pre-commit
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
-
-# Install pre-commit.
-pip3 install pre-commit
 
 # Set up git.
 gh repo fork --clone carbon-language/carbon-lang
