@@ -402,14 +402,13 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::RecoverFromDeclError(StateStackEntry state,
-                                   NodeKind parse_node_kind,
+auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
     token = SkipPastLikelyEnd(token);
   }
-  AddNode(parse_node_kind, token, state.subtree_start,
+  AddNode(node_kind, token, state.subtree_start,
           /*has_error=*/true);
 }
 

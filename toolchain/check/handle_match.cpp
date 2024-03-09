@@ -8,88 +8,86 @@
 namespace Carbon::Check {
 
 auto HandleMatchConditionStart(Context& context,
-                               Parse::MatchConditionStartId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleMatchConditionStart");
+                               Parse::MatchConditionStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchConditionStart");
 }
 
-auto HandleMatchCondition(Context& context, Parse::MatchConditionId parse_node)
+auto HandleMatchCondition(Context& context, Parse::MatchConditionId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchCondition");
+  return context.TODO(node_id, "HandleMatchCondition");
 }
 
-auto HandleMatchIntroducer(Context& context,
-                           Parse::MatchIntroducerId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleMatchIntroducer");
+auto HandleMatchIntroducer(Context& context, Parse::MatchIntroducerId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleMatchIntroducer");
 }
 
 auto HandleMatchStatementStart(Context& context,
-                               Parse::MatchStatementStartId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleMatchStatementStart");
+                               Parse::MatchStatementStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchStatementStart");
 }
 
 auto HandleMatchCaseIntroducer(Context& context,
-                               Parse::MatchCaseIntroducerId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseIntroducer");
+                               Parse::MatchCaseIntroducerId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchCaseIntroducer");
 }
 
-auto HandleMatchCaseGuardIntroducer(
-    Context& context, Parse::MatchCaseGuardIntroducerId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseGuardIntroducer");
+auto HandleMatchCaseGuardIntroducer(Context& context,
+                                    Parse::MatchCaseGuardIntroducerId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleMatchCaseGuardIntroducer");
 }
 
 auto HandleMatchCaseGuardStart(Context& context,
-                               Parse::MatchCaseGuardStartId parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseGuardStart");
+                               Parse::MatchCaseGuardStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchCaseGuardStart");
 }
 
-auto HandleMatchCaseGuard(Context& context, Parse::MatchCaseGuardId parse_node)
+auto HandleMatchCaseGuard(Context& context, Parse::MatchCaseGuardId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseGuard");
+  return context.TODO(node_id, "HandleMatchCaseGuard");
 }
 
 auto HandleMatchCaseEqualGreater(Context& context,
-                                 Parse::MatchCaseEqualGreaterId parse_node)
+                                 Parse::MatchCaseEqualGreaterId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseEqualGreater");
+  return context.TODO(node_id, "HandleMatchCaseEqualGreater");
 }
 
-auto HandleMatchCaseStart(Context& context, Parse::MatchCaseStartId parse_node)
+auto HandleMatchCaseStart(Context& context, Parse::MatchCaseStartId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchCaseStart");
+  return context.TODO(node_id, "HandleMatchCaseStart");
 }
 
-auto HandleMatchCase(Context& context, Parse::MatchCaseId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleMatchCase");
+auto HandleMatchCase(Context& context, Parse::MatchCaseId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchCase");
 }
 
 auto HandleMatchDefaultIntroducer(Context& context,
-                                  Parse::MatchDefaultIntroducerId parse_node)
+                                  Parse::MatchDefaultIntroducerId node_id)
     -> bool {
-  return context.TODO(parse_node, "MatchDefaultIntroducer");
+  return context.TODO(node_id, "MatchDefaultIntroducer");
 }
 
-auto HandleMatchDefaultEqualGreater(
-    Context& context, Parse::MatchDefaultEqualGreaterId parse_node) -> bool {
-  return context.TODO(parse_node, "MatchDefaultEqualGreater");
+auto HandleMatchDefaultEqualGreater(Context& context,
+                                    Parse::MatchDefaultEqualGreaterId node_id)
+    -> bool {
+  return context.TODO(node_id, "MatchDefaultEqualGreater");
 }
 
 auto HandleMatchDefaultStart(Context& context,
-                             Parse::MatchDefaultStartId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleMatchDefaultStart");
+                             Parse::MatchDefaultStartId node_id) -> bool {
+  return context.TODO(node_id, "HandleMatchDefaultStart");
 }
 
-auto HandleMatchDefault(Context& context, Parse::MatchDefaultId parse_node)
+auto HandleMatchDefault(Context& context, Parse::MatchDefaultId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchDefault");
+  return context.TODO(node_id, "HandleMatchDefault");
 }
 
-auto HandleMatchStatement(Context& context, Parse::MatchStatementId parse_node)
+auto HandleMatchStatement(Context& context, Parse::MatchStatementId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleMatchStatement");
+  return context.TODO(node_id, "HandleMatchStatement");
 }
 
 }  // namespace Carbon::Check

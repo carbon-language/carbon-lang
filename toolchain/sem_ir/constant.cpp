@@ -26,7 +26,7 @@ auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
 
   // Create the new inst and insert the new node.
   auto inst_id = constants_.getContext()->insts().AddInNoBlock(
-      ParseNodeAndInst::Untyped(Parse::NodeId::Invalid, inst));
+      NodeIdAndInst::Untyped(Parse::NodeId::Invalid, inst));
   auto constant_id = is_symbolic
                          ? SemIR::ConstantId::ForSymbolicConstant(inst_id)
                          : SemIR::ConstantId::ForTemplateConstant(inst_id);

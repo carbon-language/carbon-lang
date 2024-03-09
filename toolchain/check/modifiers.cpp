@@ -121,12 +121,12 @@ auto CheckMethodModifiersOnFunction(Context& context,
       if (inheritance_kind == SemIR::Class::Final) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                               " in a non-abstract non-base `class` definition",
-                              context.insts().GetParseNode(target_id));
+                              context.insts().GetNodeId(target_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                               " in a non-abstract `class` definition",
-                              context.insts().GetParseNode(target_id));
+                              context.insts().GetNodeId(target_id));
       }
       return;
     }

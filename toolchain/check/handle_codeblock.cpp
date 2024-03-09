@@ -6,18 +6,17 @@
 
 namespace Carbon::Check {
 
-auto HandleCodeBlockStart(Context& context, Parse::CodeBlockStartId parse_node)
+auto HandleCodeBlockStart(Context& context, Parse::CodeBlockStartId node_id)
     -> bool {
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   context.scope_stack().Push();
   return true;
 }
 
-auto HandleCodeBlock(Context& context, Parse::CodeBlockId /*parse_node*/)
-    -> bool {
+auto HandleCodeBlock(Context& context, Parse::CodeBlockId /*node_id*/) -> bool {
   context.scope_stack().Pop();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::CodeBlockStart>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::CodeBlockStart>();
   return true;
 }
 

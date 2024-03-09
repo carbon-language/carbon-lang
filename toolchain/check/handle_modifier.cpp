@@ -34,7 +34,7 @@ static auto EmitNotAllowedWithDiagnostic(Context& context,
       .Emit();
 }
 
-static auto HandleModifier(Context& context, Parse::NodeId parse_node,
+static auto HandleModifier(Context& context, Parse::NodeId node_id,
                            KeywordModifierSet keyword) -> bool {
   auto& s = context.decl_state_stack().innermost();
 
@@ -53,9 +53,9 @@ static auto HandleModifier(Context& context, Parse::NodeId parse_node,
 
   auto current_modifier_node_id = s.modifier_node_id(order);
   if (!!(s.modifier_set & keyword)) {
-    EmitRepeatedDiagnostic(context, current_modifier_node_id, parse_node);
+    EmitRepeatedDiagnostic(context, current_modifier_node_id, node_id);
   } else if (current_modifier_node_id.is_valid()) {
-    EmitNotAllowedWithDiagnostic(context, current_modifier_node_id, parse_node);
+    EmitNotAllowedWithDiagnostic(context, current_modifier_node_id, node_id);
   } else if (auto later_modifier_set = s.modifier_set & later_modifiers;
              !!later_modifier_set) {
     // At least one later modifier is present. Diagnose using the closest.
@@ -74,24 +74,23 @@ static auto HandleModifier(Context& context, Parse::NodeId parse_node,
                       "`{0}` must appear before `{1}`.", Lex::TokenKind,
                       Lex::TokenKind);
     context.emitter()
-        .Build(parse_node, ModifierMustAppearBefore,
-               context.token_kind(parse_node),
+        .Build(node_id, ModifierMustAppearBefore, context.token_kind(node_id),
                context.token_kind(closest_later_modifier))
         .Note(closest_later_modifier, ModifierPrevious,
               context.token_kind(closest_later_modifier))
         .Emit();
   } else {
     s.modifier_set |= keyword;
-    s.set_modifier_node_id(order, parse_node);
+    s.set_modifier_node_id(order, node_id);
   }
   return true;
 }
 
 #define CARBON_PARSE_NODE_KIND(...)
-#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                    \
-  auto Handle##Name##Modifier(Context& context,                             \
-                              Parse::Name##ModifierId parse_node) -> bool { \
-    return HandleModifier(context, parse_node, KeywordModifierSet::Name);   \
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...)                 \
+  auto Handle##Name##Modifier(Context& context,                          \
+                              Parse::Name##ModifierId node_id) -> bool { \
+    return HandleModifier(context, node_id, KeywordModifierSet::Name);   \
   }
 #include "toolchain/parse/node_kind.def"
 

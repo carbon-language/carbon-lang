@@ -826,10 +826,10 @@ struct VarStorage {
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {
 
-// HasParseNode is true if T has an associated parse node.
+// HasNodeId is true if T has an associated parse node.
 template <typename T>
-concept HasParseNode = !std::same_as<typename decltype(T::Kind)::TypedNodeId,
-                                     Parse::InvalidNodeId>;
+concept HasNodeId = !std::same_as<typename decltype(T::Kind)::TypedNodeId,
+                                  Parse::InvalidNodeId>;
 
 // HasKindMemberAsField<T> is true if T has a `InstKind kind` field, as opposed
 // to a `static constexpr InstKind::Definition Kind` member or no kind at all.
