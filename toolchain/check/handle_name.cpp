@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -89,25 +90,9 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
-    -> bool {
-  SemIR::NameId name_id = context.node_stack().PopName();
-  auto base_id = context.node_stack().PopExpr();
-
-  // If the base is a name scope, such as a class or namespace, perform lookup
-  // into that scope.
-  if (auto name_scope_id = GetAsNameScope(context, base_id)) {
-    auto inst_id =
-        name_scope_id->is_valid()
-            ? context.LookupQualifiedName(node_id, name_id, *name_scope_id)
-            : SemIR::InstId::BuiltinError;
-    auto inst = context.insts().Get(inst_id);
-    // TODO: Track that this instruction was named within `base_id`.
-    context.AddInstAndPush(
-        {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
-    return true;
-  }
-
+static auto AccessMember(Context& context, Parse::NodeId node_id,
+                         SemIR::NameId name_id, SemIR::InstId base_id)
+    -> SemIR::InstId {
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
   if (!context.TryToCompleteType(base_type_id, [&] {
@@ -117,8 +102,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_type_id);
       })) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
-    return true;
+    return SemIR::InstId::BuiltinError;
   }
 
   // Materialize a temporary for the base expression if necessary.
@@ -166,8 +150,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
           // matches the expression category of the base.
           access_id = ConvertToValueExpr(context, access_id);
         }
-        context.node_stack().Push(node_id, access_id);
-        return true;
+        return access_id;
       }
       if (member_type_id ==
           context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
@@ -184,20 +167,28 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
             << context.insts().Get(function_name_id.inst_id())
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
-          context.AddInstAndPush(
-              {node_id,
-               SemIR::BoundMethod{
-                   context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
-                   base_id, member_id}});
-          return true;
+          /*
+
+
+          toolchain/check/handle_name.cpp:170:18: error: no viable conversion
+          from returned value of type 'SemIR::BoundMethod' to function return
+          type 'SemIR::InstId' 170 |           return SemIR::BoundMethod{ |
+          ^~~~~~~~~~~~~~~~~~~ 171 |
+          context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType), |
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 172 |
+          base_id, member_id};
+
+          */
+
+          return SemIR::BoundMethod{
+              context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
+              base_id, member_id};
         }
       }
 
       // For a non-instance member, the result is that member.
       // TODO: Track that this was named within `base_id`.
-      context.AddInstAndPush(
-          {node_id, SemIR::NameRef{member_type_id, name_id, member_id}});
-      return true;
+      return SemIR::NameRef{member_type_id, name_id, member_id};
     }
     case SemIR::StructType::Kind: {
       auto refs = context.inst_blocks().Get(
@@ -206,10 +197,8 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
-          context.AddInstAndPush(
-              {node_id, SemIR::StructAccess{field.field_type_id, base_id,
-                                            SemIR::ElementIndex(i)}});
-          return true;
+          return SemIR::StructAccess{field.field_type_id, base_id,
+                                     SemIR::ElementIndex(i)};
         }
       }
       CARBON_DIAGNOSTIC(QualifiedExprNameNotFound, Error,
@@ -234,14 +223,81 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+  return SemIR::InstId::BuiltinError;
+}
+
+auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
+    -> bool {
+  SemIR::NameId name_id = context.node_stack().PopName();
+  SemIR::InstId base_id = context.node_stack().PopExpr();
+
+  // If the base is a name scope, such as a class or namespace, perform lookup
+  // into that scope.
+  if (auto name_scope_id = GetAsNameScope(context, base_id)) {
+    auto inst_id =
+        name_scope_id->is_valid()
+            ? context.LookupQualifiedName(node_id, name_id, *name_scope_id)
+            : SemIR::InstId::BuiltinError;
+    auto inst = context.insts().Get(inst_id);
+    // TODO: Track that this instruction was named within `base_id`.
+    context.AddInstAndPush(
+        {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
+    return true;
+  }
+
+  base_id = AccessMember(context, node_id, name_id, base_id);
+  if (base_id == SemIR::InstId::BuiltinError) {
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+  } else {
+    context.AddInstAndPush({node_id, base_id});
+  }
+  return true;
+}
+
+static auto FollowReference(Context& context, Parse::NodeId node_id,
+                            SemIR::InstId expr_id) -> SemIR::InstId {
+  expr_id = ConvertToValueExpr(context, expr_id);
+  auto type_id =
+      context.GetUnqualifiedType(context.insts().Get(expr_id).type_id());
+  auto result_type_id = SemIR::TypeId::Error;
+  if (auto pointer_type =
+          context.types().TryGetAs<SemIR::PointerType>(type_id)) {
+    result_type_id = pointer_type->pointee_id;
+  } else if (type_id != SemIR::TypeId::Error) {
+    CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
+                      "Cannot dereference operand of non-pointer type `{0}`.",
+                      SemIR::TypeId);
+    auto builder =
+        context.emitter().Build(TokenOnly(node_id), DerefOfNonPointer, type_id);
+    // TODO: Check for any facet here, rather than only a type.
+    if (type_id == SemIR::TypeId::TypeType) {
+      CARBON_DIAGNOSTIC(
+          DerefOfType, Note,
+          "To form a pointer type, write the `*` after the pointee type.");
+      builder.Note(TokenOnly(node_id), DerefOfType);
+    }
+    builder.Emit();
+  }
+  return SemIR::Deref{result_type_id, expr_id};
+}
+
+auto HandlePrefixOperatorStar(Context& context,
+                              Parse::PrefixOperatorStarId node_id) -> bool {
+  SemIR::InstId expr_id = context.node_stack().PopExpr();
+  expr_id = FollowReference(context, node_id, expr_id);
+  context.AddInstAndPush({node_id, expr_id});
   return true;
 }
 
 auto HandlePointerMemberAccessExpr(Context& context,
                                    Parse::PointerMemberAccessExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandlePointerMemberAccessExpr");
+  SemIR::NameId name_id = context.node_stack().PopName();
+  SemIR::InstId expr_id = context.node_stack().PopExpr();
+  expr_id = FollowReference(context, node_id, expr_id);
+  auto member_value_id = AccessMember(context, node_id, name_id, expr_id);
+  context.node_stack().Push(node_id, member_value_id);
+  return true;
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
