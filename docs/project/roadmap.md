@@ -52,8 +52,8 @@ This goal is not necessarily about complete support for the entire language
 design, but rather enough of it to support building the realistic and
 interesting Carbon code that interoperates with C++.
 
-Some example language features that we think are key to success here but far
-from an exhaustive list:
+Here are some example language features that we think are key to success, but
+this is far from an exhaustive list:
 
 -   Imports and a working [prelude] (the earliest stages of a standard library)
 -   Operator overloading and dispatch for expressions
@@ -125,9 +125,9 @@ subsequent years.
 As we adjust our schedule and roadmap to reflect the realistic rate of progress,
 the _earliest_ it seems feasible to have everything we need to evaluate the 0.1
 language is 2025. We're starting to be optimistic in 2024 that we'll be able to
-hit this in 2025, but ultimately this remains a lower bound. We may discover as
-we progress things that further push out the schedule here. That is the nature
-of an experimental project like Carbon.
+hit this in 2025, but ultimately this remains a lower bound. As we progress, we
+may discover things that push the schedule out further. That is the nature of an
+experimental project like Carbon.
 
 We expect that once we reach this milestone the community will be able to start
 realistically evaluating Carbon as a C++ successor language. Of course, this
