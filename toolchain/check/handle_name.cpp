@@ -89,8 +89,7 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
-    -> bool {
+static auto AccessMember(Context& context, Parse::NodeId node_id) -> bool {
   SemIR::NameId name_id = context.node_stack().PopName();
   auto base_id = context.node_stack().PopExpr();
 
@@ -185,7 +184,7 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
             << " of function type";
         if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
           context.AddInstAndPush(
-              {node_id,
+              {Parse::MemberAccessExprId{node_id},
                SemIR::BoundMethod{
                    context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
                    base_id, member_id}});
@@ -238,10 +237,52 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
   return true;
 }
 
+auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
+    -> bool {
+  return AccessMember(context, node_id);
+}
+
+static auto FollowReference(Context& context, Parse::NodeId node_id) -> bool {
+  auto value_id = context.node_stack().PopExpr();
+  value_id = ConvertToValueExpr(context, value_id);
+  auto type_id =
+      context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
+  auto result_type_id = SemIR::TypeId::Error;
+  if (auto pointer_type =
+          context.types().TryGetAs<SemIR::PointerType>(type_id)) {
+    result_type_id = pointer_type->pointee_id;
+  } else if (type_id != SemIR::TypeId::Error) {
+    CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
+                      "Cannot dereference operand of non-pointer type `{0}`.",
+                      SemIR::TypeId);
+    auto builder =
+        context.emitter().Build(TokenOnly(node_id), DerefOfNonPointer, type_id);
+    // TODO: Check for any facet here, rather than only a type.
+    if (type_id == SemIR::TypeId::TypeType) {
+      CARBON_DIAGNOSTIC(
+          DerefOfType, Note,
+          "To form a pointer type, write the `*` after the pointee type.");
+      builder.Note(TokenOnly(node_id), DerefOfType);
+    }
+    builder.Emit();
+  }
+  context.AddInstAndPush({node_id, SemIR::Deref{result_type_id, value_id}});
+  return true;
+}
+
+auto HandlePrefixOperatorStar(Context& context,
+                              Parse::PrefixOperatorStarId node_id) -> bool {
+  return FollowReference(context, node_id);
+}
+
 auto HandlePointerMemberAccessExpr(Context& context,
                                    Parse::PointerMemberAccessExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandlePointerMemberAccessExpr");
+  if (!FollowReference(context, node_id)) {
+    return false;
+  }
+
+  return AccessMember(context, node_id);
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
