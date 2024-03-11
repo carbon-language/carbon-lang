@@ -107,6 +107,7 @@ brew install \
   bazelisk \
   gh \
   llvm \
+  python@3.10 \
   pre-commit
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
