@@ -217,11 +217,6 @@ auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                  SemIR::Import inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleImportRefUnused(FunctionContext& /*context*/,
                            SemIR::InstId /*inst_id*/,
                            SemIR::ImportRefUnused inst) -> void {

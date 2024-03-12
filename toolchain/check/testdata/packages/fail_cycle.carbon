@@ -50,25 +50,34 @@ import B;
 // CHECK:STDOUT: --- fail_a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B: <namespace> = namespace [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %C: <namespace> = bind_name C, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C: <namespace> = namespace [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %A: <namespace> = bind_name A, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <namespace> = namespace [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_c.impl.carbon
@@ -82,8 +91,11 @@ import B;
 // CHECK:STDOUT: --- fail_cycle_child.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %B: <namespace> = bind_name B, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B: <namespace> = namespace [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

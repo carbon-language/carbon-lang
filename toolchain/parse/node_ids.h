@@ -91,6 +91,7 @@ using AnyFunctionDeclId =
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDirectiveId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

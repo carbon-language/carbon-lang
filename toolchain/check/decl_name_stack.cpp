@@ -214,6 +214,19 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
+      auto& scope = context_->name_scopes().Get(scope_id);
+      if (scope.is_closed_import) {
+        CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
+                          "Imported packages cannot be used for declarations.");
+        CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
+                          "Package imported here.");
+        context_->emitter()
+            .Build(name_context.node_id, QualifiedDeclOutsidePackage)
+            .Note(scope.inst_id, QualifiedDeclOutsidePackageSource)
+            .Emit();
+        // Only error once per package.
+        scope.is_closed_import = false;
+      }
       if (!is_unqualified) {
         PushNameQualifierScope(*context_, name_context.resolved_inst_id,
                                scope_id,

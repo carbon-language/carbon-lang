@@ -57,7 +57,7 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    NodeId node;
+    ImportDirectiveId node_id;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralValueId library_id = StringLiteralValueId::Invalid;
   };
