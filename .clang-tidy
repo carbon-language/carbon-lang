@@ -19,6 +19,9 @@ WarningsAsErrors: '*'
 # - bugprone-switch-missing-default-case has false positives for `enum_base.h`.
 #   Clang's built-in switch warnings cover most of our risk of bugs here.
 # - google-readability-function-size overlaps with readability-function-size.
+# - modernize-use-designated-initializers is disabled because it fires on
+#   creation of SemIR typed insts, for which we do not currently want to use
+#   designated initialization.
 # - modernize-use-nodiscard is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.
 # - performance-unnecessary-value-param is disabled because it duplicate
