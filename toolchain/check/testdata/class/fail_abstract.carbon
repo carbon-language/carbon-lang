@@ -103,11 +103,14 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT: fn @Access(%d: Derived) -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc26_11: Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc26_12: <unbound element of class Derived> = name_ref d, @Derived.%.loc14 [template = @Derived.%.loc14]
 // CHECK:STDOUT:   %.loc26_12.1: ref i32 = class_element_access %d.ref.loc26_11, element1
 // CHECK:STDOUT:   %.loc26_12.2: i32 = bind_value %.loc26_12.1
 // CHECK:STDOUT:   %d.ref.loc26_16: Derived = name_ref d, %d
+// CHECK:STDOUT:   %base.ref: <unbound element of class Derived> = name_ref base, @Derived.%.loc12 [template = @Derived.%.loc12]
 // CHECK:STDOUT:   %.loc26_17.1: ref Abstract = class_element_access %d.ref.loc26_16, element0
 // CHECK:STDOUT:   %.loc26_17.2: Abstract = bind_value %.loc26_17.1
+// CHECK:STDOUT:   %a.ref: <unbound element of class Abstract> = name_ref a, @Abstract.%.loc8 [template = @Abstract.%.loc8]
 // CHECK:STDOUT:   %.loc26_22.1: ref i32 = class_element_access %.loc26_17.2, element0
 // CHECK:STDOUT:   %.loc26_22.2: i32 = bind_value %.loc26_22.1
 // CHECK:STDOUT:   %.loc26_24.1: (i32, i32) = tuple_literal (%.loc26_12.2, %.loc26_22.2)

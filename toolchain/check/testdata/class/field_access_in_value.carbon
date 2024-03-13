@@ -54,10 +54,12 @@ fn Test() {
 // CHECK:STDOUT:   %cv.var: ref Class = var cv
 // CHECK:STDOUT:   %cv: ref Class = bind_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc14: ref Class = name_ref cv, %cv
+// CHECK:STDOUT:   %j.ref.loc14: <unbound element of class Class> = name_ref j, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc14_5: ref i32 = class_element_access %cv.ref.loc14, element0
 // CHECK:STDOUT:   %.loc14_10: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   assign %.loc14_5, %.loc14_10
 // CHECK:STDOUT:   %cv.ref.loc15: ref Class = name_ref cv, %cv
+// CHECK:STDOUT:   %k.ref.loc15: <unbound element of class Class> = name_ref k, @Class.%.loc9 [template = @Class.%.loc9]
 // CHECK:STDOUT:   %.loc15_5: ref i32 = class_element_access %cv.ref.loc15, element1
 // CHECK:STDOUT:   %.loc15_10: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   assign %.loc15_5, %.loc15_10
@@ -68,12 +70,14 @@ fn Test() {
 // CHECK:STDOUT:   %cj.var: ref i32 = var cj
 // CHECK:STDOUT:   %cj: ref i32 = bind_name cj, %cj.var
 // CHECK:STDOUT:   %c.ref.loc17: Class = name_ref c, %c
+// CHECK:STDOUT:   %j.ref.loc17: <unbound element of class Class> = name_ref j, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc17_18.1: ref i32 = class_element_access %c.ref.loc17, element0
 // CHECK:STDOUT:   %.loc17_18.2: i32 = bind_value %.loc17_18.1
 // CHECK:STDOUT:   assign %cj.var, %.loc17_18.2
 // CHECK:STDOUT:   %ck.var: ref i32 = var ck
 // CHECK:STDOUT:   %ck: ref i32 = bind_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc18: Class = name_ref c, %c
+// CHECK:STDOUT:   %k.ref.loc18: <unbound element of class Class> = name_ref k, @Class.%.loc9 [template = @Class.%.loc9]
 // CHECK:STDOUT:   %.loc18_18.1: ref i32 = class_element_access %c.ref.loc18, element1
 // CHECK:STDOUT:   %.loc18_18.2: i32 = bind_value %.loc18_18.1
 // CHECK:STDOUT:   assign %ck.var, %.loc18_18.2

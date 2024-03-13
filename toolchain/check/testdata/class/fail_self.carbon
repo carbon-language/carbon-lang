@@ -135,7 +135,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: WrongSelf = name_ref ws, %ws
-// CHECK:STDOUT:   %.loc50_5: <bound method> = bound_method %ws.ref, @WrongSelf.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @WrongSelf.%F [template = @WrongSelf.%F]
+// CHECK:STDOUT:   %.loc50_5: <bound method> = bound_method %ws.ref, %F.ref
 // CHECK:STDOUT:   %.loc50_7: init () = call %.loc50_5(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

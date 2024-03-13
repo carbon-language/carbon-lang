@@ -77,6 +77,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Class = name_ref self, %self
+// CHECK:STDOUT:   %n.ref: <unbound element of class Class> = name_ref n, @Class.%.loc11 [template = @Class.%.loc11]
 // CHECK:STDOUT:   %.loc15_14.1: ref i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc15_14.2: i32 = bind_value %.loc15_14.1
 // CHECK:STDOUT:   return %.loc15_14.2
@@ -86,6 +87,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Class* = name_ref self, %self
 // CHECK:STDOUT:   %.loc19_11: ref Class = deref %self.ref
+// CHECK:STDOUT:   %n.ref: <unbound element of class Class> = name_ref n, @Class.%.loc11 [template = @Class.%.loc11]
 // CHECK:STDOUT:   %.loc19_17.1: ref i32 = class_element_access %.loc19_11, element0
 // CHECK:STDOUT:   %.loc19_17.2: i32 = bind_value %.loc19_17.1
 // CHECK:STDOUT:   return %.loc19_17.2

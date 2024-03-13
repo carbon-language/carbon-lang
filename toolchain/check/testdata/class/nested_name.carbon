@@ -71,6 +71,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @F(%oi: Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: Inner = name_ref oi, %oi
+// CHECK:STDOUT:   %n.ref: <unbound element of class Inner> = name_ref n, @Inner.%.loc9 [template = @Inner.%.loc9]
 // CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc14_12.2: i32 = bind_value %.loc14_12.1
 // CHECK:STDOUT:   return %.loc14_12.2

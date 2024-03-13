@@ -67,7 +67,8 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     return GetFunction(function_decl->function_id);
   }
 
-  if (target.Is<SemIR::AssociatedEntity>()) {
+  if (target.Is<SemIR::AssociatedEntity>() || target.Is<SemIR::FieldDecl>() ||
+      target.Is<SemIR::BaseDecl>()) {
     return llvm::ConstantStruct::getAnon(llvm_context(), {});
   }
 

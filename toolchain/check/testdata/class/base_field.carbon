@@ -87,6 +87,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc21_12.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %c.ref: <unbound element of class Base> = name_ref c, @Base.%.loc10 [template = @Base.%.loc10]
 // CHECK:STDOUT:   %.loc21_15.1: ref Base = class_element_access %.loc21_12.1, element0
 // CHECK:STDOUT:   %.loc21_12.2: ref Base = converted %.loc21_12.1, %.loc21_15.1
 // CHECK:STDOUT:   %.loc21_15.2: ref i32 = class_element_access %.loc21_12.2, element2

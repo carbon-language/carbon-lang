@@ -54,6 +54,10 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
     }
     return interface_info.scope_id;
   }
+  // TODO: Per the design, if `base_id` is any kind of type, then lookup should
+  // treat it as a name scope, even if it doesn't have members. For example,
+  // `(i32*).X` should fail because there's no name `X` in `i32*`, not because
+  // there's no name `X` in `type`.
   return std::nullopt;
 }
 
@@ -87,20 +91,88 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
+static auto LookupMemberNameInScope(
+    Context& context, Parse::MemberAccessExprId node_id,
+    SemIR::InstId /*base_id*/, SemIR::NameId name_id,
+    SemIR::NameScopeId name_scope_id) -> SemIR::InstId {
+  auto inst_id = name_scope_id.is_valid() ? context.LookupQualifiedName(
+                                                node_id, name_id, name_scope_id)
+                                          : SemIR::InstId::BuiltinError;
+  auto inst = context.insts().Get(inst_id);
+  // TODO: Track that this instruction was named within `base_id`.
+  return context.AddInst(
+      {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
+}
+
+static auto PerformInstanceBinding(Context& context,
+                                   Parse::MemberAccessExprId node_id,
+                                   SemIR::InstId base_id,
+                                   SemIR::InstId member_id) -> SemIR::InstId {
+  auto member_type_id = context.insts().Get(member_id).type_id();
+  if (auto unbound_element_type =
+          context.types().TryGetAs<SemIR::UnboundElementType>(member_type_id)) {
+    // Convert the base to the type of the element if necessary.
+    base_id = ConvertToValueOrRefOfType(context, node_id, base_id,
+                                        unbound_element_type->class_type_id);
+
+    // Find the specified element, which could be either a field or a base
+    // class, and build an element access expression.
+    auto element_id = context.constant_values().Get(member_id);
+    CARBON_CHECK(element_id.is_constant())
+        << "Non-constant value " << context.insts().Get(member_id)
+        << " of unbound element type";
+    auto index = GetClassElementIndex(context, element_id.inst_id());
+    auto access_id = context.AddInst(
+        {node_id, SemIR::ClassElementAccess{
+                      unbound_element_type->element_type_id, base_id, index}});
+    if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
+            SemIR::ExprCategory::Value &&
+        SemIR::GetExprCategory(context.sem_ir(), access_id) !=
+            SemIR::ExprCategory::Value) {
+      // Class element access on a value expression produces an
+      // ephemeral reference if the class's value representation is a
+      // pointer to the object representation. Add a value binding in
+      // that case so that the expression category of the result
+      // matches the expression category of the base.
+      access_id = ConvertToValueExpr(context, access_id);
+    }
+    return access_id;
+  }
+
+  if (member_type_id ==
+      context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
+    // Find the named function and check whether it's an instance method.
+    auto function_name_id = context.constant_values().Get(member_id);
+    CARBON_CHECK(function_name_id.is_constant())
+        << "Non-constant value " << context.insts().Get(member_id)
+        << " of function type";
+    auto function_decl = context.insts()
+                             .Get(function_name_id.inst_id())
+                             .TryAs<SemIR::FunctionDecl>();
+    CARBON_CHECK(function_decl)
+        << "Unexpected value "
+        << context.insts().Get(function_name_id.inst_id())
+        << " of function type";
+    if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
+      return context.AddInst(
+          {node_id, SemIR::BoundMethod{context.GetBuiltinType(
+                                           SemIR::BuiltinKind::BoundMethodType),
+                                       base_id, member_id}});
+    }
+  }
+
+  // Not an instance member: no instance binding.
+  return member_id;
+}
+
 auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
-                         SemIR::InstId base_id, SemIR::NameId name_id)
-    -> SemIR::InstId {
+                         SemIR::InstId base_id,
+                         SemIR::NameId name_id) -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto name_scope_id = GetAsNameScope(context, base_id)) {
-    auto inst_id =
-        name_scope_id->is_valid()
-            ? context.LookupQualifiedName(node_id, name_id, *name_scope_id)
-            : SemIR::InstId::BuiltinError;
-    auto inst = context.insts().Get(inst_id);
-    // TODO: Track that this instruction was named within `base_id`.
-    return context.AddInst(
-        {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
+    return LookupMemberNameInScope(context, node_id, base_id, name_id,
+                                   *name_scope_id);
   }
 
   // If the base isn't a scope, it must have a complete type.
@@ -118,85 +190,21 @@ auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
   // Materialize a temporary for the base expression if necessary.
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
+  auto base_type_inst_id = context.types().GetInstId(base_type_id);
 
-  switch (auto base_type = context.types().GetAsInst(base_type_id);
-          base_type.kind()) {
-    case SemIR::ClassType::Kind: {
-      // Perform lookup for the name in the class scope.
-      auto class_scope_id = context.classes()
-                                .Get(base_type.As<SemIR::ClassType>().class_id)
-                                .scope_id;
-      auto member_id =
-          context.LookupQualifiedName(node_id, name_id, class_scope_id);
-
-      // Perform instance binding if we found an instance member.
-      auto member_type_id = context.insts().Get(member_id).type_id();
-      if (auto unbound_element_type =
-              context.types().TryGetAs<SemIR::UnboundElementType>(
-                  member_type_id)) {
-        // Convert the base to the type of the element if necessary.
-        base_id = ConvertToValueOrRefOfType(
-            context, node_id, base_id, unbound_element_type->class_type_id);
-
-        // Find the specified element, which could be either a field or a base
-        // class, and build an element access expression.
-        auto element_id = context.constant_values().Get(member_id);
-        CARBON_CHECK(element_id.is_constant())
-            << "Non-constant value " << context.insts().Get(member_id)
-            << " of unbound element type";
-        auto index = GetClassElementIndex(context, element_id.inst_id());
-        auto access_id =
-            context.AddInst({node_id, SemIR::ClassElementAccess{
-                                          unbound_element_type->element_type_id,
-                                          base_id, index}});
-        if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
-                SemIR::ExprCategory::Value &&
-            SemIR::GetExprCategory(context.sem_ir(), access_id) !=
-                SemIR::ExprCategory::Value) {
-          // Class element access on a value expression produces an
-          // ephemeral reference if the class's value representation is a
-          // pointer to the object representation. Add a value binding in
-          // that case so that the expression category of the result
-          // matches the expression category of the base.
-          access_id = ConvertToValueExpr(context, access_id);
-        }
-        return access_id;
-      }
-      if (member_type_id ==
-          context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
-        // Find the named function and check whether it's an instance method.
-        auto function_name_id = context.constant_values().Get(member_id);
-        CARBON_CHECK(function_name_id.is_constant())
-            << "Non-constant value " << context.insts().Get(member_id)
-            << " of function type";
-        auto function_decl = context.insts()
-                                 .Get(function_name_id.inst_id())
-                                 .TryAs<SemIR::FunctionDecl>();
-        CARBON_CHECK(function_decl)
-            << "Unexpected value "
-            << context.insts().Get(function_name_id.inst_id())
-            << " of function type";
-        if (IsInstanceMethod(context.sem_ir(), function_decl->function_id)) {
-          return context.AddInst(
-              {node_id,
-               SemIR::BoundMethod{
-                   context.GetBuiltinType(SemIR::BuiltinKind::BoundMethodType),
-                   base_id, member_id}});
-        }
-      }
-
-      // For a non-instance member, the result is that member.
-      // TODO: Track that this was named within `base_id`.
-      return context.AddInst(
-          {node_id, SemIR::NameRef{member_type_id, name_id, member_id}});
-    }
-    case SemIR::StructType::Kind: {
-      auto refs = context.inst_blocks().Get(
-          base_type.As<SemIR::StructType>().fields_id);
+  // Find the scope corresponding to the base type.
+  auto name_scope_id = GetAsNameScope(context, base_type_inst_id);
+  if (!name_scope_id) {
+    // The base type is not a name scope. Try some fallback options.
+    if (auto struct_type =
+            context.insts().TryGetAs<SemIR::StructType>(base_type_inst_id)) {
       // TODO: Do we need to optimize this with a lookup table for O(1)?
-      for (auto [i, ref_id] : llvm::enumerate(refs)) {
+      for (auto [i, ref_id] :
+           llvm::enumerate(context.inst_blocks().Get(struct_type->fields_id))) {
         auto field = context.insts().GetAs<SemIR::StructTypeField>(ref_id);
         if (name_id == field.name_id) {
+          // TODO: Model this as producing a lookup result, and do instance
+          // binding separately. Perhaps a struct type should be a name scope.
           return context.AddInst(
               {node_id, SemIR::StructAccess{field.field_type_id, base_id,
                                             SemIR::ElementIndex(i)}});
@@ -207,24 +215,26 @@ auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
                         SemIR::TypeId, SemIR::NameId);
       context.emitter().Emit(node_id, QualifiedExprNameNotFound, base_type_id,
                              name_id);
-      break;
+      return SemIR::InstId::BuiltinError;
     }
-    // TODO: `ConstType` should support member access just like the
-    // corresponding non-const type, except that the result should have `const`
-    // type if it creates a reference expression performing field access.
-    default: {
-      if (base_type_id != SemIR::TypeId::Error) {
-        CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
-                          "Type `{0}` does not support qualified expressions.",
-                          SemIR::TypeId);
-        context.emitter().Emit(node_id, QualifiedExprUnsupported, base_type_id);
-      }
-      break;
+
+    if (base_type_id != SemIR::TypeId::Error) {
+      CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
+                        "Type `{0}` does not support qualified expressions.",
+                        SemIR::TypeId);
+      context.emitter().Emit(node_id, QualifiedExprUnsupported, base_type_id);
     }
+    return SemIR::InstId::BuiltinError;
   }
 
-  // Should only be reached on error.
-  return SemIR::InstId::BuiltinError;
+  // Perform lookup into the base type.
+  auto member_id = LookupMemberNameInScope(context, node_id, base_id, name_id,
+                                           *name_scope_id);
+
+  // Perform instance binding if we found an instance member.
+  member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
+
+  return member_id;
 }
 
 }  // namespace Carbon::Check

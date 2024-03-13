@@ -156,22 +156,26 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: A* = name_ref a, %a
 // CHECK:STDOUT:   %.loc26_4.1: ref A = deref %a.ref
-// CHECK:STDOUT:   %.loc26_7: <bound method> = bound_method %.loc26_4.1, @A.%F
+// CHECK:STDOUT:   %F.ref.loc26: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc26_7: <bound method> = bound_method %.loc26_4.1, %F.ref.loc26
 // CHECK:STDOUT:   %.loc26_4.2: A* = addr_of %.loc26_4.1
 // CHECK:STDOUT:   %.loc26_9: init () = call %.loc26_7(%.loc26_4.2)
 // CHECK:STDOUT:   %b.ref: B* = name_ref b, %b
 // CHECK:STDOUT:   %.loc27_4.1: ref B = deref %b.ref
-// CHECK:STDOUT:   %.loc27_7: <bound method> = bound_method %.loc27_4.1, @B.%F
+// CHECK:STDOUT:   %F.ref.loc27: <function> = name_ref F, @B.%F [template = @B.%F]
+// CHECK:STDOUT:   %.loc27_7: <bound method> = bound_method %.loc27_4.1, %F.ref.loc27
 // CHECK:STDOUT:   %.loc27_4.2: B* = addr_of %.loc27_4.1
 // CHECK:STDOUT:   %.loc27_9: init () = call %.loc27_7(%.loc27_4.2)
 // CHECK:STDOUT:   %c.ref: C* = name_ref c, %c
 // CHECK:STDOUT:   %.loc28_4.1: ref C = deref %c.ref
-// CHECK:STDOUT:   %.loc28_7: <bound method> = bound_method %.loc28_4.1, @C.%F
+// CHECK:STDOUT:   %F.ref.loc28: <function> = name_ref F, @C.%F [template = @C.%F]
+// CHECK:STDOUT:   %.loc28_7: <bound method> = bound_method %.loc28_4.1, %F.ref.loc28
 // CHECK:STDOUT:   %.loc28_4.2: C* = addr_of %.loc28_4.1
 // CHECK:STDOUT:   %.loc28_9: init () = call %.loc28_7(%.loc28_4.2)
 // CHECK:STDOUT:   %d.ref: D* = name_ref d, %d
 // CHECK:STDOUT:   %.loc29_4.1: ref D = deref %d.ref
-// CHECK:STDOUT:   %.loc29_7: <bound method> = bound_method %.loc29_4.1, @B.%F
+// CHECK:STDOUT:   %F.ref.loc29: <function> = name_ref F, @B.%F [template = @B.%F]
+// CHECK:STDOUT:   %.loc29_7: <bound method> = bound_method %.loc29_4.1, %F.ref.loc29
 // CHECK:STDOUT:   %.loc29_4.2: D* = addr_of %.loc29_4.1
 // CHECK:STDOUT:   %.loc29_9.1: ref D = deref %.loc29_4.2
 // CHECK:STDOUT:   %.loc29_9.2: ref B = class_element_access %.loc29_9.1, element0
