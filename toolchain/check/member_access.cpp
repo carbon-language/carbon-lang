@@ -5,6 +5,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -148,6 +149,17 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
                               SemIR::InstId member_id) -> SemIR::InstId {
   auto witness_id =
       LookupInterfaceWitness(context, type_const_id, assoc_type.interface_id);
+  if (!witness_id.is_valid()) {
+    CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
+                      "Cannot access member of interface {0} in type {1} "
+                      "that does not implement that interface.",
+                      SemIR::NameId, std::string);
+    context.emitter().Emit(
+        context.insts().GetNodeId(member_id), MissingImplInMemberAccess,
+        context.interfaces().Get(assoc_type.interface_id).name_id,
+        context.sem_ir().StringifyTypeExpr(type_const_id.inst_id()));
+    return SemIR::InstId::BuiltinError;
+  }
 
   auto const_id = context.constant_values().Get(member_id);
   if (!const_id.is_constant()) {
