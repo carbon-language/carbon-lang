@@ -27,6 +27,15 @@ class ExternalRepo(NamedTuple):
     remap: Callable[[str], str]
     # The target expression to gather rules for within the repo.
     target: str
+    # Whether to use "" or <> for the include.
+    use_system_include: bool = False
+
+
+class RuleChoice(NamedTuple):
+    # Whether to use "" or <> for the include.
+    use_system_include: bool
+    # Possible rules that may be used.
+    rules: Set[str]
 
 
 # Maps external repository names to a method translating bazel labels to file
@@ -44,10 +53,11 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     "@protobuf": ExternalRepo(
         lambda x: re.sub("^(.*:src)/", "", x),
         ":protobuf_headers",
+        use_system_include=True,
     ),
     # :src/libfuzzer/libfuzzer_macro.h -> libfuzzer/libfuzzer_macro.h
     "@com_google_libprotobuf_mutator": ExternalRepo(
-        lambda x: re.sub("^(.*:src)/", "", x), "..."
+        lambda x: re.sub("^(.*:src)/", "", x), "...", use_system_include=True
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
@@ -55,6 +65,12 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     "@abseil-cpp": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # :re2/re2.h -> re2/re2.h
     "@re2": ExternalRepo(lambda x: re.sub(":", "", x), ":re2"),
+    # :googletest/include/gtest/gtest.h -> gtest/gtest.h
+    "@googletest": ExternalRepo(
+        lambda x: re.sub(":google(?:mock|test)/include/", "", x),
+        ":gtest",
+        use_system_include=True,
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
@@ -159,7 +175,7 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
 
 
 def map_headers(
-    header_to_rule_map: Dict[str, Set[str]], rules: Dict[str, Rule]
+    header_to_rule_map: Dict[str, RuleChoice], rules: Dict[str, Rule]
 ) -> None:
     """Accumulates headers provided by rules into the map.
 
@@ -167,15 +183,28 @@ def map_headers(
     """
     for rule_name, rule in rules.items():
         repo, _, path = rule_name.partition("//")
+        use_system_include = False
+        if repo in EXTERNAL_REPOS:
+            use_system_include = EXTERNAL_REPOS[repo].use_system_include
         for header in rule.hdrs:
             if header in header_to_rule_map:
-                header_to_rule_map[header].add(rule_name)
+                header_to_rule_map[header].rules.add(rule_name)
+                if (
+                    use_system_include
+                    != header_to_rule_map[header].use_system_include
+                ):
+                    exit(
+                        "Unexpected use_system_include inconsistency in "
+                        f"{header_to_rule_map[header]}"
+                    )
             else:
-                header_to_rule_map[header] = {rule_name}
+                header_to_rule_map[header] = RuleChoice(
+                    use_system_include, {rule_name}
+                )
 
 
 def get_missing_deps(
-    header_to_rule_map: Dict[str, Set[str]],
+    header_to_rule_map: Dict[str, RuleChoice],
     generated_files: Set[str],
     rule: Rule,
 ) -> Tuple[Set[str], bool]:
@@ -194,42 +223,56 @@ def get_missing_deps(
             continue
 
         with open(source_file, "r") as f:
-            for header_groups in re.findall(
-                r'^(#include (?:"([^"]+)"|'
-                r"<((?:google|gmock|gtest|libfuzzer)/[^>]+)>))",
-                f.read(),
-                re.MULTILINE,
-            ):
-                # Ignore whether the source was a quote or system include.
-                header = header_groups[1]
-                if not header:
-                    header = header_groups[2]
+            file_content = f.read()
+        file_content_changed = False
 
-                if header in rule_files:
+        for header_groups in re.findall(
+            r'^(#include (?:(["<])([^">]+)[">]))',
+            file_content,
+            re.MULTILINE,
+        ):
+            (full_include, include_open, header) = header_groups
+            is_system_include = include_open == "<"
+
+            if header in rule_files:
+                continue
+            if header not in header_to_rule_map:
+                if is_system_include:
+                    # Don't error for unexpected system includes.
                     continue
-                if header not in header_to_rule_map:
-                    if IGNORE_HEADER_REGEX.match(header):
-                        print(
-                            f"Ignored missing "
-                            f"'{header_groups[0]}' in '{source_file}'"
-                        )
-                        continue
-                    else:
-                        exit(
-                            f"Missing rule for "
-                            f"'{header_groups[0]}' in '{source_file}'"
-                        )
-                dep_choices = header_to_rule_map[header]
-                if not dep_choices.intersection(rule.deps):
-                    if len(dep_choices) > 1:
-                        print(
-                            f"Ambiguous dependency choice for "
-                            f"'{header_groups[0]}' in '{source_file}': "
-                            f"{', '.join(dep_choices)}"
-                        )
-                        ambiguous = True
-                    # Use the single dep without removing it.
-                    missing_deps.add(next(iter(dep_choices)))
+                if IGNORE_HEADER_REGEX.match(header):
+                    # Don't print anything for explicitly ignored files.
+                    continue
+                exit(
+                    f"Missing rule for " f"'{full_include}' in '{source_file}'"
+                )
+            rule_choice = header_to_rule_map[header]
+            if not rule_choice.rules.intersection(rule.deps):
+                if len(rule_choice.rules) > 1:
+                    print(
+                        f"Ambiguous dependency choice for "
+                        f"'{full_include}' in '{source_file}': "
+                        f"{', '.join(rule_choice.rules)}"
+                    )
+                    ambiguous = True
+                # Use the single dep without removing it.
+                missing_deps.add(next(iter(rule_choice.rules)))
+
+            # If the include style should change, update file content.
+            if is_system_include != rule_choice.use_system_include:
+                if rule_choice.use_system_include:
+                    new_include = f"#include <{header}>"
+                else:
+                    new_include = f'#include "{header}"'
+                print(
+                    f"Fixing include format in '{source_file}': "
+                    f"'{full_include}' to '{new_include}'"
+                )
+                file_content = file_content.replace(full_include, new_include)
+                file_content_changed = True
+        if file_content_changed:
+            with open(source_file, "w") as f:
+                f.write(file_content)
     return missing_deps, ambiguous
 
 
@@ -246,10 +289,7 @@ def main() -> None:
     external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
-    header_to_rule_map: Dict[str, Set[str]] = {
-        "gmock/gmock.h": {"@googletest//:gtest"},
-        "gtest/gtest.h": {"@googletest//:gtest"},
-    }
+    header_to_rule_map: Dict[str, RuleChoice] = {}
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 
