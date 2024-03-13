@@ -13,15 +13,15 @@ package(default_visibility = ["//visibility:public"])
 # provide stack traces on unexpected exits, because we normally rely on LLVM
 # code for that.
 #
-# This replaces "@com_google_googletest//:gtest_main";
-# "@com_google_googletest//:gtest" should still be used directly.
+# This replaces "@googletest//:gtest_main";
+# "@googletest//:gtest" should still be used directly.
 cc_library(
     name = "gtest_main",
     testonly = 1,
     srcs = ["gtest_main.cpp"],
     deps = [
         "//common:init_llvm",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -31,7 +31,7 @@ cc_library(
     hdrs = ["test_raw_ostream.h"],
     deps = [
         "//common:ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -43,6 +43,6 @@ cc_test(
     deps = [
         ":test_raw_ostream",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

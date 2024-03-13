@@ -29,7 +29,7 @@ cc_test(
         ":diagnostic_emitter",
         ":mocks",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -74,7 +74,7 @@ cc_test(
         ":mocks",
         ":sorting_diagnostic_consumer",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -86,7 +86,7 @@ cc_library(
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

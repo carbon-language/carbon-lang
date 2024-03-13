@@ -22,29 +22,13 @@ http_archive = use_repo_rule(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(
-    name = "abseil-cpp",
-    version = "20240116.1",
-    repo_name = "com_google_absl",
-)
-bazel_dep(
-    name = "re2",
-    version = "2024-03-01",
-    repo_name = "com_googlesource_code_re2",
-)
-bazel_dep(
-    name = "googletest",
-    version = "1.14.0.bcr.1",
-    repo_name = "com_google_googletest",
-)
+bazel_dep(name = "abseil-cpp", version = "20240116.1")
+bazel_dep(name = "re2", version = "2024-03-01")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 
 google_benchmark_version = "1.8.3"
 
-bazel_dep(
-    name = "google_benchmark",
-    version = google_benchmark_version,
-    repo_name = "com_github_google_benchmark",
-)
+bazel_dep(name = "google_benchmark", version = google_benchmark_version)
 archive_override(
     module_name = "google_benchmark",
     integrity = "sha256-a8GApX0j1NlRVRn5KwyD1hsFtbqxiJYfNqx7BrDZ6c4=",
@@ -54,12 +38,9 @@ archive_override(
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(google_benchmark_version)],
 )
 
-bazel_dep(
-    name = "libpfm",
-    # The registry only has an old version. We use that here to avoid a miss but
-    # override it with a newer version.
-    version = "4.11.0",
-)
+# The registry only has an old version. We use that here to avoid a miss but
+# override it with a newer version.
+bazel_dep(name = "libpfm", version = "4.11.0")
 
 libpfm_version = "4.13.0"
 
@@ -77,11 +58,7 @@ bazel_dep(name = "rules_flex", version = "0.2.1")
 bazel_dep(name = "rules_m4", version = "0.2.3")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
-bazel_dep(
-    name = "protobuf",
-    version = "21.7",
-    repo_name = "com_google_protobuf",
-)
+bazel_dep(name = "protobuf", version = "21.7")
 
 libprotobuf_mutator_version = "1.1"
 

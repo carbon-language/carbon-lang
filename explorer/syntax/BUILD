@@ -27,7 +27,7 @@ cc_test(
         ":syntax",
         "//explorer/base:arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -41,7 +41,7 @@ cc_library(
     tags = ["no-clang-tidy"],
     deps = [
         ":syntax",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -173,6 +173,6 @@ cc_test(
         ":syntax",
         "//explorer/ast:ast_test_matchers",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

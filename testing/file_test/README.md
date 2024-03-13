@@ -20,7 +20,7 @@ file_test(
     deps = [
         ":my_lib",
         "//testing/file_test:file_test_base",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

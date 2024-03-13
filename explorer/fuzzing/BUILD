@@ -35,7 +35,7 @@ cc_binary(
         "//explorer/base:arena",
         "//explorer/syntax",
         "//testing/fuzzing:carbon_cc_proto",
-        "@com_google_protobuf//:protobuf_headers",
+        "@protobuf//:protobuf_headers",
     ],
 )
 
@@ -60,8 +60,8 @@ cc_test(
         "//testing/base:test_raw_ostream",
         "//testing/fuzzing:carbon_cc_proto",
         "//testing/fuzzing:proto_to_carbon_lib",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
+        "@googletest//:gtest",
+        "@protobuf//:protobuf_headers",
     ],
 )
 
@@ -81,8 +81,8 @@ cc_library(
         "//testing/fuzzing:carbon_cc_proto",
         "//testing/fuzzing:proto_to_carbon_lib",
         "@bazel_tools//tools/cpp/runfiles",
-        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
+        "@protobuf//:protobuf_headers",
     ],
 )
 
@@ -100,9 +100,9 @@ cc_test(
         ":fuzzer_util",
         "//testing/base:gtest_main",
         "//testing/fuzzing:proto_to_carbon_lib",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
+        "@protobuf//:protobuf_headers",
     ],
 )
 

@@ -28,7 +28,7 @@ cc_test(
     deps = [
         ":arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -53,7 +53,7 @@ cc_test(
     deps = [
         ":decompose",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -81,7 +81,7 @@ cc_test(
         ":source_location",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -144,7 +144,7 @@ cc_test(
     deps = [
         ":trace_stream",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -159,6 +159,6 @@ cc_test(
         ":source_location",
         ":trace_stream",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
