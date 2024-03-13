@@ -61,6 +61,8 @@ static auto GetAsNameScope(Context& context, SemIR::InstId base_id)
   return std::nullopt;
 }
 
+// Returns the index of the specified class element within the class's
+// representation.
 static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
     -> SemIR::ElementIndex {
   auto element_inst = context.insts().Get(element_id);
@@ -91,6 +93,8 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
+// Performs a member name lookup into the specified scope. If the scope is
+// invalid, assume an error has already been diagnosed, and return BuiltinError.
 static auto LookupMemberNameInScope(Context& context,
                                     Parse::MemberAccessExprId node_id,
                                     SemIR::InstId /*base_id*/,
@@ -101,11 +105,15 @@ static auto LookupMemberNameInScope(Context& context,
                                                 node_id, name_id, name_scope_id)
                                           : SemIR::InstId::BuiltinError;
   auto inst = context.insts().Get(inst_id);
-  // TODO: Track that this instruction was named within `base_id`.
+  // TODO: Use a different kind of instruction that also references the
+  // `base_id` so that `SemIR` consumers can find it.
   return context.AddInst(
       {node_id, SemIR::NameRef{inst.type_id(), name_id, inst_id}});
 }
 
+// Performs the instance binding step in member access. If the found member is a
+// field, forms a class member access. If the found member is an instance
+// method, forms a bound method. Otherwise, the member is returned unchanged.
 static auto PerformInstanceBinding(Context& context,
                                    Parse::MemberAccessExprId node_id,
                                    SemIR::InstId base_id,
@@ -131,11 +139,11 @@ static auto PerformInstanceBinding(Context& context,
             SemIR::ExprCategory::Value &&
         SemIR::GetExprCategory(context.sem_ir(), access_id) !=
             SemIR::ExprCategory::Value) {
-      // Class element access on a value expression produces an
-      // ephemeral reference if the class's value representation is a
-      // pointer to the object representation. Add a value binding in
-      // that case so that the expression category of the result
-      // matches the expression category of the base.
+      // Class element access on a value expression produces an ephemeral
+      // reference if the class's value representation is a pointer to the
+      // object representation. Add a value binding in that case so that the
+      // expression category of the result matches the expression category of
+      // the base.
       access_id = ConvertToValueExpr(context, access_id);
     }
     return access_id;

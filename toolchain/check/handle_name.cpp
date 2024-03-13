@@ -5,7 +5,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/lex/token_kind.h"
-#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
