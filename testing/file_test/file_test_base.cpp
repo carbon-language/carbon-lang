@@ -4,6 +4,8 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <gmock/gmock.h>
+
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -15,7 +17,6 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "common/init_llvm.h"
-#include "gmock/gmock.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/FormatVariadic.h"
