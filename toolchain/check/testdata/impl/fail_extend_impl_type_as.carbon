@@ -38,7 +38,7 @@ class E {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness @I, () [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
@@ -66,7 +66,7 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: i32 as I {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, () [template = constants.%.2]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.1
@@ -75,7 +75,7 @@ class E {
 // CHECK:STDOUT: impl @impl.2: D as I;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: E as I {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, () [template = constants.%.2]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.1

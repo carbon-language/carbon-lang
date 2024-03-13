@@ -265,6 +265,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     case SemIR::BuiltinKind::FunctionType.AsInt():
     case SemIR::BuiltinKind::BoundMethodType.AsInt():
     case SemIR::BuiltinKind::NamespaceType.AsInt():
+    case SemIR::BuiltinKind::WitnessType.AsInt():
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(*llvm_context_);
     default:

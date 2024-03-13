@@ -17,7 +17,7 @@ fn Class.Function() {}
 fn CallClassFunction() {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:3: ERROR: Member access into incomplete class `Class`.
   // CHECK:STDERR:   Class.Function();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-14]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
