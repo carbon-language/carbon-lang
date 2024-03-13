@@ -105,6 +105,7 @@ cc_library(
         ":impl",
         ":import",
         ":interface",
+        ":member_access",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
@@ -188,6 +189,21 @@ cc_library(
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "member_access",
+    srcs = ["member_access.cpp"],
+    hdrs = ["member_access.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
     ],
 )
 
