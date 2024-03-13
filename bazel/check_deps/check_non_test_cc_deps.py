@@ -82,7 +82,7 @@ for dep in deps:
     # message.
     if repo_base in (
         "@google_benchmark",
-        "@com_github_protocolbuffers_protobuf",
+        "@protobuf",
         "@abseil-cpp",
         "@googletest",
     ):
