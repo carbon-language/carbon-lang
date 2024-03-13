@@ -44,7 +44,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -132,7 +132,7 @@ cc_test(
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -182,7 +182,7 @@ cc_test(
         ":precedence",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 

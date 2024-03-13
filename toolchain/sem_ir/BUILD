@@ -151,7 +151,7 @@ cc_test(
         ":inst",
         ":inst_kind",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -165,7 +165,7 @@ cc_test(
         "//testing/base:test_raw_ostream",
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

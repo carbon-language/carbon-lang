@@ -27,7 +27,7 @@ Dependencies on @llvm-project//llvm:gtest are forbidden, but a dependency path
 was detected:
 
 %s
-Carbon uses GoogleTest through @com_google_googletest, which is a different
+Carbon uses GoogleTest through @googletest, which is a different
 version than LLVM uses at @llvm-project//llvm:gtest. As a consequence,
 dependencies on @llvm-project//llvm:gtest must be avoided.
 """

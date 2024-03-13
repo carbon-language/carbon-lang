@@ -79,7 +79,7 @@ cc_library(
     tags = ["no-clang-tidy"],
     deps = [
         ":ast",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -96,7 +96,7 @@ cc_test(
         ":ast_test_matchers",
         "//explorer/base:arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -112,7 +112,7 @@ cc_test(
         ":paren_contents",
         "//explorer/base:arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -149,7 +149,7 @@ cc_test(
         ":paren_contents",
         "//explorer/base:arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -166,7 +166,7 @@ cc_test(
         ":paren_contents",
         "//explorer/base:arena",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -81,10 +81,10 @@ for dep in deps:
     # exist. Specially diagnose them to try to provide a more helpful
     # message.
     if repo_base in (
-        "@com_github_google_benchmark",
+        "@google_benchmark",
         "@com_github_protocolbuffers_protobuf",
-        "@com_google_absl",
-        "@com_google_googletest",
+        "@abseil-cpp",
+        "@googletest",
     ):
         sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
 

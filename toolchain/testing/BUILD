@@ -36,7 +36,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -48,6 +48,6 @@ cc_test(
     deps = [
         ":yaml_test_helpers",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

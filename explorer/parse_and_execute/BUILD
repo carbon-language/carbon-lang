@@ -38,6 +38,6 @@ cc_test(
     deps = [
         ":parse_and_execute",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "1b61571daf545b9f55185891a272a773932a4507063ad17fdb02a16f6352b8a9",
+  "moduleFileHash": "cce36aab60697bf068a2835858e7af7557955d647f68c5e8a22ef3d5b6a10ff2",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -55,7 +55,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 88,
+                "line": 83,
                 "column": 13
               }
             },
@@ -81,7 +81,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 135,
+                "line": 130,
                 "column": 13
               }
             }
@@ -95,7 +95,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 104,
+            "line": 99,
             "column": 35
           },
           "imports": {
@@ -112,7 +112,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 150,
+            "line": 145,
             "column": 29
           },
           "imports": {
@@ -129,7 +129,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 162,
+            "line": 157,
             "column": 23
           },
           "imports": {
@@ -145,7 +145,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 163,
+                "line": 158,
                 "column": 17
               }
             }
@@ -156,17 +156,17 @@
       ],
       "deps": {
         "bazel_skylib": "bazel_skylib@1.5.0",
-        "com_google_absl": "abseil-cpp@20240116.1",
-        "com_googlesource_code_re2": "re2@2024-03-01",
-        "com_google_googletest": "googletest@1.14.0.bcr.1",
-        "com_github_google_benchmark": "google_benchmark@_",
+        "abseil-cpp": "abseil-cpp@20240116.1",
+        "re2": "re2@2024-03-01",
+        "googletest": "googletest@1.14.0.bcr.1",
+        "google_benchmark": "google_benchmark@_",
         "libpfm": "libpfm@_",
         "rules_bison": "rules_bison@0.2.2",
         "rules_flex": "rules_flex@0.2.1",
         "rules_m4": "rules_m4@0.2.3",
         "rules_cc": "rules_cc@0.0.9",
         "rules_proto": "rules_proto@6.0.0-rc2",
-        "com_google_protobuf": "protobuf@21.7",
+        "protobuf": "protobuf@21.7",
         "bazel_clang_tidy": "bazel_clang_tidy@_",
         "hedron_compile_commands": "hedron_compile_commands@_",
         "platforms": "platforms@0.0.8",

@@ -41,7 +41,7 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
     # - protobuf_headers is specified because there are multiple overlapping
     #   targets.
-    "@com_google_protobuf": ExternalRepo(
+    "@protobuf": ExternalRepo(
         lambda x: re.sub("^(.*:src)/", "", x),
         ":protobuf_headers",
     ),
@@ -52,11 +52,9 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # absl/flags:flag.h -> absl/flags/flag.h
-    "@com_google_absl": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    "@abseil-cpp": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # :re2/re2.h -> re2/re2.h
-    "@com_googlesource_code_re2": ExternalRepo(
-        lambda x: re.sub(":", "", x), ":re2"
-    ),
+    "@re2": ExternalRepo(lambda x: re.sub(":", "", x), ":re2"),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
@@ -249,8 +247,8 @@ def main() -> None:
 
     print("Building header map...")
     header_to_rule_map: Dict[str, Set[str]] = {
-        "gmock/gmock.h": {"@com_google_googletest//:gtest"},
-        "gtest/gtest.h": {"@com_google_googletest//:gtest"},
+        "gmock/gmock.h": {"@googletest//:gtest"},
+        "gtest/gtest.h": {"@googletest//:gtest"},
     }
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)

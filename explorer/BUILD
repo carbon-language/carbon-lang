@@ -60,8 +60,8 @@ cc_binary(
         "//common:check",
         "//testing/base:test_raw_ostream",
         "//testing/file_test:file_test_base",
-        "@com_google_absl//absl/flags:flag",
-        "@com_googlesource_code_re2//:re2",
+        "@abseil-cpp//absl/flags:flag",
+        "@re2",
     ],
 )
 
