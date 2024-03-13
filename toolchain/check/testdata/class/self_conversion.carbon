@@ -112,6 +112,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @SelfBase[%self: Base]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Base = name_ref self, %self
+// CHECK:STDOUT:   %a.ref: <unbound element of class Base> = name_ref a, @Base.%.loc8 [template = @Base.%.loc8]
 // CHECK:STDOUT:   %.loc19_14.1: ref i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc19_14.2: i32 = bind_value %.loc19_14.1
 // CHECK:STDOUT:   return %.loc19_14.2
@@ -121,6 +122,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc23_4: ref Base = deref %self.ref
+// CHECK:STDOUT:   %a.ref: <unbound element of class Base> = name_ref a, @Base.%.loc8 [template = @Base.%.loc8]
 // CHECK:STDOUT:   %.loc23_10: ref i32 = class_element_access %.loc23_4, element0
 // CHECK:STDOUT:   %.loc23_15: i32 = int_literal 1 [template = constants.%.7]
 // CHECK:STDOUT:   assign %.loc23_10, %.loc23_15
@@ -131,7 +133,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref.loc27: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc27_4.1: ref Derived = deref %p.ref.loc27
-// CHECK:STDOUT:   %.loc27_7: <bound method> = bound_method %.loc27_4.1, @Derived.%AddrSelfBase
+// CHECK:STDOUT:   %AddrSelfBase.ref: <function> = name_ref AddrSelfBase, @Derived.%AddrSelfBase [template = @Derived.%AddrSelfBase]
+// CHECK:STDOUT:   %.loc27_7: <bound method> = bound_method %.loc27_4.1, %AddrSelfBase.ref
 // CHECK:STDOUT:   %.loc27_4.2: Derived* = addr_of %.loc27_4.1
 // CHECK:STDOUT:   %.loc27_20.1: ref Derived = deref %.loc27_4.2
 // CHECK:STDOUT:   %.loc27_20.2: ref Base = class_element_access %.loc27_20.1, element0
@@ -140,7 +143,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc27_20.4: init () = call %.loc27_7(%.loc27_4.3)
 // CHECK:STDOUT:   %p.ref.loc28: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc28_11.1: ref Derived = deref %p.ref.loc28
-// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11.1, @Derived.%SelfBase
+// CHECK:STDOUT:   %SelfBase.ref: <function> = name_ref SelfBase, @Derived.%SelfBase [template = @Derived.%SelfBase]
+// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11.1, %SelfBase.ref
 // CHECK:STDOUT:   %.loc28_23.1: ref Base = class_element_access %.loc28_11.1, element0
 // CHECK:STDOUT:   %.loc28_11.2: ref Base = converted %.loc28_11.1, %.loc28_23.1
 // CHECK:STDOUT:   %.loc28_11.3: Base = bind_value %.loc28_11.2

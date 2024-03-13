@@ -102,6 +102,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref Cycle* = struct_access %a.ref.loc7_11, element0
 // CHECK:STDOUT:   %.loc7_12.2: Cycle* = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref Cycle = deref %.loc7_12.2
+// CHECK:STDOUT:   %c.ref: <unbound element of class Cycle> = name_ref c, @Cycle.%import_ref.2 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_15: ref {.b: Cycle*} = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref Cycle* = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: Cycle* = bind_value %.loc7_17.1

@@ -93,6 +93,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Base* = name_ref self, %self
 // CHECK:STDOUT:   %.loc14_4: ref Base = deref %self.ref
+// CHECK:STDOUT:   %a.ref: <unbound element of class Base> = name_ref a, @Base.%.loc8 [template = @Base.%.loc8]
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
 // CHECK:STDOUT:   %.loc14_15: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   assign %.loc14_10, %.loc14_15
@@ -103,7 +104,8 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_4.1: ref Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc22_7: <bound method> = bound_method %.loc22_4.1, @Base.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Base.%F [template = @Base.%F]
+// CHECK:STDOUT:   %.loc22_7: <bound method> = bound_method %.loc22_4.1, %F.ref
 // CHECK:STDOUT:   %.loc22_4.2: Derived* = addr_of %.loc22_4.1
 // CHECK:STDOUT:   %.loc22_9.1: ref Derived = deref %.loc22_4.2
 // CHECK:STDOUT:   %.loc22_9.2: ref Base = class_element_access %.loc22_9.1, element0

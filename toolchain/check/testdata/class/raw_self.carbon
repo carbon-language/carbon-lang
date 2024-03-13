@@ -90,6 +90,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc14_5: Class* = name_ref self, %self.loc13_17
 // CHECK:STDOUT:   %.loc14_4: ref Class = deref %self.ref.loc14_5
+// CHECK:STDOUT:   %n.ref: <unbound element of class Class> = name_ref n, @Class.%.loc10 [template = @Class.%.loc10]
 // CHECK:STDOUT:   %.loc14_10: ref i32 = class_element_access %.loc14_4, element0
 // CHECK:STDOUT:   %self.ref.loc14_15: i32 = name_ref r#self, %self.loc13_30
 // CHECK:STDOUT:   assign %.loc14_10, %self.ref.loc14_15
@@ -99,6 +100,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: fn @G[%self.loc17_12: Class](%self.loc17_24: i32) -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc18_11: Class = name_ref self, %self.loc17_12
+// CHECK:STDOUT:   %n.ref: <unbound element of class Class> = name_ref n, @Class.%.loc10 [template = @Class.%.loc10]
 // CHECK:STDOUT:   %.loc18_15.1: ref i32 = class_element_access %self.ref.loc18_11, element0
 // CHECK:STDOUT:   %.loc18_15.2: i32 = bind_value %.loc18_15.1
 // CHECK:STDOUT:   %self.ref.loc18_19: i32 = name_ref r#self, %self.loc17_24

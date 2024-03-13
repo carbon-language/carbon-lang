@@ -96,12 +96,15 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: {.a: A} = name_ref s, %s
 // CHECK:STDOUT:   %.loc23_4: A = struct_access %s.ref, element0
-// CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, @A.%F
+// CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, %F.ref.loc23
 // CHECK:STDOUT:   %.loc23_8: init () = call %.loc23_6(<invalid>)
 // CHECK:STDOUT:   %b.ref: B = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: <unbound element of class B> = name_ref a, @B.%.loc12 [template = @B.%.loc12]
 // CHECK:STDOUT:   %.loc33_4.1: ref A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc33_4.2: A = bind_value %.loc33_4.1
-// CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, @A.%F
+// CHECK:STDOUT:   %F.ref.loc33: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, %F.ref.loc33
 // CHECK:STDOUT:   %.loc33_8: init () = call %.loc33_6(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

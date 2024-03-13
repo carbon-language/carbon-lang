@@ -56,10 +56,12 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: fn @F[%self: Class]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: Class = name_ref self, %self
+// CHECK:STDOUT:   %p.ref: <unbound element of class Class> = name_ref p, @Class.%.loc9_8 [template = @Class.%.loc9_8]
 // CHECK:STDOUT:   %.loc13_16.1: ref Class* = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc13_16.2: Class* = bind_value %.loc13_16.1
 // CHECK:STDOUT:   %.loc13_11.1: ref Class = deref %.loc13_16.2
-// CHECK:STDOUT:   %.loc13_19: <bound method> = bound_method %.loc13_11.1, @Class.%F
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
+// CHECK:STDOUT:   %.loc13_19: <bound method> = bound_method %.loc13_11.1, %F.ref
 // CHECK:STDOUT:   %.loc13_11.2: Class = bind_value %.loc13_11.1
 // CHECK:STDOUT:   %.loc13_21.1: init i32 = call %.loc13_19(%.loc13_11.2)
 // CHECK:STDOUT:   %.loc13_23: i32 = value_of_initializer %.loc13_21.1

@@ -7,9 +7,9 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: ERROR: Type `Interface` does not support qualified expressions.
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: ERROR: Value of type `<associated <function> in Interface>` is not callable.
   // CHECK:STDERR:   T.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:   ^~~~
   T.F();
 }
 
@@ -69,6 +69,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: fn @CallStatic(%T: Interface) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref: Interface = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %F.ref: <associated <function> in Interface> = name_ref F, @Interface.%.loc7 [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
