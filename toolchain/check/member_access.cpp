@@ -91,10 +91,12 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return false;
 }
 
-static auto LookupMemberNameInScope(
-    Context& context, Parse::MemberAccessExprId node_id,
-    SemIR::InstId /*base_id*/, SemIR::NameId name_id,
-    SemIR::NameScopeId name_scope_id) -> SemIR::InstId {
+static auto LookupMemberNameInScope(Context& context,
+                                    Parse::MemberAccessExprId node_id,
+                                    SemIR::InstId /*base_id*/,
+                                    SemIR::NameId name_id,
+                                    SemIR::NameScopeId name_scope_id)
+    -> SemIR::InstId {
   auto inst_id = name_scope_id.is_valid() ? context.LookupQualifiedName(
                                                 node_id, name_id, name_scope_id)
                                           : SemIR::InstId::BuiltinError;
@@ -166,8 +168,8 @@ static auto PerformInstanceBinding(Context& context,
 }
 
 auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
-                         SemIR::InstId base_id,
-                         SemIR::NameId name_id) -> SemIR::InstId {
+                         SemIR::InstId base_id, SemIR::NameId name_id)
+    -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
   // into that scope.
   if (auto name_scope_id = GetAsNameScope(context, base_id)) {
