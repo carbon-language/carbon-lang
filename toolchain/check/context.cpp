@@ -253,11 +253,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*node_id*/, SemIR::NameId name_id,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    auto result = scope_stack().LookupInCurrentScope(name_id);
-    if (result.is_valid()) {
-      TryResolveImportRefUnused(*this, result);
-    }
-    return result;
+    return scope_stack().LookupInCurrentScope(name_id);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -292,7 +288,6 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   if (lexical_result.is_valid()) {
-    TryResolveImportRefUnused(*this, lexical_result);
     return lexical_result;
   }
 
