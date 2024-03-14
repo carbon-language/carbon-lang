@@ -25,11 +25,11 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %.loc7
+// CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:     .Baz = %Baz.loc10
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Baz.loc10: <function> = fn_decl @Baz.1 [template] {}
@@ -49,7 +49,7 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7 [template = file.%.loc7]
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Baz.ref: <function> = name_ref Baz, file.%Baz.loc13 [template = file.%Baz.loc13]
 // CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
 // CHECK:STDOUT:   return

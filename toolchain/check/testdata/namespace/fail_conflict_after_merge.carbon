@@ -44,20 +44,20 @@ fn NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %.loc8_13.1
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.loc8_13.1: <namespace> = namespace %import_ref, [template] {}
-// CHECK:STDOUT:   %.loc8_13.2: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
+// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %.loc20: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc28: <function> = fn_decl @.2 [template] {}

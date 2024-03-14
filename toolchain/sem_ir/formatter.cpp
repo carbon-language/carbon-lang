@@ -531,6 +531,13 @@ class InstNamer {
           add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
         }
+        // The namespace is specified here due to the name conflict.
+        case SemIR::Namespace::Kind: {
+          add_inst_name_id(sem_ir_.name_scopes()
+                               .Get(inst.As<SemIR::Namespace>().name_scope_id)
+                               .name_id);
+          continue;
+        }
         case Param::Kind: {
           add_inst_name_id(inst.As<Param>().name_id);
           continue;

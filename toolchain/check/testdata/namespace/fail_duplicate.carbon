@@ -22,9 +22,9 @@ fn Foo.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %.loc7
+// CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.loc9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Baz.loc9: <function> = fn_decl @Baz [template] {}
