@@ -133,14 +133,14 @@ auto Context::ReplaceInstBeforeConstantUse(
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
-                                    SemIR::InstId prev_def_id) -> void {
+auto Context::DiagnoseDuplicateName(SemIRLocation dup_def,
+                                    SemIRLocation prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
-  emitter_->Build(dup_def_id, NameDeclDuplicate)
-      .Note(prev_def_id, NameDeclPrevious)
+  emitter_->Build(dup_def, NameDeclDuplicate)
+      .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
 
@@ -180,43 +180,6 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
                       "Interface was forward declared here.");
     builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
   }
-}
-
-auto Context::AddPackageImports(Parse::NodeId import_node,
-                                IdentifierId package_id,
-                                llvm::ArrayRef<const SemIR::File*> sem_irs,
-                                bool has_load_error) -> void {
-  CARBON_CHECK(has_load_error || !sem_irs.empty())
-      << "There should be either a load error or at least one IR.";
-
-  auto name_id = SemIR::NameId::ForIdentifier(package_id);
-
-  SemIR::ImportIRId first_id(import_irs().size());
-  for (const auto* sem_ir : sem_irs) {
-    import_irs().Add(sem_ir);
-  }
-  if (has_load_error) {
-    import_irs().Add(nullptr);
-  }
-  SemIR::ImportIRId last_id(import_irs().size() - 1);
-
-  auto type_id = GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
-  auto inst_id =
-      AddInst({import_node, SemIR::Import{.type_id = type_id,
-                                          .first_import_ir_id = first_id,
-                                          .last_import_ir_id = last_id}});
-
-  // Add the import to lookup. Should always succeed because imports will be
-  // uniquely named.
-  AddNameToLookup(name_id, inst_id);
-  // Add a name for formatted output. This isn't used in name lookup in order
-  // to reduce indirection, but it's separate from the Import because it
-  // otherwise fits in an Inst.
-  auto bind_name_id = bind_names().Add(
-      {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
-  AddInst({import_node, SemIR::BindName{.type_id = type_id,
-                                        .bind_name_id = bind_name_id,
-                                        .value_id = inst_id}});
 }
 
 auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
@@ -837,7 +800,6 @@ class TypeCompleter {
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
-      case SemIR::Import::Kind:
       case SemIR::ImportRefUnused::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:

@@ -457,19 +457,6 @@ struct ImplDecl {
   InstBlockId decl_block_id;
 };
 
-// An import corresponds to some number of IRs. The range of imported IRs is
-// inclusive of last_import_ir_id, and will always be non-empty. If
-// there was an import error, first_import_ir_id will reference a
-// nullptr IR; there should only ever be one nullptr in the range.
-struct Import {
-  // TODO: Should always be an ImportDirectiveId?
-  static constexpr auto Kind = InstKind::Import.Define<Parse::NodeId>("import");
-
-  TypeId type_id;
-  ImportIRId first_import_ir_id;
-  ImportIRId last_import_ir_id;
-};
-
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
   static constexpr InstKind Kinds[] = {InstKind::ImportRefUnused,
@@ -482,7 +469,6 @@ struct AnyImportRef {
 
 // An imported entity that hasn't yet been referenced. If referenced, it should
 // turn into an ImportRefUsed.
-// TODO: Add ImportRefUsed.
 struct ImportRefUnused {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
@@ -582,7 +568,7 @@ struct NameRef {
 
 struct Namespace {
   static constexpr auto Kind =
-      InstKind::Namespace.Define<Parse::NamespaceId>("namespace");
+      InstKind::Namespace.Define<Parse::AnyNamespaceId>("namespace");
 
   TypeId type_id;
   NameScopeId name_scope_id;

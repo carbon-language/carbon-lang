@@ -79,9 +79,10 @@ import library default;
 // CHECK:STDOUT: --- fail_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir2, ir3
-// CHECK:STDOUT:   %Api: <namespace> = bind_name Api, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Api = %Api
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_default_import.carbon

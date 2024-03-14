@@ -133,8 +133,11 @@ import ImportNotFound;
 // CHECK:STDOUT: --- fail_not_found.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import: <namespace> = import ir1, ir1
-// CHECK:STDOUT:   %ImportNotFound: <namespace> = bind_name ImportNotFound, %import
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .ImportNotFound = %ImportNotFound
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ImportNotFound: <namespace> = namespace [template] {
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

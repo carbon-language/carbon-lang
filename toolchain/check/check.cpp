@@ -114,12 +114,13 @@ struct UnitInfo {
   struct PackageImports {
     // Use the constructor so that the SmallVector is only constructed
     // as-needed.
-    explicit PackageImports(Parse::NodeId node) : node(node) {}
+    explicit PackageImports(Parse::ImportDirectiveId node_id)
+        : node_id(node_id) {}
 
     // The first `import` directive in the file, which declared the package's
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
-    Parse::NodeId node;
+    Parse::ImportDirectiveId node_id;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
@@ -181,10 +182,11 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-      Import(context, namespace_type_id, import_sem_ir);
-      error_in_import = error_in_import || import_sem_ir.name_scopes()
-                                               .Get(SemIR::NameScopeId::Package)
-                                               .has_error;
+      ImportLibraryFromCurrentPackage(context, namespace_type_id,
+                                      import_sem_ir);
+      error_in_import |= import_sem_ir.name_scopes()
+                             .Get(SemIR::NameScopeId::Package)
+                             .has_error;
     }
 
     // If an import of the current package caused an error for the imported
@@ -210,8 +212,9 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     for (auto import : package_imports.imports) {
       sem_irs.push_back(&**import.unit_info->unit->sem_ir);
     }
-    context.AddPackageImports(package_imports.node, package_id, sem_irs,
-                              package_imports.has_load_error);
+    ImportLibrariesFromOtherPackage(context, namespace_type_id,
+                                    package_imports.node_id, package_id,
+                                    sem_irs, package_imports.has_load_error);
   }
 
   context.import_ir_constant_values().resize(
@@ -338,12 +341,12 @@ static auto TrackImport(
   if (explicit_import_map) {
     // Diagnose redundant imports.
     if (auto [insert_it, success] =
-            explicit_import_map->insert({import_key, import.node});
+            explicit_import_map->insert({import_key, import.node_id});
         !success) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "Library imported more than once.");
       CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
-      unit_info.emitter.Build(import.node, RepeatedImport)
+      unit_info.emitter.Build(import.node_id, RepeatedImport)
           .Note(insert_it->second, FirstImported)
           .Emit();
       return;
@@ -377,7 +380,7 @@ static auto TrackImport(
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
       bool is_impl =
           !packaging || packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
-      unit_info.emitter.Emit(import.node,
+      unit_info.emitter.Emit(import.node_id,
                              is_impl ? ExplicitImportApi : ImportSelf);
       return;
     }
@@ -388,7 +391,7 @@ static auto TrackImport(
         is_import_default_library) {
       CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
                         "Cannot import `Main//default`.");
-      unit_info.emitter.Emit(import.node, ImportMainDefaultLibrary);
+      unit_info.emitter.Emit(import.node_id, ImportMainDefaultLibrary);
 
       return;
     }
@@ -400,7 +403,7 @@ static auto TrackImport(
         CARBON_DIAGNOSTIC(
             ImportCurrentPackageByName, Error,
             "Imports from the current package must omit the package name.");
-        unit_info.emitter.Emit(import.node, ImportCurrentPackageByName);
+        unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
         return;
       }
 
@@ -408,7 +411,7 @@ static auto TrackImport(
       if (is_explicit_main) {
         CARBON_DIAGNOSTIC(ImportMainPackage, Error,
                           "Cannot import `Main` from other packages.");
-        unit_info.emitter.Emit(import.node, ImportMainPackage);
+        unit_info.emitter.Emit(import.node_id, ImportMainPackage);
         return;
       }
     }
@@ -420,9 +423,9 @@ static auto TrackImport(
   }
 
   // Get the package imports.
-  auto package_imports_it =
-      unit_info.package_imports_map.try_emplace(import.package_id, import.node)
-          .first;
+  auto package_imports_it = unit_info.package_imports_map
+                                .try_emplace(import.package_id, import.node_id)
+                                .first;
 
   if (auto api = api_map.find(import_key); api != api_map.end()) {
     // Add references between the file and imported api.
@@ -435,8 +438,9 @@ static auto TrackImport(
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "Corresponding API not found.");
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
-    unit_info.emitter.Emit(
-        import.node, explicit_import_map ? ImportNotFound : LibraryApiNotFound);
+    unit_info.emitter.Emit(import.node_id, explicit_import_map
+                                               ? ImportNotFound
+                                               : LibraryApiNotFound);
   }
 }
 
@@ -463,9 +467,9 @@ static auto BuildApiMapAndDiagnosePackaging(
                         "`Main//default` must omit `package` directive.");
       CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
                         "Use `library` directive in `Main` package libraries.");
-      unit_info.emitter.Emit(packaging->names.node, import_key.second.empty()
-                                                        ? ExplicitMainPackage
-                                                        : ExplicitMainLibrary);
+      unit_info.emitter.Emit(packaging->names.node_id,
+                             import_key.second.empty() ? ExplicitMainPackage
+                                                       : ExplicitMainLibrary);
       continue;
     }
 
@@ -485,7 +489,7 @@ static auto BuildApiMapAndDiagnosePackaging(
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
                             std::string);
-          unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+          unit_info.emitter.Emit(packaging->names.node_id, DuplicateLibraryApi,
                                  prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
@@ -512,7 +516,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                           "File extension of `{0}` required for `{1}`.",
                           llvm::StringLiteral, Lex::TokenKind);
         auto diag = unit_info.emitter.Build(
-            packaging ? packaging->names.node : Parse::NodeId::Invalid,
+            packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
             IncorrectExtension, want_ext,
             is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
         if (is_api_with_impl_ext) {
@@ -608,7 +612,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
               CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
                                 "Import cannot be used due to a cycle. Cycle "
                                 "must be fixed to import.");
-              unit_info.emitter.Emit(import_it->names.node,
+              unit_info.emitter.Emit(import_it->names.node_id,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.
               package_imports.has_load_error = true;

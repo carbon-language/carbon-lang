@@ -106,12 +106,6 @@ class Context {
     sem_ir().insts().SetNodeId(inst_id, node_id);
   }
 
-  // Adds a package's imports to name lookup, with all libraries together.
-  // sem_irs will all be non-null; has_load_error must be used for any errors.
-  auto AddPackageImports(Parse::NodeId import_node, IdentifierId package_id,
-                         llvm::ArrayRef<const SemIR::File*> sem_irs,
-                         bool has_load_error) -> void;
-
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
 
@@ -138,8 +132,8 @@ class Context {
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIR::InstId dup_def_id,
-                             SemIR::InstId prev_def_id) -> void;
+  auto DiagnoseDuplicateName(SemIRLocation dup_def, SemIRLocation prev_def)
+      -> void;
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)

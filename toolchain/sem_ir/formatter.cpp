@@ -503,10 +503,6 @@ class InstNamer {
           CollectNamesInBlock(scope_id, inst.As<ImplDecl>().decl_block_id);
           break;
         }
-        case Import::Kind: {
-          add_inst_name("import");
-          continue;
-        }
         case ImportRefUnused::Kind:
         case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
