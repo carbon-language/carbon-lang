@@ -73,11 +73,12 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
   if (success) {
     EXPECT_FALSE(filename.starts_with("fail_"))
         << "`" << filename
-        << "` succeeded; if this is correct, add a `fail_` prefix.";
+        << "` succeeded; if success is expected, remove the `fail_` "
+           "prefix.";
   } else {
     EXPECT_TRUE(filename.starts_with("fail_"))
         << "`" << filename
-        << "` failed; if this is correct, remove the `fail_` prefix.";
+        << "` failed; if failure is expected, add the `fail_` prefix.";
   }
 }
 

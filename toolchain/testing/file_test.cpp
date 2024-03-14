@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -29,16 +30,18 @@ class ToolchainFileTest : public FileTestBase {
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
     Driver driver(fs, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
-    if (std::find(test_args.begin(), test_args.end(), "%s") ==
-        test_args.end()) {
-      // Files weren't forwarded as an argument, so don't use per_file_success.
-      // This primarily occurs in driver tests with invalid filename arguments,
-      // which we wouldn't want to try validating.
-      return {{.success = driver_result.success}};
-    } else {
-      return {{.success = driver_result.success,
-               .per_file_success = std::move(driver_result.per_file_success)}};
-    }
+
+    RunResult result{
+        .success = driver_result.success,
+        .per_file_success = std::move(driver_result.per_file_success)};
+    // Drop entries that don't look like a file. Note this can empty out the
+    // list.
+    llvm::erase_if(result.per_file_success,
+                   [](std::pair<llvm::StringRef, bool> entry) {
+                     return entry.first == "." || entry.first == "-" ||
+                            entry.first.starts_with("not_file");
+                   });
+    return result;
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
