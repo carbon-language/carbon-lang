@@ -18,7 +18,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Simple, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Simple> = assoc_entity element0, @Simple.%F [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness @Simple, (@impl.%F) [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,7 +47,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: T as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @Simple, (%F) [template = constants.%.4]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

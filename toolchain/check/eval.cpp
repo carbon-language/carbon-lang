@@ -330,7 +330,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                         &SemIR::BoundMethod::function_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
-                                        &SemIR::InterfaceWitness::table_id);
+                                        &SemIR::InterfaceWitness::elements_id);
     case SemIR::PointerType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::PointerType::pointee_id);
@@ -417,6 +417,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
+    case SemIR::InterfaceWitnessAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(context, inst);

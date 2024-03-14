@@ -842,6 +842,7 @@ class TypeCompleter {
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::InterfaceWitness::Kind:
+      case SemIR::InterfaceWitnessAccess::Kind:
       case SemIR::IntLiteral::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:

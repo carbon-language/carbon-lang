@@ -75,9 +75,9 @@ struct ArrayIndex {
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.
 struct AnyAggregateAccess {
-  static constexpr InstKind Kinds[] = {InstKind::StructAccess,
-                                       InstKind::TupleAccess,
-                                       InstKind::ClassElementAccess};
+  static constexpr InstKind Kinds[] = {
+      InstKind::StructAccess, InstKind::TupleAccess,
+      InstKind::ClassElementAccess, InstKind::InterfaceWitnessAccess};
 
   InstKind kind;
   TypeId type_id;
@@ -111,8 +111,8 @@ struct AnyAggregateInit {
 
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
-  static constexpr InstKind Kinds[] = {InstKind::StructValue,
-                                       InstKind::TupleValue};
+  static constexpr InstKind Kinds[] = {
+      InstKind::StructValue, InstKind::TupleValue, InstKind::InterfaceWitness};
 
   InstKind kind;
   TypeId type_id;
@@ -547,8 +547,18 @@ struct InterfaceWitness {
           "interface_witness");
 
   TypeId type_id;
-  InterfaceId interface_id;
-  InstBlockId table_id;
+  InstBlockId elements_id;
+};
+
+// Accesses an element of an interface witness by index.
+struct InterfaceWitnessAccess {
+  static constexpr auto Kind =
+      InstKind::InterfaceWitnessAccess.Define<Parse::InvalidNodeId>(
+          "interface_witness_access");
+
+  TypeId type_id;
+  InstId witness_id;
+  ElementIndex index;
 };
 
 struct IntLiteral {

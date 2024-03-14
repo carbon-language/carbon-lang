@@ -20,7 +20,7 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %.2: <witness> = interface_witness @I, () [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

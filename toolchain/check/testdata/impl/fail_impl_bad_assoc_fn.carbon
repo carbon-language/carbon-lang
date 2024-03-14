@@ -259,7 +259,7 @@ class FDifferentParamName {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: NoF as I {
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.1
@@ -267,7 +267,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: FNotFunction as I {
 // CHECK:STDOUT:   %F.decl: type = class_decl @F.13 [template = constants.%F] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -277,7 +277,7 @@ class FDifferentParamName {
 // CHECK:STDOUT: impl @impl.3: FAlias as I {
 // CHECK:STDOUT:   %PossiblyF.ref: <function> = name_ref PossiblyF, file.%PossiblyF [template = file.%PossiblyF]
 // CHECK:STDOUT:   %F: <function> = bind_alias F, file.%PossiblyF [template = file.%PossiblyF]
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -289,7 +289,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %b.loc54_10.1: bool = param b
 // CHECK:STDOUT:     %b.loc54_10.2: bool = bind_name b, %b.loc54_10.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -302,7 +302,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %self.loc66_10.1: FExtraImplicitParam = param self
 // CHECK:STDOUT:     %self.loc66_10.2: FExtraImplicitParam = bind_name self, %self.loc66_10.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -313,7 +313,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.4 [template] {
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @I, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -326,7 +326,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %self.loc93_10.2: bool = bind_name self, %self.loc93_10.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -339,7 +339,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %b.loc105_10.2: bool = bind_name b, %b.loc105_10.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -353,7 +353,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %b.loc117_22.1: bool = param b
 // CHECK:STDOUT:     %b.loc117_22.2: bool = bind_name b, %b.loc117_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -369,7 +369,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %b.loc129_22.2: FDifferentParamType = bind_name b, %b.loc129_22.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -385,7 +385,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %b.loc141_22.2: bool = bind_name b, %b.loc141_22.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -401,7 +401,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [template = constants.%FDifferentReturnType]
 // CHECK:STDOUT:     %return.var: ref FDifferentReturnType = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -416,7 +416,7 @@ class FDifferentParamName {
 // CHECK:STDOUT:     %not_b.loc166_22.2: bool = bind_name not_b, %not_b.loc166_22.1
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness @J, (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
