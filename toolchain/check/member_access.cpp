@@ -140,6 +140,7 @@ static auto LookupInterfaceWitness(Context& context,
     if (interface_type->interface_id != interface_id) {
       continue;
     }
+    // TODO: Diagnose if the impl isn't defined yet?
     return impl.witness_id;
   }
   return SemIR::InstId::Invalid;
