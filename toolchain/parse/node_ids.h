@@ -94,6 +94,10 @@ using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
 using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDirectiveId>;
+using AnyMemberAccessExprId =
+    NodeIdOneOf<MemberAccessExprId, PointerMemberAccessExprId>;
+using AnyPointerDeferenceExprId =
+    NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

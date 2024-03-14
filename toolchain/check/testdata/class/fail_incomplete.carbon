@@ -40,10 +40,9 @@ var global_var: Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 fn ConvertFromStruct() -> Class { return {}; }
 
-// TODO: Once the `->` operator is supported:
-// TODO: fn G(p: Class*) -> i32 {
-// TODO:   return p->n;
-// TODO: }
+fn G(p: Class*) -> i32 {
+  return p->n;
+}
 
 fn MemberAccess(p: Class*) -> i32 {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+6]]:11: ERROR: Member access into object of incomplete type `Class`.

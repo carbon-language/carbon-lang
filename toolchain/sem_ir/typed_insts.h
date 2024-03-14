@@ -273,7 +273,8 @@ struct BoolLiteral {
 // `self` parameter, such as `object.MethodName`.
 struct BoundMethod {
   static constexpr auto Kind =
-      InstKind::BoundMethod.Define<Parse::MemberAccessExprId>("bound_method");
+      InstKind::BoundMethod.Define<Parse::AnyMemberAccessExprId>(
+          "bound_method");
 
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize

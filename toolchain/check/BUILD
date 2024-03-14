@@ -107,6 +107,7 @@ cc_library(
         ":import",
         ":interface",
         ":member_access",
+        ":pointer_dereference",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
@@ -225,6 +226,21 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "pointer_dereference",
+    srcs = ["pointer_dereference.cpp"],
+    hdrs = ["pointer_dereference.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
     ],
 )
 

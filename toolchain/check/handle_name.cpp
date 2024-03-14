@@ -4,6 +4,8 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/pointer_dereference.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/inst.h"
@@ -28,10 +30,35 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
   return true;
 }
 
+auto HandlePrefixOperatorStar(Context& context,
+                              Parse::PrefixOperatorStarId node_id) -> bool {
+  auto base_id = context.node_stack().PopExpr();
+  auto type_id =
+      context.GetUnqualifiedType(context.insts().Get(base_id).type_id());
+  // TODO: Check for any facet here, rather than only a type.
+  if (type_id == SemIR::TypeId::TypeType) {
+    CARBON_DIAGNOSTIC(
+        DerefOfType, Note,
+        "To form a pointer type, write the `*` after the pointee type.");
+    auto builder = context.emitter().Build(TokenOnly(node_id), DerefOfType);
+    builder.Note(TokenOnly(node_id), DerefOfType);
+    builder.Emit();
+  }
+  auto dereference_id = PerformPointerDereference(context, node_id, base_id);
+  context.AddInstAndPush({node_id, dereference_id});
+  return true;
+}
+
 auto HandlePointerMemberAccessExpr(Context& context,
                                    Parse::PointerMemberAccessExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandlePointerMemberAccessExpr");
+  auto [name_node_id, name_id] = context.node_stack().PopNameWithNodeId();
+  auto base_id = context.node_stack().PopExpr();
+  auto dereference_id = PerformPointerDereference(context, node_id, base_id);
+  context.AddInstAndPush({node_id, dereference_id});
+  auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
+  context.node_stack().Push(node_id, member_id);
+  return true;
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
