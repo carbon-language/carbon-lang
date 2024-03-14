@@ -38,14 +38,13 @@ auto HandlePrefixOperatorStar(Context& context,
   // TODO: Check for any facet here, rather than only a type.
   if (type_id == SemIR::TypeId::TypeType) {
     CARBON_DIAGNOSTIC(
-        DerefOfType, Note,
+        DerefOfType, Error,
         "To form a pointer type, write the `*` after the pointee type.");
     auto builder = context.emitter().Build(TokenOnly(node_id), DerefOfType);
-    builder.Note(TokenOnly(node_id), DerefOfType);
     builder.Emit();
   }
-  auto dereference_id = PerformPointerDereference(context, node_id, base_id);
-  context.AddInstAndPush({node_id, dereference_id});
+  auto deref_base_id = PerformPointerDereference(context, node_id, base_id);
+  context.node_stack().Push(node_id, deref_base_id);
   return true;
 }
 
@@ -54,9 +53,9 @@ auto HandlePointerMemberAccessExpr(Context& context,
     -> bool {
   auto [name_node_id, name_id] = context.node_stack().PopNameWithNodeId();
   auto base_id = context.node_stack().PopExpr();
-  auto dereference_id = PerformPointerDereference(context, node_id, base_id);
-  context.AddInstAndPush({node_id, dereference_id});
-  auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
+  auto deref_base_id = PerformPointerDereference(context, node_id, base_id);
+  auto member_id =
+      PerformMemberAccess(context, node_id, deref_base_id, name_id);
   context.node_stack().Push(node_id, member_id);
   return true;
 }

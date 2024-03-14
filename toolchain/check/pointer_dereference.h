@@ -15,7 +15,7 @@ namespace Carbon::Check {
 // `base_id`. Returns the result of the access.
 auto PerformPointerDereference(Context& context,
                                Parse::AnyPointerDeferenceExprId node_id,
-                               SemIR::InstId base_id) -> SemIR::Deref;
+                               SemIR::InstId base_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

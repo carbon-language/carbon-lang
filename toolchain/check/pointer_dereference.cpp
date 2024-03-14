@@ -12,7 +12,7 @@ namespace Carbon::Check {
 
 auto PerformPointerDereference(Context& context,
                                Parse::AnyPointerDeferenceExprId node_id,
-                               SemIR::InstId base_id) -> SemIR::Deref {
+                               SemIR::InstId base_id) -> SemIR::InstId {
   base_id = ConvertToValueExpr(context, base_id);
   auto type_id =
       context.GetUnqualifiedType(context.insts().Get(base_id).type_id());
@@ -28,7 +28,7 @@ auto PerformPointerDereference(Context& context,
         context.emitter().Build(TokenOnly(node_id), DerefOfNonPointer, type_id);
     builder.Emit();
   }
-  return SemIR::Deref{result_type_id, base_id};
+  return context.AddInst({node_id, SemIR::Deref{result_type_id, base_id}});
 }
 
 }  // namespace Carbon::Check
