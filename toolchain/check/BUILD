@@ -142,6 +142,7 @@ cc_library(
     hdrs = ["function.h"],
     deps = [
         ":context",
+        ":subst",
         "//common:check",
         "//toolchain/sem_ir:file",
     ],
@@ -154,6 +155,7 @@ cc_library(
     deps = [
         ":context",
         ":function",
+        ":subst",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
@@ -196,6 +198,22 @@ cc_library(
     name = "member_access",
     srcs = ["member_access.cpp"],
     hdrs = ["member_access.h"],
+    deps = [
+        ":context",
+        ":subst",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "subst",
+    srcs = ["subst.cpp"],
+    hdrs = ["subst.h"],
     deps = [
         ":context",
         "//common:check",

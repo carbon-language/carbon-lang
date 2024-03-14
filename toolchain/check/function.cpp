@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/function.h"
+#include "toolchain/check/subst.h"
 
 namespace Carbon::Check {
 
@@ -31,7 +32,8 @@ static auto CheckRedeclParam(Context& context,
                              llvm::StringLiteral param_diag_label,
                              int32_t param_index,
                              SemIR::InstId new_param_ref_id,
-                             SemIR::InstId prev_param_ref_id) -> bool {
+                             SemIR::InstId prev_param_ref_id,
+                             Substitutions substitutions) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -52,7 +54,8 @@ static auto CheckRedeclParam(Context& context,
   auto new_param_ref = context.insts().Get(new_param_ref_id);
   auto prev_param_ref = context.insts().Get(prev_param_ref_id);
   if (new_param_ref.kind() != prev_param_ref.kind() ||
-      new_param_ref.type_id() != prev_param_ref.type_id()) {
+      new_param_ref.type_id() !=
+          SubstType(context, prev_param_ref.type_id(), substitutions)) {
     diagnose();
     return false;
   }
@@ -90,7 +93,8 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
                               SemIR::InstBlockId new_param_refs_id,
                               SemIR::InstId prev_decl_id,
                               SemIR::InstBlockId prev_param_refs_id,
-                              llvm::StringLiteral param_diag_label) -> bool {
+                              llvm::StringLiteral param_diag_label,
+                              Substitutions substitutions) -> bool {
   // This will often occur for empty params.
   if (new_param_refs_id == prev_param_refs_id) {
     return true;
@@ -116,7 +120,7 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
   for (auto [index, new_param_ref_id, prev_param_ref_id] :
        llvm::enumerate(new_param_ref_ids, prev_param_ref_ids)) {
     if (!CheckRedeclParam(context, param_diag_label, index, new_param_ref_id,
-                          prev_param_ref_id)) {
+                          prev_param_ref_id, substitutions)) {
       return false;
     }
   }
@@ -125,21 +129,26 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
 
 // Returns false if the provided function declarations differ.
 static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
-                        const SemIR::Function& prev_function) -> bool {
+                        const SemIR::Function& prev_function,
+                        Substitutions substitutions) -> bool {
   if (FunctionDeclHasError(context, new_function) ||
       FunctionDeclHasError(context, prev_function)) {
     return false;
   }
-  if (!CheckRedeclParams(context, new_function.decl_id,
-                         new_function.implicit_param_refs_id,
-                         prev_function.decl_id,
-                         prev_function.implicit_param_refs_id, "implicit ") ||
+  if (!CheckRedeclParams(
+          context, new_function.decl_id, new_function.implicit_param_refs_id,
+          prev_function.decl_id, prev_function.implicit_param_refs_id,
+          "implicit ", substitutions) ||
       !CheckRedeclParams(context, new_function.decl_id,
                          new_function.param_refs_id, prev_function.decl_id,
-                         prev_function.param_refs_id, "")) {
+                         prev_function.param_refs_id, "", substitutions)) {
     return false;
   }
-  if (new_function.return_type_id != prev_function.return_type_id) {
+  auto prev_return_type_id =
+      prev_function.return_type_id.is_valid()
+          ? SubstType(context, prev_function.return_type_id, substitutions)
+          : SemIR::TypeId::Invalid;
+  if (new_function.return_type_id != prev_return_type_id) {
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
         "Function redeclaration differs because return type is `{0}`.",
@@ -154,12 +163,12 @@ static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
                                       new_function.return_type_id)
             : context.emitter().Build(new_function.decl_id,
                                       FunctionRedeclReturnTypeDiffersNoReturn);
-    if (prev_function.return_type_id.is_valid()) {
+    if (prev_return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePrevious, Note,
                         "Previously declared with return type `{0}`.",
                         SemIR::TypeId);
       diag.Note(prev_function.decl_id, FunctionRedeclReturnTypePrevious,
-                prev_function.return_type_id);
+                prev_return_type_id);
     } else {
       CARBON_DIAGNOSTIC(FunctionRedeclReturnTypePreviousNoReturn, Note,
                         "Previously declared with no return type.");
@@ -173,10 +182,12 @@ static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
   return true;
 }
 
-auto CheckFunctionRedecl(Context& context, SemIR::FunctionId new_function_id,
-                         SemIR::FunctionId prev_function_id) -> bool {
+auto CheckFunctionTypeMatches(Context& context,
+                              SemIR::FunctionId new_function_id,
+                              SemIR::FunctionId prev_function_id,
+                              Substitutions substitutions) -> bool {
   return CheckRedecl(context, context.functions().Get(new_function_id),
-                     context.functions().Get(prev_function_id));
+                     context.functions().Get(prev_function_id), substitutions);
 }
 
 auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
@@ -186,7 +197,7 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
   auto& prev_function = context.functions().Get(prev_function_id);
 
   // TODO: Disallow redeclarations within classes?
-  if (!CheckRedecl(context, new_function, prev_function)) {
+  if (!CheckRedecl(context, new_function, prev_function, {})) {
     return false;
   }
 

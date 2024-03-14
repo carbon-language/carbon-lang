@@ -12,16 +12,10 @@ class C {}
 
 impl C as UseSelf {
   // TODO: Use `Self` below once it's supported.
-  // CHECK:STDERR: fail_todo_self_in_signature.carbon:[[@LINE+6]]:8: ERROR: Function redeclaration differs at implicit parameter 1.
-  // CHECK:STDERR:   fn F[self: C](x: C) -> C { return {}; }
-  // CHECK:STDERR:        ^~~~
-  // CHECK:STDERR: fail_todo_self_in_signature.carbon:[[@LINE-10]]:8: Previous declaration's corresponding implicit parameter here.
-  // CHECK:STDERR:   fn F[self: Self](x: Self) -> Self;
-  // CHECK:STDERR:        ^~~~
   fn F[self: C](x: C) -> C { return {}; }
 }
 
-// CHECK:STDOUT: --- fail_todo_self_in_signature.carbon
+// CHECK:STDOUT: --- self_in_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @UseSelf [template]
@@ -32,6 +26,7 @@ impl C as UseSelf {
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.7: C = struct_value () [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (@impl.%F) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,16 +70,16 @@ impl C as UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as UseSelf {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
-// CHECK:STDOUT:     %C.ref.loc21_14: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.loc21_8.1: C = param self
-// CHECK:STDOUT:     %self.loc21_8.2: C = bind_name self, %self.loc21_8.1
-// CHECK:STDOUT:     %C.ref.loc21_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %x.loc21_17.1: C = param x
-// CHECK:STDOUT:     %x.loc21_17.2: C = bind_name x, %x.loc21_17.1
-// CHECK:STDOUT:     %C.ref.loc21_26: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc15_14: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %self.loc15_8.1: C = param self
+// CHECK:STDOUT:     %self.loc15_8.2: C = bind_name self, %self.loc15_8.1
+// CHECK:STDOUT:     %C.ref.loc15_20: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %x.loc15_17.1: C = param x
+// CHECK:STDOUT:     %x.loc15_17.2: C = bind_name x, %x.loc15_17.1
+// CHECK:STDOUT:     %C.ref.loc15_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -98,11 +93,11 @@ impl C as UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[@UseSelf.%self.loc8_8.2: Self](@UseSelf.%x.loc8_20.2: Self) -> Self;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.%self.loc21_8.2: C](@impl.%x.loc21_17.2: C) -> @impl.%return.var: C {
+// CHECK:STDOUT: fn @F.2[@impl.%self.loc15_8.2: C](@impl.%x.loc15_17.2: C) -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_38.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc21_38.2: init C = class_init (), @impl.%return.var [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_38.3: init C = converted %.loc21_38.1, %.loc21_38.2 [template = constants.%.7]
-// CHECK:STDOUT:   return %.loc21_38.3
+// CHECK:STDOUT:   %.loc15_38.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc15_38.2: init C = class_init (), @impl.%return.var [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_38.3: init C = converted %.loc15_38.1, %.loc15_38.2 [template = constants.%.7]
+// CHECK:STDOUT:   return %.loc15_38.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

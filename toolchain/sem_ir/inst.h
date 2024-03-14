@@ -230,6 +230,12 @@ class Inst : public Printable<Inst> {
   // such argument.
   auto arg1() const -> int32_t { return arg1_; }
 
+  // Sets the arguments of this instruction.
+  auto SetArgs(int32_t arg0, int32_t arg1) {
+    arg0_ = arg0;
+    arg1_ = arg1;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:

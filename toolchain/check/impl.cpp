@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -29,7 +30,7 @@ static auto NoteAssociatedFunction(Context& context,
 // `BuiltinError` if the function is not usable.
 static auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionId interface_function_id,
-    SemIR::InstId impl_decl_id) -> SemIR::InstId {
+    SemIR::InstId impl_decl_id, Substitutions substitutions) -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
@@ -49,8 +50,8 @@ static auto CheckAssociatedFunctionImplementation(
   // before checking. Also, this should be a semantic check rather than a
   // syntactic one. The functions should be allowed to have different signatures
   // as long as we can synthesize a suitable thunk.
-  if (!CheckFunctionRedecl(context, impl_function_decl->function_id,
-                           interface_function_id)) {
+  if (!CheckFunctionTypeMatches(context, impl_function_decl->function_id,
+                                interface_function_id, substitutions)) {
     return SemIR::InstId::BuiltinError;
   }
   return impl_decl_id;
@@ -79,6 +80,11 @@ static auto BuildInterfaceWitness(
       context.inst_blocks().Get(interface.associated_entities_id);
   table.reserve(assoc_entities.size());
 
+  // Substitute `Self` with the impl's self type when associated functions.
+  Substitution substitutions[1] = {
+      {.bind_id = interface.self_param_id,
+       .replacement_id = context.types().GetConstantId(impl.self_id)}};
+
   for (auto decl_id : assoc_entities) {
     auto decl = context.insts().Get(decl_id);
     if (auto fn_decl = decl.TryAs<SemIR::FunctionDecl>()) {
@@ -88,7 +94,7 @@ static auto BuildInterfaceWitness(
       if (impl_decl_id.is_valid()) {
         used_decl_ids.push_back(impl_decl_id);
         table.push_back(CheckAssociatedFunctionImplementation(
-            context, fn_decl->function_id, impl_decl_id));
+            context, fn_decl->function_id, impl_decl_id, substitutions));
       } else {
         CARBON_DIAGNOSTIC(
             ImplMissingFunction, Error,
