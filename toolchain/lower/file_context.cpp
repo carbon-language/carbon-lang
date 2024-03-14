@@ -63,6 +63,11 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   }
 
   auto target = sem_ir().insts().Get(inst_id);
+  while (auto alias = target.TryAs<SemIR::BindAlias>()) {
+    inst_id = alias->value_id;
+    target = sem_ir().insts().Get(inst_id);
+  }
+
   if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
   }
