@@ -116,6 +116,9 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+// Given a type and an interface, searches for an impl that describes how that
+// type implements that interface, and returns the corresponding witness.
+// Returns an invalid InstId if no matching impl is found.
 static auto LookupInterfaceWitness(Context& context,
                                    SemIR::ConstantId type_const_id,
                                    SemIR::InterfaceId interface_id)
