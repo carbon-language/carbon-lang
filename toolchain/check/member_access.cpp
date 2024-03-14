@@ -159,7 +159,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
     context.emitter().Emit(
-        context.insts().GetNodeId(member_id), MissingImplInMemberAccess,
+        member_id, MissingImplInMemberAccess,
         context.interfaces().Get(assoc_type.interface_id).name_id,
         context.sem_ir().StringifyTypeExpr(type_const_id.inst_id()));
     return SemIR::InstId::BuiltinError;
