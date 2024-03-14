@@ -56,7 +56,7 @@ class Context {
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(Parse::NodeId node_id, std::string label) -> bool;
+  auto TODO(SemIRLocation loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
