@@ -82,6 +82,7 @@ cc_library(
     hdrs = [
         "class.h",
         "constant.h",
+        "copy_on_write_block.h",
         "file.h",
         "function.h",
         "impl.h",
