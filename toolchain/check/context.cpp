@@ -50,10 +50,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
        SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(Parse::NodeId node_id, std::string label) -> bool {
+auto Context::TODO(SemIRLocation loc, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
-  emitter_->Emit(node_id, SemanticsTodo, std::move(label));
+  emitter_->Emit(loc, SemanticsTodo, std::move(label));
   return false;
 }
 

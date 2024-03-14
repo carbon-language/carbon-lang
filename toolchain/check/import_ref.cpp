@@ -343,7 +343,7 @@ class ImportRefResolver {
 
       default:
         context_.TODO(
-            Parse::NodeId::Invalid,
+            Parse::NodeId(Parse::NodeId::Invalid),
             llvm::formatv("TryResolveInst on {0}", inst.kind()).str());
         return SemIR::ConstantId::Error;
     }

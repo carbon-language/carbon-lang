@@ -302,8 +302,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             if (!int_bound) {
               // TODO: Permit symbolic array bounds. This will require fixing
               // callers of `GetArrayBoundValue`.
-              context.TODO(context.insts().GetNodeId(bound_id),
-                           "symbolic array bound");
+              context.TODO(bound_id, "symbolic array bound");
               return false;
             }
             // TODO: We should check that the size of the resulting array type
