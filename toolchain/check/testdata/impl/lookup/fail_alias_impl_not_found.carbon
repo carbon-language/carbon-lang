@@ -13,17 +13,17 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   C.F();
-  // CHECK:STDERR: fail_alias_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   c.F();
 }
 
-// CHECK:STDOUT: --- fail_alias_not_found.carbon
+// CHECK:STDOUT: --- fail_alias_impl_not_found.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
