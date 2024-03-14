@@ -30,9 +30,9 @@ var A: i32 = 1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.loc7
+// CHECK:STDOUT:     .A = %A.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.var.loc15: ref i32 = var A
 // CHECK:STDOUT:   %A.loc15: ref i32 = bind_name A, %A.var.loc15
 // CHECK:STDOUT:   %A.var.loc23: ref i32 = var A

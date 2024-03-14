@@ -21,19 +21,19 @@ fn F() -> NS.a {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %.loc7
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: type = bind_alias a, bool [template = bool]
-// CHECK:STDOUT:   %NS.ref.loc10: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
+// CHECK:STDOUT:   %NS.ref.loc10: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %a.ref.loc10: type = name_ref a, %a [template = bool]
 // CHECK:STDOUT:   %.loc10: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   %b: bool = bind_name b, %.loc10
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %NS.ref.loc12: <namespace> = name_ref NS, %.loc7 [template = %.loc7]
+// CHECK:STDOUT:     %NS.ref.loc12: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:     %a.ref.loc12: type = name_ref a, %a [template = bool]
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }

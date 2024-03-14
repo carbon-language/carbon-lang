@@ -22,9 +22,9 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %.loc4
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -35,11 +35,11 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .NS = %.2
+// CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
@@ -57,7 +57,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%.2 [template = file.%.2]
+// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc6: init i32 = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %.loc6

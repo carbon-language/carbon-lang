@@ -34,16 +34,16 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .OuterN = %.loc7
+// CHECK:STDOUT:     .OuterN = %OuterN
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .CallA = %CallA
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .InnerN = %.loc8
+// CHECK:STDOUT:   %OuterN: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .InnerN = %InnerN
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .CallAB = %CallAB
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %InnerN: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .CallABC = %CallABC
 // CHECK:STDOUT:   }

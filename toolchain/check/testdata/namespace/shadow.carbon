@@ -34,15 +34,15 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.loc7
-// CHECK:STDOUT:     .N = %.loc9
+// CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1 [template] {}
-// CHECK:STDOUT:   %.loc9: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.loc10
-// CHECK:STDOUT:     .M = %.loc12
+// CHECK:STDOUT:     .M = %M
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2 [template] {}
-// CHECK:STDOUT:   %.loc12: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %M: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {

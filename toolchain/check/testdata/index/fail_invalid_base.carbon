@@ -43,14 +43,14 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .N = %.loc11
+// CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
@@ -66,7 +66,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%.loc11 [template = file.%.loc11]
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
 // CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]

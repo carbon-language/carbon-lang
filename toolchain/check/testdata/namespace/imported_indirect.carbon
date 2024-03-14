@@ -42,57 +42,57 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.loc4
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref, [template] {
-// CHECK:STDOUT:     .B = %.loc5
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+3, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = %.loc5
+// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+4, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = %.4
+// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+5, used
-// CHECK:STDOUT:   %.4: <namespace> = namespace %import_ref.3, [template] {
+// CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {}
@@ -111,19 +111,19 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.2
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, used
-// CHECK:STDOUT:   %.2: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .B = %.3
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+4, used
-// CHECK:STDOUT:   %.3: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = %.4
+// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir1, inst+6, used
-// CHECK:STDOUT:   %.4: <namespace> = namespace %import_ref.3, [template] {
+// CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+7, used [template = imports.%D]
@@ -137,9 +137,9 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.2 [template = file.%.2]
-// CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%.3 [template = file.%.3]
-// CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%.4 [template = file.%.4]
+// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%B [template = file.%B]
+// CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%C [template = file.%C]
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %.loc5: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %.loc5

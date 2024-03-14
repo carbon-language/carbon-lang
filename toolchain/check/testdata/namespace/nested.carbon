@@ -22,12 +22,12 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %.loc7
+// CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Bar = %.loc8
+// CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {
+// CHECK:STDOUT:   %Bar: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Wiz = %Wiz
 // CHECK:STDOUT:     .Baz = %Baz
 // CHECK:STDOUT:   }
@@ -42,8 +42,8 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%.loc7 [template = file.%.loc7]
-// CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%.loc8 [template = file.%.loc8]
+// CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
+// CHECK:STDOUT:   %Bar.ref: <namespace> = name_ref Bar, file.%Bar [template = file.%Bar]
 // CHECK:STDOUT:   %Wiz.ref: <function> = name_ref Wiz, file.%Wiz [template = file.%Wiz]
 // CHECK:STDOUT:   %.loc14: init () = call %Wiz.ref()
 // CHECK:STDOUT:   return

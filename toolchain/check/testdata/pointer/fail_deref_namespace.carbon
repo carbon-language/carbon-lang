@@ -17,16 +17,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.loc7
+// CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.loc7 [template = file.%.loc7]
+// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
