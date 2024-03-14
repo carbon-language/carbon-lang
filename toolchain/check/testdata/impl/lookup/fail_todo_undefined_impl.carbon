@@ -13,7 +13,7 @@ class C {
 }
 
 fn F() -> i32 {
-  // TODO: This should probably be valid.
+  // TODO: This should produce a more useful error message.
   // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface I in type C that does not implement that interface.
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
