@@ -168,8 +168,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
   auto const_id = context.constant_values().Get(member_id);
   if (!const_id.is_constant()) {
     if (const_id != SemIR::ConstantId::Error) {
-      context.TODO(context.insts().GetNodeId(member_id),
-                   "non-constant associated entity");
+      context.TODO(member_id, "non-constant associated entity");
     }
     return SemIR::InstId::BuiltinError;
   }
@@ -177,8 +176,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
   auto assoc_entity =
       context.insts().TryGetAs<SemIR::AssociatedEntity>(const_id.inst_id());
   if (!assoc_entity) {
-    context.TODO(context.insts().GetNodeId(member_id),
-                 "unexpected value for associated entity");
+    context.TODO(member_id, "unexpected value for associated entity");
     return SemIR::InstId::BuiltinError;
   }
 
