@@ -12,6 +12,7 @@ namespace Carbon::Check {
 
 namespace {
 
+// Information about an instruction that we are substituting into.
 struct WorklistItem {
   // The instruction that we are substituting into.
   SemIR::InstId inst_id;
@@ -24,6 +25,8 @@ struct WorklistItem {
   int next_index : 31;
 };
 
+// A list of instructions that we're currently in the process of substituting
+// into. For details of the algorithm used here, see `SubstConstant`.
 class Worklist {
  public:
   auto Get(int index) -> WorklistItem& { return worklist[index]; }
