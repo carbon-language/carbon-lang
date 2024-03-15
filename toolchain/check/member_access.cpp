@@ -5,6 +5,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -151,6 +152,7 @@ static auto LookupInterfaceWitness(Context& context,
 static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
+  auto& interface = context.interfaces().Get(assoc_type.interface_id);
   auto witness_id =
       LookupInterfaceWitness(context, type_const_id, assoc_type.interface_id);
   if (!witness_id.is_valid()) {
@@ -159,8 +161,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
     context.emitter().Emit(
-        member_id, MissingImplInMemberAccess,
-        context.interfaces().Get(assoc_type.interface_id).name_id,
+        member_id, MissingImplInMemberAccess, interface.name_id,
         context.sem_ir().StringifyTypeExpr(type_const_id.inst_id()));
     return SemIR::InstId::BuiltinError;
   }
@@ -180,9 +181,14 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
     return SemIR::InstId::BuiltinError;
   }
 
-  // TODO: Substitute interface arguments and `Self` into `entity_type_id`.
+  // Substitute into the type declared in the interface.
+  Substitution substitutions[1] = {
+      {.bind_id = interface.self_param_id, .replacement_id = type_const_id}};
+  auto subst_type_id =
+      SubstType(context, assoc_type.entity_type_id, substitutions);
+
   return context.AddInst(SemIR::InterfaceWitnessAccess{
-      assoc_type.entity_type_id, witness_id, assoc_entity->index});
+      subst_type_id, witness_id, assoc_entity->index});
 }
 
 // Performs a member name lookup into the specified scope, including performing

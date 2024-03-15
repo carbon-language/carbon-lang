@@ -13,8 +13,6 @@ fn F() { I.Assoc; }
 // CHECK:STDOUT: ; ModuleID = 'assoc.carbon'
 // CHECK:STDOUT: source_filename = "assoc.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @Assoc()
-// CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
