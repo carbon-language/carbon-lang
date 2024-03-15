@@ -32,4 +32,20 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
+template <typename InstKind, int Arg>
+static constexpr auto IdKindFor() -> IdKind {
+  using Info = Internal::InstLikeTypeInfo<InstKind>;
+  if constexpr (Arg < Info::NumArgs) {
+    return IdKind::For<typename Info::template ArgType<Arg>>;
+  } else {
+    return IdKind::None;
+  }
+}
+
+const std::pair<IdKind, IdKind> Inst::ArgKindTable[] = {
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  {IdKindFor<Name, 0>(), IdKindFor<Name, 1>()},
+#include "toolchain/sem_ir/inst_kind.def"
+};
+
 }  // namespace Carbon::SemIR

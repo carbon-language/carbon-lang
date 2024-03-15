@@ -26,7 +26,10 @@ cc_library(
 
 cc_library(
     name = "ids",
-    hdrs = ["ids.h"],
+    hdrs = [
+        "id_kind.h",
+        "ids.h",
+    ],
     deps = [
         "//common:check",
         "//common:ostream",
@@ -61,6 +64,7 @@ cc_library(
     deps = [
         ":block_value_store",
         ":builtin_kind",
+        ":ids",
         ":inst_kind",
         "//common:check",
         "//common:ostream",

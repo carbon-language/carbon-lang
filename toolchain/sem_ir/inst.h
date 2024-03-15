@@ -14,6 +14,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_kind.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -209,6 +210,18 @@ class Inst : public Printable<Inst> {
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
 
+  // Gets the kinds of IDs used for arg0 and arg1 of the specified kind of
+  // instruction.
+  //
+  // TODO: This would ideally live on InstKind, but can't be there for layering
+  // reasons.
+  static auto ArgKinds(InstKind kind) -> std::pair<IdKind, IdKind> {
+    return ArgKindTable[kind.AsInt()];
+  }
+
+  // Gets the kinds of IDs used for arg0 and arg1 of this instruction.
+  auto ArgKinds() const -> std::pair<IdKind, IdKind> { return ArgKinds(kind_); }
+
   // Gets the first argument of the instruction. InvalidIndex if there is no
   // such argument.
   auto arg0() const -> int32_t { return arg0_; }
@@ -221,6 +234,9 @@ class Inst : public Printable<Inst> {
 
  private:
   friend class InstTestHelper;
+
+  // Table mapping instruction kinds to their argument kinds.
+  static const std::pair<IdKind, IdKind> ArgKindTable[];
 
   // Raw constructor, used for testing.
   explicit Inst(InstKind kind, TypeId type_id, int32_t arg0, int32_t arg1)
