@@ -200,6 +200,14 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
     return values_[id.index];
   }
 
+  // Returns an ID for the value, or Invalid if not found.
+  auto Lookup(llvm::StringRef value) const -> StringId {
+    if (auto it = map_.find(value); it != map_.end()) {
+      return it->second;
+    }
+    return StringId::Invalid;
+  }
+
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [i, val] : llvm::enumerate(values_)) {
@@ -231,6 +239,10 @@ class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
 
   auto Get(IdT id) const -> llvm::StringRef {
     return values_->Get(StringId(id.index));
+  }
+
+  auto Lookup(llvm::StringRef value) const -> IdT {
+    return IdT(values_->Lookup(value).index);
   }
 
   auto Print(llvm::raw_ostream& out) const -> void { out << *values_; }
