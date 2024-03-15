@@ -29,15 +29,22 @@ struct WorklistItem {
 // into. For details of the algorithm used here, see `SubstConstant`.
 class Worklist {
  public:
-  auto Get(int index) -> WorklistItem& { return worklist[index]; }
-  auto Size() -> int { return worklist.size(); }
-  auto Push(SemIR::InstId inst_id) -> void {
-    worklist.push_back({.inst_id = inst_id,
-                        .is_expanded = false,
-                        .next_index = static_cast<int>(worklist.size() + 1)});
-    CARBON_CHECK(worklist.back().next_index > 0) << "Constant too large.";
+  explicit Worklist(SemIR::InstId root_id) {
+    worklist_.push_back(
+        {.inst_id = root_id, .is_expanded = false, .next_index = -1});
   }
-  auto Pop() -> SemIR::InstId { return worklist.pop_back_val().inst_id; }
+
+  auto operator[](int index) -> WorklistItem& { return worklist_[index]; }
+  auto size() -> int { return worklist_.size(); }
+  auto back() -> WorklistItem& { return worklist_.back(); }
+
+  auto Push(SemIR::InstId inst_id) -> void {
+    worklist_.push_back({.inst_id = inst_id,
+                         .is_expanded = false,
+                         .next_index = static_cast<int>(worklist_.size() + 1)});
+    CARBON_CHECK(worklist_.back().next_index > 0) << "Constant too large.";
+  }
+  auto Pop() -> SemIR::InstId { return worklist_.pop_back_val().inst_id; }
 
  private:
   // Constants can get pretty large, so use a large worklist. This should be
@@ -158,9 +165,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     return const_id;
   }
 
-  Worklist worklist;
-  worklist.Push(const_id.inst_id());
-  worklist.Get(0).next_index = -1;
+  Worklist worklist(const_id.inst_id());
 
   // For each instruction that forms part of the constant, we will visit it
   // twice:
@@ -176,7 +181,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   // instruction will not need to be rebuilt.
   int index = 0;
   while (index != -1) {
-    auto& item = worklist.Get(index);
+    auto& item = worklist[index];
 
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
@@ -216,14 +221,14 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     // modifies the worklist, so it's not safe to use `item` after
     // `ExpandOperands` returns.
     item.is_expanded = true;
-    int first_operand = worklist.Size();
+    int first_operand = worklist.size();
     int next_index = item.next_index;
     ExpandOperands(context, worklist, item.inst_id);
 
     // If there are any operands, go and update them before rebuilding this
     // item.
-    if (worklist.Size() > first_operand) {
-      worklist.Get(worklist.Size() - 1).next_index = index;
+    if (worklist.size() > first_operand) {
+      worklist.back().next_index = index;
       index = first_operand;
     } else {
       // No need to rebuild this instruction.
@@ -231,9 +236,9 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     }
   }
 
-  CARBON_CHECK(worklist.Size() == 1)
+  CARBON_CHECK(worklist.size() == 1)
       << "Unexpected data left behind in work list";
-  return context.constant_values().Get(worklist.Get(0).inst_id);
+  return context.constant_values().Get(worklist.back().inst_id);
 }
 
 auto SubstType(Context& context, SemIR::TypeId type_id,
