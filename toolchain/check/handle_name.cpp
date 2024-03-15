@@ -5,7 +5,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/pointer_dereference.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/inst.h"
@@ -27,24 +26,6 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
     auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
     context.node_stack().Push(node_id, member_id);
   }
-  return true;
-}
-
-auto HandlePrefixOperatorStar(Context& context,
-                              Parse::PrefixOperatorStarId node_id) -> bool {
-  auto base_id = context.node_stack().PopExpr();
-  auto type_id =
-      context.GetUnqualifiedType(context.insts().Get(base_id).type_id());
-  // TODO: Check for any facet here, rather than only a type.
-  if (type_id == SemIR::TypeId::TypeType) {
-    CARBON_DIAGNOSTIC(
-        DerefOfType, Error,
-        "To form a pointer type, write the `*` after the pointee type.");
-    auto builder = context.emitter().Build(TokenOnly(node_id), DerefOfType);
-    builder.Emit();
-  }
-  auto deref_base_id = PerformPointerDereference(context, node_id, base_id);
-  context.node_stack().Push(node_id, deref_base_id);
   return true;
 }
 

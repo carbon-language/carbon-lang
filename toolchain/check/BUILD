@@ -236,7 +236,6 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
-        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
