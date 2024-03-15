@@ -65,54 +65,30 @@ static auto RealProfileArgFunction(llvm::FoldingSetNodeID& id,
   id.AddBoolean(real.is_decimal);
 }
 
-// Selects the function to use to profile argument N of instruction InstT. We
-// compute this in advance so that we can reuse the profiling code for all
-// instructions that are profiled in the same way. For example, all instructions
-// that take two IDs that are profiled by value use the same profiling code,
-// namely `ProfileArgs<DefaultProfileArgFunction, DefaultProfileArgFunction>`.
-template <typename InstT, int N>
-static constexpr auto SelectProfileArgFunction() -> ProfileArgFunction* {
-  if constexpr (N >= Internal::InstLikeTypeInfo<InstT>::NumArgs) {
-    // This argument is not used by this instruction; don't profile it.
-    return NullProfileArgFunction;
-  } else {
-    using ArgT = Internal::InstLikeTypeInfo<InstT>::template ArgType<N>;
-    if constexpr (std::is_same_v<ArgT, InstBlockId>) {
-      return InstBlockProfileArgFunction;
-    } else if constexpr (std::is_same_v<ArgT, TypeBlockId>) {
-      return TypeBlockProfileArgFunction;
-    } else if constexpr (std::is_same_v<ArgT, IntId>) {
-      return IntProfileArgFunction;
-    } else if constexpr (std::is_same_v<ArgT, RealId>) {
-      return RealProfileArgFunction;
-    } else {
-      return DefaultProfileArgFunction;
-    }
-  }
-}
-
-// Profiles the given instruction arguments using the specified functions.
-template <ProfileArgFunction* ProfileArg0, ProfileArgFunction* ProfileArg1>
-static auto ProfileArgs(llvm::FoldingSetNodeID& id, const File& sem_ir,
-                        int32_t arg0, int32_t arg1) -> void {
-  ProfileArg0(id, sem_ir, arg0);
-  ProfileArg1(id, sem_ir, arg1);
+// Profiles the given instruction argument, which is of the specified kind.
+static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
+                       IdKind arg_kind, int32_t arg) -> void {
+  static constexpr std::array<ProfileArgFunction*, IdKind::NumValues>
+      ProfileFunctions = [] {
+        std::array<ProfileArgFunction*, IdKind::NumValues> array;
+        array.fill(DefaultProfileArgFunction);
+        array[IdKind::None.ToIndex()] = NullProfileArgFunction;
+        array[IdKind::For<InstBlockId>.ToIndex()] = InstBlockProfileArgFunction;
+        array[IdKind::For<TypeBlockId>.ToIndex()] = TypeBlockProfileArgFunction;
+        array[IdKind::For<IntId>.ToIndex()] = IntProfileArgFunction;
+        array[IdKind::For<RealId>.ToIndex()] = RealProfileArgFunction;
+        return array;
+      }();
+  ProfileFunctions[arg_kind.ToIndex()](id, sem_ir, arg);
 }
 
 auto ProfileConstant(llvm::FoldingSetNodeID& id, const File& sem_ir, Inst inst)
     -> void {
-  using ProfileArgsFunction =
-      auto(llvm::FoldingSetNodeID&, const File&, int32_t, int32_t)->void;
-  static constexpr ProfileArgsFunction* ProfileFunctions[] = {
-#define CARBON_SEM_IR_INST_KIND(KindName)              \
-  ProfileArgs<SelectProfileArgFunction<KindName, 0>(), \
-              SelectProfileArgFunction<KindName, 1>()>,
-#include "toolchain/sem_ir/inst_kind.def"
-  };
-
   inst.kind().Profile(id);
   id.AddInteger(inst.type_id().index);
-  ProfileFunctions[inst.kind().AsInt()](id, sem_ir, inst.arg0(), inst.arg1());
+  auto arg_kinds = inst.ArgKinds();
+  ProfileArg(id, sem_ir, arg_kinds.first, inst.arg0());
+  ProfileArg(id, sem_ir, arg_kinds.second, inst.arg1());
 }
 
 }  // namespace Carbon::SemIR
