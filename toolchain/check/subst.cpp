@@ -4,9 +4,9 @@
 
 #include "toolchain/check/subst.h"
 
-#include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/cow_block.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/sem_ir/copy_on_write_block.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -169,54 +169,56 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
   int index = 0;
   while (index != -1) {
     auto& item = worklist.Get(index);
-    if (!item.is_expanded) {
-      if (context.constant_values().Get(item.inst_id).is_template()) {
-        // This instruction is a template constant, so can't contain any
-        // bindings that need to be substituted.
-        index = item.next_index;
-        continue;
-      }
 
-      if (context.insts().Is<SemIR::BindSymbolicName>(item.inst_id)) {
-        // This is a symbolic binding. Check if we're substituting it.
-
-        // TODO: Consider building a hash map for substitutions. We might have a
-        // lot of them.
-        for (auto [bind_id, replacement_id] : substitutions) {
-          if (item.inst_id == bind_id) {
-            // This is the binding we're replacing. Perform substitution.
-            item.inst_id = replacement_id.inst_id();
-            break;
-          }
-        }
-
-        // Even if it's not being substituted, don't look through it. Its constant value doesn't spend on its operand.
-        index = item.next_index;
-        continue;
-      }
-
-      // Extract the operands of this item into the worklist. Note that this
-      // modifies the worklist, so it's not safe to use `item` after
-      // `ExpandOperands` returns.
-      item.is_expanded = true;
-      int first_operand = worklist.Size();
-      int next_index = item.next_index;
-      ExpandOperands(context, worklist, item.inst_id);
-
-      // If there are any operands, go and update them before rebuilding this
-      // item.
-      if (worklist.Size() > first_operand) {
-        worklist.Get(worklist.Size() - 1).next_index = index;
-        index = first_operand;
-      } else {
-        // No need to rebuild this instruction.
-        index = next_index;
-      }
-    } else {
+    if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
       item.inst_id = Rebuild(context, worklist, item.inst_id);
       index = item.next_index;
+      continue;
+    }
+
+    if (context.constant_values().Get(item.inst_id).is_template()) {
+      // This instruction is a template constant, so can't contain any
+      // bindings that need to be substituted.
+      index = item.next_index;
+      continue;
+    }
+
+    if (context.insts().Is<SemIR::BindSymbolicName>(item.inst_id)) {
+      // This is a symbolic binding. Check if we're substituting it.
+
+      // TODO: Consider building a hash map for substitutions. We might have a
+      // lot of them.
+      for (auto [bind_id, replacement_id] : substitutions) {
+        if (item.inst_id == bind_id) {
+          // This is the binding we're replacing. Perform substitution.
+          item.inst_id = replacement_id.inst_id();
+          break;
+        }
+      }
+
+      // Even if it's not being substituted, don't look through it. Its constant value doesn't spend on its operand.
+      index = item.next_index;
+      continue;
+    }
+
+    // Extract the operands of this item into the worklist. Note that this
+    // modifies the worklist, so it's not safe to use `item` after
+    // `ExpandOperands` returns.
+    item.is_expanded = true;
+    int first_operand = worklist.Size();
+    int next_index = item.next_index;
+    ExpandOperands(context, worklist, item.inst_id);
+
+    // If there are any operands, go and update them before rebuilding this
+    // item.
+    if (worklist.Size() > first_operand) {
+      worklist.Get(worklist.Size() - 1).next_index = index;
+      index = first_operand;
+    } else {
+      // No need to rebuild this instruction.
+      index = next_index;
     }
   }
 
