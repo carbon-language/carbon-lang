@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -194,47 +195,6 @@ static auto ConvertAggregateElement(
   return Convert(context, node_id, src_elem_id, target);
 }
 
-namespace {
-// A handle to a new block that may be modified, with copy-on-write semantics.
-//
-// The constructor is given the ID of an existing block that provides the
-// initial contents of the new block. The new block is lazily allocated; if no
-// modifications have been made, the `id()` function will return the original
-// block ID.
-//
-// This is intended to avoid an unnecessary block allocation in the case where
-// the new block ends up being exactly the same as the original block.
-class CopyOnWriteBlock {
- public:
-  // Constructs the block. If `source_id` is valid, it is used as the initial
-  // value of the block. Otherwise, uninitialized storage for `size` elements
-  // is allocated.
-  CopyOnWriteBlock(SemIR::File& file, SemIR::InstBlockId source_id, size_t size)
-      : file_(file), source_id_(source_id) {
-    if (!source_id_.is_valid()) {
-      id_ = file_.inst_blocks().AddUninitialized(size);
-    }
-  }
-
-  auto id() const -> SemIR::InstBlockId { return id_; }
-
-  auto Set(int i, SemIR::InstId value) -> void {
-    if (source_id_.is_valid() && file_.inst_blocks().Get(id_)[i] == value) {
-      return;
-    }
-    if (id_ == source_id_) {
-      id_ = file_.inst_blocks().Add(file_.inst_blocks().Get(source_id_));
-    }
-    file_.inst_blocks().Get(id_)[i] = value;
-  }
-
- private:
-  SemIR::File& file_;
-  SemIR::InstBlockId source_id_;
-  SemIR::InstBlockId id_ = source_id_;
-};
-}  // namespace
-
 // Performs a conversion from a tuple to an array type. This function only
 // converts the type, and does not perform a final conversion to the requested
 // expression category.
@@ -370,7 +330,12 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // Initialize each element of the destination from the corresponding element
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
-  CopyOnWriteBlock new_block(sem_ir, literal_elems_id, src_elem_types.size());
+  auto new_block =
+      literal_elems_id.is_valid()
+          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          : SemIR::CopyOnWriteInstBlock(
+                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                            src_elem_types.size()});
   for (auto [i, src_type_id, dest_type_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
@@ -463,7 +428,12 @@ static auto ConvertStructToStructOrClass(Context& context,
   // Initialize each element of the destination from the corresponding element
   // of the source.
   // TODO: Annotate diagnostics coming from here with the element index.
-  CopyOnWriteBlock new_block(sem_ir, literal_elems_id, src_elem_fields.size());
+  auto new_block =
+      literal_elems_id.is_valid()
+          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          : SemIR::CopyOnWriteInstBlock(
+                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                            src_elem_fields.size()});
   for (auto [i, dest_field_id] : llvm::enumerate(dest_elem_fields)) {
     auto dest_field =
         sem_ir.insts().GetAs<SemIR::StructTypeField>(dest_field_id);
