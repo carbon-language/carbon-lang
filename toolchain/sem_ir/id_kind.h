@@ -24,16 +24,16 @@ class TypeEnum {
   //
   // The enum_extensibility attribute indicates that this enum is intended to
   // take values that do not correspond to its declared enumerators.
-  enum class [[clang::enum_extensibility(open)]] RawEnumType : uint8_t {
-    // The first sizeof...(Types) values correspond to the types.
+  enum class [[clang::enum_extensibility(open)]] RawEnumType : uint8_t{
+      // The first sizeof...(Types) values correspond to the types.
 
-    // An explicitly invalid value.
-    Invalid = NumTypes,
+      // An explicitly invalid value.
+      Invalid = NumTypes,
 
-    // Indicates that no type should be used.
-    // TODO: This doesn't really fit the model of this type, but it's convenient
-    // for all of its users.
-    None,
+      // Indicates that no type should be used.
+      // TODO: This doesn't really fit the model of this type, but it's
+      // convenient for all of its users.
+      None,
   };
 
   // Accesses the type given an enum value.

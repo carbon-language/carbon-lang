@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/function.h"
+
 #include "toolchain/check/subst.h"
 
 namespace Carbon::Check {

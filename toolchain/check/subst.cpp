@@ -46,8 +46,8 @@ class Worklist {
 }  // namespace
 
 // Pushes the specified operand onto the worklist.
-static auto PushOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
-                        int32_t arg) -> void {
+static auto PushOperand(Context& context, Worklist& worklist,
+                        SemIR::IdKind kind, int32_t arg) -> void {
   switch (kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
       worklist.Push(static_cast<SemIR::InstId>(arg));
@@ -62,7 +62,8 @@ static auto PushOperand(Context& context, Worklist& worklist, SemIR::IdKind kind
       }
       break;
     case SemIR::IdKind::For<SemIR::TypeBlockId>:
-      for (auto type_id : context.type_blocks().Get(static_cast<SemIR::TypeBlockId>(arg))) {
+      for (auto type_id :
+           context.type_blocks().Get(static_cast<SemIR::TypeBlockId>(arg))) {
         worklist.Push(context.types().GetInstId(type_id));
       }
       break;
@@ -117,8 +118,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
 
 // Pops the operands of the specified instruction off the worklist and rebuilds
 // the instruction with the updated operands.
-static auto Rebuild(Context& context, Worklist& worklist,
-                    SemIR::InstId inst_id) -> SemIR::InstId {
+static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id)
+    -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);
   auto kinds = inst.ArgKinds();
 
@@ -198,7 +199,8 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
         }
       }
 
-      // Even if it's not being substituted, don't look through it. Its constant value doesn't spend on its operand.
+      // Even if it's not being substituted, don't look through it. Its constant
+      // value doesn't spend on its operand.
       index = item.next_index;
       continue;
     }
@@ -228,7 +230,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
 }
 
 auto SubstType(Context& context, SemIR::TypeId type_id,
-                   Substitutions substitutions) -> SemIR::TypeId {
+               Substitutions substitutions) -> SemIR::TypeId {
   return context.GetTypeIdForTypeConstant(SubstConstant(
       context, context.types().GetConstantId(type_id), substitutions));
 }
