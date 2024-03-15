@@ -133,6 +133,10 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id)
     return inst_id;
   }
 
+  // TODO: Updating the arguments might result in the instruction having a
+  // different type. We should consider either recomputing the type or
+  // substituting into it. In the latter case, consider caching, as we may
+  // substitute into related types repeatedly.
   inst.SetArgs(arg0, arg1);
   auto result_id = TryEvalInst(context, SemIR::InstId::Invalid, inst);
   CARBON_CHECK(result_id.is_constant())
