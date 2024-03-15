@@ -37,8 +37,8 @@ class IdUnion {
 
   // Returns the ID given its kind.
   template <SemIR::IdKind::RawEnumType K>
-  constexpr auto As() const -> SemIR::IdKind::AsType<K> {
-    return As<SemIR::IdKind::AsType<K>>();
+  constexpr auto As() const -> SemIR::IdKind::TypeFor<K> {
+    return As<SemIR::IdKind::TypeFor<K>>();
   }
 
   // Translates an ID type to the enum ID kind. Returns Invalid if `IdT` isn't

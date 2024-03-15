@@ -70,10 +70,8 @@ static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
                        IdKind arg_kind, int32_t arg) -> void {
   static constexpr std::array<ProfileArgFunction*, IdKind::NumValues>
       ProfileFunctions = [] {
-        std::array<ProfileArgFunction*, IdKind::NumValues> array = {};
-        for (auto& elem : array) {
-          elem = DefaultProfileArgFunction;
-        }
+        std::array<ProfileArgFunction*, IdKind::NumValues> array;
+        array.fill(DefaultProfileArgFunction);
         array[IdKind::None.ToIndex()] = NullProfileArgFunction;
         array[IdKind::For<InstBlockId>.ToIndex()] = InstBlockProfileArgFunction;
         array[IdKind::For<TypeBlockId>.ToIndex()] = TypeBlockProfileArgFunction;

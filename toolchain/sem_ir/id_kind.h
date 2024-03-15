@@ -36,7 +36,7 @@ class TypeEnum {
   // Accesses the type given an enum value.
   template <RawEnumType K>
     requires(K != RawEnumType::Invalid)
-  using AsType = __type_pack_element<static_cast<size_t>(K), Types...>;
+  using TypeFor = __type_pack_element<static_cast<size_t>(K), Types...>;
 
   // Workarond for Clang bug https://github.com/llvm/llvm-project/issues/85461
   template <RawEnumType Value>

@@ -32,11 +32,13 @@ auto Inst::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
-template <typename InstKind, int Arg>
+// Returns the IdKind of an instruction's argument, or None if there is no
+// argument with that index.
+template <typename InstKind, int ArgIndex>
 static constexpr auto IdKindFor() -> IdKind {
   using Info = Internal::InstLikeTypeInfo<InstKind>;
-  if constexpr (Arg < Info::NumArgs) {
-    return IdKind::For<typename Info::template ArgType<Arg>>;
+  if constexpr (ArgIndex < Info::NumArgs) {
+    return IdKind::For<typename Info::template ArgType<ArgIndex>>;
   } else {
     return IdKind::None;
   }
