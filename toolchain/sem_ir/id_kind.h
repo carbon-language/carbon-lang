@@ -28,15 +28,15 @@ class TypeEnum {
 // https://github.com/llvm/llvm-project/issues/85476
 #define CARBON_OPEN_ENUM [[clang::enum_extensibility(open)]]
   enum class CARBON_OPEN_ENUM RawEnumType : uint8_t {
-      // The first sizeof...(Types) values correspond to the types.
+    // The first sizeof...(Types) values correspond to the types.
 
-      // An explicitly invalid value.
-      Invalid = NumTypes,
+    // An explicitly invalid value.
+    Invalid = NumTypes,
 
-      // Indicates that no type should be used.
-      // TODO: This doesn't really fit the model of this type, but it's
-      // convenient for all of its users.
-      None,
+    // Indicates that no type should be used.
+    // TODO: This doesn't really fit the model of this type, but it's
+    // convenient for all of its users.
+    None,
   };
 
   // Accesses the type given an enum value.
