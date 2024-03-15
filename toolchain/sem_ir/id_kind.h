@@ -24,7 +24,10 @@ class TypeEnum {
   //
   // The enum_extensibility attribute indicates that this enum is intended to
   // take values that do not correspond to its declared enumerators.
-  enum class [[clang::enum_extensibility(open)]] RawEnumType : uint8_t{
+// TODO: Works around a clang-format bug:
+// https://github.com/llvm/llvm-project/issues/85476
+#define CARBON_OPEN_ENUM [[clang::enum_extensibility(open)]]
+  enum class CARBON_OPEN_ENUM RawEnumType : uint8_t {
       // The first sizeof...(Types) values correspond to the types.
 
       // An explicitly invalid value.

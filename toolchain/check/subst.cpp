@@ -43,7 +43,7 @@ class Worklist {
   // Constants can get pretty large, so use a large worklist. This should be
   // about 4KiB, which should be small enough to comfortably fit on the stack,
   // but large enough that it's unlikely that we'll need a heap allocation.
-  llvm::SmallVector<WorklistItem, 512> worklist;
+  llvm::SmallVector<WorklistItem, 512> worklist_;
 };
 
 }  // namespace
@@ -98,8 +98,8 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       auto size = context.inst_blocks().Get(old_inst_block_id).size();
       SemIR::CopyOnWriteInstBlock new_inst_block(context.sem_ir(),
                                                  old_inst_block_id);
-      for (auto i : llvm::index_range(0, size)) {
-        new_inst_block.Set(size - i - 1, worklist.Pop());
+      for (auto i : llvm::reverse(llvm::seq(size))) {
+        new_inst_block.Set(i, worklist.Pop());
       }
       return new_inst_block.id().index;
     }
@@ -206,8 +206,8 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
         }
       }
 
-      // Even if it's not being substituted, don't look through it. Its constant
-      // value doesn't spend on its operand.
+      // If it's not being substituted, don't look through it. Its constant
+      // value doesn't depend on its operand.
       index = item.next_index;
       continue;
     }
