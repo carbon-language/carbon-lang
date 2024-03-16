@@ -217,6 +217,9 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsideScopeEntity)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclInIncompleteClassScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 
+// Name lookup.
+CARBON_DIAGNOSTIC_KIND(InNameLookup)
+
 CARBON_DIAGNOSTIC_KIND(AddrOfEphemeralRef)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
 CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)

@@ -78,6 +78,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/check:scope_stack",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",

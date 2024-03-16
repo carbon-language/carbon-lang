@@ -14,6 +14,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
@@ -190,7 +191,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::LookupNameInDecl(Parse::NodeId /*node_id*/, SemIR::NameId name_id,
+auto Context::LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
@@ -227,7 +228,8 @@ auto Context::LookupNameInDecl(Parse::NodeId /*node_id*/, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(node_id, name_id,
+                                  name_scopes().Get(scope_id));
   }
 }
 
@@ -259,12 +261,69 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupNameInExactScope(SemIR::NameId name_id,
+// Handles lookup through the import_ir_scopes for LookupNameInExactScope.
+static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
+                                   SemIR::NameId name_id,
+                                   const SemIR::NameScope& scope)
+    -> SemIR::InstId {
+  auto identifier_id = name_id.AsIdentifierId();
+  llvm::StringRef identifier;
+  if (identifier_id.is_valid()) {
+    identifier = context.identifiers().Get(identifier_id);
+  }
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InNameLookup, Note, "In name lookup for `{0}`.",
+                          SemIR::NameId);
+        builder.Note(loc, InNameLookup, name_id);
+      });
+
+  auto result_id = SemIR::InstId::Invalid;
+  for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
+    auto& import_ir = context.import_irs().Get(import_ir_id);
+
+    // Determine the NameId in the import IR.
+    SemIR::NameId import_name_id = name_id;
+    if (identifier_id.is_valid()) {
+      auto import_identifier_id = import_ir->identifiers().Lookup(identifier);
+      if (!import_identifier_id.is_valid()) {
+        // Name doesn't exist in the import IR.
+        continue;
+      }
+      import_name_id = SemIR::NameId::ForIdentifier(import_identifier_id);
+    }
+
+    // Look up the name in the import scope.
+    const auto& import_scope = import_ir->name_scopes().Get(import_scope_id);
+    auto it = import_scope.names.find(import_name_id);
+    if (it == import_scope.names.end()) {
+      // Name doesn't exist in the import scope.
+      continue;
+    }
+    auto import_inst_id = context.AddPlaceholderInst(
+        {SemIR::ImportRefUnused{import_ir_id, it->second}});
+    TryResolveImportRefUnused(context, import_inst_id);
+    if (result_id.is_valid()) {
+      // TODO: Add generalized merge functionality (merge_decls.h?).
+      context.DiagnoseDuplicateName(import_inst_id, result_id);
+    } else {
+      result_id = import_inst_id;
+    }
+  }
+
+  return result_id;
+}
+
+auto Context::LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
     TryResolveImportRefUnused(*this, it->second);
     return it->second;
+  }
+  if (!scope.import_ir_scopes.empty()) {
+    return LookupInImportIRScopes(*this, loc, name_id, scope);
   }
   return SemIR::InstId::Invalid;
 }
@@ -281,7 +340,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
     const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(name_id, scope);
+    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);
