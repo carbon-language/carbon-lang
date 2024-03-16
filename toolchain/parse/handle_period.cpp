@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
 static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
-                                bool is_arrow) -> void {
+                                State paren_state, bool is_arrow) -> void {
   auto state = context.PopState();
 
   // We're handling `.something` or `->something`.
@@ -25,6 +25,12 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
                                              NodeKind::BaseName)) {
     // OK, `.base`. This is allowed in any name context other than declaring a
     // new qualified name: `fn Namespace.base() {}`
+  } else if (paren_state != State::Invalid &&
+             context.PositionIs(Lex::TokenKind::OpenParen)) {
+    state.state = paren_state;
+    context.PushState(state);
+    context.PushState(State::ParenExpr);
+    return;
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
                       "Expected identifier after `{0}`.", llvm::StringLiteral);
@@ -49,23 +55,37 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
 }
 
 auto HandlePeriodAsDecl(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::QualifiedName,
+  HandlePeriodOrArrow(context, NodeKind::QualifiedName, State::Invalid,
                       /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsExpr(Context& context) -> void {
   HandlePeriodOrArrow(context, NodeKind::MemberAccessExpr,
+                      State::CompoundMemberAccess,
                       /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsStruct(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::StructFieldDesignator,
+  HandlePeriodOrArrow(context, NodeKind::StructFieldDesignator, State::Invalid,
                       /*is_arrow=*/false);
 }
 
 auto HandleArrowExpr(Context& context) -> void {
   HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpr,
+                      State::CompoundPointerMemberAccess,
                       /*is_arrow=*/true);
+}
+
+auto HandleCompoundMemberAccess(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddNode(NodeKind::MemberAccessExpr, state.token, state.subtree_start,
+                  state.has_error);
+}
+
+auto HandleCompoundPointerMemberAccess(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddNode(NodeKind::PointerMemberAccessExpr, state.token,
+                  state.subtree_start, state.has_error);
 }
 
 }  // namespace Carbon::Parse

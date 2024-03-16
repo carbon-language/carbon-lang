@@ -66,6 +66,8 @@ using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
 using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
 using AnyMemberNameId = NodeIdInCategory<NodeCategory::MemberName>;
+using AnyMemberNameOrMemberExprId =
+    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;

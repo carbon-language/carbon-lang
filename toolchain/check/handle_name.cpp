@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -12,10 +13,18 @@ namespace Carbon::Check {
 
 auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
     -> bool {
-  SemIR::NameId name_id = context.node_stack().PopName();
-  auto base_id = context.node_stack().PopExpr();
-  auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
-  context.node_stack().Push(node_id, member_id);
+  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+    auto member_expr_id = context.node_stack().PopExpr();
+    auto base_id = context.node_stack().PopExpr();
+    auto member_id =
+        PerformCompoundMemberAccess(context, node_id, base_id, member_expr_id);
+    context.node_stack().Push(node_id, member_id);
+  } else {
+    SemIR::NameId name_id = context.node_stack().PopName();
+    auto base_id = context.node_stack().PopExpr();
+    auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
+    context.node_stack().Push(node_id, member_id);
+  }
   return true;
 }
 
