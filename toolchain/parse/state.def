@@ -385,12 +385,40 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 //
 // . name
 // ^~~~~~
+// -> name
+// ^~~~~~~
+// . base    (variant is not Decl)
+// ^~~~~~
+// -> base   (variant is not Decl)
+// ^~~~~~~
+// . ???     (??? consumed if it is a keyword)
+// ^
+// -> ???    (??? consumed if it is a keyword)
+// ^~
 //   (state done)
 //
-// . ???    (??? consumed if it is a keyword)
-// ^
-//   (state done)
+// expr . ( ... )
+//      ^
+//   1. ParenExpr
+//   2. CompoundMemberAccess
+//
+// expr -> ( ... )
+//      ^~
+//   1. ParenExpr
+//   2. CompoundPointerMemberAccess
 CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
+
+// Handles a compound member access after we parse the name expression.
+//
+// expr . ( expr )
+//                ^
+CARBON_PARSE_STATE(CompoundMemberAccess)
+
+// Handles a compound pointer member access after we parse the name expression.
+//
+// expr -> ( expr )
+//                 ^
+CARBON_PARSE_STATE(CompoundPointerMemberAccess)
 
 // Handles `->name` expressions. Identical to PeriodAsExpr except for the
 // leading token.

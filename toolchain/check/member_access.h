@@ -16,6 +16,14 @@ auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId;
 
+// Creates SemIR to perform a compound member access with base expression
+// `base_id` and member name expression `member_expr_id`. Returns the result of
+// the access.
+auto PerformCompoundMemberAccess(Context& context,
+                                 Parse::MemberAccessExprId node_id,
+                                 SemIR::InstId base_id,
+                                 SemIR::InstId member_expr_id) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_MEMBER_ACCESS_H_

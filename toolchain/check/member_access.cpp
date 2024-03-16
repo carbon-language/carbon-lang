@@ -269,6 +269,10 @@ static auto PerformInstanceBinding(Context& context,
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType)) {
     // Find the named function and check whether it's an instance method.
     auto function_name_id = context.constant_values().Get(member_id);
+    if (function_name_id == SemIR::ConstantId::Error) {
+      return SemIR::InstId::BuiltinError;
+    }
+
     CARBON_CHECK(function_name_id.is_constant())
         << "Non-constant value " << context.insts().Get(member_id)
         << " of function type";
@@ -362,6 +366,44 @@ auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
+
+  return member_id;
+}
+
+auto PerformCompoundMemberAccess(Context& context,
+                                 Parse::MemberAccessExprId node_id,
+                                 SemIR::InstId base_id,
+                                 SemIR::InstId member_expr_id)
+    -> SemIR::InstId {
+  // Materialize a temporary for the base expression if necessary.
+  base_id = ConvertToValueOrRefExpr(context, base_id);
+  auto base_type_id = context.insts().Get(base_id).type_id();
+  auto base_type_const_id = context.types().GetConstantId(base_type_id);
+
+  auto member_id = member_expr_id;
+  auto member = context.insts().Get(member_id);
+
+  // If the member expression names an associated entity, impl lookup is always
+  // performed using the type of the base expression.
+  if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
+          member.type_id())) {
+    member_id =
+        PerformImplLookup(context, base_type_const_id, *assoc_type, member_id);
+  }
+
+  // Perform instance binding if we found an instance member.
+  member_id = PerformInstanceBinding(context, node_id, base_id, member_id);
+
+  // If we didn't perform impl lookup or instance binding, that's an error
+  // because the base expression is not used for anything.
+  if (member_id == member_expr_id) {
+    CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
+                      "Member name of type `{0}` in compound member access is "
+                      "not an instance member or an interface member.",
+                      SemIR::TypeId);
+    context.emitter().Emit(node_id, CompoundMemberAccessDoesNotUseBase,
+                           member.type_id());
+  }
 
   return member_id;
 }
