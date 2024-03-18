@@ -136,6 +136,12 @@ auto CheckMethodModifiersOnFunction(Context& context,
                         " outside of a class");
 }
 
+auto ForbidExternModifierOnDefinition(Context& context,
+                                      Lex::TokenKind decl_kind) -> void {
+  ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                        " on a definition");
+}
+
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind,
                                          SemIR::NameScopeId target_scope_id)

@@ -42,6 +42,11 @@ inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
   ForbidModifiersOnDecl(context, ~allowed, decl_kind, "");
 }
 
+// If the `extern` modifier is present, diagnoses and updates the declaration
+// state to remove it. Only called for declarations with definitions.
+auto ForbidExternModifierOnDefinition(Context& context,
+                                      Lex::TokenKind decl_kind) -> void;
+
 // Report a diagonostic if `default` and `final` modifiers are used on
 // declarations where they are not allowed. Right now they are only allowed
 // inside interfaces.

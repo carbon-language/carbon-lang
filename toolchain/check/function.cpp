@@ -191,13 +191,14 @@ auto CheckFunctionTypeMatches(Context& context,
                      context.functions().Get(prev_function_id), substitutions);
 }
 
+// TODO: Detect conflicting cross-file declarations, as well as uses of imported
+// declarations followed by a redeclaration.
 auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
                          SemIR::Function& new_function,
                          SemIR::FunctionId prev_function_id, bool is_definition)
     -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
-  // TODO: Disallow redeclarations within classes?
   if (!CheckRedecl(context, new_function, prev_function, {})) {
     return false;
   }
@@ -223,6 +224,17 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
         .Note(prev_function.definition_id, FunctionPreviousDefinition)
         .Emit();
     // The second definition will be unused as a consequence of the error.
+    return true;
+  } else if (prev_function.is_extern) {
+    CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
+                      "Cannot define extern function `{0}`.", SemIR::NameId);
+    CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
+                      "Previously declared `extern` here.");
+    context.emitter()
+        .Build(node_id, FunctionDefiningExtern, prev_function.name_id)
+        .Note(prev_function.decl_id, FunctionPreviousExternDecl)
+        .Emit();
+    // The diagnostic doesn't prevent a merge.
     return true;
   }
 

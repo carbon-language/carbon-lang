@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
@@ -39,13 +40,25 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context,
+static auto DiagnoseModifiers(Context& context, bool is_definition,
                               SemIR::NameScopeId target_scope_id)
     -> KeywordModifierSet {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
   CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
+  if (is_definition) {
+    ForbidExternModifierOnDefinition(context, decl_kind);
+  }
+  if (target_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
+    if (target_id.is_valid() &&
+        !context.insts().Is<SemIR::Namespace>(target_id)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                            " on member functions");
+    }
+  }
   LimitModifiersOnDecl(context,
-                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
+                           KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
   CheckMethodModifiersOnFunction(context, target_scope_id);
@@ -96,16 +109,16 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers = DiagnoseModifiers(context, name_context.target_scope_id);
+  auto modifiers =
+      DiagnoseModifiers(context, is_definition, name_context.target_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Extern)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Extern),
-                 "extern modifier");
+  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
+  if (is_extern && is_definition) {
+    is_extern = false;
   }
   if (!!(modifiers & KeywordModifierSet::Method)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
@@ -132,7 +145,8 @@ static auto BuildFunctionDecl(Context& context,
       .implicit_param_refs_id = implicit_param_refs_id,
       .param_refs_id = param_refs_id,
       .return_type_id = return_type_id,
-      .return_slot_id = return_slot_id};
+      .return_slot_id = return_slot_id,
+      .is_extern = is_extern};
   if (is_definition) {
     function_info.definition_id = function_info.decl_id;
   }
