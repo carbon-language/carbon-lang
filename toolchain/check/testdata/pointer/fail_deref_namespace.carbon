@@ -11,6 +11,10 @@ fn F() {
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   *A;
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR:   A->foo;
+  // CHECK:STDERR:   ^
+  A->foo;
 }
 
 // CHECK:STDOUT: --- fail_deref_namespace.carbon
@@ -26,8 +30,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %A.ref.loc13: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc17: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc17: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
