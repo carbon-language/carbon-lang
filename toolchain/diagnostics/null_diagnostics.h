@@ -32,7 +32,8 @@ inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
 template <typename LocationT>
 inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocationT>& {
   static auto* emitter = new DiagnosticEmitter<LocationT>(
-      NullDiagnosticLocationTranslator<LocationT>(), NullDiagnosticConsumer());
+      "<null>", NullDiagnosticLocationTranslator<LocationT>(),
+      NullDiagnosticConsumer());
   return *emitter;
 }
 

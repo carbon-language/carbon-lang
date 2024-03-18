@@ -23,7 +23,7 @@ struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
 
 class DiagnosticEmitterTest : public ::testing::Test {
  protected:
-  DiagnosticEmitterTest() : emitter_(translator_, consumer_) {}
+  DiagnosticEmitterTest() : emitter_("unused", translator_, consumer_) {}
 
   FakeDiagnosticLocationTranslator translator_;
   Testing::MockDiagnosticConsumer consumer_;

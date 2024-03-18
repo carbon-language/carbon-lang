@@ -34,7 +34,7 @@ class NumericLiteralTest : public ::testing::Test {
 
   auto Parse(llvm::StringRef text) -> NumericLiteral::Value {
     Testing::SingleTokenDiagnosticTranslator translator(text);
-    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
+    DiagnosticEmitter<const char*> emitter("unused", translator, error_tracker);
     return Lex(text).ComputeValue(emitter);
   }
 

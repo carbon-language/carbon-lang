@@ -3,14 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
-// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
 
 // --- a.carbon
 
@@ -34,6 +26,14 @@ interface ForwardDeclared {
 var f_ref: {.f: ForwardDeclared};
 
 // --- fail_b.carbon
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntityType`.
+// CHECK:STDERR: fail_b.carbon: ERROR: Semantics TODO: `TryResolveInst on AssociatedEntity`.
 
 library "b" api;
 
@@ -152,7 +152,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .UseBasicF = %UseBasicF
 // CHECK:STDOUT:     .UseForwardDeclaredT = %UseForwardDeclaredT
 // CHECK:STDOUT:     .UseForwardDeclaredF = %UseForwardDeclaredF
-// CHECK:STDOUT:     .f = %f.loc16
+// CHECK:STDOUT:     .f = %f.loc24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+4, used [template = constants.%.3]
@@ -161,37 +161,37 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %UseEmpty: <function> = fn_decl @UseEmpty [template] {
 // CHECK:STDOUT:     %Empty.decl: invalid = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %import_ref.1 [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc6_13.1: Empty = param e
-// CHECK:STDOUT:     @UseEmpty.%e: Empty = bind_name e, %e.loc6_13.1
+// CHECK:STDOUT:     %e.loc14_13.1: Empty = param e
+// CHECK:STDOUT:     @UseEmpty.%e: Empty = bind_name e, %e.loc14_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic: <function> = fn_decl @UseBasic [template] {
 // CHECK:STDOUT:     %Basic.decl: invalid = interface_decl @Basic [template = constants.%.3] {}
-// CHECK:STDOUT:     %Basic.ref.loc7: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
-// CHECK:STDOUT:     %e.loc7_13.1: Basic = param e
-// CHECK:STDOUT:     @UseBasic.%e: Basic = bind_name e, %e.loc7_13.1
+// CHECK:STDOUT:     %Basic.ref.loc15: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
+// CHECK:STDOUT:     %e.loc15_13.1: Basic = param e
+// CHECK:STDOUT:     @UseBasic.%e: Basic = bind_name e, %e.loc15_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared: <function> = fn_decl @UseForwardDeclared [template] {
 // CHECK:STDOUT:     %ForwardDeclared.decl: invalid = interface_decl @ForwardDeclared [template = constants.%.4] {}
-// CHECK:STDOUT:     %ForwardDeclared.ref.loc8: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:     %f.loc8_23.1: ForwardDeclared = param f
-// CHECK:STDOUT:     @UseForwardDeclared.%f: ForwardDeclared = bind_name f, %f.loc8_23.1
+// CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
+// CHECK:STDOUT:     %f.loc16_23.1: ForwardDeclared = param f
+// CHECK:STDOUT:     @UseForwardDeclared.%f: ForwardDeclared = bind_name f, %f.loc16_23.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
-// CHECK:STDOUT:   %T.ref.loc10: <error> = name_ref T, @Basic.%import_ref.3 [template = <error>]
+// CHECK:STDOUT:   %Basic.ref.loc18: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
+// CHECK:STDOUT:   %T.ref.loc18: <error> = name_ref T, @Basic.%import_ref.3 [template = <error>]
 // CHECK:STDOUT:   %UseBasicT: <error> = bind_alias UseBasicT, @Basic.%import_ref.3 [template = <error>]
-// CHECK:STDOUT:   %Basic.ref.loc11: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
-// CHECK:STDOUT:   %F.ref.loc11: <error> = name_ref F, @Basic.%import_ref.2 [template = <error>]
+// CHECK:STDOUT:   %Basic.ref.loc19: type = name_ref Basic, %import_ref.2 [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref.loc19: <error> = name_ref F, @Basic.%import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %UseBasicF: <error> = bind_alias UseBasicF, @Basic.%import_ref.2 [template = <error>]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc13: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:   %T.ref.loc13: <error> = name_ref T, @ForwardDeclared.%import_ref.3 [template = <error>]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc21: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
+// CHECK:STDOUT:   %T.ref.loc21: <error> = name_ref T, @ForwardDeclared.%import_ref.3 [template = <error>]
 // CHECK:STDOUT:   %UseForwardDeclaredT: <error> = bind_alias UseForwardDeclaredT, @ForwardDeclared.%import_ref.3 [template = <error>]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:   %F.ref.loc14: <error> = name_ref F, @ForwardDeclared.%import_ref.2 [template = <error>]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc22: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
+// CHECK:STDOUT:   %F.ref.loc22: <error> = name_ref F, @ForwardDeclared.%import_ref.2 [template = <error>]
 // CHECK:STDOUT:   %UseForwardDeclaredF: <error> = bind_alias UseForwardDeclaredF, @ForwardDeclared.%import_ref.2 [template = <error>]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc16: type = ptr_type ForwardDeclared [template = constants.%.5]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc24: type = name_ref ForwardDeclared, %import_ref.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc24: type = ptr_type ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:   %f.var: ref ForwardDeclared* = var f
-// CHECK:STDOUT:   %f.loc16: ref ForwardDeclared* = bind_name f, %f.var
+// CHECK:STDOUT:   %f.loc24: ref ForwardDeclared* = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -248,9 +248,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref {.f: ForwardDeclared} = name_ref f_ref, file.%import_ref.4
-// CHECK:STDOUT:   %.loc16_33: ref ForwardDeclared = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %.loc16_27: ForwardDeclared* = addr_of %.loc16_33
-// CHECK:STDOUT:   assign file.%f.var, %.loc16_27
+// CHECK:STDOUT:   %.loc24_33: ref ForwardDeclared = struct_access %f_ref.ref, element0
+// CHECK:STDOUT:   %.loc24_27: ForwardDeclared* = addr_of %.loc24_33
+// CHECK:STDOUT:   assign file.%f.var, %.loc24_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

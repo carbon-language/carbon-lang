@@ -19,12 +19,6 @@ fn F() {}
 package Other library "fn_extern" api;
 
 // TODO: Mark extern
-// CHECK:STDERR: other_fn_extern.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn F();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
 fn F();
 
 // --- other_fn_conflict.carbon
@@ -62,6 +56,13 @@ fn Run() {
 }
 
 // --- fail_main_use_other_extern.carbon
+// CHECK:STDERR: While compiling fail_main_use_other_extern.carbon:
+// CHECK:STDERR: other_fn_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn F();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn F() {}
+// CHECK:STDERR: ^~~~~~~~
 
 library "use_other_extern" api;
 
@@ -69,15 +70,9 @@ import Other library "fn";
 import Other library "fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE+9]]:3: In name lookup for `F`.
+  // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE+3]]:3: In name lookup for `F`.
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-  // CHECK:STDERR: fn F(x: i32) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
-  // CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
-  // CHECK:STDERR: fn F() {}
-  // CHECK:STDERR: ^~~~~~~~
   Other.F();
 }
 
@@ -89,6 +84,13 @@ import Other library "fn";
 import Other library "fn_conflict";
 
 // --- fail_main_use_other_ambiguous.carbon
+// CHECK:STDERR: While compiling fail_main_use_other_ambiguous.carbon:
+// CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn F(x: i32) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn F() {}
+// CHECK:STDERR: ^~~~~~~~
 
 library "use_other_ambiguous" api;
 
@@ -272,7 +274,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F.2]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc17: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc18: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +312,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, used [template = imports.%F.2]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, %import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc11: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc18: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

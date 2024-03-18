@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: fail_main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
 
 // --- main1.carbon
 
 // --- fail_main2.carbon
+// CHECK:STDERR: fail_main2.carbon: ERROR: Main//default previously provided by `main1.carbon`.
 
 // --- main_lib1.carbon
 

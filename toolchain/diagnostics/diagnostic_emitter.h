@@ -101,6 +101,10 @@ struct DiagnosticMessage {
 // An instance of a single error or warning.  Information about the diagnostic
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
+  // The file whose compilation led to the diagnostic. This may differ from the
+  // line of code that is being diagnosed.
+  llvm::StringRef filename;
+
   // The diagnostic's level.
   DiagnosticLevel level;
 
@@ -298,7 +302,8 @@ class DiagnosticEmitter {
         llvm::SmallVector<llvm::Any> args)
         : emitter_(emitter),
           diagnostic_(
-              {.level = diagnostic_base.Level,
+              {.filename = emitter_->filename_,
+               .level = diagnostic_base.Level,
                .message = MakeMessage(emitter, location, diagnostic_base,
                                       std::move(args))}) {
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
@@ -321,12 +326,12 @@ class DiagnosticEmitter {
     Diagnostic diagnostic_;
   };
 
-  // The `translator` and `consumer` are required to outlive the diagnostic
-  // emitter.
+  // Parameters must have a lifetime until the consumer is flushed.
   explicit DiagnosticEmitter(
+      llvm::StringRef filename,
       DiagnosticLocationTranslator<LocationT>& translator,
       DiagnosticConsumer& consumer)
-      : translator_(&translator), consumer_(&consumer) {}
+      : filename_(filename), translator_(&translator), consumer_(&consumer) {}
   ~DiagnosticEmitter() = default;
 
   // Emits an error.
@@ -372,6 +377,7 @@ class DiagnosticEmitter {
   template <typename LocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
 
+  llvm::StringRef filename_;
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
@@ -384,6 +390,9 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       : stream_(&stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+    if (diagnostic.filename != diagnostic.message.location.filename) {
+      *stream_ << "While compiling " << diagnostic.filename << ":\n";
+    }
     std::string prefix;
     if (diagnostic.level == DiagnosticLevel::Error) {
       prefix = "ERROR: ";
@@ -423,6 +432,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   }
 
  private:
+  llvm::StringRef filename_;
   llvm::raw_ostream* stream_;
 };
 

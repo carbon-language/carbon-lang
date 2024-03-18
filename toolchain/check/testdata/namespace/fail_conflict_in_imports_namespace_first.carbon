@@ -15,15 +15,16 @@ fn NS.Foo() {}
 
 package Example library "fn" api;
 
-// CHECK:STDERR: fn.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+fn NS() {}
+
+// --- fail_conflict.carbon
+// CHECK:STDERR: While compiling fail_conflict.carbon:
+// CHECK:STDERR: fn.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn NS() {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
-fn NS() {}
-
-// --- fail_conflict.carbon
 
 package Example library "namespace_then_fn" api;
 

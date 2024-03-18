@@ -30,7 +30,8 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   FakeDiagnosticLocationTranslator translator;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
-  DiagnosticEmitter<DiagnosticLocation> emitter(translator, sorting_consumer);
+  DiagnosticEmitter<DiagnosticLocation> emitter("f", translator,
+                                                sorting_consumer);
 
   emitter.Emit({"f", "line", 2, 1}, TestDiagnostic, "M1");
   emitter.Emit({"f", "line", 1, 1}, TestDiagnostic, "M2");

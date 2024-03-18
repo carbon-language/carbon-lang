@@ -21,7 +21,8 @@ auto HandleInvalid(Context& context) -> void {
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
   Lex::TokenLocationTranslator translator(&tokens);
-  Lex::TokenDiagnosticEmitter emitter(translator, consumer);
+  Lex::TokenDiagnosticEmitter emitter(tokens.source().filename(), translator,
+                                      consumer);
 
   // Delegate to the parser.
   Tree tree(tokens);

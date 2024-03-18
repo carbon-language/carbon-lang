@@ -14,15 +14,16 @@ fn Foo();
 
 package Example library "var" api;
 
-// CHECK:STDERR: var.carbon:[[@LINE+6]]:5: ERROR: Duplicate name being declared in the same scope.
+var Foo: i32;
+
+// --- fail_conflict.carbon
+// CHECK:STDERR: While compiling fail_conflict.carbon:
+// CHECK:STDERR: var.carbon:4:5: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: var Foo: i32;
 // CHECK:STDERR:     ^~~
 // CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn Foo();
 // CHECK:STDERR: ^~~~~~~~~
-var Foo: i32;
-
-// --- fail_conflict.carbon
 
 package Example library "conflict" api;
 

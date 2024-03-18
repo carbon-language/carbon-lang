@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// --- fail_main.incorrect
 // CHECK:STDERR: fail_main.incorrect: ERROR: File extension of `.carbon` required for `api`.
+
+// --- fail_main_redundant_with_swapped_ext.impl.carbon
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: ERROR: Main//default previously provided by `fail_main.incorrect`.
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: ERROR: File extension of `.carbon` required for `api`.
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: File extension of `.impl.carbon` only allowed for `impl`.
-
-// --- fail_main.incorrect
-
-// --- fail_main_redundant_with_swapped_ext.impl.carbon
 
 // --- fail_main_lib.incorrect
 

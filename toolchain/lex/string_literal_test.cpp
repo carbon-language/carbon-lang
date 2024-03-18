@@ -28,7 +28,7 @@ class StringLiteralTest : public ::testing::Test {
   auto Parse(llvm::StringRef text) -> llvm::StringRef {
     StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticTranslator translator(text);
-    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
+    DiagnosticEmitter<const char*> emitter("unused", translator, error_tracker);
     return token.ComputeValue(allocator, emitter);
   }
 

@@ -78,9 +78,9 @@ class [[clang::internal_linkage]] Lexer {
       : buffer_(value_stores, source),
         consumer_(consumer),
         translator_(&buffer_),
-        emitter_(translator_, consumer_),
+        emitter_(source.filename(), translator_, consumer_),
         token_translator_(&buffer_),
-        token_emitter_(token_translator_, consumer_) {}
+        token_emitter_(source.filename(), token_translator_, consumer_) {}
 
   // Find all line endings and create the line data structures.
   //

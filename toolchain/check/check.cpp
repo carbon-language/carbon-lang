@@ -132,7 +132,7 @@ struct UnitInfo {
         translator(unit.tokens, unit.tokens->source().filename(),
                    unit.parse_tree),
         err_tracker(*unit.consumer),
-        emitter(translator, err_tracker) {}
+        emitter(unit.tokens->source().filename(), translator, err_tracker) {}
 
   Unit* unit;
 
@@ -251,9 +251,9 @@ static auto CheckParseTree(
         node_translators,
     const SemIR::File& builtin_ir, UnitInfo& unit_info,
     llvm::raw_ostream* vlog_stream) -> void {
-  unit_info.unit->sem_ir->emplace(
-      *unit_info.unit->value_stores,
-      unit_info.unit->tokens->source().filename().str(), &builtin_ir);
+  llvm::StringRef filename = unit_info.unit->tokens->source().filename();
+  unit_info.unit->sem_ir->emplace(*unit_info.unit->value_stores, filename.str(),
+                                  &builtin_ir);
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
@@ -261,7 +261,8 @@ static auto CheckParseTree(
       node_translators->insert({&sem_ir, &unit_info.translator}).second);
 
   SemIRLocationTranslator translator(node_translators, &sem_ir);
-  Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
+  Context::DiagnosticEmitter emitter(filename, translator,
+                                     unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
                   sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(

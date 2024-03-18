@@ -29,7 +29,7 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
                                 DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
   FilenameTranslator translator;
-  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+  DiagnosticEmitter<llvm::StringRef> emitter(filename, translator, consumer);
 
   llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> file =
       fs.openFileForRead(filename);
@@ -64,7 +64,7 @@ auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::StringRef filename, bool is_regular_file,
     DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
   FilenameTranslator translator;
-  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+  DiagnosticEmitter<llvm::StringRef> emitter(filename, translator, consumer);
 
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "Error reading file: {0}",

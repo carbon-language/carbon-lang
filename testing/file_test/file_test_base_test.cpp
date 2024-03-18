@@ -131,6 +131,15 @@ class FileTestBaseTest : public FileTestBase {
       result.per_file_success.push_back({"a.carbon", true});
       result.per_file_success.push_back({"fail_b.carbon", false});
       return result;
+    } else if (filename == "fail_no_line.carbon") {
+      stderr << "In fail_no_line.carbon:\nan error\n";
+      return {{.success = false}};
+    } else if (filename == "fail_multi_no_line.carbon") {
+      stderr << "In b.carbon:\n"
+             << "an error\n"
+             << "In c.carbon:\n"
+             << "c.carbon:5: an error\n";
+      return {{.success = false}};
     } else {
       return ErrorBuilder() << "Unexpected file: " << filename;
     }
