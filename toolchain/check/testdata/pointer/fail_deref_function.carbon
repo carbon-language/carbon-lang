@@ -5,9 +5,6 @@
 // AUTOUPDATE
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+6]]:3: ERROR: Cannot dereference operand of non-pointer type `<function>`.
-  // CHECK:STDERR:   *A;
-  // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
@@ -26,7 +23,7 @@ fn A() {
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc14: ref <error> = deref <error>
+// CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

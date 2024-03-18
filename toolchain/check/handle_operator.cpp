@@ -284,25 +284,29 @@ auto HandlePrefixOperatorPlusPlus(Context& context,
 auto HandlePrefixOperatorStar(Context& context,
                               Parse::PrefixOperatorStarId node_id) -> bool {
   auto base_id = context.node_stack().PopExpr();
-  auto type_id =
-      context.GetUnqualifiedType(context.insts().Get(base_id).type_id());
-  auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(type_id);
-  if (!pointer_type.has_value() && type_id != SemIR::TypeId::Error) {
-    CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
-                      "Cannot dereference operand of non-pointer type `{0}`.",
-                      SemIR::TypeId);
-    auto builder =
-        context.emitter().Build(TokenOnly(node_id), DerefOfNonPointer, type_id);
-    // TODO: Check for any facet here, rather than only a type.
-    if (type_id == SemIR::TypeId::TypeType) {
-      CARBON_DIAGNOSTIC(
-          DerefOfType, Note,
-          "To form a pointer type, write the `*` after the pointee type.");
-      builder.Note(TokenOnly(node_id), DerefOfType);
-    }
-    builder.Emit();
-  }
-  auto deref_base_id = PerformPointerDereference(context, node_id, base_id);
+
+  auto deref_base_id = PerformPointerDereference(
+      context, node_id, base_id,
+      [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
+        CARBON_DIAGNOSTIC(
+            DerefOfNonPointer, Error,
+            "Cannot dereference operand of non-pointer type `{0}`.",
+            SemIR::TypeId);
+
+        auto builder = context.emitter().Build(
+            TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
+
+        // TODO: Check for any facet here, rather than only a type.
+        if (not_pointer_type_id == SemIR::TypeId::TypeType) {
+          CARBON_DIAGNOSTIC(
+              DerefOfType, Note,
+              "To form a pointer type, write the `*` after the pointee type.");
+          builder.Note(TokenOnly(node_id), DerefOfType);
+        }
+
+        builder.Emit();
+      });
+
   context.node_stack().Push(node_id, deref_base_id);
   return true;
 }

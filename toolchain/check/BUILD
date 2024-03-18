@@ -214,6 +214,21 @@ cc_library(
 )
 
 cc_library(
+    name = "pointer_dereference",
+    srcs = ["pointer_dereference.cpp"],
+    hdrs = ["pointer_dereference.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "subst",
     srcs = ["subst.cpp"],
     hdrs = ["subst.h"],
@@ -226,20 +241,6 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "pointer_dereference",
-    srcs = ["pointer_dereference.cpp"],
-    hdrs = ["pointer_dereference.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
     ],
 )
 
