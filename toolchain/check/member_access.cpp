@@ -371,7 +371,7 @@ auto PerformMemberAccess(Context& context, Parse::AnyMemberAccessExprId node_id,
 }
 
 auto PerformCompoundMemberAccess(Context& context,
-                                 Parse::MemberAccessExprId node_id,
+                                 Parse::AnyMemberAccessExprId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id)
     -> SemIR::InstId {

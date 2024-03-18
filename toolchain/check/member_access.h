@@ -20,7 +20,7 @@ auto PerformMemberAccess(Context& context, Parse::AnyMemberAccessExprId node_id,
 // `base_id` and member name expression `member_expr_id`. Returns the result of
 // the access.
 auto PerformCompoundMemberAccess(Context& context,
-                                 Parse::MemberAccessExprId node_id,
+                                 Parse::AnyMemberAccessExprId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id) -> SemIR::InstId;
 
