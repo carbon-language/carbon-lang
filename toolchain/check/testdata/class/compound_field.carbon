@@ -25,6 +25,14 @@ fn AccessBase(d: Derived) -> i32 {
   return d.(Base.b);
 }
 
+fn AccessDerivedIndirect(p: Derived*) -> i32* {
+  return &p->(Derived.d);
+}
+
+fn AccessBaseIndirect(p: Derived*) -> i32* {
+  return &p->(Base.b);
+}
+
 // CHECK:STDOUT: --- compound_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -39,6 +47,8 @@ fn AccessBase(d: Derived) -> i32 {
 // CHECK:STDOUT:   %.7: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
 // CHECK:STDOUT:   %.8: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type Derived [template]
+// CHECK:STDOUT:   %.11: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,6 +57,8 @@ fn AccessBase(d: Derived) -> i32 {
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .AccessDerived = %AccessDerived
 // CHECK:STDOUT:     .AccessBase = %AccessBase
+// CHECK:STDOUT:     .AccessDerivedIndirect = %AccessDerivedIndirect
+// CHECK:STDOUT:     .AccessBaseIndirect = %AccessBaseIndirect
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
@@ -61,6 +73,22 @@ fn AccessBase(d: Derived) -> i32 {
 // CHECK:STDOUT:     %d.loc24_15.1: Derived = param d
 // CHECK:STDOUT:     @AccessBase.%d: Derived = bind_name d, %d.loc24_15.1
 // CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessDerivedIndirect: <function> = fn_decl @AccessDerivedIndirect [template] {
+// CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc28_36: type = ptr_type Derived [template = constants.%.10]
+// CHECK:STDOUT:     %p.loc28_26.1: Derived* = param p
+// CHECK:STDOUT:     @AccessDerivedIndirect.%p: Derived* = bind_name p, %p.loc28_26.1
+// CHECK:STDOUT:     %.loc28_45: type = ptr_type i32 [template = constants.%.11]
+// CHECK:STDOUT:     %return.var.loc28: ref i32* = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AccessBaseIndirect: <function> = fn_decl @AccessBaseIndirect [template] {
+// CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:     %.loc32_33: type = ptr_type Derived [template = constants.%.10]
+// CHECK:STDOUT:     %p.loc32_23.1: Derived* = param p
+// CHECK:STDOUT:     @AccessBaseIndirect.%p: Derived* = bind_name p, %p.loc32_23.1
+// CHECK:STDOUT:     %.loc32_42: type = ptr_type i32 [template = constants.%.11]
+// CHECK:STDOUT:     %return.var.loc32: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,5 +138,29 @@ fn AccessBase(d: Derived) -> i32 {
 // CHECK:STDOUT:   %.loc25_11.2: ref i32 = class_element_access %.loc25_10, element1
 // CHECK:STDOUT:   %.loc25_11.3: i32 = bind_value %.loc25_11.2
 // CHECK:STDOUT:   return %.loc25_11.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @AccessDerivedIndirect(%p: Derived*) -> i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
+// CHECK:STDOUT:   %d.ref: <unbound element of class Derived> = name_ref d, @Derived.%.loc16 [template = @Derived.%.loc16]
+// CHECK:STDOUT:   %.loc29_12.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc29_12.2: ref i32 = class_element_access %.loc29_12.1, element1
+// CHECK:STDOUT:   %.loc29_10: i32* = addr_of %.loc29_12.2
+// CHECK:STDOUT:   return %.loc29_10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @AccessBaseIndirect(%p: Derived*) -> i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %b.ref: <unbound element of class Base> = name_ref b, @Base.%.loc9 [template = @Base.%.loc9]
+// CHECK:STDOUT:   %.loc33_12.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc33_12.2: ref Base = class_element_access %.loc33_12.1, element0
+// CHECK:STDOUT:   %.loc33_12.3: ref Base = converted %.loc33_12.1, %.loc33_12.2
+// CHECK:STDOUT:   %.loc33_12.4: ref i32 = class_element_access %.loc33_12.3, element1
+// CHECK:STDOUT:   %.loc33_10: i32* = addr_of %.loc33_12.4
+// CHECK:STDOUT:   return %.loc33_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
