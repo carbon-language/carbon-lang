@@ -4,6 +4,8 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/pointer_dereference.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
 
@@ -281,30 +283,31 @@ auto HandlePrefixOperatorPlusPlus(Context& context,
 
 auto HandlePrefixOperatorStar(Context& context,
                               Parse::PrefixOperatorStarId node_id) -> bool {
-  auto value_id = context.node_stack().PopExpr();
-  value_id = ConvertToValueExpr(context, value_id);
-  auto type_id =
-      context.GetUnqualifiedType(context.insts().Get(value_id).type_id());
-  auto result_type_id = SemIR::TypeId::Error;
-  if (auto pointer_type =
-          context.types().TryGetAs<SemIR::PointerType>(type_id)) {
-    result_type_id = pointer_type->pointee_id;
-  } else if (type_id != SemIR::TypeId::Error) {
-    CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
-                      "Cannot dereference operand of non-pointer type `{0}`.",
-                      SemIR::TypeId);
-    auto builder =
-        context.emitter().Build(TokenOnly(node_id), DerefOfNonPointer, type_id);
-    // TODO: Check for any facet here, rather than only a type.
-    if (type_id == SemIR::TypeId::TypeType) {
-      CARBON_DIAGNOSTIC(
-          DerefOfType, Note,
-          "To form a pointer type, write the `*` after the pointee type.");
-      builder.Note(TokenOnly(node_id), DerefOfType);
-    }
-    builder.Emit();
-  }
-  context.AddInstAndPush({node_id, SemIR::Deref{result_type_id, value_id}});
+  auto base_id = context.node_stack().PopExpr();
+
+  auto deref_base_id = PerformPointerDereference(
+      context, node_id, base_id,
+      [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
+        CARBON_DIAGNOSTIC(
+            DerefOfNonPointer, Error,
+            "Cannot dereference operand of non-pointer type `{0}`.",
+            SemIR::TypeId);
+
+        auto builder = context.emitter().Build(
+            TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
+
+        // TODO: Check for any facet here, rather than only a type.
+        if (not_pointer_type_id == SemIR::TypeId::TypeType) {
+          CARBON_DIAGNOSTIC(
+              DerefOfType, Note,
+              "To form a pointer type, write the `*` after the pointee type.");
+          builder.Note(TokenOnly(node_id), DerefOfType);
+        }
+
+        builder.Emit();
+      });
+
+  context.node_stack().Push(node_id, deref_base_id);
   return true;
 }
 

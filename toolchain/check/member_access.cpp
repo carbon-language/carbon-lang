@@ -195,7 +195,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
 // impl lookup if necessary. If the scope is invalid, assume an error has
 // already been diagnosed, and return BuiltinError.
 static auto LookupMemberNameInScope(Context& context,
-                                    Parse::MemberAccessExprId node_id,
+                                    Parse::AnyMemberAccessExprId node_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
@@ -231,7 +231,7 @@ static auto LookupMemberNameInScope(Context& context,
 // field, forms a class member access. If the found member is an instance
 // method, forms a bound method. Otherwise, the member is returned unchanged.
 static auto PerformInstanceBinding(Context& context,
-                                   Parse::MemberAccessExprId node_id,
+                                   Parse::AnyMemberAccessExprId node_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   auto member_type_id = context.insts().Get(member_id).type_id();
@@ -295,7 +295,7 @@ static auto PerformInstanceBinding(Context& context,
   return member_id;
 }
 
-auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
+auto PerformMemberAccess(Context& context, Parse::AnyMemberAccessExprId node_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -371,7 +371,7 @@ auto PerformMemberAccess(Context& context, Parse::MemberAccessExprId node_id,
 }
 
 auto PerformCompoundMemberAccess(Context& context,
-                                 Parse::MemberAccessExprId node_id,
+                                 Parse::AnyMemberAccessExprId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id)
     -> SemIR::InstId {

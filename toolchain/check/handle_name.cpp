@@ -4,8 +4,8 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/pointer_dereference.h"
 #include "toolchain/lex/token_kind.h"
-#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -31,7 +31,36 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
 auto HandlePointerMemberAccessExpr(Context& context,
                                    Parse::PointerMemberAccessExprId node_id)
     -> bool {
-  return context.TODO(node_id, "HandlePointerMemberAccessExpr");
+  auto diagnose_not_pointer = [&context,
+                               &node_id](SemIR::TypeId not_pointer_type_id) {
+    CARBON_DIAGNOSTIC(ArrowOperatorOfNonPointer, Error,
+                      "Cannot apply `->` operator to non-pointer type `{0}`.",
+                      SemIR::TypeId);
+
+    auto builder = context.emitter().Build(
+        TokenOnly(node_id), ArrowOperatorOfNonPointer, not_pointer_type_id);
+    builder.Emit();
+  };
+
+  if (context.node_stack().PeekIs<Parse::NodeKind::ParenExpr>()) {
+    auto member_expr_id = context.node_stack().PopExpr();
+    auto base_id = context.node_stack().PopExpr();
+    auto deref_base_id = PerformPointerDereference(context, node_id, base_id,
+                                                   diagnose_not_pointer);
+    auto member_id = PerformCompoundMemberAccess(context, node_id,
+                                                 deref_base_id, member_expr_id);
+    context.node_stack().Push(node_id, member_id);
+  } else {
+    SemIR::NameId name_id = context.node_stack().PopName();
+    auto base_id = context.node_stack().PopExpr();
+    auto deref_base_id = PerformPointerDereference(context, node_id, base_id,
+                                                   diagnose_not_pointer);
+    auto member_id =
+        PerformMemberAccess(context, node_id, deref_base_id, name_id);
+    context.node_stack().Push(node_id, member_id);
+  }
+
+  return true;
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
