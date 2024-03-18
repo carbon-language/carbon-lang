@@ -13,7 +13,7 @@ namespace Carbon {
 namespace {
 struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
   auto GetLocation(llvm::StringRef filename) -> DiagnosticLocation override {
-    return {.file_name = filename};
+    return {.filename = filename};
   }
 };
 }  // namespace

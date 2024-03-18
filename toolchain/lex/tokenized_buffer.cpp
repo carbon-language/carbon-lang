@@ -384,7 +384,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     }
   }
 
-  return {.file_name = buffer_->source_->filename(),
+  return {.filename = buffer_->source_->filename(),
           .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};

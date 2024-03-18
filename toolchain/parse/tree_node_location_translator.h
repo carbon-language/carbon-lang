@@ -49,7 +49,7 @@ class NodeLocationTranslator
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
     if (!node_location.node_id().is_valid()) {
-      return {.file_name = filename_};
+      return {.filename = filename_};
     }
 
     if (node_location.token_only()) {

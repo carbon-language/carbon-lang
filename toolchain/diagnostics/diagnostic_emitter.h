@@ -49,10 +49,10 @@ enum class DiagnosticLevel : int8_t {
 
 // A location for a diagnostic in a file. The lifetime of a DiagnosticLocation
 // is required to be less than SourceBuffer that it refers to due to the
-// contained file_name and line references.
+// contained filename and line references.
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.
-  llvm::StringRef file_name;
+  llvm::StringRef filename;
   // A reference to the line of the error.
   llvm::StringRef line;
   // 1-based line number.
@@ -395,7 +395,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   }
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix = "")
       -> void {
-    *stream_ << message.location.file_name;
+    *stream_ << message.location.filename;
     if (message.location.line_number > 0) {
       *stream_ << ":" << message.location.line_number;
       if (message.location.column_number > 0) {
