@@ -227,7 +227,7 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
     return true;
   } else if (prev_function.is_extern) {
     CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
-                      "Cannot define extern function `{0}`.", SemIR::NameId);
+                      "Cannot define `extern` function `{0}`.", SemIR::NameId);
     CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
                       "Previously declared `extern` here.");
     context.emitter()
