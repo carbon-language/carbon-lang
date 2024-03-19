@@ -672,54 +672,41 @@ class ImportRefResolver {
     return context_.constant_values().Get(function_decl_id);
   }
 
-  auto TryResolveTypedInst(SemIR::InterfaceDecl inst, SemIR::InstId inst_id,
-                           bool made_forward_decl) -> SemIR::ConstantId {
-    const auto& import_interface =
-        import_ir_.interfaces().Get(inst.interface_id);
+  // Make a declaration of an interface. This is done as a separate step from
+  // importing the interface definition in order to resolve cycles.
+  auto MakeInterfaceDecl(SemIR::InstId inst_id,
+                         const SemIR::Interface& import_interface)
+      -> SemIR::ConstantId {
+    auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
+                                                SemIR::InterfaceId::Invalid,
+                                                SemIR::InstBlockId::Empty};
+    auto interface_decl_id =
+        context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
 
-    // On the first pass, create a forward declaration of the interface.
-    if (!made_forward_decl) {
-      auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
-                                                 SemIR::InterfaceId::Invalid,
-                                                 SemIR::InstBlockId::Empty};
-      auto interface_decl_id =
-          context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
+    // Start with an incomplete interface.
+    SemIR::Interface new_interface = {
+        .name_id = GetLocalNameId(import_interface.name_id),
+        .enclosing_scope_id = NoEnclosingScopeForImports,
+        .decl_id = interface_decl_id,
+    };
 
-      // Start with an incomplete interface.
-      SemIR::Interface new_interface = {
-          .name_id = GetLocalNameId(import_interface.name_id),
-          .enclosing_scope_id = NoEnclosingScopeForImports,
-          .decl_id = interface_decl_id,
-      };
+    // Write the interface ID into the InterfaceDecl.
+    interface_decl.interface_id = context_.interfaces().Add(new_interface);
+    context_.ReplaceInstBeforeConstantUse(
+        interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
 
-      // Write the interface ID into the InterfaceDecl.
-      interface_decl.interface_id = context_.interfaces().Add(new_interface);
-      context_.ReplaceInstBeforeConstantUse(
-          interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
+    // Set the constant value for the imported interface.
+    auto interface_const_id =
+        context_.constant_values().Get(interface_decl_id);
+    import_ir_constant_values_.Set(inst_id, interface_const_id);
+    return interface_const_id;
+  }
 
-      // Set the constant value for the imported interface.
-      auto interface_const_id =
-          context_.constant_values().Get(interface_decl_id);
-      import_ir_constant_values_.Set(inst_id, interface_const_id);
-
-      if (!import_interface.is_defined()) {
-        return interface_const_id;
-      }
-      // Track that we need another pass. We always will, because the type of
-      // the `Self` binding refers to the interface.
-      work_stack_.back().made_forward_decl = true;
-    }
-
-    auto initial_work = work_stack_.size();
-    auto self_param_id = GetLocalConstantId(import_interface.self_param_id);
-    if (HasNewWork(initial_work)) {
-      return SemIR::ConstantId::Invalid;
-    }
-
-    // Add the interface definition.
-    CARBON_CHECK(import_interface.is_defined())
-        << "Should not need second pass for undefined interface.";
-    auto interface_const_id = import_ir_constant_values_.Get(inst_id);
+  // Imports the definition for an interface that has been imported as a forward
+  // declaration.
+  auto AddInterfaceDefinition(const SemIR::Interface& import_interface,
+                              SemIR::ConstantId interface_const_id,
+                              SemIR::ConstantId self_param_id) -> void {
     auto& new_interface = context_.interfaces().Get(
         context_.insts()
             .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
@@ -741,7 +728,35 @@ class ImportRefResolver {
 
     CARBON_CHECK(import_scope.extended_scopes.empty())
         << "Interfaces don't currently have extended scopes to support.";
+  }
 
+  auto TryResolveTypedInst(SemIR::InterfaceDecl inst, SemIR::InstId inst_id,
+                           bool made_forward_decl) -> SemIR::ConstantId {
+    const auto& import_interface =
+        import_ir_.interfaces().Get(inst.interface_id);
+
+    // On the first pass, create a forward declaration of the interface.
+    if (!made_forward_decl) {
+      auto interface_const_id = MakeInterfaceDecl(inst_id, import_interface);
+      if (!import_interface.is_defined()) {
+        return interface_const_id;
+      }
+      // Track that we need another pass. We always will, because the type of
+      // the `Self` binding refers to the interface.
+      work_stack_.back().made_forward_decl = true;
+    }
+
+    auto initial_work = work_stack_.size();
+    auto self_param_id = GetLocalConstantId(import_interface.self_param_id);
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
+
+    // Add the interface definition.
+    CARBON_CHECK(import_interface.is_defined())
+        << "Should not need second pass for undefined interface.";
+    auto interface_const_id = import_ir_constant_values_.Get(inst_id);
+    AddInterfaceDefinition(import_interface, interface_const_id, self_param_id);
     return interface_const_id;
   }
 
