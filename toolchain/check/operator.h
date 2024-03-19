@@ -16,12 +16,12 @@ struct Operator {
   llvm::StringLiteral op_name = "Op";
 };
 
-// Checks and builds SemIR for a unary operator expression, `$operand` or
+// Checks and builds SemIR for a unary operator expression. For example, `$operand` or
 // `operand$`.
 auto BuildUnaryOperator(Context& context, Parse::AnyExprId node_id, Operator op,
                         SemIR::InstId operand_id) -> SemIR::InstId;
 
-// Checks and builds SemIR for a binary operator expression, `lhs_id $ rhs_id`.
+// Checks and builds SemIR for a binary operator expression. For example, `lhs_id $ rhs_id`.
 auto BuildBinaryOperator(Context& context, Parse::AnyExprId node_id,
                          Operator op, SemIR::InstId lhs_id,
                          SemIR::InstId rhs_id) -> SemIR::InstId;
