@@ -11,8 +11,8 @@
 namespace Carbon::Check {
 
 // Common logic for unary operator handlers.
-static auto HandleUnaryOperator(Context& context, Parse::NodeId node_id, Operator op)
-    -> bool {
+static auto HandleUnaryOperator(Context& context, Parse::NodeId node_id,
+                                Operator op) -> bool {
   // TODO: Support implicit conversion from specific node IDs to node ID
   // categories and change this function to take an `AnyExprId` directly.
   auto expr_node_id = static_cast<Parse::AnyExprId>(node_id);
@@ -23,8 +23,8 @@ static auto HandleUnaryOperator(Context& context, Parse::NodeId node_id, Operato
 }
 
 // Common logic for binary operator handlers.
-static auto HandleBinaryOperator(Context& context, Parse::NodeId node_id, Operator op)
-    -> bool {
+static auto HandleBinaryOperator(Context& context, Parse::NodeId node_id,
+                                 Operator op) -> bool {
   // TODO: Support implicit conversion from specific node IDs to node ID
   // categories and change this function to take an `AnyExprId` directly.
   auto expr_node_id = static_cast<Parse::AnyExprId>(node_id);
