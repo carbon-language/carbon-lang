@@ -35,6 +35,12 @@ fn UseEmpty(e: Empty) {}
 fn UseBasic(e: Basic) {}
 fn UseForwardDeclared(f: ForwardDeclared) {}
 
+alias UseBasicT = Basic.T;
+alias UseBasicF = Basic.F;
+
+alias UseForwardDeclaredT = ForwardDeclared.T;
+alias UseForwardDeclaredF = ForwardDeclared.F;
+
 var f: ForwardDeclared* = &f_ref.f;
 
 // CHECK:STDOUT: --- a.carbon
