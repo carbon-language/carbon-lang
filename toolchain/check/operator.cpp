@@ -34,6 +34,7 @@ static auto GetCorePackage(Context& context, Parse::AnyExprId node_id)
     return SemIR::NameScopeId::Invalid;
   }
 
+  // Look through import_refs and aliases.
   package_id = context.constant_values().Get(package_id).inst_id();
 
   // We expect it to be a package, and fail if not.
@@ -67,6 +68,7 @@ static auto GetOperatorInterface(Context& context, Parse::AnyExprId node_id,
     return SemIR::NameScopeId::Invalid;
   }
 
+  // Look through import_refs and aliases.
   interface_id = context.constant_values().Get(interface_id).inst_id();
 
   // We expect it to be an interface.
@@ -94,6 +96,7 @@ static auto GetOperatorOpFunction(Context& context, Parse::AnyExprId node_id,
     return SemIR::InstId::Invalid;
   }
 
+  // Look through import_refs and aliases.
   op_id = context.constant_values().Get(op_id).inst_id();
 
   // We expect it to be an associated function.
