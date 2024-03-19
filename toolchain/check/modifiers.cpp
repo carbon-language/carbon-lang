@@ -139,7 +139,7 @@ auto CheckMethodModifiersOnFunction(Context& context,
 auto ForbidExternModifierOnDefinition(Context& context,
                                       Lex::TokenKind decl_kind) -> void {
   ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
-                        " on a definition");
+                        " that provides a definition");
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,

@@ -39,11 +39,11 @@ fn F();
 // --- fail_member_extern.carbon
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration on member functions.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration on member functions.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn G[self: Self]();
   // CHECK:STDERR:   ^~~~~~
   extern fn G[self: Self]();

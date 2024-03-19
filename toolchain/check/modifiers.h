@@ -28,6 +28,7 @@ auto CheckMethodModifiersOnFunction(Context& context,
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_node`) specifying the context in
 // which those modifiers are forbidden.
+// TODO: Take another look at diagnostic phrasing for callers.
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,

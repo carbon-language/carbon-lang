@@ -53,7 +53,7 @@ static auto DiagnoseModifiers(Context& context, bool is_definition,
     if (target_id.is_valid() &&
         !context.insts().Is<SemIR::Namespace>(target_id)) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
-                            " on member functions");
+                            " that is a member");
     }
   }
   LimitModifiersOnDecl(context,
@@ -117,9 +117,6 @@ static auto BuildFunctionDecl(Context& context,
                  "access modifier");
   }
   bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
-  if (is_extern && is_definition) {
-    is_extern = false;
-  }
   if (!!(modifiers & KeywordModifierSet::Method)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Decl),
