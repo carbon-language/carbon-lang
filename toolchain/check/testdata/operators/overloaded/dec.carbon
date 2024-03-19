@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface Dec {
   fn Op[addr self: Self*]();
@@ -18,11 +18,11 @@ interface Dec {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Dec {
+impl C as Core.Dec {
   fn Op[addr self: C*]();
 }
 
@@ -35,7 +35,7 @@ fn TestOp() {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
@@ -51,11 +51,11 @@ fn TestOp() {
 
 package FailNotRef api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Dec {
+impl C as Core.Dec {
   fn Op[addr self: C*]();
 }
 
@@ -125,15 +125,15 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Dec.decl: invalid = interface_decl @Dec [template = constants.%.2] {}
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, %import_ref [template = constants.%.2]
@@ -210,11 +210,11 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {}
 // CHECK:STDOUT: }
@@ -269,15 +269,15 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Dec.decl: invalid = interface_decl @Dec [template = constants.%.2] {}
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, %import_ref [template = constants.%.2]

@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface Eq {
   fn Equal[self: Self](other: Self) -> bool;
@@ -17,11 +17,11 @@ interface Eq {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Eq {
+impl C as Core.Eq {
   fn Equal[self: C](other: C) -> bool;
   fn NotEqual[self: C](other: C) -> bool;
 }
@@ -38,7 +38,7 @@ fn TestNotEqual(a: C, b: C) -> bool {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
@@ -60,12 +60,12 @@ fn TestNotEqual(a: D, b: D) -> bool {
 
 package FailNoImplForArgs api;
 
-import Carbon;
+import Core;
 
 class C {};
 class D {};
 
-impl C as Carbon.Eq {
+impl C as Core.Eq {
   fn Equal[self: C](other: C) -> bool;
   fn NotEqual[self: C](other: C) -> bool;
 }
@@ -161,16 +161,16 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestEqual = %TestEqual
 // CHECK:STDOUT:     .TestNotEqual = %TestNotEqual
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref [template = constants.%.2]
@@ -292,12 +292,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestEqual = %TestEqual
 // CHECK:STDOUT:     .TestNotEqual = %TestNotEqual
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestEqual: <function> = fn_decl @TestEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc8_17: type = name_ref D, %D.decl [template = constants.%D]
@@ -374,18 +374,18 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestRhsBad = %TestRhsBad
 // CHECK:STDOUT:     .TestLhsBad = %TestLhsBad
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref [template = constants.%.2]

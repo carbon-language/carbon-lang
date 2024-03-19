@@ -8,7 +8,7 @@ HEADER
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface INTERFACE {
   fn Op[self: Self]() -> Self;
@@ -18,17 +18,17 @@ interface INTERFACE {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.INTERFACE {
-  fn Op[self: C](other: C) -> C {
+impl C as Core.INTERFACE {
+  fn Op[self: C]() -> C {
     return {};
   }
 }
 
-fn TestOp(a: C, b: C) -> C {
+fn TestOp(a: C) -> C {
   return OPa;
 }
 
@@ -36,7 +36,7 @@ fn TestOp(a: C, b: C) -> C {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 

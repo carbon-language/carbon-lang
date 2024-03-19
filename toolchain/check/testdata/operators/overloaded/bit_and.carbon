@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface BitAnd {
   fn Op[self: Self](other: Self) -> Self;
@@ -21,70 +21,58 @@ interface BitAndAssign {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.BitAnd {
+impl C as Core.BitAnd {
   fn Op[self: C](other: C) -> C {
     return {};
   }
 }
-impl C as Carbon.BitAndAssign {
+impl C as Core.BitAndAssign {
   fn Op[addr self: C*](other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {
-  // CHECK:STDERR: user.carbon:[[@LINE+6]]:10: ERROR: Cannot copy value of type `C`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: user.carbon:[[@LINE+3]]:12: ERROR: `return` statements must end with a `;`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:            ^~
-  return a OP b;
+  return a & b;
 }
 
 fn TestAssign(a: C*, b: C) {
-  // CHECK:STDERR: user.carbon:[[@LINE+3]]:6: ERROR: Expected `;` after expression statement.
-  // CHECK:STDERR:   *a OP= b;
-  // CHECK:STDERR:      ^~
-  *a OP= b;
+  *a &= b;
 }
 
 // --- fail_no_impl.carbon
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
 fn TestOp(a: D, b: D) -> D {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+6]]:10: ERROR: Cannot copy value of type `D`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:12: ERROR: `return` statements must end with a `;`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:            ^~
-  return a OP b;
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface BitAnd in type D that does not implement that interface.
+  // CHECK:STDERR:   return a & b;
+  // CHECK:STDERR:          ^~~~~
+  return a & b;
 }
 
 fn TestAssign(a: D*, b: D) {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:6: ERROR: Expected `;` after expression statement.
-  // CHECK:STDERR:   *a OP= b;
-  // CHECK:STDERR:      ^~
-  *a OP= b;
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface BitAndAssign in type D that does not implement that interface.
+  // CHECK:STDERR:   *a &= b;
+  // CHECK:STDERR:   ^~~~~~~
+  *a &= b;
 }
 
 // --- fail_no_impl_for_args.carbon
 
 package FailNoImplForArgs api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.BitAnd {
+impl C as Core.BitAnd {
   fn Op[self: C](other: C) -> C {
     return {};
   }
@@ -93,23 +81,20 @@ impl C as Carbon.BitAnd {
 class D {};
 
 fn TestRhsBad(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+6]]:10: ERROR: Cannot copy value of type `C`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:12: ERROR: `return` statements must end with a `;`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:            ^~
-  return a OP b;
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR:   return a & b;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-11]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR:   fn Op[self: C](other: C) -> C {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  return a & b;
 }
 
 fn TestLhsBad(a: D, b: C) -> C {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `D` to `C`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:12: ERROR: `return` statements must end with a `;`.
-  // CHECK:STDERR:   return a OP b;
-  // CHECK:STDERR:            ^~
-  return a OP b;
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface BitAnd in type D that does not implement that interface.
+  // CHECK:STDERR:   return a & b;
+  // CHECK:STDERR:          ^~~~~
+  return a & b;
 }
 
 // CHECK:STDOUT: --- prelude.carbon
@@ -201,27 +186,31 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type @BitAnd, <function> [template]
+// CHECK:STDOUT:   %.12: <associated <function> in BitAnd> = assoc_entity element0, @TestOp.%import_ref.2 [template]
+// CHECK:STDOUT:   %.13: type = assoc_entity_type @BitAndAssign, <function> [template]
+// CHECK:STDOUT:   %.14: <associated <function> in BitAndAssign> = assoc_entity element0, @TestAssign.%import_ref.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:     .TestAssign = %TestAssign
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref.loc8: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %BitAnd.decl: invalid = interface_decl @BitAnd [template = constants.%.2] {}
 // CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref.loc13: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref.2: type = import_ref ir1, inst+22, used [template = constants.%.7]
 // CHECK:STDOUT:     %BitAndAssign.decl: invalid = interface_decl @BitAndAssign [template = constants.%.7] {}
 // CHECK:STDOUT:     %BitAndAssign.ref: type = name_ref BitAndAssign, %import_ref.2 [template = constants.%.7]
@@ -237,18 +226,18 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
-// CHECK:STDOUT:     %C.ref.loc27_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc27: type = ptr_type C [template = constants.%.8]
-// CHECK:STDOUT:     %a.loc27_15.1: C* = param a
-// CHECK:STDOUT:     @TestAssign.%a: C* = bind_name a, %a.loc27_15.1
-// CHECK:STDOUT:     %C.ref.loc27_25: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc27_22.1: C = param b
-// CHECK:STDOUT:     @TestAssign.%b: C = bind_name b, %b.loc27_22.1
+// CHECK:STDOUT:     %C.ref.loc21_18: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc21: type = ptr_type C [template = constants.%.8]
+// CHECK:STDOUT:     %a.loc21_15.1: C* = param a
+// CHECK:STDOUT:     @TestAssign.%a: C* = bind_name a, %a.loc21_15.1
+// CHECK:STDOUT:     %C.ref.loc21_25: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc21_22.1: C = param b
+// CHECK:STDOUT:     @TestAssign.%b: C = bind_name b, %b.loc21_22.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitAnd {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+20, unused
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitAnd> = import_ref ir1, inst+20, used [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, used [template = imports.%Op.1]
 // CHECK:STDOUT:
@@ -259,7 +248,7 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitAndAssign {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+40, unused
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitAndAssign> = import_ref ir1, inst+40, used [template = constants.%.14]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+24, unused
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+38, used [template = imports.%Op.2]
 // CHECK:STDOUT:
@@ -330,13 +319,27 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a: C, %b: C) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %b.ref: C = name_ref b, %b
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+18, unused
+// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
+// CHECK:STDOUT:   %.loc18_12.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc17: ref C = splice_block %return {}
+// CHECK:STDOUT:   %.loc18_12.2: init C = call %.loc18_12.1(%a.ref, %b.ref) to %.loc17
+// CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a: C*, %b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C* = name_ref a, %a
-// CHECK:STDOUT:   %.loc31: ref C = deref %a.ref
+// CHECK:STDOUT:   %.loc22_3.1: ref C = deref %a.ref
+// CHECK:STDOUT:   %b.ref: C = name_ref b, %b
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+22, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+38, unused
+// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
+// CHECK:STDOUT:   %.loc22_6.1: <bound method> = bound_method %.loc22_3.1, %.1
+// CHECK:STDOUT:   %.loc22_3.2: C* = addr_of %.loc22_3.1
+// CHECK:STDOUT:   %.loc22_6.2: init () = call %.loc22_6.1(%.loc22_3.2, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,17 +350,23 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type D [template]
+// CHECK:STDOUT:   %.4: type = interface_type @BitAnd [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @BitAnd, <function> [template]
+// CHECK:STDOUT:   %.6: <associated <function> in BitAnd> = assoc_entity element0, @TestOp.%import_ref.2 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type D [template]
+// CHECK:STDOUT:   %.8: type = interface_type @BitAndAssign [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type @BitAndAssign, <function> [template]
+// CHECK:STDOUT:   %.10: <associated <function> in BitAndAssign> = assoc_entity element0, @TestAssign.%import_ref.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:     .TestAssign = %TestAssign
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %D.ref.loc8_14: type = name_ref D, %D.decl [template = constants.%D]
@@ -370,14 +379,36 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:     @TestOp.%return: ref D = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
-// CHECK:STDOUT:     %D.ref.loc18_18: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %.loc18: type = ptr_type D [template = constants.%.4]
-// CHECK:STDOUT:     %a.loc18_15.1: D* = param a
-// CHECK:STDOUT:     @TestAssign.%a: D* = bind_name a, %a.loc18_15.1
-// CHECK:STDOUT:     %D.ref.loc18_25: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc18_22.1: D = param b
-// CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc18_22.1
+// CHECK:STDOUT:     %D.ref.loc15_18: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %.loc15: type = ptr_type D [template = constants.%.7]
+// CHECK:STDOUT:     %a.loc15_15.1: D* = param a
+// CHECK:STDOUT:     @TestAssign.%a: D* = bind_name a, %a.loc15_15.1
+// CHECK:STDOUT:     %D.ref.loc15_25: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc15_22.1: D = param b
+// CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc15_22.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @BitAnd {
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitAnd> = import_ref ir1, inst+20, used [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+18, unused
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %import_ref.1
+// CHECK:STDOUT:   .Self = %import_ref.2
+// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @BitAndAssign {
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitAndAssign> = import_ref ir1, inst+40, used [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+24, unused
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+38, unused
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %import_ref.1
+// CHECK:STDOUT:   .Self = %import_ref.2
+// CHECK:STDOUT:   witness = (%import_ref.3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -388,13 +419,21 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a: D, %b: D) -> %return: D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: D = name_ref b, %b
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %BitAnd.decl: invalid = interface_decl @BitAnd [template = constants.%.4] {}
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+18, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a: D*, %b: D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D* = name_ref a, %a
-// CHECK:STDOUT:   %.loc22: ref D = deref %a.ref
+// CHECK:STDOUT:   %.loc19: ref D = deref %a.ref
+// CHECK:STDOUT:   %b.ref: D = name_ref b, %b
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+22, used [template = constants.%.8]
+// CHECK:STDOUT:   %BitAndAssign.decl: invalid = interface_decl @BitAndAssign [template = constants.%.8] {}
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+38, unused
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -409,21 +448,23 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:   %.5: C = struct_value () [template]
 // CHECK:STDOUT:   %.6: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type @BitAnd, <function> [template]
+// CHECK:STDOUT:   %.8: <associated <function> in BitAnd> = assoc_entity element0, @TestRhsBad.%import_ref.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestRhsBad = %TestRhsBad
 // CHECK:STDOUT:     .TestLhsBad = %TestLhsBad
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %BitAnd.decl: invalid = interface_decl @BitAnd [template = constants.%.2] {}
 // CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, %import_ref [template = constants.%.2]
@@ -452,7 +493,7 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitAnd {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+20, unused
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitAnd> = import_ref ir1, inst+20, used [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, used [template = imports.%Op]
 // CHECK:STDOUT:
@@ -503,12 +544,21 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT: fn @TestRhsBad(%a: C, %b: D) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %b.ref: D = name_ref b, %b
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+18, unused
+// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
+// CHECK:STDOUT:   %.loc23_12.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc23_12.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc23_12.3: init C = call %.loc23_12.1(<invalid>)
+// CHECK:STDOUT:   return %.loc23_12.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLhsBad(%a: D, %b: C) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: C = name_ref b, %b
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -678,8 +678,8 @@ class ImportRefResolver {
                          const SemIR::Interface& import_interface)
       -> SemIR::ConstantId {
     auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
-                                                SemIR::InterfaceId::Invalid,
-                                                SemIR::InstBlockId::Empty};
+                                               SemIR::InterfaceId::Invalid,
+                                               SemIR::InstBlockId::Empty};
     auto interface_decl_id =
         context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
 
@@ -696,8 +696,7 @@ class ImportRefResolver {
         interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
 
     // Set the constant value for the imported interface.
-    auto interface_const_id =
-        context_.constant_values().Get(interface_decl_id);
+    auto interface_const_id = context_.constant_values().Get(interface_decl_id);
     import_ir_constant_values_.Set(inst_id, interface_const_id);
     return interface_const_id;
   }

@@ -5,7 +5,7 @@
 
 make_test() {
   HEADER="// This file was generated from $4. Run make_tests.sh to regenerate."
-  sed "s,INTERFACE,$1,g; s,OP,$2,g; s,HEADER,$HEADER," $4 > $3.carbon
+  sed "s,INTERFACE,$1,g; s,OP,$2,g; s,HEADER,$HEADER," "$4" > "$3.carbon"
 }
 
 make_unary_op_test() {
@@ -27,7 +27,7 @@ make_unary_stmt_test Dec '--' dec
 make_unary_stmt_test Inc '++' inc
 
 make_binary_op_test Add '+' add
-make_binary_op_test BitAnd '&' bit_and
+make_binary_op_test BitAnd '\&' bit_and
 make_binary_op_test BitOr '|' bit_or
 make_binary_op_test BitXor '^' bit_xor
 make_binary_op_test Div '/' div

@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -21,16 +21,16 @@ interface AddAssign {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Add {
+impl C as Core.Add {
   fn Op[self: C](other: C) -> C {
     return {};
   }
 }
-impl C as Carbon.AddAssign {
+impl C as Core.AddAssign {
   fn Op[addr self: C*](other: C) {}
 }
 
@@ -46,7 +46,7 @@ fn TestAssign(a: C*, b: C) {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
@@ -68,11 +68,11 @@ fn TestAssign(a: D*, b: D) {
 
 package FailNoImplForArgs api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Add {
+impl C as Core.Add {
   fn Op[self: C](other: C) -> C {
     return {};
   }
@@ -194,23 +194,23 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:     .TestAssign = %TestAssign
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref.loc8: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Add.decl: invalid = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref.loc13: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref.2: type = import_ref ir1, inst+22, used [template = constants.%.7]
 // CHECK:STDOUT:     %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.7] {}
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.2 [template = constants.%.7]
@@ -361,12 +361,12 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:     .TestAssign = %TestAssign
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %D.ref.loc8_14: type = name_ref D, %D.decl [template = constants.%D]
@@ -454,17 +454,17 @@ fn TestLhsBad(a: D, b: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestRhsBad = %TestRhsBad
 // CHECK:STDOUT:     .TestLhsBad = %TestLhsBad
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Add.decl: invalid = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref [template = constants.%.2]

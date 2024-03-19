@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface BitComplement {
   fn Op[self: Self]() -> Self;
@@ -18,21 +18,17 @@ interface BitComplement {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.BitComplement {
-  // CHECK:STDERR: user.carbon:[[@LINE+4]]:3: ERROR: Function redeclaration differs because of parameter count of 1.
-  // CHECK:STDERR:   fn Op[self: C](other: C) -> C {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: user.carbon: Previously declared with parameter count of 0.
-  fn Op[self: C](other: C) -> C {
+impl C as Core.BitComplement {
+  fn Op[self: C]() -> C {
     return {};
   }
 }
 
-fn TestOp(a: C, b: C) -> C {
+fn TestOp(a: C) -> C {
   return ^a;
 }
 
@@ -40,7 +36,7 @@ fn TestOp(a: C, b: C) -> C {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
@@ -104,39 +100,37 @@ fn TestOp(a: D) {
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: C = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type @BitComplement, <function> [template]
-// CHECK:STDOUT:   %.7: <associated <function> in BitComplement> = assoc_entity element0, @TestOp.%import_ref.2 [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (@impl.%Op) [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type @BitComplement, <function> [template]
+// CHECK:STDOUT:   %.8: <associated <function> in BitComplement> = assoc_entity element0, @TestOp.%import_ref.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %BitComplement.decl: invalid = interface_decl @BitComplement [template = constants.%.2] {}
 // CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, %import_ref [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
-// CHECK:STDOUT:     %C.ref.loc18_14: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc18_11.1: C = param a
-// CHECK:STDOUT:     @TestOp.%a: C = bind_name a, %a.loc18_11.1
-// CHECK:STDOUT:     %C.ref.loc18_20: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc18_17.1: C = param b
-// CHECK:STDOUT:     @TestOp.%b: C = bind_name b, %b.loc18_17.1
-// CHECK:STDOUT:     %C.ref.loc18_26: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc14_14: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc14_11.1: C = param a
+// CHECK:STDOUT:     @TestOp.%a: C = bind_name a, %a.loc14_11.1
+// CHECK:STDOUT:     %C.ref.loc14_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitComplement {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitComplement> = import_ref ir1, inst+15, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitComplement> = import_ref ir1, inst+15, used [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
 // CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+13, used [template = imports.%Op]
 // CHECK:STDOUT:
@@ -148,16 +142,13 @@ fn TestOp(a: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as BitComplement {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
-// CHECK:STDOUT:     %C.ref.loc13_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %self.loc13_9.1: C = param self
-// CHECK:STDOUT:     %self.loc13_9.2: C = bind_name self, %self.loc13_9.1
-// CHECK:STDOUT:     %C.ref.loc13_25: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %other.loc13_18.1: C = param other
-// CHECK:STDOUT:     %other.loc13_18.2: C = bind_name other, %other.loc13_18.1
-// CHECK:STDOUT:     %C.ref.loc13_31: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc9_15: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %self.loc9_9.1: C = param self
+// CHECK:STDOUT:     %self.loc9_9.2: C = bind_name self, %self.loc9_9.1
+// CHECK:STDOUT:     %C.ref.loc9_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (<error>) [template = <error>]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -169,23 +160,26 @@ fn TestOp(a: D) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc13_9.2: C](@impl.%other.loc13_18.2: C) -> @impl.%return.var: C {
+// CHECK:STDOUT: fn @Op.1[@impl.%self.loc9_9.2: C]() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc14_13.2: init C = class_init (), @impl.%return.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_13.3: init C = converted %.loc14_13.1, %.loc14_13.2 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc14_13.3
+// CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.5]
+// CHECK:STDOUT:   return %.loc10_13.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self]() -> Self;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a: C, %b: C) -> %return: C {
+// CHECK:STDOUT: fn @TestOp(%a: C) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unused
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = <error>]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
+// CHECK:STDOUT:   %.loc15_10.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc14: ref C = splice_block %return {}
+// CHECK:STDOUT:   %.loc15_10.2: init C = call %.loc15_10.1(%a.ref) to %.loc14
+// CHECK:STDOUT:   return %.loc15_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
@@ -202,11 +196,11 @@ fn TestOp(a: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestOp = %TestOp
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%D]

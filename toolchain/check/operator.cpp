@@ -12,22 +12,22 @@
 
 namespace Carbon::Check {
 
-// Returns the scope of the Carbon package, or Invalid if it's not found.
+// Returns the scope of the Core package, or Invalid if it's not found.
 //
-// TODO: Consider tracking the Carbon package in SemIR so we don't need to use
+// TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
-static auto GetCarbonPackage(Context& context, Parse::AnyExprId node_id)
+static auto GetCorePackage(Context& context, Parse::AnyExprId node_id)
     -> SemIR::NameScopeId {
-  // TODO: If the current package is the `Carbon` package, return
+  // TODO: If the current package is the `Core` package, return
   // `SemIR::InstId::Package`.
 
-  auto ident_id = context.identifiers().Lookup("Carbon");
+  auto ident_id = context.identifiers().Lookup("Core");
   if (!ident_id.is_valid()) {
     return SemIR::NameScopeId::Invalid;
   }
   auto name_id = SemIR::NameId::ForIdentifier(ident_id);
 
-  // Look up `package.Carbon`.
+  // Look up `package.Core`.
   auto package_id = context.LookupQualifiedName(
       node_id, name_id, SemIR::NameScopeId::Package, /*required=*/false);
   if (!package_id.is_valid()) {
@@ -40,7 +40,7 @@ static auto GetCarbonPackage(Context& context, Parse::AnyExprId node_id)
   if (auto package_inst =
           context.insts().TryGetAs<SemIR::Namespace>(package_id)) {
     auto& name_scope = context.name_scopes().Get(package_inst->name_scope_id);
-    // Check that this is really the `Carbon` package and not an alias.
+    // Check that this is really the `Core` package and not an alias.
     if (name_scope.is_closed_import && name_scope.name_id == name_id &&
         name_scope.enclosing_scope_id == SemIR::NameScopeId::Package) {
       return package_inst->name_scope_id;
@@ -50,15 +50,15 @@ static auto GetCarbonPackage(Context& context, Parse::AnyExprId node_id)
 }
 
 // Returns the name scope of the operator interface for the specified operator
-// from the Carbon package.
+// from the Core package.
 static auto GetOperatorInterface(Context& context, Parse::AnyExprId node_id,
                                  Operator op) -> SemIR::NameScopeId {
-  auto carbon_package_id = GetCarbonPackage(context, node_id);
+  auto carbon_package_id = GetCorePackage(context, node_id);
   if (!carbon_package_id.is_valid()) {
     return SemIR::NameScopeId::Invalid;
   }
 
-  // Lookup `Carbon.InterfaceName`.
+  // Lookup `Core.InterfaceName`.
   auto interface_ident_id = context.identifiers().Add(op.interface_name);
   auto interface_id = context.LookupQualifiedName(
       node_id, SemIR::NameId::ForIdentifier(interface_ident_id),

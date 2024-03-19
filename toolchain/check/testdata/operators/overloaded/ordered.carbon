@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Carbon api;
+package Core api;
 
 interface Ordered {
   // TODO: fn Compare
@@ -20,11 +20,11 @@ interface Ordered {
 
 package User api;
 
-import Carbon;
+import Core;
 
 class C {};
 
-impl C as Carbon.Ordered {
+impl C as Core.Ordered {
   fn Less[self: C](other: C) -> bool;
   fn LessOrEquivalent[self: C](other: C) -> bool;
   fn Greater[self: C](other: C) -> bool;
@@ -51,7 +51,7 @@ fn TestGreaterEqual(a: C, b: C) -> bool {
 
 package FailNoImpl api;
 
-import Carbon;
+import Core;
 
 class D {};
 
@@ -195,18 +195,18 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .TestLess = %TestLess
 // CHECK:STDOUT:     .TestLessEqual = %TestLessEqual
 // CHECK:STDOUT:     .TestGreater = %TestGreater
 // CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Carbon.ref: <namespace> = name_ref Carbon, %Carbon [template = %Carbon]
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Ordered.decl: invalid = interface_decl @Ordered [template = constants.%.2] {}
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, %import_ref [template = constants.%.2]
@@ -410,14 +410,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Carbon = %Carbon
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .TestLess = %TestLess
 // CHECK:STDOUT:     .TestLessEqual = %TestLessEqual
 // CHECK:STDOUT:     .TestGreater = %TestGreater
 // CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Carbon: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %TestLess: <function> = fn_decl @TestLess [template] {
 // CHECK:STDOUT:     %D.ref.loc8_16: type = name_ref D, %D.decl [template = constants.%D]
