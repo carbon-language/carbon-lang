@@ -55,7 +55,6 @@ cc_library(
         "decl_name_stack.cpp",
         "eval.cpp",
         "import_ref.cpp",
-        "import_ref.h",
         "inst_block_stack.cpp",
         "modifiers.cpp",
         "return.cpp",
@@ -66,6 +65,7 @@ cc_library(
         "decl_name_stack.h",
         "decl_state.h",
         "eval.h",
+        "import_ref.h",
         "inst_block_stack.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
@@ -101,12 +101,14 @@ cc_library(
     ]),
     hdrs = ["check.h"],
     deps = [
+        ":call",
         ":context",
         ":function",
         ":impl",
         ":import",
         ":interface",
         ":member_access",
+        ":operator",
         ":pointer_dereference",
         "//common:check",
         "//common:ostream",
@@ -135,6 +137,20 @@ cc_fuzz_test(
     deps = [
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "call",
+    srcs = ["call.cpp"],
+    hdrs = ["call.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
     ],
 )
 
@@ -210,6 +226,23 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "operator",
+    srcs = ["operator.cpp"],
+    hdrs = ["operator.h"],
+    deps = [
+        ":call",
+        ":context",
+        ":member_access",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
     ],
 )
 

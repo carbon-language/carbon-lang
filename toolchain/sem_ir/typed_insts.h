@@ -273,8 +273,7 @@ struct BoolLiteral {
 // `self` parameter, such as `object.MethodName`.
 struct BoundMethod {
   static constexpr auto Kind =
-      InstKind::BoundMethod.Define<Parse::AnyMemberAccessExprId>(
-          "bound_method");
+      InstKind::BoundMethod.Define<Parse::NodeId>("bound_method");
 
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize
@@ -335,8 +334,10 @@ struct Builtin {
 };
 
 struct Call {
-  static constexpr auto Kind =
-      InstKind::Call.Define<Parse::CallExprStartId>("call");
+  // For a syntactic call, the parse node will be a CallExprStartId. However,
+  // calls can arise from other syntaxes, such as operators and implicit
+  // conversions.
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>("call");
 
   TypeId type_id;
   InstId callee_id;
