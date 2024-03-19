@@ -15,6 +15,11 @@ auto PerformPointerDereference(
     SemIR::InstId base_id,
     llvm::function_ref<auto(SemIR::TypeId not_pointer_type_id)->void>
         diagnose_not_pointer) -> SemIR::InstId {
+  // TODO: Once we have a finalized design for a pointer interface, use
+  //
+  //   HandleUnaryOperator(context, node_id, {"Pointer", "Dereference"});
+  //
+  // to convert to a pointer value.
   base_id = ConvertToValueExpr(context, base_id);
   auto type_id =
       context.GetUnqualifiedType(context.insts().Get(base_id).type_id());

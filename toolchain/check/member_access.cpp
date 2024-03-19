@@ -149,7 +149,8 @@ static auto LookupInterfaceWitness(Context& context,
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
+static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
+                              SemIR::ConstantId type_const_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
   auto& interface = context.interfaces().Get(assoc_type.interface_id);
@@ -161,7 +162,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
                       "that does not implement that interface.",
                       SemIR::NameId, std::string);
     context.emitter().Emit(
-        member_id, MissingImplInMemberAccess, interface.name_id,
+        node_id, MissingImplInMemberAccess, interface.name_id,
         context.sem_ir().StringifyTypeExpr(type_const_id.inst_id()));
     return SemIR::InstId::BuiltinError;
   }
@@ -194,8 +195,7 @@ static auto PerformImplLookup(Context& context, SemIR::ConstantId type_const_id,
 // Performs a member name lookup into the specified scope, including performing
 // impl lookup if necessary. If the scope is invalid, assume an error has
 // already been diagnosed, and return BuiltinError.
-static auto LookupMemberNameInScope(Context& context,
-                                    Parse::AnyMemberAccessExprId node_id,
+static auto LookupMemberNameInScope(Context& context, Parse::NodeId node_id,
                                     SemIR::InstId /*base_id*/,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
@@ -219,8 +219,8 @@ static auto LookupMemberNameInScope(Context& context,
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           inst.type_id())) {
     if (ScopeNeedsImplLookup(context, name_scope_id)) {
-      member_id = PerformImplLookup(context, name_scope_const_id, *assoc_type,
-                                    member_id);
+      member_id = PerformImplLookup(context, node_id, name_scope_const_id,
+                                    *assoc_type, member_id);
     }
   }
 
@@ -230,8 +230,7 @@ static auto LookupMemberNameInScope(Context& context,
 // Performs the instance binding step in member access. If the found member is a
 // field, forms a class member access. If the found member is an instance
 // method, forms a bound method. Otherwise, the member is returned unchanged.
-static auto PerformInstanceBinding(Context& context,
-                                   Parse::AnyMemberAccessExprId node_id,
+static auto PerformInstanceBinding(Context& context, Parse::NodeId node_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   auto member_type_id = context.insts().Get(member_id).type_id();
@@ -295,7 +294,7 @@ static auto PerformInstanceBinding(Context& context,
   return member_id;
 }
 
-auto PerformMemberAccess(Context& context, Parse::AnyMemberAccessExprId node_id,
+auto PerformMemberAccess(Context& context, Parse::NodeId node_id,
                          SemIR::InstId base_id, SemIR::NameId name_id)
     -> SemIR::InstId {
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -370,8 +369,7 @@ auto PerformMemberAccess(Context& context, Parse::AnyMemberAccessExprId node_id,
   return member_id;
 }
 
-auto PerformCompoundMemberAccess(Context& context,
-                                 Parse::AnyMemberAccessExprId node_id,
+auto PerformCompoundMemberAccess(Context& context, Parse::NodeId node_id,
                                  SemIR::InstId base_id,
                                  SemIR::InstId member_expr_id)
     -> SemIR::InstId {
@@ -387,8 +385,8 @@ auto PerformCompoundMemberAccess(Context& context,
   // performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
-    member_id =
-        PerformImplLookup(context, base_type_const_id, *assoc_type, member_id);
+    member_id = PerformImplLookup(context, node_id, base_type_const_id,
+                                  *assoc_type, member_id);
   }
 
   // Perform instance binding if we found an instance member.

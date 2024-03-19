@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
@@ -86,7 +87,10 @@ static auto BuildInterfaceWitness(
        .replacement_id = context.types().GetConstantId(impl.self_id)}};
 
   for (auto decl_id : assoc_entities) {
-    auto decl = context.insts().Get(decl_id);
+    TryResolveImportRefUnused(context, decl_id);
+    auto const_id = context.constant_values().Get(decl_id);
+    CARBON_CHECK(const_id.is_constant()) << "Non-constant associated entity";
+    auto decl = context.insts().Get(const_id.inst_id());
     if (auto fn_decl = decl.TryAs<SemIR::FunctionDecl>()) {
       auto& fn = context.functions().Get(fn_decl->function_id);
       auto impl_decl_id =

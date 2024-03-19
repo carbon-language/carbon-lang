@@ -23,17 +23,19 @@ namespace Carbon::Check {
 // Work items on work_stack_. At a high level, the loop is:
 //
 // 1. If Work has received a constant, it's considered resolved.
-//    - If made_incomplete_type, resolve unconditionally.
+//    - If made_forward_decl, resolve unconditionally.
 //    - The constant check avoids performance costs of deduplication on add.
 // 2. Resolve the instruction: (TryResolveInst/TryResolveTypedInst)
 //    - For most cases:
-//      A. For types which _can_ be incomplete, when not made_incomplete_type:
-//        i. Start by making an incomplete type to address circular references.
-//        ii. If the imported type is incomplete, return the constant.
-//        iii. Otherwise, set made_incomplete_type and continue resolving.
-//          - Creating an incomplete type will have set the constant, which
-//            influences step (1); setting made_incomplete_type gets us a second
-//            resolve pass when needed.
+//      A. For types which _can_ be forward declared, when not
+//         made_forward_decl:
+//        i. Start by making a forward declared type to address circular
+//           references.
+//        ii. If the imported type is not defined, return the constant.
+//        iii. Otherwise, set made_forward_decl and continue resolving.
+//          - Creating a forward declaration of the type will have set the
+//            constant, which influences step (1); setting made_forward_decl
+//            gets us a second resolve pass when needed.
 //      B. Gather all input constants.
 //        - Gathering constants directly adds unresolved values to work_stack_.
 //      C. If any need to be resolved (HasNewWork), return Invalid; this
@@ -72,11 +74,11 @@ class ImportRefResolver {
       // This should typically be checked before adding it, but a given
       // instruction may be added multiple times before its constant is
       // evaluated.
-      if (!work.made_incomplete_type &&
+      if (!work.made_forward_decl &&
           import_ir_constant_values_.Get(work.inst_id).is_valid()) {
         work_stack_.pop_back();
       } else if (auto new_const_id =
-                     TryResolveInst(work.inst_id, work.made_incomplete_type);
+                     TryResolveInst(work.inst_id, work.made_forward_decl);
                  new_const_id.is_valid()) {
         import_ir_constant_values_.Set(work.inst_id, new_const_id);
         work_stack_.pop_back();
@@ -110,8 +112,8 @@ class ImportRefResolver {
     // The instruction to work on.
     SemIR::InstId inst_id;
 
-    // True if a first pass made an incomplete type.
-    bool made_incomplete_type = false;
+    // True if a first pass made a forward declaration.
+    bool made_forward_decl = false;
   };
 
   // For imported entities, we use an invalid enclosing scope. This will be okay
@@ -161,6 +163,15 @@ class ImportRefResolver {
     for (auto inst_id : param_refs) {
       const_ids.push_back(
           GetLocalConstantId(import_ir_.insts().Get(inst_id).type_id()));
+
+      // If the parameter is a symbolic binding, build the BindSymbolicName
+      // constant.
+      auto bind_id = inst_id;
+      if (auto addr =
+              import_ir_.insts().TryGetAs<SemIR::AddrPattern>(bind_id)) {
+        bind_id = addr->inner_id;
+      }
+      GetLocalConstantId(bind_id);
     }
     return const_ids;
   }
@@ -182,8 +193,10 @@ class ImportRefResolver {
       // TODO: Consider a different parameter handling to simplify import logic.
       auto inst = import_ir_.insts().Get(ref_id);
       auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
+      auto bind_id = ref_id;
       if (addr_inst) {
-        inst = import_ir_.insts().Get(addr_inst->inner_id);
+        bind_id = addr_inst->inner_id;
+        inst = import_ir_.insts().Get(bind_id);
       }
       auto bind_inst = inst.TryAs<SemIR::AnyBindName>();
       if (bind_inst) {
@@ -198,23 +211,32 @@ class ImportRefResolver {
       auto new_param_id = context_.AddInstInNoBlock(
           {Parse::NodeId::Invalid, SemIR::Param{type_id, name_id}});
       if (bind_inst) {
-        auto bind_name_id = context_.bind_names().Add(
-            {.name_id = name_id,
-             .enclosing_scope_id = SemIR::NameScopeId::Invalid});
         switch (bind_inst->kind) {
-          case SemIR::InstKind::BindName:
+          case SemIR::InstKind::BindName: {
+            auto bind_name_id = context_.bind_names().Add(
+                {.name_id = name_id,
+                 .enclosing_scope_id = SemIR::NameScopeId::Invalid});
             new_param_id = context_.AddInstInNoBlock(
                 {Parse::NodeId::Invalid,
                  SemIR::BindName{type_id, bind_name_id, new_param_id}});
             break;
-          case SemIR::InstKind::BindSymbolicName:
-            new_param_id = context_.AddInstInNoBlock(
-                {Parse::NodeId::Invalid,
-                 SemIR::BindSymbolicName{type_id, bind_name_id, new_param_id}});
+          }
+          case SemIR::InstKind::BindSymbolicName: {
+            // The symbolic name will be created on first reference, so might
+            // already exist. Update the value in it to refer to the parameter.
+            auto new_bind_inst =
+                context_.insts().GetAs<SemIR::BindSymbolicName>(
+                    GetLocalConstantId(bind_id).inst_id());
+            new_bind_inst.value_id = new_param_id;
+            // This is not before constant use, but doesn't change the
+            // constant value of the instruction.
+            context_.ReplaceInstBeforeConstantUse(
+                bind_id, {Parse::NodeId::Invalid, new_bind_inst});
             break;
-
-          default:
+          }
+          default: {
             CARBON_FATAL() << "Unexpected kind: " << bind_inst->kind;
+          }
         }
       }
       if (addr_inst) {
@@ -272,23 +294,30 @@ class ImportRefResolver {
   // following TryResolveTypedInst helper functions.
   //
   // TODO: Error is returned when support is missing, but that should go away.
-  auto TryResolveInst(SemIR::InstId inst_id, bool made_incomplete_type)
+  auto TryResolveInst(SemIR::InstId inst_id, bool made_forward_decl)
       -> SemIR::ConstantId {
     if (inst_id.is_builtin()) {
-      CARBON_CHECK(!made_incomplete_type);
+      CARBON_CHECK(!made_forward_decl);
       // Constants for builtins can be directly copied.
       return context_.constant_values().Get(inst_id);
     }
 
     auto inst = import_ir_.insts().Get(inst_id);
 
-    CARBON_CHECK(!made_incomplete_type ||
-                 inst.kind() == SemIR::InstKind::ClassDecl)
-        << "Currently only decls with incomplete types should need "
-           "made_incomplete_type states: "
+    CARBON_CHECK(!made_forward_decl ||
+                 inst.kind() == SemIR::InstKind::ClassDecl ||
+                 inst.kind() == SemIR::InstKind::InterfaceDecl)
+        << "Only types that can be involved in cycles should need "
+           "made_forward_decl state: "
         << inst.kind();
 
     switch (inst.kind()) {
+      case SemIR::InstKind::AssociatedEntity:
+        return TryResolveTypedInst(inst.As<SemIR::AssociatedEntity>());
+
+      case SemIR::InstKind::AssociatedEntityType:
+        return TryResolveTypedInst(inst.As<SemIR::AssociatedEntityType>());
+
       case SemIR::InstKind::BaseDecl:
         return TryResolveTypedInst(inst.As<SemIR::BaseDecl>());
 
@@ -297,7 +326,7 @@ class ImportRefResolver {
 
       case SemIR::InstKind::ClassDecl:
         return TryResolveTypedInst(inst.As<SemIR::ClassDecl>(), inst_id,
-                                   made_incomplete_type);
+                                   made_forward_decl);
 
       case SemIR::InstKind::ClassType:
         return TryResolveTypedInst(inst.As<SemIR::ClassType>());
@@ -312,7 +341,8 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst.As<SemIR::FunctionDecl>());
 
       case SemIR::InstKind::InterfaceDecl:
-        return TryResolveTypedInst(inst.As<SemIR::InterfaceDecl>());
+        return TryResolveTypedInst(inst.As<SemIR::InterfaceDecl>(), inst_id,
+                                   made_forward_decl);
 
       case SemIR::InstKind::InterfaceType:
         return TryResolveTypedInst(inst.As<SemIR::InterfaceType>());
@@ -334,12 +364,7 @@ class ImportRefResolver {
         return TryEvalInst(context_, inst_id, inst);
 
       case SemIR::InstKind::BindSymbolicName:
-        // TODO: This will return a `ConstantId` referring to the `inst_id` from
-        // the import IR. But we need all references to the same
-        // `BindSymbolicName` in the imported IR to resolve to the same constant
-        // value in the local IR, so we can't just create a new local
-        // `BindSymbolicName` here.
-        return TryEvalInst(context_, inst_id, inst);
+        return TryResolveTypedInst(inst.As<SemIR::BindSymbolicName>());
 
       default:
         context_.TODO(
@@ -347,6 +372,46 @@ class ImportRefResolver {
             llvm::formatv("TryResolveInst on {0}", inst.kind()).str());
         return SemIR::ConstantId::Error;
     }
+  }
+
+  auto TryResolveTypedInst(SemIR::AssociatedEntity inst) -> SemIR::ConstantId {
+    auto initial_work = work_stack_.size();
+    auto type_const_id = GetLocalConstantId(inst.type_id);
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
+
+    // Add a lazy reference to the target declaration.
+    auto decl_id = context_.AddPlaceholderInst(
+        SemIR::ImportRefUnused{import_ir_id_, inst.decl_id});
+
+    auto inst_id = context_.AddInstInNoBlock(
+        {Parse::NodeId::Invalid,
+         SemIR::AssociatedEntity{
+             context_.GetTypeIdForTypeConstant(type_const_id), inst.index,
+             decl_id}});
+    return context_.constant_values().Get(inst_id);
+  }
+
+  auto TryResolveTypedInst(SemIR::AssociatedEntityType inst)
+      -> SemIR::ConstantId {
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+
+    auto initial_work = work_stack_.size();
+    auto entity_type_const_id = GetLocalConstantId(inst.entity_type_id);
+    auto interface_const_id = GetLocalConstantId(
+        import_ir_.interfaces().Get(inst.interface_id).decl_id);
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
+
+    auto inst_id = context_.AddInstInNoBlock(SemIR::AssociatedEntityType{
+        SemIR::TypeId::TypeType,
+        context_.insts()
+            .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
+            .interface_id,
+        context_.GetTypeIdForTypeConstant(entity_type_const_id)});
+    return context_.constant_values().Get(inst_id);
   }
 
   auto TryResolveTypedInst(SemIR::BaseDecl inst) -> SemIR::ConstantId {
@@ -373,6 +438,25 @@ class ImportRefResolver {
       return SemIR::ConstantId::Invalid;
     }
     return value_id;
+  }
+
+  auto TryResolveTypedInst(SemIR::BindSymbolicName inst) -> SemIR::ConstantId {
+    auto initial_work = work_stack_.size();
+    auto type_id = GetLocalConstantId(inst.type_id);
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
+
+    auto name_id =
+        GetLocalNameId(import_ir_.bind_names().Get(inst.bind_name_id).name_id);
+    auto bind_name_id = context_.bind_names().Add(
+        {.name_id = name_id,
+         .enclosing_scope_id = SemIR::NameScopeId::Invalid});
+    auto new_bind_id = context_.AddInstInNoBlock(
+        {Parse::NodeId::Invalid,
+         SemIR::BindSymbolicName{context_.GetTypeIdForTypeConstant(type_id),
+                                 bind_name_id, SemIR::InstId::Invalid}});
+    return context_.constant_values().Get(new_bind_id);
   }
 
   // Makes an incomplete class. This is necessary even with classes with a
@@ -452,13 +536,13 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst, SemIR::InstId inst_id,
-                           bool made_incomplete_type) -> SemIR::ConstantId {
+                           bool made_forward_decl) -> SemIR::ConstantId {
     const auto& import_class = import_ir_.classes().Get(inst.class_id);
 
     SemIR::ConstantId class_const_id = SemIR::ConstantId::Invalid;
     // On the first pass, there's no incomplete type; start by adding one for
     // any recursive references.
-    if (!made_incomplete_type) {
+    if (!made_forward_decl) {
       class_const_id = MakeIncompleteClass(inst_id, import_class);
       // If there's only a forward declaration, we're done.
       if (!import_class.is_defined()) {
@@ -467,7 +551,7 @@ class ImportRefResolver {
       // This may not be needed because all constants might be ready, but we do
       // it here so that we don't need to track which work item corresponds to
       // this instruction.
-      work_stack_.back().made_incomplete_type = true;
+      work_stack_.back().made_forward_decl = true;
     }
 
     CARBON_CHECK(import_class.is_defined())
@@ -488,7 +572,7 @@ class ImportRefResolver {
     // On the first pass, we build the incomplete type's constant above. If we
     // get here on a subsequent pass we need to fetch the one we built in the
     // first pass.
-    if (made_incomplete_type) {
+    if (made_forward_decl) {
       CARBON_CHECK(!class_const_id.is_valid())
           << "Shouldn't have a const yet when resuming";
       class_const_id = import_ir_constant_values_.Get(inst_id);
@@ -588,51 +672,77 @@ class ImportRefResolver {
     return context_.constant_values().Get(function_decl_id);
   }
 
-  auto TryResolveTypedInst(SemIR::InterfaceDecl inst) -> SemIR::ConstantId {
+  auto TryResolveTypedInst(SemIR::InterfaceDecl inst, SemIR::InstId inst_id,
+                           bool made_forward_decl) -> SemIR::ConstantId {
     const auto& import_interface =
         import_ir_.interfaces().Get(inst.interface_id);
 
-    auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
-                                               SemIR::InterfaceId::Invalid,
-                                               SemIR::InstBlockId::Empty};
-    auto interface_decl_id =
-        context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
+    // On the first pass, create a forward declaration of the interface.
+    if (!made_forward_decl) {
+      auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
+                                                 SemIR::InterfaceId::Invalid,
+                                                 SemIR::InstBlockId::Empty};
+      auto interface_decl_id =
+          context_.AddPlaceholderInst({Parse::NodeId::Invalid, interface_decl});
 
-    // Start with an incomplete interface.
-    SemIR::Interface new_interface = {
-        .name_id = GetLocalNameId(import_interface.name_id),
-        .enclosing_scope_id = NoEnclosingScopeForImports,
-        .decl_id = interface_decl_id,
-    };
+      // Start with an incomplete interface.
+      SemIR::Interface new_interface = {
+          .name_id = GetLocalNameId(import_interface.name_id),
+          .enclosing_scope_id = NoEnclosingScopeForImports,
+          .decl_id = interface_decl_id,
+      };
 
-    // If the interface is defined, we can complete it immediately. No constants
-    // are required. Do this before adding it to interfaces.
-    if (import_interface.is_defined()) {
-      new_interface.scope_id = context_.name_scopes().Add(
-          new_interface.decl_id, SemIR::NameId::Invalid,
-          new_interface.enclosing_scope_id);
-      auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
-      const auto& import_scope =
-          import_ir_.name_scopes().Get(import_interface.scope_id);
+      // Write the interface ID into the InterfaceDecl.
+      interface_decl.interface_id = context_.interfaces().Add(new_interface);
+      context_.ReplaceInstBeforeConstantUse(
+          interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
 
-      // Push a block so that we can add scoped instructions to it.
-      context_.inst_block_stack().Push();
-      AddNameScopeImportRefs(import_scope, new_scope);
-      new_interface.associated_entities_id =
-          AddAssociatedEntities(import_interface.associated_entities_id);
-      new_interface.body_block_id = context_.inst_block_stack().Pop();
-      // TODO: Import new_interface.self_param_id.
+      // Set the constant value for the imported interface.
+      auto interface_const_id =
+          context_.constant_values().Get(interface_decl_id);
+      import_ir_constant_values_.Set(inst_id, interface_const_id);
 
-      CARBON_CHECK(import_scope.extended_scopes.empty())
-          << "Interfaces don't currently have extended scopes to support.";
+      if (!import_interface.is_defined()) {
+        return interface_const_id;
+      }
+      // Track that we need another pass. We always will, because the type of
+      // the `Self` binding refers to the interface.
+      work_stack_.back().made_forward_decl = true;
     }
 
-    // Write the interface ID into the InterfaceDecl.
-    interface_decl.interface_id = context_.interfaces().Add(new_interface);
-    context_.ReplaceInstBeforeConstantUse(
-        interface_decl_id, {Parse::NodeId::Invalid, interface_decl});
+    auto initial_work = work_stack_.size();
+    auto self_param_id = GetLocalConstantId(import_interface.self_param_id);
+    if (HasNewWork(initial_work)) {
+      return SemIR::ConstantId::Invalid;
+    }
 
-    return context_.constant_values().Get(interface_decl_id);
+    // Add the interface definition.
+    CARBON_CHECK(import_interface.is_defined())
+        << "Should not need second pass for undefined interface.";
+    auto interface_const_id = import_ir_constant_values_.Get(inst_id);
+    auto& new_interface = context_.interfaces().Get(
+        context_.insts()
+            .GetAs<SemIR::InterfaceType>(interface_const_id.inst_id())
+            .interface_id);
+    new_interface.scope_id = context_.name_scopes().Add(
+        new_interface.decl_id, SemIR::NameId::Invalid,
+        new_interface.enclosing_scope_id);
+    auto& new_scope = context_.name_scopes().Get(new_interface.scope_id);
+    const auto& import_scope =
+        import_ir_.name_scopes().Get(import_interface.scope_id);
+
+    // Push a block so that we can add scoped instructions to it.
+    context_.inst_block_stack().Push();
+    AddNameScopeImportRefs(import_scope, new_scope);
+    new_interface.associated_entities_id =
+        AddAssociatedEntities(import_interface.associated_entities_id);
+    new_interface.body_block_id = context_.inst_block_stack().Pop();
+    new_interface.self_param_id = self_param_id.inst_id();
+
+    CARBON_CHECK(import_scope.extended_scopes.empty())
+        << "Interfaces don't currently have extended scopes to support.";
+
+    return interface_const_id;
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceType inst) -> SemIR::ConstantId {

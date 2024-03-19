@@ -1,0 +1,45 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+HEADER
+
+// --- prelude.carbon
+
+package Carbon api;
+
+interface INTERFACE {
+  fn Op[self: Self]() -> Self;
+}
+
+// --- user.carbon
+
+package User api;
+
+import Carbon;
+
+class C {};
+
+impl C as Carbon.INTERFACE {
+  fn Op[self: C](other: C) -> C {
+    return {};
+  }
+}
+
+fn TestOp(a: C, b: C) -> C {
+  return OPa;
+}
+
+// --- fail_no_impl.carbon
+
+package FailNoImpl api;
+
+import Carbon;
+
+class D {};
+
+fn TestOp(a: D) {
+  return OPa;
+}

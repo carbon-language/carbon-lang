@@ -36,12 +36,12 @@ var b: T = *a;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic]
-// CHECK:STDOUT:   %T.ref.loc4: type = name_ref T, %import_ref [symbolic = %import_ref]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic = <unexpected instref inst+2>]
+// CHECK:STDOUT:   %T.ref.loc4: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+2>]
 // CHECK:STDOUT:   %.loc4: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref T* = var a
 // CHECK:STDOUT:   %a: ref T* = bind_name a, %a.var
-// CHECK:STDOUT:   %T.ref.loc5: type = name_ref T, %import_ref [symbolic = %import_ref]
+// CHECK:STDOUT:   %T.ref.loc5: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+2>]
 // CHECK:STDOUT:   %b.var: ref T = var b
 // CHECK:STDOUT:   %b: ref T = bind_name b, %b.var
 // CHECK:STDOUT: }
