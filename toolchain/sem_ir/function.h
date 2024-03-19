@@ -56,6 +56,8 @@ struct Function : public Printable<Function> {
   // expected to have an additional final argument corresponding to the return
   // slot.
   InstId return_slot_id;
+  // Whether the declaration is extern.
+  bool is_extern;
 
   // The following members are set at the `{` of the function definition.
 

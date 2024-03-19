@@ -28,6 +28,7 @@ auto CheckMethodModifiersOnFunction(Context& context,
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_node`) specifying the context in
 // which those modifiers are forbidden.
+// TODO: Take another look at diagnostic phrasing for callers.
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
@@ -41,6 +42,11 @@ inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
                                  Lex::TokenKind decl_kind) -> void {
   ForbidModifiersOnDecl(context, ~allowed, decl_kind, "");
 }
+
+// If the `extern` modifier is present, diagnoses and updates the declaration
+// state to remove it. Only called for declarations with definitions.
+auto ForbidExternModifierOnDefinition(Context& context,
+                                      Lex::TokenKind decl_kind) -> void;
 
 // Report a diagonostic if `default` and `final` modifiers are used on
 // declarations where they are not allowed. Right now they are only allowed
