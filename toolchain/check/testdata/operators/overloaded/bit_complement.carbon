@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// This file was generated from unary_op.carbon.in. Run make_tests.sh to regenerate.
+// This file was generated from unary_op.carbon.tmpl. Run make_tests.sh to regenerate.
 
 // --- prelude.carbon
 
@@ -29,27 +29,6 @@ impl C as Core.BitComplement {
 }
 
 fn TestOp(a: C) -> C {
-  return ^a;
-}
-
-// --- fail_no_impl.carbon
-
-package FailNoImpl api;
-
-import Core;
-
-class D {};
-
-fn TestOp(a: D) {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+9]]:3: ERROR: No return expression should be provided in this context.
-  // CHECK:STDERR:   return ^a;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE-4]]:1: There was no return type provided.
-  // CHECK:STDERR: fn TestOp(a: D) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface BitComplement in type D that does not implement that interface.
-  // CHECK:STDERR:   return ^a;
-  // CHECK:STDERR:          ^~
   return ^a;
 }
 
@@ -180,57 +159,5 @@ fn TestOp(a: D) {
 // CHECK:STDOUT:   %.loc14: ref C = splice_block %return {}
 // CHECK:STDOUT:   %.loc15_10.2: init C = call %.loc15_10.1(%a.ref) to %.loc14
 // CHECK:STDOUT:   return %.loc15_10.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = interface_type @BitComplement [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @BitComplement, <function> [template]
-// CHECK:STDOUT:   %.6: <associated <function> in BitComplement> = assoc_entity element0, @TestOp.%import_ref.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .D = %D.decl
-// CHECK:STDOUT:     .TestOp = %TestOp
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
-// CHECK:STDOUT:     %D.ref: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc8_11.1: D = param a
-// CHECK:STDOUT:     @TestOp.%a: D = bind_name a, %a.loc8_11.1
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @BitComplement {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitComplement> = import_ref ir1, inst+15, used [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+13, unused
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @D {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a: D) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: D = name_ref a, %a
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
-// CHECK:STDOUT:   %BitComplement.decl: invalid = interface_decl @BitComplement [template = constants.%.4] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unused
-// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

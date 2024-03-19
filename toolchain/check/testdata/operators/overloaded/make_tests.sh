@@ -3,21 +3,26 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# TODO: This is a short-term script to regenerate the test files for operators
+# while we're in a period where we expect the tests to have substantial churn.
+# Once the implementation of overloaded operators has stabilized, this script
+# and its template files should be removed.
+
 make_test() {
   HEADER="// This file was generated from $4. Run make_tests.sh to regenerate."
   sed "s,INTERFACE,$1,g; s,OP,$2,g; s,HEADER,$HEADER," "$4" > "$3.carbon"
 }
 
 make_unary_op_test() {
-  make_test "$1" "$2" "$3" unary_op.carbon.in
+  make_test "$1" "$2" "$3" unary_op.carbon.tmpl
 }
 
 make_unary_stmt_test() {
-  make_test "$1" "$2" "$3" unary_stmt.carbon.in
+  make_test "$1" "$2" "$3" unary_stmt.carbon.tmpl
 }
 
 make_binary_op_test() {
-  make_test "$1" "$2" "$3" binary_op.carbon.in
+  make_test "$1" "$2" "$3" binary_op.carbon.tmpl
 }
 
 make_unary_op_test BitComplement '^' bit_complement

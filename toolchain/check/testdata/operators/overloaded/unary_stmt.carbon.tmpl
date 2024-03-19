@@ -11,7 +11,7 @@ HEADER
 package Core api;
 
 interface INTERFACE {
-  fn Op[self: Self]() -> Self;
+  fn Op[addr self: Self*]();
 }
 
 // --- user.carbon
@@ -23,23 +23,10 @@ import Core;
 class C {};
 
 impl C as Core.INTERFACE {
-  fn Op[self: C]() -> C {
-    return {};
-  }
+  fn Op[addr self: C*]();
 }
 
-fn TestOp(a: C) -> C {
-  return OPa;
-}
-
-// --- fail_no_impl.carbon
-
-package FailNoImpl api;
-
-import Core;
-
-class D {};
-
-fn TestOp(a: D) {
-  return OPa;
+fn TestOp() {
+  var c: C = {};
+  OPc;
 }
