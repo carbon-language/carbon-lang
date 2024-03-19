@@ -164,7 +164,7 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
-    if (!validate_fn(typed_inst)) {
+    if (phase == Phase::UnknownDueToError || !validate_fn(typed_inst)) {
       return SemIR::ConstantId::Error;
     }
     return MakeConstantResult(context, typed_inst, phase);
