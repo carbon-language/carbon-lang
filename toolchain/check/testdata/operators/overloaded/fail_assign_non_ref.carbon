@@ -252,7 +252,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+12, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
 // CHECK:STDOUT:   %.loc22_3.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc22_3.2: init () = call %.loc22_3.1(<invalid>)
+// CHECK:STDOUT:   %.loc22_3.2: init () = call %.loc22_3.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+32, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
 // CHECK:STDOUT:   %.loc32_5.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc32_5.2: init () = call %.loc32_5.1(<invalid>)
+// CHECK:STDOUT:   %.loc32_5.2: init () = call %.loc32_5.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

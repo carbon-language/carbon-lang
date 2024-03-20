@@ -103,22 +103,22 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
 // CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>)
+// CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
 // CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc25_7: init () = call %Run0.ref.loc25(<invalid>)
+// CHECK:STDOUT:   %.loc25_7: init () = call %Run0.ref.loc25(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc33: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
-// CHECK:STDOUT:   %.loc33: init () = call %Run1.ref.loc33(<invalid>)
+// CHECK:STDOUT:   %.loc33: init () = call %Run1.ref.loc33(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc40: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
 // CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc40_7: init () = call %Run1.ref.loc40(<invalid>)
+// CHECK:STDOUT:   %.loc40_7: init () = call %Run1.ref.loc40(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc48: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc48: init () = call %Run2.ref.loc48(<invalid>)
+// CHECK:STDOUT:   %.loc48: init () = call %Run2.ref.loc48(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc55: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
 // CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>)
+// CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

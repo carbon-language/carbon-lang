@@ -424,6 +424,7 @@ class NodeStack {
         case Parse::NodeKind::WhileConditionStart:
           return Id::KindFor<SemIR::InstBlockId>();
         case Parse::NodeKind::FunctionDefinitionStart:
+        case Parse::NodeKind::BuiltinFunctionDefinitionStart:
           return Id::KindFor<SemIR::FunctionId>();
         case Parse::NodeKind::ClassDefinitionStart:
           return Id::KindFor<SemIR::ClassId>();
@@ -434,6 +435,7 @@ class NodeStack {
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
         case Parse::NodeKind::ArrayExprSemi:
+        case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:
         case Parse::NodeKind::CodeBlockStart:
         case Parse::NodeKind::ExprOpenParen:

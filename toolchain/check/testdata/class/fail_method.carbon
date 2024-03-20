@@ -98,13 +98,13 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %.loc18: init () = call %NoSelf.ref.loc18()
 // CHECK:STDOUT:   %Class.ref.loc25: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc25: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc25: init () = call %WithSelf.ref.loc25(<invalid>)
+// CHECK:STDOUT:   %.loc25: init () = call %WithSelf.ref.loc25(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Class.ref.loc32: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc32: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc32: Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc32: init () = call %WithSelf.ref.loc32(<invalid>)
+// CHECK:STDOUT:   %.loc32: init () = call %WithSelf.ref.loc32(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc40: init () = call %A.ref(<invalid>)
+// CHECK:STDOUT:   %.loc40: init () = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

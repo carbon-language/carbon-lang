@@ -10,6 +10,7 @@
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -93,6 +94,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
           sem_ir().name_scopes().GetInstIdIfValid(
               function.enclosing_scope_id))) {
+    return nullptr;
+  }
+
+  // Don't lower builtins.
+  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
     return nullptr;
   }
 

@@ -11,6 +11,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -166,13 +167,74 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
+static auto GetCalleeBuiltinFunctionKind(const SemIR::File& sem_ir,
+                                         SemIR::InstId callee_id)
+    -> SemIR::BuiltinFunctionKind {
+  if (auto bound_method =
+          sem_ir.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
+    callee_id = bound_method->function_id;
+  }
+  callee_id = sem_ir.constant_values().Get(callee_id).inst_id();
+  if (!callee_id.is_valid()) {
+    return SemIR::BuiltinFunctionKind::None;
+  }
+  if (auto callee = sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(callee_id)) {
+    const auto& function = sem_ir.functions().Get(callee->function_id);
+    return function.builtin_kind;
+  }
+  return SemIR::BuiltinFunctionKind::None;
+}
+
+static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
+                              SemIR::BuiltinFunctionKind builtin_kind,
+                              llvm::ArrayRef<SemIR::InstId> arg_ids) -> void {
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::None:
+      CARBON_FATAL() << "No callee in function call.";
+
+    case SemIR::BuiltinFunctionKind::IntAdd: {
+      // TODO: Move type checking to the point where we make the call.
+      if (arg_ids.size() != 2) {
+        break;
+      }
+      auto lhs_type = context.sem_ir().insts().Get(arg_ids[0]).type_id();
+      auto rhs_type = context.sem_ir().insts().Get(arg_ids[1]).type_id();
+      auto result_type = context.sem_ir().insts().Get(inst_id).type_id();
+      if (lhs_type != rhs_type || lhs_type != result_type ||
+          context.sem_ir().types().GetInstId(lhs_type) !=
+              SemIR::InstId::BuiltinIntType) {
+        break;
+      }
+      constexpr bool SignedOverflowIsUB = false;
+      context.SetLocal(
+          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1]), "",
+                                               false, SignedOverflowIsUB));
+      return;
+    }
+  }
+
+  CARBON_FATAL() << "Unsupported builtin call.";
+}
+
 auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
-  auto* callee = llvm::cast<llvm::Function>(context.GetValue(inst.callee_id));
-
-  std::vector<llvm::Value*> args;
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
+
+  auto* callee_value = context.GetValue(inst.callee_id);
+
+  // A null callee pointer value indicates this isn't a real function.
+  if (!callee_value) {
+    auto builtin_kind =
+        GetCalleeBuiltinFunctionKind(context.sem_ir(), inst.callee_id);
+    HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
+    return;
+  }
+
+  auto* callee = llvm::cast<llvm::Function>(callee_value);
+
+  std::vector<llvm::Value*> args;
 
   if (SemIR::GetInitRepr(context.sem_ir(), inst.type_id).has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
