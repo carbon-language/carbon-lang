@@ -162,7 +162,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   // First create the constant values map for all imported IRs. We'll populate
   // these with mappings for namespaces as we go.
   size_t num_irs = context.import_irs().size();
-  for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
+  for (auto& [_, package_imports] : unit_info.package_imports_map) {
     num_irs += package_imports.imports.size();
   }
   context.import_ir_constant_values().resize(
