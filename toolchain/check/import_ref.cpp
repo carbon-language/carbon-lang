@@ -62,29 +62,22 @@ class ImportRefResolver {
             context_.import_ir_constant_values()[import_ir_id.index]) {}
 
   // Iteratively resolves an imported instruction's inner references until a
-  // constant ID referencing the current IR is produced. When an outer
-  // instruction has unresolved inner references, it will add them to the stack
-  // for inner evaluation and reattempt outer evaluation after.
+  // constant ID referencing the current IR is produced. See the class comment
+  // for more details.
   auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
     work_stack_.push_back({inst_id});
     while (!work_stack_.empty()) {
       auto work = work_stack_.back();
       CARBON_CHECK(work.inst_id.is_valid());
 
-      // Double-check that the constant still doesn't have a calculated value.
-      // This should typically be checked before adding it, but a given
-      // instruction may be added multiple times before its constant is
-      // evaluated.
-      //
-      // If a retry was requested, then rerun this work item even if it already
-      // has a constant value from the previous run. It may not have been fully
-      // imported, even though it was imported enough to produce a constant.
+      // Step 1: check for a constant value.
       auto existing_const_id = import_ir_constant_values_.Get(work.inst_id);
       if (existing_const_id.is_valid() && !work.retry) {
         work_stack_.pop_back();
         continue;
       }
 
+      // Step 2: resolve the instruction.
       auto initial_work = work_stack_.size();
       auto [new_const_id, finished] =
           TryResolveInst(work.inst_id, existing_const_id);
@@ -95,6 +88,7 @@ class ImportRefResolver {
           << "Constant value changed in second pass.";
       import_ir_constant_values_.Set(work.inst_id, new_const_id);
 
+      // Step 3: pop or retry.
       if (finished) {
         work_stack_.pop_back();
       } else {
