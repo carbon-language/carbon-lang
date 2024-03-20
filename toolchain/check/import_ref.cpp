@@ -774,7 +774,6 @@ class ImportRefResolver {
     // On the first pass, create a forward declaration of the interface.
     if (!interface_const_id.is_valid()) {
       interface_const_id = MakeInterfaceDecl(import_interface);
-      work_stack_.back().retry = true;
     }
 
     auto initial_work = work_stack_.size();
