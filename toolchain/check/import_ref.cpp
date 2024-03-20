@@ -132,11 +132,21 @@ class ImportRefResolver {
     bool retry = false;
   };
 
-  // For imported entities, we use an invalid enclosing scope. This will be okay
-  // if the scope isn't used later, but we may need to change logic for this if
-  // the behavior changes.
-  static constexpr SemIR::NameScopeId NoEnclosingScopeForImports =
-      SemIR::NameScopeId::Invalid;
+  // The result of attempting to resolve an imported instruction to a constant.
+  struct ResolveResult {
+    // Try resolving this function again. If `const_id` is specified, it will be
+    // passed to the next resolution attempt.
+    static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
+        -> ResolveResult {
+      return {.const_id = const_id, .finished = false};
+    }
+
+    // The new constant value, if known.
+    SemIR::ConstantId const_id;
+    // Whether resolution has finished. If false, `TryResolveInst` will be
+    // called again.
+    bool finished = true;
+  };
 
   // Returns true if new unresolved constants were found.
   //
@@ -339,22 +349,6 @@ class ImportRefResolver {
     return context_.inst_blocks().Add(new_associated_entities);
   }
 
-  // The result of attempting to resolve an imported instruction to a constant.
-  struct ResolveResult {
-    // Try resolving this function again. If `const_id` is specified, it will be
-    // passed to the next resolution attempt.
-    static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
-        -> ResolveResult {
-      return {.const_id = const_id, .finished = false};
-    }
-
-    // The new constant value, if known.
-    SemIR::ConstantId const_id;
-    // Whether resolution has finished. If false, `TryResolveInst` will be
-    // called again.
-    bool finished = true;
-  };
-
   // Tries to resolve the InstId, returning a constant when ready, or Invalid if
   // more has been added to the stack. A similar API is followed for all
   // following TryResolveTypedInst helper functions.
@@ -531,7 +525,8 @@ class ImportRefResolver {
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
-        .enclosing_scope_id = NoEnclosingScopeForImports,
+        // Set in the second pass once we've imported it.
+        .enclosing_scope_id = SemIR::NameScopeId::Invalid,
         // `.self_type_id` depends on the ClassType, so is set below.
         .self_type_id = SemIR::TypeId::Invalid,
         .decl_id = class_decl_id,
@@ -732,7 +727,8 @@ class ImportRefResolver {
     // Start with an incomplete interface.
     SemIR::Interface new_interface = {
         .name_id = GetLocalNameId(import_interface.name_id),
-        .enclosing_scope_id = NoEnclosingScopeForImports,
+        // Set in the second pass once we've imported it.
+        .enclosing_scope_id = SemIR::NameScopeId::Invalid,
         .decl_id = interface_decl_id,
     };
 
