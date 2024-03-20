@@ -156,6 +156,7 @@ cc_library(
     deps = [
         ":inst",
         ":inst_kind",
+        "@llvm-project//llvm:Support",
     ],
 )
 

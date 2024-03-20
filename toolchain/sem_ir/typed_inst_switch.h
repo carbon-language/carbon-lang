@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INST_SWITCH_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INST_SWITCH_H_
 
+#include <concepts>
+
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -15,7 +18,7 @@ namespace Carbon::SemIR {
 //
 // Usage:
 //   TypedInstSwitch(inst)
-//       .Case<MyInst>([&](auto inst) { ... })
+//       .Case([&](MyInst inst) { ... })
 //       .Cases<OtherInst1, OtherInst2>([&]() { ... })
 //       .Default([&]() { ... });
 //
@@ -24,7 +27,7 @@ namespace Carbon::SemIR {
 // TODO: Should this check for unhandled or duplicate cases?
 class TypedInstSwitch {
  public:
-  //
+  // Starts a switch on the provided type.
   explicit TypedInstSwitch(const SemIR::Inst& inst) : inst_(inst) {}
 
   // Not copyable or movable.
@@ -33,8 +36,14 @@ class TypedInstSwitch {
 
   // If an instruction is the provided kind, calls the function with the typed
   // instruction.
-  template <typename InstT>
-  auto Case(llvm::function_ref<void(InstT)> fn) -> TypedInstSwitch& {
+  //
+  // This template setup allows deducing InstT from FnT.
+  template <typename FnT>
+    requires(
+        std::same_as<typename llvm::function_traits<FnT>::result_t, void> &&
+        llvm::function_traits<FnT>::num_args == 1)
+  auto Case(FnT&& fn) -> TypedInstSwitch& {
+    using InstT = llvm::function_traits<FnT>::template arg_t<0>;
     if (!done_ && inst_.Is<InstT>()) {
       fn(inst_.As<InstT>());
       done_ = true;

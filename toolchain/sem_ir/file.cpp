@@ -310,7 +310,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
     };
 
     TypedInstSwitch(sem_ir.insts().Get(step.inst_id))
-        .Case<ArrayType>([&](auto inst) {
+        .Case([&](ArrayType inst) {
           if (step.index == 0) {
             out << "[";
             steps.push_back(step.Next());
@@ -319,7 +319,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
             out << "; " << sem_ir.GetArrayBoundValue(inst.bound_id) << "]";
           }
         })
-        .Case<AssociatedEntityType>([&](auto inst) {
+        .Case([&](AssociatedEntityType inst) {
           if (step.index == 0) {
             out << "<associated ";
             steps.push_back(step.Next());
@@ -331,16 +331,16 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
                 << ">";
           }
         })
-        .Case<AnyBindName>([&](auto inst) {
+        .Case([&](AnyBindName inst) {
           auto name_id = inst.bind_name_id;
           out << sem_ir.names().GetFormatted(
               sem_ir.bind_names().Get(name_id).name_id);
         })
-        .Case<ClassType>([&](auto inst) {
+        .Case([&](ClassType inst) {
           auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
           out << sem_ir.names().GetFormatted(class_name_id);
         })
-        .Case<ConstType>([&](auto inst) {
+        .Case([&](ConstType inst) {
           if (step.index == 0) {
             out << "const ";
 
@@ -358,22 +358,22 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
             out << ")";
           }
         })
-        .Case<FacetTypeAccess>([&](auto /*inst*/) {
+        .Case([&](FacetTypeAccess /*inst*/) {
           // Print `T as type` as simply `T`.
         })
-        .Case<ImportRefUsed>([&](auto inst) {
+        .Case([&](ImportRefUsed inst) {
           steps.push_back({.sem_ir = *sem_ir.import_irs().Get(inst.ir_id),
                            .inst_id = inst.inst_id});
         })
-        .Case<InterfaceType>([&](auto inst) {
+        .Case([&](InterfaceType inst) {
           auto interface_name_id =
               sem_ir.interfaces().Get(inst.interface_id).name_id;
           out << sem_ir.names().GetFormatted(interface_name_id);
         })
-        .Case<NameRef>([&](auto inst) {
+        .Case([&](NameRef inst) {
           out << sem_ir.names().GetFormatted(inst.name_id);
         })
-        .Case<PointerType>([&](auto inst) {
+        .Case([&](PointerType inst) {
           if (step.index == 0) {
             steps.push_back(step.Next());
             push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
@@ -381,7 +381,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
             out << "*";
           }
         })
-        .Case<StructType>([&](auto inst) {
+        .Case([&](StructType inst) {
           auto refs = sem_ir.inst_blocks().Get(inst.fields_id);
           if (refs.empty()) {
             out << "{}";
@@ -398,11 +398,11 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           steps.push_back(step.Next());
           push_inst_id(refs[step.index]);
         })
-        .Case<StructTypeField>([&](auto inst) {
+        .Case([&](StructTypeField inst) {
           out << "." << sem_ir.names().GetFormatted(inst.name_id) << ": ";
           push_inst_id(sem_ir.types().GetInstId(inst.field_type_id));
         })
-        .Case<TupleType>([&](auto inst) {
+        .Case([&](TupleType inst) {
           auto refs = sem_ir.type_blocks().Get(inst.elements_id);
           if (refs.empty()) {
             out << "()";
@@ -423,7 +423,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           steps.push_back(step.Next());
           push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
         })
-        .Case<UnboundElementType>([&](auto inst) {
+        .Case([&](UnboundElementType inst) {
           if (step.index == 0) {
             out << "<unbound element of class ";
             steps.push_back(step.Next());
@@ -465,13 +465,13 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
                FunctionDecl, ImplDecl, ImportRefUnused, Namespace, Return,
                ReturnExpr, StructTypeField>(
             [&] { result = ExprCategory::NotExpr; })
-        .Case<ImportRefUsed>([&](auto inst) {
+        .Case([&](ImportRefUsed inst) {
           ir = ir->import_irs().Get(inst.ir_id);
           inst_id = inst.inst_id;
         })
-        .Case<BindAlias>([&](auto inst) { inst_id = inst.value_id; })
-        .Case<NameRef>([&](auto inst) { inst_id = inst.value_id; })
-        .Case<Converted>([&](auto inst) { inst_id = inst.result_id; })
+        .Case([&](BindAlias inst) { inst_id = inst.value_id; })
+        .Case([&](NameRef inst) { inst_id = inst.value_id; })
+        .Case([&](Converted inst) { inst_id = inst.result_id; })
         .Cases<AddrOf, AddrPattern, ArrayType, AssociatedConstantDecl,
                AssociatedEntity, AssociatedEntityType, BindSymbolicName,
                BindValue, BlockArg, BoolLiteral, BoundMethod, ClassDecl,
@@ -481,24 +481,24 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
                StructValue, StructType, TupleValue, TupleType, UnaryOperatorNot,
                UnboundElementType, ValueOfInitializer>(
             [&]() { result = value_category; })
-        .Case<Builtin>([&](auto inst) {
+        .Case([&](Builtin inst) {
           result = (inst.builtin_kind == BuiltinKind::Error)
                        ? ExprCategory::Error
                        : value_category;
         })
-        .Case<BindName>([&](auto inst) { inst_id = inst.value_id; })
-        .Case<ArrayIndex>([&](auto inst) { inst_id = inst.array_id; })
-        .Case<ClassElementAccess>([&](auto inst) {
+        .Case([&](BindName inst) { inst_id = inst.value_id; })
+        .Case([&](ArrayIndex inst) { inst_id = inst.array_id; })
+        .Case([&](ClassElementAccess inst) {
           inst_id = inst.base_id;
           // A value of class type is a pointer to an object representation.
           // Therefore, if the base is a value, the result is an ephemeral
           // reference.
           value_category = ExprCategory::EphemeralRef;
         })
-        .Case<StructAccess>([&](auto inst) { inst_id = inst.struct_id; })
-        .Case<TupleAccess>([&](auto inst) { inst_id = inst.tuple_id; })
-        .Case<TupleIndex>([&](auto inst) { inst_id = inst.tuple_id; })
-        .Case<SpliceBlock>([&](auto inst) { inst_id = inst.result_id; })
+        .Case([&](StructAccess inst) { inst_id = inst.struct_id; })
+        .Case([&](TupleAccess inst) { inst_id = inst.tuple_id; })
+        .Case([&](TupleIndex inst) { inst_id = inst.tuple_id; })
+        .Case([&](SpliceBlock inst) { inst_id = inst.result_id; })
         .Cases<StructLiteral, TupleLiteral>(
             [&]() { result = ExprCategory::Mixed; })
         .Cases<ArrayInit, Call, InitializeFrom, ClassInit, StructInit,
