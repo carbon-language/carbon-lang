@@ -68,7 +68,6 @@ class ImportRefResolver {
   auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
     work_stack_.push_back({inst_id});
     while (!work_stack_.empty()) {
-      auto initial_work = work_stack_.size();
       auto work = work_stack_.back();
       CARBON_CHECK(work.inst_id.is_valid());
 
@@ -84,6 +83,7 @@ class ImportRefResolver {
       if (existing_const_id.is_valid() && !work.retry) {
         work_stack_.pop_back();
       } else {
+        auto initial_work = work_stack_.size();
         auto [new_const_id, finished] =
             TryResolveInst(work.inst_id, existing_const_id);
         CARBON_CHECK(finished == !HasNewWork(initial_work));
