@@ -187,10 +187,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Ordered, <function> [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element0, @TestLess.%import_ref.2 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element1, @TestLessEqual.%import_ref.2 [template]
-// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element2, @TestGreater.%import_ref.2 [template]
-// CHECK:STDOUT:   %.10: <associated <function> in Ordered> = assoc_entity element3, @TestGreaterEqual.%import_ref.2 [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element1, file.%import_ref.14 [template]
+// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element2, file.%import_ref.16 [template]
+// CHECK:STDOUT:   %.10: <associated <function> in Ordered> = assoc_entity element3, file.%import_ref.18 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -204,12 +204,21 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir1, inst+17, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir1, inst+31, used [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir1, inst+59, used [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir1, inst+45, used [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir1, inst+15, used [template = imports.%Less]
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir1, inst+30, used [template = imports.%LessOrEquivalent]
+// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir1, inst+44, used [template = imports.%Greater]
+// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir1, inst+58, used [template = imports.%GreaterOrEquivalent]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Ordered.decl: invalid = interface_decl @Ordered [template = constants.%.2] {}
-// CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, %import_ref [template = constants.%.2]
+// CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLess: <function> = fn_decl @TestLess [template] {
 // CHECK:STDOUT:     %C.ref.loc15_16: type = name_ref C, %C.decl [template = constants.%C]
@@ -220,6 +229,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: C = bind_name b, %b.loc15_19.1
 // CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc19_21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc19_18.1: C = param a
@@ -229,6 +240,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: C = bind_name b, %b.loc19_24.1
 // CHECK:STDOUT:     %return.var.loc19: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.13: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
 // CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_16.1: C = param a
@@ -238,6 +251,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: C = bind_name b, %b.loc23_22.1
 // CHECK:STDOUT:     %return.var.loc23: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.15: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.16 = import_ref ir1, inst+44, unused
 // CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc27_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc27_21.1: C = param a
@@ -247,26 +262,18 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: C = bind_name b, %b.loc27_27.1
 // CHECK:STDOUT:     %return.var.loc27: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.17: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.18 = import_ref ir1, inst+58, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Ordered> = import_ref ir1, inst+17, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Ordered> = import_ref ir1, inst+31, used [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir1, inst+59, used [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir1, inst+45, used [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+15, used [template = imports.%Less]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir1, inst+30, used [template = imports.%LessOrEquivalent]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir1, inst+44, used [template = imports.%Greater]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir1, inst+58, used [template = imports.%GreaterOrEquivalent]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Less = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   .LessOrEquivalent = %import_ref.3
-// CHECK:STDOUT:   .GreaterOrEquivalent = %import_ref.4
-// CHECK:STDOUT:   .Greater = %import_ref.5
-// CHECK:STDOUT:   witness = (%import_ref.6, %import_ref.7, %import_ref.8, %import_ref.9)
+// CHECK:STDOUT:   .Less = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.4
+// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.5
+// CHECK:STDOUT:   .Greater = file.%import_ref.6
+// CHECK:STDOUT:   witness = (file.%import_ref.7, file.%import_ref.8, file.%import_ref.9, file.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Ordered {
@@ -341,8 +348,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Less]
 // CHECK:STDOUT:   %.loc16_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc16_12.2: init bool = call %.loc16_12.1(%a.ref, %b.ref)
@@ -355,8 +360,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element1 [template = @impl.%LessOrEquivalent]
 // CHECK:STDOUT:   %.loc20_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc20_12.2: init bool = call %.loc20_12.1(%a.ref, %b.ref)
@@ -369,8 +372,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+44, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element2 [template = @impl.%Greater]
 // CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc24_12.2: init bool = call %.loc24_12.1(%a.ref, %b.ref)
@@ -383,8 +384,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+58, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element3 [template = @impl.%GreaterOrEquivalent]
 // CHECK:STDOUT:   %.loc28_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc28_12.2: init bool = call %.loc28_12.1(%a.ref, %b.ref)
@@ -402,10 +401,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Ordered [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Ordered, <function> [template]
-// CHECK:STDOUT:   %.6: <associated <function> in Ordered> = assoc_entity element0, @TestLess.%import_ref.2 [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element1, @TestLessEqual.%import_ref.2 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element2, @TestGreater.%import_ref.2 [template]
-// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element3, @TestGreaterEqual.%import_ref.2 [template]
+// CHECK:STDOUT:   %.6: <associated <function> in Ordered> = assoc_entity element0, file.%import_ref.11 [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element1, file.%import_ref.13 [template]
+// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element2, file.%import_ref.15 [template]
+// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element3, file.%import_ref.17 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -428,6 +427,17 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: D = bind_name b, %b.loc8_19.1
 // CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir1, inst+17, used [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir1, inst+31, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir1, inst+59, used [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir1, inst+45, used [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+15, unused
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+30, unused
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+44, unused
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+58, unused
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc15_21: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc15_18.1: D = param a
@@ -437,6 +447,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc15_24.1
 // CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.12: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
 // CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc22_16.1: D = param a
@@ -446,6 +458,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc22_22.1
 // CHECK:STDOUT:     %return.var.loc22: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.14: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.15 = import_ref ir1, inst+44, unused
 // CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc29_24: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc29_21.1: D = param a
@@ -455,26 +469,18 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc29_27.1
 // CHECK:STDOUT:     %return.var.loc29: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.17 = import_ref ir1, inst+58, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Ordered> = import_ref ir1, inst+17, used [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Ordered> = import_ref ir1, inst+31, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir1, inst+59, used [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir1, inst+45, used [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+15, unused
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+30, unused
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+44, unused
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+58, unused
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Less = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   .LessOrEquivalent = %import_ref.3
-// CHECK:STDOUT:   .GreaterOrEquivalent = %import_ref.4
-// CHECK:STDOUT:   .Greater = %import_ref.5
-// CHECK:STDOUT:   witness = (%import_ref.6, %import_ref.7, %import_ref.8, %import_ref.9)
+// CHECK:STDOUT:   .Less = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .LessOrEquivalent = file.%import_ref.4
+// CHECK:STDOUT:   .GreaterOrEquivalent = file.%import_ref.5
+// CHECK:STDOUT:   .Greater = file.%import_ref.6
+// CHECK:STDOUT:   witness = (file.%import_ref.7, file.%import_ref.8, file.%import_ref.9, file.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -486,9 +492,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %Ordered.decl: invalid = interface_decl @Ordered [template = constants.%.4] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -496,8 +500,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,8 +507,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+44, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -514,8 +514,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+58, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -132,9 +132,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type @Add, <function> [template]
-// CHECK:STDOUT:   %.12: <associated <function> in Add> = assoc_entity element0, @TestOp.%import_ref.2 [template]
+// CHECK:STDOUT:   %.12: <associated <function> in Add> = assoc_entity element0, file.%import_ref.10 [template]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, <function> [template]
-// CHECK:STDOUT:   %.14: <associated <function> in AddAssign> = assoc_entity element0, @TestAssign.%import_ref.2 [template]
+// CHECK:STDOUT:   %.14: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -146,19 +146,25 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir1, inst+20, used [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Add.decl: invalid = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+22, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir1, inst+40, used [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+24, unused
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir1, inst+38, used [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref.2: type = import_ref ir1, inst+22, used [template = constants.%.7]
 // CHECK:STDOUT:     %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.7] {}
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.2 [template = constants.%.7]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %C.ref.loc17_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -170,6 +176,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc17_26: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+18, unused
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
 // CHECK:STDOUT:     %C.ref.loc21_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc21: type = ptr_type C [template = constants.%.8]
@@ -179,28 +187,22 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %b.loc21_22.1: C = param b
 // CHECK:STDOUT:     @TestAssign.%b: C = bind_name b, %b.loc21_22.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+22, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+38, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Add> = import_ref ir1, inst+20, used [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, used [template = imports.%Op.1]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT:   .Op = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in AddAssign> = import_ref ir1, inst+40, used [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+24, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+38, used [template = imports.%Op.2]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT:   .Op = file.%import_ref.6
+// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   witness = (file.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: C as Add {
@@ -265,8 +267,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+18, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
 // CHECK:STDOUT:   %.loc18_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc17: ref C = splice_block %return {}
@@ -279,8 +279,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: C* = name_ref a, %a
 // CHECK:STDOUT:   %.loc22_3.1: ref C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+22, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+38, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
 // CHECK:STDOUT:   %.loc22_6.1: <bound method> = bound_method %.loc22_3.1, %.1
 // CHECK:STDOUT:   %.loc22_3.2: C* = addr_of %.loc22_3.1

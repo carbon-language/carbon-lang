@@ -134,6 +134,23 @@ auto Context::ReplaceInstBeforeConstantUse(
   constant_values().Set(inst_id, const_id);
 }
 
+auto Context::AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  auto import_ref_id =
+      AddPlaceholderInstInNoBlock(SemIR::ImportRefUnused{ir_id, inst_id});
+
+  // We can't insert this instruction into whatever block we happen to be in,
+  // because this function is typically called by name lookup in the middle of
+  // an otherwise unknown checking step. But we need to add the instruction
+  // somewhere, because it's referenced by other instructions and needs to be
+  // visible in textual IR. Adding it to the file block is arbitrary but is the
+  // best place we have right now.
+  //
+  // TODO: Consider adding a dedicated block for import_refs.
+  inst_block_stack().AddInstIdToFileBlock(import_ref_id);
+  return import_ref_id;
+}
+
 auto Context::DiagnoseDuplicateName(SemIRLocation dup_def,
                                     SemIRLocation prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
@@ -301,8 +318,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    auto import_inst_id = context.AddPlaceholderInst(
-        {SemIR::ImportRefUnused{import_ir_id, it->second}});
+    auto import_inst_id = context.AddImportRef(import_ir_id, it->second);
     TryResolveImportRefUnused(context, import_inst_id);
     if (result_id.is_valid()) {
       // TODO: Add generalized merge functionality (merge_decls.h?).

@@ -96,6 +96,11 @@ class Context {
                                     SemIR::NodeIdAndInst node_id_and_inst)
       -> void;
 
+  // Adds an import_ref instruction for the specified instruction in the
+  // specified IR. The import_ref is initially marked as unused.
+  auto AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
+      -> SemIR::InstId;
+
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
   // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used

@@ -79,7 +79,7 @@ static auto AddNamespace(
     Parse::ImportDirectiveId node_id, SemIR::NameId name_id,
     SemIR::NameScopeId enclosing_scope_id, bool diagnose_duplicate_namespace,
     std::optional<llvm::function_ref<SemIR::InstId()>> make_import_id)
-    -> std::pair<SemIR::NameScopeId, bool> {
+    -> std::tuple<SemIR::NameScopeId, SemIR::ConstantId, bool> {
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
   auto [it, success] =
       enclosing_scope.names.insert({name_id, SemIR::InstId::Invalid});
@@ -89,7 +89,8 @@ static auto AddNamespace(
       if (diagnose_duplicate_namespace) {
         context.DiagnoseDuplicateName(node_id, it->second);
       }
-      return {namespace_inst->name_scope_id, true};
+      return {namespace_inst->name_scope_id,
+              context.constant_values().Get(it->second), true};
     }
   }
 
@@ -110,7 +111,8 @@ static auto AddNamespace(
   }
 
   it->second = namespace_id;
-  return {namespace_inst.name_scope_id, false};
+  return {namespace_inst.name_scope_id,
+          context.constant_values().Get(namespace_id), false};
 }
 
 // Adds a copied namespace to the cache.
@@ -140,10 +142,13 @@ static auto CopySingleNameScopeFromImportIR(
                                                 .ir_id = ir_id,
                                                 .inst_id = import_inst_id});
   };
-  auto [namespace_scope_id, _] =
+  auto [namespace_scope_id, namespace_const_id, _] =
       AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,
                    enclosing_scope_id, /*diagnose_duplicate_namespace=*/false,
                    make_import_id);
+
+  context.import_ir_constant_values()[ir_id.index].Set(import_inst_id,
+                                                       namespace_const_id);
 
   CacheCopiedNamespace(copied_namespaces, import_scope_id, namespace_scope_id);
   return namespace_scope_id;
@@ -205,6 +210,9 @@ auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      const SemIR::File& import_sem_ir) -> void {
   auto ir_id = context.import_irs().Add(&import_sem_ir);
+  context.import_ir_constant_values()[ir_id.index].Set(
+      SemIR::InstId::PackageNamespace,
+      context.constant_values().Get(SemIR::InstId::PackageNamespace));
 
   for (const auto import_inst_id :
        import_sem_ir.inst_blocks().Get(SemIR::InstBlockId::Exports)) {
@@ -233,8 +241,7 @@ auto ImportLibraryFromCurrentPackage(Context& context,
           namespace_type_id);
     } else {
       // Leave a placeholder that the inst comes from the other IR.
-      auto target_id = context.AddPlaceholderInst(
-          {SemIR::ImportRefUnused{.ir_id = ir_id, .inst_id = import_inst_id}});
+      auto target_id = context.AddImportRef(ir_id, import_inst_id);
       // TODO: When importing from other packages, the scope's names should
       // be changed to allow for ambiguous names. When importing from the
       // current package, as is currently being done, we should issue a
@@ -260,15 +267,17 @@ auto ImportLibrariesFromOtherPackage(Context& context,
 
   auto name_id = SemIR::NameId::ForIdentifier(package_id);
 
-  auto [namespace_scope_id, is_duplicate] = AddNamespace(
+  auto [namespace_scope_id, namespace_const_id, is_duplicate] = AddNamespace(
       context, namespace_type_id, node_id, name_id, SemIR::NameScopeId::Package,
       /*diagnose_duplicate_namespace=*/true, /*make_import_id=*/std::nullopt);
 
   auto& scope = context.name_scopes().Get(namespace_scope_id);
   scope.is_closed_import = !is_duplicate;
   for (const auto* sem_ir : sem_irs) {
-    scope.import_ir_scopes.push_back(
-        {context.import_irs().Add(sem_ir), SemIR::NameScopeId::Package});
+    auto ir_id = context.import_irs().Add(sem_ir);
+    scope.import_ir_scopes.push_back({ir_id, SemIR::NameScopeId::Package});
+    context.import_ir_constant_values()[ir_id.index].Set(
+        SemIR::InstId::PackageNamespace, namespace_const_id);
   }
   if (has_load_error) {
     scope.has_error = has_load_error;

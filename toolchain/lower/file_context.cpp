@@ -91,8 +91,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   // Don't lower associated functions.
   // TODO: We shouldn't lower any function that has generic parameters.
   if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
-          sem_ir().name_scopes().GetInstIdIfValid(
-              function.enclosing_scope_id))) {
+          sem_ir().name_scopes().Get(function.enclosing_scope_id).inst_id)) {
     return nullptr;
   }
 

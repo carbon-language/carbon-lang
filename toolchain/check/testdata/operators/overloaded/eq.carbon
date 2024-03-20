@@ -155,8 +155,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Eq, <function> [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element0, @TestEqual.%import_ref.2 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Eq> = assoc_entity element1, @TestNotEqual.%import_ref.2 [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element0, file.%import_ref.8 [template]
+// CHECK:STDOUT:   %.8: <associated <function> in Eq> = assoc_entity element1, file.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -168,12 +168,17 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir1, inst+15, used [template = imports.%Equal]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+30, used [template = imports.%NotEqual]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref [template = constants.%.2]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestEqual: <function> = fn_decl @TestEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc13_17: type = name_ref C, %C.decl [template = constants.%C]
@@ -184,6 +189,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestEqual.%b: C = bind_name b, %b.loc13_20.1
 // CHECK:STDOUT:     %return.var.loc13: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestNotEqual: <function> = fn_decl @TestNotEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc17_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc17_17.1: C = param a
@@ -193,20 +200,16 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%b: C = bind_name b, %b.loc17_23.1
 // CHECK:STDOUT:     %return.var.loc17: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+15, used [template = imports.%Equal]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir1, inst+30, used [template = imports.%NotEqual]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Equal = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   .NotEqual = %import_ref.3
-// CHECK:STDOUT:   witness = (%import_ref.4, %import_ref.5)
+// CHECK:STDOUT:   .Equal = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .NotEqual = file.%import_ref.4
+// CHECK:STDOUT:   witness = (file.%import_ref.5, file.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Eq {
@@ -253,8 +256,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
 // CHECK:STDOUT:   %.loc14_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc14_12.2: init bool = call %.loc14_12.1(%a.ref, %b.ref)
@@ -267,8 +268,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element1 [template = @impl.%NotEqual]
 // CHECK:STDOUT:   %.loc18_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc18_12.2: init bool = call %.loc18_12.1(%a.ref, %b.ref)
@@ -286,8 +285,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Eq [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Eq, <function> [template]
-// CHECK:STDOUT:   %.6: <associated <function> in Eq> = assoc_entity element0, @TestEqual.%import_ref.2 [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element1, @TestNotEqual.%import_ref.2 [template]
+// CHECK:STDOUT:   %.6: <associated <function> in Eq> = assoc_entity element0, file.%import_ref.7 [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element1, file.%import_ref.9 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -308,6 +307,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestEqual.%b: D = bind_name b, %b.loc8_20.1
 // CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+15, unused
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+30, unused
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestNotEqual: <function> = fn_decl @TestNotEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc15_20: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc15_17.1: D = param a
@@ -317,20 +323,16 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%b: D = bind_name b, %b.loc15_23.1
 // CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.8: type = import_ref ir1, inst+1, used [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+15, unused
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+30, unused
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Equal = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   .NotEqual = %import_ref.3
-// CHECK:STDOUT:   witness = (%import_ref.4, %import_ref.5)
+// CHECK:STDOUT:   .Equal = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .NotEqual = file.%import_ref.4
+// CHECK:STDOUT:   witness = (file.%import_ref.5, file.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -342,9 +344,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %Eq.decl: invalid = interface_decl @Eq [template = constants.%.4] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,8 +352,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,8 +366,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Eq, <function> [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element0, @TestRhsBad.%import_ref.2 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Eq> = assoc_entity element1, @TestLhsBad.%import_ref.2 [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element0, file.%import_ref.8 [template]
+// CHECK:STDOUT:   %.8: <associated <function> in Eq> = assoc_entity element1, file.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -383,12 +381,17 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir1, inst+15, used [template = imports.%Equal]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+30, used [template = imports.%NotEqual]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref [template = constants.%.2]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRhsBad: <function> = fn_decl @TestRhsBad [template] {
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, %C.decl [template = constants.%C]
@@ -399,6 +402,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestRhsBad.%b: D = bind_name b, %b.loc14_21.1
 // CHECK:STDOUT:     %return.var.loc14: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestLhsBad: <function> = fn_decl @TestLhsBad [template] {
 // CHECK:STDOUT:     %D.ref.loc24: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc24_15.1: D = param a
@@ -408,20 +413,16 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestLhsBad.%b: C = bind_name b, %b.loc24_21.1
 // CHECK:STDOUT:     %return.var.loc24: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Eq> = import_ref ir1, inst+17, used [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir1, inst+31, used [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+15, used [template = imports.%Equal]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir1, inst+30, used [template = imports.%NotEqual]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Equal = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   .NotEqual = %import_ref.3
-// CHECK:STDOUT:   witness = (%import_ref.4, %import_ref.5)
+// CHECK:STDOUT:   .Equal = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .NotEqual = file.%import_ref.4
+// CHECK:STDOUT:   witness = (file.%import_ref.5, file.%import_ref.6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Eq {
@@ -473,8 +474,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
 // CHECK:STDOUT:   %.loc21_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc21_12.2: init bool = call %.loc21_12.1(<invalid>)
@@ -487,8 +486,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

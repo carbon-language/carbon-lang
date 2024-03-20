@@ -81,7 +81,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.5: C = struct_value () [template]
 // CHECK:STDOUT:   %.6: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @BitComplement, <function> [template]
-// CHECK:STDOUT:   %.8: <associated <function> in BitComplement> = assoc_entity element0, @TestOp.%import_ref.2 [template]
+// CHECK:STDOUT:   %.8: <associated <function> in BitComplement> = assoc_entity element0, file.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -92,12 +92,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in BitComplement> = import_ref ir1, inst+15, used [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+13, used [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %BitComplement.decl: invalid = interface_decl @BitComplement [template = constants.%.2] {}
-// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, %import_ref [template = constants.%.2]
+// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %C.ref.loc14_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -106,17 +109,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc14_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+13, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitComplement {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in BitComplement> = import_ref ir1, inst+15, used [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+13, used [template = imports.%Op]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT:   .Op = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as BitComplement {
@@ -152,8 +153,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a: C) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
 // CHECK:STDOUT:   %.loc15_10.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc14: ref C = splice_block %return {}

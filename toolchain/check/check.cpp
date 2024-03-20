@@ -159,6 +159,15 @@ struct UnitInfo {
 // Add imports to the root block.
 static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     -> void {
+  // First create the constant values map for all imported IRs. We'll populate
+  // these with mappings for namespaces as we go.
+  size_t num_irs = context.import_irs().size();
+  for (auto& [_, package_imports] : unit_info.package_imports_map) {
+    num_irs += package_imports.imports.size();
+  }
+  context.import_ir_constant_values().resize(
+      num_irs, SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
+
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
       context.GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
@@ -217,9 +226,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
                                     sem_irs, package_imports.has_load_error);
   }
 
-  context.import_ir_constant_values().resize(
-      context.import_irs().size(),
-      SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
+  CARBON_CHECK(context.import_irs().size() == num_irs)
+      << "Created an unexpected number of IRs";
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,

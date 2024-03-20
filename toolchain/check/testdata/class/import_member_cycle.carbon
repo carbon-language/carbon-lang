@@ -58,26 +58,25 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = %import_ref
+// CHECK:STDOUT:     .Cycle = %import_ref.1
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%Cycle]
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+7, unused
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+7, unused
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .a = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
+// CHECK:STDOUT:   .a = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cycle.decl: invalid = class_decl @Cycle [template = constants.%Cycle] {}
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref [template = constants.%Cycle]
+// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%import_ref.1 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc7: type = ptr_type Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref Cycle* = var a
 // CHECK:STDOUT:   %a: ref Cycle* = bind_name a, %a.var
