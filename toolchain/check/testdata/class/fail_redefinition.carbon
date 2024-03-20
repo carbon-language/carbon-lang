@@ -17,6 +17,12 @@ class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 class Class {
   fn G();
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:3: ERROR: Redundant redeclaration of function H.
+  // CHECK:STDERR:   fn H();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-14]]:3: Previously declared here.
+  // CHECK:STDERR:   fn H();
+  // CHECK:STDERR:   ^~~~~~~
   fn H();
 }
 
@@ -32,19 +38,22 @@ fn Class.H() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl.loc7} [template]
-// CHECK:STDOUT:   %Class.decl.loc7 = class_decl @Class, ()
-// CHECK:STDOUT:   %Class.decl.loc18 = class_decl @Class, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl.loc7
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc18: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = <unexpected instref inst+3>
 // CHECK:STDOUT:   .H = <unexpected instref inst+4>
 // CHECK:STDOUT:   .G = %G

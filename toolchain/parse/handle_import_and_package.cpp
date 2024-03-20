@@ -5,6 +5,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
 namespace Carbon::Parse {
@@ -75,7 +76,8 @@ static auto HandleDirectiveContent(Context& context,
                                    NodeKind directive,
                                    llvm::function_ref<void()> on_parse_error)
     -> void {
-  Tree::PackagingNames names{.node = NodeId(state.subtree_start)};
+  Tree::PackagingNames names{
+      .node_id = ImportDirectiveId(NodeId(state.subtree_start))};
   if (directive != NodeKind::LibraryDirective) {
     if (auto package_name_token =
             context.ConsumeIf(Lex::TokenKind::Identifier)) {

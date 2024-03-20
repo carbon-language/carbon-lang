@@ -10,6 +10,11 @@ auto HandleStatement(Context& context) -> void {
   context.PopAndDiscardState();
 
   switch (context.PositionKind()) {
+    case Lex::TokenKind::Alias: {
+      context.PushState(State::Alias);
+      context.AddLeafNode(NodeKind::AliasIntroducer, context.Consume());
+      break;
+    }
     case Lex::TokenKind::Break: {
       context.PushState(State::StatementBreakFinish);
       context.AddLeafNode(NodeKind::BreakStatementStart, context.Consume());
@@ -50,6 +55,10 @@ auto HandleStatement(Context& context) -> void {
     }
     case Lex::TokenKind::While: {
       context.PushState(State::StatementWhile);
+      break;
+    }
+    case Lex::TokenKind::Match: {
+      context.PushState(State::MatchIntroducer);
       break;
     }
     default: {

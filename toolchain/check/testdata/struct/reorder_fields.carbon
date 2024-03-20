@@ -23,10 +23,21 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.MakeI32 = %MakeI32, .MakeF64 = %MakeF64, .F = %F} [template]
-// CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32 [template]
-// CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64 [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .MakeI32 = %MakeI32
+// CHECK:STDOUT:     .MakeF64 = %MakeF64
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32 [template] {
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64 [template] {
+// CHECK:STDOUT:     %return.var.loc8: ref f64 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %.loc10: type = struct_type {.a: i32, .b: f64} [template = constants.%.1]
+// CHECK:STDOUT:     @F.%return: ref {.a: i32, .b: f64} = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeI32() -> i32;

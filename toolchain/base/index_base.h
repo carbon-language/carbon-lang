@@ -5,7 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_INDEX_BASE_H_
 #define CARBON_TOOLCHAIN_BASE_INDEX_BASE_H_
 
-#include <type_traits>
+#include <compare>
+#include <concepts>
 
 #include "common/ostream.h"
 #include "llvm/ADT/DenseMapInfo.h"
@@ -38,7 +39,7 @@ struct IdBase : public Printable<IdBase> {
     }
   }
 
-  auto is_valid() const -> bool { return index != InvalidIndex; }
+  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
 
   int32_t index;
 };
@@ -52,78 +53,26 @@ struct IndexBase : public IdBase {
   using IdBase::IdBase;
 };
 
-// Equality comparison for both IdBase and IndexBase.
-template <
-    typename IndexType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr>
-auto operator==(IndexType lhs, IndexType rhs) -> bool {
+// Support equality comparison when one operand is a child of `IdBase`
+// (including `IndexBase`) and the other operand is either the same type or
+// convertible to that type.
+template <typename IndexType>
+  requires std::derived_from<IndexType, IdBase>
+constexpr auto operator==(IndexType lhs, IndexType rhs) -> bool {
   return lhs.index == rhs.index;
 }
-template <
-    typename IndexType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr>
-auto operator!=(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index != rhs.index;
-}
-
-template <
-    typename IndexType, typename RHSType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
-    typename std::enable_if_t<std::is_convertible_v<RHSType, IndexType>>* =
-        nullptr>
+template <typename IndexType, typename RHSType>
+  requires std::derived_from<IndexType, IdBase> &&
+           std::convertible_to<RHSType, IndexType>
 auto operator==(IndexType lhs, RHSType rhs) -> bool {
   return lhs.index == IndexType(rhs).index;
 }
-template <
-    typename IndexType, typename RHSType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
-    typename std::enable_if_t<std::is_convertible_v<RHSType, IndexType>>* =
-        nullptr>
-auto operator!=(IndexType lhs, RHSType rhs) -> bool {
-  return lhs.index != IndexType(rhs).index;
-}
 
-template <
-    typename LHSType, typename IndexType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
-    typename std::enable_if_t<std::is_convertible_v<LHSType, IndexType>>* =
-        nullptr>
-auto operator==(LHSType lhs, IndexType rhs) -> bool {
-  return IndexType(lhs).index == rhs.index;
-}
-template <
-    typename LHSType, typename IndexType,
-    typename std::enable_if_t<std::is_base_of_v<IdBase, IndexType>>* = nullptr,
-    typename std::enable_if_t<std::is_convertible_v<LHSType, IndexType>>* =
-        nullptr>
-auto operator!=(LHSType lhs, IndexType rhs) -> bool {
-  return IndexType(lhs).index != rhs.index;
-}
-
-// The < and > comparisons for only IndexBase.
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
-              nullptr>
-auto operator<(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index < rhs.index;
-}
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
-              nullptr>
-auto operator<=(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index <= rhs.index;
-}
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
-              nullptr>
-auto operator>(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index > rhs.index;
-}
-template <typename IndexType,
-          typename std::enable_if_t<std::is_base_of_v<IndexBase, IndexType>>* =
-              nullptr>
-auto operator>=(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index >= rhs.index;
+// Relational comparisons are only supported for types derived from `IndexBase`.
+template <typename IndexType>
+  requires std::derived_from<IndexType, IndexBase>
+auto operator<=>(IndexType lhs, IndexType rhs) -> std::strong_ordering {
+  return lhs.index <=> rhs.index;
 }
 
 // Provides base support for use of IdBase types as DenseMap/DenseSet keys.

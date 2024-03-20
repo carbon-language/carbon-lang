@@ -32,16 +32,31 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Outer = %Outer.decl, .F = %F, .G = %G} [template]
-// CHECK:STDOUT:   %Outer.decl = class_decl @Outer, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Outer = %Outer.decl
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %Outer.ref.loc13: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
+// CHECK:STDOUT:     %oi.loc13_6.1: Inner = param oi
+// CHECK:STDOUT:     @F.%oi: Inner = bind_name oi, %oi.loc13_6.1
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:     %Outer.ref.loc17: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:     %o.loc17_6.1: Outer = param o
+// CHECK:STDOUT:     @G.%o: Outer = bind_name o, %o.loc17_6.1
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.decl = class_decl @Inner, ()
+// CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -49,12 +64,14 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %.loc9: <unbound element of class Inner> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .n = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi: Inner) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: Inner = name_ref oi, %oi
+// CHECK:STDOUT:   %n.ref: <unbound element of class Inner> = name_ref n, @Inner.%.loc9 [template = @Inner.%.loc9]
 // CHECK:STDOUT:   %.loc14_12.1: ref i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc14_12.2: i32 = bind_value %.loc14_12.1
 // CHECK:STDOUT:   return %.loc14_12.2
@@ -63,7 +80,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o: Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %o.ref: Outer = name_ref o, %o
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, constants.%Inner [template = constants.%Inner]
+// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref Inner = var i
 // CHECK:STDOUT:   %i: ref Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return

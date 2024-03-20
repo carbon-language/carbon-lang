@@ -46,39 +46,46 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.B1 = %B1.decl, .B2 = %B2.decl, .C = %C.decl, .D = %D.decl} [template]
-// CHECK:STDOUT:   %B1.decl = class_decl @B1, ()
-// CHECK:STDOUT:   %B2.decl = class_decl @B2, ()
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
-// CHECK:STDOUT:   %D.decl = class_decl @D, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .B1 = %B1.decl
+// CHECK:STDOUT:     .B2 = %B2.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {}
+// CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B1.ref: type = name_ref B1, constants.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %.loc11: <unbound element of class C> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B2.ref: type = name_ref B2, constants.%B2 [template = constants.%B2]
+// CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc11
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, constants.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %.loc23: <unbound element of class D> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, constants.%B1 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc23
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }

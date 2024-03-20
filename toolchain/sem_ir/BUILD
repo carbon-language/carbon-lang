@@ -15,13 +15,27 @@ cc_library(
 )
 
 cc_library(
+    name = "block_value_store",
+    hdrs = ["block_value_store.h"],
+    deps = [
+        "//toolchain/base:value_store",
+        "//toolchain/base:yaml",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "ids",
-    hdrs = ["ids.h"],
+    hdrs = [
+        "id_kind.h",
+        "ids.h",
+    ],
     deps = [
         "//common:check",
         "//common:ostream",
         "//toolchain/base:index_base",
         "//toolchain/base:value_store",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:builtin_kind",
     ],
 )
@@ -37,7 +51,6 @@ cc_library(
     deps = [
         "//common:enum_base",
         "//toolchain/parse:node_kind",
-        "//toolchain/parse:tree",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
@@ -49,13 +62,14 @@ cc_library(
     srcs = ["inst.cpp"],
     hdrs = ["inst.h"],
     deps = [
+        ":block_value_store",
         ":builtin_kind",
+        ":ids",
         ":inst_kind",
         "//common:check",
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:index_base",
-        "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -63,22 +77,33 @@ cc_library(
 cc_library(
     name = "file",
     srcs = [
+        "constant.cpp",
         "file.cpp",
         "inst_profile.cpp",
         "inst_profile.h",
-        "value_stores.cpp",
+        "name.cpp",
     ],
     hdrs = [
+        "class.h",
+        "constant.h",
+        "copy_on_write_block.h",
         "file.h",
-        "value_stores.h",
+        "function.h",
+        "impl.h",
+        "interface.h",
+        "name.h",
+        "name_scope.h",
+        "type.h",
     ],
     deps = [
+        ":block_value_store",
         ":builtin_kind",
         ":ids",
         ":inst",
         ":inst_kind",
         ":type_info",
         "//common:check",
+        "//common:error",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",
@@ -95,6 +120,7 @@ cc_library(
         ":file",
         ":ids",
         ":inst_kind",
+        "//common:ostream",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
@@ -130,7 +156,7 @@ cc_test(
         ":inst",
         ":inst_kind",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -144,7 +170,7 @@ cc_test(
         "//testing/base:test_raw_ostream",
         "//toolchain/driver",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

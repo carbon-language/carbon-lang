@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/formatter.h"
 
+#include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -28,13 +29,16 @@ class InstNamer {
  public:
   // int32_t matches the input value size.
   // NOLINTNEXTLINE(performance-enum-size)
-  enum class ScopeIndex : int32_t {
+  enum class ScopeId : int32_t {
     None = -1,
     File = 0,
-    Constants = 1,
-    FirstFunction = 2,
+    ImportRef = 1,
+    Constants = 2,
+    FirstFunction = 3,
   };
-  static_assert(sizeof(ScopeIndex) == sizeof(FunctionId));
+  static_assert(sizeof(ScopeId) == sizeof(FunctionId));
+
+  struct NumberOfScopesTag {};
 
   InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
             const Parse::Tree& parse_tree, const File& sem_ir)
@@ -43,19 +47,23 @@ class InstNamer {
         sem_ir_(sem_ir) {
     insts.resize(sem_ir.insts().size());
     labels.resize(sem_ir.inst_blocks().size());
-    scopes.resize(static_cast<int32_t>(ScopeIndex::FirstFunction) +
-                  sem_ir.functions().size() + sem_ir.classes().size() +
-                  sem_ir.interfaces().size());
+    scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
 
     // Build the constants scope.
-    GetScopeInfo(ScopeIndex::Constants).name =
+    GetScopeInfo(ScopeId::Constants).name =
         globals.AddNameUnchecked("constants");
-    CollectNamesInBlock(ScopeIndex::Constants,
-                        sem_ir.constants().GetAsVector());
+    CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().GetAsVector());
 
     // Build the file scope.
-    GetScopeInfo(ScopeIndex::File).name = globals.AddNameUnchecked("file");
-    CollectNamesInBlock(ScopeIndex::File, sem_ir.top_inst_block_id());
+    GetScopeInfo(ScopeId::File).name = globals.AddNameUnchecked("file");
+    CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
+
+    // Build the imports scope, used only by import-related instructions without
+    // a block.
+    // TODO: Consider other approaches for ImportRef constant formatting, as the
+    // actual source of these remains unclear even though they're referenced in
+    // constants.
+    GetScopeInfo(ScopeId::ImportRef).name = globals.AddNameUnchecked("imports");
 
     // Build each function scope.
     for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -70,9 +78,9 @@ class InstNamer {
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       if (fn.return_slot_id.is_valid()) {
         insts[fn.return_slot_id.index] = {
-            fn_scope, GetScopeInfo(fn_scope).insts.AllocateName(
-                          *this, sem_ir.insts().GetParseNode(fn.return_slot_id),
-                          "return")};
+            fn_scope,
+            GetScopeInfo(fn_scope).insts.AllocateName(
+                *this, sem_ir.insts().GetNodeId(fn.return_slot_id), "return")};
       }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -89,8 +97,7 @@ class InstNamer {
     for (auto [i, class_info] : llvm::enumerate(sem_ir.classes().array_ref())) {
       auto class_id = ClassId(i);
       auto class_scope = GetScopeFor(class_id);
-      // TODO: Provide a location for the class for use as a
-      // disambiguator.
+      // TODO: Provide a location for the class for use as a disambiguator.
       auto class_loc = Parse::NodeId::Invalid;
       GetScopeInfo(class_scope).name = globals.AllocateName(
           *this, class_loc,
@@ -104,8 +111,7 @@ class InstNamer {
          llvm::enumerate(sem_ir.interfaces().array_ref())) {
       auto interface_id = InterfaceId(i);
       auto interface_scope = GetScopeFor(interface_id);
-      // TODO: Provide a location for the interface for use as a
-      // disambiguator.
+      // TODO: Provide a location for the interface for use as a disambiguator.
       auto interface_loc = Parse::NodeId::Invalid;
       GetScopeInfo(interface_scope).name = globals.AllocateName(
           *this, interface_loc,
@@ -114,63 +120,66 @@ class InstNamer {
                     interface_loc);
       CollectNamesInBlock(interface_scope, interface_info.body_block_id);
     }
+
+    // Build each impl scope.
+    for (auto [i, impl_info] : llvm::enumerate(sem_ir.impls().array_ref())) {
+      auto impl_id = ImplId(i);
+      auto impl_scope = GetScopeFor(impl_id);
+      // TODO: Provide a location for the impl for use as a disambiguator.
+      auto impl_loc = Parse::NodeId::Invalid;
+      // TODO: Invent a name based on the self and constraint types.
+      GetScopeInfo(impl_scope).name =
+          globals.AllocateName(*this, impl_loc, "impl");
+      AddBlockLabel(impl_scope, impl_info.body_block_id, "impl", impl_loc);
+      CollectNamesInBlock(impl_scope, impl_info.body_block_id);
+    }
   }
 
-  // Returns the scope index corresponding to a function.
-  auto GetScopeFor(FunctionId fn_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(
-        static_cast<int32_t>(ScopeIndex::FirstFunction) + fn_id.index);
+  // Returns the scope ID corresponding to an ID of a function, class, or
+  // interface.
+  template <typename IdT>
+  auto GetScopeFor(IdT id) -> ScopeId {
+    auto index = static_cast<int32_t>(ScopeId::FirstFunction);
+
+    if constexpr (!std::same_as<FunctionId, IdT>) {
+      index += sem_ir_.functions().size();
+      if constexpr (!std::same_as<ClassId, IdT>) {
+        index += sem_ir_.classes().size();
+        if constexpr (!std::same_as<InterfaceId, IdT>) {
+          index += sem_ir_.interfaces().size();
+          if constexpr (!std::same_as<ImplId, IdT>) {
+            index += sem_ir_.impls().size();
+            static_assert(std::same_as<NumberOfScopesTag, IdT>,
+                          "Unknown ID kind for scope");
+          }
+        }
+      }
+    }
+    if constexpr (!std::same_as<NumberOfScopesTag, IdT>) {
+      index += id.index;
+    }
+    return static_cast<ScopeId>(index);
   }
 
-  // Returns the scope index corresponding to a class.
-  auto GetScopeFor(ClassId class_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(
-        static_cast<int32_t>(ScopeIndex::FirstFunction) +
-        sem_ir_.functions().size() + class_id.index);
-  }
-
-  // Returns the scope index corresponding to an interface.
-  auto GetScopeFor(InterfaceId interface_id) -> ScopeIndex {
-    return static_cast<ScopeIndex>(
-        static_cast<int32_t>(ScopeIndex::FirstFunction) +
-        sem_ir_.functions().size() + sem_ir_.classes().size() +
-        interface_id.index);
-  }
-
-  // Returns the IR name to use for a function.
-  auto GetNameFor(FunctionId fn_id) -> llvm::StringRef {
-    if (!fn_id.is_valid()) {
+  // Returns the IR name to use for a function, class, or interface.
+  template <typename IdT>
+  auto GetNameFor(IdT id) -> llvm::StringRef {
+    if (!id.is_valid()) {
       return "invalid";
     }
-    return GetScopeInfo(GetScopeFor(fn_id)).name.str();
-  }
-
-  // Returns the IR name to use for a class.
-  auto GetNameFor(ClassId class_id) -> llvm::StringRef {
-    if (!class_id.is_valid()) {
-      return "invalid";
-    }
-    return GetScopeInfo(GetScopeFor(class_id)).name.str();
-  }
-
-  // Returns the IR name to use for an interface.
-  auto GetNameFor(InterfaceId interface_id) -> llvm::StringRef {
-    if (!interface_id.is_valid()) {
-      return "invalid";
-    }
-    return GetScopeInfo(GetScopeFor(interface_id)).name.str();
+    return GetScopeInfo(GetScopeFor(id)).name.str();
   }
 
   // Returns the IR name to use for an instruction, when referenced from a given
   // scope.
-  auto GetNameFor(ScopeIndex scope_idx, InstId inst_id) -> std::string {
+  auto GetNameFor(ScopeId scope_id, InstId inst_id) -> std::string {
     if (!inst_id.is_valid()) {
       return "invalid";
     }
 
     // Check for a builtin.
-    if (inst_id.index < BuiltinKind::ValidCount) {
-      return BuiltinKind::FromInt(inst_id.index).label().str();
+    if (inst_id.is_builtin()) {
+      return inst_id.builtin_kind().label().str();
     }
 
     if (inst_id == InstId::PackageNamespace) {
@@ -184,14 +193,14 @@ class InstNamer {
       llvm::raw_string_ostream(str) << "<unexpected instref " << inst_id << ">";
       return str;
     }
-    if (inst_scope == scope_idx) {
+    if (inst_scope == scope_id) {
       return inst_name.str().str();
     }
     return (GetScopeInfo(inst_scope).name.str() + "." + inst_name.str()).str();
   }
 
   // Returns the IR name to use for a label, when referenced from a given scope.
-  auto GetLabelFor(ScopeIndex scope_idx, InstBlockId block_id) -> std::string {
+  auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) -> std::string {
     if (!block_id.is_valid()) {
       return "!invalid";
     }
@@ -204,7 +213,7 @@ class InstNamer {
           << "<unexpected instblockref " << block_id << ">";
       return str;
     }
-    if (label_scope == scope_idx) {
+    if (label_scope == scope_id) {
       return label_name.str().str();
     }
     return (GetScopeInfo(label_scope).name.str() + "." + label_name.str())
@@ -326,36 +335,35 @@ class InstNamer {
     Namespace labels = {.prefix = "!"};
   };
 
-  auto GetScopeInfo(ScopeIndex scope_idx) -> Scope& {
-    return scopes[static_cast<int>(scope_idx)];
+  auto GetScopeInfo(ScopeId scope_id) -> Scope& {
+    return scopes[static_cast<int>(scope_id)];
   }
 
-  auto AddBlockLabel(ScopeIndex scope_idx, InstBlockId block_id,
+  auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     Parse::NodeId parse_node = Parse::NodeId::Invalid)
-      -> void {
+                     Parse::NodeId node_id = Parse::NodeId::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (!parse_node.is_valid()) {
+    if (!node_id.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        parse_node = sem_ir_.insts().GetParseNode(block.front());
+        node_id = sem_ir_.insts().GetNodeId(block.front());
       }
     }
 
-    labels[block_id.index] = {scope_idx,
-                              GetScopeInfo(scope_idx).labels.AllocateName(
-                                  *this, parse_node, std::move(name))};
+    labels[block_id.index] = {
+        scope_id, GetScopeInfo(scope_id).labels.AllocateName(*this, node_id,
+                                                             std::move(name))};
   }
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeIndex scope_idx, Parse::NodeId parse_node,
-                     AnyBranch branch) -> void {
+  auto AddBlockLabel(ScopeId scope_id, Parse::NodeId node_id, AnyBranch branch)
+      -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(parse_node)) {
+    switch (parse_tree_.node_kind(node_id)) {
       case Parse::NodeKind::IfExprIf:
         switch (branch.kind) {
           case BranchIf::Kind:
@@ -417,18 +425,18 @@ class InstNamer {
         break;
     }
 
-    AddBlockLabel(scope_idx, branch.target_id, name.str(), parse_node);
+    AddBlockLabel(scope_id, branch.target_id, name.str(), node_id);
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx, InstBlockId block_id) -> void {
+  auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void {
     if (block_id.is_valid()) {
-      CollectNamesInBlock(scope_idx, sem_ir_.inst_blocks().Get(block_id));
+      CollectNamesInBlock(scope_id, sem_ir_.inst_blocks().Get(block_id));
     }
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx, llvm::ArrayRef<InstId> block)
+  auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
       -> void {
-    Scope& scope = GetScopeInfo(scope_idx);
+    Scope& scope = GetScopeInfo(scope_id);
 
     // Use bound names where available. Otherwise, assign a backup name.
     for (auto inst_id : block) {
@@ -439,8 +447,8 @@ class InstNamer {
       auto inst = sem_ir_.insts().Get(inst_id);
       auto add_inst_name = [&](std::string name) {
         insts[inst_id.index] = {
-            scope_idx, scope.insts.AllocateName(
-                           *this, sem_ir_.insts().GetParseNode(inst_id), name)};
+            scope_id, scope.insts.AllocateName(
+                          *this, sem_ir_.insts().GetNodeId(inst_id), name)};
       };
       auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
         add_inst_name(
@@ -448,8 +456,7 @@ class InstNamer {
       };
 
       if (auto branch = inst.TryAs<AnyBranch>()) {
-        AddBlockLabel(scope_idx, sem_ir_.insts().GetParseNode(inst_id),
-                      *branch);
+        AddBlockLabel(scope_id, sem_ir_.insts().GetNodeId(inst_id), *branch);
       }
 
       switch (inst.kind()) {
@@ -458,13 +465,14 @@ class InstNamer {
           // function declarations, which may be nested within a pattern. For
           // now, just look through `addr`, but we should find a better way to
           // visit parameters.
-          CollectNamesInBlock(scope_idx, inst.As<AddrPattern>().inner_id);
+          CollectNamesInBlock(scope_id, inst.As<AddrPattern>().inner_id);
           break;
         }
-        case SpliceBlock::Kind: {
-          CollectNamesInBlock(scope_idx, inst.As<SpliceBlock>().block_id);
-          break;
+        case AssociatedConstantDecl::Kind: {
+          add_inst_name_id(inst.As<AssociatedConstantDecl>().name_id);
+          continue;
         }
+        case BindAlias::Kind:
         case BindName::Kind:
         case BindSymbolicName::Kind: {
           add_inst_name_id(sem_ir_.bind_names()
@@ -472,16 +480,11 @@ class InstNamer {
                                .name_id);
           continue;
         }
-        case FunctionDecl::Kind: {
-          add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDecl>().function_id)
-                               .name_id);
-          continue;
-        }
         case ClassDecl::Kind: {
           add_inst_name_id(
               sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
               ".decl");
+          CollectNamesInBlock(scope_id, inst.As<ClassDecl>().decl_block_id);
           continue;
         }
         case ClassType::Kind: {
@@ -489,8 +492,27 @@ class InstNamer {
               sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
           continue;
         }
-        case Import::Kind: {
-          add_inst_name("import");
+        case FunctionDecl::Kind: {
+          add_inst_name_id(sem_ir_.functions()
+                               .Get(inst.As<FunctionDecl>().function_id)
+                               .name_id);
+          CollectNamesInBlock(scope_id, inst.As<FunctionDecl>().decl_block_id);
+          continue;
+        }
+        case ImplDecl::Kind: {
+          CollectNamesInBlock(scope_id, inst.As<ImplDecl>().decl_block_id);
+          break;
+        }
+        case ImportRefUnused::Kind:
+        case ImportRefUsed::Kind: {
+          add_inst_name("import_ref");
+          // When building import refs, we frequently add instructions without a
+          // block. Constants that refer to them need to be separately named.
+          auto const_id = sem_ir_.constant_values().Get(inst_id);
+          if (const_id.is_valid() && const_id.is_template() &&
+              !insts[const_id.inst_id().index].second) {
+            CollectNamesInBlock(ScopeId::ImportRef, const_id.inst_id());
+          }
           continue;
         }
         case InterfaceDecl::Kind: {
@@ -498,19 +520,27 @@ class InstNamer {
                                .Get(inst.As<InterfaceDecl>().interface_id)
                                .name_id,
                            ".decl");
-          continue;
-        }
-        case LazyImportRef::Kind: {
-          add_inst_name("lazy_import_ref");
+          CollectNamesInBlock(scope_id, inst.As<InterfaceDecl>().decl_block_id);
           continue;
         }
         case NameRef::Kind: {
           add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
           continue;
         }
+        // The namespace is specified here due to the name conflict.
+        case SemIR::Namespace::Kind: {
+          add_inst_name_id(sem_ir_.name_scopes()
+                               .Get(inst.As<SemIR::Namespace>().name_scope_id)
+                               .name_id);
+          continue;
+        }
         case Param::Kind: {
           add_inst_name_id(inst.As<Param>().name_id);
           continue;
+        }
+        case SpliceBlock::Kind: {
+          CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
+          break;
         }
         case VarStorage::Kind: {
           add_inst_name_id(inst.As<VarStorage>().name_id, ".var");
@@ -533,8 +563,8 @@ class InstNamer {
   const File& sem_ir_;
 
   Namespace globals = {.prefix = "@"};
-  std::vector<std::pair<ScopeIndex, Namespace::Name>> insts;
-  std::vector<std::pair<ScopeIndex, Namespace::Name>> labels;
+  std::vector<std::pair<ScopeId, Namespace::Name>> insts;
+  std::vector<std::pair<ScopeId, Namespace::Name>> labels;
   std::vector<Scope> scopes;
 };
 }  // namespace
@@ -542,6 +572,8 @@ class InstNamer {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
+  enum class AddSpace : bool { Before, After };
+
   explicit Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
                      const Parse::Tree& parse_tree, const File& sem_ir,
                      llvm::raw_ostream& out)
@@ -559,18 +591,26 @@ class Formatter {
 
     FormatConstants();
 
-    out_ << "file {\n";
+    out_ << "file ";
+    OpenBrace();
+
     // TODO: Handle the case where there are multiple top-level instruction
     // blocks. For example, there may be branching in the initializer of a
     // global or a type expression.
     if (auto block_id = sem_ir_.top_inst_block_id(); block_id.is_valid()) {
-      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeIndex::File);
+      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
       FormatCodeBlock(block_id);
     }
-    out_ << "}\n";
+
+    CloseBrace();
+    out_ << '\n';
 
     for (int i : llvm::seq(sem_ir_.interfaces().size())) {
       FormatInterface(InterfaceId(i));
+    }
+
+    for (int i : llvm::seq(sem_ir_.impls().size())) {
+      FormatImpl(ImplId(i));
     }
 
     for (int i : llvm::seq(sem_ir_.classes().size())) {
@@ -585,16 +625,60 @@ class Formatter {
     out_ << "\n";
   }
 
+  // Begins a braced block. Writes an open brace, and prepares to insert a
+  // newline after it if the braced block is non-empty.
+  auto OpenBrace() -> void {
+    // Put the constant value of an instruction before any braced block, rather
+    // than at the end.
+    FormatPendingConstantValue(AddSpace::After);
+
+    out_ << '{';
+    indent_ += 2;
+    after_open_brace_ = true;
+  }
+
+  // Ends a braced block by writing a close brace.
+  auto CloseBrace() -> void {
+    indent_ -= 2;
+    if (!after_open_brace_) {
+      Indent();
+    }
+    out_ << '}';
+    after_open_brace_ = false;
+  }
+
+  // Adds beginning-of-line indentation. If we're at the start of a braced
+  // block, first starts a new line.
+  auto Indent(int offset = 0) -> void {
+    if (after_open_brace_) {
+      out_ << '\n';
+      after_open_brace_ = false;
+    }
+    out_.indent(indent_ + offset);
+  }
+
+  // Adds beginning-of-label indentation. This is one level less than normal
+  // indentation. Labels also get a preceding blank line unless they're at the
+  // start of a block.
+  auto IndentLabel() -> void {
+    CARBON_CHECK(indent_ >= 2);
+    if (!after_open_brace_) {
+      out_ << '\n';
+    }
+    Indent(-2);
+  }
+
   auto FormatConstants() -> void {
     if (!sem_ir_.constants().size()) {
       return;
     }
 
-    llvm::SaveAndRestore constants_scope(scope_,
-                                         InstNamer::ScopeIndex::Constants);
-    out_ << "constants {\n";
+    llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
+    out_ << "constants ";
+    OpenBrace();
     FormatCodeBlock(sem_ir_.constants().GetAsVector());
-    out_ << "}\n\n";
+    CloseBrace();
+    out_ << "\n\n";
   }
 
   auto FormatClass(ClassId id) -> void {
@@ -606,11 +690,12 @@ class Formatter {
     llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (class_info.scope_id.is_valid()) {
-      out_ << " {\n";
+      out_ << ' ';
+      OpenBrace();
       FormatCodeBlock(class_info.body_block_id);
-      out_ << "\n!members:";
-      FormatNameScope(class_info.scope_id, "", "\n  ");
-      out_ << "\n}\n";
+      FormatNameScope(class_info.scope_id, "!members:\n");
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -625,11 +710,59 @@ class Formatter {
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
 
     if (interface_info.scope_id.is_valid()) {
-      out_ << " {\n";
+      out_ << ' ';
+      OpenBrace();
       FormatCodeBlock(interface_info.body_block_id);
-      out_ << "\n!members:";
-      FormatNameScope(interface_info.scope_id, "", "\n  ");
-      out_ << "\n}\n";
+
+      // Always include the !members label because we always list the witness in
+      // this section.
+      IndentLabel();
+      out_ << "!members:\n";
+      FormatNameScope(interface_info.scope_id);
+
+      Indent();
+      out_ << "witness = ";
+      FormatArg(interface_info.associated_entities_id);
+      out_ << "\n";
+
+      CloseBrace();
+      out_ << '\n';
+    } else {
+      out_ << ";\n";
+    }
+  }
+
+  auto FormatImpl(ImplId id) -> void {
+    const Impl& impl_info = sem_ir_.impls().Get(id);
+
+    out_ << "\nimpl ";
+    FormatImplName(id);
+    out_ << ": ";
+    // TODO: Include the deduced parameter list if present.
+    FormatType(impl_info.self_id);
+    out_ << " as ";
+    FormatType(impl_info.constraint_id);
+
+    llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
+
+    if (impl_info.scope_id.is_valid()) {
+      out_ << ' ';
+      OpenBrace();
+      FormatCodeBlock(impl_info.body_block_id);
+
+      // Print the !members label even if the name scope is empty because we
+      // always list the witness in this section.
+      IndentLabel();
+      out_ << "!members:\n";
+      FormatNameScope(impl_info.scope_id);
+
+      Indent();
+      out_ << "witness = ";
+      FormatArg(impl_info.witness_id);
+      out_ << "\n";
+
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -663,18 +796,19 @@ class Formatter {
     }
 
     if (!fn.body_block_ids.empty()) {
-      out_ << " {";
+      out_ << ' ';
+      OpenBrace();
 
       for (auto block_id : fn.body_block_ids) {
-        out_ << "\n";
-
+        IndentLabel();
         FormatLabel(block_id);
         out_ << ":\n";
 
         FormatCodeBlock(block_id);
       }
 
-      out_ << "}\n";
+      CloseBrace();
+      out_ << '\n';
     } else {
       out_ << ";\n";
     }
@@ -710,9 +844,26 @@ class Formatter {
     }
   }
 
-  auto FormatNameScope(NameScopeId id, llvm::StringRef separator,
-                       llvm::StringRef prefix) -> void {
+  auto FormatTrailingBlock(InstBlockId block_id) -> void {
+    out_ << ' ';
+    OpenBrace();
+    FormatCodeBlock(block_id);
+    CloseBrace();
+  }
+
+  auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void {
     const auto& scope = sem_ir_.name_scopes().Get(id);
+
+    if (scope.names.empty() && scope.extended_scopes.empty() &&
+        !scope.has_error) {
+      // Name scope is empty.
+      return;
+    }
+
+    if (!label.empty()) {
+      IndentLabel();
+      out_ << label;
+    }
 
     // Name scopes aren't kept in any particular order. Sort the entries before
     // we print them for stability and consistency.
@@ -723,21 +874,24 @@ class Formatter {
     llvm::sort(entries,
                [](auto a, auto b) { return a.first.index < b.first.index; });
 
-    llvm::ListSeparator sep(separator);
     for (auto [inst_id, name_id] : entries) {
-      out_ << sep << prefix << ".";
+      Indent();
+      out_ << ".";
       FormatName(name_id);
       out_ << " = ";
       FormatInstName(inst_id);
+      out_ << "\n";
     }
 
     for (auto extended_scope_id : scope.extended_scopes) {
       // TODO: Print this scope in a better way.
-      out_ << sep << prefix << "extend " << extended_scope_id;
+      Indent();
+      out_ << "extend " << extended_scope_id << "\n";
     }
 
     if (scope.has_error) {
-      out_ << sep << prefix << "has_error";
+      Indent();
+      out_ << "has_error\n";
     }
   }
 
@@ -752,8 +906,6 @@ class Formatter {
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(InstT)            \
   case InstT::Kind:                               \
@@ -763,24 +915,55 @@ class Formatter {
     }
   }
 
-  auto Indent() -> void { out_.indent(indent_); }
-
   template <typename InstT>
   auto FormatInstruction(InstId inst_id, InstT inst) -> void {
     Indent();
     FormatInstructionLHS(inst_id, inst);
     out_ << InstT::Kind.ir_name();
+    pending_constant_value_ = sem_ir_.constant_values().Get(inst_id);
+    pending_constant_value_is_self_ =
+        pending_constant_value_.inst_id() == inst_id;
     FormatInstructionRHS(inst);
-    if (auto const_id = sem_ir_.constant_values().Get(inst_id);
-        const_id.is_constant()) {
-      out_ << (const_id.is_symbolic() ? " [symbolic" : " [template");
-      if (const_id.inst_id() != inst_id) {
-        out_ << " = ";
-        FormatInstName(const_id.inst_id());
-      }
-      out_ << "]";
-    }
+    FormatPendingConstantValue(AddSpace::Before);
     out_ << "\n";
+  }
+
+  // Don't print a constant for ImportRefUnused.
+  auto FormatInstruction(InstId inst_id, ImportRefUnused inst) -> void {
+    Indent();
+    FormatInstructionLHS(inst_id, inst);
+    out_ << ImportRefUnused::Kind.ir_name();
+    FormatInstructionRHS(inst);
+    out_ << "\n";
+  }
+
+  // If there is a pending constant value attached to the current instruction,
+  // print it now and clear it out. The constant value gets printed before the
+  // first braced block argument, or at the end of the instruction if there are
+  // no such arguments.
+  auto FormatPendingConstantValue(AddSpace space_where) -> void {
+    if (pending_constant_value_ == ConstantId::NotConstant) {
+      return;
+    }
+
+    if (space_where == AddSpace::Before) {
+      out_ << ' ';
+    }
+    out_ << '[';
+    if (pending_constant_value_.is_valid()) {
+      out_ << (pending_constant_value_.is_symbolic() ? "symbolic" : "template");
+      if (!pending_constant_value_is_self_) {
+        out_ << " = ";
+        FormatInstName(pending_constant_value_.inst_id());
+      }
+    } else {
+      out_ << pending_constant_value_;
+    }
+    out_ << ']';
+    if (space_where == AddSpace::After) {
+      out_ << ' ';
+    }
+    pending_constant_value_ = ConstantId::NotConstant;
   }
 
   auto FormatInstructionLHS(InstId inst_id, Inst inst) -> void {
@@ -810,22 +993,9 @@ class Formatter {
     }
   }
 
-  // Print ClassDecl with type-like semantics even though it lacks a type_id.
-  auto FormatInstructionLHS(InstId inst_id, ClassDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
-  // Print InterfaceDecl with type-like semantics even though it lacks a
+  // Print ImportRefUnused with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstructionLHS(InstId inst_id, InterfaceDecl /*inst*/) -> void {
-    FormatInstName(inst_id);
-    out_ << " = ";
-  }
-
-  // Print LazyImportRef with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstructionLHS(InstId inst_id, LazyImportRef /*inst*/) -> void {
+  auto FormatInstructionLHS(InstId inst_id, ImportRefUnused /*inst*/) -> void {
     FormatInstName(inst_id);
     out_ << " = ";
   }
@@ -833,7 +1003,7 @@ class Formatter {
   template <typename InstT>
   auto FormatInstructionRHS(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.
-    using Info = InstLikeTypeInfo<InstT>;
+    using Info = Internal::InstLikeTypeInfo<InstT>;
     if constexpr (Info::NumArgs == 2) {
       FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
     } else if constexpr (Info::NumArgs == 1) {
@@ -843,9 +1013,27 @@ class Formatter {
     }
   }
 
+  auto FormatInstructionRHS(BindSymbolicName inst) -> void {
+    // A BindSymbolicName with no value is a purely symbolic binding, such as
+    // the `Self` in an interface. Don't print out `invalid` for the value.
+    if (inst.value_id.is_valid()) {
+      FormatArgs(inst.bind_name_id, inst.value_id);
+    } else {
+      FormatArgs(inst.bind_name_id);
+    }
+  }
+
   auto FormatInstructionRHS(BlockArg inst) -> void {
     out_ << " ";
     FormatLabel(inst.block_id);
+  }
+
+  auto FormatInstructionRHS(Namespace inst) -> void {
+    if (inst.import_id.is_valid()) {
+      FormatArgs(inst.import_id, inst.name_scope_id);
+    } else {
+      FormatArgs(inst.name_scope_id);
+    }
   }
 
   auto FormatInstruction(InstId /*inst_id*/, BranchIf inst) -> void {
@@ -933,29 +1121,41 @@ class Formatter {
     FormatReturnSlot(init.dest_id);
   }
 
-  auto FormatInstructionRHS(CrossRef inst) -> void {
-    // TODO: Figure out a way to make this meaningful. We'll need some way to
-    // name cross-reference IRs, perhaps by the instruction ID of the import?
-    out_ << " " << inst.ir_id << ", " << inst.inst_id;
+  auto FormatInstructionRHS(FunctionDecl inst) -> void {
+    FormatArgs(inst.function_id);
+    FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstructionRHS(LazyImportRef inst) -> void {
+  auto FormatInstructionRHS(ClassDecl inst) -> void {
+    FormatArgs(inst.class_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(ImplDecl inst) -> void {
+    FormatArgs(inst.impl_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(InterfaceDecl inst) -> void {
+    FormatArgs(inst.interface_id);
+    FormatTrailingBlock(inst.decl_block_id);
+  }
+
+  auto FormatInstructionRHS(ImportRefUnused inst) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
-    out_ << " " << inst.ir_id << ", " << inst.inst_id;
+    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", unused";
+  }
+
+  auto FormatInstructionRHS(ImportRefUsed inst) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    // TODO: Consider a better way to format the InstID from other IRs.
+    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", used";
   }
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
-    out_ << " {";
-    if (!sem_ir_.inst_blocks().Get(inst.block_id).empty()) {
-      out_ << "\n";
-      indent_ += 2;
-      FormatCodeBlock(inst.block_id);
-      indent_ -= 2;
-      Indent();
-    }
-    out_ << "}";
+    FormatTrailingBlock(inst.block_id);
   }
 
   // StructTypeFields are formatted as part of their StructType.
@@ -998,7 +1198,9 @@ class Formatter {
 
   auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
 
-  auto FormatArg(CrossRefIRId id) -> void { out_ << id; }
+  auto FormatArg(ImplId id) -> void { FormatImplName(id); }
+
+  auto FormatArg(ImportIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntId id) -> void {
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
@@ -1007,14 +1209,19 @@ class Formatter {
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
 
   auto FormatArg(NameScopeId id) -> void {
-    out_ << '{';
-    FormatNameScope(id, ", ", "");
-    out_ << '}';
+    OpenBrace();
+    FormatNameScope(id);
+    CloseBrace();
   }
 
   auto FormatArg(InstId id) -> void { FormatInstName(id); }
 
   auto FormatArg(InstBlockId id) -> void {
+    if (!id.is_valid()) {
+      out_ << "invalid";
+      return;
+    }
+
     out_ << '(';
     llvm::ListSeparator sep;
     for (auto inst_id : sem_ir_.inst_blocks().Get(id)) {
@@ -1081,6 +1288,8 @@ class Formatter {
     out_ << inst_namer_.GetNameFor(id);
   }
 
+  auto FormatImplName(ImplId id) -> void { out_ << inst_namer_.GetNameFor(id); }
+
   auto FormatType(TypeId id) -> void {
     if (!id.is_valid()) {
       out_ << "invalid";
@@ -1093,9 +1302,32 @@ class Formatter {
   const File& sem_ir_;
   llvm::raw_ostream& out_;
   InstNamer inst_namer_;
-  InstNamer::ScopeIndex scope_ = InstNamer::ScopeIndex::None;
+
+  // The current scope that we are formatting within. References to names in
+  // this scope will not have a `@scope.` prefix added.
+  InstNamer::ScopeId scope_ = InstNamer::ScopeId::None;
+
+  // Whether we are formatting in a terminator sequence, that is, a sequence of
+  // branches at the end of a block. The entirety of a terminator sequence is
+  // formatted on a single line, despite being multiple instructions.
   bool in_terminator_sequence_ = false;
-  int indent_ = 2;
+
+  // The indent depth to use for new instructions.
+  int indent_ = 0;
+
+  // Whether we are currently formatting immediately after an open brace. If so,
+  // a newline will be inserted before the next line indent.
+  bool after_open_brace_ = false;
+
+  // The constant value of the current instruction, if it has one that has not
+  // yet been printed. The value `NotConstant` is used as a sentinel to indicate
+  // there is nothing to print.
+  ConstantId pending_constant_value_ = ConstantId::NotConstant;
+
+  // Whether `pending_constant_value_`'s instruction is the same as the
+  // instruction currently being printed. If true, only the phase of the
+  // constant is printed, and the value is omitted.
+  bool pending_constant_value_is_self_ = false;
 };
 
 auto FormatFile(const Lex::TokenizedBuffer& tokenized_buffer,

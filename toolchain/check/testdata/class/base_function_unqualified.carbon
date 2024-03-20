@@ -32,26 +32,31 @@ fn Derived.H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Base = %Base.decl, .Derived = %Derived.decl} [template]
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Derived.decl = class_decl @Derived, ()
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, constants.%Base [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Derived> = base_decl Base, element0 [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .H = %H

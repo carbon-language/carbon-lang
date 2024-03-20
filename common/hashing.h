@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_HASHING_H_
 #define CARBON_COMMON_HASHING_H_
 
+#include <concepts>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -16,7 +17,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/MathExtras.h"
 
 #ifdef __ARM_ACLE
 #include <arm_acle.h>
@@ -240,8 +240,8 @@ class Hasher {
   // This can be directly used for simple users combining some aggregation of
   // objects. However, when possible, prefer the variadic version below for
   // aggregating several primitive types into a hash.
-  template <typename T, typename = std::enable_if_t<
-                            std::has_unique_object_representations_v<T>>>
+  template <typename T>
+    requires std::has_unique_object_representations_v<T>
   auto Hash(const T& value) -> void;
 
   // Incorporates a variable number of objects into the `hasher`s state in a
@@ -257,9 +257,8 @@ class Hasher {
   // aggregations of data in this way is rarely results in effectively
   // high-performance hash table data structures and so should generally be
   // avoided.
-  template <typename... Ts,
-            typename = std::enable_if_t<
-                (... && std::has_unique_object_representations_v<Ts>)>>
+  template <typename... Ts>
+    requires(... && std::has_unique_object_representations_v<Ts>)
   auto Hash(const Ts&... value) -> void;
 
   // Simpler and more primitive functions to incorporate state represented in
@@ -312,9 +311,8 @@ class Hasher {
   // Reads the underlying object representation of a type into a 64-bit integer
   // efficiently. Only supports types with unique object representation and at
   // most 8-bytes large. This is typically used to read primitive types.
-  template <typename T,
-            typename = std::enable_if_t<
-                std::has_unique_object_representations_v<T> && sizeof(T) <= 8>>
+  template <typename T>
+    requires std::has_unique_object_representations_v<T> && (sizeof(T) <= 8)
   static auto ReadSmall(const T& value) -> uint64_t;
 
   // The core of the hash algorithm is this mix function. The specific
@@ -377,7 +375,7 @@ class Hasher {
   // which will generate 8 64-bit values and one more digit. The `bc` command's
   // decimal based scaling means that without getting at least some extra hex
   // digits rendered there will be rounding that we don't want so the script
-  // below goes on to produce one more hex digit ensuring the the 8 initializers
+  // below goes on to produce one more hex digit ensuring the 8 initializers
   // aren't rounded in any way. Using a higher scale won't cause the 8
   // initializers here to change further.
   //
@@ -430,7 +428,10 @@ class Hasher {
 // A dedicated namespace for `CarbonHashValue` overloads that are not found by
 // ADL with their associated types. For example, primitive type overloads or
 // overloads for types in LLVM's libraries.
-namespace HashDispatch {
+//
+// Note that these are internal implementation details and **not** part of the
+// public API. They should not be used directly by client code.
+namespace InternalHashDispatch {
 
 inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
     -> HashCode {
@@ -483,31 +484,30 @@ template <typename T>
 inline auto MapNullPtrToVoidPtr(const T& value) -> const T& {
   // This overload should never be selected for `std::nullptr_t`, so
   // static_assert to get some better compiler error messages.
-  static_assert(!std::is_same_v<T, std::nullptr_t>);
+  static_assert(!std::same_as<T, std::nullptr_t>);
   return value;
 }
 inline auto MapNullPtrToVoidPtr(std::nullptr_t /*value*/) -> const void* {
   return nullptr;
 }
 
-// Predicate to be used in conjunction with a `nullptr` mapping routine like the
-// above.
+// Implementation detail predicate to be used in conjunction with a `nullptr`
+// mapping routine like the above.
 template <typename T>
-constexpr bool NullPtrOrHasUniqueObjectRepresentations =
-    std::is_same_v<T, std::nullptr_t> ||
+concept NullPtrOrHasUniqueObjectRepresentations =
+    std::same_as<T, std::nullptr_t> ||
     std::has_unique_object_representations_v<T>;
 
-template <typename T, typename = std::enable_if_t<
-                          NullPtrOrHasUniqueObjectRepresentations<T>>>
+template <typename T>
+  requires NullPtrOrHasUniqueObjectRepresentations<T>
 inline auto CarbonHashValue(const T& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
   hasher.Hash(MapNullPtrToVoidPtr(value));
   return static_cast<HashCode>(hasher);
 }
 
-template <typename... Ts,
-          typename = std::enable_if_t<
-              (... && NullPtrOrHasUniqueObjectRepresentations<Ts>)>>
+template <typename... Ts>
+  requires(... && NullPtrOrHasUniqueObjectRepresentations<Ts>)
 inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
@@ -517,18 +517,17 @@ inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-template <typename T, typename U,
-          typename = std::enable_if_t<
-              NullPtrOrHasUniqueObjectRepresentations<T> &&
-              NullPtrOrHasUniqueObjectRepresentations<U> &&
-              sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t)>>
+template <typename T, typename U>
+  requires NullPtrOrHasUniqueObjectRepresentations<T> &&
+           NullPtrOrHasUniqueObjectRepresentations<U> &&
+           (sizeof(T) <= sizeof(uint64_t) && sizeof(U) <= sizeof(uint64_t))
 inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
     -> HashCode {
   return CarbonHashValue(std::tuple(value.first, value.second), seed);
 }
 
-template <typename T, typename = std::enable_if_t<
-                          std::has_unique_object_representations_v<T>>>
+template <typename T>
+  requires std::has_unique_object_representations_v<T>
 inline auto CarbonHashValue(llvm::ArrayRef<T> objs, uint64_t seed) -> HashCode {
   return CarbonHashValue(
       llvm::ArrayRef(reinterpret_cast<const std::byte*>(objs.data()),
@@ -543,11 +542,11 @@ inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode {
   return CarbonHashValue(value, seed);
 }
 
-}  // namespace HashDispatch
+}  // namespace InternalHashDispatch
 
 template <typename T>
 inline auto HashValue(const T& value, uint64_t seed) -> HashCode {
-  return HashDispatch::DispatchImpl(value, seed);
+  return InternalHashDispatch::DispatchImpl(value, seed);
 }
 
 template <typename T>
@@ -684,7 +683,8 @@ inline auto Hasher::HashDense(uint64_t data0, uint64_t data1) -> void {
       Mix(data0 ^ StaticRandomData[1], data1 ^ StaticRandomData[3] ^ buffer);
 }
 
-template <typename T, typename /*enable_if*/>
+template <typename T>
+  requires std::has_unique_object_representations_v<T> && (sizeof(T) <= 8)
 inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
   const auto* storage = reinterpret_cast<const std::byte*>(&value);
   if constexpr (sizeof(T) == 1) {
@@ -707,7 +707,8 @@ inline auto Hasher::ReadSmall(const T& value) -> uint64_t {
   }
 }
 
-template <typename T, typename /*enable_if*/>
+template <typename T>
+  requires std::has_unique_object_representations_v<T>
 inline auto Hasher::Hash(const T& value) -> void {
   if constexpr (sizeof(T) <= 8) {
     // For types size 8-bytes and smaller directly being hashed (as opposed to
@@ -749,7 +750,8 @@ inline auto Hasher::Hash(const T& value) -> void {
   HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)));
 }
 
-template <typename... Ts, typename /*enable_if*/>
+template <typename... Ts>
+  requires(... && std::has_unique_object_representations_v<Ts>)
 inline auto Hasher::Hash(const Ts&... value) -> void {
   if constexpr (sizeof...(Ts) == 0) {
     buffer ^= StaticRandomData[0];

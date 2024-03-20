@@ -13,20 +13,20 @@ namespace Carbon {
 namespace {
 struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
   auto GetLocation(llvm::StringRef filename) -> DiagnosticLocation override {
-    return {.file_name = filename};
+    return {.filename = filename};
   }
 };
 }  // namespace
 
-auto SourceBuffer::CreateFromStdin(DiagnosticConsumer& consumer)
+auto SourceBuffer::MakeFromStdin(DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
-  return CreateFromMemoryBuffer(llvm::MemoryBuffer::getSTDIN(), "<stdin>",
-                                /*is_regular_file=*/false, consumer);
+  return MakeFromMemoryBuffer(llvm::MemoryBuffer::getSTDIN(), "<stdin>",
+                              /*is_regular_file=*/false, consumer);
 }
 
-auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
-                                  llvm::StringRef filename,
-                                  DiagnosticConsumer& consumer)
+auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
+                                llvm::StringRef filename,
+                                DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
   FilenameTranslator translator;
   DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
@@ -54,12 +54,12 @@ auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
   bool is_regular_file = status->isRegularFile();
   int64_t size = is_regular_file ? status->getSize() : -1;
 
-  return CreateFromMemoryBuffer(
+  return MakeFromMemoryBuffer(
       (*file)->getBuffer(filename, size, /*RequiresNullTerminator=*/false),
       filename, is_regular_file, consumer);
 }
 
-auto SourceBuffer::CreateFromMemoryBuffer(
+auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
     DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {

@@ -60,7 +60,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
       -> Definition<TypedNodeId>;
 
   using EnumBase::AsInt;
-  using EnumBase::Create;
+  using EnumBase::Make;
 
   // Returns the name to use for this instruction kind in Semantics IR.
   auto ir_name() const -> llvm::StringLiteral;

@@ -22,5 +22,5 @@ cc_library(
     hdrs = ["src/libfuzzer/libfuzzer_macro.h"],
     strip_include_prefix = "src",
     visibility = ["//visibility:public"],
-    deps = ["@com_google_protobuf//:protobuf"],
+    deps = ["@protobuf"],
 )

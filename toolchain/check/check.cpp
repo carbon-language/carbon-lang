@@ -15,14 +15,13 @@
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id parse_node) -> bool;
+  auto Handle##Name(Context& context, Parse::Name##Id node_id) -> bool;
 #include "toolchain/parse/node_kind.def"
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
@@ -45,22 +44,49 @@ class SemIRLocationTranslator
     auto cursor_inst_id = loc.inst_id;
     while (true) {
       // If the parse node is valid, use it for the location.
-      if (auto parse_node = cursor_ir->insts().GetParseNode(cursor_inst_id);
-          parse_node.is_valid()) {
-        return GetLocationInFile(cursor_ir, parse_node);
+      if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
+          node_id.is_valid()) {
+        return GetLocationInFile(cursor_ir, node_id);
       }
 
       // If the parse node was invalid, recurse through import references when
       // possible.
-      auto import_ref =
-          cursor_ir->insts().TryGetAs<SemIR::LazyImportRef>(cursor_inst_id);
-      if (!import_ref) {
-        // Invalid parse node but not an import; just nothing to point at.
-        return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
+              cursor_inst_id)) {
+        cursor_ir = cursor_ir->import_irs().Get(import_ref->ir_id);
+        cursor_inst_id = import_ref->inst_id;
+        continue;
       }
 
-      cursor_ir = cursor_ir->cross_ref_irs().Get(import_ref->ir_id);
-      cursor_inst_id = import_ref->inst_id;
+      // If a namespace has an instruction for an import, switch to looking at
+      // it.
+      if (auto ns =
+              cursor_ir->insts().TryGetAs<SemIR::Namespace>(cursor_inst_id)) {
+        if (ns->import_id.is_valid()) {
+          cursor_inst_id = ns->import_id;
+          continue;
+        }
+      }
+
+      // Invalid parse node but not an import; just nothing to point at.
+      return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+    }
+  }
+
+  auto TranslateArg(DiagnosticTypeTranslation translation, llvm::Any arg) const
+      -> llvm::Any override {
+    switch (translation) {
+      case DiagnosticTypeTranslation::NameId: {
+        auto name_id = llvm::any_cast<SemIR::NameId>(arg);
+        return sem_ir_->names().GetFormatted(name_id).str();
+      }
+      case DiagnosticTypeTranslation::TypeId: {
+        auto type_id = llvm::any_cast<SemIR::TypeId>(arg);
+        return sem_ir_->StringifyType(type_id);
+      }
+      default:
+        return DiagnosticLocationTranslator<SemIRLocation>::TranslateArg(
+            translation, arg);
     }
   }
 
@@ -88,12 +114,13 @@ struct UnitInfo {
   struct PackageImports {
     // Use the constructor so that the SmallVector is only constructed
     // as-needed.
-    explicit PackageImports(Parse::NodeId node) : node(node) {}
+    explicit PackageImports(Parse::ImportDirectiveId node_id)
+        : node_id(node_id) {}
 
     // The first `import` directive in the file, which declared the package's
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
-    Parse::NodeId node;
+    Parse::ImportDirectiveId node_id;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
@@ -139,13 +166,14 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
   auto package_scope_id = context.name_scopes().Add(
-      SemIR::InstId::PackageNamespace, SemIR::NameScopeId::Invalid);
+      SemIR::InstId::PackageNamespace, SemIR::NameId::PackageNamespace,
+      SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id = context.AddInst(
       {Parse::NodeId::Invalid,
-       SemIR::Namespace{namespace_type_id, SemIR::NameId::PackageNamespace,
-                        SemIR::NameScopeId::Package}});
+       SemIR::Namespace{namespace_type_id, SemIR::NameScopeId::Package,
+                        SemIR::InstId::Invalid}});
   CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
   // Add imports from the current package.
@@ -154,11 +182,11 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     bool error_in_import = self_import->second.has_load_error;
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-      Import(context, namespace_type_id, self_import->second.node,
-             import_sem_ir);
-      error_in_import = error_in_import || import_sem_ir.name_scopes()
-                                               .Get(SemIR::NameScopeId::Package)
-                                               .has_error;
+      ImportLibraryFromCurrentPackage(context, namespace_type_id,
+                                      import_sem_ir);
+      error_in_import |= import_sem_ir.name_scopes()
+                             .Get(SemIR::NameScopeId::Package)
+                             .has_error;
     }
 
     // If an import of the current package caused an error for the imported
@@ -166,12 +194,13 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     if (error_in_import) {
       context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
     }
-    context.PushScope(package_inst_id, SemIR::NameScopeId::Package,
-                      error_in_import);
+    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package,
+                               error_in_import);
   } else {
     // Push the scope; there are no names to add.
-    context.PushScope(package_inst_id, SemIR::NameScopeId::Package);
+    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
   }
+  CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
     if (!package_id.is_valid()) {
@@ -183,24 +212,27 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     for (auto import : package_imports.imports) {
       sem_irs.push_back(&**import.unit_info->unit->sem_ir);
     }
-    context.AddPackageImports(package_imports.node, package_id, sem_irs,
-                              package_imports.has_load_error);
+    ImportLibrariesFromOtherPackage(context, namespace_type_id,
+                                    package_imports.node_id, package_id,
+                                    sem_irs, package_imports.has_load_error);
   }
+
+  context.import_ir_constant_values().resize(
+      context.import_irs().size(),
+      SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
-static auto ProcessParseNodes(Context& context,
-                              ErrorTrackingDiagnosticConsumer& err_tracker)
+static auto ProcessNodeIds(Context& context,
+                           ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
-  for (auto parse_node : context.parse_tree().postorder()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (auto parse_kind = context.parse_tree().node_kind(parse_node)) {
+  for (auto node_id : context.parse_tree().postorder()) {
+    switch (auto parse_kind = context.parse_tree().node_kind(node_id)) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
-    if (!Check::Handle##Name(context, Parse::Name##Id(parse_node))) {        \
+    if (!Check::Handle##Name(context, Parse::Name##Id(node_id))) {           \
       CARBON_CHECK(err_tracker.seen_error())                                 \
           << "Handle" #Name " returned false without printing a diagnostic"; \
       return false;                                                          \
@@ -240,15 +272,16 @@ static auto CheckParseTree(
 
   InitPackageScopeAndImports(context, unit_info);
 
-  if (!ProcessParseNodes(context, unit_info.err_tracker)) {
+  if (!ProcessNodeIds(context, unit_info.err_tracker)) {
     context.sem_ir().set_has_errors(true);
     return;
   }
 
   // Pop information for the file-level scope.
   sem_ir.set_top_inst_block_id(context.inst_block_stack().Pop());
-  context.PopScope();
+  context.scope_stack().Pop();
   context.FinalizeExports();
+  context.FinalizeGlobalInit();
 
   context.VerifyOnFinish();
 
@@ -308,12 +341,12 @@ static auto TrackImport(
   if (explicit_import_map) {
     // Diagnose redundant imports.
     if (auto [insert_it, success] =
-            explicit_import_map->insert({import_key, import.node});
+            explicit_import_map->insert({import_key, import.node_id});
         !success) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "Library imported more than once.");
       CARBON_DIAGNOSTIC(FirstImported, Note, "First import here.");
-      unit_info.emitter.Build(import.node, RepeatedImport)
+      unit_info.emitter.Build(import.node_id, RepeatedImport)
           .Note(insert_it->second, FirstImported)
           .Emit();
       return;
@@ -347,7 +380,7 @@ static auto TrackImport(
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
       bool is_impl =
           !packaging || packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
-      unit_info.emitter.Emit(import.node,
+      unit_info.emitter.Emit(import.node_id,
                              is_impl ? ExplicitImportApi : ImportSelf);
       return;
     }
@@ -358,7 +391,7 @@ static auto TrackImport(
         is_import_default_library) {
       CARBON_DIAGNOSTIC(ImportMainDefaultLibrary, Error,
                         "Cannot import `Main//default`.");
-      unit_info.emitter.Emit(import.node, ImportMainDefaultLibrary);
+      unit_info.emitter.Emit(import.node_id, ImportMainDefaultLibrary);
 
       return;
     }
@@ -370,7 +403,7 @@ static auto TrackImport(
         CARBON_DIAGNOSTIC(
             ImportCurrentPackageByName, Error,
             "Imports from the current package must omit the package name.");
-        unit_info.emitter.Emit(import.node, ImportCurrentPackageByName);
+        unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
         return;
       }
 
@@ -378,7 +411,7 @@ static auto TrackImport(
       if (is_explicit_main) {
         CARBON_DIAGNOSTIC(ImportMainPackage, Error,
                           "Cannot import `Main` from other packages.");
-        unit_info.emitter.Emit(import.node, ImportMainPackage);
+        unit_info.emitter.Emit(import.node_id, ImportMainPackage);
         return;
       }
     }
@@ -390,9 +423,9 @@ static auto TrackImport(
   }
 
   // Get the package imports.
-  auto package_imports_it =
-      unit_info.package_imports_map.try_emplace(import.package_id, import.node)
-          .first;
+  auto package_imports_it = unit_info.package_imports_map
+                                .try_emplace(import.package_id, import.node_id)
+                                .first;
 
   if (auto api = api_map.find(import_key); api != api_map.end()) {
     // Add references between the file and imported api.
@@ -405,8 +438,9 @@ static auto TrackImport(
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "Corresponding API not found.");
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
-    unit_info.emitter.Emit(
-        import.node, explicit_import_map ? ImportNotFound : LibraryApiNotFound);
+    unit_info.emitter.Emit(import.node_id, explicit_import_map
+                                               ? ImportNotFound
+                                               : LibraryApiNotFound);
   }
 }
 
@@ -433,9 +467,9 @@ static auto BuildApiMapAndDiagnosePackaging(
                         "`Main//default` must omit `package` directive.");
       CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
                         "Use `library` directive in `Main` package libraries.");
-      unit_info.emitter.Emit(packaging->names.node, import_key.second.empty()
-                                                        ? ExplicitMainPackage
-                                                        : ExplicitMainLibrary);
+      unit_info.emitter.Emit(packaging->names.node_id,
+                             import_key.second.empty() ? ExplicitMainPackage
+                                                       : ExplicitMainLibrary);
       continue;
     }
 
@@ -455,7 +489,7 @@ static auto BuildApiMapAndDiagnosePackaging(
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "Library's API previously provided by `{0}`.",
                             std::string);
-          unit_info.emitter.Emit(packaging->names.node, DuplicateLibraryApi,
+          unit_info.emitter.Emit(packaging->names.node_id, DuplicateLibraryApi,
                                  prev_filename.str());
         } else {
           CARBON_DIAGNOSTIC(DuplicateMainApi, Error,
@@ -482,7 +516,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                           "File extension of `{0}` required for `{1}`.",
                           llvm::StringLiteral, Lex::TokenKind);
         auto diag = unit_info.emitter.Build(
-            packaging ? packaging->names.node : Parse::NodeId::Invalid,
+            packaging ? packaging->names.node_id : Parse::NodeId::Invalid,
             IncorrectExtension, want_ext,
             is_impl ? Lex::TokenKind::Impl : Lex::TokenKind::Api);
         if (is_api_with_impl_ext) {
@@ -578,7 +612,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
               CARBON_DIAGNOSTIC(ImportCycleDetected, Error,
                                 "Import cannot be used due to a cycle. Cycle "
                                 "must be fixed to import.");
-              unit_info.emitter.Emit(import_it->names.node,
+              unit_info.emitter.Emit(import_it->names.node_id,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.
               package_imports.has_load_error = true;

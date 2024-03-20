@@ -42,7 +42,7 @@ namespace Carbon::Internal {
 //
 //     // OPTIONAL: To expose the ability to create an instance from the raw
 //     // enumerator (for unusual use cases), add this:
-//     using EnumBase::Create;
+//     using EnumBase::Make;
 //
 //     // Plus, anything else you wish to include.
 //   };
@@ -141,12 +141,12 @@ class EnumBase : public Printable<DerivedT> {
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
   // protected constructor to allow derived classes to be constructed but not
-  // the base itself. This should only be used in the `Create` function below.
+  // the base itself. This should only be used in the `Make` function below.
   constexpr EnumBase() = default;
 
   // Create an instance from the raw enumerator. Mainly used internally, but may
   // be exposed for unusual use cases.
-  static constexpr auto Create(RawEnumType value) -> EnumType {
+  static constexpr auto Make(RawEnumType value) -> EnumType {
     EnumType result;
     result.value_ = value;
     return result;
@@ -161,7 +161,7 @@ class EnumBase : public Printable<DerivedT> {
   // Convert from the underlying integer type. Derived types can choose to
   // expose this as part of their API.
   static constexpr auto FromInt(UnderlyingType value) -> EnumType {
-    return Create(static_cast<RawEnumType>(value));
+    return Make(static_cast<RawEnumType>(value));
   }
 
  private:
@@ -211,7 +211,7 @@ class EnumBase : public Printable<DerivedT> {
 // constant.
 #define CARBON_ENUM_CONSTANT_DEFINITION(EnumClassName, Name) \
   constexpr EnumClassName EnumClassName::Name =              \
-      EnumClassName::Create(RawEnumType::Name);
+      EnumClassName::Make(RawEnumType::Name);
 
 // Alternatively, use this within the Carbon enum class body to declare and
 // define each named constant. Due to type completeness constraints, this will
@@ -221,7 +221,7 @@ class EnumBase : public Printable<DerivedT> {
 // `EnumBase` base class.
 #define CARBON_INLINE_ENUM_CONSTANT_DEFINITION(Name)     \
   static constexpr const typename Base::EnumType& Name = \
-      Base::Create(Base::RawEnumType::Name);
+      Base::Make(Base::RawEnumType::Name);
 
 // Use this in the `.cpp` file for an enum class to start the definition of the
 // constant names array for each enumerator. It is followed by the desired

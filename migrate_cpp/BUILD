@@ -52,7 +52,7 @@ cc_test(
     deps = [
         ":rewriter",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",
         "@llvm-project//clang:tooling",

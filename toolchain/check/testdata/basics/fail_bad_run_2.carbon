@@ -12,8 +12,13 @@ fn Run(n: i32) {}
 // CHECK:STDOUT: --- fail_bad_run_2.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run} [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {
+// CHECK:STDOUT:     %n.loc10_8.1: i32 = param n
+// CHECK:STDOUT:     @Run.%n: i32 = bind_name n, %n.loc10_8.1
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%n: i32) {

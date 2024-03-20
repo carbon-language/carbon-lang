@@ -9,7 +9,6 @@
 
 #include <forward_list>
 
-#include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
@@ -28,8 +27,8 @@ class TypedNodeTest : public ::testing::Test {
   auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
     CARBON_CHECK(fs_.addFile("test.carbon", /*ModificationTime=*/0,
                              llvm::MemoryBuffer::getMemBuffer(t)));
-    source_storage_.push_front(std::move(
-        *SourceBuffer::CreateFromFile(fs_, "test.carbon", consumer_)));
+    source_storage_.push_front(
+        std::move(*SourceBuffer::MakeFromFile(fs_, "test.carbon", consumer_)));
     return source_storage_.front();
   }
 
@@ -173,7 +172,9 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
 Optional [^:]*: begin
-NodeIdForKind error: wrong kind BindingPattern, expected VariableInitializer
+Aggregate [^:]*: begin
+NodeIdInCategory Expr error: kind BindingPattern doesn't match
+Aggregate [^:]*: error
 Optional [^:]*: missing
 NodeIdInCategory Pattern: kind BindingPattern consumed
 Optional [^:]*: begin
@@ -201,8 +202,11 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-Optional [^:]*: begin
+Optional [^:]*leDecl11InitializerE: begin
+Aggregate [^:]*: begin
+NodeIdInCategory Expr: kind MemberAccessExpr consumed
 NodeIdForKind: VariableInitializer consumed
+Aggregate [^:]*: success
 Optional [^:]*: found
 NodeIdInCategory Pattern: kind BindingPattern consumed
 Optional [^:]*: begin
@@ -217,24 +221,12 @@ Aggregate [^:]*: success
 
   ASSERT_TRUE(var->initializer.has_value());
   ErrorBuilder trace2;
-  auto initializer =
-      tree->VerifyExtractAs<VariableInitializer>(*var->initializer, &trace2);
-  ASSERT_TRUE(initializer.has_value());
+  auto value =
+      tree->VerifyExtractAs<MemberAccessExpr>(var->initializer->value, &trace2);
+  ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
-                                  R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory Expr: kind MemberAccessExpr consumed
-Aggregate [^:]*: success
-)Trace"));
-
-  ErrorBuilder trace3;
-  auto value =
-      tree->VerifyExtractAs<MemberAccessExpr>(initializer->value, &trace3);
-  ASSERT_TRUE(value.has_value());
-  Error err3 = trace3;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
-  EXPECT_THAT(err3.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
 NodeIdInCategory MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed

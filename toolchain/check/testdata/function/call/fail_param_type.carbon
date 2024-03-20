@@ -24,9 +24,15 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G, .F = %F} [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
+// CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc7_6.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {

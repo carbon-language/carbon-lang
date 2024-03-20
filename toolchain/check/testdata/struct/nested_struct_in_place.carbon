@@ -22,9 +22,16 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %.loc7_25.1: (type, type, type) = tuple_literal (i32, i32, i32)
+// CHECK:STDOUT:     %.loc7_25.2: type = converted %.loc7_25.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     @F.%return: ref (i32, i32, i32) = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);

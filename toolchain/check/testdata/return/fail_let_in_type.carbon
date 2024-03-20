@@ -30,8 +30,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:

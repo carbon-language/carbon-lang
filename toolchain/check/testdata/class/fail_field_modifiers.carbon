@@ -38,8 +38,10 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -51,6 +53,7 @@ class Class {
 // CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc12
 // CHECK:STDOUT:   .k = %.loc17
 // CHECK:STDOUT: }

@@ -5,34 +5,33 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
 auto HandleArrayExprStart(Context& /*context*/,
-                          Parse::ArrayExprStartId /*parse_node*/) -> bool {
+                          Parse::ArrayExprStartId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandleArrayExprSemi(Context& context, Parse::ArrayExprSemiId parse_node)
+auto HandleArrayExprSemi(Context& context, Parse::ArrayExprSemiId node_id)
     -> bool {
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
+auto HandleArrayExpr(Context& context, Parse::ArrayExprId node_id) -> bool {
   // TODO: Handle array type with undefined bound.
   if (context.node_stack()
-          .PopAndDiscardSoloParseNodeIf<Parse::NodeKind::ArrayExprSemi>()) {
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::ArrayExprSemi>()) {
     context.node_stack().PopAndIgnore();
-    return context.TODO(parse_node, "HandleArrayExprWithoutBounds");
+    return context.TODO(node_id, "HandleArrayExprWithoutBounds");
   }
 
   auto bound_inst_id = context.node_stack().PopExpr();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ArrayExprSemi>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ArrayExprSemi>();
   auto [element_type_node_id, element_type_inst_id] =
-      context.node_stack().PopExprWithParseNode();
+      context.node_stack().PopExprWithNodeId();
 
   // The array bound must be a constant.
   //
@@ -43,14 +42,14 @@ auto HandleArrayExpr(Context& context, Parse::ArrayExprId parse_node) -> bool {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error,
                       "Array bound is not a constant.");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
 
   context.AddInstAndPush(
-      {parse_node, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
-                                    ExprAsType(context, element_type_node_id,
-                                               element_type_inst_id)}});
+      {node_id, SemIR::ArrayType{SemIR::TypeId::TypeType, bound_inst_id,
+                                 ExprAsType(context, element_type_node_id,
+                                            element_type_inst_id)}});
   return true;
 }
 

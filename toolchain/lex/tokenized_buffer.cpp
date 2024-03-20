@@ -198,7 +198,7 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 }
 
 // Compute the printed width of a number. When numbers are printed in decimal,
-// the number of digits needed is is one more than the log-base-10 of the
+// the number of digits needed is one more than the log-base-10 of the
 // value. We handle a value of `zero` explicitly.
 //
 // This routine requires its argument to be *non-negative*.
@@ -384,7 +384,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
     }
   }
 
-  return {.file_name = buffer_->source_->filename(),
+  return {.filename = buffer_->source_->filename(),
           .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};

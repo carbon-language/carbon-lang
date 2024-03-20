@@ -5,30 +5,27 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
-auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
+auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                              bool is_generic) -> bool {
-  auto [type_node, parsed_type_id] =
-      context.node_stack().PopExprWithParseNode();
-  auto type_node_copy = type_node;
+  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto cast_type_id = ExprAsType(context, type_node, parsed_type_id);
 
   // TODO: Handle `_` bindings.
 
   // Every other kind of pattern binding has a name.
-  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   // Create the appropriate kind of binding for this pattern.
-  auto make_bind_name = [&, name_node = name_node, name_id = name_id](
-                            SemIR::TypeId type_id,
-                            SemIR::InstId value_id) -> SemIR::ParseNodeAndInst {
+  auto make_bind_name = [&](SemIR::TypeId type_id,
+                            SemIR::InstId value_id) -> SemIR::NodeIdAndInst {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(
-        {.name_id = name_id, .enclosing_scope_id = context.current_scope_id()});
+        {.name_id = name_id,
+         .enclosing_scope_id = context.scope_stack().PeekNameScopeId()});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       return {name_node,
@@ -44,15 +41,14 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
     CARBON_DIAGNOSTIC(
         SelfOutsideImplicitParamList, Error,
         "`self` can only be declared in an implicit parameter list.");
-    context.emitter().Emit(parse_node, SelfOutsideImplicitParamList);
+    context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
   // TODO: The node stack is a fragile way of getting context information.
   // Get this information from somewhere else.
-  switch (auto context_parse_node_kind =
-              context.node_stack().PeekParseNodeKind()) {
+  switch (auto context_node_kind = context.node_stack().PeekNodeKind()) {
     case Parse::NodeKind::ReturnedModifier:
     case Parse::NodeKind::VariableIntroducer: {
       if (is_generic) {
@@ -64,23 +60,22 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       auto binding_id =
           is_generic
               ? Parse::NodeId::Invalid
-              : context.parse_tree().As<Parse::BindingPatternId>(parse_node);
+              : context.parse_tree().As<Parse::BindingPatternId>(node_id);
 
       // A `var` declaration at class scope introduces a field.
       auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                           "{0} has incomplete type `{1}`.", llvm::StringLiteral,
-                          std::string);
-        return context.emitter().Build(
-            type_node_copy, IncompleteTypeInVarDecl,
-            enclosing_class_decl ? llvm::StringLiteral("Field")
-                                 : llvm::StringLiteral("Variable"),
-            context.sem_ir().StringifyType(cast_type_id));
+                          SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInVarDecl,
+                                       enclosing_class_decl
+                                           ? llvm::StringLiteral("Field")
+                                           : llvm::StringLiteral("Variable"),
+                                       cast_type_id);
       });
       if (enclosing_class_decl) {
-        CARBON_CHECK(context_parse_node_kind ==
-                     Parse::NodeKind::VariableIntroducer)
+        CARBON_CHECK(context_node_kind == Parse::NodeKind::VariableIntroducer)
             << "`returned var` at class scope";
         auto& class_info =
             context.classes().Get(enclosing_class_decl->class_id);
@@ -96,25 +91,25 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
         // Add a corresponding field to the object representation of the class.
         context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
             {binding_id, SemIR::StructTypeField{name_id, cast_type_id}}));
-        context.node_stack().Push(parse_node, field_id);
+        context.node_stack().Push(node_id, field_id);
         break;
       }
 
       SemIR::InstId value_id = SemIR::InstId::Invalid;
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
+      if (context_node_kind == Parse::NodeKind::ReturnedModifier) {
         // TODO: Should we check this for the `var` as a whole, rather than for
         // the name binding?
         value_id =
-            CheckReturnedVar(context, context.node_stack().PeekParseNode(),
+            CheckReturnedVar(context, context.node_stack().PeekNodeId(),
                              name_node, name_id, type_node, cast_type_id);
       } else {
         value_id = context.AddInst(
             {name_node, SemIR::VarStorage{cast_type_id, name_id}});
       }
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, value_id));
-      context.node_stack().Push(parse_node, bind_id);
+      context.node_stack().Push(node_id, bind_id);
 
-      if (context_parse_node_kind == Parse::NodeKind::ReturnedModifier) {
+      if (context_node_kind == Parse::NodeKind::ReturnedModifier) {
         RegisterReturnedVar(context, bind_id);
       }
       break;
@@ -129,7 +124,10 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       auto param_id =
           context.AddInst({name_node, SemIR::Param{cast_type_id, name_id}});
       auto bind_id = context.AddInst(make_bind_name(cast_type_id, param_id));
-      context.node_stack().Push(parse_node, bind_id);
+      // TODO: Bindings should come into scope immediately in other contexts
+      // too.
+      context.AddNameToLookup(name_id, bind_id);
+      context.node_stack().Push(node_id, bind_id);
       break;
     }
 
@@ -137,39 +135,38 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId parse_node,
       cast_type_id = context.AsCompleteType(cast_type_id, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                           "`let` binding has incomplete type `{0}`.",
-                          std::string);
-        return context.emitter().Build(
-            type_node_copy, IncompleteTypeInLetDecl,
-            context.sem_ir().StringifyType(cast_type_id));
+                          SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInLetDecl,
+                                       cast_type_id);
       });
       // Create the instruction, but don't add it to a block until after we've
       // formed its initializer.
       // TODO: For general pattern parsing, we'll need to create a block to hold
       // the `let` pattern before we see the initializer.
       context.node_stack().Push(
-          parse_node, context.AddPlaceholderInstInNoBlock(make_bind_name(
-                          cast_type_id, SemIR::InstId::Invalid)));
+          node_id, context.AddPlaceholderInstInNoBlock(
+                       make_bind_name(cast_type_id, SemIR::InstId::Invalid)));
       break;
 
     default:
       CARBON_FATAL() << "Found a pattern binding in unexpected context "
-                     << context_parse_node_kind;
+                     << context_node_kind;
   }
   return true;
 }
 
-auto HandleBindingPattern(Context& context, Parse::BindingPatternId parse_node)
+auto HandleBindingPattern(Context& context, Parse::BindingPatternId node_id)
     -> bool {
-  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/false);
+  return HandleAnyBindingPattern(context, node_id, /*is_generic=*/false);
 }
 
-auto HandleGenericBindingPattern(Context& context,
-                                 Parse::GenericBindingPatternId parse_node)
+auto HandleCompileTimeBindingPattern(Context& context,
+                                     Parse::CompileTimeBindingPatternId node_id)
     -> bool {
-  return HandleAnyBindingPattern(context, parse_node, /*is_generic=*/true);
+  return HandleAnyBindingPattern(context, node_id, /*is_generic=*/true);
 }
 
-auto HandleAddr(Context& context, Parse::AddrId parse_node) -> bool {
+auto HandleAddr(Context& context, Parse::AddrId node_id) -> bool {
   auto self_param_id = context.node_stack().PopPattern();
   if (auto self_param =
           context.insts().TryGetAs<SemIR::AnyBindName>(self_param_id);
@@ -179,18 +176,18 @@ auto HandleAddr(Context& context, Parse::AddrId parse_node) -> bool {
     // TODO: The type of an `addr_pattern` should probably be the non-pointer
     // type, because that's the type that the pattern matches.
     context.AddInstAndPush(
-        {parse_node, SemIR::AddrPattern{self_param->type_id, self_param_id}});
+        {node_id, SemIR::AddrPattern{self_param->type_id, self_param_id}});
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter.");
-    context.emitter().Emit(TokenOnly(parse_node), AddrOnNonSelfParam);
-    context.node_stack().Push(parse_node, self_param_id);
+    context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
+    context.node_stack().Push(node_id, self_param_id);
   }
   return true;
 }
 
-auto HandleTemplate(Context& context, Parse::TemplateId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleTemplate");
+auto HandleTemplate(Context& context, Parse::TemplateId node_id) -> bool {
+  return context.TODO(node_id, "HandleTemplate");
 }
 
 }  // namespace Carbon::Check

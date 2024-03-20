@@ -1304,9 +1304,9 @@ fn Positive(a: i64) -> auto {
 A _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
-semicolon or block. [Expressions](#expressions), [assignments](assignment.md)
-and [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations)
-are valid statements.
+semicolon or block. [Expressions](#expressions), [assignments](assignment.md),
+[`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
+valid statements.
 
 Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
@@ -3731,8 +3731,8 @@ In conclusion, there are two patterns in how Carbon diverges from C++:
 
 -   Simplify and removing things to create space for new safety features. This
     trivially requires breaking backwards compatibility.
--   Re-engineer foundations to model and enforce safety. This has complex and
-    difficulty in C++ without first simplifying the language.
+-   Re-engineer foundations to model and enforce safety. This is complex and
+    difficult in C++ without first simplifying the language.
 
 This leads to Carbon's incremental path to safety:
 

@@ -11,6 +11,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -34,7 +35,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // used.
   types_.resize(sem_ir_->types().size());
   for (auto type_id : sem_ir_->complete_types()) {
-    types_[type_id.index] = BuildType(sem_ir_->types().Get(type_id).inst_id);
+    types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
   }
 
   // Lower function declarations.
@@ -57,13 +58,23 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
   // All builtins are types, with the same empty lowered value.
-  if (inst_id.index < SemIR::BuiltinKind::ValidCount) {
+  if (inst_id.is_builtin()) {
     return GetTypeAsValue();
   }
 
   auto target = sem_ir().insts().Get(inst_id);
+  while (auto alias = target.TryAs<SemIR::BindAlias>()) {
+    inst_id = alias->value_id;
+    target = sem_ir().insts().Get(inst_id);
+  }
+
   if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
+  }
+
+  if (target.Is<SemIR::AssociatedEntity>() || target.Is<SemIR::FieldDecl>() ||
+      target.Is<SemIR::BaseDecl>()) {
+    return llvm::ConstantStruct::getAnon(llvm_context(), {});
   }
 
   if (target.type_id() == SemIR::TypeId::TypeType) {
@@ -76,6 +87,15 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
+
+  // Don't lower associated functions.
+  // TODO: We shouldn't lower any function that has generic parameters.
+  if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
+          sem_ir().name_scopes().GetInstIdIfValid(
+              function.enclosing_scope_id))) {
+    return nullptr;
+  }
+
   const bool has_return_slot = function.return_slot_id.is_valid();
   auto implicit_param_refs =
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
@@ -259,6 +279,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     case SemIR::BuiltinKind::FunctionType.AsInt():
     case SemIR::BuiltinKind::BoundMethodType.AsInt():
     case SemIR::BuiltinKind::NamespaceType.AsInt():
+    case SemIR::BuiltinKind::WitnessType.AsInt():
       // Return an empty struct as a placeholder.
       return llvm::StructType::get(*llvm_context_);
     default:
@@ -274,6 +295,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
+    case SemIR::AssociatedEntityType::Kind:
+      // No runtime operations are provided on an associated entity name, so use
+      // an empty representation.
+      return llvm::StructType::get(*llvm_context_);
     case SemIR::BindSymbolicName::Kind:
       // Treat non-monomorphized type bindings as opaque.
       return llvm::StructType::get(*llvm_context_);
@@ -285,6 +310,10 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
     case SemIR::ConstType::Kind:
       return GetType(inst.As<SemIR::ConstType>().inner_id);
+    case SemIR::InterfaceType::Kind:
+      // Return an empty struct as a placeholder.
+      // TODO: Should we model an interface as a witness table?
+      return llvm::StructType::get(*llvm_context_);
     case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {

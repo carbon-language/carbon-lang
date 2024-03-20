@@ -18,8 +18,18 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %a.loc7_6.1: bool = param a
+// CHECK:STDOUT:     @F.%a: bool = bind_name a, %a.loc7_6.1
+// CHECK:STDOUT:     %b.loc7_15.1: bool = param b
+// CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc7_15.1
+// CHECK:STDOUT:     %c.loc7_24.1: bool = param c
+// CHECK:STDOUT:     @F.%c: bool = bind_name c, %c.loc7_24.1
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {

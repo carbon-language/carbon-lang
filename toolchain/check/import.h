@@ -10,10 +10,26 @@
 
 namespace Carbon::Check {
 
-// Add imports to the root block.
-auto Import(Context& context, SemIR::TypeId namespace_type_id,
-            Parse::NodeId import_node, const SemIR::File& import_sem_ir)
-    -> void;
+// Add imports from a single library in the current package. This pulls in all
+// names; conflicts for things such as `package.a.b.c` will be flagged even
+// though they are several layers deep.
+auto ImportLibraryFromCurrentPackage(Context& context,
+                                     SemIR::TypeId namespace_type_id,
+                                     const SemIR::File& import_sem_ir) -> void;
+
+// Adds another package's imports to name lookup, with all libraries together.
+// This only adds the package name to lookup, so that `package.ImportedPackage`
+// will resolve, and will provide a name scope that can be used for further
+// qualified name lookups.
+//
+// sem_irs will all be non-null, and may be empty. has_load_error is used to
+// indicate if any library in the package failed to import correctly.
+auto ImportLibrariesFromOtherPackage(Context& context,
+                                     SemIR::TypeId namespace_type_id,
+                                     Parse::ImportDirectiveId node_id,
+                                     IdentifierId package_id,
+                                     llvm::ArrayRef<const SemIR::File*> sem_irs,
+                                     bool has_load_error) -> void;
 
 }  // namespace Carbon::Check
 

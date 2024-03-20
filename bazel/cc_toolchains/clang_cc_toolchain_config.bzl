@@ -100,7 +100,7 @@ def _impl(ctx):
         for name in [ACTION_NAMES.strip]
     ]
 
-    std_compile_flags = ["-std=c++17"]
+    std_compile_flags = ["-std=c++20"]
 
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_os != "windows":
@@ -541,14 +541,11 @@ def _impl(ctx):
         )],
     )
 
-    # With clang 14 and lower, we expect it to be built with libc++ debug
-    # support. In later LLVM versions, we expect the assertions define to work.
-    # clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of HARDENED_MODE.
-    if clang_version and clang_version <= 14:
-        libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
-    elif clang_version and clang_version <= 16:
+    if clang_version and clang_version <= 16:
         libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
     else:
+        # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
+        # HARDENED_MODE.
         libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
 
     linux_flags_feature = feature(
@@ -566,14 +563,8 @@ def _impl(ctx):
                             # Force the C++ standard library and runtime
                             # libraries to be statically linked. This works even
                             # with libc++ and libunwind despite the names,
-                            # provided libc++ is built with two CMake options:
+                            # provided libc++ is built with the CMake option:
                             # - `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`
-                            # - `-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY`
-                            # These are both required because of PR43604
-                            # (impacting at least Debian packages of libc++) and
-                            # PR46321 (impacting most other packages).
-                            # We recommend using Homebrew's LLVM install on
-                            # Linux.
                             "-static-libstdc++",
                             "-static-libgcc",
                             # Link with Clang's runtime library. This is always
@@ -586,6 +577,11 @@ def _impl(ctx):
                             "-L" + llvm_bindir + "/../lib",
                             # Link with pthread.
                             "-lpthread",
+                            # Force linking the static libc++abi archive here.
+                            # This *should* be linked automatically, but not
+                            # every release of LLVM correctly sets the CMake
+                            # flags to do so.
+                            "-l:libc++abi.a",
                         ],
                     ),
                 ]),

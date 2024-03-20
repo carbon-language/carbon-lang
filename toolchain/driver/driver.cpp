@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/driver.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -85,7 +86,7 @@ The input Carbon source file to compile.
         },
         [&](auto& arg_b) {
           arg_b.Required(true);
-          arg_b.Append(&input_file_names);
+          arg_b.Append(&input_filenames);
         });
 
     b.AddOneOfOption(
@@ -127,7 +128,7 @@ Passing `--output=-` will write the output to stdout. In that case, the flag
 object output can be forced by enabling `--force-obj-output`.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&output_file_name); });
+        [&](auto& arg_b) { arg_b.Set(&output_filename); });
 
     b.AddStringOption(
         {
@@ -261,8 +262,8 @@ Dump the generated assembly to stdout after codegen.
   std::string host = llvm::sys::getDefaultTargetTriple();
   llvm::StringRef target;
 
-  llvm::StringRef output_file_name;
-  llvm::SmallVector<llvm::StringRef> input_file_names;
+  llvm::StringRef output_filename;
+  llvm::SmallVector<llvm::StringRef> input_filenames;
 
   bool asm_output = false;
   bool force_obj_output = false;
@@ -333,13 +334,13 @@ auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 }
 
-auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
   Options options;
   CommandLine::ParseResult result = ParseArgs(args, options);
   if (result == CommandLine::ParseResult::Error) {
-    return false;
+    return {.success = false};
   } else if (result == CommandLine::ParseResult::MetaSuccess) {
-    return true;
+    return {.success = true};
   }
 
   if (options.verbose) {
@@ -394,10 +395,10 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 class Driver::CompilationUnit {
  public:
   explicit CompilationUnit(Driver* driver, const CompileOptions& options,
-                           llvm::StringRef input_file_name)
+                           llvm::StringRef input_filename)
       : driver_(driver),
         options_(options),
-        input_file_name_(input_file_name),
+        input_filename_(input_filename),
         vlog_stream_(driver_->vlog_stream_),
         stream_consumer_(driver_->error_stream_) {
     if (vlog_stream_ != nullptr || options_.stream_errors) {
@@ -409,17 +410,18 @@ class Driver::CompilationUnit {
   }
 
   // Loads source and lexes it. Returns true on success.
-  auto RunLex() -> bool {
-    LogCall("SourceBuffer::CreateFromFile", [&] {
-      if (input_file_name_ == "-") {
-        source_ = SourceBuffer::CreateFromStdin(*consumer_);
+  auto RunLex() -> void {
+    LogCall("SourceBuffer::MakeFromFile", [&] {
+      if (input_filename_ == "-") {
+        source_ = SourceBuffer::MakeFromStdin(*consumer_);
       } else {
-        source_ = SourceBuffer::CreateFromFile(driver_->fs_, input_file_name_,
-                                               *consumer_);
+        source_ = SourceBuffer::MakeFromFile(driver_->fs_, input_filename_,
+                                             *consumer_);
       }
     });
     if (!source_) {
-      return false;
+      success_ = false;
+      return;
     }
     CARBON_VLOG() << "*** SourceBuffer ***\n```\n"
                   << source_->text() << "\n```\n";
@@ -431,11 +433,13 @@ class Driver::CompilationUnit {
       driver_->output_stream_ << tokens_;
     }
     CARBON_VLOG() << "*** Lex::TokenizedBuffer ***\n" << tokens_;
-    return !tokens_->has_errors();
+    if (tokens_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Parses tokens. Returns true on success.
-  auto RunParse() -> bool {
+  auto RunParse() -> void {
     CARBON_CHECK(tokens_);
 
     LogCall("Parse::Parse", [&] {
@@ -446,7 +450,9 @@ class Driver::CompilationUnit {
       parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
     }
     CARBON_VLOG() << "*** Parse::Tree ***\n" << parse_tree_;
-    return !parse_tree_->has_errors();
+    if (parse_tree_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Returns information needed to check this unit.
@@ -460,7 +466,7 @@ class Driver::CompilationUnit {
   }
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
-  auto PostCheck() -> bool {
+  auto PostCheck() -> void {
     CARBON_CHECK(sem_ir_);
 
     // We've finished all steps that can produce diagnostics. Emit the
@@ -484,7 +490,9 @@ class Driver::CompilationUnit {
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
                         driver_->output_stream_);
     }
-    return !sem_ir_->has_errors();
+    if (sem_ir_->has_errors()) {
+      success_ = false;
+    }
   }
 
   // Lower SemIR to LLVM IR.
@@ -493,7 +501,7 @@ class Driver::CompilationUnit {
 
     LogCall("Lower::LowerToLLVM", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
-      module_ = Lower::LowerToLLVM(*llvm_context_, input_file_name_, *sem_ir_,
+      module_ = Lower::LowerToLLVM(*llvm_context_, input_filename_, *sem_ir_,
                                    vlog_stream_);
     });
     if (vlog_stream_) {
@@ -508,13 +516,28 @@ class Driver::CompilationUnit {
     }
   }
 
-  // Do codegen. Returns true on success.
-  auto RunCodeGen() -> bool {
+  auto RunCodeGen() -> void {
     CARBON_CHECK(module_);
+    LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
+  }
 
-    CARBON_VLOG() << "*** CodeGen ***\n";
+  // Flushes output.
+  auto Flush() -> void { consumer_->Flush(); }
+
+  auto PrintSharedValues() const -> void {
+    Yaml::Print(driver_->output_stream_,
+                value_stores_.OutputYaml(input_filename_));
+  }
+
+  auto input_filename() -> llvm::StringRef { return input_filename_; }
+  auto success() -> bool { return success_; }
+  auto has_source() -> bool { return source_.has_value(); }
+
+ private:
+  // Do codegen. Returns true on success.
+  auto RunCodeGenHelper() -> bool {
     std::optional<CodeGen> codegen =
-        CodeGen::Create(*module_, options_.target, driver_->error_stream_);
+        CodeGen::Make(*module_, options_.target, driver_->error_stream_);
     if (!codegen) {
       return false;
     }
@@ -523,7 +546,7 @@ class Driver::CompilationUnit {
       codegen->EmitAssembly(*vlog_stream_);
     }
 
-    if (options_.output_file_name == "-") {
+    if (options_.output_filename == "-") {
       // TODO: the output file name, forcing object output, and requesting
       // textual assembly output are all somewhat linked flags. We should add
       // some validation that they are used correctly.
@@ -537,17 +560,17 @@ class Driver::CompilationUnit {
         }
       }
     } else {
-      llvm::SmallString<256> output_file_name = options_.output_file_name;
-      if (output_file_name.empty()) {
+      llvm::SmallString<256> output_filename = options_.output_filename;
+      if (output_filename.empty()) {
         if (!source_->is_regular_file()) {
           // Don't invent file names like `-.o` or `/dev/stdin.o`.
           driver_->error_stream_
               << "ERROR: Output file name must be specified for input '"
-              << input_file_name_ << "' that is not a regular file.\n";
+              << input_filename_ << "' that is not a regular file.\n";
           return false;
         }
-        output_file_name = input_file_name_;
-        llvm::sys::path::replace_extension(output_file_name,
+        output_filename = input_filename_;
+        llvm::sys::path::replace_extension(output_filename,
                                            options_.asm_output ? ".s" : ".o");
       } else {
         // TODO: Handle the case where multiple input files were specified
@@ -556,14 +579,14 @@ class Driver::CompilationUnit {
         // Currently each unit overwrites the output from the previous one in
         // this case.
       }
-      CARBON_VLOG() << "Writing output to: " << output_file_name << "\n";
+      CARBON_VLOG() << "Writing output to: " << output_filename << "\n";
 
       std::error_code ec;
-      llvm::raw_fd_ostream output_file(output_file_name, ec,
+      llvm::raw_fd_ostream output_file(output_filename, ec,
                                        llvm::sys::fs::OF_None);
       if (ec) {
         driver_->error_stream_ << "ERROR: Could not open output file '"
-                               << output_file_name << "': " << ec.message()
+                               << output_filename << "': " << ec.message()
                                << "\n";
         return false;
       }
@@ -577,25 +600,13 @@ class Driver::CompilationUnit {
         }
       }
     }
-    CARBON_VLOG() << "*** CodeGen done ***\n";
     return true;
   }
 
-  // Flushes output.
-  auto Flush() -> void { consumer_->Flush(); }
-
-  auto PrintSharedValues() const -> void {
-    Yaml::Print(driver_->output_stream_,
-                value_stores_.OutputYaml(input_file_name_));
-  }
-
-  auto has_source() -> bool { return source_.has_value(); }
-
- private:
   // Wraps a call with log statements to indicate start and end.
   auto LogCall(llvm::StringLiteral label, llvm::function_ref<void()> fn)
       -> void {
-    CARBON_VLOG() << "*** " << label << ": " << input_file_name_ << " ***\n";
+    CARBON_VLOG() << "*** " << label << ": " << input_filename_ << " ***\n";
     fn();
     CARBON_VLOG() << "*** " << label << " done ***\n";
   }
@@ -603,7 +614,7 @@ class Driver::CompilationUnit {
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
-  llvm::StringRef input_file_name_;
+  llvm::StringRef input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_;
@@ -612,6 +623,8 @@ class Driver::CompilationUnit {
   StreamDiagnosticConsumer stream_consumer_;
   std::optional<SortingDiagnosticConsumer> sorting_consumer_;
   DiagnosticConsumer* consumer_;
+
+  bool success_ = true;
 
   // These are initialized as steps are run.
   std::optional<SourceBuffer> source_;
@@ -622,12 +635,21 @@ class Driver::CompilationUnit {
   std::unique_ptr<llvm::Module> module_;
 };
 
-auto Driver::Compile(const CompileOptions& options) -> bool {
+auto Driver::Compile(const CompileOptions& options) -> RunResult {
   if (!ValidateCompileOptions(options)) {
-    return false;
+    return {.success = false};
   }
 
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  auto make_result = [&]() {
+    RunResult result = {.success = true};
+    for (const auto& unit : units) {
+      result.success &= unit->success();
+      result.per_file_success.push_back(
+          {unit->input_filename(), unit->success()});
+    }
+    return result;
+  };
   auto flush = llvm::make_scope_exit([&]() {
     // The diagnostics consumer must be flushed before compilation artifacts are
     // destructed, because diagnostics can refer to their state. This ensures
@@ -644,18 +666,17 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
       }
     }
   });
-  for (const auto& input_file_name : options.input_file_names) {
+  for (const auto& input_filename : options.input_filenames) {
     units.push_back(
-        std::make_unique<CompilationUnit>(this, options, input_file_name));
+        std::make_unique<CompilationUnit>(this, options, input_filename));
   }
 
   // Lex.
-  bool success_before_lower = true;
   for (auto& unit : units) {
-    success_before_lower &= unit->RunLex();
+    unit->RunLex();
   }
   if (options.phase == CompileOptions::Phase::Lex) {
-    return success_before_lower;
+    return make_result();
   }
   // Parse and check phases examine `has_source` because they want to proceed if
   // lex failed, but not if source doesn't exist. Later steps are skipped if
@@ -664,11 +685,11 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   // Parse.
   for (auto& unit : units) {
     if (unit->has_source()) {
-      success_before_lower &= unit->RunParse();
+      unit->RunParse();
     }
   }
   if (options.phase == CompileOptions::Phase::Parse) {
-    return success_before_lower;
+    return make_result();
   }
 
   // Check.
@@ -686,17 +707,18 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {
-      success_before_lower &= unit->PostCheck();
+      unit->PostCheck();
     }
   }
   if (options.phase == CompileOptions::Phase::Check) {
-    return success_before_lower;
+    return make_result();
   }
 
   // Unlike previous steps, errors block further progress.
-  if (!success_before_lower) {
+  if (std::any_of(units.begin(), units.end(),
+                  [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG() << "*** Stopping before lowering due to errors ***";
-    return false;
+    return make_result();
   }
 
   // Lower.
@@ -704,17 +726,16 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     unit->RunLower();
   }
   if (options.phase == CompileOptions::Phase::Lower) {
-    return true;
+    return make_result();
   }
   CARBON_CHECK(options.phase == CompileOptions::Phase::CodeGen)
       << "CodeGen should be the last stage";
 
   // Codegen.
-  bool codegen_success = true;
   for (auto& unit : units) {
-    codegen_success &= unit->RunCodeGen();
+    unit->RunCodeGen();
   }
-  return codegen_success;
+  return make_result();
 }
 
 }  // namespace Carbon

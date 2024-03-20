@@ -69,7 +69,9 @@ struct NodeIdInCategory : public NodeId {
 // Aliases for `NodeIdInCategory` to describe particular categories of nodes.
 using AnyDeclId = NodeIdInCategory<NodeCategory::Decl>;
 using AnyExprId = NodeIdInCategory<NodeCategory::Expr>;
-using AnyMemberNameId = NodeIdInCategory<NodeCategory::MemberName>;
+using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
+using AnyMemberNameOrMemberExprId =
+    NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
@@ -92,8 +94,12 @@ struct NodeIdOneOf : public NodeId {
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
 using AnyFunctionDeclId =
     NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId>;
+using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDirectiveId>;
+using AnyPointerDeferenceExprId =
+    NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

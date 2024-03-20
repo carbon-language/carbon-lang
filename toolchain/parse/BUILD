@@ -44,7 +44,7 @@ cc_test(
         "//toolchain/diagnostics:mocks",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -110,8 +110,6 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//common:struct_reflection",
-        "//toolchain/base:pretty_stack_trace_function",
-        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -134,7 +132,7 @@ cc_test(
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -184,7 +182,7 @@ cc_test(
         ":precedence",
         "//testing/base:gtest_main",
         "//toolchain/lex:token_kind",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 

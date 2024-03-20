@@ -8,36 +8,36 @@
 namespace Carbon::Check {
 
 auto HandleStructLiteralOrStructTypeLiteralStart(
-    Context& context, Parse::StructLiteralOrStructTypeLiteralStartId parse_node)
+    Context& context, Parse::StructLiteralOrStructTypeLiteralStartId node_id)
     -> bool {
-  context.PushScope();
-  context.node_stack().Push(parse_node);
+  context.scope_stack().Push();
+  context.node_stack().Push(node_id);
   // At this point we aren't sure whether this will be a value or type literal,
   // so we push onto args irrespective. It just won't be used for a type
   // literal.
   context.args_type_info_stack().Push();
-  context.ParamOrArgStart();
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 auto HandleStructFieldDesignator(Context& context,
-                                 Parse::StructFieldDesignatorId /*parse_node*/)
+                                 Parse::StructFieldDesignatorId /*node_id*/)
     -> bool {
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(context.node_stack().PeekIsName());
   return true;
 }
 
-auto HandleStructComma(Context& context, Parse::StructCommaId /*parse_node*/)
+auto HandleStructComma(Context& context, Parse::StructCommaId /*node_id*/)
     -> bool {
-  context.ParamOrArgComma();
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleStructFieldValue(Context& context,
-                            Parse::StructFieldValueId parse_node) -> bool {
+auto HandleStructFieldValue(Context& context, Parse::StructFieldValueId node_id)
+    -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
-  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   // Store the name for the type.
   context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
@@ -45,20 +45,20 @@ auto HandleStructFieldValue(Context& context,
                       name_id, context.insts().Get(value_inst_id).type_id()}}));
 
   // Push the value back on the stack as an argument.
-  context.node_stack().Push(parse_node, value_inst_id);
+  context.node_stack().Push(node_id, value_inst_id);
   return true;
 }
 
-auto HandleStructFieldType(Context& context,
-                           Parse::StructFieldTypeId parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopExprWithParseNode();
+auto HandleStructFieldType(Context& context, Parse::StructFieldTypeId node_id)
+    -> bool {
+  auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
   SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id);
 
-  auto [name_node, name_id] = context.node_stack().PopNameWithParseNode();
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   auto inst_id = context.AddInst(
       {name_node, SemIR::StructTypeField{name_id, cast_type_id}});
-  context.node_stack().Push(parse_node, inst_id);
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 
@@ -75,12 +75,12 @@ static auto DiagnoseDuplicateNames(Context& context,
     if (!added) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "Duplicated field name `{1}` in {0}.", std::string,
-                        std::string);
+                        SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "Field with the same name here.");
       context.emitter()
           .Build(field_inst_id, StructNameDuplicate, construct.str(),
-                 sem_ir.names().GetFormatted(field_inst.name_id).str())
+                 field_inst.name_id)
           .Note(it->second, StructNamePrevious)
           .Emit();
       return true;
@@ -89,37 +89,37 @@ static auto DiagnoseDuplicateNames(Context& context,
   return false;
 }
 
-auto HandleStructLiteral(Context& context, Parse::StructLiteralId parse_node)
+auto HandleStructLiteral(Context& context, Parse::StructLiteralId node_id)
     -> bool {
-  auto refs_id = context.ParamOrArgEnd(
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloNodeId<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
   if (DiagnoseDuplicateNames(context, type_block_id, "struct literal")) {
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
 
   auto type_id = context.GetStructType(type_block_id);
 
   auto value_id =
-      context.AddInst({parse_node, SemIR::StructLiteral{type_id, refs_id}});
-  context.node_stack().Push(parse_node, value_id);
+      context.AddInst({node_id, SemIR::StructLiteral{type_id, refs_id}});
+  context.node_stack().Push(node_id, value_id);
   return true;
 }
 
 auto HandleStructTypeLiteral(Context& context,
-                             Parse::StructTypeLiteralId parse_node) -> bool {
-  auto refs_id = context.ParamOrArgEnd(
+                             Parse::StructTypeLiteralId node_id) -> bool {
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralOrStructTypeLiteralStart);
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<
+      .PopAndDiscardSoloNodeId<
           Parse::NodeKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
@@ -128,11 +128,11 @@ auto HandleStructTypeLiteral(Context& context,
       << "{} is handled by StructLiteral.";
 
   if (DiagnoseDuplicateNames(context, refs_id, "struct type literal")) {
-    context.node_stack().Push(parse_node, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
     return true;
   }
   context.AddInstAndPush(
-      {parse_node, SemIR::StructType{SemIR::TypeId::TypeType, refs_id}});
+      {node_id, SemIR::StructType{SemIR::TypeId::TypeType, refs_id}});
   return true;
 }
 

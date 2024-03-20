@@ -9,8 +9,6 @@
 
 #include <string>
 
-#include "llvm/Support/Error.h"
-
 using ::testing::Eq;
 using ::testing::Optional;
 

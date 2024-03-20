@@ -41,8 +41,6 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
     auto inst = sem_ir().insts().Get(inst_id);
     CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
@@ -73,7 +71,7 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
   return phi;
 }
 
-auto FunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
+auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return synthetic_block_;
 }

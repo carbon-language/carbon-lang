@@ -18,8 +18,12 @@ namespace Carbon::Check {
 // `ScopeIndex` values are comparable. Lower `ScopeIndex` values correspond to
 // scopes entered earlier in the file.
 struct ScopeIndex : public IndexBase, public Printable<ScopeIndex> {
+  static const ScopeIndex Package;
+
   using IndexBase::IndexBase;
 };
+
+constexpr ScopeIndex ScopeIndex::Package = ScopeIndex(0);
 
 }  // namespace Carbon::Check
 

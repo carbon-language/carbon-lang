@@ -26,17 +26,22 @@ fn T.F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
-// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template]
+// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

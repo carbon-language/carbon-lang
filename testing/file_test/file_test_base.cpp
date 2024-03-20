@@ -4,6 +4,8 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <gmock/gmock.h>
+
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -35,10 +37,12 @@ ABSL_FLAG(bool, autoupdate, false,
 ABSL_FLAG(unsigned int, threads, 0,
           "Number of threads to use when autoupdating tests, or 0 to "
           "automatically determine a thread count.");
+ABSL_FLAG(bool, dump_output, false,
+          "Instead of verifying files match test output, directly dump output "
+          "to stderr.");
 
 namespace Carbon::Testing {
 
-using ::testing::Eq;
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
@@ -63,23 +67,43 @@ static auto SplitOutput(llvm::StringRef output)
   return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
 }
 
+// Verify that the success and `fail_` prefix use correspond. Separately handle
+// both cases for clearer test failures.
+static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
+  if (success) {
+    EXPECT_FALSE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` succeeded; if success is expected, remove the `fail_` "
+           "prefix.";
+  } else {
+    EXPECT_TRUE(filename.starts_with("fail_"))
+        << "`" << filename
+        << "` failed; if failure is expected, add the `fail_` prefix.";
+  }
+}
+
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
-  std::optional<llvm::PrettyStackTraceFormat> stack_trace_entry;
+  std::string test_command;
+  std::optional<llvm::PrettyStackTraceString> stack_trace_entry;
 
   // If we're being run from bazel, provide some assistance for understanding
   // and reproducing failures.
   const char* target = getenv("TEST_TARGET");
   if (target) {
+    constexpr const char* CommandFormat =
+        "bazel {0} {1} --test_arg=--file_tests={2}";
+    test_command = llvm::formatv(CommandFormat, "test", target, test_name_);
+    // Add a crash trace entry with the run command.
+    stack_trace_entry.emplace(test_command.c_str());
+
     // This advice overrides the --file_tests flag provided by the file_test
     // rule.
-    llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
-                 << " --test_arg=--file_tests=" << test_name_ << "\n\n";
-
-    // Add a crash trace entry with a command that runs this test in isolation.
-    stack_trace_entry.emplace("bazel test %s --test_arg=--file_tests=%s",
-                              target, test_name_);
+    llvm::errs() << "\nTo test this file alone, run:\n  " << test_command
+                 << "\n\nTo view output, run:\n  "
+                 << llvm::formatv(CommandFormat, "run", target, test_name_)
+                 << " --test_arg=--dump_output\n\n";
   }
 
   TestContext context;
@@ -87,10 +111,30 @@ auto FileTestBase::TestBody() -> void {
   ASSERT_TRUE(run_result.ok()) << run_result.error();
   ValidateRun();
   auto test_filename = std::filesystem::path(test_name_.str()).filename();
-  EXPECT_THAT(!llvm::StringRef(test_filename).starts_with("fail_"),
-              Eq(context.exit_with_success))
-      << "Tests should be prefixed with `fail_` if and only if running them "
-         "is expected to fail.";
+
+  // Check success/failure against `fail_` prefixes.
+  if (context.run_result.per_file_success.empty()) {
+    CompareFailPrefix(test_filename.string(), context.run_result.success);
+  } else {
+    bool require_overall_failure = false;
+    for (const auto& [filename, success] :
+         context.run_result.per_file_success) {
+      CompareFailPrefix(filename, success);
+      if (!success) {
+        require_overall_failure = true;
+      }
+    }
+
+    if (require_overall_failure) {
+      EXPECT_FALSE(context.run_result.success)
+          << "There is a per-file failure expectation, so the overall result "
+             "should have been a failure.";
+    } else {
+      // Individual files all succeeded, so the prefix is enforced on the main
+      // test file.
+      CompareFailPrefix(test_filename.string(), context.run_result.success);
+    }
+  }
 
   // Check results. Include a reminder of the autoupdate command for any
   // stdout/stderr differences.
@@ -159,8 +203,9 @@ auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
 
 auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
   // Add a crash trace entry mentioning which file we're updating.
-  llvm::PrettyStackTraceFormat stack_trace_entry("performing autoupdate for %s",
-                                                 test_name_);
+  std::string stack_trace_string =
+      llvm::formatv("performing autoupdate for {0}", test_name_);
+  llvm::PrettyStackTraceString stack_trace_entry(stack_trace_string.c_str());
 
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
@@ -169,6 +214,25 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
                           << run_result.error();
   }
   return RunAutoupdater(context, /*dry_run=*/false);
+}
+
+auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
+  TestContext context;
+  std::string banner(79, '=');
+  banner.append("\n");
+  llvm::errs() << banner << "= " << test_name_ << "\n";
+
+  auto run_result = ProcessTestFileAndRun(context);
+  if (!run_result.ok()) {
+    return ErrorBuilder() << "Error updating " << test_name_ << ": "
+                          << run_result.error();
+  }
+  llvm::errs() << banner << "= stderr\n"
+               << banner << context.stderr << banner << "= stdout\n"
+               << banner << context.stdout << banner << "= Exit with success: "
+               << (context.run_result.success ? "true" : "false") << "\n"
+               << banner;
+  return Success();
 }
 
 auto FileTestBase::GetLineNumberReplacements(
@@ -226,7 +290,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   // Capture trace streaming, but only when in debug mode.
   llvm::raw_svector_ostream stdout(context.stdout);
   llvm::raw_svector_ostream stderr(context.stderr);
-  CARBON_ASSIGN_OR_RETURN(context.exit_with_success,
+  CARBON_ASSIGN_OR_RETURN(context.run_result,
                           Run(test_args_ref, fs, stdout, stderr));
   return Success();
 }
@@ -729,13 +793,28 @@ static auto Main(int argc, char** argv) -> int {
   // Tests might try to read from stdin. Ensure those reads fail by closing
   // stdin and reopening it as /dev/null. Note that STDIN_FILENO doesn't exist
   // on Windows, but POSIX requires it to be 0.
-  llvm::sys::Process::SafelyCloseFileDescriptor(0);
-  llvm::sys::Process::FixupStandardFileDescriptors();
+  if (std::error_code error =
+          llvm::sys::Process::SafelyCloseFileDescriptor(0)) {
+    llvm::errs() << "Unable to close standard input: " << error.message()
+                 << "\n";
+    return EXIT_FAILURE;
+  }
+  if (std::error_code error =
+          llvm::sys::Process::FixupStandardFileDescriptors()) {
+    llvm::errs() << "Unable to correct standard file descriptors: "
+                 << error.message() << "\n";
+    return EXIT_FAILURE;
+  }
+  if (absl::GetFlag(FLAGS_autoupdate) && absl::GetFlag(FLAGS_dump_output)) {
+    llvm::errs() << "--autoupdate and --dump_output are mutually exclusive.\n";
+    return EXIT_FAILURE;
+  }
 
   llvm::SmallVector<std::string> tests = GetTests();
   auto test_factory = GetFileTestFactory();
   if (absl::GetFlag(FLAGS_autoupdate)) {
-    llvm::ThreadPool pool({.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    llvm::DefaultThreadPool pool(
+        {.ThreadsRequested = absl::GetFlag(FLAGS_threads)});
     std::mutex errs_mutex;
 
     for (const auto& test_name : tests) {
@@ -753,6 +832,16 @@ static auto Main(int argc, char** argv) -> int {
       });
     }
     pool.wait();
+    llvm::errs() << "\nDone!\n";
+    return EXIT_SUCCESS;
+  } else if (absl::GetFlag(FLAGS_dump_output)) {
+    for (const auto& test_name : tests) {
+      std::unique_ptr<FileTestBase> test(test_factory.factory_fn(test_name));
+      auto result = test->DumpOutput();
+      if (!result.ok()) {
+        llvm::errs() << "\n" << result.error().message() << "\n";
+      }
+    }
     llvm::errs() << "\nDone!\n";
     return EXIT_SUCCESS;
   } else {

@@ -13,6 +13,9 @@ cc_library(
     name = "parse_and_execute",
     srcs = ["parse_and_execute.cpp"],
     hdrs = ["parse_and_execute.h"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         "//common:check",
         "//common:error",
@@ -29,9 +32,12 @@ cc_test(
     name = "parse_and_execute_test",
     size = "small",
     srcs = ["parse_and_execute_test.cpp"],
+    # Running clang-tidy is slow, and explorer is currently feature frozen, so
+    # don't spend time linting it.
+    tags = ["no-clang-tidy"],
     deps = [
         ":parse_and_execute",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

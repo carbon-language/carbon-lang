@@ -6,7 +6,6 @@
 
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -40,6 +39,7 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
   } else if (constant_id.is_template()) {
     return Phase::Template;
   } else {
+    CARBON_CHECK(constant_id.is_symbolic());
     return Phase::Symbolic;
   }
 }
@@ -83,6 +83,14 @@ static auto GetConstantValue(Context& context, SemIR::InstId inst_id,
   return const_id.inst_id();
 }
 
+// A type is always constant, but we still need to extract its phase.
+static auto GetConstantValue(Context& context, SemIR::TypeId type_id,
+                             Phase* phase) -> SemIR::TypeId {
+  auto const_id = context.types().GetConstantId(type_id);
+  *phase = LatestPhase(*phase, GetPhase(const_id));
+  return type_id;
+}
+
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values.
 static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
@@ -107,6 +115,17 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
   // TODO: If the new block is identical to the original block, return the
   // original ID.
   return context.inst_blocks().Add(const_insts);
+}
+
+// The constant value of a type block is that type block, but we still need to
+// extract its phase.
+static auto GetConstantValue(Context& context, SemIR::TypeBlockId type_block_id,
+                             Phase* phase) -> SemIR::TypeBlockId {
+  auto types = context.type_blocks().Get(type_block_id);
+  for (auto type_id : types) {
+    GetConstantValue(context, type_id, phase);
+  }
+  return type_block_id;
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -145,7 +164,7 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
-    if (!validate_fn(typed_inst)) {
+    if (phase == Phase::UnknownDueToError || !validate_fn(typed_inst)) {
       return SemIR::ConstantId::Error;
     }
     return MakeConstantResult(context, typed_inst, phase);
@@ -237,11 +256,10 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
           context.ints().Get(bound->int_id).ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
                           "Array index `{0}` is past the end of type `{1}`.",
-                          llvm::APSInt, std::string);
-        context.emitter().Emit(
-            index_inst.index_id, ArrayIndexOutOfBounds,
-            llvm::APSInt(index_val, /*isUnsigned=*/true),
-            context.sem_ir().StringifyType(aggregate_type_id));
+                          llvm::APSInt, SemIR::TypeId);
+        context.emitter().Emit(index_inst.index_id, ArrayIndexOutOfBounds,
+                               llvm::APSInt(index_val, /*isUnsigned=*/true),
+                               aggregate_type_id);
         return SemIR::ConstantId::Error;
       }
     }
@@ -269,9 +287,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   // TODO: Ensure we have test coverage for each of these cases that can result
   // in a constant, once those situations are all reachable.
-
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (inst.kind()) {
     // These cases are constants if their operands are.
     case SemIR::AddrOf::Kind:
@@ -282,43 +297,62 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
           context, inst,
           [&](SemIR::ArrayType result) {
             auto bound_id = inst.As<SemIR::ArrayType>().bound_id;
-            if (auto int_bound = context.insts().TryGetAs<SemIR::IntLiteral>(
-                    result.bound_id)) {
-              // TODO: We should check that the size of the resulting array type
-              // fits in 64 bits, not just that the bound does. Should we use a
-              // 32-bit limit for 32-bit targets?
-              // TODO: Also check for a negative bound, once that's something we
-              // can represent.
-              const auto& bound_val = context.ints().Get(int_bound->int_id);
-              if (bound_val.getActiveBits() > 64) {
-                CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                  "Array bound of {0} is too large.",
-                                  llvm::APInt);
-                context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
-                return false;
-              }
-            } else {
+            auto int_bound =
+                context.insts().TryGetAs<SemIR::IntLiteral>(result.bound_id);
+            if (!int_bound) {
               // TODO: Permit symbolic array bounds. This will require fixing
               // callers of `GetArrayBoundValue`.
-              context.TODO(context.insts().GetParseNode(bound_id),
-                           "symbolic array bound");
+              context.TODO(bound_id, "symbolic array bound");
+              return false;
+            }
+            // TODO: We should check that the size of the resulting array type
+            // fits in 64 bits, not just that the bound does. Should we use a
+            // 32-bit limit for 32-bit targets?
+            // TODO: Also check for a negative bound, once that's something we
+            // can represent.
+            const auto& bound_val = context.ints().Get(int_bound->int_id);
+            if (bound_val.getActiveBits() > 64) {
+              CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                                "Array bound of {0} is too large.",
+                                llvm::APInt);
+              context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
+              return false;
             }
             return true;
           },
-          &SemIR::ArrayType::bound_id);
+          &SemIR::ArrayType::bound_id, &SemIR::ArrayType::element_type_id);
+    case SemIR::AssociatedEntityType::Kind:
+      return RebuildIfFieldsAreConstant(
+          context, inst, &SemIR::AssociatedEntityType::entity_type_id);
     case SemIR::BoundMethod::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::InterfaceWitness::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::InterfaceWitness::elements_id);
+    case SemIR::PointerType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::PointerType::pointee_id);
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructType::fields_id);
+    case SemIR::StructTypeField::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::StructTypeField::field_type_id);
     case SemIR::StructValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructValue::elements_id);
+    case SemIR::TupleType::Kind:
+      return RebuildIfFieldsAreConstant(context, inst,
+                                        &SemIR::TupleType::elements_id);
     case SemIR::TupleValue::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::TupleValue::elements_id);
+    case SemIR::UnboundElementType::Kind:
+      return RebuildIfFieldsAreConstant(
+          context, inst, &SemIR::UnboundElementType::class_type_id,
+          &SemIR::UnboundElementType::element_type_id);
 
     // Initializers evaluate to a value of the object representation.
     case SemIR::ArrayInit::Kind:
@@ -334,20 +368,37 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(context, inst, SemIR::TupleValue::Kind);
 
-    // These cases are always constants.
+    case SemIR::AssociatedEntity::Kind:
     case SemIR::Builtin::Kind:
-    case SemIR::ClassType::Kind:
-    case SemIR::PointerType::Kind:
-    case SemIR::StructTypeField::Kind:
-    case SemIR::TupleType::Kind:
-    case SemIR::UnboundElementType::Kind:
-      // TODO: Propagate symbolic / template nature from operands.
+      // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
+
+    case SemIR::ClassDecl::Kind:
+      // TODO: Once classes have generic arguments, handle them.
+      return MakeConstantResult(
+          context,
+          SemIR::ClassType{SemIR::TypeId::TypeType,
+                           inst.As<SemIR::ClassDecl>().class_id},
+          Phase::Template);
+
+    case SemIR::InterfaceDecl::Kind:
+      // TODO: Once interfaces have generic arguments, handle them.
+      return MakeConstantResult(
+          context,
+          SemIR::InterfaceType{SemIR::TypeId::TypeType,
+                               inst.As<SemIR::InterfaceDecl>().interface_id},
+          Phase::Template);
+
+    case SemIR::ClassType::Kind:
+    case SemIR::InterfaceType::Kind:
+      CARBON_FATAL() << inst.kind()
+                     << " is only created during corresponding Decl handling.";
 
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
     // TODO: This doesn't properly handle redeclarations. Consider adding a
     // corresponding `Value` inst for each of these cases.
+    case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
     case SemIR::FunctionDecl::Kind:
@@ -366,6 +417,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
+    case SemIR::InterfaceWitnessAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(context, inst);
@@ -376,8 +428,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // TODO: These need special handling.
     case SemIR::BindValue::Kind:
     case SemIR::Call::Kind:
-    case SemIR::CrossRef::Kind:
     case SemIR::Deref::Kind:
+    case SemIR::ImportRefUsed::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
@@ -389,7 +441,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       // are treated as the same value.
       return SemIR::ConstantId::ForSymbolicConstant(inst_id);
 
-    // These semnatic wrappers don't change the constant value.
+    // These semantic wrappers don't change the constant value.
+    case SemIR::BindAlias::Kind:
+      return context.constant_values().Get(
+          inst.As<SemIR::BindAlias>().value_id);
     case SemIR::NameRef::Kind:
       return context.constant_values().Get(inst.As<SemIR::NameRef>().value_id);
     case SemIR::Converted::Kind:
@@ -404,6 +459,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ValueOfInitializer::Kind:
       return context.constant_values().Get(
           inst.As<SemIR::ValueOfInitializer>().init_id);
+    case SemIR::FacetTypeAccess::Kind:
+      // TODO: Once we start tracking the witness in the facet value, remove it
+      // here. For now, we model a facet value as just a type.
+      return context.constant_values().Get(
+          inst.As<SemIR::FacetTypeAccess>().facet_id);
 
     // `not true` -> `false`, `not false` -> `true`.
     // All other uses of unary `not` are non-constant.
@@ -445,10 +505,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::Branch::Kind:
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
-    case SemIR::ClassDecl::Kind:
-    case SemIR::Import::Kind:
-    case SemIR::InterfaceDecl::Kind:
-    case SemIR::LazyImportRef::Kind:
+    case SemIR::ImplDecl::Kind:
     case SemIR::Param::Kind:
     case SemIR::ReturnExpr::Kind:
     case SemIR::Return::Kind:
@@ -456,6 +513,10 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleLiteral::Kind:
     case SemIR::VarStorage::Kind:
       break;
+
+    case SemIR::ImportRefUnused::Kind:
+      CARBON_FATAL() << "ImportRefUnused should transform to ImportRefUsed "
+                        "before TryEvalInst.";
   }
   return SemIR::ConstantId::NotConstant;
 }

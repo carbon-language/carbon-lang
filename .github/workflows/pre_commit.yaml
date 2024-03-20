@@ -14,6 +14,24 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
       - uses: pre-commit/action@v3.0.0
+
+      # We want to automatically create github suggestions for pre-commit file
+      # changes for a pull request. But `pull_request` actions never have write
+      # permissions to the repository, so we create the suggestions in a separate
+      # privileged `workflow_run` action in pre_commit_suggestions.yaml. Here,
+      # we upload the diffs and event configuration to an artifact for use by
+      # that action.
+      - name: Collect pre-commit output
+        if: failure()
+        run: |
+          mkdir -p pre-commit-output
+          git diff > pre-commit-output/diff
+          cp $GITHUB_EVENT_PATH pre-commit-output/event
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: pre-commit output
+          path: pre-commit-output/*

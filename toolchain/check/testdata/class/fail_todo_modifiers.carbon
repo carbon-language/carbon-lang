@@ -70,19 +70,24 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Access = %Access.decl, .Base = %Base.decl, .Abstract = %Abstract.decl} [template]
-// CHECK:STDOUT:   %Access.decl = class_decl @Access, ()
-// CHECK:STDOUT:   %Base.decl = class_decl @Base, ()
-// CHECK:STDOUT:   %Abstract.decl = class_decl @Abstract, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Access = %Access.decl
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Access.decl: type = class_decl @Access [template = constants.%Access] {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT:   %.loc22: <unbound element of class Access> = field_decl k, element0 [template]
 // CHECK:STDOUT:   %.loc27: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Access
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .k = %.loc22
@@ -90,20 +95,22 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %I: <function> = fn_decl @I [template]
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
+// CHECK:STDOUT:   %I: <function> = fn_decl @I [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .H = %H
 // CHECK:STDOUT:   .I = %I
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %J: <function> = fn_decl @J [template]
-// CHECK:STDOUT:   %K: <function> = fn_decl @K [template]
-// CHECK:STDOUT:   %L: <function> = fn_decl @L [template]
+// CHECK:STDOUT:   %J: <function> = fn_decl @J [template] {}
+// CHECK:STDOUT:   %K: <function> = fn_decl @K [template] {}
+// CHECK:STDOUT:   %L: <function> = fn_decl @L [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT:   .J = %J
 // CHECK:STDOUT:   .K = %K
 // CHECK:STDOUT:   .L = %L

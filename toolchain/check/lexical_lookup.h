@@ -7,7 +7,6 @@
 #define CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 
 #include "toolchain/check/scope_index.h"
-#include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

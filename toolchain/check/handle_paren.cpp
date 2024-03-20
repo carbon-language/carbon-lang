@@ -6,37 +6,39 @@
 
 namespace Carbon::Check {
 
-auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId parse_node)
+auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId node_id)
     -> bool {
-  context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
+  context.node_stack().Push(node_id);
+  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
-auto HandleParenExpr(Context& context, Parse::ParenExprId parse_node) -> bool {
+auto HandleParenExpr(Context& context, Parse::ParenExprId node_id) -> bool {
   auto value_id = context.node_stack().PopExpr();
-  // ParamOrArgStart was called for tuple handling; clean up the ParamOrArg
-  // support for non-tuple cases.
-  context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+
+  // This always is always pushed at the open paren. It's only used for tuples,
+  // not paren exprs, but we still need to clean up.
+  context.param_and_arg_refs_stack().PopAndDiscard();
+
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
-  context.node_stack().Push(parse_node, value_id);
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ExprOpenParen>();
+  context.node_stack().Push(node_id, value_id);
   return true;
 }
 
 auto HandleTupleLiteralComma(Context& context,
-                             Parse::TupleLiteralCommaId /*parse_node*/)
-    -> bool {
-  context.ParamOrArgComma();
+                             Parse::TupleLiteralCommaId /*node_id*/) -> bool {
+  context.param_and_arg_refs_stack().ApplyComma();
   return true;
 }
 
-auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId parse_node)
+auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId node_id)
     -> bool {
-  auto refs_id = context.ParamOrArgEnd(Parse::NodeKind::ExprOpenParen);
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::ExprOpenParen);
 
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::ExprOpenParen>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::ExprOpenParen>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(inst_block.size());
@@ -46,8 +48,8 @@ auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId parse_node)
   auto type_id = context.GetTupleType(type_ids);
 
   auto value_id =
-      context.AddInst({parse_node, SemIR::TupleLiteral{type_id, refs_id}});
-  context.node_stack().Push(parse_node, value_id);
+      context.AddInst({node_id, SemIR::TupleLiteral{type_id, refs_id}});
+  context.node_stack().Push(node_id, value_id);
   return true;
 }
 

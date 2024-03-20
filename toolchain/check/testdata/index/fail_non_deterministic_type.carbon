@@ -24,31 +24,40 @@ var c: i32 = a[b];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.a = %a, .b = %b, .c = %c} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
 // CHECK:STDOUT:   %a: ref (i32, i32) = bind_name a, %a.var
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %c.var: ref i32 = var c
+// CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_25: i32 = int_literal 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_literal (%.loc7_22, %.loc7_25)
-// CHECK:STDOUT:   %.loc7_26.2: ref i32 = tuple_access %a.var, element0
+// CHECK:STDOUT:   %.loc7_26.2: ref i32 = tuple_access file.%a.var, element0
 // CHECK:STDOUT:   %.loc7_26.3: init i32 = initialize_from %.loc7_22 to %.loc7_26.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_26.4: ref i32 = tuple_access %a.var, element1
+// CHECK:STDOUT:   %.loc7_26.4: ref i32 = tuple_access file.%a.var, element1
 // CHECK:STDOUT:   %.loc7_26.5: init i32 = initialize_from %.loc7_25 to %.loc7_26.4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_26.6: init (i32, i32) = tuple_init (%.loc7_26.3, %.loc7_26.5) to %a.var [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_26.6: init (i32, i32) = tuple_init (%.loc7_26.3, %.loc7_26.5) to file.%a.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_26.7: init (i32, i32) = converted %.loc7_26.1, %.loc7_26.6 [template = constants.%.6]
-// CHECK:STDOUT:   assign %a.var, %.loc7_26.7
-// CHECK:STDOUT:   %b.var: ref i32 = var b
-// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   assign file.%a.var, %.loc7_26.7
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   assign %b.var, %.loc8
-// CHECK:STDOUT:   %c.var: ref i32 = var c
-// CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, %b
+// CHECK:STDOUT:   assign file.%b.var, %.loc8
+// CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, file.%a
+// CHECK:STDOUT:   %b.ref: ref i32 = name_ref b, file.%b
 // CHECK:STDOUT:   %.loc12_16: i32 = bind_value %b.ref
 // CHECK:STDOUT:   %.loc12_17: ref <error> = tuple_index %a.ref, <error>
-// CHECK:STDOUT:   assign %c.var, <error>
+// CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

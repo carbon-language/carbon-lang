@@ -39,31 +39,43 @@ interface Class { }
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.3: type = interface_type @.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Interface = %Interface.decl.loc7, .Function = %Function, .Class = %Class.decl} [template]
-// CHECK:STDOUT:   %Interface.decl.loc7 = interface_decl @Interface, ()
-// CHECK:STDOUT:   %Interface.decl.loc15 = interface_decl @Interface, ()
-// CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template]
-// CHECK:STDOUT:   %.decl.loc27 = interface_decl @.1, ()
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
-// CHECK:STDOUT:   %.decl.loc37 = interface_decl @.2, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Interface = %Interface.decl.loc7
+// CHECK:STDOUT:     .Function = %Function
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Interface.decl.loc7: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc15: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template] {}
+// CHECK:STDOUT:   %.decl.loc27: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %.decl.loc37: type = interface_decl @.2 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = <error>
+// CHECK:STDOUT:   .Self = <unexpected instref inst+3>
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;

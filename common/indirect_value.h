@@ -17,7 +17,7 @@ class IndirectValue;
 // Creates and returns an IndirectValue that holds the value returned by
 // `callable()`.
 template <typename Callable>
-auto CreateIndirectValue(Callable callable)
+auto MakeIndirectValue(Callable callable)
     -> IndirectValue<std::decay_t<decltype(callable())>>;
 
 // An IndirectValue<T> object stores a T value, using a layer of indirection
@@ -88,7 +88,7 @@ class IndirectValue {
   static_assert(std::is_object_v<T>, "T must be an object type");
 
   template <typename Callable>
-  friend auto CreateIndirectValue(Callable callable)
+  friend auto MakeIndirectValue(Callable callable)
       -> IndirectValue<std::decay_t<decltype(callable())>>;
 
   template <typename... Args>
@@ -98,7 +98,7 @@ class IndirectValue {
 };
 
 template <typename Callable>
-auto CreateIndirectValue(Callable callable)
+auto MakeIndirectValue(Callable callable)
     -> IndirectValue<std::decay_t<decltype(callable())>> {
   using T = std::decay_t<decltype(callable())>;
   return IndirectValue<T>(std::unique_ptr<T>(new T(callable())));

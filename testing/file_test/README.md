@@ -20,7 +20,7 @@ file_test(
     deps = [
         ":my_lib",
         "//testing/file_test:file_test_base",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -33,7 +33,6 @@ A typical implementation will look like:
 ```
 #include "my_library.h"
 
-#include "llvm/ADT/StringExtras.h"
 #include "testing/file_test/file_test_base.h"
 
 namespace Carbon::Testing {
@@ -47,8 +46,8 @@ class MyFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            const llvm::SmallVector<TestFile>& test_files,
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
-      -> ErrorOr<bool> override {
-    MyFunctionality(test_args, stdout, stderr);
+      -> ErrorOr<RunResult> override {
+    return MyFunctionality(test_args, stdout, stderr);
   }
 
   // Provides arguments which are used in tests that don't provide ARGS.
@@ -64,6 +63,17 @@ CARBON_FILE_TEST_FACTORY(MyFileTest);
 
 }  // namespace Carbon::Testing
 ```
+
+## Filename `fail_` prefixes
+
+When a run fails, information about what pieces failed are returned on
+`RunResult`. This affects whether a `fail_` prefix on the file is required,
+including in combination with split-file tests (using the `// --- <filename>`
+comment marker).
+
+The main test file and any split-files must have a `fail_` prefix if and only if
+they have an associated error. An exception is that the main test file may omit
+`fail_` when it contains split-files that have a `fail_` prefix.
 
 ## Comment markers
 

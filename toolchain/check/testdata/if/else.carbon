@@ -24,11 +24,19 @@ fn If(b: bool) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.F = %F, .G = %G, .H = %H, .If = %If} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template]
-// CHECK:STDOUT:   %If: <function> = fn_decl @If [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .H = %H
+// CHECK:STDOUT:     .If = %If
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
+// CHECK:STDOUT:   %If: <function> = fn_decl @If [template] {
+// CHECK:STDOUT:     %b.loc11_7.1: bool = param b
+// CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc11_7.1
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

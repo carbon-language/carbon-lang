@@ -1,0 +1,97 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+// CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `generic interface`.
+// CHECK:STDERR: interface GenericInterface(T:! type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interface GenericInterface(T:! type) {
+  fn F(x: T);
+}
+
+class C {
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+9]]:3: ERROR: Cannot `extend` a parameterized `impl`.
+  // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+6]]:3: ERROR: Semantics TODO: `impl as non-interface`.
+  // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:36: ERROR: Value of type `type` is not callable.
+  // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
+  // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~
+  extend impl forall [T:! type] as GenericInterface(T) {
+    fn F(x: T) {}
+  }
+}
+
+// CHECK:STDOUT: --- fail_extend_impl_forall.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = interface_type @GenericInterface [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type @GenericInterface, <function> [template]
+// CHECK:STDOUT:   %.3: <associated <function> in GenericInterface> = assoc_entity element0, @GenericInterface.%F [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %GenericInterface.decl: type = interface_decl @GenericInterface [template = constants.%.1] {
+// CHECK:STDOUT:     %T.loc10_28.1: type = param T
+// CHECK:STDOUT:     %T.loc10_28.2: type = bind_symbolic_name T, %T.loc10_28.1 [symbolic]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @GenericInterface {
+// CHECK:STDOUT:   %Self: GenericInterface = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T.loc10_28.2 [symbolic = file.%T.loc10_28.2]
+// CHECK:STDOUT:     %x.loc11_8.1: T = param x
+// CHECK:STDOUT:     %x.loc11_8.2: T = bind_name x, %x.loc11_8.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11: <associated <function> in GenericInterface> = assoc_entity element0, %F [template = constants.%.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .F = %.loc11
+// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: C as <error> {
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @C.%T.loc24_23.2 [symbolic = @C.%T.loc24_23.2]
+// CHECK:STDOUT:     %x.loc25_10.1: T = param x
+// CHECK:STDOUT:     %x.loc25_10.2: T = bind_name x, %x.loc25_10.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %T.loc24_23.1: type = param T
+// CHECK:STDOUT:     %T.loc24_23.2: type = bind_symbolic_name T, %T.loc24_23.1 [symbolic]
+// CHECK:STDOUT:     %GenericInterface.ref: type = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc24_23.2 [symbolic = %T.loc24_23.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   has_error
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.1(@GenericInterface.%x.loc11_8.2: T);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.2(@impl.%x.loc25_10.2: T) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -22,29 +22,13 @@ http_archive = use_repo_rule(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(
-    name = "abseil-cpp",
-    version = "20230802.0",
-    repo_name = "com_google_absl",
-)
-bazel_dep(
-    name = "re2",
-    version = "2023-11-01",
-    repo_name = "com_googlesource_code_re2",
-)
-bazel_dep(
-    name = "googletest",
-    version = "1.14.0.bcr.1",
-    repo_name = "com_google_googletest",
-)
+bazel_dep(name = "abseil-cpp", version = "20240116.1")
+bazel_dep(name = "re2", version = "2024-03-01")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
 
 google_benchmark_version = "1.8.3"
 
-bazel_dep(
-    name = "google_benchmark",
-    version = google_benchmark_version,
-    repo_name = "com_github_google_benchmark",
-)
+bazel_dep(name = "google_benchmark", version = google_benchmark_version)
 archive_override(
     module_name = "google_benchmark",
     integrity = "sha256-a8GApX0j1NlRVRn5KwyD1hsFtbqxiJYfNqx7BrDZ6c4=",
@@ -54,12 +38,9 @@ archive_override(
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(google_benchmark_version)],
 )
 
-bazel_dep(
-    name = "libpfm",
-    # The registry only has an old version. We use that here to avoid a miss but
-    # override it with a newer version.
-    version = "4.11.0",
-)
+# The registry only has an old version. We use that here to avoid a miss but
+# override it with a newer version.
+bazel_dep(name = "libpfm", version = "4.11.0")
 
 libpfm_version = "4.13.0"
 
@@ -76,12 +57,8 @@ bazel_dep(name = "rules_bison", version = "0.2.2")
 bazel_dep(name = "rules_flex", version = "0.2.1")
 bazel_dep(name = "rules_m4", version = "0.2.3")
 bazel_dep(name = "rules_cc", version = "0.0.9")
-bazel_dep(name = "rules_proto", version = "6.0.0-rc1")
-bazel_dep(
-    name = "protobuf",
-    version = "21.7",
-    repo_name = "com_google_protobuf",
-)
+bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
+bazel_dep(name = "protobuf", version = "21.7")
 
 libprotobuf_mutator_version = "1.1"
 
@@ -93,15 +70,12 @@ http_archive(
     urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
-clang_tidy_version = "d2aecc583d14c9554febeab185833c1e8cce5384"
-
-http_archive(
-    name = "bazel_clang_tidy",
-    patch_args = ["-p1"],
-    patches = ["@carbon//bazel/bazel_clang_tidy:0001_Add_hdrs.patch"],
-    sha256 = "89c198a9f544beac119bb41904d16d8870686ccb5fe946442c1576934c9e6869",
-    strip_prefix = "bazel_clang_tidy-{0}".format(clang_tidy_version),
-    urls = ["https://github.com/erenon/bazel_clang_tidy/archive/{0}.tar.gz".format(clang_tidy_version)],
+bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
+git_override(
+    module_name = "bazel_clang_tidy",
+    # HEAD as of 2024-03-12.
+    commit = "bff5c59c843221b05ef0e37cef089ecc9d24e7da",
+    remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
 bazel_cc_toolchain = use_extension(
@@ -115,15 +89,15 @@ register_toolchains("@bazel_cc_toolchain//:all")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    # HEAD as of 2023-12-19.
-    commit = "af167878427c469db96444b65f026d064ec62a4f",
+    # HEAD as of 2024-03-12.
+    commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "0.0.8")
-bazel_dep(name = "zlib", version = "1.3", repo_name = "llvm_zlib")
-bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
+bazel_dep(name = "zlib", version = "1.3.1.bcr.1", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.5.bcr.1", repo_name = "llvm_zstd")
 
 ###############################################################################
 # llvm-project
@@ -131,8 +105,8 @@ bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2024-01-03.
-llvm_project_version = "82e33d6203f62c0be16f8da8d4178e7fa9e790ea"
+# HEAD as of 2024-03-06.
+llvm_project_version = "be15a6b3b68bed7b9d982f25b2e10a273302002a"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
@@ -144,7 +118,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch",
     ],
-    sha256 = "402a6dc72452f24ff27ae8157c6d55ea74124de83c57855bbff89b85787fad1c",
+    sha256 = "1e6cc2eb634438a59fb5e1b87e7bb35883fb680dc2934f431150db22fb3a6c09",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )
@@ -160,7 +134,7 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "0.27.1")
+bazel_dep(name = "rules_python", version = "0.31.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(

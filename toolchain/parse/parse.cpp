@@ -6,7 +6,6 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
@@ -36,8 +35,6 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.PushState(State::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (context.state_stack().back().state) {
 #define CARBON_PARSE_STATE(Name) \
   case State::Name:              \

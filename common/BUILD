@@ -33,7 +33,7 @@ cc_test(
         ":command_line",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -58,7 +58,7 @@ cc_test(
     deps = [
         ":check",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -86,7 +86,7 @@ cc_test(
         ":enum_base_test_def",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -108,7 +108,7 @@ cc_test(
         ":error",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -130,7 +130,7 @@ cc_test(
         ":hashing",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -142,9 +142,9 @@ cc_binary(
     deps = [
         ":check",
         ":hashing",
-        "@com_github_google_benchmark//:benchmark_main",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/random",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark_main",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -161,7 +161,7 @@ cc_test(
     deps = [
         ":indirect_value",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -217,7 +217,7 @@ cc_test(
     deps = [
         ":string_helpers",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -234,7 +234,7 @@ cc_test(
     deps = [
         ":struct_reflection",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -256,6 +256,6 @@ cc_test(
         ":vlog",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )

@@ -82,10 +82,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>string.quoted.triple.carbon</string>
                 <key>begin</key>
-                <string>'''</string>
+                <string>'''([^\s'#]*\n)?</string>
                 <key>end</key>
                 <string>'''</string>
-
+                <key>beginCaptures</key>
+                <dict>
+                    <key>1</key>
+                    <dict>
+                        <key>name</key>
+                        <string>constant.character.escape.carbon</string>
+                    </dict>
+                </dict>
                 <key>patterns</key>
                 <array>
                     <dict>

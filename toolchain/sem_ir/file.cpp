@@ -57,67 +57,58 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
-  out << "{inst: " << inst_id << ", value_rep: " << value_repr << "}";
+  out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
+}
+
+File::File(SharedValueStores& value_stores, std::string filename,
+           const File* builtins, llvm::function_ref<void()> init_builtins)
+    : value_stores_(&value_stores),
+      filename_(std::move(filename)),
+      type_blocks_(allocator_),
+      constant_values_(ConstantId::NotConstant),
+      inst_blocks_(allocator_),
+      constants_(*this, allocator_) {
+  CARBON_CHECK(builtins != nullptr);
+  auto builtins_id = import_irs_.Add(builtins);
+  CARBON_CHECK(builtins_id == ImportIRId::Builtins)
+      << "Builtins must be the first IR";
+
+  insts_.Reserve(BuiltinKind::ValidCount);
+  init_builtins();
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
+      << "Builtins should produce " << BuiltinKind::ValidCount
+      << " insts, actual: " << insts_.size();
+  for (auto i : llvm::seq(BuiltinKind::ValidCount)) {
+    auto builtin_id = SemIR::InstId(i);
+    constant_values_.Set(builtin_id,
+                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
+  }
 }
 
 File::File(SharedValueStores& value_stores)
-    : value_stores_(&value_stores),
-      filename_("<builtins>"),
-      type_blocks_(allocator_),
-      inst_blocks_(allocator_),
-      constants_(*this, allocator_) {
-  auto builtins_id = cross_ref_irs_.Add(this);
-  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
-      << "Builtins must be the first IR, even if self-referential";
-
-  insts_.Reserve(BuiltinKind::ValidCount);
-
-  // Error uses a self-referential type so that it's not accidentally treated as
-  // a normal type. Every other builtin is a type, including the
-  // self-referential TypeType.
+    : File(value_stores, "<builtins>", this, [&]() {
+// Error uses a self-referential type so that it's not accidentally treated as
+// a normal type. Every other builtin is a type, including the
+// self-referential TypeType.
 #define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
   insts_.AddInNoBlock(                                                     \
       {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
                                                        : TypeId::TypeType, \
                BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
-  for (auto [i, inst] : llvm::enumerate(insts_.array_ref())) {
-    auto builtin_id = SemIR::InstId(i);
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
-  }
-
-  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
-      << "Builtins should produce " << BuiltinKind::ValidCount
-      << " insts, actual: " << insts_.size();
+      }) {
 }
 
 File::File(SharedValueStores& value_stores, std::string filename,
            const File* builtins)
-    : value_stores_(&value_stores),
-      filename_(std::move(filename)),
-      type_blocks_(allocator_),
-      inst_blocks_(allocator_),
-      constants_(*this, allocator_) {
-  CARBON_CHECK(builtins != nullptr);
-  auto builtins_id = cross_ref_irs_.Add(builtins);
-  CARBON_CHECK(builtins_id == CrossRefIRId::Builtins)
-      << "Builtins must be the first IR";
-
-  // Copy builtins over.
-  insts_.Reserve(BuiltinKind::ValidCount);
-  static constexpr auto BuiltinIR = CrossRefIRId(0);
-  for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
-    // We can reuse the type IDs from the builtins IR because they're
-    // special-cased values.
-    auto type_id = inst.type_id();
-    auto builtin_id = SemIR::InstId(i);
-    insts_.AddInNoBlock(
-        {Parse::NodeId::Invalid, CrossRef{type_id, BuiltinIR, builtin_id}});
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
-  }
-}
+    : File(value_stores, filename, builtins, [&]() {
+        for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
+          // We can reuse the type_id from the builtin IR's inst because they're
+          // special-cased values.
+          insts_.AddInNoBlock({ImportRefUsed{
+              inst.type_id(), ImportIRId::Builtins, SemIR::InstId(i)}});
+        }
+      }) {}
 
 auto File::Verify() const -> ErrorOr<Success> {
   // Invariants don't necessarily hold for invalid IR.
@@ -162,8 +153,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
     map.Add("filename", filename_);
     map.Add(
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-          map.Add("cross_ref_irs_size",
-                  Yaml::OutputScalar(cross_ref_irs_.size()));
+          map.Add("import_irs_size", Yaml::OutputScalar(import_irs_.size()));
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("bind_names", bind_names_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
@@ -185,7 +175,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);
-                      if (value.is_constant()) {
+                      if (!value.is_valid() || value.is_constant()) {
                         map.Add(PrintToString(id), Yaml::OutputScalar(value));
                       }
                     }
@@ -199,13 +189,16 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
 // precedence of that type's syntax. Higher numbers correspond to higher
 // precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  // clang warns on unhandled enum values; clang-tidy is incorrect here.
-  // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
   switch (kind) {
     case ArrayType::Kind:
+    case AssociatedEntityType::Kind:
+    case BindAlias::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
+    case FacetTypeAccess::Kind:
+    case ImportRefUsed::Kind:
+    case InterfaceType::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -216,17 +209,13 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case PointerType::Kind:
       return -2;
 
-    case CrossRef::Kind:
-      // TODO: Once we support stringification of cross-references, we'll need
-      // to determine the precedence of the target of the cross-reference. For
-      // now, all cross-references refer to builtin types from the prelude.
-      return 0;
-
     case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
     case Assign::Kind:
+    case AssociatedConstantDecl::Kind:
+    case AssociatedEntity::Kind:
     case BaseDecl::Kind:
     case BindName::Kind:
     case BindValue::Kind:
@@ -244,11 +233,13 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Deref::Kind:
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
-    case Import::Kind:
+    case ImplDecl::Kind:
+    case ImportRefUnused::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
+    case InterfaceWitness::Kind:
+    case InterfaceWitnessAccess::Kind:
     case IntLiteral::Kind:
-    case LazyImportRef::Kind:
     case Namespace::Kind:
     case Param::Kind:
     case RealLiteral::Kind:
@@ -276,25 +267,27 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   }
 }
 
-auto File::StringifyType(TypeId type_id) const -> std::string {
-  return StringifyTypeExpr(types().GetInstId(type_id));
-}
-
-auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
+// Implements File::StringifyTypeExpr. Static to prevent accidental use of
+// member functions while traversing IRs.
+static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
+                                  InstId outer_inst_id) {
   std::string str;
   llvm::raw_string_ostream out(str);
 
   struct Step {
+    // The instruction's file.
+    const File& sem_ir;
     // The instruction to print.
     InstId inst_id;
     // The index into inst_id to print. Not used by all types.
     int index = 0;
 
     auto Next() const -> Step {
-      return {.inst_id = inst_id, .index = index + 1};
+      return {.sem_ir = sem_ir, .inst_id = inst_id, .index = index + 1};
     }
   };
-  llvm::SmallVector<Step> steps = {{.inst_id = outer_inst_id}};
+  llvm::SmallVector<Step> steps = {
+      Step{.sem_ir = outer_sem_ir, .inst_id = outer_inst_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -304,36 +297,55 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
     }
 
     // Builtins have designated labels.
-    if (step.inst_id.index < BuiltinKind::ValidCount) {
-      out << BuiltinKind::FromInt(step.inst_id.index).label();
+    if (step.inst_id.is_builtin()) {
+      out << step.inst_id.builtin_kind().label();
       continue;
     }
 
-    auto inst = insts().Get(step.inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
+    const auto& sem_ir = step.sem_ir;
+    // Helper for instructions with the current sem_ir.
+    auto push_inst_id = [&](InstId inst_id) {
+      steps.push_back({.sem_ir = sem_ir, .inst_id = inst_id});
+    };
+
+    auto inst = sem_ir.insts().Get(step.inst_id);
     switch (inst.kind()) {
       case ArrayType::Kind: {
         auto array = inst.As<ArrayType>();
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          steps.push_back(
-              {.inst_id = types().GetInstId(array.element_type_id)});
+          push_inst_id(sem_ir.types().GetInstId(array.element_type_id));
         } else if (step.index == 1) {
-          out << "; " << GetArrayBoundValue(array.bound_id) << "]";
+          out << "; " << sem_ir.GetArrayBoundValue(array.bound_id) << "]";
         }
         break;
       }
+      case AssociatedEntityType::Kind: {
+        auto assoc = inst.As<AssociatedEntityType>();
+        if (step.index == 0) {
+          out << "<associated ";
+          steps.push_back(step.Next());
+          push_inst_id(sem_ir.types().GetInstId(assoc.entity_type_id));
+        } else {
+          auto interface_name_id =
+              sem_ir.interfaces().Get(assoc.interface_id).name_id;
+          out << " in " << sem_ir.names().GetFormatted(interface_name_id)
+              << ">";
+        }
+        break;
+      }
+      case BindAlias::Kind:
       case BindSymbolicName::Kind: {
-        auto name_id = inst.As<BindSymbolicName>().bind_name_id;
-        out << names().GetFormatted(bind_names().Get(name_id).name_id);
+        auto name_id = inst.As<AnyBindName>().bind_name_id;
+        out << sem_ir.names().GetFormatted(
+            sem_ir.bind_names().Get(name_id).name_id);
         break;
       }
       case ClassType::Kind: {
         auto class_name_id =
-            classes().Get(inst.As<ClassType>().class_id).name_id;
-        out << names().GetFormatted(class_name_id);
+            sem_ir.classes().Get(inst.As<ClassType>().class_id).name_id;
+        out << sem_ir.names().GetFormatted(class_name_id);
         break;
       }
       case ConstType::Kind: {
@@ -342,35 +354,53 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
 
           // Add parentheses if required.
           auto inner_type_inst_id =
-              types().GetInstId(inst.As<ConstType>().inner_id);
-          if (GetTypePrecedence(insts().Get(inner_type_inst_id).kind()) <
+              sem_ir.types().GetInstId(inst.As<ConstType>().inner_id);
+          if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
               GetTypePrecedence(inst.kind())) {
             out << "(";
             steps.push_back(step.Next());
           }
 
-          steps.push_back({.inst_id = inner_type_inst_id});
+          push_inst_id(inner_type_inst_id);
         } else if (step.index == 1) {
           out << ")";
         }
         break;
       }
+      case FacetTypeAccess::Kind: {
+        // Print `T as type` as simply `T`.
+        push_inst_id(inst.As<FacetTypeAccess>().facet_id);
+        break;
+      }
+      case ImportRefUsed::Kind: {
+        auto import_ref = inst.As<ImportRefUsed>();
+        steps.push_back({.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id),
+                         .inst_id = import_ref.inst_id});
+        break;
+      }
+      case InterfaceType::Kind: {
+        auto interface_name_id = sem_ir.interfaces()
+                                     .Get(inst.As<InterfaceType>().interface_id)
+                                     .name_id;
+        out << sem_ir.names().GetFormatted(interface_name_id);
+        break;
+      }
       case NameRef::Kind: {
-        out << names().GetFormatted(inst.As<NameRef>().name_id);
+        out << sem_ir.names().GetFormatted(inst.As<NameRef>().name_id);
         break;
       }
       case PointerType::Kind: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = types().GetInstId(
-                               inst.As<PointerType>().pointee_id)});
+          push_inst_id(
+              sem_ir.types().GetInstId(inst.As<PointerType>().pointee_id));
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
       case StructType::Kind: {
-        auto refs = inst_blocks().Get(inst.As<StructType>().fields_id);
+        auto refs = sem_ir.inst_blocks().Get(inst.As<StructType>().fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -384,17 +414,17 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
         }
 
         steps.push_back(step.Next());
-        steps.push_back({.inst_id = refs[step.index]});
+        push_inst_id(refs[step.index]);
         break;
       }
       case StructTypeField::Kind: {
         auto field = inst.As<StructTypeField>();
-        out << "." << names().GetFormatted(field.name_id) << ": ";
-        steps.push_back({.inst_id = types().GetInstId(field.field_type_id)});
+        out << "." << sem_ir.names().GetFormatted(field.name_id) << ": ";
+        push_inst_id(sem_ir.types().GetInstId(field.field_type_id));
         break;
       }
       case TupleType::Kind: {
-        auto refs = type_blocks().Get(inst.As<TupleType>().elements_id);
+        auto refs = sem_ir.type_blocks().Get(inst.As<TupleType>().elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -412,15 +442,15 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
           break;
         }
         steps.push_back(step.Next());
-        steps.push_back({.inst_id = types().GetInstId(refs[step.index])});
+        push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
         break;
       }
       case UnboundElementType::Kind: {
         if (step.index == 0) {
           out << "<unbound element of class ";
           steps.push_back(step.Next());
-          steps.push_back({.inst_id = types().GetInstId(
-                               inst.As<UnboundElementType>().class_type_id)});
+          push_inst_id(sem_ir.types().GetInstId(
+              inst.As<UnboundElementType>().class_type_id));
         } else {
           out << ">";
         }
@@ -431,6 +461,8 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
       case Assign::Kind:
+      case AssociatedConstantDecl::Kind:
+      case AssociatedEntity::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
       case BindValue::Kind:
@@ -446,15 +478,16 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
       case ClassElementAccess::Kind:
       case ClassInit::Kind:
       case Converted::Kind:
-      case CrossRef::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
-      case Import::Kind:
+      case ImplDecl::Kind:
+      case ImportRefUnused::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
+      case InterfaceWitness::Kind:
+      case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
-      case LazyImportRef::Kind:
       case Namespace::Kind:
       case Param::Kind:
       case RealLiteral::Kind:
@@ -488,6 +521,14 @@ auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
   return str;
 }
 
+auto File::StringifyType(TypeId type_id) const -> std::string {
+  return StringifyTypeExprImpl(*this, types().GetInstId(type_id));
+}
+
+auto File::StringifyTypeExpr(InstId outer_inst_id) const -> std::string {
+  return StringifyTypeExprImpl(*this, outer_inst_id);
+}
+
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   const File* ir = &file;
 
@@ -497,33 +538,33 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
   while (true) {
     auto inst = ir->insts().Get(inst_id);
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case Assign::Kind:
       case BaseDecl::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
-      case ClassDecl::Kind:
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
-      case Import::Kind:
-      case InterfaceDecl::Kind:
-      case LazyImportRef::Kind:
+      case ImplDecl::Kind:
+      case ImportRefUnused::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case CrossRef::Kind: {
-        auto xref = inst.As<CrossRef>();
-        ir = ir->cross_ref_irs().Get(xref.ir_id);
-        inst_id = xref.inst_id;
+      case ImportRefUsed::Kind: {
+        auto import_ref = inst.As<ImportRefUsed>();
+        ir = ir->import_irs().Get(import_ref.ir_id);
+        inst_id = import_ref.inst_id;
         continue;
       }
 
+      case BindAlias::Kind: {
+        inst_id = inst.As<BindAlias>().value_id;
+        continue;
+      }
       case NameRef::Kind: {
         inst_id = inst.As<NameRef>().value_id;
         continue;
@@ -537,13 +578,22 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayType::Kind:
+      case AssociatedConstantDecl::Kind:
+      case AssociatedEntity::Kind:
+      case AssociatedEntityType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoundMethod::Kind:
+      case ClassDecl::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
+      case FacetTypeAccess::Kind:
+      case InterfaceDecl::Kind:
+      case InterfaceType::Kind:
+      case InterfaceWitness::Kind:
+      case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
       case Param::Kind:
       case PointerType::Kind:

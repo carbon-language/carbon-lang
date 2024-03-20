@@ -20,23 +20,20 @@ fn Test() {
 
 // CHECK:STDOUT: --- fail_address_of_error.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type <error> [template]
-// CHECK:STDOUT:   %.2: type = ptr_type <error>* [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Test = %Test} [template]
-// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Test = %Test
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11: <error>* = addr_of %undeclared.ref.loc11 [template = <error>]
+// CHECK:STDOUT:   %.loc11: <error> = addr_of %undeclared.ref.loc11 [template = <error>]
 // CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_5: <error>* = addr_of %undeclared.ref.loc18 [template = <error>]
-// CHECK:STDOUT:   %.loc18_3: <error>** = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_5: <error> = addr_of %undeclared.ref.loc18 [template = <error>]
+// CHECK:STDOUT:   %.loc18_3: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -17,12 +17,19 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_14.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc10_14.2: type = converted %.loc10_14.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %x.var: ref (i32,) = var x
 // CHECK:STDOUT:   %x: ref (i32,) = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc10_24: (type,) = tuple_literal (i32)
-// CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10: (type,) = tuple_literal (i32)
+// CHECK:STDOUT:   assign file.%x.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

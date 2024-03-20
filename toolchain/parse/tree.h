@@ -13,7 +13,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
@@ -58,7 +57,7 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    NodeId node;
+    ImportDirectiveId node_id;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralValueId library_id = StringLiteralValueId::Invalid;
   };
@@ -356,8 +355,12 @@ class Tree::PostorderIterator
   auto operator==(const PostorderIterator& rhs) const -> bool {
     return node_ == rhs.node_;
   }
-  auto operator<(const PostorderIterator& rhs) const -> bool {
-    return node_.index < rhs.node_.index;
+  // While we don't want users to directly leverage the index of `NodeId` for
+  // ordering, when we're explicitly walking in postorder, that becomes
+  // reasonable so add the ordering here and reach down for the index
+  // explicitly.
+  auto operator<=>(const PostorderIterator& rhs) const -> std::strong_ordering {
+    return node_.index <=> rhs.node_.index;
   }
 
   auto operator*() const -> NodeId { return node_; }

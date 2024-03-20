@@ -5,64 +5,64 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
+#include "toolchain/check/function.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 auto HandleFunctionIntroducer(Context& context,
-                              Parse::FunctionIntroducerId parse_node) -> bool {
+                              Parse::FunctionIntroducerId node_id) -> bool {
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
   // Push the bracketing node.
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(node_id);
   // Optional modifiers and the name follow.
   context.decl_state_stack().Push(DeclState::Fn);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
-auto HandleReturnType(Context& context, Parse::ReturnTypeId parse_node)
-    -> bool {
+auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
-  auto [type_parse_node, type_inst_id] =
-      context.node_stack().PopExprWithParseNode();
-  auto type_id = ExprAsType(context, type_parse_node, type_inst_id);
+  auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto type_id = ExprAsType(context, type_node_id, type_inst_id);
   // TODO: Use a dedicated instruction rather than VarStorage here.
   context.AddInstAndPush(
-      {parse_node, SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot}});
+      {node_id, SemIR::VarStorage{type_id, SemIR::NameId::ReturnSlot}});
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
-  Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  CheckAccessModifiersOnDecl(context, decl_kind);
+static auto DiagnoseModifiers(Context& context, bool is_definition,
+                              SemIR::NameScopeId target_scope_id)
+    -> KeywordModifierSet {
+  const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
+  CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
+  if (is_definition) {
+    ForbidExternModifierOnDefinition(context, decl_kind);
+  }
+  if (target_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
+    if (target_id.is_valid() &&
+        !context.insts().Is<SemIR::Namespace>(target_id)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                            " that is a member");
+    }
+  }
   LimitModifiersOnDecl(context,
-                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
+                           KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
-  // Rules for abstract, virtual, and impl, which are only allowed in classes.
-  if (auto class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
-    auto inheritance_kind =
-        context.classes().Get(class_decl->class_id).inheritance_kind;
-    if (inheritance_kind == SemIR::Class::Final) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
-                            " in a non-abstract non-base `class` definition",
-                            context.GetCurrentScopeParseNode());
-    }
-    if (inheritance_kind != SemIR::Class::Abstract) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
-                            " in a non-abstract `class` definition",
-                            context.GetCurrentScopeParseNode());
-    }
-  } else {
-    ForbidModifiersOnDecl(context, KeywordModifierSet::Method, decl_kind,
-                          " outside of a class");
-  }
-  RequireDefaultFinalOnlyInInterfaces(context, decl_kind);
+  CheckMethodModifiersOnFunction(context, target_scope_id);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_kind, target_scope_id);
 
   return context.decl_state_stack().innermost().modifier_set;
 }
@@ -71,39 +71,31 @@ static auto DiagnoseModifiers(Context& context) -> KeywordModifierSet {
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
 static auto BuildFunctionDecl(Context& context,
-                              Parse::AnyFunctionDeclId parse_node,
+                              Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  // TODO: This contains the IR block for the parameters and return type. At
-  // present, it's just loose, but it's not strictly required for parameter
-  // refs; we should either stop constructing it completely or, if it turns out
-  // to be needed, store it. Note, the underlying issue is that the LLVM IR has
-  // nowhere clear to emit, so changing storage would require addressing that
-  // problem. For comparison with function calls, the IR needs to be emitted
-  // prior to the call.
-  context.inst_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
   auto return_slot_id = SemIR::InstId::Invalid;
-  if (auto return_node_and_id =
-          context.node_stack()
-              .PopWithParseNodeIf<Parse::NodeKind::ReturnType>()) {
-    auto return_storage_id = return_node_and_id->second;
-    return_type_id = context.insts().Get(return_storage_id).type_id();
+  if (auto [return_node, return_storage_id] =
+          context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
+      return_storage_id) {
+    return_type_id = context.insts().Get(*return_storage_id).type_id();
 
     return_type_id = context.AsCompleteType(return_type_id, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "Function returns incomplete type `{0}`.", std::string);
+                        "Function returns incomplete type `{0}`.",
+                        SemIR::TypeId);
       return context.emitter().Build(
-          return_node_and_id->first, IncompleteTypeInFunctionReturnType,
-          context.sem_ir().StringifyType(return_type_id));
+          return_node, IncompleteTypeInFunctionReturnType, return_type_id);
     });
 
     if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
              .has_return_slot()) {
       // The function only has a return slot if it uses in-place initialization.
     } else {
-      return_slot_id = return_storage_id;
+      return_slot_id = *return_storage_id;
     }
   }
 
@@ -114,22 +106,27 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::InstBlockId::Empty);
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
-      .PopAndDiscardSoloParseNode<Parse::NodeKind::FunctionIntroducer>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers = DiagnoseModifiers(context);
+  auto modifiers =
+      DiagnoseModifiers(context, is_definition, name_context.target_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
-    context.TODO(context.decl_state_stack().innermost().saw_access_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Access),
                  "access modifier");
   }
+  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
   if (!!(modifiers & KeywordModifierSet::Method)) {
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Decl),
                  "method modifier");
   }
   if (!!(modifiers & KeywordModifierSet::Interface)) {
     // TODO: Once we are saving the modifiers for a function, add check that
     // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(context.decl_state_stack().innermost().saw_decl_modifier,
+    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
+                     ModifierOrder::Decl),
                  "interface modifier");
   }
   context.decl_state_stack().Pop(DeclState::Fn);
@@ -137,52 +134,63 @@ static auto BuildFunctionDecl(Context& context,
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      SemIR::FunctionId::Invalid};
-  auto function_decl_id =
-      context.AddPlaceholderInst({parse_node, function_decl});
+      SemIR::FunctionId::Invalid, decl_block_id};
+  auto function_info = SemIR::Function{
+      .name_id = name_context.name_id_for_new_inst(),
+      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .decl_id = context.AddPlaceholderInst({node_id, function_decl}),
+      .implicit_param_refs_id = implicit_param_refs_id,
+      .param_refs_id = param_refs_id,
+      .return_type_id = return_type_id,
+      .return_slot_id = return_slot_id,
+      .is_extern = is_extern};
+  if (is_definition) {
+    function_info.definition_id = function_info.decl_id;
+  }
+
+  // At interface scope, a function declaration introduces an associated
+  // function.
+  auto lookup_result_id = function_info.decl_id;
+  if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
+      !name_context.has_qualifiers) {
+    auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
+        name_context.enclosing_scope_id_for_new_inst());
+    if (auto interface_scope =
+            context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
+                scope_inst_id)) {
+      lookup_result_id = BuildAssociatedEntity(
+          context, interface_scope->interface_id, function_info.decl_id);
+    }
+  }
 
   // Check whether this is a redeclaration.
   auto existing_id =
-      context.decl_name_stack().LookupOrAddName(name_context, function_decl_id);
+      context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
   if (existing_id.is_valid()) {
     if (auto existing_function_decl =
             context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
-      // This is a redeclaration of an existing function.
-      function_decl.function_id = existing_function_decl->function_id;
-
-      // TODO: Check that the signature matches!
-
-      // Track the signature from the definition, so that IDs in the body match
-      // IDs in the signature.
-      if (is_definition) {
-        auto& function_info =
-            context.functions().Get(function_decl.function_id);
-        function_info.implicit_param_refs_id = implicit_param_refs_id;
-        function_info.param_refs_id = param_refs_id;
-        function_info.return_type_id = return_type_id;
-        function_info.return_slot_id = return_slot_id;
+      if (MergeFunctionRedecl(context, node_id, function_info,
+                              existing_function_decl->function_id,
+                              is_definition)) {
+        // When merging, use the existing function rather than adding a new one.
+        function_decl.function_id = existing_function_decl->function_id;
       }
     } else {
-      // This is a redeclaration of something other than a function.
-      context.DiagnoseDuplicateName(function_decl_id, existing_id);
+      // This is a redeclaration of something other than a function. This
+      // includes the case where an associated function redeclares another
+      // associated function.
+      context.DiagnoseDuplicateName(function_info.decl_id, existing_id);
     }
   }
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
-    function_decl.function_id = context.functions().Add(
-        {.name_id = name_context.name_id_for_new_inst(),
-         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-         .decl_id = function_decl_id,
-         .implicit_param_refs_id = implicit_param_refs_id,
-         .param_refs_id = param_refs_id,
-         .return_type_id = return_type_id,
-         .return_slot_id = return_slot_id});
+    function_decl.function_id = context.functions().Add(function_info);
   }
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_decl_id,
-                                       {parse_node, function_decl});
+  context.ReplaceInstBeforeConstantUse(function_info.decl_id,
+                                       {node_id, function_decl});
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
@@ -195,47 +203,32 @@ static auto BuildFunctionDecl(Context& context,
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
-      context.emitter().Emit(parse_node, InvalidMainRunSignature);
+      context.emitter().Emit(node_id, InvalidMainRunSignature);
     }
   }
 
-  return {function_decl.function_id, function_decl_id};
+  return {function_decl.function_id, function_info.decl_id};
 }
 
-auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId parse_node)
+auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId node_id)
     -> bool {
-  BuildFunctionDecl(context, parse_node, /*is_definition=*/false);
+  BuildFunctionDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleFunctionDefinitionStart(Context& context,
-                                   Parse::FunctionDefinitionStartId parse_node)
+                                   Parse::FunctionDefinitionStartId node_id)
     -> bool {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
-      BuildFunctionDecl(context, parse_node, /*is_definition=*/true);
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
   auto& function = context.functions().Get(function_id);
-
-  // Track that this declaration is the definition.
-  if (function.definition_id.is_valid()) {
-    CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", std::string);
-    CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                      "Previous definition was here.");
-    context.emitter()
-        .Build(parse_node, FunctionRedefinition,
-               context.names().GetFormatted(function.name_id).str())
-        .Note(function.definition_id, FunctionPreviousDefinition)
-        .Emit();
-  } else {
-    function.definition_id = decl_id;
-  }
 
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
-  context.PushScope(decl_id);
+  context.scope_stack().Push(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Bring the implicit and explicit parameters into scope.
@@ -256,27 +249,18 @@ auto HandleFunctionDefinitionStart(Context& context,
       CARBON_DIAGNOSTIC(
           IncompleteTypeInFunctionParam, Error,
           "Parameter has incomplete type `{0}` in function definition.",
-          std::string);
-      return context.emitter().Build(
-          param_id, IncompleteTypeInFunctionParam,
-          context.sem_ir().StringifyType(param.type_id()));
+          SemIR::TypeId);
+      return context.emitter().Build(param_id, IncompleteTypeInFunctionParam,
+                                     param.type_id());
     });
-
-    if (auto fn_param = param.TryAs<SemIR::AnyBindName>()) {
-      context.AddNameToLookup(
-          context.bind_names().Get(fn_param->bind_name_id).name_id, param_id);
-    } else {
-      CARBON_FATAL() << "Unexpected kind of parameter in function definition "
-                     << param;
-    }
   }
 
-  context.node_stack().Push(parse_node, function_id);
+  context.node_stack().Push(node_id, function_id);
   return true;
 }
 
 auto HandleFunctionDefinition(Context& context,
-                              Parse::FunctionDefinitionId parse_node) -> bool {
+                              Parse::FunctionDefinitionId node_id) -> bool {
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
@@ -287,13 +271,13 @@ auto HandleFunctionDefinition(Context& context,
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "Missing `return` at end of function with declared return type.");
-      context.emitter().Emit(TokenOnly(parse_node), MissingReturnStatement);
+      context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      context.AddInst({parse_node, SemIR::Return{}});
+      context.AddInst({node_id, SemIR::Return{}});
     }
   }
 
-  context.PopScope();
+  context.scope_stack().Pop();
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();

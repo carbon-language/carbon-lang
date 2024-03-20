@@ -11,20 +11,29 @@ fn F() {
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
   *A;
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR:   A->foo;
+  // CHECK:STDERR:   ^
+  A->foo;
 }
 
 // CHECK:STDOUT: --- fail_deref_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %.loc7, .F = %F} [template]
-// CHECK:STDOUT:   %.loc7: <namespace> = namespace A, {} [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, file.%.loc7 [template = file.%.loc7]
+// CHECK:STDOUT:   %A.ref.loc13: <namespace> = name_ref A, file.%A [template = file.%A]
 // CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc17: <namespace> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc17: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

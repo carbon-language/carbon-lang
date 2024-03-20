@@ -9,8 +9,10 @@ fn Foo() {}
 // CHECK:STDOUT: --- params_zero.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

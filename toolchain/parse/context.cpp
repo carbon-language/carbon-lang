@@ -25,11 +25,9 @@ enum class RelativeLocation : int8_t {
 
 }  // namespace Carbon::Parse
 
-namespace llvm {
-
 // Adapts RelativeLocation for use with formatv.
 template <>
-struct format_provider<Carbon::Parse::RelativeLocation> {
+struct llvm::format_provider<Carbon::Parse::RelativeLocation> {
   using RelativeLocation = Carbon::Parse::RelativeLocation;
   static void format(const RelativeLocation& loc, raw_ostream& out,
                      StringRef /*style*/) {
@@ -46,8 +44,6 @@ struct format_provider<Carbon::Parse::RelativeLocation> {
     }
   }
 };
-
-}  // namespace llvm
 
 namespace Carbon::Parse {
 
@@ -406,14 +402,13 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::RecoverFromDeclError(StateStackEntry state,
-                                   NodeKind parse_node_kind,
+auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
     token = SkipPastLikelyEnd(token);
   }
-  AddNode(parse_node_kind, token, state.subtree_start,
+  AddNode(node_kind, token, state.subtree_start,
           /*has_error=*/true);
 }
 

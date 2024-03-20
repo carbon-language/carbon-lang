@@ -6,20 +6,20 @@
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/inst_block_stack.h"
-#include "toolchain/check/lexical_lookup.h"
 #include "toolchain/check/node_stack.h"
+#include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/scope_stack.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -50,52 +50,34 @@ class Context {
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
-  // A scope in which `break` and `continue` can be used.
-  struct BreakContinueScope {
-    SemIR::InstBlockId break_target;
-    SemIR::InstBlockId continue_target;
-  };
-
-  // A scope in which `return` can be used.
-  struct ReturnScope {
-    // The declaration from which we can return. Inside a function, this will
-    // be a `FunctionDecl`.
-    SemIR::InstId decl_id;
-
-    // The value corresponding to the current `returned var`, if any. Will be
-    // set and unset as `returned var`s are declared and go out of scope.
-    SemIR::InstId returned_var = SemIR::InstId::Invalid;
-  };
-
   // Stores references for work.
   explicit Context(const Lex::TokenizedBuffer& tokens,
                    DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(Parse::NodeId parse_node, std::string label) -> bool;
+  auto TODO(SemIRLocation loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
-      -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+  auto AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely. The instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+  auto AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
@@ -103,22 +85,26 @@ class Context {
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
-  auto AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst) -> void;
+  auto AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `parse_node_and_inst`.
+  // Replaces the value of the instruction `inst_id` with `node_id_and_inst`.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
   // as a return slot.
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
-                                    SemIR::ParseNodeAndInst parse_node_and_inst)
+                                    SemIR::NodeIdAndInst node_id_and_inst)
       -> void;
 
-  // Adds a package's imports to name lookup, with all libraries together.
-  // sem_irs will all be non-null; has_load_error must be used for any errors.
-  auto AddPackageImports(Parse::NodeId import_node, IdentifierId package_id,
-                         llvm::ArrayRef<const SemIR::File*> sem_irs,
-                         bool has_load_error) -> void;
+  // Sets only the parse node of an instruction. This is only used when setting
+  // the parse node of an imported namespace. Versus
+  // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
+  // in constant evaluation. It's exposed this way mainly so that `insts()` can
+  // remain const.
+  auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
+      -> void {
+    sem_ir().insts().SetNodeId(inst_id, node_id);
+  }
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
@@ -126,123 +112,71 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(Parse::NodeId parse_node, SemIR::NameId name_id,
+  auto LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
-  auto LookupUnqualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id)
+  auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
       -> SemIR::InstId;
 
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
-  auto LookupNameInExactScope(SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
                               const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.
-  auto LookupQualifiedName(Parse::NodeId parse_node, SemIR::NameId name_id,
+  auto LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIR::InstId dup_def_id,
-                             SemIR::InstId prev_def_id) -> void;
+  auto DiagnoseDuplicateName(SemIRLocation dup_def, SemIRLocation prev_def)
+      -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::NodeId parse_node, SemIR::NameId name_id)
+  auto DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
 
-  // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
-  // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
-  // given namespace may contain a mix of both successful and failed name
-  // imports.
-  auto PushScope(SemIR::InstId scope_inst_id = SemIR::InstId::Invalid,
-                 SemIR::NameScopeId scope_id = SemIR::NameScopeId::Invalid,
-                 bool lexical_lookup_has_load_error = false) -> void;
-
-  // Pops the top scope from scope_stack_, cleaning up names from
-  // lexical_lookup_.
-  auto PopScope() -> void;
-
-  // Pops scopes until we return to the specified scope index.
-  auto PopToScope(ScopeIndex index) -> void;
-
-  // Returns the scope index associated with the current scope.
-  auto current_scope_index() const -> ScopeIndex {
-    return current_scope().index;
-  }
-
-  // Returns the name scope associated with the current lexical scope, if any.
-  auto current_scope_id() const -> SemIR::NameScopeId {
-    return current_scope().scope_id;
-  }
-
-  auto GetCurrentScopeParseNode() const -> Parse::NodeId {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
-      return Parse::NodeId::Invalid;
-    }
-    return sem_ir_->insts().GetParseNode(current_scope_inst_id);
-  }
-
-  // Returns true if currently at file scope.
-  auto at_file_scope() const -> bool { return scope_stack_.size() == 1; }
-
-  // Returns true if the current scope is of the specified kind.
-  template <typename InstT>
-  auto CurrentScopeIs() -> bool {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
-      return false;
-    }
-    return sem_ir_->insts().Get(current_scope_inst_id).kind() == InstT::Kind;
-  }
+  // Adds a note to a diagnostic explaining that an interface is not defined.
+  auto NoteUndefinedInterface(SemIR::InterfaceId interface_id,
+                              DiagnosticBuilder& builder) -> void;
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
-    auto current_scope_inst_id = current_scope().scope_inst_id;
-    if (!current_scope_inst_id.is_valid()) {
-      return std::nullopt;
-    }
-    return insts().Get(current_scope_inst_id).TryAs<InstT>();
+    return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
-
-  // If there is no `returned var` in scope, sets the given instruction to be
-  // the current `returned var` and returns an invalid instruction ID. If there
-  // is already a `returned var`, returns it instead.
-  auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
-  auto AddDominatedBlockAndBranch(Parse::NodeId parse_node)
-      -> SemIR::InstBlockId;
+  auto AddDominatedBlockAndBranch(Parse::NodeId node_id) -> SemIR::InstBlockId;
 
   // Adds a `Branch` instruction branching to a new instruction block with a
   // value, and returns the ID of the new block. All paths to the branch target
   // must go through the current block.
-  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+  auto AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                          SemIR::InstId arg_id)
       -> SemIR::InstBlockId;
 
   // Adds a `BranchIf` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block.
-  auto AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+  auto AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
                                     SemIR::InstId cond_id)
       -> SemIR::InstBlockId;
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the instruction block stack to a new block, pops the
   // existing blocks, and pushes the new block onto the instruction block stack.
-  auto AddConvergenceBlockAndPush(Parse::NodeId parse_node, int num_blocks)
+  auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
@@ -252,21 +186,27 @@ class Context {
   // corresponding result values are the elements of `block_args`. Returns an
   // instruction referring to the result value.
   auto AddConvergenceBlockWithArgAndPush(
-      Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+      Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
 
   // Add the current code block to the enclosing function.
-  // TODO: The parse_node is taken for expressions, which can occur in
+  // TODO: The node_id is taken for expressions, which can occur in
   // non-function contexts. This should be refactored to support non-function
-  // contexts, and parse_node removed.
+  // contexts, and node_id removed.
   auto AddCurrentCodeBlockToFunction(
-      Parse::NodeId parse_node = Parse::NodeId::Invalid) -> void;
+      Parse::NodeId node_id = Parse::NodeId::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
   // Returns the type ID for a constant of type `type`.
   auto GetTypeIdForTypeConstant(SemIR::ConstantId constant_id) -> SemIR::TypeId;
+
+  // Returns the type ID for an instruction whose constant value is of type
+  // `type`.
+  auto GetTypeIdForTypeInst(SemIR::InstId inst_id) -> SemIR::TypeId {
+    return GetTypeIdForTypeConstant(constant_values().Get(inst_id));
+  }
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
@@ -292,12 +232,12 @@ class Context {
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
+  // Gets the type for the name of an associated entity.
+  auto GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                               SemIR::TypeId entity_type_id) -> SemIR::TypeId;
+
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
-
-  // Returns a class type for the class described by `class_id`.
-  // TODO: Support generic arguments.
-  auto GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
@@ -316,34 +256,6 @@ class Context {
   // Removes any top-level `const` qualifiers from a type.
   auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
 
-  // Starts handling parameters or arguments.
-  auto ParamOrArgStart() -> void;
-
-  // On a comma, pushes the entry. On return, the top of node_stack_ will be
-  // start_kind.
-  auto ParamOrArgComma() -> void;
-
-  // Detects whether there's an entry to push from the end of a parameter or
-  // argument list, and if so, moves it to the current parameter or argument
-  // list. Does not pop the list. `start_kind` is the node kind at the start
-  // of the parameter or argument list, and will be at the top of the parse node
-  // stack when this function returns.
-  auto ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void;
-
-  // Pops the current parameter or argument list. Should only be called after
-  // `ParamOrArgEndNoPop`.
-  auto ParamOrArgPop() -> SemIR::InstBlockId;
-
-  // Detects whether there's an entry to push. Pops and returns the argument
-  // list. This is the same as `ParamOrArgEndNoPop` followed by `ParamOrArgPop`.
-  auto ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId;
-
-  // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_.
-  auto ParamOrArgSave(SemIR::InstId inst_id) -> void {
-    params_or_args_stack_.AddInstId(inst_id);
-  }
-
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
@@ -352,12 +264,15 @@ class Context {
     inst_blocks().Set(SemIR::InstBlockId::Exports, exports_);
   }
 
+  // Finalizes the initialization function (__global_init).
+  auto FinalizeGlobalInit() -> void;
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
   // Get the Lex::TokenKind of a node for diagnostics.
-  auto token_kind(Parse::NodeId parse_node) -> Lex::TokenKind {
-    return tokens().GetKind(parse_tree().node_token(parse_node));
+  auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
+    return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
   auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
@@ -372,27 +287,33 @@ class Context {
 
   auto inst_block_stack() -> InstBlockStack& { return inst_block_stack_; }
 
-  auto params_or_args_stack() -> InstBlockStack& {
-    return params_or_args_stack_;
+  auto param_and_arg_refs_stack() -> ParamAndArgRefsStack& {
+    return param_and_arg_refs_stack_;
   }
 
   auto args_type_info_stack() -> InstBlockStack& {
     return args_type_info_stack_;
   }
 
-  auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
-    return return_scope_stack_;
-  }
-
-  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
-    return break_continue_stack_;
-  }
-
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_state_stack() -> DeclStateStack& { return decl_state_stack_; }
 
-  auto lexical_lookup() -> LexicalLookup& { return lexical_lookup_; }
+  auto scope_stack() -> ScopeStack& { return scope_stack_; }
+
+  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
+    return scope_stack().return_scope_stack();
+  }
+
+  auto break_continue_stack()
+      -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
+    return scope_stack().break_continue_stack();
+  }
+
+  auto import_ir_constant_values()
+      -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
+    return import_ir_constant_values_;
+  }
 
   // Directly expose SemIR::File data accessors for brevity in calls.
 
@@ -414,8 +335,9 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
-  auto cross_ref_irs() -> ValueStore<SemIR::CrossRefIRId>& {
-    return sem_ir().cross_ref_irs();
+  auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
+    return sem_ir().import_irs();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -450,45 +372,6 @@ class Context {
     SemIR::TypeId type_id_;
   };
 
-  // An entry in scope_stack_.
-  struct ScopeStackEntry {
-    // The sequential index of this scope entry within the file.
-    ScopeIndex index;
-
-    // The instruction associated with this entry, if any. This can be one of:
-    //
-    // - A `ClassDecl`, for a class definition scope.
-    // - A `FunctionDecl`, for the outermost scope in a function
-    //   definition.
-    // - Invalid, for any other scope.
-    SemIR::InstId scope_inst_id;
-
-    // The name scope associated with this entry, if any.
-    SemIR::NameScopeId scope_id;
-
-    // The previous state of lexical_lookup_has_load_error_, restored on pop.
-    bool prev_lexical_lookup_has_load_error;
-
-    // Names which are registered with lexical_lookup_, and will need to be
-    // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names;
-
-    // Whether a `returned var` was introduced in this scope, and needs to be
-    // unregistered when the scope ends.
-    bool has_returned_var = false;
-
-    // TODO: This likely needs to track things which need to be destructed.
-  };
-
-  // If the passed in instruction ID is a LazyImportRef, resolves it for use.
-  // Called when name lookup intends to return an inst_id.
-  auto ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void;
-
-  auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
-  auto current_scope() const -> const ScopeStackEntry& {
-    return scope_stack_.back();
-  }
-
   // Tokens for getting data on literals.
   const Lex::TokenizedBuffer* tokens_;
 
@@ -510,34 +393,15 @@ class Context {
   // The stack of instruction blocks being used for general IR generation.
   InstBlockStack inst_block_stack_;
 
-  // The stack of instruction blocks being used for per-element tracking of
-  // instructions in parameter and argument instruction blocks. Versus
-  // inst_block_stack_, an element will have 1 or more instructions in blocks in
-  // inst_block_stack_, but only ever 1 instruction in blocks here.
-  InstBlockStack params_or_args_stack_;
+  // The stack of instruction blocks being used for param and arg ref blocks.
+  ParamAndArgRefsStack param_and_arg_refs_stack_;
 
   // The stack of instruction blocks being used for type information while
-  // processing arguments. This is used in parallel with params_or_args_stack_.
-  // It's currently only used for struct literals, where we need to track names
-  // for a type separate from the literal arguments.
+  // processing arguments. This is used in parallel with
+  // param_and_arg_refs_stack_. It's currently only used for struct literals,
+  // where we need to track names for a type separate from the literal
+  // arguments.
   InstBlockStack args_type_info_stack_;
-
-  // A stack of scopes from which we can `return`.
-  llvm::SmallVector<ReturnScope> return_scope_stack_;
-
-  // A stack of `break` and `continue` targets.
-  llvm::SmallVector<BreakContinueScope> break_continue_stack_;
-
-  // A stack for scope context.
-  llvm::SmallVector<ScopeStackEntry> scope_stack_;
-
-  // Information about non-lexical scopes. This is a subset of the entries and
-  // the information in scope_stack_.
-  llvm::SmallVector<std::pair<ScopeIndex, SemIR::NameScopeId>>
-      non_lexical_scope_stack_;
-
-  // The index of the next scope that will be pushed onto scope_stack_.
-  ScopeIndex next_scope_index_ = ScopeIndex(0);
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
@@ -545,12 +409,8 @@ class Context {
   // The stack of declarations that could have modifiers.
   DeclStateStack decl_state_stack_;
 
-  // Tracks lexical lookup results.
-  LexicalLookup lexical_lookup_;
-
-  // Whether lexical_lookup_ has load errors, updated whenever scope_stack_ is
-  // pushed or popped.
-  bool lexical_lookup_has_load_error_ = false;
+  // The stack of scopes we are currently within.
+  ScopeStack scope_stack_;
 
   // Cache of reverse mapping from type constants to types.
   //
@@ -564,6 +424,12 @@ class Context {
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Per-import constant values. These refer to the main IR and mainly serve as
+  // a lookup table for quick access.
+  //
+  // Inline 0 elements because it's expected to require heap allocation.
+  llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
 };
 
 }  // namespace Carbon::Check

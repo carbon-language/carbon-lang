@@ -10,7 +10,7 @@ class Class {
     // later.
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+9]]:12: ERROR: Member access into incomplete class `Class`.
     // CHECK:STDERR:     return Class.F();
-    // CHECK:STDERR:            ^~~~~
+    // CHECK:STDERR:            ^~~~~~~
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
     // CHECK:STDERR: class Class {
     // CHECK:STDERR: ^~~~~~~~~~~~~
@@ -34,22 +34,29 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Class = %Class.decl} [template]
-// CHECK:STDOUT:   %Class.decl = class_decl @Class, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:     %return.var.loc23: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

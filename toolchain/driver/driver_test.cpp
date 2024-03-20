@@ -46,12 +46,12 @@ class DriverTest : public testing::Test {
     test_tmpdir_ = tmpdir_env;
   }
 
-  auto CreateTestFile(llvm::StringRef text,
-                      llvm::StringRef file_name = "test_file.carbon")
+  auto MakeTestFile(llvm::StringRef text,
+                    llvm::StringRef filename = "test_file.carbon")
       -> llvm::StringRef {
-    fs_.addFile(file_name, /*ModificationTime=*/0,
+    fs_.addFile(filename, /*ModificationTime=*/0,
                 llvm::MemoryBuffer::getMemBuffer(text));
-    return file_name;
+    return filename;
   }
 
   // Makes a temp directory and changes the working directory to it. Returns an
@@ -97,19 +97,19 @@ class DriverTest : public testing::Test {
 };
 
 TEST_F(DriverTest, BadCommandErrors) {
-  EXPECT_FALSE(driver_.RunCommand({}));
+  EXPECT_FALSE(driver_.RunCommand({}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver_.RunCommand({"foo"}));
+  EXPECT_FALSE(driver_.RunCommand({"foo"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver_.RunCommand({"foo --bar --baz"}));
+  EXPECT_FALSE(driver_.RunCommand({"foo --bar --baz"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
 TEST_F(DriverTest, CompileCommandErrors) {
   // No input file. This error message is important so check all of it.
-  EXPECT_FALSE(driver_.RunCommand({"compile"}));
+  EXPECT_FALSE(driver_.RunCommand({"compile"}).success);
   EXPECT_THAT(
       test_error_stream_.TakeStr(),
       StrEq("ERROR: Not all required positional arguments were provided. First "
@@ -117,17 +117,19 @@ TEST_F(DriverTest, CompileCommandErrors) {
 
   // Invalid output filename. No reliably error message here.
   // TODO: Likely want a different filename on Windows.
-  auto empty_file = CreateTestFile("");
+  auto empty_file = MakeTestFile("");
   EXPECT_FALSE(
-      driver_.RunCommand({"compile", "--output=/dev/empty", empty_file}));
+      driver_.RunCommand({"compile", "--output=/dev/empty", empty_file})
+          .success);
   EXPECT_THAT(test_error_stream_.TakeStr(),
               ContainsRegex("ERROR: .*/dev/empty.*"));
 }
 
 TEST_F(DriverTest, DumpTokens) {
-  auto file = CreateTestFile("Hello World");
+  auto file = MakeTestFile("Hello World");
   EXPECT_TRUE(
-      driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file}));
+      driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file})
+          .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
   EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
@@ -135,9 +137,11 @@ TEST_F(DriverTest, DumpTokens) {
 }
 
 TEST_F(DriverTest, DumpParseTree) {
-  auto file = CreateTestFile("var v: i32 = 42;");
-  EXPECT_TRUE(driver_.RunCommand(
-      {"compile", "--phase=parse", "--dump-parse-tree", file}));
+  auto file = MakeTestFile("var v: i32 = 42;");
+  EXPECT_TRUE(
+      driver_
+          .RunCommand({"compile", "--phase=parse", "--dump-parse-tree", file})
+          .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
   EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
@@ -146,15 +150,18 @@ TEST_F(DriverTest, DumpParseTree) {
 
 TEST_F(DriverTest, StdoutOutput) {
   // Use explicit filenames so we can look for those to validate output.
-  CreateTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
+  MakeTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
 
-  EXPECT_TRUE(driver_.RunCommand({"compile", "--output=-", "test.carbon"}));
+  EXPECT_TRUE(
+      driver_.RunCommand({"compile", "--output=-", "test.carbon"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // The default is textual assembly.
   EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("Main:"));
 
-  EXPECT_TRUE(driver_.RunCommand(
-      {"compile", "--output=-", "--force-obj-output", "test.carbon"}));
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--output=-", "--force-obj-output",
+                               "test.carbon"})
+                  .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   std::string output = test_output_stream_.TakeStr();
   auto result =
@@ -170,11 +177,11 @@ TEST_F(DriverTest, FileOutput) {
 
   // Use explicit filenames as the default output filename is computed from
   // this, and we can use this to validate output.
-  CreateTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
+  MakeTestFile("fn Main() -> i32 { return 0; }", "test.carbon");
 
   // Object output (the default) uses `.o`.
   // TODO: This should actually reflect the platform defaults.
-  EXPECT_TRUE(driver_.RunCommand({"compile", "test.carbon"}));
+  EXPECT_TRUE(driver_.RunCommand({"compile", "test.carbon"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Ensure we wrote an object file of some form with the correct name.
   auto result = llvm::object::createBinary("test.o");
@@ -185,7 +192,8 @@ TEST_F(DriverTest, FileOutput) {
 
   // Assembly output uses `.s`.
   // TODO: This should actually reflect the platform defaults.
-  EXPECT_TRUE(driver_.RunCommand({"compile", "--asm-output", "test.carbon"}));
+  EXPECT_TRUE(
+      driver_.RunCommand({"compile", "--asm-output", "test.carbon"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.
   EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));

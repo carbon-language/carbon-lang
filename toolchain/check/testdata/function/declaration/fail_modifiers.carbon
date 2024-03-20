@@ -70,16 +70,36 @@ base fn InvalidModifier();
 // CHECK:STDERR: ^~~~~~~
 default final virtual fn ModifiersConflict2() {}
 
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
+// CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:8: ERROR: `private` must appear before `extern`.
+// CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
+// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `extern` previously appeared here.
+// CHECK:STDERR: extern private fn ExternOrderAndConflict() {}
+// CHECK:STDERR: ^~~~~~
+extern private fn ExternOrderAndConflict() {}
+
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.WrongOrder = %WrongOrder, .DuplicateVirtual = %DuplicateVirtual, .TwoAccess = %TwoAccess, .ModifiersConflict = %ModifiersConflict, .InvalidModifier = %InvalidModifier, .ModifiersConflict2 = %ModifiersConflict2} [template]
-// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder [template]
-// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual [template]
-// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess [template]
-// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict [template]
-// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier [template]
-// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .WrongOrder = %WrongOrder
+// CHECK:STDOUT:     .DuplicateVirtual = %DuplicateVirtual
+// CHECK:STDOUT:     .TwoAccess = %TwoAccess
+// CHECK:STDOUT:     .ModifiersConflict = %ModifiersConflict
+// CHECK:STDOUT:     .InvalidModifier = %InvalidModifier
+// CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2
+// CHECK:STDOUT:     .ExternOrderAndConflict = %ExternOrderAndConflict
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder [template] {}
+// CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual [template] {}
+// CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess [template] {}
+// CHECK:STDOUT:   %ModifiersConflict: <function> = fn_decl @ModifiersConflict [template] {}
+// CHECK:STDOUT:   %InvalidModifier: <function> = fn_decl @InvalidModifier [template] {}
+// CHECK:STDOUT:   %ModifiersConflict2: <function> = fn_decl @ModifiersConflict2 [template] {}
+// CHECK:STDOUT:   %ExternOrderAndConflict: <function> = fn_decl @ExternOrderAndConflict [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @WrongOrder();
@@ -99,6 +119,11 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDOUT: fn @InvalidModifier();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ModifiersConflict2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ExternOrderAndConflict() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

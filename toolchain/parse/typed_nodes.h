@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 #define CARBON_TOOLCHAIN_PARSE_TYPED_NODES_H_
 
+#include <optional>
+
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -224,9 +226,9 @@ struct BindingPattern {
 };
 
 // `name:! Type`
-struct GenericBindingPattern {
+struct CompileTimeBindingPattern {
   static constexpr auto Kind =
-      NodeKind::GenericBindingPattern.Define(NodeCategory::Pattern);
+      NodeKind::CompileTimeBindingPattern.Define(NodeCategory::Pattern);
 
   NodeIdOneOf<IdentifierName, SelfValueName> name;
   AnyExprId type;
@@ -243,7 +245,7 @@ struct Addr {
 struct Template {
   static constexpr auto Kind = NodeKind::Template.Define(NodeCategory::Pattern);
 
-  // This is a GenericBindingPatternId in any valid program.
+  // This is a CompileTimeBindingPatternId in any valid program.
   // TODO: Should the parser enforce that?
   AnyPatternId inner;
 };
@@ -283,9 +285,9 @@ struct ReturnType {
 };
 
 // A function signature: `fn F() -> i32`.
-template <const NodeKind& KindT>
+template <const NodeKind& KindT, NodeCategory Category>
 struct FunctionSignature {
-  static constexpr auto Kind = KindT.Define(NodeCategory::Decl);
+  static constexpr auto Kind = KindT.Define(Category);
 
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -296,9 +298,10 @@ struct FunctionSignature {
   std::optional<ReturnTypeId> return_type;
 };
 
-using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl>;
+using FunctionDecl =
+    FunctionSignature<NodeKind::FunctionDecl, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart, NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -307,6 +310,25 @@ struct FunctionDefinition {
 
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
+};
+
+// `alias` nodes
+// -------------
+
+using AliasIntroducer = LeafNode<NodeKind::AliasIntroducer>;
+using AliasInitializer = LeafNode<NodeKind::AliasInitializer>;
+
+// An `alias` declaration: `alias a = b;`.
+struct Alias {
+  static constexpr auto Kind =
+      NodeKind::Alias.Define(NodeCategory::Decl | NodeCategory::Statement);
+
+  AliasIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  // For now, this is either an IdentifierName or a QualifiedName.
+  AnyNameComponentId name;
+  AliasInitializerId equals;
+  AnyExprId initializer;
 };
 
 // `let` nodes
@@ -323,8 +345,12 @@ struct LetDecl {
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   AnyPatternId pattern;
-  LetInitializerId equals;
-  AnyExprId initializer;
+
+  struct Initializer {
+    LetInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // `var` nodes
@@ -332,13 +358,7 @@ struct LetDecl {
 
 using VariableIntroducer = LeafNode<NodeKind::VariableIntroducer>;
 using ReturnedModifier = LeafNode<NodeKind::ReturnedModifier>;
-
-// The initializer part of a `var` declaration.
-struct VariableInitializer {
-  static constexpr auto Kind = NodeKind::VariableInitializer.Define();
-
-  AnyExprId value;
-};
+using VariableInitializer = LeafNode<NodeKind::VariableInitializer>;
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
@@ -350,7 +370,11 @@ struct VariableDecl {
   std::optional<ReturnedModifierId> returned;
   AnyPatternId pattern;
 
-  std::optional<VariableInitializerId> initializer;
+  struct Initializer {
+    VariableInitializerId equals;
+    AnyExprId value;
+  };
+  std::optional<Initializer> initializer;
 };
 
 // Statement nodes
@@ -481,10 +505,81 @@ struct WhileStatement {
   CodeBlockId body;
 };
 
+using MatchConditionStart = LeafNode<NodeKind::MatchConditionStart>;
+
+struct MatchCondition {
+  static constexpr auto Kind = NodeKind::MatchCondition.Define();
+
+  MatchConditionStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchIntroducer = LeafNode<NodeKind::MatchIntroducer>;
+struct MatchStatementStart {
+  static constexpr auto Kind = NodeKind::MatchStatementStart.Define();
+
+  MatchIntroducerId introducer;
+  MatchConditionId left_brace;
+};
+
+using MatchCaseIntroducer = LeafNode<NodeKind::MatchCaseIntroducer>;
+using MatchCaseGuardIntroducer = LeafNode<NodeKind::MatchCaseGuardIntroducer>;
+using MatchCaseGuardStart = LeafNode<NodeKind::MatchCaseGuardStart>;
+
+struct MatchCaseGuard {
+  static constexpr auto Kind = NodeKind::MatchCaseGuard.Define();
+  MatchCaseGuardIntroducerId introducer;
+  MatchCaseGuardStartId left_paren;
+  AnyExprId condition;
+};
+
+using MatchCaseEqualGreater = LeafNode<NodeKind::MatchCaseEqualGreater>;
+
+struct MatchCaseStart {
+  static constexpr auto Kind = NodeKind::MatchCaseStart.Define();
+  MatchCaseIntroducerId introducer;
+  AnyPatternId pattern;
+  std::optional<MatchCaseGuardId> guard;
+  MatchCaseEqualGreaterId equal_greater_token;
+};
+
+struct MatchCase {
+  static constexpr auto Kind = NodeKind::MatchCase.Define();
+  MatchCaseStartId head;
+  llvm::SmallVector<AnyStatementId> statements;
+};
+
+using MatchDefaultIntroducer = LeafNode<NodeKind::MatchDefaultIntroducer>;
+using MatchDefaultEqualGreater = LeafNode<NodeKind::MatchDefaultEqualGreater>;
+
+struct MatchDefaultStart {
+  static constexpr auto Kind = NodeKind::MatchDefaultStart.Define();
+  MatchDefaultIntroducerId introducer;
+  MatchDefaultEqualGreaterId equal_greater_token;
+};
+
+struct MatchDefault {
+  static constexpr auto Kind = NodeKind::MatchDefault.Define();
+
+  MatchDefaultStartId introducer;
+  llvm::SmallVector<AnyStatementId> statements;
+};
+
+// A `match` statement: `match (expr) { case (...) => {...} default => {...}}`.
+struct MatchStatement {
+  static constexpr auto Kind =
+      NodeKind::MatchStatement.Define(NodeCategory::Statement);
+
+  MatchStatementStartId head;
+
+  llvm::SmallVector<MatchCaseId> cases;
+  std::optional<MatchDefaultId> default_case;
+};
+
 // Expression nodes
 // ----------------
 
-using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart, NodeCategory::Expr>;
+using ArrayExprStart = LeafNode<NodeKind::ArrayExprStart>;
 
 // The start of an array type, `[i32;`.
 //
@@ -525,7 +620,8 @@ using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
-  static constexpr auto Kind = NodeKind::ParenExpr.Define(NodeCategory::Expr);
+  static constexpr auto Kind =
+      NodeKind::ParenExpr.Define(NodeCategory::Expr | NodeCategory::MemberExpr);
 
   ExprOpenParenId left_paren;
   AnyExprId expr;
@@ -561,22 +657,22 @@ struct CallExpr {
   CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
 };
 
-// A simple member access expression: `a.b`.
+// A member access expression: `a.b` or `a.(b)`.
 struct MemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::MemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
-// A simple indirect member access expression: `a->b`.
+// An indirect member access expression: `a->b` or `a->(b)`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::PointerMemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
 // A prefix operator expression.
@@ -848,14 +944,24 @@ struct InterfaceDefinition {
 
 // `impl`
 using ImplIntroducer = LeafNode<NodeKind::ImplIntroducer>;
-// `as`
-using ImplAs = LeafNode<NodeKind::ImplAs>;
 
 // `forall [...]`
 struct ImplForall {
   static constexpr auto Kind = NodeKind::ImplForall.Define();
 
   ImplicitParamListId params;
+};
+
+// `as` with no type before it
+using DefaultSelfImplAs =
+    LeafNode<NodeKind::DefaultSelfImplAs, NodeCategory::ImplAs>;
+
+// `<type> as`
+struct TypeImplAs {
+  static constexpr auto Kind =
+      NodeKind::TypeImplAs.Define(NodeCategory::ImplAs);
+
+  AnyExprId type_expr;
 };
 
 // `impl T as I`
@@ -866,8 +972,7 @@ struct ImplSignature {
   ImplIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ImplForallId> forall;
-  std::optional<AnyExprId> type_expr;
-  ImplAsId as;
+  AnyImplAsId as;
   AnyExprId interface;
 };
 

@@ -40,14 +40,12 @@ class C {
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type C, <error> [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.n: <error>} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block5>
+// CHECK:STDOUT:   %.loc17: i32 = block_arg <unexpected instblockref block6>
 // CHECK:STDOUT:   %x: i32 = bind_name x, %.loc17
-// CHECK:STDOUT:   %C.decl = class_decl @C, ()
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -55,6 +53,7 @@ class C {
 // CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .n = <unexpected instref inst+22>
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .n = <unexpected instref inst+21>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

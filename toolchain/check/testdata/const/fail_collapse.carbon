@@ -25,8 +25,20 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.G = %G} [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:     %.loc10_16: type = const_type i32 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc10_9: type = const_type const i32 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc10_26: type = ptr_type const i32 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc10_27: type = ptr_type const i32* [template = constants.%.3]
+// CHECK:STDOUT:     %p.loc10_6.1: const i32** = param p
+// CHECK:STDOUT:     @G.%p: const i32** = bind_name p, %p.loc10_6.1
+// CHECK:STDOUT:     %.loc10_36: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_37: type = ptr_type i32* [template = constants.%.5]
+// CHECK:STDOUT:     %return.var: ref i32** = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {

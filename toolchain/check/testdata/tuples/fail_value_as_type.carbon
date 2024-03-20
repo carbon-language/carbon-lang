@@ -14,15 +14,15 @@ var x: (1, );
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (<error>) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_12.1: (i32,) = tuple_literal (%.loc10_9)
-// CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   %x.var: ref (<error>,) = var x
-// CHECK:STDOUT:   %x: ref (<error>,) = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc10_12: (i32,) = tuple_literal (%.loc10_9)
+// CHECK:STDOUT:   %x.var: ref <error> = var x
+// CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

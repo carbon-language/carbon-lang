@@ -49,10 +49,10 @@ enum class DiagnosticLevel : int8_t {
 
 // A location for a diagnostic in a file. The lifetime of a DiagnosticLocation
 // is required to be less than SourceBuffer that it refers to due to the
-// contained file_name and line references.
+// contained filename and line references.
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.
-  llvm::StringRef file_name;
+  llvm::StringRef filename;
   // A reference to the line of the error.
   llvm::StringRef line;
   // 1-based line number.
@@ -136,6 +136,15 @@ class DiagnosticConsumer {
   virtual auto Flush() -> void {}
 };
 
+// Known diagnostic type translations. These are enumerated because `llvm::Any`
+// doesn't expose the contained type; instead, we infer it from a given
+// diagnostic.
+enum class DiagnosticTypeTranslation : int8_t {
+  None,
+  NameId,
+  TypeId,
+};
+
 // An interface that can translate some representation of a location into a
 // diagnostic location.
 //
@@ -147,9 +156,38 @@ class DiagnosticLocationTranslator {
   virtual ~DiagnosticLocationTranslator() = default;
 
   virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
+
+  // Translates arg types as needed. Not all uses support translation, so the
+  // default simply errors.
+  virtual auto TranslateArg(DiagnosticTypeTranslation translation,
+                            llvm::Any /*arg*/) const -> llvm::Any {
+    CARBON_FATAL() << "Unexpected call to TranslateArg: "
+                   << static_cast<int8_t>(translation);
+  }
+};
+
+template <typename StorageTypeT, DiagnosticTypeTranslation TranslationV>
+struct DiagnosticTypeInfo {
+  using StorageType = StorageTypeT;
+  static constexpr DiagnosticTypeTranslation Translation = TranslationV;
 };
 
 namespace Internal {
+
+// Determines whether there's a DiagnosticType member on Arg.
+template <typename Arg>
+concept HasDiagnosticType =
+    requires { std::type_identity<typename Arg::DiagnosticType>(); };
+
+// The default implementation with no translation.
+template <typename Arg, typename /*Unused*/ = void>
+struct DiagnosticTypeForArg
+    : public DiagnosticTypeInfo<Arg, DiagnosticTypeTranslation::None> {};
+
+// Exposes a custom translation for an argument type.
+template <typename Arg>
+  requires HasDiagnosticType<Arg>
+struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
@@ -184,16 +222,18 @@ struct DiagnosticBase {
   inline auto FormatFnImpl(const DiagnosticMessage& message,
                            std::index_sequence<N...> /*indices*/) const
       -> std::string {
-    assert(message.format_args.size() == sizeof...(Args));
-    return llvm::formatv(message.format.data(),
-                         llvm::any_cast<Args>(message.format_args[N])...);
+    CARBON_CHECK(message.format_args.size() == sizeof...(Args));
+    return llvm::formatv(
+        message.format.data(),
+        llvm::any_cast<typename DiagnosticTypeForArg<Args>::StorageType>(
+            message.format_args[N])...);
   }
 };
 
 // Disable type deduction based on `args`; the type of `diagnostic_base`
 // determines the diagnostic's parameter types.
 template <typename Arg>
-using NoTypeDeduction = std::common_type_t<Arg>;
+using NoTypeDeduction = std::type_identity_t<Arg>;
 
 }  // namespace Internal
 
@@ -232,8 +272,9 @@ class DiagnosticEmitter {
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
           << static_cast<int>(diagnostic_base.Level);
-      diagnostic_.notes.push_back(MakeMessage(
-          emitter_, location, diagnostic_base, {llvm::Any(args)...}));
+      diagnostic_.notes.push_back(
+          MakeMessage(emitter_, location, diagnostic_base,
+                      {emitter_->MakeAny<Args>(args)...}));
       return *this;
     }
 
@@ -241,8 +282,8 @@ class DiagnosticEmitter {
     // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
     template <typename... Args>
     auto Emit() -> void {
-      for (auto* annotator : emitter_->annotators_) {
-        annotator->Annotate(*this);
+      for (auto annotate_fn : emitter_->annotate_fns_) {
+        annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
     }
@@ -296,7 +337,7 @@ class DiagnosticEmitter {
   auto Emit(LocationT location,
             const Internal::DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticBuilder(this, location, diagnostic_base, {llvm::Any(args)...})
+    DiagnosticBuilder(this, location, diagnostic_base, {MakeAny<Args>(args)...})
         .Emit();
   }
 
@@ -311,41 +352,30 @@ class DiagnosticEmitter {
              const Internal::DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
     return DiagnosticBuilder(this, location, diagnostic_base,
-                             {llvm::Any(args)...});
+                             {MakeAny<Args>(args)...});
   }
 
  private:
-  // Base class for scopes in which we perform diagnostic annotation, such as
-  // adding notes with contextual information.
-  class DiagnosticAnnotationScopeBase {
-   public:
-    virtual auto Annotate(DiagnosticBuilder& builder) -> void = 0;
-
-    DiagnosticAnnotationScopeBase(const DiagnosticAnnotationScopeBase&) =
-        delete;
-    auto operator=(const DiagnosticAnnotationScopeBase&)
-        -> DiagnosticAnnotationScopeBase& = delete;
-
-   protected:
-    explicit DiagnosticAnnotationScopeBase(DiagnosticEmitter* emitter)
-        : emitter_(emitter) {
-      emitter_->annotators_.push_back(this);
+  // Converts an argument to llvm::Any for storage, handling input to storage
+  // type translation when needed.
+  template <typename Arg>
+  auto MakeAny(Arg arg) -> llvm::Any {
+    if constexpr (Internal::DiagnosticTypeForArg<Arg>::Translation ==
+                  DiagnosticTypeTranslation::None) {
+      return arg;
+    } else {
+      return translator_->TranslateArg(
+          Internal::DiagnosticTypeForArg<Arg>::Translation, arg);
     }
-    ~DiagnosticAnnotationScopeBase() {
-      CARBON_CHECK(emitter_->annotators_.back() == this);
-      emitter_->annotators_.pop_back();
-    }
-
-   private:
-    DiagnosticEmitter* emitter_;
-  };
+  }
 
   template <typename LocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
 
   DiagnosticLocationTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
-  llvm::SmallVector<DiagnosticAnnotationScopeBase*> annotators_;
+  llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
+      annotate_fns_;
 };
 
 class StreamDiagnosticConsumer : public DiagnosticConsumer {
@@ -365,7 +395,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   }
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix = "")
       -> void {
-    *stream_ << message.location.file_name;
+    *stream_ << message.location.filename;
     if (message.location.line_number > 0) {
       *stream_ << ":" << message.location.line_number;
       if (message.location.column_number > 0) {
@@ -432,23 +462,18 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
 // given emitter. That function can annotate the diagnostic by calling
 // `builder.Note` to add notes.
 template <typename LocationT, typename AnnotateFn>
-class DiagnosticAnnotationScope
-    : private DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase {
-  using Base =
-      typename DiagnosticEmitter<LocationT>::DiagnosticAnnotationScopeBase;
-
+class DiagnosticAnnotationScope {
  public:
   DiagnosticAnnotationScope(DiagnosticEmitter<LocationT>* emitter,
                             AnnotateFn annotate)
-      : Base(emitter), annotate_(annotate) {}
+      : emitter_(emitter), annotate_(std::move(annotate)) {
+    emitter_->annotate_fns_.push_back(annotate_);
+  }
+  ~DiagnosticAnnotationScope() { emitter_->annotate_fns_.pop_back(); }
 
  private:
-  auto Annotate(
-      typename DiagnosticEmitter<LocationT>::DiagnosticBuilder& builder)
-      -> void override {
-    annotate_(builder);
-  }
-
+  DiagnosticEmitter<LocationT>* emitter_;
+  // Make a copy of the annotation function to ensure that it lives long enough.
   AnnotateFn annotate_;
 };
 

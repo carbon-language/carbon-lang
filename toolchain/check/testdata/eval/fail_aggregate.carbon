@@ -35,11 +35,17 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.array_index = %array_index} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .array_index = %array_index
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_24: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_25: type = array_type %.loc12_24, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %array_index.var: ref [i32; 1] = var array_index
 // CHECK:STDOUT:   %array_index: ref [i32; 1] = bind_name array_index, %array_index.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_30: i32 = int_literal 0 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_32: (i32,) = tuple_literal (%.loc12_30)
 // CHECK:STDOUT:   %.loc12_45: i32 = int_literal 5 [template = constants.%.6]
@@ -68,6 +74,7 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.loc12_55.17: ref [i32; 4] = temporary %.loc12_55.2, %.loc12_55.16
 // CHECK:STDOUT:   %.loc12_71.1: ref i32 = array_index %.loc12_55.17, %.loc12_70
 // CHECK:STDOUT:   %.loc12_71.2: i32 = bind_value %.loc12_71.1
-// CHECK:STDOUT:   assign %array_index.var, <error>
+// CHECK:STDOUT:   assign file.%array_index.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

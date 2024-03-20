@@ -110,6 +110,10 @@ static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
 static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                             bool saw_modifier) -> bool {
   switch (context.PositionKind()) {
+    case Lex::TokenKind::Alias: {
+      ApplyIntroducer(context, state, NodeKind::AliasIntroducer, State::Alias);
+      return true;
+    }
     case Lex::TokenKind::Base: {
       HandleBaseAsDecl(context, state);
       return true;
@@ -195,6 +199,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
       // also modifiers (such as `base`). Other introducer tokens need to be
       // added by hand.
       switch (context.PositionKind(Lookahead::NextToken)) {
+        case Lex::TokenKind::Alias:
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Constraint:
         case Lex::TokenKind::Fn:

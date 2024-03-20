@@ -32,7 +32,7 @@ cc_test(
     deps = [
         ":token_kind",
         "//testing/base:gtest_main",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -61,7 +61,7 @@ cc_library(
         "//common:check",
         "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -87,7 +87,7 @@ cc_binary(
         ":numeric_literal",
         "//common:check",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark_main",
     ],
 )
 
@@ -102,7 +102,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -140,7 +140,7 @@ cc_binary(
     deps = [
         ":string_literal",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark_main",
     ],
 )
 
@@ -155,7 +155,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -223,7 +223,7 @@ cc_library(
         ":tokenized_buffer",
         "//common:check",
         "//toolchain/base:value_store",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -242,7 +242,7 @@ cc_test(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "//toolchain/testing:yaml_test_helpers",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -274,8 +274,8 @@ cc_binary(
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
-        "@com_github_google_benchmark//:benchmark_main",
-        "@com_google_absl//absl/random",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark_main",
         "@llvm-project//llvm:Support",
     ],
 )

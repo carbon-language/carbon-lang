@@ -4,9 +4,10 @@
 
 #include "common/command_line.h"
 
-#include <initializer_list>
 #include <memory>
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon::CommandLine {
@@ -91,6 +92,8 @@ class MetaPrinter {
   void RegisterWithCommand(const Command& command, CommandBuilder& builder);
 
   void PrintHelp(const Command& command) const;
+  void PrintHelpForSubcommandName(const Command& command,
+                                  llvm::StringRef subcommand_name) const;
   void PrintVersion(const Command& command) const;
   void PrintSubcommands(const Command& command) const;
 
@@ -152,6 +155,13 @@ line usage, and details of each option that can be provided.
       .help_short = SubHelpCommandInfo.help_short,
   };
 
+  static constexpr ArgInfo HelpSubcommandArgInfo = {
+      .name = "subcommand",
+      .help = R"""(
+Which subcommand to print help information for.
+)""",
+  };
+
   static constexpr CommandInfo VersionCommandInfo = {
       .name = "version",
       .help = R"""(
@@ -197,6 +207,9 @@ Prints the version of this command.
   // A flag that may be configured during command line parsing to select between
   // long and short form help output.
   bool short_help_ = false;
+
+  // The requested subcommand to print help information for.
+  llvm::StringRef help_subcommand_;
 };
 
 void MetaPrinter::RegisterWithCommand(const Command& command,
@@ -211,7 +224,16 @@ void MetaPrinter::RegisterWithCommand(const Command& command,
     builder.AddSubcommand(
         is_subcommand ? SubHelpCommandInfo : HelpCommandInfo,
         [&](CommandBuilder& sub_b) {
-          sub_b.Meta([this, &command]() { PrintHelp(command); });
+          sub_b.AddStringPositionalArg(HelpSubcommandArgInfo, [&](auto& arg_b) {
+            arg_b.Set(&help_subcommand_);
+          });
+          sub_b.Meta([this, &command]() {
+            if (help_subcommand_.empty()) {
+              PrintHelp(command);
+            } else {
+              PrintHelpForSubcommandName(command, help_subcommand_);
+            }
+          });
         });
 
     // Only add version printing support if there is a version string
@@ -277,6 +299,19 @@ void MetaPrinter::PrintHelp(const Command& command) const {
   // End with a blank line for the long help to make it easier to separate from
   // anything that follows in the shell.
   out_ << "\n";
+}
+
+void MetaPrinter::PrintHelpForSubcommandName(
+    const Command& command, llvm::StringRef subcommand_name) const {
+  for (const auto& subcommand : command.subcommands) {
+    if (subcommand->info.name == subcommand_name) {
+      PrintHelp(*subcommand);
+      return;
+    }
+  }
+
+  out_ << "ERROR: Could not find a subcommand named '" << subcommand_name
+       << "'.\n";
 }
 
 void MetaPrinter::PrintVersion(const Command& command) const {

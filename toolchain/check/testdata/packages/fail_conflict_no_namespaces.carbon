@@ -22,7 +22,7 @@ package Example library "var" api;
 // CHECK:STDERR: ^~~~~~~~~
 var Foo: i32;
 
-// --- conflict.carbon
+// --- fail_conflict.carbon
 
 package Example library "conflict" api;
 
@@ -32,8 +32,10 @@ import library "var";
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
@@ -41,16 +43,20 @@ import library "var";
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %Foo} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Foo = %lazy_import_ref.1} [template]
-// CHECK:STDOUT:   %lazy_import_ref.1 = lazy_import_ref ir1, inst+1
-// CHECK:STDOUT:   %lazy_import_ref.2 = lazy_import_ref ir2, inst+2
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Foo = %import_ref.1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

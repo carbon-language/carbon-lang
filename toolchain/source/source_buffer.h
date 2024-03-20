@@ -36,14 +36,13 @@ class SourceBuffer {
  public:
   // Opens and reads the contents of stdin. Returns a SourceBuffer on success.
   // Prints an error and returns nullopt on failure.
-  static auto CreateFromStdin(DiagnosticConsumer& consumer)
+  static auto MakeFromStdin(DiagnosticConsumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Opens the requested file. Returns a SourceBuffer on success. Prints an
   // error and returns nullopt on failure.
-  static auto CreateFromFile(llvm::vfs::FileSystem& fs,
-                             llvm::StringRef filename,
-                             DiagnosticConsumer& consumer)
+  static auto MakeFromFile(llvm::vfs::FileSystem& fs, llvm::StringRef filename,
+                           DiagnosticConsumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Use one of the factory functions above to create a source buffer.
@@ -60,7 +59,7 @@ class SourceBuffer {
  private:
   // Creates a `SourceBuffer` from the given `llvm::MemoryBuffer`. Prints an
   // error and returns nullopt on failure.
-  static auto CreateFromMemoryBuffer(
+  static auto MakeFromMemoryBuffer(
       llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
       llvm::StringRef filename, bool is_regular_file,
       DiagnosticConsumer& consumer) -> std::optional<SourceBuffer>;

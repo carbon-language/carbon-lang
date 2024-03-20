@@ -11,33 +11,32 @@ namespace Carbon::Check {
 // -------
 
 auto HandleWhileConditionStart(Context& context,
-                               Parse::WhileConditionStartId parse_node)
-    -> bool {
+                               Parse::WhileConditionStartId node_id) -> bool {
   // Branch to the loop header block. Note that we create a new block here even
   // if the current block is empty; this ensures that the loop always has a
   // preheader block.
-  auto loop_header_id = context.AddDominatedBlockAndBranch(parse_node);
+  auto loop_header_id = context.AddDominatedBlockAndBranch(node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop header block.
   context.inst_block_stack().Push(loop_header_id);
   context.AddCurrentCodeBlockToFunction();
 
-  context.node_stack().Push(parse_node, loop_header_id);
+  context.node_stack().Push(node_id, loop_header_id);
   return true;
 }
 
-auto HandleWhileCondition(Context& context, Parse::WhileConditionId parse_node)
+auto HandleWhileCondition(Context& context, Parse::WhileConditionId node_id)
     -> bool {
   auto cond_value_id = context.node_stack().PopExpr();
   auto loop_header_id =
       context.node_stack().Peek<Parse::NodeKind::WhileConditionStart>();
-  cond_value_id = ConvertToBoolValue(context, parse_node, cond_value_id);
+  cond_value_id = ConvertToBoolValue(context, node_id, cond_value_id);
 
   // Branch to either the loop body or the loop exit block.
   auto loop_body_id =
-      context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
-  auto loop_exit_id = context.AddDominatedBlockAndBranch(parse_node);
+      context.AddDominatedBlockAndBranchIf(node_id, cond_value_id);
+  auto loop_exit_id = context.AddDominatedBlockAndBranch(node_id);
   context.inst_block_stack().Pop();
 
   // Start emitting the loop body.
@@ -46,11 +45,11 @@ auto HandleWhileCondition(Context& context, Parse::WhileConditionId parse_node)
   context.break_continue_stack().push_back(
       {.break_target = loop_exit_id, .continue_target = loop_header_id});
 
-  context.node_stack().Push(parse_node, loop_exit_id);
+  context.node_stack().Push(node_id, loop_exit_id);
   return true;
 }
 
-auto HandleWhileStatement(Context& context, Parse::WhileStatementId parse_node)
+auto HandleWhileStatement(Context& context, Parse::WhileStatementId node_id)
     -> bool {
   auto loop_exit_id =
       context.node_stack().Pop<Parse::NodeKind::WhileCondition>();
@@ -59,7 +58,7 @@ auto HandleWhileStatement(Context& context, Parse::WhileStatementId parse_node)
   context.break_continue_stack().pop_back();
 
   // Add the loop backedge.
-  context.AddInst({parse_node, SemIR::Branch{loop_header_id}});
+  context.AddInst({node_id, SemIR::Branch{loop_header_id}});
   context.inst_block_stack().Pop();
 
   // Start emitting the loop exit block.
@@ -71,38 +70,37 @@ auto HandleWhileStatement(Context& context, Parse::WhileStatementId parse_node)
 // `for`
 // -----
 
-auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId parse_node)
+auto HandleForHeaderStart(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleForHeaderStart");
+  return context.TODO(node_id, "HandleForHeaderStart");
 }
 
-auto HandleForIn(Context& context, Parse::ForInId parse_node) -> bool {
+auto HandleForIn(Context& context, Parse::ForInId node_id) -> bool {
   context.decl_state_stack().Pop(DeclState::Var);
-  return context.TODO(parse_node, "HandleForIn");
+  return context.TODO(node_id, "HandleForIn");
 }
 
-auto HandleForHeader(Context& context, Parse::ForHeaderId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleForHeader");
+auto HandleForHeader(Context& context, Parse::ForHeaderId node_id) -> bool {
+  return context.TODO(node_id, "HandleForHeader");
 }
 
-auto HandleForStatement(Context& context, Parse::ForStatementId parse_node)
+auto HandleForStatement(Context& context, Parse::ForStatementId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleForStatement");
+  return context.TODO(node_id, "HandleForStatement");
 }
 
 // `break`
 // -------
 
 auto HandleBreakStatementStart(Context& context,
-                               Parse::BreakStatementStartId parse_node)
-    -> bool {
+                               Parse::BreakStatementStartId node_id) -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
     CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
                       "`break` can only be used in a loop.");
-    context.emitter().Emit(parse_node, BreakOutsideLoop);
+    context.emitter().Emit(node_id, BreakOutsideLoop);
   } else {
-    context.AddInst({parse_node, SemIR::Branch{stack.back().break_target}});
+    context.AddInst({node_id, SemIR::Branch{stack.back().break_target}});
   }
 
   context.inst_block_stack().Pop();
@@ -111,7 +109,7 @@ auto HandleBreakStatementStart(Context& context,
 }
 
 auto HandleBreakStatement(Context& /*context*/,
-                          Parse::BreakStatementId /*parse_node*/) -> bool {
+                          Parse::BreakStatementId /*node_id*/) -> bool {
   return true;
 }
 
@@ -119,15 +117,15 @@ auto HandleBreakStatement(Context& /*context*/,
 // ----------
 
 auto HandleContinueStatementStart(Context& context,
-                                  Parse::ContinueStatementStartId parse_node)
+                                  Parse::ContinueStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
   if (stack.empty()) {
     CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
                       "`continue` can only be used in a loop.");
-    context.emitter().Emit(parse_node, ContinueOutsideLoop);
+    context.emitter().Emit(node_id, ContinueOutsideLoop);
   } else {
-    context.AddInst({parse_node, SemIR::Branch{stack.back().continue_target}});
+    context.AddInst({node_id, SemIR::Branch{stack.back().continue_target}});
   }
 
   context.inst_block_stack().Pop();
@@ -136,8 +134,7 @@ auto HandleContinueStatementStart(Context& context,
 }
 
 auto HandleContinueStatement(Context& /*context*/,
-                             Parse::ContinueStatementId /*parse_node*/)
-    -> bool {
+                             Parse::ContinueStatementId /*node_id*/) -> bool {
   return true;
 }
 

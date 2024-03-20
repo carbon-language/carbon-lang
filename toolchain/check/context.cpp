@@ -12,15 +12,18 @@
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
-#include "toolchain/sem_ir/value_stores.h"
 
 namespace Carbon::Check {
 
@@ -34,10 +37,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
       inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", sem_ir, vlog_stream),
+      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
       args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
       decl_name_stack_(this),
-      lexical_lookup_(sem_ir_->identifiers()) {
+      scope_stack_(sem_ir_->identifiers()) {
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.insert(
@@ -48,10 +51,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
        SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(Parse::NodeId parse_node, std::string label) -> bool {
+auto Context::TODO(SemIRLocation loc, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
-  emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
+  emitter_->Emit(loc, SemanticsTodo, std::move(label));
   return false;
 }
 
@@ -60,19 +63,19 @@ auto Context::VerifyOnFinish() -> void {
   // various pieces of context go out of scope. At this point, nothing should
   // remain.
   // node_stack_ will still contain top-level entities.
-  CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
-  CARBON_CHECK(inst_block_stack_.empty()) << inst_block_stack_.size();
-  CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
+  scope_stack_.VerifyOnFinish();
+  inst_block_stack_.VerifyOnFinish();
+  param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
-auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddInst: " << parse_node_and_inst.inst << "\n";
+  auto inst_id = sem_ir().insts().AddInNoBlock(node_id_and_inst);
+  CARBON_VLOG() << "AddInst: " << node_id_and_inst.inst << "\n";
 
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, node_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << node_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
     constant_values().Set(inst_id, const_id);
   }
@@ -80,23 +83,23 @@ auto Context::AddInstInNoBlock(SemIR::ParseNodeAndInst parse_node_and_inst)
   return inst_id;
 }
 
-auto Context::AddInst(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(parse_node_and_inst);
+auto Context::AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId {
+  auto inst_id = AddInstInNoBlock(node_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInstInNoBlock(
-    SemIR::ParseNodeAndInst parse_node_and_inst) -> SemIR::InstId {
-  auto inst_id = sem_ir().insts().AddInNoBlock(parse_node_and_inst);
-  CARBON_VLOG() << "AddPlaceholderInst: " << parse_node_and_inst.inst << "\n";
+auto Context::AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = sem_ir().insts().AddInNoBlock(node_id_and_inst);
+  CARBON_VLOG() << "AddPlaceholderInst: " << node_id_and_inst.inst << "\n";
+  constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInst(SemIR::ParseNodeAndInst parse_node_and_inst)
+auto Context::AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = AddPlaceholderInstInNoBlock(parse_node_and_inst);
+  auto inst_id = AddPlaceholderInstInNoBlock(node_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
@@ -108,165 +111,87 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
   return const_id;
 }
 
-auto Context::AddInstAndPush(SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  auto inst_id = AddInst(parse_node_and_inst);
-  node_stack_.Push(parse_node_and_inst.parse_node, inst_id);
+auto Context::AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void {
+  auto inst_id = AddInst(node_id_and_inst);
+  node_stack_.Push(node_id_and_inst.node_id, inst_id);
 }
 
 auto Context::ReplaceInstBeforeConstantUse(
-    SemIR::InstId inst_id, SemIR::ParseNodeAndInst parse_node_and_inst)
-    -> void {
-  sem_ir().insts().Set(inst_id, parse_node_and_inst);
+    SemIR::InstId inst_id, SemIR::NodeIdAndInst node_id_and_inst) -> void {
+  sem_ir().insts().Set(inst_id, node_id_and_inst);
 
-  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> "
-                << parse_node_and_inst.inst << "\n";
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << node_id_and_inst.inst
+                << "\n";
 
   // Redo evaluation. This is only safe to do if this instruction has not
   // already been used as a constant, which is the caller's responsibility to
   // ensure.
-  auto const_id = TryEvalInst(*this, inst_id, parse_node_and_inst.inst);
+  auto const_id = TryEvalInst(*this, inst_id, node_id_and_inst.inst);
   if (const_id.is_constant()) {
-    CARBON_VLOG() << "Constant: " << parse_node_and_inst.inst << " -> "
+    CARBON_VLOG() << "Constant: " << node_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
   }
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::DiagnoseDuplicateName(SemIR::InstId dup_def_id,
-                                    SemIR::InstId prev_def_id) -> void {
+auto Context::DiagnoseDuplicateName(SemIRLocation dup_def,
+                                    SemIRLocation prev_def) -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
                     "Name is previously declared here.");
-  emitter_->Build(dup_def_id, NameDeclDuplicate)
-      .Note(prev_def_id, NameDeclPrevious)
+  emitter_->Build(dup_def, NameDeclDuplicate)
+      .Note(prev_def, NameDeclPrevious)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(Parse::NodeId parse_node,
-                                   SemIR::NameId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.", std::string);
-  emitter_->Emit(parse_node, NameNotFound, names().GetFormatted(name_id).str());
+auto Context::DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
+    -> void {
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
+                    SemIR::NameId);
+  emitter_->Emit(node_id, NameNotFound, name_id);
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
-  CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                    "Class was forward declared here.");
-  CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                    "Class is incomplete within its definition.");
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined()) << "Class is not incomplete";
   if (class_info.definition_id.is_valid()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "Class is incomplete within its definition.");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "Class was forward declared here.");
     builder.Note(class_info.decl_id, ClassForwardDeclaredHere);
   }
 }
 
-auto Context::AddPackageImports(Parse::NodeId import_node,
-                                IdentifierId package_id,
-                                llvm::ArrayRef<const SemIR::File*> sem_irs,
-                                bool has_load_error) -> void {
-  CARBON_CHECK(has_load_error || !sem_irs.empty())
-      << "There should be either a load error or at least one IR.";
-
-  auto name_id = SemIR::NameId::ForIdentifier(package_id);
-
-  SemIR::CrossRefIRId first_id(cross_ref_irs().size());
-  for (const auto* sem_ir : sem_irs) {
-    cross_ref_irs().Add(sem_ir);
+auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
+                                     DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_defined()) << "Interface is not incomplete";
+  if (interface_info.is_being_defined()) {
+    CARBON_DIAGNOSTIC(InterfaceUndefinedWithinDefinition, Note,
+                      "Interface is currently being defined.");
+    builder.Note(interface_info.definition_id,
+                 InterfaceUndefinedWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "Interface was forward declared here.");
+    builder.Note(interface_info.decl_id, InterfaceForwardDeclaredHere);
   }
-  if (has_load_error) {
-    cross_ref_irs().Add(nullptr);
-  }
-  SemIR::CrossRefIRId last_id(cross_ref_irs().size() - 1);
-
-  auto type_id = GetBuiltinType(SemIR::BuiltinKind::NamespaceType);
-  auto inst_id =
-      AddInst({import_node, SemIR::Import{.type_id = type_id,
-                                          .first_cross_ref_ir_id = first_id,
-                                          .last_cross_ref_ir_id = last_id}});
-
-  // Add the import to lookup. Should always succeed because imports will be
-  // uniquely named.
-  AddNameToLookup(name_id, inst_id);
-  // Add a name for formatted output. This isn't used in name lookup in order
-  // to reduce indirection, but it's separate from the Import because it
-  // otherwise fits in an Inst.
-  auto bind_name_id = bind_names().Add(
-      {.name_id = name_id, .enclosing_scope_id = SemIR::NameScopeId::Package});
-  AddInst({import_node, SemIR::BindName{.type_id = type_id,
-                                        .bind_name_id = bind_name_id,
-                                        .value_id = inst_id}});
 }
 
 auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
     -> void {
-  if (current_scope().names.insert(name_id).second) {
-    // TODO: Reject if we previously performed a failed lookup for this name in
-    // this scope or a scope nested within it.
-    auto& lexical_results = lexical_lookup_.Get(name_id);
-    CARBON_CHECK(lexical_results.empty() ||
-                 lexical_results.back().scope_index < current_scope_index())
-        << "Failed to clean up after scope nested within the current scope";
-    lexical_results.push_back(
-        {.inst_id = target_id, .scope_index = current_scope_index()});
-  } else {
-    DiagnoseDuplicateName(target_id,
-                          lexical_lookup_.Get(name_id).back().inst_id);
+  if (auto existing = scope_stack().LookupOrAddName(name_id, target_id);
+      existing.is_valid()) {
+    DiagnoseDuplicateName(target_id, existing);
   }
 }
 
-auto Context::ResolveIfLazyImportRef(SemIR::InstId inst_id) -> void {
-  auto inst = insts().Get(inst_id);
-  auto lazy_inst = inst.TryAs<SemIR::LazyImportRef>();
-  if (!lazy_inst) {
-    return;
-  }
-  const SemIR::File& import_ir = *cross_ref_irs().Get(lazy_inst->ir_id);
-  auto import_inst = import_ir.insts().Get(lazy_inst->inst_id);
-  switch (import_inst.kind()) {
-    case SemIR::InstKind::FunctionDecl: {
-      // TODO: Fill this in better.
-      auto function_id =
-          functions().Add({.name_id = SemIR::NameId::Invalid,
-                           .enclosing_scope_id = SemIR::NameScopeId::Invalid,
-                           .decl_id = inst_id,
-                           .implicit_param_refs_id = SemIR::InstBlockId::Empty,
-                           .param_refs_id = SemIR::InstBlockId::Empty,
-                           .return_type_id = SemIR::TypeId::Invalid,
-                           .return_slot_id = SemIR::InstId::Invalid});
-      ReplaceInstBeforeConstantUse(
-          inst_id,
-          // TODO: For diagnostic purposes, we should provide some form of
-          // location for the function.
-          {Parse::NodeId::Invalid,
-           SemIR::FunctionDecl{GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-                               function_id}});
-      constant_values().Set(inst_id,
-                            SemIR::ConstantId::ForTemplateConstant(inst_id));
-      break;
-    }
-
-    default:
-      // TODO: We need more type support. For now we inject an arbitrary
-      // invalid node that's unrelated to the underlying value. The TODO
-      // diagnostic is used since this section shouldn't typically be able to
-      // error.
-      TODO(Parse::NodeId::Invalid,
-           (llvm::Twine("TODO: support ") + import_inst.kind().name()).str());
-      ReplaceInstBeforeConstantUse(
-          inst_id, {Parse::NodeId::Invalid,
-                    SemIR::VarStorage{SemIR::TypeId::Error,
-                                      SemIR::NameId::PackageNamespace}});
-      break;
-  }
-}
-
-auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
-                               SemIR::NameId name_id,
+auto Context::LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
@@ -292,15 +217,7 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    auto& lexical_results = lexical_lookup_.Get(name_id);
-    if (!lexical_results.empty()) {
-      auto result = lexical_results.back();
-      if (result.scope_index == current_scope_index()) {
-        ResolveIfLazyImportRef(result.inst_id);
-        return result.inst_id;
-      }
-    }
-    return SemIR::InstId::Invalid;
+    return scope_stack().LookupInCurrentScope(name_id);
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -311,63 +228,107 @@ auto Context::LookupNameInDecl(Parse::NodeId /*parse_node*/,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(node_id, name_id,
+                                  name_scopes().Get(scope_id));
   }
 }
 
-auto Context::LookupUnqualifiedName(Parse::NodeId parse_node,
+auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                     SemIR::NameId name_id) -> SemIR::InstId {
   // TODO: Check for shadowed lookup results.
 
   // Find the results from enclosing lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
-  llvm::ArrayRef<LexicalLookup::Result> lexical_results =
-      lexical_lookup_.Get(name_id);
+  auto [lexical_result, non_lexical_scopes] =
+      scope_stack().LookupInEnclosingScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
-  for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scope_stack_)) {
-    // If the innermost lexical result is within this non-lexical scope, then
-    // it shadows all further non-lexical results and we're done.
-    if (!lexical_results.empty() &&
-        lexical_results.back().scope_index > index) {
-      auto inst_id = lexical_results.back().inst_id;
-      ResolveIfLazyImportRef(inst_id);
-      return inst_id;
-    }
-
+  for (auto [index, name_scope_id] : llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
-            LookupQualifiedName(parse_node, name_id, name_scope_id,
+            LookupQualifiedName(node_id, name_id, name_scope_id,
                                 /*required=*/false);
         non_lexical_result.is_valid()) {
       return non_lexical_result;
     }
   }
 
-  if (!lexical_results.empty()) {
-    auto inst_id = lexical_results.back().inst_id;
-    ResolveIfLazyImportRef(inst_id);
-    return inst_id;
+  if (lexical_result.is_valid()) {
+    return lexical_result;
   }
 
   // We didn't find anything at all.
-  if (!lexical_lookup_has_load_error_) {
-    DiagnoseNameNotFound(parse_node, name_id);
-  }
+  DiagnoseNameNotFound(node_id, name_id);
   return SemIR::InstId::BuiltinError;
 }
 
-auto Context::LookupNameInExactScope(SemIR::NameId name_id,
+// Handles lookup through the import_ir_scopes for LookupNameInExactScope.
+static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
+                                   SemIR::NameId name_id,
+                                   const SemIR::NameScope& scope)
+    -> SemIR::InstId {
+  auto identifier_id = name_id.AsIdentifierId();
+  llvm::StringRef identifier;
+  if (identifier_id.is_valid()) {
+    identifier = context.identifiers().Get(identifier_id);
+  }
+
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InNameLookup, Note, "In name lookup for `{0}`.",
+                          SemIR::NameId);
+        builder.Note(loc, InNameLookup, name_id);
+      });
+
+  auto result_id = SemIR::InstId::Invalid;
+  for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
+    auto& import_ir = context.import_irs().Get(import_ir_id);
+
+    // Determine the NameId in the import IR.
+    SemIR::NameId import_name_id = name_id;
+    if (identifier_id.is_valid()) {
+      auto import_identifier_id = import_ir->identifiers().Lookup(identifier);
+      if (!import_identifier_id.is_valid()) {
+        // Name doesn't exist in the import IR.
+        continue;
+      }
+      import_name_id = SemIR::NameId::ForIdentifier(import_identifier_id);
+    }
+
+    // Look up the name in the import scope.
+    const auto& import_scope = import_ir->name_scopes().Get(import_scope_id);
+    auto it = import_scope.names.find(import_name_id);
+    if (it == import_scope.names.end()) {
+      // Name doesn't exist in the import scope.
+      continue;
+    }
+    auto import_inst_id = context.AddPlaceholderInst(
+        {SemIR::ImportRefUnused{import_ir_id, it->second}});
+    TryResolveImportRefUnused(context, import_inst_id);
+    if (result_id.is_valid()) {
+      // TODO: Add generalized merge functionality (merge_decls.h?).
+      context.DiagnoseDuplicateName(import_inst_id, result_id);
+    } else {
+      result_id = import_inst_id;
+    }
+  }
+
+  return result_id;
+}
+
+auto Context::LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    ResolveIfLazyImportRef(it->second);
+    TryResolveImportRefUnused(*this, it->second);
     return it->second;
+  }
+  if (!scope.import_ir_scopes.empty()) {
+    return LookupInImportIRScopes(*this, loc, name_id, scope);
   }
   return SemIR::InstId::Invalid;
 }
 
-auto Context::LookupQualifiedName(Parse::NodeId parse_node,
-                                  SemIR::NameId name_id,
+auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                                   SemIR::NameScopeId scope_id, bool required)
     -> SemIR::InstId {
   llvm::SmallVector<SemIR::NameScopeId> scope_ids = {scope_id};
@@ -379,7 +340,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
     const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(name_id, scope);
+    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);
@@ -395,9 +356,8 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
       CARBON_DIAGNOSTIC(
           NameAmbiguousDueToExtend, Error,
           "Ambiguous use of name `{0}` found in multiple extended scopes.",
-          std::string);
-      emitter_->Emit(parse_node, NameAmbiguousDueToExtend,
-                     names().GetFormatted(name_id).str());
+          SemIR::NameId);
+      emitter_->Emit(node_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return SemIR::InstId::BuiltinError;
     }
@@ -407,7 +367,7 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
 
   if (required && !result_id.is_valid()) {
     if (!has_error) {
-      DiagnoseNameNotFound(parse_node, name_id);
+      DiagnoseNameNotFound(node_id, name_id);
     }
     return SemIR::InstId::BuiltinError;
   }
@@ -415,109 +375,39 @@ auto Context::LookupQualifiedName(Parse::NodeId parse_node,
   return result_id;
 }
 
-auto Context::PushScope(SemIR::InstId scope_inst_id,
-                        SemIR::NameScopeId scope_id,
-                        bool lexical_lookup_has_load_error) -> void {
-  scope_stack_.push_back(
-      {.index = next_scope_index_,
-       .scope_inst_id = scope_inst_id,
-       .scope_id = scope_id,
-       .prev_lexical_lookup_has_load_error = lexical_lookup_has_load_error_});
-  if (scope_id.is_valid()) {
-    non_lexical_scope_stack_.push_back({next_scope_index_, scope_id});
-  }
-
-  lexical_lookup_has_load_error_ |= lexical_lookup_has_load_error;
-
-  // TODO: Handle this case more gracefully.
-  CARBON_CHECK(next_scope_index_.index != std::numeric_limits<int32_t>::max())
-      << "Ran out of scopes";
-  ++next_scope_index_.index;
-}
-
-auto Context::PopScope() -> void {
-  auto scope = scope_stack_.pop_back_val();
-
-  lexical_lookup_has_load_error_ = scope.prev_lexical_lookup_has_load_error;
-
-  for (const auto& str_id : scope.names) {
-    auto& lexical_results = lexical_lookup_.Get(str_id);
-    CARBON_CHECK(lexical_results.back().scope_index == scope.index)
-        << "Inconsistent scope index for name " << names().GetFormatted(str_id);
-    lexical_results.pop_back();
-  }
-
-  if (scope.scope_id.is_valid()) {
-    CARBON_CHECK(non_lexical_scope_stack_.back().first == scope.index);
-    non_lexical_scope_stack_.pop_back();
-  }
-
-  if (scope.has_returned_var) {
-    CARBON_CHECK(!return_scope_stack_.empty());
-    CARBON_CHECK(return_scope_stack_.back().returned_var.is_valid());
-    return_scope_stack_.back().returned_var = SemIR::InstId::Invalid;
-  }
-}
-
-auto Context::PopToScope(ScopeIndex index) -> void {
-  while (current_scope_index() > index) {
-    PopScope();
-  }
-  CARBON_CHECK(current_scope_index() == index)
-      << "Scope index " << index << " does not enclose the current scope "
-      << current_scope_index();
-}
-
-auto Context::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  CARBON_CHECK(!return_scope_stack_.empty()) << "`returned var` in no function";
-  auto& returned_var = return_scope_stack_.back().returned_var;
-  if (returned_var.is_valid()) {
-    return returned_var;
-  }
-
-  returned_var = inst_id;
-  CARBON_CHECK(!current_scope().has_returned_var)
-      << "Scope has returned var but none is set";
-  if (inst_id.is_valid()) {
-    current_scope().has_returned_var = true;
-  }
-  return SemIR::InstId::Invalid;
-}
-
 template <typename BranchNode, typename... Args>
 static auto AddDominatedBlockAndBranchImpl(Context& context,
-                                           Parse::NodeId parse_node,
-                                           Args... args) -> SemIR::InstBlockId {
+                                           Parse::NodeId node_id, Args... args)
+    -> SemIR::InstBlockId {
   if (!context.inst_block_stack().is_current_block_reachable()) {
     return SemIR::InstBlockId::Unreachable;
   }
   auto block_id = context.inst_blocks().AddDefaultValue();
-  context.AddInst({parse_node, BranchNode{block_id, args...}});
+  context.AddInst({node_id, BranchNode{block_id, args...}});
   return block_id;
 }
 
-auto Context::AddDominatedBlockAndBranch(Parse::NodeId parse_node)
+auto Context::AddDominatedBlockAndBranch(Parse::NodeId node_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, parse_node);
+  return AddDominatedBlockAndBranchImpl<SemIR::Branch>(*this, node_id);
 }
 
-auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchWithArg(Parse::NodeId node_id,
                                                 SemIR::InstId arg_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchWithArg>(*this, node_id,
                                                               arg_id);
 }
 
-auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId parse_node,
+auto Context::AddDominatedBlockAndBranchIf(Parse::NodeId node_id,
                                            SemIR::InstId cond_id)
     -> SemIR::InstBlockId {
-  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, parse_node,
+  return AddDominatedBlockAndBranchImpl<SemIR::BranchIf>(*this, node_id,
                                                          cond_id);
 }
 
-auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
-                                         int num_blocks) -> void {
+auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
+    -> void {
   CARBON_CHECK(num_blocks >= 2) << "no convergence";
 
   SemIR::InstBlockId new_block_id = SemIR::InstBlockId::Unreachable;
@@ -526,7 +416,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::Branch{new_block_id}});
+      AddInst({node_id, SemIR::Branch{new_block_id}});
     }
     inst_block_stack().Pop();
   }
@@ -534,7 +424,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId parse_node,
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
-    Parse::NodeId parse_node, std::initializer_list<SemIR::InstId> block_args)
+    Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
     -> SemIR::InstId {
   CARBON_CHECK(block_args.size() >= 2) << "no convergence";
 
@@ -544,7 +434,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
       if (new_block_id == SemIR::InstBlockId::Unreachable) {
         new_block_id = inst_blocks().AddDefaultValue();
       }
-      AddInst({parse_node, SemIR::BranchWithArg{new_block_id, arg_id}});
+      AddInst({node_id, SemIR::BranchWithArg{new_block_id, arg_id}});
     }
     inst_block_stack().Pop();
   }
@@ -552,17 +442,17 @@ auto Context::AddConvergenceBlockWithArgAndPush(
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
-  return AddInst({parse_node, SemIR::BlockArg{result_type_id, new_block_id}});
+  return AddInst({node_id, SemIR::BlockArg{result_type_id, new_block_id}});
 }
 
 // Add the current code block to the enclosing function.
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId parse_node) -> void {
+auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
 
   if (return_scope_stack().empty()) {
-    CARBON_CHECK(parse_node.is_valid())
-        << "No current function, but parse_node not provided";
-    TODO(parse_node,
+    CARBON_CHECK(node_id.is_valid())
+        << "No current function, but node_id not provided";
+    TODO(node_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
     return;
@@ -598,25 +488,27 @@ auto Context::is_current_position_reachable() -> bool {
          SemIR::TerminatorKind::Terminator;
 }
 
-auto Context::ParamOrArgStart() -> void { params_or_args_stack_.Push(); }
+auto Context::FinalizeGlobalInit() -> void {
+  inst_block_stack().PushGlobalInit();
+  if (!inst_block_stack().PeekCurrentBlockContents().empty()) {
+    AddInst({Parse::NodeId::Invalid, SemIR::Return{}});
+    // Pop the GlobalInit block here to finalize it.
+    inst_block_stack().Pop();
 
-auto Context::ParamOrArgComma() -> void {
-  ParamOrArgSave(node_stack_.PopExpr());
-}
-
-auto Context::ParamOrArgEndNoPop(Parse::NodeKind start_kind) -> void {
-  if (!node_stack_.PeekIs(start_kind)) {
-    ParamOrArgSave(node_stack_.PopExpr());
+    // __global_init is only added if there are initialization instructions.
+    auto name_id = sem_ir().identifiers().Add("__global_init");
+    sem_ir().functions().Add(
+        {.name_id = SemIR::NameId::ForIdentifier(name_id),
+         .enclosing_scope_id = SemIR::NameScopeId::Package,
+         .decl_id = SemIR::InstId::Invalid,
+         .implicit_param_refs_id = SemIR::InstBlockId::Empty,
+         .param_refs_id = SemIR::InstBlockId::Empty,
+         .return_type_id = SemIR::TypeId::Invalid,
+         .return_slot_id = SemIR::InstId::Invalid,
+         .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
+  } else {
+    inst_block_stack().PopGlobalInit();
   }
-}
-
-auto Context::ParamOrArgPop() -> SemIR::InstBlockId {
-  return params_or_args_stack_.Pop();
-}
-
-auto Context::ParamOrArgEnd(Parse::NodeKind start_kind) -> SemIR::InstBlockId {
-  ParamOrArgEndNoPop(start_kind);
-  return ParamOrArgPop();
 }
 
 namespace {
@@ -700,6 +592,9 @@ class TypeCompleter {
         }
         // For a pointer representation, the pointee also needs to be complete.
         if (value_rep.kind == SemIR::ValueRepr::Pointer) {
+          if (value_rep.type_id == SemIR::TypeId::Error) {
+            break;
+          }
           auto pointee_type_id =
               context_.sem_ir().GetPointeeType(value_rep.type_id);
           if (!context_.types().IsComplete(pointee_type_id)) {
@@ -804,21 +699,9 @@ class TypeCompleter {
     return value_rep;
   };
 
-  auto BuildCrossRefValueRepr(SemIR::TypeId type_id, SemIR::CrossRef xref) const
-      -> SemIR::ValueRepr {
-    auto xref_inst =
-        context_.cross_ref_irs().Get(xref.ir_id)->insts().Get(xref.inst_id);
-
-    // The canonical description of a type should only have cross-references
-    // for entities owned by another File, such as builtins, which are owned
-    // by the prelude, and named entities like classes and interfaces, which
-    // we don't support yet.
-    CARBON_CHECK(xref_inst.kind() == SemIR::Builtin::Kind)
-        << "TODO: Handle other kinds of inst cross-references";
-
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
-    switch (xref_inst.As<SemIR::Builtin>().builtin_kind) {
+  auto BuildBuiltinValueRepr(SemIR::TypeId type_id,
+                             SemIR::Builtin builtin) const -> SemIR::ValueRepr {
+    switch (builtin.builtin_kind) {
       case SemIR::BuiltinKind::TypeType:
       case SemIR::BuiltinKind::Error:
       case SemIR::BuiltinKind::Invalid:
@@ -828,6 +711,7 @@ class TypeCompleter {
       case SemIR::BuiltinKind::NamespaceType:
       case SemIR::BuiltinKind::FunctionType:
       case SemIR::BuiltinKind::BoundMethodType:
+      case SemIR::BuiltinKind::WitnessType:
         return MakeCopyValueRepr(type_id);
 
       case SemIR::BuiltinKind::StringType:
@@ -837,6 +721,16 @@ class TypeCompleter {
         return MakePointerValueRepr(type_id);
     }
     llvm_unreachable("All builtin kinds were handled above");
+  }
+
+  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
+                                   SemIR::ImportRefUsed import_ref) const
+      -> SemIR::ValueRepr {
+    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
+    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
+    CARBON_CHECK(import_inst.kind() != SemIR::InstKind::ImportRefUsed)
+        << "If ImportRefUsed can point at another, this would be recursive.";
+    return BuildValueRepr(type_id, import_inst);
   }
 
   auto BuildStructOrTupleValueRepr(std::size_t num_elements,
@@ -932,20 +826,16 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    // TODO: This can emit new SemIR instructions. Consider emitting them into a
-    // dedicated file-scope instruction block where possible, or somewhere else
-    // that better reflects the definition of the type, rather than wherever the
-    // type happens to first be required to be complete.
-
-    // clang warns on unhandled enum values; clang-tidy is incorrect here.
-    // NOLINTNEXTLINE(bugprone-switch-missing-default-case)
     switch (inst.kind()) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
       case SemIR::Assign::Kind:
+      case SemIR::AssociatedConstantDecl::Kind:
+      case SemIR::AssociatedEntity::Kind:
       case SemIR::BaseDecl::Kind:
+      case SemIR::BindAlias::Kind:
       case SemIR::BindName::Kind:
       case SemIR::BindValue::Kind:
       case SemIR::BlockArg::Kind:
@@ -960,13 +850,16 @@ class TypeCompleter {
       case SemIR::ClassInit::Kind:
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
+      case SemIR::FacetTypeAccess::Kind:
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
-      case SemIR::Import::Kind:
+      case SemIR::ImplDecl::Kind:
+      case SemIR::ImportRefUnused::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
+      case SemIR::InterfaceWitness::Kind:
+      case SemIR::InterfaceWitnessAccess::Kind:
       case SemIR::IntLiteral::Kind:
-      case SemIR::LazyImportRef::Kind:
       case SemIR::NameRef::Kind:
       case SemIR::Namespace::Kind:
       case SemIR::Param::Kind:
@@ -993,15 +886,16 @@ class TypeCompleter {
       case SemIR::VarStorage::Kind:
         CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
-      case SemIR::CrossRef::Kind:
-        return BuildCrossRefValueRepr(type_id, inst.As<SemIR::CrossRef>());
-
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
         // even when the array has zero or one element, in order to support
         // indexing.
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
+
+      case SemIR::ImportRefUsed::Kind:
+        return BuildImportRefUsedValueRepr(type_id,
+                                           inst.As<SemIR::ImportRefUsed>());
 
       case SemIR::StructType::Kind:
         return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
@@ -1020,9 +914,14 @@ class TypeCompleter {
                 .object_repr_id,
             SemIR::ValueRepr::ObjectAggregate);
 
-      case SemIR::Builtin::Kind:
-        CARBON_FATAL() << "Builtins should be named as cross-references";
+      case SemIR::InterfaceType::Kind:
+        // TODO: Should we model the value representation as a witness?
+        return MakeEmptyValueRepr();
 
+      case SemIR::Builtin::Kind:
+        return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
+
+      case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
@@ -1063,13 +962,13 @@ auto Context::TryToCompleteType(
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
     -> SemIR::TypeId {
-  CARBON_CHECK(constant_id.is_constant()) << "Canonicalizing non-constant type";
+  CARBON_CHECK(constant_id.is_constant())
+      << "Canonicalizing non-constant type: " << constant_id;
 
   auto [it, added] = type_ids_for_type_constants_.insert(
       {constant_id, SemIR::TypeId::Invalid});
   if (added) {
-    // TODO: Store the full `constant_id` on the TypeInfo.
-    it->second = types().Add({.inst_id = constant_id.inst_id()});
+    it->second = types().Add({.constant_id = constant_id});
   }
   return it->second;
 }
@@ -1095,18 +994,20 @@ auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
   return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
 }
 
+auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
+                                      SemIR::TypeId entity_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::AssociatedEntityType>(*this, interface_id,
+                                                  entity_type_id);
+}
+
 auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
   CARBON_CHECK(kind != SemIR::BuiltinKind::Invalid);
-  auto type_id = GetTypeIdForTypeConstant(
-      constant_values().Get(SemIR::InstId::ForBuiltin(kind)));
+  auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete builtin type";
   return type_id;
-}
-
-auto Context::GetClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::ClassType>(*this, class_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {
@@ -1130,7 +1031,7 @@ auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   node_stack_.PrintForStackDump(output);
   inst_block_stack_.PrintForStackDump(output);
-  params_or_args_stack_.PrintForStackDump(output);
+  param_and_arg_refs_stack_.PrintForStackDump(output);
   args_type_info_stack_.PrintForStackDump(output);
 }
 

@@ -6,25 +6,25 @@
 
 namespace Carbon::Check {
 
-auto HandleChoiceDefinition(Context& context,
-                            Parse::ChoiceDefinitionId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleChoiceDefinition");
+auto HandleChoiceDefinition(Context& context, Parse::ChoiceDefinitionId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleChoiceDefinition");
 }
 
-auto HandleChoiceIntroducer(Context& context,
-                            Parse::ChoiceIntroducerId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleChoiceIntroducer");
+auto HandleChoiceIntroducer(Context& context, Parse::ChoiceIntroducerId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleChoiceIntroducer");
 }
 
 auto HandleChoiceDefinitionStart(Context& context,
-                                 Parse::ChoiceDefinitionStartId parse_node)
+                                 Parse::ChoiceDefinitionStartId node_id)
     -> bool {
-  return context.TODO(parse_node, "HandleChoiceDefinitionStart");
+  return context.TODO(node_id, "HandleChoiceDefinitionStart");
 }
 
 auto HandleChoiceAlternativeListComma(
-    Context& context, Parse::ChoiceAlternativeListCommaId parse_node) -> bool {
-  return context.TODO(parse_node, "HandleChoiceAlternativeListComma");
+    Context& context, Parse::ChoiceAlternativeListCommaId node_id) -> bool {
+  return context.TODO(node_id, "HandleChoiceAlternativeListComma");
 }
 
 }  // namespace Carbon::Check

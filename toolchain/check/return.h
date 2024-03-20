@@ -6,8 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_RETURN_H_
 
 #include "toolchain/check/context.h"
-#include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/inst.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
 
@@ -22,16 +21,15 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
 auto RegisterReturnedVar(Context& context, SemIR::InstId bind_id) -> void;
 
 // Checks and builds SemIR for a `return;` statement.
-auto BuildReturnWithNoExpr(Context& context,
-                           Parse::ReturnStatementId parse_node) -> void;
+auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
+    -> void;
 
 // Checks and builds SemIR for a `return <expression>;` statement.
-auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId parse_node,
+auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
                          SemIR::InstId expr_id) -> void;
 
 // Checks and builds SemIR for a `return var;` statement.
-auto BuildReturnVar(Context& context, Parse::ReturnStatementId parse_node)
-    -> void;
+auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id) -> void;
 
 }  // namespace Carbon::Check
 

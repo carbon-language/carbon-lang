@@ -17,12 +17,13 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x, .Main = %Main} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %x.var, %.loc7
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -32,6 +33,13 @@ fn Main() {
 // CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc10: i32 = bind_value %x.ref
 // CHECK:STDOUT:   assign %y.var, %.loc10
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

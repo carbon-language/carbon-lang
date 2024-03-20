@@ -25,9 +25,9 @@ var x: {.a: i32, .b = 0} = {};
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '.', has_error: yes},
 // CHECK:STDOUT:         {kind: 'StructTypeLiteral', text: '}', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 12},
-// CHECK:STDOUT:           {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

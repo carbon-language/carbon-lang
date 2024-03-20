@@ -17,8 +17,12 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- fail_value_missing.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Main = %Main} [template]
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {

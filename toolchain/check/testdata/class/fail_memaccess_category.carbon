@@ -49,39 +49,62 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl, .B = %B.decl, .F = %F} [template]
-// CHECK:STDOUT:   %A.decl = class_decl @A, ()
-// CHECK:STDOUT:   %B.decl = class_decl @B, ()
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc15: type = struct_type {.a: A} [template = constants.%.6]
+// CHECK:STDOUT:     %s.loc15_6.1: {.a: A} = param s
+// CHECK:STDOUT:     @F.2.%s: {.a: A} = bind_name s, %s.loc15_6.1
+// CHECK:STDOUT:     %B.ref: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:     %b.loc15_18.1: B = param b
+// CHECK:STDOUT:     @F.2.%b: B = bind_name b, %b.loc15_18.1
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %.loc8_20: type = ptr_type A [template = constants.%.1]
+// CHECK:STDOUT:     %self.loc8_13.1: A* = param self
+// CHECK:STDOUT:     %self.loc8_13.3: A* = bind_name self, %self.loc8_13.1
+// CHECK:STDOUT:     %.loc8_8: A* = addr_pattern %self.loc8_13.3
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, constants.%A [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc12: <unbound element of class B> = field_decl a, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self: A*]();
+// CHECK:STDOUT: fn @F.1[addr @A.%self.loc8_13.3: A*]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: {.a: A} = name_ref s, %s
 // CHECK:STDOUT:   %.loc23_4: A = struct_access %s.ref, element0
-// CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, @A.%F
+// CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, %F.ref.loc23
 // CHECK:STDOUT:   %.loc23_8: init () = call %.loc23_6(<invalid>)
 // CHECK:STDOUT:   %b.ref: B = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: <unbound element of class B> = name_ref a, @B.%.loc12 [template = @B.%.loc12]
 // CHECK:STDOUT:   %.loc33_4.1: ref A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc33_4.2: A = bind_value %.loc33_4.1
-// CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, @A.%F
+// CHECK:STDOUT:   %F.ref.loc33: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, %F.ref.loc33
 // CHECK:STDOUT:   %.loc33_8: init () = call %.loc33_6(<invalid>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

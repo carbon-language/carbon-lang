@@ -35,50 +35,58 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.A = %A.decl.loc7, .X = %X.decl, .Y = %Y.decl} [template]
-// CHECK:STDOUT:   %A.decl.loc7 = class_decl @A.1, ()
-// CHECK:STDOUT:   %X.decl = class_decl @X, ()
-// CHECK:STDOUT:   %A.decl.loc15 = class_decl @A.1, ()
-// CHECK:STDOUT:   %Y.decl = class_decl @Y, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .X = %X.decl
+// CHECK:STDOUT:     .Y = %Y.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A.1 [template = constants.%A.1] {}
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
+// CHECK:STDOUT:   %A.decl.loc15: type = class_decl @A.1 [template = constants.%A.1] {}
+// CHECK:STDOUT:   %Y.decl: type = class_decl @Y [template = constants.%Y] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   %B.decl = class_decl @B.2, ()
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [template = constants.%B.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A.1
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %A.decl = class_decl @A.2, ()
-// CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
+// CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.2] {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT:   .A = %A.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %B.decl = class_decl @B.1, ()
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A.2
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   %.decl = class_decl @.1, ()
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

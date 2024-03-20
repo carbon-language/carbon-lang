@@ -39,7 +39,7 @@ enum class ProgramPhase {
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
-// disproprotionate amount of time to log, so we try to avoid it.
+// disproportionate amount of time to log, so we try to avoid it.
 class TraceStream {
  public:
   explicit TraceStream() = default;

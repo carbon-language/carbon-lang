@@ -133,6 +133,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Auto: {
+      context.AddLeafNode(NodeKind::AutoTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::OpenCurlyBrace: {
       context.PushState(state);
       context.PushState(State::BraceExpr);
@@ -308,7 +313,7 @@ auto HandleExprLoop(Context& context) -> void {
   }
 }
 
-// Adds the operator node and returns the the main expression loop.
+// Adds the operator node and returns the main expression loop.
 static auto HandleExprLoopForOperator(Context& context,
                                       Context::StateStackEntry state,
                                       NodeKind node_kind) -> void {

@@ -42,12 +42,17 @@ These commands should help set up a development environment on your machine.
 # Update apt.
 sudo apt update
 
+# Check that the `clang` version is at least 16, our minimum version. That needs
+# the number of the `:` in the output to be over 16. For example, `1:16.0-57`.
+apt-cache show clang | grep 'Version:'
+
 # Install tools.
 sudo apt install \
   bazel \
   clang \
   gh \
   libc++-dev \
+  libc++abi-dev \
   lld \
   python3 \
   pipx
@@ -65,7 +70,24 @@ pre-commit install
 bazel test //...:all
 ```
 
-> NOTE: Most LLVM 14+ installs should build Carbon. If you're having issues, see
+If the version of `clang` is earlier than 16, you may still have version 16
+available. You can use the following install instead:
+
+```shell
+# Install explicitly versioned Clang tools.
+sudo apt install \
+  clang-16 \
+  libc++-16-dev \
+  libc++abi-16-dev \
+  lld-16
+
+# In your Carbon checkout, tell Bazel where to find `clang`. You can also
+# export this path as the `CC` environment variable, or add it directly to
+# your `PATH`.
+echo "build --repo_env=CC=$(readlink -f $(which clang-16))" >> user.bazelrc
+```
+
+> NOTE: Most LLVM 16+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
 > NOTE: If you don't have a `bazel` package, see
@@ -85,12 +107,10 @@ brew install \
   bazelisk \
   gh \
   llvm \
-  python@3.10
+  python@3.10 \
+  pre-commit
 
 # IMPORTANT: Make sure `llvm` is added to the PATH! It's separate from `brew`.
-
-# Install pre-commit.
-pip3 install pre-commit
 
 # Set up git.
 gh repo fork --clone carbon-language/carbon-lang
@@ -217,8 +237,8 @@ work reliably include:
 
 Many build issues result from the particular options `clang` and `llvm` have
 been built with, particularly when it comes to system-installed versions. If you
-run `clang --version`, you should see at least version 14. If you see an older
-version, please update.
+run `clang --version`, you should see at least version 16. If you see an older
+version, please update, or use the special `clang-16` instructions above.
 
 System installs of macOS typically won't work, for example being an old LLVM
 version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
@@ -236,6 +256,7 @@ providing the output of the following diagnostic commands:
 ```shell
 echo $CC
 which clang
+which clang-16
 clang --version
 grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/bazel_cc_toolchain/clang_detected_variables.bzl
 

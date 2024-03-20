@@ -9,6 +9,6 @@
 // CHECK:STDOUT: --- <stdin>
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

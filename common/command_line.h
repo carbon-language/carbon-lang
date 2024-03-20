@@ -5,24 +5,17 @@
 #ifndef CARBON_COMMON_COMMAND_LINE_H_
 #define CARBON_COMMON_COMMAND_LINE_H_
 
-#include <initializer_list>
 #include <memory>
-#include <tuple>
-#include <type_traits>
 #include <utility>
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Allocator.h"
 
 // # Command-line argument parsing library.
 //

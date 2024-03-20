@@ -64,6 +64,11 @@ abstract protected class WrongOrder;
 // CHECK:STDERR: ^~~~~~~~
 abstract base class AbstractAndBase {}
 
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `extern` not allowed on `class` declaration.
+// CHECK:STDERR: extern class ExternDefined {}
+// CHECK:STDERR: ^~~~~~
+extern class ExternDefined {}
+
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -74,36 +79,51 @@ abstract base class AbstractAndBase {}
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
+// CHECK:STDOUT:   %ExternDefined: type = class_type @ExternDefined [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.DuplicatePrivate = %DuplicatePrivate.decl, .TwoAccess = %TwoAccess.decl, .TwoAbstract = %TwoAbstract.decl, .Virtual = %Virtual.decl, .WrongOrder = %WrongOrder.decl, .AbstractAndBase = %AbstractAndBase.decl} [template]
-// CHECK:STDOUT:   %DuplicatePrivate.decl = class_decl @DuplicatePrivate, ()
-// CHECK:STDOUT:   %TwoAccess.decl = class_decl @TwoAccess, ()
-// CHECK:STDOUT:   %TwoAbstract.decl = class_decl @TwoAbstract, ()
-// CHECK:STDOUT:   %Virtual.decl = class_decl @Virtual, ()
-// CHECK:STDOUT:   %WrongOrder.decl = class_decl @WrongOrder, ()
-// CHECK:STDOUT:   %AbstractAndBase.decl = class_decl @AbstractAndBase, ()
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .DuplicatePrivate = %DuplicatePrivate.decl
+// CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
+// CHECK:STDOUT:     .TwoAbstract = %TwoAbstract.decl
+// CHECK:STDOUT:     .Virtual = %Virtual.decl
+// CHECK:STDOUT:     .WrongOrder = %WrongOrder.decl
+// CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
+// CHECK:STDOUT:     .ExternDefined = %ExternDefined.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {}
+// CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {}
+// CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {}
+// CHECK:STDOUT:   %Virtual.decl: type = class_decl @Virtual [template = constants.%Virtual] {}
+// CHECK:STDOUT:   %WrongOrder.decl: type = class_decl @WrongOrder [template = constants.%WrongOrder] {}
+// CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [template = constants.%AbstractAndBase] {}
+// CHECK:STDOUT:   %ExternDefined.decl: type = class_decl @ExternDefined [template = constants.%ExternDefined] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DuplicatePrivate;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAccess {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%TwoAccess
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAbstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Virtual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AbstractAndBase
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @ExternDefined {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%ExternDefined
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

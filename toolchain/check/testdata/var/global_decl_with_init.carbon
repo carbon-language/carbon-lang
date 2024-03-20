@@ -13,10 +13,17 @@ var x: i32 = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.x = %x} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %x.var, %.loc7
+// CHECK:STDOUT:   assign file.%x.var, %.loc7
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

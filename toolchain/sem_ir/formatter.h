@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {

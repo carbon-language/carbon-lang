@@ -60,6 +60,28 @@ auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
 }
 
+auto HandleAssociatedConstantDecl(FunctionContext& /*context*/,
+                                  SemIR::InstId /*inst_id*/,
+                                  SemIR::AssociatedConstantDecl inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleAssociatedEntity(FunctionContext& /*context*/,
+                            SemIR::InstId /*inst_id*/,
+                            SemIR::AssociatedEntity inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
+                     SemIR::BindAlias inst) -> void {
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
+  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+    return;
+  }
+
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
@@ -107,7 +129,7 @@ auto HandleBranchIf(FunctionContext& context, SemIR::InstId /*inst_id*/,
                     SemIR::BranchIf inst) -> void {
   llvm::Value* cond = context.GetValue(inst.cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(inst.target_id);
-  llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
+  llvm::BasicBlock* else_block = context.MakeSyntheticBlock();
   context.builder().CreateCondBr(cond, then_block, else_block);
   context.builder().SetInsertPoint(else_block);
 }
@@ -180,11 +202,6 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleCrossRef(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::CrossRef inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
                  SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
@@ -195,8 +212,20 @@ auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleImport(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                  SemIR::Import inst) -> void {
+auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                    SemIR::ImplDecl inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleImportRefUnused(FunctionContext& /*context*/,
+                           SemIR::InstId /*inst_id*/,
+                           SemIR::ImportRefUnused inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleImportRefUsed(FunctionContext& /*context*/,
+                         SemIR::InstId /*inst_id*/, SemIR::ImportRefUsed inst)
+    -> void {
   FatalErrorIfEncountered(inst);
 }
 
@@ -207,9 +236,25 @@ auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInterfaceDecl(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/,
-                         SemIR::InterfaceDecl /*inst*/) -> void {
-  // No action to perform.
+                         SemIR::InstId /*inst_id*/, SemIR::InterfaceDecl inst)
+    -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleInterfaceWitness(FunctionContext& /*context*/,
+                            SemIR::InstId /*inst_id*/,
+                            SemIR::InterfaceWitness inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
+auto HandleInterfaceWitnessAccess(FunctionContext& context,
+                                  SemIR::InstId inst_id,
+                                  SemIR::InterfaceWitnessAccess inst) -> void {
+  // TODO: Add general constant lowering.
+  auto const_id = context.sem_ir().constant_values().Get(inst_id);
+  CARBON_CHECK(const_id.is_constant())
+      << "Lowering non-constant witness access " << inst;
+  context.SetLocal(inst_id, context.GetValue(const_id.inst_id()));
 }
 
 auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
@@ -219,12 +264,6 @@ auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
   context.SetLocal(inst_id, v);
-}
-
-auto HandleLazyImportRef(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::LazyImportRef inst)
-    -> void {
-  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,

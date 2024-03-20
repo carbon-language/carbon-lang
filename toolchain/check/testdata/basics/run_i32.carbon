@@ -13,8 +13,12 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.Run = %Run} [template]
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {

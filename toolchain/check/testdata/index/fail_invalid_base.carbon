@@ -42,34 +42,46 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace package, {.N = %.loc11, .a = %a, .F = %F, .b = %b, .c = %c, .d = %d} [template]
-// CHECK:STDOUT:   %.loc11: <namespace> = namespace N, {} [template]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, %.loc11 [template = %.loc11]
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %a.var, <error>
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template]
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, %F [template = %F]
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
+// CHECK:STDOUT:   %d.var: ref i32 = var d
+// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%a.var, <error>
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc26_29.1: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
 // CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_value (%.loc26_20, %.loc26_28) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = converted %.loc26_29.1, %.loc26_29.2 [template = constants.%.6]
-// CHECK:STDOUT:   assign %c.var, <error>
-// CHECK:STDOUT:   %d.var: ref i32 = var d
-// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
+// CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
 // CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   assign %d.var, <error>
+// CHECK:STDOUT:   assign file.%d.var, <error>
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
