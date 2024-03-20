@@ -86,14 +86,12 @@ class ImportRefResolver {
       } else {
         auto [new_const_id, finished] =
             TryResolveInst(work.inst_id, existing_const_id);
+        CARBON_CHECK(finished == !HasNewWork(initial_work));
         CARBON_CHECK(!existing_const_id.is_valid() ||
                      existing_const_id == new_const_id)
             << "Constant value changed in second pass.";
         import_ir_constant_values_.Set(work.inst_id, new_const_id);
         if (finished) {
-          CARBON_CHECK(!HasNewWork(initial_work))
-              << "TryResolveInst succeeded but added work for "
-              << import_ir_.insts().Get(work.inst_id);
           work_stack_.pop_back();
         } else {
           work_stack_[initial_work - 1].retry = true;
@@ -144,7 +142,10 @@ class ImportRefResolver {
     // The new constant value, if known.
     SemIR::ConstantId const_id;
     // Whether resolution has finished. If false, `TryResolveInst` will be
-    // called again.
+    // called again. Note that this is not strictly necessary, and we can get
+    // the same information by checking whether new work was added to the stack.
+    // However, we use this for consistency checks between resolve actions and
+    // the work stack.
     bool finished = true;
   };
 
