@@ -232,17 +232,17 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, %import_ref.1 [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
 // CHECK:STDOUT:   %.loc8: init () = call %F.ref()
 // CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F2]
-// CHECK:STDOUT:   %F2.ref: <function> = name_ref F2, %import_ref.2 [template = imports.%F2]
+// CHECK:STDOUT:   %F2.ref: <function> = name_ref F2, file.%import_ref.2 [template = imports.%F2]
 // CHECK:STDOUT:   %.loc9: init () = call %F2.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -264,14 +264,14 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F.2]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, %import_ref.1 [template = imports.%F.1]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
 // CHECK:STDOUT:   %.loc17: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -302,14 +302,14 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, used [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, used [template = imports.%F.2]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, %import_ref.1 [template = imports.%F.1]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
 // CHECK:STDOUT:   %.loc11: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -326,9 +326,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
-// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template] {
-// CHECK:STDOUT:     %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F]
+// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
