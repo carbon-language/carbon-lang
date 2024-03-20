@@ -82,20 +82,23 @@ class ImportRefResolver {
       auto existing_const_id = import_ir_constant_values_.Get(work.inst_id);
       if (existing_const_id.is_valid() && !work.retry) {
         work_stack_.pop_back();
+        continue;
+      }
+
+      auto initial_work = work_stack_.size();
+      auto [new_const_id, finished] =
+          TryResolveInst(work.inst_id, existing_const_id);
+      CARBON_CHECK(finished == !HasNewWork(initial_work));
+
+      CARBON_CHECK(!existing_const_id.is_valid() ||
+                   existing_const_id == new_const_id)
+          << "Constant value changed in second pass.";
+      import_ir_constant_values_.Set(work.inst_id, new_const_id);
+
+      if (finished) {
+        work_stack_.pop_back();
       } else {
-        auto initial_work = work_stack_.size();
-        auto [new_const_id, finished] =
-            TryResolveInst(work.inst_id, existing_const_id);
-        CARBON_CHECK(finished == !HasNewWork(initial_work));
-        CARBON_CHECK(!existing_const_id.is_valid() ||
-                     existing_const_id == new_const_id)
-            << "Constant value changed in second pass.";
-        import_ir_constant_values_.Set(work.inst_id, new_const_id);
-        if (finished) {
-          work_stack_.pop_back();
-        } else {
-          work_stack_[initial_work - 1].retry = true;
-        }
+        work_stack_[initial_work - 1].retry = true;
       }
     }
     auto constant_id = import_ir_constant_values_.Get(inst_id);
