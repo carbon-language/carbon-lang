@@ -288,10 +288,7 @@ class ImportRefResolver {
   // unresolved constants to the work stack.
   auto GetLocalNameScopeId(SemIR::NameScopeId name_scope_id)
       -> SemIR::NameScopeId {
-    if (!name_scope_id.is_valid()) {
-      return SemIR::NameScopeId::Invalid;
-    }
-    auto inst_id = import_ir_.name_scopes().Get(name_scope_id).inst_id;
+    auto inst_id = import_ir_.name_scopes().GetInstIdIfValid(name_scope_id);
     if (!inst_id.is_valid()) {
       // Map scopes that aren't associated with an instruction to invalid
       // scopes. For now, such scopes aren't used, and we don't have a good way
@@ -302,21 +299,25 @@ class ImportRefResolver {
     if (!const_id.is_valid()) {
       return SemIR::NameScopeId::Invalid;
     }
-    auto name_scope_inst = context_.insts().Get(const_id.inst_id());
-    if (auto namespace_inst = name_scope_inst.TryAs<SemIR::Namespace>()) {
-      return namespace_inst->name_scope_id;
+    switch (auto name_scope_inst = context_.insts().Get(const_id.inst_id());
+            name_scope_inst.kind()) {
+      case SemIR::Namespace::Kind:
+        return name_scope_inst.As<SemIR::Namespace>().name_scope_id;
+      case SemIR::ClassType::Kind:
+        return context_.classes()
+            .Get(name_scope_inst.As<SemIR::ClassType>().class_id)
+            .scope_id;
+      case SemIR::InterfaceType::Kind:
+        return context_.interfaces()
+            .Get(name_scope_inst.As<SemIR::InterfaceType>().interface_id)
+            .scope_id;
+      default:
+        if (const_id == SemIR::ConstantId::Error) {
+          return SemIR::NameScopeId::Invalid;
+        }
+        CARBON_FATAL() << "Unexpected instruction kind for name scope: "
+                       << name_scope_inst;
     }
-    if (auto class_inst = name_scope_inst.TryAs<SemIR::ClassType>()) {
-      return context_.classes().Get(class_inst->class_id).scope_id;
-    }
-    if (auto interface_inst = name_scope_inst.TryAs<SemIR::InterfaceType>()) {
-      return context_.interfaces().Get(interface_inst->interface_id).scope_id;
-    }
-    if (const_id == SemIR::ConstantId::Error) {
-      return SemIR::NameScopeId::Invalid;
-    }
-    CARBON_FATAL() << "Unexpected instruction kind for name scope: "
-                   << name_scope_inst;
   }
 
   // Adds ImportRefUnused entries for members of the imported scope, for name
