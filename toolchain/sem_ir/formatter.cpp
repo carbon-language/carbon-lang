@@ -13,6 +13,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_inst_switch.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -459,96 +460,82 @@ class InstNamer {
         AddBlockLabel(scope_id, sem_ir_.insts().GetNodeId(inst_id), *branch);
       }
 
-      switch (inst.kind()) {
-        case AddrPattern::Kind: {
-          // TODO: We need to assign names to parameters that appear in
-          // function declarations, which may be nested within a pattern. For
-          // now, just look through `addr`, but we should find a better way to
-          // visit parameters.
-          CollectNamesInBlock(scope_id, inst.As<AddrPattern>().inner_id);
-          break;
-        }
-        case AssociatedConstantDecl::Kind: {
-          add_inst_name_id(inst.As<AssociatedConstantDecl>().name_id);
-          continue;
-        }
-        case BindAlias::Kind:
-        case BindName::Kind:
-        case BindSymbolicName::Kind: {
-          add_inst_name_id(sem_ir_.bind_names()
-                               .Get(inst.As<AnyBindName>().bind_name_id)
-                               .name_id);
-          continue;
-        }
-        case ClassDecl::Kind: {
-          add_inst_name_id(
-              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
-              ".decl");
-          CollectNamesInBlock(scope_id, inst.As<ClassDecl>().decl_block_id);
-          continue;
-        }
-        case ClassType::Kind: {
-          add_inst_name_id(
-              sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
-          continue;
-        }
-        case FunctionDecl::Kind: {
-          add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDecl>().function_id)
-                               .name_id);
-          CollectNamesInBlock(scope_id, inst.As<FunctionDecl>().decl_block_id);
-          continue;
-        }
-        case ImplDecl::Kind: {
-          CollectNamesInBlock(scope_id, inst.As<ImplDecl>().decl_block_id);
-          break;
-        }
-        case ImportRefUnused::Kind:
-        case ImportRefUsed::Kind: {
-          add_inst_name("import_ref");
-          // When building import refs, we frequently add instructions without a
-          // block. Constants that refer to them need to be separately named.
-          auto const_id = sem_ir_.constant_values().Get(inst_id);
-          if (const_id.is_valid() && const_id.is_template() &&
-              !insts[const_id.inst_id().index].second) {
-            CollectNamesInBlock(ScopeId::ImportRef, const_id.inst_id());
-          }
-          continue;
-        }
-        case InterfaceDecl::Kind: {
-          add_inst_name_id(sem_ir_.interfaces()
-                               .Get(inst.As<InterfaceDecl>().interface_id)
-                               .name_id,
-                           ".decl");
-          CollectNamesInBlock(scope_id, inst.As<InterfaceDecl>().decl_block_id);
-          continue;
-        }
-        case NameRef::Kind: {
-          add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
-          continue;
-        }
-        // The namespace is specified here due to the name conflict.
-        case SemIR::Namespace::Kind: {
-          add_inst_name_id(sem_ir_.name_scopes()
-                               .Get(inst.As<SemIR::Namespace>().name_scope_id)
-                               .name_id);
-          continue;
-        }
-        case Param::Kind: {
-          add_inst_name_id(inst.As<Param>().name_id);
-          continue;
-        }
-        case SpliceBlock::Kind: {
-          CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
-          break;
-        }
-        case VarStorage::Kind: {
-          add_inst_name_id(inst.As<VarStorage>().name_id, ".var");
-          continue;
-        }
-        default: {
-          break;
-        }
+      bool do_continue = false;
+      TypedInstSwitch(inst)
+          .Case<AddrPattern>([&](auto inst) {
+            // TODO: We need to assign names to parameters that appear in
+            // function declarations, which may be nested within a pattern.
+            // For now, just look through `addr`, but we should find a
+            // better way to visit parameters.
+            CollectNamesInBlock(scope_id, inst.inner_id);
+          })
+          .Case<AssociatedConstantDecl>([&](auto inst) {
+            add_inst_name_id(inst.name_id);
+            do_continue = true;
+          })
+          .Case<AnyBindName>([&](auto inst) {
+            add_inst_name_id(
+                sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
+            do_continue = true;
+          })
+          .Case<ClassDecl>([&](auto inst) {
+            add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id,
+                             ".decl");
+            CollectNamesInBlock(scope_id, inst.decl_block_id);
+            do_continue = true;
+          })
+          .Case<ClassType>([&](auto inst) {
+            add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
+            do_continue = true;
+          })
+          .Case<FunctionDecl>([&](auto inst) {
+            add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
+            CollectNamesInBlock(scope_id, inst.decl_block_id);
+            do_continue = true;
+          })
+          .Case<ImplDecl>([&](auto inst) {
+            CollectNamesInBlock(scope_id, inst.decl_block_id);
+          })
+          .Case<AnyImportRef>([&](auto /*inst*/) {
+            add_inst_name("import_ref");
+            // When building import refs, we frequently add instructions
+            // without a block. Constants that refer to them need to be
+            // separately named.
+            auto const_id = sem_ir_.constant_values().Get(inst_id);
+            if (const_id.is_valid() && const_id.is_template() &&
+                !insts[const_id.inst_id().index].second) {
+              CollectNamesInBlock(ScopeId::ImportRef, const_id.inst_id());
+            }
+            do_continue = true;
+          })
+          .Case<InterfaceDecl>([&](auto inst) {
+            add_inst_name_id(
+                sem_ir_.interfaces().Get(inst.interface_id).name_id, ".decl");
+            CollectNamesInBlock(scope_id, inst.decl_block_id);
+            do_continue = true;
+          })
+          .Case<NameRef>([&](auto inst) {
+            add_inst_name_id(inst.name_id, ".ref");
+            do_continue = true;
+          })
+          .Case<SemIR::Namespace>([&](auto inst) {
+            // The namespace is specified here due to the name conflict.
+            add_inst_name_id(
+                sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
+            do_continue = true;
+          })
+          .Case<Param>([&](auto inst) {
+            add_inst_name_id(inst.name_id);
+            do_continue = true;
+          })
+          .Case<SpliceBlock>(
+              [&](auto inst) { CollectNamesInBlock(scope_id, inst.block_id); })
+          .Case<VarStorage>([&](auto inst) {
+            add_inst_name_id(inst.name_id, ".var");
+            do_continue = true;
+          });
+      if (do_continue) {
+        continue;
       }
 
       // Sequentially number all remaining values.
@@ -906,13 +893,11 @@ class Formatter {
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
-    switch (inst.kind()) {
-#define CARBON_SEM_IR_INST_KIND(InstT)            \
-  case InstT::Kind:                               \
-    FormatInstruction(inst_id, inst.As<InstT>()); \
-    break;
+    TypedInstSwitch(inst)
+#define CARBON_SEM_IR_INST_KIND(InstT) \
+  .Case<InstT>([&](auto inst) { FormatInstruction(inst_id, inst); })
 #include "toolchain/sem_ir/inst_kind.def"
-    }
+        ;
   }
 
   template <typename InstT>

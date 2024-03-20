@@ -102,6 +102,7 @@ cc_library(
         ":inst",
         ":inst_kind",
         ":type_info",
+        ":typed_inst_switch",
         "//common:check",
         "//common:error",
         "//toolchain/base:value_store",
@@ -120,6 +121,7 @@ cc_library(
         ":file",
         ":ids",
         ":inst_kind",
+        ":typed_inst_switch",
         "//common:ostream",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
@@ -145,6 +147,15 @@ cc_library(
         ":ids",
         ":inst",
         "//common:ostream",
+    ],
+)
+
+cc_library(
+    name = "typed_inst_switch",
+    hdrs = ["typed_inst_switch.h"],
+    deps = [
+        ":inst",
+        ":inst_kind",
     ],
 )
 

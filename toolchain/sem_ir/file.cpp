@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/typed_inst_switch.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -308,214 +309,135 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       steps.push_back({.sem_ir = sem_ir, .inst_id = inst_id});
     };
 
-    auto inst = sem_ir.insts().Get(step.inst_id);
-    switch (inst.kind()) {
-      case ArrayType::Kind: {
-        auto array = inst.As<ArrayType>();
-        if (step.index == 0) {
-          out << "[";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(array.element_type_id));
-        } else if (step.index == 1) {
-          out << "; " << sem_ir.GetArrayBoundValue(array.bound_id) << "]";
-        }
-        break;
-      }
-      case AssociatedEntityType::Kind: {
-        auto assoc = inst.As<AssociatedEntityType>();
-        if (step.index == 0) {
-          out << "<associated ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(assoc.entity_type_id));
-        } else {
-          auto interface_name_id =
-              sem_ir.interfaces().Get(assoc.interface_id).name_id;
-          out << " in " << sem_ir.names().GetFormatted(interface_name_id)
-              << ">";
-        }
-        break;
-      }
-      case BindAlias::Kind:
-      case BindSymbolicName::Kind: {
-        auto name_id = inst.As<AnyBindName>().bind_name_id;
-        out << sem_ir.names().GetFormatted(
-            sem_ir.bind_names().Get(name_id).name_id);
-        break;
-      }
-      case ClassType::Kind: {
-        auto class_name_id =
-            sem_ir.classes().Get(inst.As<ClassType>().class_id).name_id;
-        out << sem_ir.names().GetFormatted(class_name_id);
-        break;
-      }
-      case ConstType::Kind: {
-        if (step.index == 0) {
-          out << "const ";
-
-          // Add parentheses if required.
-          auto inner_type_inst_id =
-              sem_ir.types().GetInstId(inst.As<ConstType>().inner_id);
-          if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
-              GetTypePrecedence(inst.kind())) {
-            out << "(";
+    TypedInstSwitch(sem_ir.insts().Get(step.inst_id))
+        .Case<ArrayType>([&](auto inst) {
+          if (step.index == 0) {
+            out << "[";
             steps.push_back(step.Next());
+            push_inst_id(sem_ir.types().GetInstId(inst.element_type_id));
+          } else if (step.index == 1) {
+            out << "; " << sem_ir.GetArrayBoundValue(inst.bound_id) << "]";
+          }
+        })
+        .Case<AssociatedEntityType>([&](auto inst) {
+          if (step.index == 0) {
+            out << "<associated ";
+            steps.push_back(step.Next());
+            push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
+          } else {
+            auto interface_name_id =
+                sem_ir.interfaces().Get(inst.interface_id).name_id;
+            out << " in " << sem_ir.names().GetFormatted(interface_name_id)
+                << ">";
+          }
+        })
+        .Case<AnyBindName>([&](auto inst) {
+          auto name_id = inst.bind_name_id;
+          out << sem_ir.names().GetFormatted(
+              sem_ir.bind_names().Get(name_id).name_id);
+        })
+        .Case<ClassType>([&](auto inst) {
+          auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
+          out << sem_ir.names().GetFormatted(class_name_id);
+        })
+        .Case<ConstType>([&](auto inst) {
+          if (step.index == 0) {
+            out << "const ";
+
+            // Add parentheses if required.
+            auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
+            if (GetTypePrecedence(
+                    sem_ir.insts().Get(inner_type_inst_id).kind()) <
+                GetTypePrecedence(SemIR::ConstType::Kind)) {
+              out << "(";
+              steps.push_back(step.Next());
+            }
+
+            push_inst_id(inner_type_inst_id);
+          } else if (step.index == 1) {
+            out << ")";
+          }
+        })
+        .Case<FacetTypeAccess>([&](auto /*inst*/) {
+          // Print `T as type` as simply `T`.
+        })
+        .Case<ImportRefUsed>([&](auto inst) {
+          steps.push_back({.sem_ir = *sem_ir.import_irs().Get(inst.ir_id),
+                           .inst_id = inst.inst_id});
+        })
+        .Case<InterfaceType>([&](auto inst) {
+          auto interface_name_id =
+              sem_ir.interfaces().Get(inst.interface_id).name_id;
+          out << sem_ir.names().GetFormatted(interface_name_id);
+        })
+        .Case<NameRef>([&](auto inst) {
+          out << sem_ir.names().GetFormatted(inst.name_id);
+        })
+        .Case<PointerType>([&](auto inst) {
+          if (step.index == 0) {
+            steps.push_back(step.Next());
+            push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
+          } else if (step.index == 1) {
+            out << "*";
+          }
+        })
+        .Case<StructType>([&](auto inst) {
+          auto refs = sem_ir.inst_blocks().Get(inst.fields_id);
+          if (refs.empty()) {
+            out << "{}";
+            return;
+          } else if (step.index == 0) {
+            out << "{";
+          } else if (step.index < static_cast<int>(refs.size())) {
+            out << ", ";
+          } else {
+            out << "}";
+            return;
           }
 
-          push_inst_id(inner_type_inst_id);
-        } else if (step.index == 1) {
-          out << ")";
-        }
-        break;
-      }
-      case FacetTypeAccess::Kind: {
-        // Print `T as type` as simply `T`.
-        push_inst_id(inst.As<FacetTypeAccess>().facet_id);
-        break;
-      }
-      case ImportRefUsed::Kind: {
-        auto import_ref = inst.As<ImportRefUsed>();
-        steps.push_back({.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id),
-                         .inst_id = import_ref.inst_id});
-        break;
-      }
-      case InterfaceType::Kind: {
-        auto interface_name_id = sem_ir.interfaces()
-                                     .Get(inst.As<InterfaceType>().interface_id)
-                                     .name_id;
-        out << sem_ir.names().GetFormatted(interface_name_id);
-        break;
-      }
-      case NameRef::Kind: {
-        out << sem_ir.names().GetFormatted(inst.As<NameRef>().name_id);
-        break;
-      }
-      case PointerType::Kind: {
-        if (step.index == 0) {
           steps.push_back(step.Next());
-          push_inst_id(
-              sem_ir.types().GetInstId(inst.As<PointerType>().pointee_id));
-        } else if (step.index == 1) {
-          out << "*";
-        }
-        break;
-      }
-      case StructType::Kind: {
-        auto refs = sem_ir.inst_blocks().Get(inst.As<StructType>().fields_id);
-        if (refs.empty()) {
-          out << "{}";
-          break;
-        } else if (step.index == 0) {
-          out << "{";
-        } else if (step.index < static_cast<int>(refs.size())) {
-          out << ", ";
-        } else {
-          out << "}";
-          break;
-        }
-
-        steps.push_back(step.Next());
-        push_inst_id(refs[step.index]);
-        break;
-      }
-      case StructTypeField::Kind: {
-        auto field = inst.As<StructTypeField>();
-        out << "." << sem_ir.names().GetFormatted(field.name_id) << ": ";
-        push_inst_id(sem_ir.types().GetInstId(field.field_type_id));
-        break;
-      }
-      case TupleType::Kind: {
-        auto refs = sem_ir.type_blocks().Get(inst.As<TupleType>().elements_id);
-        if (refs.empty()) {
-          out << "()";
-          break;
-        } else if (step.index == 0) {
-          out << "(";
-        } else if (step.index < static_cast<int>(refs.size())) {
-          out << ", ";
-        } else {
-          // A tuple of one element has a comma to disambiguate from an
-          // expression.
-          if (step.index == 1) {
-            out << ",";
+          push_inst_id(refs[step.index]);
+        })
+        .Case<StructTypeField>([&](auto inst) {
+          out << "." << sem_ir.names().GetFormatted(inst.name_id) << ": ";
+          push_inst_id(sem_ir.types().GetInstId(inst.field_type_id));
+        })
+        .Case<TupleType>([&](auto inst) {
+          auto refs = sem_ir.type_blocks().Get(inst.elements_id);
+          if (refs.empty()) {
+            out << "()";
+            return;
+          } else if (step.index == 0) {
+            out << "(";
+          } else if (step.index < static_cast<int>(refs.size())) {
+            out << ", ";
+          } else {
+            // A tuple of one element has a comma to disambiguate from an
+            // expression.
+            if (step.index == 1) {
+              out << ",";
+            }
+            out << ")";
+            return;
           }
-          out << ")";
-          break;
-        }
-        steps.push_back(step.Next());
-        push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
-        break;
-      }
-      case UnboundElementType::Kind: {
-        if (step.index == 0) {
-          out << "<unbound element of class ";
           steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(
-              inst.As<UnboundElementType>().class_type_id));
-        } else {
-          out << ">";
-        }
-        break;
-      }
-      case AddrOf::Kind:
-      case AddrPattern::Kind:
-      case ArrayIndex::Kind:
-      case ArrayInit::Kind:
-      case Assign::Kind:
-      case AssociatedConstantDecl::Kind:
-      case AssociatedEntity::Kind:
-      case BaseDecl::Kind:
-      case BindName::Kind:
-      case BindValue::Kind:
-      case BlockArg::Kind:
-      case BoolLiteral::Kind:
-      case BoundMethod::Kind:
-      case Branch::Kind:
-      case BranchIf::Kind:
-      case BranchWithArg::Kind:
-      case Builtin::Kind:
-      case Call::Kind:
-      case ClassDecl::Kind:
-      case ClassElementAccess::Kind:
-      case ClassInit::Kind:
-      case Converted::Kind:
-      case Deref::Kind:
-      case FieldDecl::Kind:
-      case FunctionDecl::Kind:
-      case ImplDecl::Kind:
-      case ImportRefUnused::Kind:
-      case InitializeFrom::Kind:
-      case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
-      case IntLiteral::Kind:
-      case Namespace::Kind:
-      case Param::Kind:
-      case RealLiteral::Kind:
-      case Return::Kind:
-      case ReturnExpr::Kind:
-      case SpliceBlock::Kind:
-      case StringLiteral::Kind:
-      case StructAccess::Kind:
-      case StructLiteral::Kind:
-      case StructInit::Kind:
-      case StructValue::Kind:
-      case Temporary::Kind:
-      case TemporaryStorage::Kind:
-      case TupleAccess::Kind:
-      case TupleIndex::Kind:
-      case TupleLiteral::Kind:
-      case TupleInit::Kind:
-      case TupleValue::Kind:
-      case UnaryOperatorNot::Kind:
-      case ValueAsRef::Kind:
-      case ValueOfInitializer::Kind:
-      case VarStorage::Kind:
-        // We don't need to handle stringification for instructions that don't
-        // show up in errors, but make it clear what's going on so that it's
-        // clearer when stringification is needed.
-        out << "<cannot stringify " << step.inst_id << ">";
-        break;
-    }
+          push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
+        })
+        .Case<UnboundElementType>([&](auto inst) {
+          if (step.index == 0) {
+            out << "<unbound element of class ";
+            steps.push_back(step.Next());
+            push_inst_id(sem_ir.types().GetInstId(inst.class_type_id));
+          } else {
+            out << ">";
+          }
+        })
+        .Default([&]() {
+          // We don't need to handle stringification for instructions that don't
+          // show up in errors, but make it clear what's going on so that it's
+          // clearer when stringification is needed.
+          out << "<cannot stringify " << step.inst_id << ">";
+        });
   }
 
   return str;
@@ -537,143 +459,55 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   ExprCategory value_category = ExprCategory::Value;
 
   while (true) {
-    auto inst = ir->insts().Get(inst_id);
-    switch (inst.kind()) {
-      case Assign::Kind:
-      case BaseDecl::Kind:
-      case Branch::Kind:
-      case BranchIf::Kind:
-      case BranchWithArg::Kind:
-      case FieldDecl::Kind:
-      case FunctionDecl::Kind:
-      case ImplDecl::Kind:
-      case ImportRefUnused::Kind:
-      case Namespace::Kind:
-      case Return::Kind:
-      case ReturnExpr::Kind:
-      case StructTypeField::Kind:
-        return ExprCategory::NotExpr;
-
-      case ImportRefUsed::Kind: {
-        auto import_ref = inst.As<ImportRefUsed>();
-        ir = ir->import_irs().Get(import_ref.ir_id);
-        inst_id = import_ref.inst_id;
-        continue;
-      }
-
-      case BindAlias::Kind: {
-        inst_id = inst.As<BindAlias>().value_id;
-        continue;
-      }
-      case NameRef::Kind: {
-        inst_id = inst.As<NameRef>().value_id;
-        continue;
-      }
-
-      case Converted::Kind: {
-        inst_id = inst.As<Converted>().result_id;
-        continue;
-      }
-
-      case AddrOf::Kind:
-      case AddrPattern::Kind:
-      case ArrayType::Kind:
-      case AssociatedConstantDecl::Kind:
-      case AssociatedEntity::Kind:
-      case AssociatedEntityType::Kind:
-      case BindSymbolicName::Kind:
-      case BindValue::Kind:
-      case BlockArg::Kind:
-      case BoolLiteral::Kind:
-      case BoundMethod::Kind:
-      case ClassDecl::Kind:
-      case ClassType::Kind:
-      case ConstType::Kind:
-      case FacetTypeAccess::Kind:
-      case InterfaceDecl::Kind:
-      case InterfaceType::Kind:
-      case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
-      case IntLiteral::Kind:
-      case Param::Kind:
-      case PointerType::Kind:
-      case RealLiteral::Kind:
-      case StringLiteral::Kind:
-      case StructValue::Kind:
-      case StructType::Kind:
-      case TupleValue::Kind:
-      case TupleType::Kind:
-      case UnaryOperatorNot::Kind:
-      case UnboundElementType::Kind:
-      case ValueOfInitializer::Kind:
-        return value_category;
-
-      case Builtin::Kind: {
-        if (inst.As<Builtin>().builtin_kind == BuiltinKind::Error) {
-          return ExprCategory::Error;
-        }
-        return value_category;
-      }
-
-      case BindName::Kind: {
-        inst_id = inst.As<BindName>().value_id;
-        continue;
-      }
-
-      case ArrayIndex::Kind: {
-        inst_id = inst.As<ArrayIndex>().array_id;
-        continue;
-      }
-
-      case ClassElementAccess::Kind: {
-        inst_id = inst.As<ClassElementAccess>().base_id;
-        // A value of class type is a pointer to an object representation.
-        // Therefore, if the base is a value, the result is an ephemeral
-        // reference.
-        value_category = ExprCategory::EphemeralRef;
-        continue;
-      }
-
-      case StructAccess::Kind: {
-        inst_id = inst.As<StructAccess>().struct_id;
-        continue;
-      }
-
-      case TupleAccess::Kind: {
-        inst_id = inst.As<TupleAccess>().tuple_id;
-        continue;
-      }
-
-      case TupleIndex::Kind: {
-        inst_id = inst.As<TupleIndex>().tuple_id;
-        continue;
-      }
-
-      case SpliceBlock::Kind: {
-        inst_id = inst.As<SpliceBlock>().result_id;
-        continue;
-      }
-
-      case StructLiteral::Kind:
-      case TupleLiteral::Kind:
-        return ExprCategory::Mixed;
-
-      case ArrayInit::Kind:
-      case Call::Kind:
-      case InitializeFrom::Kind:
-      case ClassInit::Kind:
-      case StructInit::Kind:
-      case TupleInit::Kind:
-        return ExprCategory::Initializing;
-
-      case Deref::Kind:
-      case VarStorage::Kind:
-        return ExprCategory::DurableRef;
-
-      case Temporary::Kind:
-      case TemporaryStorage::Kind:
-      case ValueAsRef::Kind:
-        return ExprCategory::EphemeralRef;
+    std::optional<ExprCategory> result;
+    TypedInstSwitch(ir->insts().Get(inst_id))
+        .Cases<Assign, BaseDecl, Branch, BranchIf, BranchWithArg, FieldDecl,
+               FunctionDecl, ImplDecl, ImportRefUnused, Namespace, Return,
+               ReturnExpr, StructTypeField>(
+            [&] { result = ExprCategory::NotExpr; })
+        .Case<ImportRefUsed>([&](auto inst) {
+          ir = ir->import_irs().Get(inst.ir_id);
+          inst_id = inst.inst_id;
+        })
+        .Case<BindAlias>([&](auto inst) { inst_id = inst.value_id; })
+        .Case<NameRef>([&](auto inst) { inst_id = inst.value_id; })
+        .Case<Converted>([&](auto inst) { inst_id = inst.result_id; })
+        .Cases<AddrOf, AddrPattern, ArrayType, AssociatedConstantDecl,
+               AssociatedEntity, AssociatedEntityType, BindSymbolicName,
+               BindValue, BlockArg, BoolLiteral, BoundMethod, ClassDecl,
+               ClassType, ConstType, FacetTypeAccess, InterfaceDecl,
+               InterfaceType, InterfaceWitness, InterfaceWitnessAccess,
+               IntLiteral, Param, PointerType, RealLiteral, StringLiteral,
+               StructValue, StructType, TupleValue, TupleType, UnaryOperatorNot,
+               UnboundElementType, ValueOfInitializer>(
+            [&]() { result = value_category; })
+        .Case<Builtin>([&](auto inst) {
+          result = (inst.builtin_kind == BuiltinKind::Error)
+                       ? ExprCategory::Error
+                       : value_category;
+        })
+        .Case<BindName>([&](auto inst) { inst_id = inst.value_id; })
+        .Case<ArrayIndex>([&](auto inst) { inst_id = inst.array_id; })
+        .Case<ClassElementAccess>([&](auto inst) {
+          inst_id = inst.base_id;
+          // A value of class type is a pointer to an object representation.
+          // Therefore, if the base is a value, the result is an ephemeral
+          // reference.
+          value_category = ExprCategory::EphemeralRef;
+        })
+        .Case<StructAccess>([&](auto inst) { inst_id = inst.struct_id; })
+        .Case<TupleAccess>([&](auto inst) { inst_id = inst.tuple_id; })
+        .Case<TupleIndex>([&](auto inst) { inst_id = inst.tuple_id; })
+        .Case<SpliceBlock>([&](auto inst) { inst_id = inst.result_id; })
+        .Cases<StructLiteral, TupleLiteral>(
+            [&]() { result = ExprCategory::Mixed; })
+        .Cases<ArrayInit, Call, InitializeFrom, ClassInit, StructInit,
+               TupleInit>([&]() { result = ExprCategory::Initializing; })
+        .Cases<Deref, VarStorage>([&]() { result = ExprCategory::DurableRef; })
+        .Cases<Temporary, TemporaryStorage, ValueAsRef>(
+            [&]() { result = ExprCategory::EphemeralRef; });
+    if (result) {
+      return *result;
     }
   }
 }
