@@ -134,9 +134,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %.9: type = tuple_type () [template]
 // CHECK:STDOUT:   %.10: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.11: type = assoc_entity_type @Inc, <function> [template]
-// CHECK:STDOUT:   %.12: <associated <function> in Inc> = assoc_entity element0, @TestIncNonRef.%import_ref.2 [template]
+// CHECK:STDOUT:   %.12: <associated <function> in Inc> = assoc_entity element0, file.%import_ref.10 [template]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, <function> [template]
-// CHECK:STDOUT:   %.14: <associated <function> in AddAssign> = assoc_entity element0, @TestAddAssignNonRef.%import_ref.2 [template]
+// CHECK:STDOUT:   %.14: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -148,25 +148,33 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Inc> = import_ref ir1, inst+14, used [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unused
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+12, used [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:     %Inc.decl: invalid = interface_decl @Inc [template = constants.%.2] {}
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+16, used [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir1, inst+34, used [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+18, unused
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir1, inst+32, used [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %import_ref.2: type = import_ref ir1, inst+16, used [template = constants.%.6]
 // CHECK:STDOUT:     %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.6] {}
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.2 [template = constants.%.6]
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef: <function> = fn_decl @TestIncNonRef [template] {
 // CHECK:STDOUT:     %C.ref.loc15: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_18.1: C = param a
 // CHECK:STDOUT:     @TestIncNonRef.%a: C = bind_name a, %a.loc15_18.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+12, unused
 // CHECK:STDOUT:   %TestAddAssignNonRef: <function> = fn_decl @TestAddAssignNonRef [template] {
 // CHECK:STDOUT:     %C.ref.loc25_27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc25_24.1: C = param a
@@ -175,28 +183,22 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.loc25_30.1: C = param b
 // CHECK:STDOUT:     @TestAddAssignNonRef.%b: C = bind_name b, %b.loc25_30.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+16, used [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+32, unused
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in Inc> = import_ref ir1, inst+14, used [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+12, used [template = imports.%Op.1]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT:   .Op = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   witness = (file.%import_ref.4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %import_ref.1: <associated <function> in AddAssign> = import_ref ir1, inst+34, used [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+18, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+32, used [template = imports.%Op.2]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %import_ref.1
-// CHECK:STDOUT:   .Self = %import_ref.2
-// CHECK:STDOUT:   witness = (%import_ref.3)
+// CHECK:STDOUT:   .Op = file.%import_ref.6
+// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   witness = (file.%import_ref.8)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: C as Inc {
@@ -248,8 +250,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+12, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
 // CHECK:STDOUT:   %.loc22_3.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc22_3.2: init () = call %.loc22_3.1(<invalid>) [template = <error>]
@@ -260,8 +260,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+16, used [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+32, unused
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
 // CHECK:STDOUT:   %.loc32_5.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc32_5.2: init () = call %.loc32_5.1(<invalid>) [template = <error>]

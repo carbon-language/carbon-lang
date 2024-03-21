@@ -82,15 +82,14 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
 // CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir1, inst+11, used
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unused
+// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir1, inst+18, used [template = imports.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:   %import_ref.2: <unbound element of class Cycle> = import_ref ir1, inst+18, used [template = imports.%.1]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %import_ref.1
-// CHECK:STDOUT:   .c = %import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .c = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -102,7 +101,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref Cycle* = struct_access %a.ref.loc7_11, element0
 // CHECK:STDOUT:   %.loc7_12.2: Cycle* = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: <unbound element of class Cycle> = name_ref c, @Cycle.%import_ref.2 [template = imports.%.1]
+// CHECK:STDOUT:   %c.ref: <unbound element of class Cycle> = name_ref c, file.%import_ref.4 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_15: ref {.b: Cycle*} = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref Cycle* = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: Cycle* = bind_value %.loc7_17.1
