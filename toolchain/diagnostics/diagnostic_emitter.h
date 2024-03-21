@@ -65,9 +65,8 @@ class DiagnosticEmitter {
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
           << static_cast<int>(diagnostic_base.Level);
-      diagnostic_.notes.push_back(
-          MakeMessage(emitter_, location, diagnostic_base,
-                      {emitter_->MakeAny<Args>(args)...}));
+      AddMessage(emitter_, location, diagnostic_base,
+                 {emitter_->MakeAny<Args>(args)...});
       return *this;
     }
 
@@ -89,26 +88,25 @@ class DiagnosticEmitter {
         DiagnosticEmitter<LocationT>* emitter, LocationT location,
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
         llvm::SmallVector<llvm::Any> args)
-        : emitter_(emitter),
-          diagnostic_(
-              {.level = diagnostic_base.Level,
-               .message = MakeMessage(emitter, location, diagnostic_base,
-                                      std::move(args))}) {
+        : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
+      AddMessage(emitter, location, diagnostic_base, std::move(args));
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
 
     template <typename... Args>
-    static auto MakeMessage(
-        DiagnosticEmitter<LocationT>* emitter, LocationT location,
-        const Internal::DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) -> DiagnosticMessage {
-      return DiagnosticMessage(
-          diagnostic_base.Kind, emitter->converter_->ConvertLocation(location),
-          diagnostic_base.Format, std::move(args),
-          [](const DiagnosticMessage& message) -> std::string {
+    auto AddMessage(DiagnosticEmitter<LocationT>* emitter, LocationT location,
+                    const Internal::DiagnosticBase<Args...>& diagnostic_base,
+                    llvm::SmallVector<llvm::Any> args) -> void {
+      diagnostic_.messages.emplace_back(DiagnosticMessage{
+          .kind = diagnostic_base.Kind,
+          .level = diagnostic_base.Level,
+          .location = emitter->converter_->ConvertLocation(location),
+          .format = diagnostic_base.Format,
+          .format_args = std::move(args),
+          .format_fn = [](const DiagnosticMessage& message) -> std::string {
             return FormatFn<Args...>(
                 message, std::make_index_sequence<sizeof...(Args)>());
-          });
+          }});
     }
 
     // Handles the cast of llvm::Any to Args types for formatv.

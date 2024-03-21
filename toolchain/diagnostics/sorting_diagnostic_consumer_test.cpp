@@ -14,7 +14,7 @@
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::IsDiagnostic;
+using ::Carbon::Testing::IsSingleDiagnostic;
 using ::testing::InSequence;
 
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
@@ -40,24 +40,24 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   emitter.Emit({"f", "line", 3, 2}, TestDiagnostic, "M6");
 
   InSequence s;
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 1, 1, "M2")));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 1, 3, "M3")));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 2, 1, "M1")));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 3, 2, "M5")));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 3, 2, "M6")));
-  EXPECT_CALL(consumer, HandleDiagnostic(
-                            IsDiagnostic(DiagnosticKind::TestDiagnostic,
-                                         DiagnosticLevel::Error, 3, 4, "M4")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 1, 1, "M2")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 1, 3, "M3")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 2, 1, "M1")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 3, 2, "M5")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 3, 2, "M6")));
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::TestDiagnostic,
+                            DiagnosticLevel::Error, 3, 4, "M4")));
   sorting_consumer.Flush();
 }
 
