@@ -15,8 +15,8 @@ namespace {
 
 using ::Carbon::Testing::IsDiagnostic;
 
-struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
-  auto GetLocation(int n) -> DiagnosticLocation override {
+struct FakeDiagnosticTranslator : DiagnosticTranslator<int> {
+  auto TranslateLocation(int n) const -> DiagnosticLocation override {
     return {.line_number = 1, .column_number = n};
   }
 };
@@ -25,7 +25,7 @@ class DiagnosticEmitterTest : public ::testing::Test {
  protected:
   DiagnosticEmitterTest() : emitter_(translator_, consumer_) {}
 
-  FakeDiagnosticLocationTranslator translator_;
+  FakeDiagnosticTranslator translator_;
   Testing::MockDiagnosticConsumer consumer_;
   DiagnosticEmitter<int> emitter_;
 };

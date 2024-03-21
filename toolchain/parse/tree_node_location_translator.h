@@ -34,8 +34,7 @@ inline auto TokenOnly(NodeId node_id) -> NodeLocation {
   return NodeLocation(node_id, true);
 }
 
-class NodeLocationTranslator
-    : public DiagnosticLocationTranslator<NodeLocation> {
+class NodeLocationTranslator : public DiagnosticTranslator<NodeLocation> {
  public:
   explicit NodeLocationTranslator(const Lex::TokenizedBuffer* tokens,
                                   llvm::StringRef filename,
@@ -45,7 +44,8 @@ class NodeLocationTranslator
         parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(NodeLocation node_location) -> DiagnosticLocation override {
+  auto TranslateLocation(NodeLocation node_location) const
+      -> DiagnosticLocation override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
     if (!node_location.node_id().is_valid()) {
@@ -53,7 +53,7 @@ class NodeLocationTranslator
     }
 
     if (node_location.token_only()) {
-      return token_translator_.GetLocation(
+      return token_translator_.TranslateLocation(
           parse_tree_->node_token(node_location.node_id()));
     }
 
@@ -73,11 +73,12 @@ class NodeLocationTranslator
         end_token = desc_token;
       }
     }
-    DiagnosticLocation start_loc = token_translator_.GetLocation(start_token);
+    DiagnosticLocation start_loc =
+        token_translator_.TranslateLocation(start_token);
     if (start_token == end_token) {
       return start_loc;
     }
-    DiagnosticLocation end_loc = token_translator_.GetLocation(end_token);
+    DiagnosticLocation end_loc = token_translator_.TranslateLocation(end_token);
     // For multiline locations we simply return the rest of the line for now
     // since true multiline locations are not yet supported.
     if (start_loc.line_number != end_loc.line_number) {
@@ -92,7 +93,7 @@ class NodeLocationTranslator
   }
 
  private:
-  Lex::TokenLocationTranslator token_translator_;
+  Lex::TokenDiagnosticTranslator token_translator_;
   llvm::StringRef filename_;
   const Tree* parse_tree_;
 };

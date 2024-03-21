@@ -24,15 +24,12 @@ enum class DiagnosticTypeTranslation : int8_t {
 
 // An interface that can translate some representation of a location into a
 // diagnostic location.
-//
-// TODO: Revisit this once the diagnostics machinery is more complete and see
-// if we can turn it into a `std::function`.
 template <typename LocationT>
-class DiagnosticLocationTranslator {
+class DiagnosticTranslator {
  public:
-  virtual ~DiagnosticLocationTranslator() = default;
+  virtual ~DiagnosticTranslator() = default;
 
-  virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
+  virtual auto TranslateLocation(LocationT loc) const -> DiagnosticLocation = 0;
 
   // Translates arg types as needed. Not all uses support translation, so the
   // default simply errors.

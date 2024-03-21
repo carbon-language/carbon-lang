@@ -103,7 +103,8 @@ class DiagnosticEmitter {
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
         llvm::SmallVector<llvm::Any> args) -> DiagnosticMessage {
       return DiagnosticMessage(
-          diagnostic_base.Kind, emitter->translator_->GetLocation(location),
+          diagnostic_base.Kind,
+          emitter->translator_->TranslateLocation(location),
           diagnostic_base.Format, std::move(args),
           [](const DiagnosticMessage& message) -> std::string {
             return FormatFn<Args...>(
@@ -133,9 +134,8 @@ class DiagnosticEmitter {
 
   // The `translator` and `consumer` are required to outlive the diagnostic
   // emitter.
-  explicit DiagnosticEmitter(
-      DiagnosticLocationTranslator<LocationT>& translator,
-      DiagnosticConsumer& consumer)
+  explicit DiagnosticEmitter(DiagnosticTranslator<LocationT>& translator,
+                             DiagnosticConsumer& consumer)
       : translator_(&translator), consumer_(&consumer) {}
   ~DiagnosticEmitter() = default;
 
@@ -182,7 +182,7 @@ class DiagnosticEmitter {
   template <typename LocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
 
-  DiagnosticLocationTranslator<LocationT>* translator_;
+  DiagnosticTranslator<LocationT>* translator_;
   DiagnosticConsumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
       annotate_fns_;

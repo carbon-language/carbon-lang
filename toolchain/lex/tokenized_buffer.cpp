@@ -345,8 +345,8 @@ auto TokenIterator::Print(llvm::raw_ostream& output) const -> void {
   output << token_.index;
 }
 
-auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
-    const char* loc) -> DiagnosticLocation {
+auto TokenizedBuffer::SourceBufferDiagnosticTranslator::TranslateLocation(
+    const char* loc) const -> DiagnosticLocation {
   CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
       << "location not within buffer";
   int64_t offset = loc - buffer_->source_->text().begin();
@@ -390,7 +390,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
           .column_number = column_number + 1};
 }
 
-auto TokenLocationTranslator::GetLocation(TokenIndex token)
+auto TokenDiagnosticTranslator::TranslateLocation(TokenIndex token) const
     -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
@@ -402,8 +402,8 @@ auto TokenLocationTranslator::GetLocation(TokenIndex token)
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
   DiagnosticLocation loc =
-      TokenizedBuffer::SourceBufferLocationTranslator(buffer_).GetLocation(
-          token_start);
+      TokenizedBuffer::SourceBufferDiagnosticTranslator(buffer_)
+          .TranslateLocation(token_start);
   loc.length = buffer_->GetTokenText(token).size();
   return loc;
 }

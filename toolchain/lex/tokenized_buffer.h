@@ -113,14 +113,13 @@ class TokenIterator
 
 // A diagnostic location translator that maps token locations into source
 // buffer locations.
-class TokenLocationTranslator
-    : public DiagnosticLocationTranslator<TokenIndex> {
+class TokenDiagnosticTranslator : public DiagnosticTranslator<TokenIndex> {
  public:
-  explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
+  explicit TokenDiagnosticTranslator(const TokenizedBuffer* buffer)
       : buffer_(buffer) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(TokenIndex token) -> DiagnosticLocation override;
+  auto TranslateLocation(TokenIndex token) const -> DiagnosticLocation override;
 
  private:
   const TokenizedBuffer* buffer_;
@@ -244,19 +243,20 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
  private:
   friend class Lexer;
-  friend class TokenLocationTranslator;
+  friend class TokenDiagnosticTranslator;
 
   // A diagnostic location translator that maps token locations into source
   // buffer locations.
-  class SourceBufferLocationTranslator
-      : public DiagnosticLocationTranslator<const char*> {
+  class SourceBufferDiagnosticTranslator
+      : public DiagnosticTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer)
+    explicit SourceBufferDiagnosticTranslator(const TokenizedBuffer* buffer)
         : buffer_(buffer) {}
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto GetLocation(const char* loc) -> DiagnosticLocation override;
+    auto TranslateLocation(const char* loc) const
+        -> DiagnosticLocation override;
 
    private:
     const TokenizedBuffer* buffer_;

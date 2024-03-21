@@ -11,8 +11,9 @@
 namespace Carbon {
 
 namespace {
-struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
-  auto GetLocation(llvm::StringRef filename) -> DiagnosticLocation override {
+struct FilenameTranslator : DiagnosticTranslator<llvm::StringRef> {
+  auto TranslateLocation(llvm::StringRef filename) const
+      -> DiagnosticLocation override {
     return {.filename = filename};
   }
 };

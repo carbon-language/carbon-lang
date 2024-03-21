@@ -10,10 +10,10 @@
 namespace Carbon {
 
 template <typename LocationT>
-inline auto NullDiagnosticLocationTranslator()
-    -> DiagnosticLocationTranslator<LocationT>& {
-  struct Translator : DiagnosticLocationTranslator<LocationT> {
-    auto GetLocation(LocationT /*loc*/) -> DiagnosticLocation override {
+inline auto NullDiagnosticTranslator() -> DiagnosticTranslator<LocationT>& {
+  struct Translator : DiagnosticTranslator<LocationT> {
+    auto TranslateLocation(LocationT /*loc*/) const
+        -> DiagnosticLocation override {
       return {};
     }
   };
@@ -32,7 +32,7 @@ inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
 template <typename LocationT>
 inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocationT>& {
   static auto* emitter = new DiagnosticEmitter<LocationT>(
-      NullDiagnosticLocationTranslator<LocationT>(), NullDiagnosticConsumer());
+      NullDiagnosticTranslator<LocationT>(), NullDiagnosticConsumer());
   return *emitter;
 }
 

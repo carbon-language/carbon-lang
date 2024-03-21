@@ -170,10 +170,10 @@ class [[clang::internal_linkage]] Lexer {
 
   ErrorTrackingDiagnosticConsumer consumer_;
 
-  TokenizedBuffer::SourceBufferLocationTranslator translator_;
+  TokenizedBuffer::SourceBufferDiagnosticTranslator translator_;
   LexerDiagnosticEmitter emitter_;
 
-  TokenLocationTranslator token_translator_;
+  TokenDiagnosticTranslator token_translator_;
   TokenDiagnosticEmitter token_emitter_;
 };
 

@@ -19,15 +19,15 @@ using ::testing::InSequence;
 
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
 
-struct FakeDiagnosticLocationTranslator
-    : DiagnosticLocationTranslator<DiagnosticLocation> {
-  auto GetLocation(DiagnosticLocation loc) -> DiagnosticLocation override {
+struct FakeDiagnosticTranslator : DiagnosticTranslator<DiagnosticLocation> {
+  auto TranslateLocation(DiagnosticLocation loc) const
+      -> DiagnosticLocation override {
     return loc;
   }
 };
 
 TEST(SortedDiagnosticEmitterTest, SortErrors) {
-  FakeDiagnosticLocationTranslator translator;
+  FakeDiagnosticTranslator translator;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
   DiagnosticEmitter<DiagnosticLocation> emitter(translator, sorting_consumer);

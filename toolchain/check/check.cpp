@@ -25,19 +25,19 @@ namespace Carbon::Check {
 #include "toolchain/parse/node_kind.def"
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
-class SemIRLocationTranslator
-    : public DiagnosticLocationTranslator<SemIRLocation> {
+class SemIRDiagnosticTranslator : public DiagnosticTranslator<SemIRLocation> {
  public:
-  explicit SemIRLocationTranslator(
+  explicit SemIRDiagnosticTranslator(
       const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
           node_translators,
       const SemIR::File* sem_ir)
       : node_translators_(node_translators), sem_ir_(sem_ir) {}
 
-  auto GetLocation(SemIRLocation loc) -> DiagnosticLocation override {
+  auto TranslateLocation(SemIRLocation loc) const
+      -> DiagnosticLocation override {
     // Parse nodes always refer to the current IR.
     if (!loc.is_inst_id) {
-      return GetLocationInFile(sem_ir_, loc.node_location);
+      return TranslateLocationInFile(sem_ir_, loc.node_location);
     }
 
     const auto* cursor_ir = sem_ir_;
@@ -46,7 +46,7 @@ class SemIRLocationTranslator
       // If the parse node is valid, use it for the location.
       if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
           node_id.is_valid()) {
-        return GetLocationInFile(cursor_ir, node_id);
+        return TranslateLocationInFile(cursor_ir, node_id);
       }
 
       // If the parse node was invalid, recurse through import references when
@@ -69,7 +69,7 @@ class SemIRLocationTranslator
       }
 
       // Invalid parse node but not an import; just nothing to point at.
-      return GetLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      return TranslateLocationInFile(cursor_ir, Parse::NodeId::Invalid);
     }
   }
 
@@ -85,18 +85,18 @@ class SemIRLocationTranslator
         return sem_ir_->StringifyType(type_id);
       }
       default:
-        return DiagnosticLocationTranslator<SemIRLocation>::TranslateArg(
-            translation, arg);
+        return DiagnosticTranslator<SemIRLocation>::TranslateArg(translation,
+                                                                 arg);
     }
   }
 
  private:
-  auto GetLocationInFile(const SemIR::File* sem_ir,
-                         Parse::NodeLocation node_location) const
+  auto TranslateLocationInFile(const SemIR::File* sem_ir,
+                               Parse::NodeLocation node_location) const
       -> DiagnosticLocation {
     auto it = node_translators_->find(sem_ir);
     CARBON_CHECK(it != node_translators_->end());
-    return it->second->GetLocation(node_location);
+    return it->second->TranslateLocation(node_location);
   }
 
   const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
@@ -268,7 +268,7 @@ static auto CheckParseTree(
   CARBON_CHECK(
       node_translators->insert({&sem_ir, &unit_info.translator}).second);
 
-  SemIRLocationTranslator translator(node_translators, &sem_ir);
+  SemIRDiagnosticTranslator translator(node_translators, &sem_ir);
   Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
                   sem_ir, vlog_stream);
