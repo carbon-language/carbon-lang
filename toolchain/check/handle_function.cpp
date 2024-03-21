@@ -9,7 +9,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
-#include "toolchain/parse/tree_node_location_translator.h"
+#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"

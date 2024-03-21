@@ -285,7 +285,7 @@ constexpr BoolValue BoolValue::True = BoolValue(1);
 struct NameId : public IdBase, public Printable<NameId> {
   // names().GetFormatted() is used for diagnostics.
   using DiagnosticType =
-      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::NameId>;
+      DiagnosticTypeInfo<std::string, DiagnosticTypeConversion::NameId>;
 
   // An explicitly invalid ID.
   static const NameId Invalid;
@@ -423,7 +423,7 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   using ValueType = TypeInfo;
   // StringifyType() is used for diagnostics.
   using DiagnosticType =
-      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::TypeId>;
+      DiagnosticTypeInfo<std::string, DiagnosticTypeConversion::TypeId>;
 
   // The builtin TypeType.
   static const TypeId TypeType;

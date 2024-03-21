@@ -16,7 +16,7 @@
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/tree_node_location_translator.h"
+#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
