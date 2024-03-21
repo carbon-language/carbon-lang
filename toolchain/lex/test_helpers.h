@@ -15,17 +15,16 @@
 
 namespace Carbon::Testing {
 
-// A diagnostic translator for tests that lex a single token. Produces
+// A diagnostic converter for tests that lex a single token. Produces
 // locations such as "`12.5`:1:3" to refer to the third character in the token.
-class SingleTokenDiagnosticTranslator
-    : public DiagnosticTranslator<const char*> {
+class SingleTokenDiagnosticConverter : public DiagnosticConverter<const char*> {
  public:
-  // Form a translator for a given token. The string provided here must refer
+  // Form a converter for a given token. The string provided here must refer
   // to the same character array that we are going to lex.
-  explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
+  explicit SingleTokenDiagnosticConverter(llvm::StringRef token)
       : token_(token) {}
 
-  auto TranslateLocation(const char* pos) const -> DiagnosticLocation override {
+  auto ConvertLocation(const char* pos) const -> DiagnosticLocation override {
     CARBON_CHECK(StringRefContainsPointer(token_, pos))
         << "invalid diagnostic location";
     llvm::StringRef prefix = token_.take_front(pos - token_.begin());

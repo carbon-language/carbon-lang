@@ -16,8 +16,8 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
-#include "toolchain/diagnostics/diagnostic_translator.h"
 
 namespace Carbon {
 
@@ -103,8 +103,7 @@ class DiagnosticEmitter {
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
         llvm::SmallVector<llvm::Any> args) -> DiagnosticMessage {
       return DiagnosticMessage(
-          diagnostic_base.Kind,
-          emitter->translator_->TranslateLocation(location),
+          diagnostic_base.Kind, emitter->converter_->ConvertLocation(location),
           diagnostic_base.Format, std::move(args),
           [](const DiagnosticMessage& message) -> std::string {
             return FormatFn<Args...>(
@@ -132,11 +131,11 @@ class DiagnosticEmitter {
     Diagnostic diagnostic_;
   };
 
-  // The `translator` and `consumer` are required to outlive the diagnostic
+  // The `converter` and `consumer` are required to outlive the diagnostic
   // emitter.
-  explicit DiagnosticEmitter(DiagnosticTranslator<LocationT>& translator,
+  explicit DiagnosticEmitter(DiagnosticConverter<LocationT>& converter,
                              DiagnosticConsumer& consumer)
-      : translator_(&translator), consumer_(&consumer) {}
+      : converter_(&converter), consumer_(&consumer) {}
   ~DiagnosticEmitter() = default;
 
   // Emits an error.
@@ -167,22 +166,22 @@ class DiagnosticEmitter {
 
  private:
   // Converts an argument to llvm::Any for storage, handling input to storage
-  // type translation when needed.
+  // type conversion when needed.
   template <typename Arg>
   auto MakeAny(Arg arg) -> llvm::Any {
-    if constexpr (Internal::DiagnosticTypeForArg<Arg>::Translation ==
-                  DiagnosticTypeTranslation::None) {
+    if constexpr (Internal::DiagnosticTypeForArg<Arg>::Conversion ==
+                  DiagnosticTypeConversion::None) {
       return arg;
     } else {
-      return translator_->TranslateArg(
-          Internal::DiagnosticTypeForArg<Arg>::Translation, arg);
+      return converter_->ConvertArg(
+          Internal::DiagnosticTypeForArg<Arg>::Conversion, arg);
     }
   }
 
   template <typename LocT, typename AnnotateFn>
   friend class DiagnosticAnnotationScope;
 
-  DiagnosticTranslator<LocationT>* translator_;
+  DiagnosticConverter<LocationT>* converter_;
   DiagnosticConsumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
       annotate_fns_;

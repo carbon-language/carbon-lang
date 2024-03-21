@@ -15,17 +15,17 @@ namespace {
 
 using ::Carbon::Testing::IsDiagnostic;
 
-struct FakeDiagnosticTranslator : DiagnosticTranslator<int> {
-  auto TranslateLocation(int n) const -> DiagnosticLocation override {
+struct FakeDiagnosticConverter : DiagnosticConverter<int> {
+  auto ConvertLocation(int n) const -> DiagnosticLocation override {
     return {.line_number = 1, .column_number = n};
   }
 };
 
 class DiagnosticEmitterTest : public ::testing::Test {
  protected:
-  DiagnosticEmitterTest() : emitter_(translator_, consumer_) {}
+  DiagnosticEmitterTest() : emitter_(converter_, consumer_) {}
 
-  FakeDiagnosticTranslator translator_;
+  FakeDiagnosticConverter converter_;
   Testing::MockDiagnosticConsumer consumer_;
   DiagnosticEmitter<int> emitter_;
 };

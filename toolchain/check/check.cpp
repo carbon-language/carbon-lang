@@ -12,7 +12,7 @@
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/tree_node_location_translator.h"
+#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -25,19 +25,18 @@ namespace Carbon::Check {
 #include "toolchain/parse/node_kind.def"
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
-class SemIRDiagnosticTranslator : public DiagnosticTranslator<SemIRLocation> {
+class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
  public:
-  explicit SemIRDiagnosticTranslator(
-      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
-          node_translators,
+  explicit SemIRDiagnosticConverter(
+      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+          node_converters,
       const SemIR::File* sem_ir)
-      : node_translators_(node_translators), sem_ir_(sem_ir) {}
+      : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
-  auto TranslateLocation(SemIRLocation loc) const
-      -> DiagnosticLocation override {
+  auto ConvertLocation(SemIRLocation loc) const -> DiagnosticLocation override {
     // Parse nodes always refer to the current IR.
     if (!loc.is_inst_id) {
-      return TranslateLocationInFile(sem_ir_, loc.node_location);
+      return ConvertLocationInFile(sem_ir_, loc.node_location);
     }
 
     const auto* cursor_ir = sem_ir_;
@@ -46,7 +45,7 @@ class SemIRDiagnosticTranslator : public DiagnosticTranslator<SemIRLocation> {
       // If the parse node is valid, use it for the location.
       if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
           node_id.is_valid()) {
-        return TranslateLocationInFile(cursor_ir, node_id);
+        return ConvertLocationInFile(cursor_ir, node_id);
       }
 
       // If the parse node was invalid, recurse through import references when
@@ -69,38 +68,37 @@ class SemIRDiagnosticTranslator : public DiagnosticTranslator<SemIRLocation> {
       }
 
       // Invalid parse node but not an import; just nothing to point at.
-      return TranslateLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      return ConvertLocationInFile(cursor_ir, Parse::NodeId::Invalid);
     }
   }
 
-  auto TranslateArg(DiagnosticTypeTranslation translation, llvm::Any arg) const
+  auto ConvertArg(DiagnosticTypeConversion conversion, llvm::Any arg) const
       -> llvm::Any override {
-    switch (translation) {
-      case DiagnosticTypeTranslation::NameId: {
+    switch (conversion) {
+      case DiagnosticTypeConversion::NameId: {
         auto name_id = llvm::any_cast<SemIR::NameId>(arg);
         return sem_ir_->names().GetFormatted(name_id).str();
       }
-      case DiagnosticTypeTranslation::TypeId: {
+      case DiagnosticTypeConversion::TypeId: {
         auto type_id = llvm::any_cast<SemIR::TypeId>(arg);
         return sem_ir_->StringifyType(type_id);
       }
       default:
-        return DiagnosticTranslator<SemIRLocation>::TranslateArg(translation,
-                                                                 arg);
+        return DiagnosticConverter<SemIRLocation>::ConvertArg(conversion, arg);
     }
   }
 
  private:
-  auto TranslateLocationInFile(const SemIR::File* sem_ir,
-                               Parse::NodeLocation node_location) const
+  auto ConvertLocationInFile(const SemIR::File* sem_ir,
+                             Parse::NodeLocation node_location) const
       -> DiagnosticLocation {
-    auto it = node_translators_->find(sem_ir);
-    CARBON_CHECK(it != node_translators_->end());
-    return it->second->TranslateLocation(node_location);
+    auto it = node_converters_->find(sem_ir);
+    CARBON_CHECK(it != node_converters_->end());
+    return it->second->ConvertLocation(node_location);
   }
 
-  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
-      node_translators_;
+  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+      node_converters_;
   const SemIR::File* sem_ir_;
 };
 
@@ -129,15 +127,15 @@ struct UnitInfo {
 
   explicit UnitInfo(Unit& unit)
       : unit(&unit),
-        translator(unit.tokens, unit.tokens->source().filename(),
-                   unit.parse_tree),
+        converter(unit.tokens, unit.tokens->source().filename(),
+                  unit.parse_tree),
         err_tracker(*unit.consumer),
-        emitter(translator, err_tracker) {}
+        emitter(converter, err_tracker) {}
 
   Unit* unit;
 
   // Emitter information.
-  Parse::NodeLocationTranslator translator;
+  Parse::NodeLocationConverter converter;
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLocation> emitter;
 
@@ -255,8 +253,8 @@ static auto ProcessNodeIds(Context& context,
 
 // Produces and checks the IR for the provided Parse::Tree.
 static auto CheckParseTree(
-    llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>*
-        node_translators,
+    llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+        node_converters,
     const SemIR::File& builtin_ir, UnitInfo& unit_info,
     llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(
@@ -265,11 +263,10 @@ static auto CheckParseTree(
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
-  CARBON_CHECK(
-      node_translators->insert({&sem_ir, &unit_info.translator}).second);
+  CARBON_CHECK(node_converters->insert({&sem_ir, &unit_info.converter}).second);
 
-  SemIRDiagnosticTranslator translator(node_translators, &sem_ir);
-  Context::DiagnosticEmitter emitter(translator, unit_info.err_tracker);
+  SemIRDiagnosticConverter converter(node_converters, &sem_ir);
+  Context::DiagnosticEmitter emitter(converter, unit_info.err_tracker);
   Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
                   sem_ir, vlog_stream);
   PrettyStackTraceFunction context_dumper(
@@ -582,15 +579,15 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
-  llvm::DenseMap<const SemIR::File*, Parse::NodeLocationTranslator*>
-      node_translators;
+  llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>
+      node_converters;
 
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(&node_translators, builtin_ir, *unit_info, vlog_stream);
+    CheckParseTree(&node_converters, builtin_ir, *unit_info, vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -635,7 +632,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(&node_translators, builtin_ir, unit_info, vlog_stream);
+        CheckParseTree(&node_converters, builtin_ir, unit_info, vlog_stream);
       }
     }
   }

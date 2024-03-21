@@ -77,10 +77,10 @@ class [[clang::internal_linkage]] Lexer {
         DiagnosticConsumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
-        translator_(&buffer_),
-        emitter_(translator_, consumer_),
-        token_translator_(&buffer_),
-        token_emitter_(token_translator_, consumer_) {}
+        converter_(&buffer_),
+        emitter_(converter_, consumer_),
+        token_converter_(&buffer_),
+        token_emitter_(token_converter_, consumer_) {}
 
   // Find all line endings and create the line data structures.
   //
@@ -170,10 +170,10 @@ class [[clang::internal_linkage]] Lexer {
 
   ErrorTrackingDiagnosticConsumer consumer_;
 
-  TokenizedBuffer::SourceBufferDiagnosticTranslator translator_;
+  TokenizedBuffer::SourceBufferDiagnosticConverter converter_;
   LexerDiagnosticEmitter emitter_;
 
-  TokenDiagnosticTranslator token_translator_;
+  TokenDiagnosticConverter token_converter_;
   TokenDiagnosticEmitter token_emitter_;
 };
 
