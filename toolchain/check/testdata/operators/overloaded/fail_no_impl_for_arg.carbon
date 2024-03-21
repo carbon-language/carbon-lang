@@ -275,7 +275,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
 // CHECK:STDOUT:   %.loc23_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc23_12.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc23_12.3: init C = call %.loc23_12.1(<invalid>)
+// CHECK:STDOUT:   %.loc23_12.3: init C = call %.loc23_12.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return %.loc23_12.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,7 +293,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
 // CHECK:STDOUT:   %.loc34_5.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc34_3: C* = addr_of %a.ref
-// CHECK:STDOUT:   %.loc34_5.2: init () = call %.loc34_5.1(<invalid>)
+// CHECK:STDOUT:   %.loc34_5.2: init () = call %.loc34_5.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

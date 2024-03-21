@@ -284,4 +284,53 @@ auto HandleFunctionDefinition(Context& context,
   return true;
 }
 
+auto HandleBuiltinFunctionDefinitionStart(
+    Context& context, Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, _] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  context.node_stack().Push(node_id, function_id);
+  return true;
+}
+
+auto HandleBuiltinName(Context& context, Parse::BuiltinNameId node_id) -> bool {
+  context.node_stack().Push(node_id);
+  return true;
+}
+
+// Looks up a builtin function kind given its name as a string.
+// TODO: Move this out to another file.
+static auto LookupBuiltinFunctionKind(Context& context,
+                                      Parse::BuiltinNameId name_id)
+    -> SemIR::BuiltinFunctionKind {
+  auto builtin_name = context.string_literal_values().Get(
+      context.tokens().GetStringLiteralValue(
+          context.parse_tree().node_token(name_id)));
+  auto kind = llvm::StringSwitch<SemIR::BuiltinFunctionKind>(builtin_name)
+                  .Case("int.add", SemIR::BuiltinFunctionKind::IntAdd)
+                  .Default(SemIR::BuiltinFunctionKind::None);
+  if (kind == SemIR::BuiltinFunctionKind::None) {
+    CARBON_DIAGNOSTIC(UnknownBuiltinFunctionName, Error,
+                      "Unknown builtin function name \"{0}\".", std::string);
+    context.emitter().Emit(name_id, UnknownBuiltinFunctionName,
+                           builtin_name.str());
+  }
+  return kind;
+}
+
+auto HandleBuiltinFunctionDefinition(
+    Context& context, Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
+  auto name_id =
+      context.node_stack().PopForSoloNodeId<Parse::NodeKind::BuiltinName>();
+  auto function_id =
+      context.node_stack()
+          .Pop<Parse::NodeKind::BuiltinFunctionDefinitionStart>();
+
+  auto& function = context.functions().Get(function_id);
+  function.builtin_kind = LookupBuiltinFunctionKind(context, name_id);
+
+  context.decl_name_stack().PopScope();
+  return true;
+}
+
 }  // namespace Carbon::Check

@@ -95,11 +95,11 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %c.ref.loc19: Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc19: <function> = name_ref F, @Class.%F [template = @Class.%F]
 // CHECK:STDOUT:   %.loc19_4: <bound method> = bound_method %c.ref.loc19, %F.ref.loc19
-// CHECK:STDOUT:   %.loc19_6: init () = call %.loc19_4(<invalid>)
+// CHECK:STDOUT:   %.loc19_6: init () = call %.loc19_4(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %c.ref.loc27: Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc27: <function> = name_ref G, @Class.%G [template = @Class.%G]
 // CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %c.ref.loc27, %G.ref.loc27
-// CHECK:STDOUT:   %.loc27_6: init () = call %.loc27_4(<invalid>)
+// CHECK:STDOUT:   %.loc27_6: init () = call %.loc27_4(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %p.ref.loc30: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc30_4.1: ref Class = deref %p.ref.loc30
 // CHECK:STDOUT:   %F.ref.loc30: <function> = name_ref F, @Class.%F [template = @Class.%F]
@@ -111,7 +111,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.ref.loc38: <function> = name_ref G, @Class.%G [template = @Class.%G]
 // CHECK:STDOUT:   %.loc38_7: <bound method> = bound_method %.loc38_4.1, %G.ref.loc38
 // CHECK:STDOUT:   %.loc38_4.2: Class* = addr_of %.loc38_4.1
-// CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>)
+// CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

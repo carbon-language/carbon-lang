@@ -259,10 +259,10 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc105: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc105_18: ref Class = deref %p.ref
-// CHECK:STDOUT:   %.loc105_17: init () = call %TakeIncomplete.ref.loc105(<invalid>)
+// CHECK:STDOUT:   %.loc105_17: init () = call %TakeIncomplete.ref.loc105(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc116: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
 // CHECK:STDOUT:   %.loc116_19: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc116_17: init () = call %TakeIncomplete.ref.loc116(<invalid>)
+// CHECK:STDOUT:   %.loc116_17: init () = call %TakeIncomplete.ref.loc116(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

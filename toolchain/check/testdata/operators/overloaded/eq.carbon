@@ -476,9 +476,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
 // CHECK:STDOUT:   %.loc21_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc21_12.2: init bool = call %.loc21_12.1(<invalid>)
-// CHECK:STDOUT:   %.loc21_16: bool = value_of_initializer %.loc21_12.2
-// CHECK:STDOUT:   %.loc21_12.3: bool = converted %.loc21_12.2, %.loc21_16
+// CHECK:STDOUT:   %.loc21_12.2: init bool = call %.loc21_12.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc21_16: bool = value_of_initializer %.loc21_12.2 [template = <error>]
+// CHECK:STDOUT:   %.loc21_12.3: bool = converted %.loc21_12.2, %.loc21_16 [template = <error>]
 // CHECK:STDOUT:   return %.loc21_12.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

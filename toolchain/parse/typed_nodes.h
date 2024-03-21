@@ -312,6 +312,20 @@ struct FunctionDefinition {
   llvm::SmallVector<AnyStatementId> body;
 };
 
+using BuiltinFunctionDefinitionStart =
+    FunctionSignature<NodeKind::BuiltinFunctionDefinitionStart,
+                      NodeCategory::None>;
+using BuiltinName = LeafNode<NodeKind::BuiltinName>;
+
+// A builtin function definition: `fn F() -> i32 = "builtin name";`
+struct BuiltinFunctionDefinition {
+  static constexpr auto Kind =
+      NodeKind::BuiltinFunctionDefinition.Define(NodeCategory::Decl);
+
+  BuiltinFunctionDefinitionStartId signature;
+  BuiltinNameId builtin_name;
+};
+
 // `alias` nodes
 // -------------
 

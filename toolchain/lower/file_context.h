@@ -23,9 +23,8 @@ class FileContext {
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
-  // Gets a callable's function.
+  // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
-    CARBON_CHECK(functions_[function_id.index] != nullptr) << function_id;
     return functions_[function_id.index];
   }
 
