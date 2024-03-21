@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
@@ -39,13 +40,25 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
   return true;
 }
 
-static auto DiagnoseModifiers(Context& context,
+static auto DiagnoseModifiers(Context& context, bool is_definition,
                               SemIR::NameScopeId target_scope_id)
     -> KeywordModifierSet {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
   CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
+  if (is_definition) {
+    ForbidExternModifierOnDefinition(context, decl_kind);
+  }
+  if (target_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
+    if (target_id.is_valid() &&
+        !context.insts().Is<SemIR::Namespace>(target_id)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                            " that is a member");
+    }
+  }
   LimitModifiersOnDecl(context,
-                       KeywordModifierSet::Access | KeywordModifierSet::Method |
+                       KeywordModifierSet::Access | KeywordModifierSet::Extern |
+                           KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
   CheckMethodModifiersOnFunction(context, target_scope_id);
@@ -96,17 +109,14 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers = DiagnoseModifiers(context, name_context.target_scope_id);
+  auto modifiers =
+      DiagnoseModifiers(context, is_definition, name_context.target_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
                  "access modifier");
   }
-  if (!!(modifiers & KeywordModifierSet::Extern)) {
-    context.TODO(context.decl_state_stack().innermost().modifier_node_id(
-                     ModifierOrder::Extern),
-                 "extern modifier");
-  }
+  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
   if (!!(modifiers & KeywordModifierSet::Method)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Decl),
@@ -132,7 +142,8 @@ static auto BuildFunctionDecl(Context& context,
       .implicit_param_refs_id = implicit_param_refs_id,
       .param_refs_id = param_refs_id,
       .return_type_id = return_type_id,
-      .return_slot_id = return_slot_id};
+      .return_slot_id = return_slot_id,
+      .is_extern = is_extern};
   if (is_definition) {
     function_info.definition_id = function_info.decl_id;
   }
@@ -269,6 +280,55 @@ auto HandleFunctionDefinition(Context& context,
   context.scope_stack().Pop();
   context.inst_block_stack().Pop();
   context.return_scope_stack().pop_back();
+  context.decl_name_stack().PopScope();
+  return true;
+}
+
+auto HandleBuiltinFunctionDefinitionStart(
+    Context& context, Parse::BuiltinFunctionDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, _] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  context.node_stack().Push(node_id, function_id);
+  return true;
+}
+
+auto HandleBuiltinName(Context& context, Parse::BuiltinNameId node_id) -> bool {
+  context.node_stack().Push(node_id);
+  return true;
+}
+
+// Looks up a builtin function kind given its name as a string.
+// TODO: Move this out to another file.
+static auto LookupBuiltinFunctionKind(Context& context,
+                                      Parse::BuiltinNameId name_id)
+    -> SemIR::BuiltinFunctionKind {
+  auto builtin_name = context.string_literal_values().Get(
+      context.tokens().GetStringLiteralValue(
+          context.parse_tree().node_token(name_id)));
+  auto kind = llvm::StringSwitch<SemIR::BuiltinFunctionKind>(builtin_name)
+                  .Case("int.add", SemIR::BuiltinFunctionKind::IntAdd)
+                  .Default(SemIR::BuiltinFunctionKind::None);
+  if (kind == SemIR::BuiltinFunctionKind::None) {
+    CARBON_DIAGNOSTIC(UnknownBuiltinFunctionName, Error,
+                      "Unknown builtin function name \"{0}\".", std::string);
+    context.emitter().Emit(name_id, UnknownBuiltinFunctionName,
+                           builtin_name.str());
+  }
+  return kind;
+}
+
+auto HandleBuiltinFunctionDefinition(
+    Context& context, Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
+  auto name_id =
+      context.node_stack().PopForSoloNodeId<Parse::NodeKind::BuiltinName>();
+  auto function_id =
+      context.node_stack()
+          .Pop<Parse::NodeKind::BuiltinFunctionDefinitionStart>();
+
+  auto& function = context.functions().Get(function_id);
+  function.builtin_kind = LookupBuiltinFunctionKind(context, name_id);
+
   context.decl_name_stack().PopScope();
   return true;
 }

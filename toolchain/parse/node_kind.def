@@ -232,21 +232,31 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0,
 CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
                                CARBON_IF_VALID(CloseCurlyBrace))
 
-// `fn`:
-//     FunctionIntroducer
-//     _repeated_ _external_: modifier
-//     _external_: IdentifierName or QualifiedName
-//     _optional_ _external_: ImplicitParamList
-//     _external_: TuplePattern
-//       _external_: type expression
-//     ReturnType
+// `fn` declarations start with a function signature:
+//
+//   FunctionIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: IdentifierName or QualifiedName
+//   _optional_ _external_: ImplicitParamList
+//   _external_: TuplePattern
+//     _external_: type expression
+//   ReturnType
+// _function signature_
+//
+// There are three forms of function declaration:
+//
+//   _function signature_
+// FunctionDecl
+//
+//     _function signature_
 //   FunctionDefinitionStart
 //   _repeated_ _external_: statement
 // FunctionDefinition
 //
-// The above is the structure for a definition; for a declaration,
-// FunctionDefinitionStart and later nodes are removed and replaced by
-// FunctionDecl.
+//     _function signature_
+//   BuiltinFunctionDefinitionStart
+//   BuiltinName
+// BuiltinFunctionDefinition
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0, Fn)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1, MinusGreater)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer,
@@ -254,6 +264,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer,
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
                                CloseCurlyBrace)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
+                               CARBON_IF_VALID(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(BuiltinFunctionDefinitionStart,
+                               FunctionIntroducer, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BuiltinName, 0, StringLiteral)
+CARBON_PARSE_NODE_KIND_BRACKET(BuiltinFunctionDefinition,
+                               BuiltinFunctionDefinitionStart,
                                CARBON_IF_VALID(Semi))
 
 // `alias`:

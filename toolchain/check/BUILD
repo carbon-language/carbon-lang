@@ -55,7 +55,6 @@ cc_library(
         "decl_name_stack.cpp",
         "eval.cpp",
         "import_ref.cpp",
-        "import_ref.h",
         "inst_block_stack.cpp",
         "modifiers.cpp",
         "return.cpp",
@@ -66,6 +65,7 @@ cc_library(
         "decl_name_stack.h",
         "decl_state.h",
         "eval.h",
+        "import_ref.h",
         "inst_block_stack.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
@@ -78,6 +78,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/check:scope_stack",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
@@ -100,12 +101,15 @@ cc_library(
     ]),
     hdrs = ["check.h"],
     deps = [
+        ":call",
         ":context",
         ":function",
         ":impl",
         ":import",
         ":interface",
         ":member_access",
+        ":operator",
+        ":pointer_dereference",
         "//common:check",
         "//common:ostream",
         "//toolchain/base:pretty_stack_trace_function",
@@ -137,11 +141,26 @@ cc_fuzz_test(
 )
 
 cc_library(
+    name = "call",
+    srcs = ["call.cpp"],
+    hdrs = ["call.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
     name = "function",
     srcs = ["function.cpp"],
     hdrs = ["function.h"],
     deps = [
         ":context",
+        ":subst",
         "//common:check",
         "//toolchain/sem_ir:file",
     ],
@@ -154,6 +173,7 @@ cc_library(
     deps = [
         ":context",
         ":function",
+        ":subst",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
@@ -196,6 +216,55 @@ cc_library(
     name = "member_access",
     srcs = ["member_access.cpp"],
     hdrs = ["member_access.h"],
+    deps = [
+        ":context",
+        ":subst",
+        "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "operator",
+    srcs = ["operator.cpp"],
+    hdrs = ["operator.h"],
+    deps = [
+        ":call",
+        ":context",
+        ":member_access",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+    ],
+)
+
+cc_library(
+    name = "pointer_dereference",
+    srcs = ["pointer_dereference.cpp"],
+    hdrs = ["pointer_dereference.h"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//toolchain/parse:node_kind",
+        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:inst_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "subst",
+    srcs = ["subst.cpp"],
+    hdrs = ["subst.h"],
     deps = [
         ":context",
         "//common:check",

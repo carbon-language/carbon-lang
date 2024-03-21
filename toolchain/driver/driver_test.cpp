@@ -47,11 +47,11 @@ class DriverTest : public testing::Test {
   }
 
   auto MakeTestFile(llvm::StringRef text,
-                    llvm::StringRef file_name = "test_file.carbon")
+                    llvm::StringRef filename = "test_file.carbon")
       -> llvm::StringRef {
-    fs_.addFile(file_name, /*ModificationTime=*/0,
+    fs_.addFile(filename, /*ModificationTime=*/0,
                 llvm::MemoryBuffer::getMemBuffer(text));
-    return file_name;
+    return filename;
   }
 
   // Makes a temp directory and changes the working directory to it. Returns an

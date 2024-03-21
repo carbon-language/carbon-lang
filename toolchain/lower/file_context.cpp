@@ -10,6 +10,7 @@
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -87,6 +88,19 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     -> llvm::Function* {
   const auto& function = sem_ir().functions().Get(function_id);
+
+  // Don't lower associated functions.
+  // TODO: We shouldn't lower any function that has generic parameters.
+  if (sem_ir().insts().Is<SemIR::InterfaceDecl>(
+          sem_ir().name_scopes().Get(function.enclosing_scope_id).inst_id)) {
+    return nullptr;
+  }
+
+  // Don't lower builtins.
+  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    return nullptr;
+  }
+
   const bool has_return_slot = function.return_slot_id.is_valid();
   auto implicit_param_refs =
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);

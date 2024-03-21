@@ -312,6 +312,20 @@ struct FunctionDefinition {
   llvm::SmallVector<AnyStatementId> body;
 };
 
+using BuiltinFunctionDefinitionStart =
+    FunctionSignature<NodeKind::BuiltinFunctionDefinitionStart,
+                      NodeCategory::None>;
+using BuiltinName = LeafNode<NodeKind::BuiltinName>;
+
+// A builtin function definition: `fn F() -> i32 = "builtin name";`
+struct BuiltinFunctionDefinition {
+  static constexpr auto Kind =
+      NodeKind::BuiltinFunctionDefinition.Define(NodeCategory::Decl);
+
+  BuiltinFunctionDefinitionStartId signature;
+  BuiltinNameId builtin_name;
+};
+
 // `alias` nodes
 // -------------
 
@@ -620,7 +634,8 @@ using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
-  static constexpr auto Kind = NodeKind::ParenExpr.Define(NodeCategory::Expr);
+  static constexpr auto Kind =
+      NodeKind::ParenExpr.Define(NodeCategory::Expr | NodeCategory::MemberExpr);
 
   ExprOpenParenId left_paren;
   AnyExprId expr;
@@ -656,22 +671,22 @@ struct CallExpr {
   CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
 };
 
-// A simple member access expression: `a.b`.
+// A member access expression: `a.b` or `a.(b)`.
 struct MemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::MemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
-// A simple indirect member access expression: `a->b`.
+// An indirect member access expression: `a->b` or `a->(b)`.
 struct PointerMemberAccessExpr {
   static constexpr auto Kind =
       NodeKind::PointerMemberAccessExpr.Define(NodeCategory::Expr);
 
   AnyExprId lhs;
-  AnyMemberNameId rhs;
+  AnyMemberNameOrMemberExprId rhs;
 };
 
 // A prefix operator expression.

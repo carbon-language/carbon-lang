@@ -4,6 +4,8 @@
 
 #include "toolchain/check/eval.h"
 
+#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -164,7 +166,7 @@ static auto RebuildAndValidateIfFieldsAreConstant(
   if ((ReplaceFieldWithConstantValue(context, &typed_inst, each_field_id,
                                      &phase) &&
        ...)) {
-    if (!validate_fn(typed_inst)) {
+    if (phase == Phase::UnknownDueToError || !validate_fn(typed_inst)) {
       return SemIR::ConstantId::Error;
     }
     return MakeConstantResult(context, typed_inst, phase);
@@ -281,6 +283,101 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   CARBON_CHECK(index_val.ult(elements.size()))
       << "Index out of bounds in tuple indexing";
   return context.constant_values().Get(elements[index_val.getZExtValue()]);
+}
+
+static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
+                               SemIR::Call call,
+                               SemIR::BuiltinFunctionKind builtin_kind,
+                               llvm::ArrayRef<SemIR::InstId> arg_ids,
+                               Phase phase) -> SemIR::ConstantId {
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::None:
+      CARBON_FATAL() << "Not a builtin function.";
+
+    case SemIR::BuiltinFunctionKind::IntAdd: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      if (arg_ids.size() != 2) {
+        break;
+      }
+      auto lhs = context.insts().TryGetAs<SemIR::IntLiteral>(arg_ids[0]);
+      auto rhs = context.insts().TryGetAs<SemIR::IntLiteral>(arg_ids[1]);
+      // TODO: Move type checking to the point where we make the call.
+      if (!lhs || !rhs || lhs->type_id != rhs->type_id ||
+          call.type_id != lhs->type_id) {
+        break;
+      }
+      // TODO: Integer values should be stored in the correct bit width for
+      // their types. For now we assume i32.
+      auto lhs_val = context.ints().Get(lhs->int_id).sextOrTrunc(32);
+      auto rhs_val = context.ints().Get(rhs->int_id).sextOrTrunc(32);
+      bool overflow = false;
+      auto result = context.ints().Add(lhs_val.sadd_ov(rhs_val, overflow));
+      if (overflow) {
+        CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
+                          "Integer overflow in calculation {0} + {1}.",
+                          llvm::APSInt, llvm::APSInt);
+        context.emitter().Emit(loc, CompileTimeIntegerOverflow,
+                               llvm::APSInt(lhs_val, false),
+                               llvm::APSInt(rhs_val, false));
+      }
+      return MakeConstantResult(context,
+                                SemIR::IntLiteral{lhs->type_id, result}, phase);
+    }
+  }
+
+  return SemIR::ConstantId::NotConstant;
+}
+
+// Extracts the callee function from a callee constant. Returns
+// FunctionId::Invalid if the callee is not known.
+static auto GetCalleeFunctionId(Context& context, SemIR::InstId callee_id)
+    -> SemIR::FunctionId {
+  if (auto bound_method =
+          context.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
+    callee_id = bound_method->function_id;
+  }
+  if (auto callee = context.insts().TryGetAs<SemIR::FunctionDecl>(callee_id)) {
+    return {callee->function_id};
+  }
+  return {SemIR::FunctionId::Invalid};
+}
+
+static auto PerformCall(Context& context, SemIRLocation loc, SemIR::Call call)
+    -> SemIR::ConstantId {
+  Phase phase = Phase::Template;
+
+  // A call with an invalid argument list is used to represent an erroneous
+  // call.
+  //
+  // TODO: Use a better representation for this.
+  if (call.args_id == SemIR::InstBlockId::Invalid) {
+    return SemIR::ConstantId::Error;
+  }
+
+  // If the callee isn't constant, this is not a constant call.
+  if (!ReplaceFieldWithConstantValue(context, &call, &SemIR::Call::callee_id,
+                                     &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+
+  auto function_id = GetCalleeFunctionId(context, call.callee_id);
+
+  // Handle calls to builtins.
+  auto& function = context.functions().Get(function_id);
+  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    if (!ReplaceFieldWithConstantValue(context, &call, &SemIR::Call::args_id,
+                                       &phase)) {
+      return SemIR::ConstantId::NotConstant;
+    }
+    if (phase == Phase::UnknownDueToError) {
+      return SemIR::ConstantId::Error;
+    }
+    return PerformBuiltinCall(context, loc, call, function.builtin_kind,
+                              context.inst_blocks().Get(call.args_id), phase);
+  }
+  return SemIR::ConstantId::NotConstant;
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
@@ -425,9 +522,11 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::TupleIndex::Kind:
       return PerformAggregateIndex(context, inst);
 
+    case SemIR::Call::Kind:
+      return PerformCall(context, inst_id, inst.As<SemIR::Call>());
+
     // TODO: These need special handling.
     case SemIR::BindValue::Kind:
-    case SemIR::Call::Kind:
     case SemIR::Deref::Kind:
     case SemIR::ImportRefUsed::Kind:
     case SemIR::Temporary::Kind:

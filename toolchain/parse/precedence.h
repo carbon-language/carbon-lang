@@ -73,9 +73,6 @@ class PrecedenceGroup {
   friend auto operator==(PrecedenceGroup lhs, PrecedenceGroup rhs) -> bool {
     return lhs.level_ == rhs.level_;
   }
-  friend auto operator!=(PrecedenceGroup lhs, PrecedenceGroup rhs) -> bool {
-    return lhs.level_ != rhs.level_;
-  }
 
   // Compare the precedence levels for two adjacent operators.
   static auto GetPriority(PrecedenceGroup left, PrecedenceGroup right)

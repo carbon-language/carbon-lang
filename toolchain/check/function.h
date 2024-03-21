@@ -6,14 +6,20 @@
 #define CARBON_TOOLCHAIN_CHECK_FUNCTION_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/function.h"
 
 namespace Carbon::Check {
 
-// Checks that `new_function_id` does not differ from `prev_function_id`.
-// Prints a suitable diagnostic and returns false if not.
-auto CheckFunctionRedecl(Context& context, SemIR::FunctionId new_function_id,
-                         SemIR::FunctionId prev_function_id) -> bool;
+// Checks that `new_function_id` has the same parameter types and return type as
+// `prev_function_id`, applying the specified set of substitutions to the
+// previous function. Prints a suitable diagnostic and returns false if not.
+// Note that this doesn't include the syntactic check that's performed for
+// redeclarations.
+auto CheckFunctionTypeMatches(Context& context,
+                              SemIR::FunctionId new_function_id,
+                              SemIR::FunctionId prev_function_id,
+                              Substitutions substitutions) -> bool;
 
 // Tries to merge new_function into prev_function_id. Since new_function won't
 // have a definition even if one is upcoming, set is_definition to indicate the

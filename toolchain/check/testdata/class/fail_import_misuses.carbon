@@ -75,6 +75,7 @@ var a: Incomplete;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+4, used [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unused
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %Empty.decl: invalid = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }
@@ -85,10 +86,8 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %import_ref
+// CHECK:STDOUT:   .Self = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {

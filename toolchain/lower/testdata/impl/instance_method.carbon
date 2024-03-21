@@ -7,8 +7,7 @@
 class A;
 
 interface GetSelf {
-  // TODO: Use `Self` once that works.
-  fn Get[addr self: A*]() -> A*;
+  fn Get[addr self: Self*]() -> Self*;
 }
 
 class A {
@@ -26,13 +25,11 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: ; ModuleID = 'instance_method.carbon'
 // CHECK:STDOUT: source_filename = "instance_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare ptr @Get(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @Get.1(ptr %self) {
+// CHECK:STDOUT: define ptr @Get(ptr %self) {
 // CHECK:STDOUT:   ret ptr %self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @Call(ptr %a) {
-// CHECK:STDOUT:   %Get.1 = call ptr @Get.1(ptr %a)
-// CHECK:STDOUT:   ret ptr %Get.1
+// CHECK:STDOUT:   %Get = call ptr @Get(ptr %a)
+// CHECK:STDOUT:   ret ptr %Get
 // CHECK:STDOUT: }

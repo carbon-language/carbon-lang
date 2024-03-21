@@ -8,13 +8,20 @@
 // CHECK:STDERR: let n: i32 = *undeclared;
 // CHECK:STDERR:               ^~~~~~~~~~
 let n: i32 = *undeclared;
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: ERROR: Name `undeclared` not found.
+// CHECK:STDERR: let n2: i32 = undeclared->foo;
+// CHECK:STDERR:               ^~~~~~~~~~
+let n2: i32 = undeclared->foo;
 
 // CHECK:STDOUT: --- fail_deref_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc10: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc10: ref <error> = deref <error>
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
+// CHECK:STDOUT:   %undeclared.ref.loc14: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc14: ref <error> = deref <error>
+// CHECK:STDOUT:   %n2: i32 = bind_name n2, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

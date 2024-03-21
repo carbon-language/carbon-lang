@@ -347,6 +347,11 @@ Past Carbon focused talks from the community:
 -   [Modernizing Compiler Design for Carbon’s Toolchain](https://www.youtube.com/watch?v=ZI198eFghJk),
     C++Now
 
+### Upcoming
+
+-   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/)
+    C++Now
+
 ## Join us
 
 We'd love to have folks join us and contribute to the project. Carbon is

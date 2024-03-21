@@ -10,6 +10,15 @@
 
 namespace Carbon::SemIR {
 
+// A builtin function.
+// TODO: Move out to another file.
+enum class BuiltinFunctionKind : std::uint8_t {
+  // Not a builtin function.
+  None,
+  // "int.add", integer addition.
+  IntAdd,
+};
+
 // A function.
 struct Function : public Printable<Function> {
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -56,6 +65,13 @@ struct Function : public Printable<Function> {
   // expected to have an additional final argument corresponding to the return
   // slot.
   InstId return_slot_id;
+  // Whether the declaration is extern.
+  bool is_extern;
+
+  // The following members are set at the end of a builtin function definition.
+
+  // If this is a builtin function, the corresponding builtin kind.
+  BuiltinFunctionKind builtin_kind = BuiltinFunctionKind::None;
 
   // The following members are set at the `{` of the function definition.
 

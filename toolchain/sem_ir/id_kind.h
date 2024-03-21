@@ -1,0 +1,129 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_SEM_IR_ID_KIND_H_
+#define CARBON_TOOLCHAIN_SEM_IR_ID_KIND_H_
+
+#include <algorithm>
+
+#include "toolchain/sem_ir/ids.h"
+
+namespace Carbon::SemIR {
+
+// An enum whose values are the specified types.
+template <typename... Types>
+class TypeEnum {
+ public:
+  static constexpr std::size_t NumTypes = sizeof...(Types);
+  static constexpr std::size_t NumValues = NumTypes + 2;
+
+  static_assert(NumValues <= 256, "Too many types for raw enum.");
+
+// TODO: Works around a clang-format bug:
+// https://github.com/llvm/llvm-project/issues/85476
+#define CARBON_OPEN_ENUM [[clang::enum_extensibility(open)]]
+
+  // The underlying raw enumeration type.
+  //
+  // The enum_extensibility attribute indicates that this enum is intended to
+  // take values that do not correspond to its declared enumerators.
+  enum class CARBON_OPEN_ENUM RawEnumType : uint8_t {
+    // The first sizeof...(Types) values correspond to the types.
+
+    // An explicitly invalid value.
+    Invalid = NumTypes,
+
+    // Indicates that no type should be used.
+    // TODO: This doesn't really fit the model of this type, but it's convenient
+    // for all of its users.
+    None,
+  };
+
+#undef CARBON_OPEN_ENUM
+
+  // Accesses the type given an enum value.
+  template <RawEnumType K>
+    requires(K != RawEnumType::Invalid)
+  using TypeFor = __type_pack_element<static_cast<size_t>(K), Types...>;
+
+  // Workarond for Clang bug https://github.com/llvm/llvm-project/issues/85461
+  template <RawEnumType Value>
+  static constexpr auto FromRaw = TypeEnum(Value);
+
+  // Names for the `Invalid` and `None` enumeration values.
+  static constexpr const TypeEnum& Invalid = FromRaw<RawEnumType::Invalid>;
+  static constexpr const TypeEnum& None = FromRaw<RawEnumType::None>;
+
+  // Accesses the enumeration value for the type `IdT`. If `AllowInvalid` is
+  // set, any unexpected type is mapped to `Invalid`, otherwise an invalid type
+  // results in a compile error.
+  //
+  // The `Self` parameter is an implementation detail to allow `ForImpl` to be
+  // defined after this template, and should not be specified.
+  template <typename IdT, bool AllowInvalid = false, typename Self = TypeEnum>
+  static constexpr auto For = Self::template ForImpl<IdT, AllowInvalid>();
+
+  // This bool indicates whether the specified type corresponds to a value in
+  // this enum.
+  template <typename IdT>
+  static constexpr bool Contains = For<IdT, true>.is_valid();
+
+  // Explicitly convert from the raw enum type.
+  explicit constexpr TypeEnum(RawEnumType value) : value_(value) {}
+
+  // Implicitly convert to the raw enum type, for use in `switch`.
+  //
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr operator RawEnumType() const { return value_; }
+
+  // Conversion to bool is deleted to prevent direct use in an `if` condition
+  // instead of comparing with another value.
+  explicit operator bool() const = delete;
+
+  // Returns the raw enum value.
+  constexpr auto ToRaw() const -> RawEnumType { return value_; }
+
+  // Returns a value that can be used as an array index. Returned value will be
+  // < NumValues.
+  constexpr auto ToIndex() const -> std::size_t {
+    return static_cast<std::size_t>(value_);
+  }
+
+  // Returns whether this is a valid value, not `Invalid`.
+  constexpr auto is_valid() const -> bool {
+    return value_ != RawEnumType::Invalid;
+  }
+
+ private:
+  // Translates a type to its enum value, or `Invalid`.
+  template <typename IdT, bool AllowInvalid>
+  static constexpr auto ForImpl() -> TypeEnum {
+    // A bool for each type saying whether it matches. The result is the index
+    // of the first `true` in this list. If none matches, then the result is the
+    // length of the list, which is mapped to `Invalid`.
+    constexpr bool TypeMatches[] = {std::same_as<IdT, Types>...};
+    constexpr int Index =
+        std::find(TypeMatches, TypeMatches + NumTypes, true) - TypeMatches;
+    static_assert(Index != NumTypes || AllowInvalid,
+                  "Unexpected type passed to TypeEnum::For<...>");
+    return TypeEnum(static_cast<RawEnumType>(Index));
+  }
+
+  RawEnumType value_;
+};
+
+// An enum of all the ID types used as instruction operands.
+using IdKind = TypeEnum<
+    // From sem_ir/builtin_kind.h.
+    BuiltinKind,
+    // From base/value_store.h.
+    IntId, RealId, StringLiteralValueId,
+    // From sem_ir/id.h.
+    InstId, ConstantId, BindNameId, FunctionId, ClassId, InterfaceId, ImplId,
+    ImportIRId, BoolValue, NameId, NameScopeId, InstBlockId, TypeId,
+    TypeBlockId, ElementIndex>;
+
+}  // namespace Carbon::SemIR
+
+#endif  // CARBON_TOOLCHAIN_SEM_IR_ID_KIND_H_

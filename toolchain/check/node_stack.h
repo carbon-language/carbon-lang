@@ -5,70 +5,47 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_NODE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_NODE_STACK_H_
 
-#include <type_traits>
-
 #include "common/vlog.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
 // A non-discriminated union of ID types.
-template <typename... IdTypes>
 class IdUnion {
  public:
   // The default constructor forms an invalid ID.
   explicit constexpr IdUnion() : index(IdBase::InvalidIndex) {}
 
   template <typename IdT>
-    requires(std::same_as<IdT, IdTypes> || ...)
+    requires SemIR::IdKind::Contains<IdT>
   explicit constexpr IdUnion(IdT id) : index(id.index) {}
 
-  static constexpr std::size_t NumValidKinds = sizeof...(IdTypes);
-
-  // A numbering for the associated ID types.
-  enum class Kind : int8_t {
-    // The first `sizeof...(IdTypes)` indexes correspond to the types in
-    // `IdTypes`.
-
-    // An explicit invalid state.
-    Invalid = NumValidKinds,
-
-    // No active union element.
-    None,
-  };
+  using Kind = SemIR::IdKind::RawEnumType;
 
   // Returns the ID given its type.
   template <typename IdT>
-    requires(std::same_as<IdT, IdTypes> || ...)
+    requires SemIR::IdKind::Contains<IdT>
   constexpr auto As() const -> IdT {
     return IdT(index);
   }
 
   // Returns the ID given its kind.
-  template <Kind K>
-    requires(static_cast<size_t>(K) < sizeof...(IdTypes))
-  constexpr auto As() const {
-    using IdT = __type_pack_element<static_cast<size_t>(K), IdTypes...>;
-    return As<IdT>();
+  template <SemIR::IdKind::RawEnumType K>
+  constexpr auto As() const -> SemIR::IdKind::TypeFor<K> {
+    return As<SemIR::IdKind::TypeFor<K>>();
   }
 
   // Translates an ID type to the enum ID kind. Returns Invalid if `IdT` isn't
   // a type that can be stored in this union.
   template <typename IdT>
   static constexpr auto KindFor() -> Kind {
-    // A bool for each type saying whether it matches. The result is the index
-    // of the first `true` in this list. If none matches, then the result is the
-    // length of the list, which is mapped to `Invalid`.
-    constexpr bool TypeMatches[] = {std::same_as<IdT, IdTypes>...};
-    constexpr int Index =
-        std::find(TypeMatches, TypeMatches + sizeof...(IdTypes), true) -
-        TypeMatches;
-    return static_cast<Kind>(Index);
+    return SemIR::IdKind::For<IdT>;
   }
 
  private:
@@ -361,9 +338,7 @@ class NodeStack {
   // that the parse node has no associated ID, in which case the *SoloNodeId
   // functions should be used to push and pop it. Id::Kind::Invalid indicates
   // that the parse node should not appear in the node stack at all.
-  using Id = IdUnion<SemIR::InstId, SemIR::InstBlockId, SemIR::FunctionId,
-                     SemIR::ClassId, SemIR::InterfaceId, SemIR::ImplId,
-                     SemIR::NameId, SemIR::TypeId>;
+  using Id = IdUnion;
 
   // An entry in stack_.
   struct Entry {
@@ -449,6 +424,7 @@ class NodeStack {
         case Parse::NodeKind::WhileConditionStart:
           return Id::KindFor<SemIR::InstBlockId>();
         case Parse::NodeKind::FunctionDefinitionStart:
+        case Parse::NodeKind::BuiltinFunctionDefinitionStart:
           return Id::KindFor<SemIR::FunctionId>();
         case Parse::NodeKind::ClassDefinitionStart:
           return Id::KindFor<SemIR::ClassId>();
@@ -459,6 +435,7 @@ class NodeStack {
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
         case Parse::NodeKind::ArrayExprSemi:
+        case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:
         case Parse::NodeKind::CodeBlockStart:
         case Parse::NodeKind::ExprOpenParen:
