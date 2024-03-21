@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
-https://docs.google.com/drawings/d/1uQd1pfdXzxzxrzCm30gdMEQO3dHzJn13qRG8JQentbg/edit?usp=sharing&resourcekey=0-S8Y8V69A1gEblQWINbAYaw
+https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
 -->
 <img src="docs/images/quicksort_snippet.svg" align="right" width="575"
      alt="Quicksort code in Carbon. Follow the link to read more.">
