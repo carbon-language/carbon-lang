@@ -13,10 +13,17 @@ filegroup(
 
 cc_library(
     name = "diagnostic_emitter",
-    hdrs = ["diagnostic_emitter.h"],
+    srcs = ["diagnostic_consumer.cpp"],
+    hdrs = [
+        "diagnostic.h",
+        "diagnostic_consumer.h",
+        "diagnostic_emitter.h",
+        "diagnostic_translator.h",
+    ],
     deps = [
         ":diagnostic_kind",
         "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )

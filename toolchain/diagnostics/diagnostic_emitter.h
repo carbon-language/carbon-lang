@@ -5,9 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
-#include <algorithm>
 #include <cstdint>
-#include <functional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -15,220 +13,15 @@
 #include "common/check.h"
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/raw_ostream.h"
+#include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/diagnostic_translator.h"
 
 namespace Carbon {
 
-enum class DiagnosticLevel : int8_t {
-  // A note, not indicating an error on its own, but possibly providing context
-  // for an error.
-  Note,
-  // A warning diagnostic, indicating a likely problem with the program.
-  Warning,
-  // An error diagnostic, indicating that the program is not valid.
-  Error,
-};
-
-// Provides a definition of a diagnostic. For example:
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
-//                     std::string, std::string);
-//
-// Arguments are passed to llvm::formatv; see:
-// https://llvm.org/doxygen/FormatVariadic_8h_source.html
-//
-// See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
-  static constexpr auto DiagnosticName =                      \
-      ::Carbon::Internal::DiagnosticBase<__VA_ARGS__>(        \
-          ::Carbon::DiagnosticKind::DiagnosticName,           \
-          ::Carbon::DiagnosticLevel::Level, Format)
-
-// A location for a diagnostic in a file. The lifetime of a DiagnosticLocation
-// is required to be less than SourceBuffer that it refers to due to the
-// contained filename and line references.
-struct DiagnosticLocation {
-  // Name of the file or buffer that this diagnostic refers to.
-  llvm::StringRef filename;
-  // A reference to the line of the error.
-  llvm::StringRef line;
-  // 1-based line number.
-  int32_t line_number = -1;
-  // 1-based column number.
-  int32_t column_number = -1;
-  // A location can represent a range of text if set to >1 value.
-  int32_t length = 1;
-};
-
-// A message composing a diagnostic. This may be the main message, but can also
-// be notes providing more information.
-struct DiagnosticMessage {
-  explicit DiagnosticMessage(
-      DiagnosticKind kind, DiagnosticLocation location,
-      llvm::StringLiteral format, llvm::SmallVector<llvm::Any> format_args,
-      std::function<std::string(const DiagnosticMessage&)> format_fn)
-      : kind(kind),
-        location(location),
-        format(format),
-        format_args(std::move(format_args)),
-        format_fn(std::move(format_fn)) {}
-
-  // The diagnostic's kind.
-  DiagnosticKind kind;
-
-  // The calculated location of the diagnostic.
-  DiagnosticLocation location;
-
-  // The diagnostic's format string. This, along with format_args, will be
-  // passed to format_fn.
-  llvm::StringLiteral format;
-
-  // A list of format arguments.
-  //
-  // These may be used by non-standard consumers to inspect diagnostic details
-  // without needing to parse the formatted string; however, it should be
-  // understood that diagnostic formats are subject to change and the llvm::Any
-  // offers limited compile-time type safety. Integration tests are required.
-  llvm::SmallVector<llvm::Any> format_args;
-
-  // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const DiagnosticMessage&)> format_fn;
-};
-
-// An instance of a single error or warning.  Information about the diagnostic
-// can be recorded into it for more complex consumers.
-struct Diagnostic {
-  // The diagnostic's level.
-  DiagnosticLevel level;
-
-  // The main error or warning.
-  DiagnosticMessage message;
-
-  // Notes that add context or supplemental information to the diagnostic.
-  llvm::SmallVector<DiagnosticMessage> notes;
-};
-
-// Receives diagnostics as they are emitted.
-class DiagnosticConsumer {
- public:
-  virtual ~DiagnosticConsumer() = default;
-
-  // Handle a diagnostic.
-  //
-  // This relies on moves of the Diagnostic. At present, diagnostics are
-  // allocated on the stack, so their lifetime is that of HandleDiagnostic.
-  // However, SortingDiagnosticConsumer needs a longer lifetime, until all
-  // diagnostics have been produced. As a consequence, it needs to either copy
-  // or move the Diagnostic, and right now we're moving due to the overhead of
-  // notes.
-  //
-  // At present, there is no persistent storage of diagnostics because IDEs
-  // would be fine with diagnostics being printed immediately and discarded,
-  // without SortingDiagnosticConsumer. If this becomes a performance issue, we
-  // may want to investigate alternative ownership models that address both IDE
-  // and CLI user needs.
-  virtual auto HandleDiagnostic(Diagnostic diagnostic) -> void = 0;
-
-  // Flushes any buffered input.
-  virtual auto Flush() -> void {}
-};
-
-// Known diagnostic type translations. These are enumerated because `llvm::Any`
-// doesn't expose the contained type; instead, we infer it from a given
-// diagnostic.
-enum class DiagnosticTypeTranslation : int8_t {
-  None,
-  NameId,
-  TypeId,
-};
-
-// An interface that can translate some representation of a location into a
-// diagnostic location.
-//
-// TODO: Revisit this once the diagnostics machinery is more complete and see
-// if we can turn it into a `std::function`.
-template <typename LocationT>
-class DiagnosticLocationTranslator {
- public:
-  virtual ~DiagnosticLocationTranslator() = default;
-
-  virtual auto GetLocation(LocationT loc) -> DiagnosticLocation = 0;
-
-  // Translates arg types as needed. Not all uses support translation, so the
-  // default simply errors.
-  virtual auto TranslateArg(DiagnosticTypeTranslation translation,
-                            llvm::Any /*arg*/) const -> llvm::Any {
-    CARBON_FATAL() << "Unexpected call to TranslateArg: "
-                   << static_cast<int8_t>(translation);
-  }
-};
-
-template <typename StorageTypeT, DiagnosticTypeTranslation TranslationV>
-struct DiagnosticTypeInfo {
-  using StorageType = StorageTypeT;
-  static constexpr DiagnosticTypeTranslation Translation = TranslationV;
-};
-
 namespace Internal {
-
-// Determines whether there's a DiagnosticType member on Arg.
-template <typename Arg>
-concept HasDiagnosticType =
-    requires { std::type_identity<typename Arg::DiagnosticType>(); };
-
-// The default implementation with no translation.
-template <typename Arg, typename /*Unused*/ = void>
-struct DiagnosticTypeForArg
-    : public DiagnosticTypeInfo<Arg, DiagnosticTypeTranslation::None> {};
-
-// Exposes a custom translation for an argument type.
-template <typename Arg>
-  requires HasDiagnosticType<Arg>
-struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
-
-// Use the DIAGNOSTIC macro to instantiate this.
-// This stores static information about a diagnostic category.
-template <typename... Args>
-struct DiagnosticBase {
-  explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
-                                    llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {
-    static_assert((... && !std::is_same_v<Args, llvm::StringRef>),
-                  "Use std::string or llvm::StringLiteral for diagnostics to "
-                  "avoid lifetime issues.");
-  }
-
-  // Calls formatv with the diagnostic's arguments.
-  auto FormatFn(const DiagnosticMessage& message) const -> std::string {
-    return FormatFnImpl(message, std::make_index_sequence<sizeof...(Args)>());
-  };
-
-  // The diagnostic's kind.
-  DiagnosticKind Kind;
-  // The diagnostic's level.
-  DiagnosticLevel Level;
-  // The diagnostic's format for llvm::formatv.
-  llvm::StringLiteral Format;
-
- private:
-  // Handles the cast of llvm::Any to Args types for formatv.
-  // TODO: Custom formatting can be provided with an format_provider, but that
-  // affects all formatv calls. Consider replacing formatv with a custom call
-  // that allows diagnostic-specific formatting.
-  template <std::size_t... N>
-  inline auto FormatFnImpl(const DiagnosticMessage& message,
-                           std::index_sequence<N...> /*indices*/) const
-      -> std::string {
-    CARBON_CHECK(message.format_args.size() == sizeof...(Args));
-    return llvm::formatv(
-        message.format.data(),
-        llvm::any_cast<typename DiagnosticTypeForArg<Args>::StorageType>(
-            message.format_args[N])...);
-  }
-};
 
 // Disable type deduction based on `args`; the type of `diagnostic_base`
 // determines the diagnostic's parameter types.
@@ -312,9 +105,26 @@ class DiagnosticEmitter {
       return DiagnosticMessage(
           diagnostic_base.Kind, emitter->translator_->GetLocation(location),
           diagnostic_base.Format, std::move(args),
-          [&diagnostic_base](const DiagnosticMessage& message) -> std::string {
-            return diagnostic_base.FormatFn(message);
+          [](const DiagnosticMessage& message) -> std::string {
+            return FormatFn<Args...>(
+                message, std::make_index_sequence<sizeof...(Args)>());
           });
+    }
+
+    // Handles the cast of llvm::Any to Args types for formatv.
+    // TODO: Custom formatting can be provided with an format_provider, but that
+    // affects all formatv calls. Consider replacing formatv with a custom call
+    // that allows diagnostic-specific formatting.
+    template <typename... Args, std::size_t... N>
+    static auto FormatFn(const DiagnosticMessage& message,
+                         std::index_sequence<N...> /*indices*/) -> std::string {
+      static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
+      CARBON_CHECK(message.format_args.size() == sizeof...(Args));
+      return llvm::formatv(
+          message.format.data(),
+          llvm::any_cast<
+              typename Internal::DiagnosticTypeForArg<Args>::StorageType>(
+              message.format_args[N])...);
     }
 
     DiagnosticEmitter<LocationT>* emitter_;
@@ -376,82 +186,6 @@ class DiagnosticEmitter {
   DiagnosticConsumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
       annotate_fns_;
-};
-
-class StreamDiagnosticConsumer : public DiagnosticConsumer {
- public:
-  explicit StreamDiagnosticConsumer(llvm::raw_ostream& stream)
-      : stream_(&stream) {}
-
-  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    std::string prefix;
-    if (diagnostic.level == DiagnosticLevel::Error) {
-      prefix = "ERROR: ";
-    }
-    Print(diagnostic.message, prefix);
-    for (const auto& note : diagnostic.notes) {
-      Print(note);
-    }
-  }
-  auto Print(const DiagnosticMessage& message, llvm::StringRef prefix = "")
-      -> void {
-    *stream_ << message.location.filename;
-    if (message.location.line_number > 0) {
-      *stream_ << ":" << message.location.line_number;
-      if (message.location.column_number > 0) {
-        *stream_ << ":" << message.location.column_number;
-      }
-    }
-    *stream_ << ": " << prefix << message.format_fn(message) << "\n";
-    if (message.location.column_number > 0) {
-      *stream_ << message.location.line << "\n";
-      stream_->indent(message.location.column_number - 1);
-      *stream_ << "^";
-      int underline_length = std::max(0, message.location.length - 1);
-      // We want to ensure that we don't underline past the end of the line in
-      // case of a multiline token.
-      // TODO: revisit this once we can reference multiple ranges on multiple
-      // lines in a single diagnostic message.
-      underline_length = std::min(
-          underline_length, static_cast<int32_t>(message.location.line.size()) -
-                                message.location.column_number);
-      for (int i = 0; i < underline_length; ++i) {
-        *stream_ << "~";
-      }
-      *stream_ << "\n";
-    }
-  }
-
- private:
-  llvm::raw_ostream* stream_;
-};
-
-inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  static auto* consumer = new StreamDiagnosticConsumer(llvm::errs());
-  return *consumer;
-}
-
-// Diagnostic consumer adaptor that tracks whether any errors have been
-// produced.
-class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
- public:
-  explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
-      : next_consumer_(&next_consumer) {}
-
-  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-    seen_error_ |= diagnostic.level == DiagnosticLevel::Error;
-    next_consumer_->HandleDiagnostic(std::move(diagnostic));
-  }
-
-  // Reset whether we've seen an error.
-  auto Reset() -> void { seen_error_ = false; }
-
-  // Returns whether we've seen an error since the last reset.
-  auto seen_error() const -> bool { return seen_error_; }
-
- private:
-  DiagnosticConsumer* next_consumer_;
-  bool seen_error_ = false;
 };
 
 // An RAII object that denotes a scope in which any diagnostic produced should
