@@ -61,18 +61,11 @@ struct DiagnosticLocation {
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
 struct DiagnosticMessage {
-  explicit DiagnosticMessage(
-      DiagnosticKind kind, DiagnosticLocation location,
-      llvm::StringLiteral format, llvm::SmallVector<llvm::Any> format_args,
-      std::function<std::string(const DiagnosticMessage&)> format_fn)
-      : kind(kind),
-        location(location),
-        format(format),
-        format_args(std::move(format_args)),
-        format_fn(std::move(format_fn)) {}
-
   // The diagnostic's kind.
   DiagnosticKind kind;
+
+  // The diagnostic's level.
+  DiagnosticLevel level;
 
   // The calculated location of the diagnostic.
   DiagnosticLocation location;
@@ -99,11 +92,9 @@ struct Diagnostic {
   // The diagnostic's level.
   DiagnosticLevel level;
 
-  // The main error or warning.
-  DiagnosticMessage message;
-
-  // Notes that add context or supplemental information to the diagnostic.
-  llvm::SmallVector<DiagnosticMessage> notes;
+  // Messages related to the diagnostic. Only one should be a warning or error;
+  // other messages provide context.
+  llvm::SmallVector<DiagnosticMessage> messages;
 };
 
 namespace Internal {
