@@ -19,9 +19,12 @@ library "b" api;
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import library "a";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~

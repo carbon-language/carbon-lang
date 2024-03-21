@@ -16,9 +16,12 @@ package Example api;
 
 import library "fn";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
@@ -51,8 +54,8 @@ fn NS.Foo();
 // CHECK:STDOUT:     .NS = %import_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%NS]
-// CHECK:STDOUT:   %.loc13: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc21: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();

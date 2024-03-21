@@ -119,7 +119,8 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
       : buffer_(buffer) {}
 
   // Map the given token into a diagnostic location.
-  auto ConvertLocation(TokenIndex token) const -> DiagnosticLocation override;
+  auto ConvertLocation(TokenIndex token, ContextFnT context_fn) const
+      -> DiagnosticLocation override;
 
  private:
   const TokenizedBuffer* buffer_;
@@ -255,7 +256,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto ConvertLocation(const char* loc) const -> DiagnosticLocation override;
+    auto ConvertLocation(const char* loc, ContextFnT context_fn) const
+        -> DiagnosticLocation override;
 
    private:
     const TokenizedBuffer* buffer_;

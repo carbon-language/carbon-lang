@@ -44,7 +44,7 @@ class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
         parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto ConvertLocation(NodeLocation node_location) const
+  auto ConvertLocation(NodeLocation node_location, ContextFnT context_fn) const
       -> DiagnosticLocation override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
@@ -54,7 +54,7 @@ class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
 
     if (node_location.token_only()) {
       return token_converter_.ConvertLocation(
-          parse_tree_->node_token(node_location.node_id()));
+          parse_tree_->node_token(node_location.node_id()), context_fn);
     }
 
     // Construct a location that encompasses all tokens that descend from this
@@ -74,11 +74,12 @@ class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
       }
     }
     DiagnosticLocation start_loc =
-        token_converter_.ConvertLocation(start_token);
+        token_converter_.ConvertLocation(start_token, context_fn);
     if (start_token == end_token) {
       return start_loc;
     }
-    DiagnosticLocation end_loc = token_converter_.ConvertLocation(end_token);
+    DiagnosticLocation end_loc =
+        token_converter_.ConvertLocation(end_token, context_fn);
     // For multiline locations we simply return the rest of the line for now
     // since true multiline locations are not yet supported.
     if (start_loc.line_number != end_loc.line_number) {

@@ -15,9 +15,16 @@ namespace Carbon {
 template <typename LocationT>
 class DiagnosticConverter {
  public:
+  using ContextFnT = llvm::function_ref<void(
+      DiagnosticLocation, const Internal::DiagnosticBase<>&)>;
+
   virtual ~DiagnosticConverter() = default;
 
-  virtual auto ConvertLocation(LocationT loc) const -> DiagnosticLocation = 0;
+  // Converts a LocationT to a DiagnosticLocation. The function may optionally
+  // provide context messages using context_fn, but these must be simple and
+  // already have converted locations.
+  virtual auto ConvertLocation(LocationT loc, ContextFnT context_fn) const
+      -> DiagnosticLocation = 0;
 
   // Converts arg types as needed. Not all uses require conversion, so the
   // default returns the argument unchanged.

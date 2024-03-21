@@ -38,6 +38,17 @@ struct BindNameInfo : public Printable<BindNameInfo> {
   NameScopeId enclosing_scope_id;
 };
 
+class File;
+
+struct ImportIR : public Printable<ImportIR> {
+  auto Print(llvm::raw_ostream& out) const -> void { out << node_id; }
+
+  // The node ID for the import.
+  Parse::ImportDirectiveId node_id;
+  // The imported IR.
+  const File* sem_ir;
+};
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:

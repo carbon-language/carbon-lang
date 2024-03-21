@@ -17,9 +17,12 @@ library "b" api;
 import library "a";
 
 // TODO: This should probably have a valid form.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class ForwardDecl {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE-6]]:1: In import.
+// CHECK:STDERR: import library "a";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class ForwardDecl;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~

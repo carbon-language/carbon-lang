@@ -57,7 +57,7 @@ class ImportRefResolver {
   explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
       : context_(context),
         import_ir_id_(import_ir_id),
-        import_ir_(*context_.import_irs().Get(import_ir_id)),
+        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir),
         import_ir_constant_values_(
             context_.import_ir_constant_values()[import_ir_id.index]) {}
 
@@ -912,7 +912,8 @@ auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
     return;
   }
 
-  const SemIR::File& import_ir = *context.import_irs().Get(import_ref->ir_id);
+  const SemIR::File& import_ir =
+      *context.import_irs().Get(import_ref->ir_id).sem_ir;
   auto import_inst = import_ir.insts().Get(import_ref->inst_id);
 
   ImportRefResolver resolver(context, import_ref->ir_id);

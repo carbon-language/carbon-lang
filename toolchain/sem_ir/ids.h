@@ -20,6 +20,7 @@ class Inst;
 struct BindNameInfo;
 struct Class;
 struct Function;
+struct ImportIR;
 struct Interface;
 struct Impl;
 struct NameScope;
@@ -248,7 +249,7 @@ constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
 
 // The ID of an imported IR.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
-  using ValueType = const File*;
+  using ValueType = ImportIR;
 
   static const ImportIRId Builtins;
   using IdBase::IdBase;

@@ -137,7 +137,7 @@ auto Context::ReplaceInstBeforeConstantUse(
 auto Context::AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto import_ref_id =
-      AddPlaceholderInstInNoBlock(SemIR::ImportRefUnused{ir_id, inst_id});
+      AddPlaceholderInstInNoBlock({SemIR::ImportRefUnused{ir_id, inst_id}});
 
   // We can't insert this instruction into whatever block we happen to be in,
   // because this function is typically called by name lookup in the middle of
@@ -303,7 +303,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
     // Determine the NameId in the import IR.
     SemIR::NameId import_name_id = name_id;
     if (identifier_id.is_valid()) {
-      auto import_identifier_id = import_ir->identifiers().Lookup(identifier);
+      auto import_identifier_id =
+          import_ir.sem_ir->identifiers().Lookup(identifier);
       if (!import_identifier_id.is_valid()) {
         // Name doesn't exist in the import IR.
         continue;
@@ -312,7 +313,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
     }
 
     // Look up the name in the import scope.
-    const auto& import_scope = import_ir->name_scopes().Get(import_scope_id);
+    const auto& import_scope =
+        import_ir.sem_ir->name_scopes().Get(import_scope_id);
     auto it = import_scope.names.find(import_name_id);
     if (it == import_scope.names.end()) {
       // Name doesn't exist in the import scope.
@@ -742,7 +744,7 @@ class TypeCompleter {
   auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
                                    SemIR::ImportRefUsed import_ref) const
       -> SemIR::ValueRepr {
-    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id);
+    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id).sem_ir;
     auto import_inst = import_ir->insts().Get(import_ref.inst_id);
     CARBON_CHECK(import_inst.kind() != SemIR::InstKind::ImportRefUsed)
         << "If ImportRefUsed can point at another, this would be recursive.";
