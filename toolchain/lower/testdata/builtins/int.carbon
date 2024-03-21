@@ -11,6 +11,6 @@ fn TestAdd(a: i32, b: i32) -> i32 { return Add(a, b); }
 // CHECK:STDOUT: source_filename = "int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAdd(i32 %a, i32 %b) {
-// CHECK:STDOUT:   %1 = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT:   %add = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %add
 // CHECK:STDOUT: }

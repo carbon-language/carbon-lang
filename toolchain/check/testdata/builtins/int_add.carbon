@@ -44,6 +44,19 @@ var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var bad_call: [i32; JustRight(1, 2, 3)];
 
+// TODO: We should diagnose these in check rather than failing in lower.
+fn RuntimeCallTooFew(a: i32) -> i32 {
+  return TooFew(a);
+}
+
+fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
+  return TooMany(a, b, c);
+}
+
+fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
+  return BadReturnType(a, b);
+}
+
 // --- fail_overflow.carbon
 
 package FailOverflow api;
@@ -126,6 +139,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     .too_many = %too_many
 // CHECK:STDOUT:     .bad_return_type = %bad_return_type
 // CHECK:STDOUT:     .bad_call = %bad_call
+// CHECK:STDOUT:     .RuntimeCallTooFew = %RuntimeCallTooFew
+// CHECK:STDOUT:     .RuntimeCallTooMany = %RuntimeCallTooMany
+// CHECK:STDOUT:     .RuntimeCallBadReturnType = %RuntimeCallBadReturnType
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooFew: <function> = fn_decl @TooFew [template] {
 // CHECK:STDOUT:     %a.loc4_11.1: i32 = param a
@@ -181,6 +197,27 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc28_39: type = array_type %.loc28_30, i32 [template = <error>]
 // CHECK:STDOUT:   %bad_call.var: ref <error> = var bad_call
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
+// CHECK:STDOUT:   %RuntimeCallTooFew: <function> = fn_decl @RuntimeCallTooFew [template] {
+// CHECK:STDOUT:     %a.loc31_22.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCallTooFew.%a: i32 = bind_name a, %a.loc31_22.1
+// CHECK:STDOUT:     %return.var.loc31: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %RuntimeCallTooMany: <function> = fn_decl @RuntimeCallTooMany [template] {
+// CHECK:STDOUT:     %a.loc35_23.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCallTooMany.%a: i32 = bind_name a, %a.loc35_23.1
+// CHECK:STDOUT:     %b.loc35_31.1: i32 = param b
+// CHECK:STDOUT:     @RuntimeCallTooMany.%b: i32 = bind_name b, %b.loc35_31.1
+// CHECK:STDOUT:     %c.loc35_39.1: i32 = param c
+// CHECK:STDOUT:     @RuntimeCallTooMany.%c: i32 = bind_name c, %c.loc35_39.1
+// CHECK:STDOUT:     %return.var.loc35: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %RuntimeCallBadReturnType: <function> = fn_decl @RuntimeCallBadReturnType [template] {
+// CHECK:STDOUT:     %a.loc39_29.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCallBadReturnType.%a: i32 = bind_name a, %a.loc39_29.1
+// CHECK:STDOUT:     %b.loc39_37.1: i32 = param b
+// CHECK:STDOUT:     @RuntimeCallBadReturnType.%b: i32 = bind_name b, %b.loc39_37.1
+// CHECK:STDOUT:     %return.var.loc39: ref bool = var <return slot>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew(%a: i32) -> i32 = "int.add";
@@ -190,6 +227,39 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT: fn @BadReturnType(%a: i32, %b: i32) -> bool = "int.add";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @JustRight(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallTooFew(%a: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TooFew.ref: <function> = name_ref TooFew, file.%TooFew [template = file.%TooFew]
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc32_16.1: init i32 = call %TooFew.ref(%a.ref)
+// CHECK:STDOUT:   %.loc32_19: i32 = value_of_initializer %.loc32_16.1
+// CHECK:STDOUT:   %.loc32_16.2: i32 = converted %.loc32_16.1, %.loc32_19
+// CHECK:STDOUT:   return %.loc32_16.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallTooMany(%a: i32, %b: i32, %c: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %TooMany.ref: <function> = name_ref TooMany, file.%TooMany [template = file.%TooMany]
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   %c.ref: i32 = name_ref c, %c
+// CHECK:STDOUT:   %.loc36_17.1: init i32 = call %TooMany.ref(%a.ref, %b.ref, %c.ref)
+// CHECK:STDOUT:   %.loc36_26: i32 = value_of_initializer %.loc36_17.1
+// CHECK:STDOUT:   %.loc36_17.2: i32 = converted %.loc36_17.1, %.loc36_26
+// CHECK:STDOUT:   return %.loc36_17.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: i32, %b: i32) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %BadReturnType.ref: <function> = name_ref BadReturnType, file.%BadReturnType [template = file.%BadReturnType]
+// CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
+// CHECK:STDOUT:   %.loc40_23.1: init bool = call %BadReturnType.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc40_29: bool = value_of_initializer %.loc40_23.1
+// CHECK:STDOUT:   %.loc40_23.2: bool = converted %.loc40_23.1, %.loc40_29
+// CHECK:STDOUT:   return %.loc40_23.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
 // CHECK:STDOUT:

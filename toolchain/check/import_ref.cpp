@@ -706,7 +706,8 @@ class ImportRefResolver {
          .param_refs_id =
              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
          .return_type_id = new_return_type_id,
-         .return_slot_id = new_return_slot});
+         .return_slot_id = new_return_slot,
+         .builtin_kind = function.builtin_kind});
     // Write the function ID into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(
         function_decl_id, {Parse::NodeId::Invalid, function_decl});

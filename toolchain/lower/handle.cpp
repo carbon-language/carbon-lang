@@ -167,6 +167,8 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
+// Returns the builtin function kind of the callee in a function call, or None
+// if the call is not to a builtin.
 static auto GetCalleeBuiltinFunctionKind(const SemIR::File& sem_ir,
                                          SemIR::InstId callee_id)
     -> SemIR::BuiltinFunctionKind {
@@ -185,6 +187,7 @@ static auto GetCalleeBuiltinFunctionKind(const SemIR::File& sem_ir,
   return SemIR::BuiltinFunctionKind::None;
 }
 
+// Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> void {
@@ -206,10 +209,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
         break;
       }
       constexpr bool SignedOverflowIsUB = false;
-      context.SetLocal(
-          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1]), "",
-                                               false, SignedOverflowIsUB));
+      context.SetLocal(inst_id, context.builder().CreateAdd(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "add",
+                                    /*HasNUW=*/false,
+                                    /*HasNSW=*/SignedOverflowIsUB));
       return;
     }
   }
