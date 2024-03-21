@@ -5,29 +5,32 @@
 // AUTOUPDATE
 
 interface Interface {
-  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default fn F();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn F();
 
-  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn G(a: i32, b: i32) -> i32;
 }
 
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Interface.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-11]]:3: Name is previously declared here.
+// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-12]]:3: Name is previously declared here.
 // CHECK:STDERR:   default fn F();
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Interface.F() {}
 
 // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-14]]:3: Name is previously declared here.
+// CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-15]]:3: Name is previously declared here.
 // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
@@ -46,12 +49,12 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %.loc25: <function> = fn_decl @.1 [template] {}
-// CHECK:STDOUT:   %.loc33: <function> = fn_decl @.2 [template] {
-// CHECK:STDOUT:     %a.loc33_16.1: i32 = param a
-// CHECK:STDOUT:     @.2.%a: i32 = bind_name a, %a.loc33_16.1
-// CHECK:STDOUT:     %b.loc33_24.1: i32 = param b
-// CHECK:STDOUT:     @.2.%b: i32 = bind_name b, %b.loc33_24.1
+// CHECK:STDOUT:   %.loc28: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %.loc36: <function> = fn_decl @.2 [template] {
+// CHECK:STDOUT:     %a.loc36_16.1: i32 = param a
+// CHECK:STDOUT:     @.2.%a: i32 = bind_name a, %a.loc36_16.1
+// CHECK:STDOUT:     %b.loc36_24.1: i32 = param b
+// CHECK:STDOUT:     @.2.%b: i32 = bind_name b, %b.loc36_24.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -59,26 +62,26 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %.loc11: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %a.loc16_16.1: i32 = param a
-// CHECK:STDOUT:     %a.loc16_16.2: i32 = bind_name a, %a.loc16_16.1
-// CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
-// CHECK:STDOUT:     %b.loc16_24.2: i32 = bind_name b, %b.loc16_24.1
+// CHECK:STDOUT:     %a.loc18_16.1: i32 = param a
+// CHECK:STDOUT:     %a.loc18_16.2: i32 = bind_name a, %a.loc18_16.1
+// CHECK:STDOUT:     %b.loc18_24.1: i32 = param b
+// CHECK:STDOUT:     %b.loc18_24.2: i32 = bind_name b, %b.loc18_24.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <associated <function> in Interface> = assoc_entity element1, %G [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18: <associated <function> in Interface> = assoc_entity element1, %G [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc11
-// CHECK:STDOUT:   .G = %.loc16
+// CHECK:STDOUT:   .F = %.loc12
+// CHECK:STDOUT:   .G = %.loc18
 // CHECK:STDOUT:   witness = (%F, %G)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Interface.%a.loc16_16.2: i32, @Interface.%b.loc16_24.2: i32) -> i32;
+// CHECK:STDOUT: fn @G(@Interface.%a.loc18_16.2: i32, @Interface.%b.loc18_24.2: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:

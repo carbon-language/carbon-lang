@@ -6,9 +6,10 @@
 
 virtual class B
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:1: ERROR: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:1: ERROR: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR: impl class
 // CHECK:STDERR: ^~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:6: ERROR: `class` introducer should be followed by a name.
 // CHECK:STDERR: impl class
 // CHECK:STDERR:      ^~~~~

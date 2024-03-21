@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+6]]:1: ERROR: Semantics TODO: `generic interface`.
+// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `generic interface`.
 // CHECK:STDERR: interface I[]();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `generic interface`.
 // CHECK:STDERR: interface I[]();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~

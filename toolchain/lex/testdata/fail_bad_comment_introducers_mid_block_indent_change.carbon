@@ -22,10 +22,12 @@
 // CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-13]]:3: ERROR: Whitespace is required after '//'.
 // CHECK:STDERR: //abc
 // CHECK:STDERR:   ^
-// CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-13]]:5: ERROR: Whitespace is required after '//'.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-14]]:5: ERROR: Whitespace is required after '//'.
 // CHECK:STDERR:   //abc
 // CHECK:STDERR:     ^
-// CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-13]]:3: ERROR: Whitespace is required after '//'.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_bad_comment_introducers_mid_block_indent_change.carbon:[[@LINE-15]]:3: ERROR: Whitespace is required after '//'.
 // CHECK:STDERR: //abc
 // CHECK:STDERR:   ^
 // CHECK:STDOUT: - filename: fail_bad_comment_introducers_mid_block_indent_change.carbon

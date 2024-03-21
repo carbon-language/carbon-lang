@@ -6,9 +6,10 @@
 
 var
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+15]]:21: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+16]]:21: ERROR: Expected binding pattern.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+12]]:21: ERROR: `var` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^

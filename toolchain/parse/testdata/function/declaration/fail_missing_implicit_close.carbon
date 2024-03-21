@@ -5,9 +5,10 @@
 // AUTOUPDATE
 
 // Fix and uncomment this to test error handling.
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+6]]:7: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+7]]:7: ERROR: Opening symbol without a corresponding closing symbol.
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+3]]:7: ERROR: `fn` requires a `(` for parameters.
 // CHECK:STDERR: fn Div[();
 // CHECK:STDERR:       ^

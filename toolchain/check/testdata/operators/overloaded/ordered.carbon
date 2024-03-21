@@ -56,23 +56,26 @@ import Core;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
   // CHECK:STDERR:   return a < b;
   // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   return a < b;
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
   // CHECK:STDERR:   return a <= b;
   // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:
   return a <= b;
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Ordered in type D that does not implement that interface.
   // CHECK:STDERR:   return a > b;
   // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   return a > b;
 }
 
@@ -439,35 +442,35 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+58, unused
 // CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
-// CHECK:STDOUT:     %D.ref.loc15_21: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc15_18.1: D = param a
-// CHECK:STDOUT:     @TestLessEqual.%a: D = bind_name a, %a.loc15_18.1
-// CHECK:STDOUT:     %D.ref.loc15_27: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc15_24.1: D = param b
-// CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc15_24.1
-// CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
+// CHECK:STDOUT:     %D.ref.loc16_21: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc16_18.1: D = param a
+// CHECK:STDOUT:     @TestLessEqual.%a: D = bind_name a, %a.loc16_18.1
+// CHECK:STDOUT:     %D.ref.loc16_27: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc16_24.1: D = param b
+// CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc16_24.1
+// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.12: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
-// CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc22_16.1: D = param a
-// CHECK:STDOUT:     @TestGreater.%a: D = bind_name a, %a.loc22_16.1
-// CHECK:STDOUT:     %D.ref.loc22_25: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc22_22.1: D = param b
-// CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc22_22.1
-// CHECK:STDOUT:     %return.var.loc22: ref bool = var <return slot>
+// CHECK:STDOUT:     %D.ref.loc24_19: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc24_16.1: D = param a
+// CHECK:STDOUT:     @TestGreater.%a: D = bind_name a, %a.loc24_16.1
+// CHECK:STDOUT:     %D.ref.loc24_25: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc24_22.1: D = param b
+// CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc24_22.1
+// CHECK:STDOUT:     %return.var.loc24: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.14: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir1, inst+44, unused
 // CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
-// CHECK:STDOUT:     %D.ref.loc29_24: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc29_21.1: D = param a
-// CHECK:STDOUT:     @TestGreaterEqual.%a: D = bind_name a, %a.loc29_21.1
-// CHECK:STDOUT:     %D.ref.loc29_30: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc29_27.1: D = param b
-// CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc29_27.1
-// CHECK:STDOUT:     %return.var.loc29: ref bool = var <return slot>
+// CHECK:STDOUT:     %D.ref.loc32_24: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc32_21.1: D = param a
+// CHECK:STDOUT:     @TestGreaterEqual.%a: D = bind_name a, %a.loc32_21.1
+// CHECK:STDOUT:     %D.ref.loc32_30: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc32_27.1: D = param b
+// CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc32_27.1
+// CHECK:STDOUT:     %return.var.loc32: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.16: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.17 = import_ref ir1, inst+58, unused

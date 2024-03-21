@@ -30,24 +30,27 @@ import Core;
 class C {};
 
 fn TestUnary(a: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Negate in type C that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Negate in type C that does not implement that interface.
   // CHECK:STDERR:   return -a;
   // CHECK:STDERR:          ^~
+  // CHECK:STDERR:
   return -a;
 }
 
 fn TestBinary(a: C, b: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Add in type C that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Add in type C that does not implement that interface.
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
   return a + b;
 }
 
 fn TestRef(b: C) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface AddAssign in type C that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface AddAssign in type C that does not implement that interface.
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   a += b;
   // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface Inc in type C that does not implement that interface.
   // CHECK:STDERR:   ++a;
@@ -226,13 +229,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+9, unused
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+9, unused
 // CHECK:STDOUT:   %TestBinary: <function> = fn_decl @TestBinary [template] {
-// CHECK:STDOUT:     %C.ref.loc15_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc15_15.1: C = param a
-// CHECK:STDOUT:     @TestBinary.%a: C = bind_name a, %a.loc15_15.1
-// CHECK:STDOUT:     %C.ref.loc15_24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc15_21.1: C = param b
-// CHECK:STDOUT:     @TestBinary.%b: C = bind_name b, %b.loc15_21.1
-// CHECK:STDOUT:     %C.ref.loc15_30: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc16_18: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc16_15.1: C = param a
+// CHECK:STDOUT:     @TestBinary.%a: C = bind_name a, %a.loc16_15.1
+// CHECK:STDOUT:     %C.ref.loc16_24: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc16_21.1: C = param b
+// CHECK:STDOUT:     @TestBinary.%b: C = bind_name b, %b.loc16_21.1
+// CHECK:STDOUT:     %C.ref.loc16_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+13, used [template = constants.%.7]
@@ -241,9 +244,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %TestRef: <function> = fn_decl @TestRef [template] {
-// CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc22_12.1: C = param b
-// CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc22_12.1
+// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc24_12.1: C = param b
+// CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc24_12.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+34, used [template = constants.%.11]
 // CHECK:STDOUT:   %import_ref.12: <associated <function> in AddAssign> = import_ref ir1, inst+52, used [template = constants.%.13]
@@ -310,14 +313,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc23_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc23_15.2: init C = class_init (), %a.var [template = constants.%.10]
-// CHECK:STDOUT:   %.loc23_15.3: init C = converted %.loc23_15.1, %.loc23_15.2 [template = constants.%.10]
-// CHECK:STDOUT:   assign %a.var, %.loc23_15.3
-// CHECK:STDOUT:   %a.ref.loc27: ref C = name_ref a, %a
+// CHECK:STDOUT:   %.loc25_15.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc25_15.2: init C = class_init (), %a.var [template = constants.%.10]
+// CHECK:STDOUT:   %.loc25_15.3: init C = converted %.loc25_15.1, %.loc25_15.2 [template = constants.%.10]
+// CHECK:STDOUT:   assign %a.var, %.loc25_15.3
+// CHECK:STDOUT:   %a.ref.loc30: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
 // CHECK:STDOUT:   %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.11] {}
-// CHECK:STDOUT:   %a.ref.loc31: ref C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc34: ref C = name_ref a, %a
 // CHECK:STDOUT:   %Inc.decl: invalid = interface_decl @Inc [template = constants.%.14] {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

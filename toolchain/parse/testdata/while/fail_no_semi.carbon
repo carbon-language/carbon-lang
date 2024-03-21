@@ -8,9 +8,10 @@ fn F() {
   while (a) {
     if (b) {
       break
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: ERROR: `break` statements must end with a `;`.
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:5: ERROR: `break` statements must end with a `;`.
     // CHECK:STDERR:     }
     // CHECK:STDERR:     ^
+    // CHECK:STDERR:
     }
     if (c) {
       continue

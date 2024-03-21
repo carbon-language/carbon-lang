@@ -17,9 +17,10 @@ class B2 {
   var b: i32;
 }
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:38: ERROR: Cannot implicitly convert from `B2*` to `A1*`.
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: ERROR: Cannot implicitly convert from `B2*` to `A1*`.
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
+// CHECK:STDERR:
 fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
@@ -66,22 +67,22 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
 // CHECK:STDOUT:   %ConvertUnrelated: <function> = fn_decl @ConvertUnrelated [template] {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, %B2.decl [template = constants.%B2]
-// CHECK:STDOUT:     %.loc23_26: type = ptr_type B2 [template = constants.%.8]
-// CHECK:STDOUT:     %p.loc23_21.1: B2* = param p
-// CHECK:STDOUT:     @ConvertUnrelated.%p: B2* = bind_name p, %p.loc23_21.1
+// CHECK:STDOUT:     %.loc24_26: type = ptr_type B2 [template = constants.%.8]
+// CHECK:STDOUT:     %p.loc24_21.1: B2* = param p
+// CHECK:STDOUT:     @ConvertUnrelated.%p: B2* = bind_name p, %p.loc24_21.1
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, %A1.decl [template = constants.%A1]
-// CHECK:STDOUT:     %.loc23_34: type = ptr_type A1 [template = constants.%.9]
-// CHECK:STDOUT:     %return.var.loc23: ref A1* = var <return slot>
+// CHECK:STDOUT:     %.loc24_34: type = ptr_type A1 [template = constants.%.9]
+// CHECK:STDOUT:     %return.var.loc24: ref A1* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %ConvertIncomplete: <function> = fn_decl @ConvertIncomplete [template] {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc30_35: type = ptr_type Incomplete [template = constants.%.13]
-// CHECK:STDOUT:     %p.loc30_22.1: Incomplete* = param p
-// CHECK:STDOUT:     @ConvertIncomplete.%p: Incomplete* = bind_name p, %p.loc30_22.1
+// CHECK:STDOUT:     %.loc31_35: type = ptr_type Incomplete [template = constants.%.13]
+// CHECK:STDOUT:     %p.loc31_22.1: Incomplete* = param p
+// CHECK:STDOUT:     @ConvertIncomplete.%p: Incomplete* = bind_name p, %p.loc31_22.1
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, %A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %.loc30_43: type = ptr_type A2 [template = constants.%.14]
-// CHECK:STDOUT:     %return.var.loc30: ref A2* = var <return slot>
+// CHECK:STDOUT:     %.loc31_43: type = ptr_type A2 [template = constants.%.14]
+// CHECK:STDOUT:     %return.var.loc31: ref A2* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

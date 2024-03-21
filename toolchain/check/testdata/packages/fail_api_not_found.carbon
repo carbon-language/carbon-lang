@@ -6,16 +6,18 @@
 
 // --- fail_no_api.impl.carbon
 
-// CHECK:STDERR: fail_no_api.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: fail_no_api.impl.carbon:[[@LINE+4]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo impl;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Foo impl;
 
 // --- fail_no_api_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API not found.
+// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Corresponding API not found.
 // CHECK:STDERR: package Foo library "Bar" impl;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Foo library "Bar" impl;
 
 // --- fail_no_api_main_lib.impl.carbon

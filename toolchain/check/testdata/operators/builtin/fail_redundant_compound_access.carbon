@@ -8,9 +8,10 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: ERROR: Member name of type `i32` in compound member access is not an instance member or an interface member.
   // CHECK:STDERR:   a = a.(a);
   // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:
   a = a.(a);
   // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: ERROR: Member name of type `<function>` in compound member access is not an instance member or an interface member.
   // CHECK:STDERR:   a = a.(F)();
@@ -48,16 +49,16 @@ fn Main() {
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 3 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.var, %.loc10
-// CHECK:STDOUT:   %a.ref.loc14_3: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc14_7: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc14_10: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc14: i32 = bind_value %a.ref.loc14_10
-// CHECK:STDOUT:   assign %a.ref.loc14_3, %.loc14
-// CHECK:STDOUT:   %a.ref.loc18_3: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc18_7: ref i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc15_3: ref i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc15_7: ref i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc15_10: ref i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc15: i32 = bind_value %a.ref.loc15_10
+// CHECK:STDOUT:   assign %a.ref.loc15_3, %.loc15
+// CHECK:STDOUT:   %a.ref.loc19_3: ref i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc19_7: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc18: init i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc18_3, %.loc18
+// CHECK:STDOUT:   %.loc19: init i32 = call %F.ref()
+// CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

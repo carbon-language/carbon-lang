@@ -69,9 +69,10 @@ import Other library "fn";
 import Other library "fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE+9]]:3: In name lookup for `F`.
+  // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE+10]]:3: In name lookup for `F`.
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
   // CHECK:STDERR: fn F(x: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~
@@ -96,9 +97,10 @@ import Other library "fn";
 import Other library "fn_conflict";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+3]]:3: In name lookup for `F`.
+  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: In name lookup for `F`.
   // CHECK:STDERR:   Other.F();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   Other.F();
 }
 
@@ -107,20 +109,22 @@ fn Run() {
 library "namespace_conflict" api;
 
 import library "other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: main_other_ns.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 fn Other.F() {}
 
 // --- fail_main_reopen_other.carbon
@@ -129,12 +133,13 @@ library "reopen_other" api;
 
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+6]]:11: ERROR: Imported packages cannot be used for declarations.
+// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: ERROR: Imported packages cannot be used for declarations.
 // CHECK:STDERR: namespace Other;
 // CHECK:STDERR:           ^~~~~
 // CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: Package imported here.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 namespace Other;
 
 // This is not diagnosed after the diagnostic on `namespace Other;`.
@@ -272,7 +277,7 @@ fn Other.G() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc17: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc18: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +315,7 @@ fn Other.G() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc11: init () = call %F.ref()
+// CHECK:STDOUT:   %.loc12: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,7 +332,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F]
-// CHECK:STDOUT:   %.loc19: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %.loc21: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -346,7 +351,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc13: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

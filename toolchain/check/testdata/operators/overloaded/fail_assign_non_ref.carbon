@@ -31,12 +31,13 @@ impl C as Core.AddAssign {
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:3: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:14: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn Op[addr self: C*]();
   // CHECK:STDERR:              ^~~~
+  // CHECK:STDERR:
   ++a;
 }
 
@@ -44,7 +45,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+6]]:5: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:     ^~
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-17]]:14: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:14: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:              ^~~~
   a += b;
@@ -176,12 +177,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+12, unused
 // CHECK:STDOUT:   %TestAddAssignNonRef: <function> = fn_decl @TestAddAssignNonRef [template] {
-// CHECK:STDOUT:     %C.ref.loc25_27: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %a.loc25_24.1: C = param a
-// CHECK:STDOUT:     @TestAddAssignNonRef.%a: C = bind_name a, %a.loc25_24.1
-// CHECK:STDOUT:     %C.ref.loc25_33: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc25_30.1: C = param b
-// CHECK:STDOUT:     @TestAddAssignNonRef.%b: C = bind_name b, %b.loc25_30.1
+// CHECK:STDOUT:     %C.ref.loc26_27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %a.loc26_24.1: C = param a
+// CHECK:STDOUT:     @TestAddAssignNonRef.%a: C = bind_name a, %a.loc26_24.1
+// CHECK:STDOUT:     %C.ref.loc26_33: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc26_30.1: C = param b
+// CHECK:STDOUT:     @TestAddAssignNonRef.%b: C = bind_name b, %b.loc26_30.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+16, used [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+32, unused
@@ -251,8 +252,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
-// CHECK:STDOUT:   %.loc22_3.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc22_3.2: init () = call %.loc22_3.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc23_3.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc23_3.2: init () = call %.loc23_3.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,8 +262,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
-// CHECK:STDOUT:   %.loc32_5.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc32_5.2: init () = call %.loc32_5.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc33_5.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc33_5.2: init () = call %.loc33_5.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

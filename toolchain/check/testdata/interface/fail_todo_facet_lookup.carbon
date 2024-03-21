@@ -7,9 +7,10 @@
 interface Interface { fn F(); }
 
 fn CallStatic(T:! Interface) {
-  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+3]]:3: ERROR: Value of type `<associated <function> in Interface>` is not callable.
+  // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: ERROR: Value of type `<associated <function> in Interface>` is not callable.
   // CHECK:STDERR:   T.F();
   // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
   T.F();
 }
 
@@ -42,14 +43,14 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     @CallStatic.%T: Interface = bind_symbolic_name T, %T.loc9_15.1 [symbolic]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet: <function> = fn_decl @CallFacet [template] {
-// CHECK:STDOUT:     %Interface.ref.loc16: type = name_ref Interface, %Interface.decl [template = constants.%.1]
-// CHECK:STDOUT:     %T.loc16_14.1: Interface = param T
-// CHECK:STDOUT:     @CallFacet.%T: Interface = bind_symbolic_name T, %T.loc16_14.1 [symbolic]
+// CHECK:STDOUT:     %Interface.ref.loc17: type = name_ref Interface, %Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:     %T.loc17_14.1: Interface = param T
+// CHECK:STDOUT:     @CallFacet.%T: Interface = bind_symbolic_name T, %T.loc17_14.1 [symbolic]
 // CHECK:STDOUT:     %T.ref: Interface = name_ref T, @CallFacet.%T [symbolic = @CallFacet.%T]
-// CHECK:STDOUT:     %.loc16_32.1: type = facet_type_access %T.ref [symbolic = @CallFacet.%T]
-// CHECK:STDOUT:     %.loc16_32.2: type = converted %T.ref, %.loc16_32.1 [symbolic = @CallFacet.%T]
-// CHECK:STDOUT:     %x.loc16_29.1: T = param x
-// CHECK:STDOUT:     @CallFacet.%x: T = bind_name x, %x.loc16_29.1
+// CHECK:STDOUT:     %.loc17_32.1: type = facet_type_access %T.ref [symbolic = @CallFacet.%T]
+// CHECK:STDOUT:     %.loc17_32.2: type = converted %T.ref, %.loc17_32.1 [symbolic = @CallFacet.%T]
+// CHECK:STDOUT:     %x.loc17_29.1: T = param x
+// CHECK:STDOUT:     @CallFacet.%x: T = bind_name x, %x.loc17_29.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

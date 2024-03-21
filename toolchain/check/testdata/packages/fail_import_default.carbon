@@ -8,25 +8,28 @@
 
 package A api;
 
-// CHECK:STDERR: fail_default_api.carbon:[[@LINE+3]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_default_api.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library default;
 
 // --- fail_default.impl.carbon
 
 package A impl;
 
-// CHECK:STDERR: fail_default.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_default.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library default;
 
 // --- fail_main_import_default.carbon
 
-// CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import library default;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library default;
 
 // --- fail_main_lib_import_default.carbon

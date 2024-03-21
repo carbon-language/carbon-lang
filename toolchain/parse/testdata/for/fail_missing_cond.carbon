@@ -5,17 +5,20 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+6]]:7: ERROR: Expected `(` after `for`.
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+8]]:7: ERROR: Expected `(` after `for`.
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:7: ERROR: Expected `var` declaration.
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:7: ERROR: Expected `var` declaration.
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   for {
   }
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+6]]:1: ERROR: Expected braced code block.
+// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+7]]:1: ERROR: Expected braced code block.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+3]]:1: ERROR: Expected expression.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^

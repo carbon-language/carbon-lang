@@ -45,10 +45,11 @@ library "extern" api;
 
 import Other library "extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+11]]:8: ERROR: Variable has incomplete type `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR: fail_extern.carbon: Class was forward declared here.
+// CHECK:STDERR:
 // CHECK:STDERR: other_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
@@ -64,9 +65,10 @@ library "fail_merge_define_extern" api;
 import Other library "define";
 import Other library "extern";
 
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+9]]:8: In name lookup for `C`.
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+10]]:8: In name lookup for `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn C() {}
 // CHECK:STDERR: ^~~~~~~~
@@ -199,7 +201,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc17: {} = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -241,10 +243,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc16_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc16_19.3: init C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc16_19.3
+// CHECK:STDOUT:   %.loc17_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc17_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17_19.3: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc17_19.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

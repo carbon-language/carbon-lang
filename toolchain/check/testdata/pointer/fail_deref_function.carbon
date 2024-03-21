@@ -5,9 +5,10 @@
 // AUTOUPDATE
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:4: ERROR: Expression cannot be used as a value.
+  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+4]]:4: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   *A;
   // CHECK:STDERR:    ^
+  // CHECK:STDERR:
   *A;
   // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+3]]:3: ERROR: Expression cannot be used as a value.
   // CHECK:STDERR:   A->foo;
@@ -26,10 +27,10 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc11: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
-// CHECK:STDOUT:   %A.ref.loc15: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc15: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc12: <function> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
+// CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A [template = file.%A]
+// CHECK:STDOUT:   %.loc16: ref <error> = deref <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

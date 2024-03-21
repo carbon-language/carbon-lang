@@ -9,18 +9,19 @@ class Class {
   fn H();
 }
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of class Class.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: ERROR: Redefinition of class Class.
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-8]]:1: Previous definition was here.
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 class Class {
   fn G();
   // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:3: ERROR: Redundant redeclaration of function H.
   // CHECK:STDERR:   fn H();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-14]]:3: Previously declared here.
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-15]]:3: Previously declared here.
   // CHECK:STDERR:   fn H();
   // CHECK:STDERR:   ^~~~~~~
   fn H();
@@ -42,7 +43,7 @@ fn Class.H() {}
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Class.decl.loc18: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT:   %Class.decl.loc19: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}

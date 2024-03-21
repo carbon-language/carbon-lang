@@ -7,19 +7,21 @@
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl i32 as I {}
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extend impl i32 as I {}
 }
 
 class D {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+7]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15: Remove the explicit `Self` type here.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   extend impl D as I;
 }
 

@@ -5,12 +5,14 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+9]]:6: ERROR: Expected `(` after `if`.
+  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+11]]:6: ERROR: Expected `(` after `if`.
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:      ^~~~
-  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+6]]:11: ERROR: Expected braced code block.
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+7]]:11: ERROR: Expected braced code block.
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_top_level_if.carbon:[[@LINE+3]]:11: ERROR: Expected expression.
   // CHECK:STDERR:   if true then 1 else 2;
   // CHECK:STDERR:           ^~~~

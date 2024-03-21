@@ -8,9 +8,10 @@
 // CHECK:STDOUT: - filename: fail_a.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index: 0, kind: 'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
-// CHECK:STDERR: fail_a.carbon:[[@LINE+3]]:3: ERROR: Empty digit sequence in numeric literal.
+// CHECK:STDERR: fail_a.carbon:[[@LINE+4]]:3: ERROR: Empty digit sequence in numeric literal.
 // CHECK:STDERR: 1.a
 // CHECK:STDERR:   ^
+// CHECK:STDERR:
 1.a
 // CHECK:STDOUT:     { index: 1, kind:     'Error', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '1.a', has_trailing_space: true },
 

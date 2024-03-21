@@ -10,9 +10,10 @@ class X {
 fn F(x: X) {
   // TODO: Strings should eventually be copyable, once we decide how to
   // represent them.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:19: ERROR: Cannot copy value of type `String`.
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:19: ERROR: Cannot copy value of type `String`.
   // CHECK:STDERR:   var s: String = "hello";
   // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR:
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
@@ -55,7 +56,7 @@ fn F(x: X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref String = var s
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
-// CHECK:STDOUT:   %.loc16: String = string_literal "hello" [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17: String = string_literal "hello" [template = constants.%.5]
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref X = var y

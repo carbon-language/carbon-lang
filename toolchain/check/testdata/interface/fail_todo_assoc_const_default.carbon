@@ -5,9 +5,10 @@
 // AUTOUPDATE
 
 interface I {
-  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default let T:! type = (i32, i32);
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default let T:! type = (i32, i32);
   // CHECK:STDERR: fail_todo_assoc_const_default.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default let N:! i32 = 42;
@@ -37,18 +38,18 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
-// CHECK:STDOUT:   %.loc11_35.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc11_35.2: type = converted %.loc11_35.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12_35.1: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc12_35.2: type = converted %.loc12_35.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc11_36: <associated type in I> = assoc_entity element0, %T [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_25: i32 = int_literal 42 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_36: <associated type in I> = assoc_entity element0, %T [template = constants.%.5]
+// CHECK:STDOUT:   %.loc16_25: i32 = int_literal 42 [template = constants.%.6]
 // CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc15_27: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.8]
+// CHECK:STDOUT:   %.loc16_27: <associated i32 in I> = assoc_entity element1, %N [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc11_36
-// CHECK:STDOUT:   .N = %.loc15_27
+// CHECK:STDOUT:   .T = %.loc12_36
+// CHECK:STDOUT:   .N = %.loc16_27
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

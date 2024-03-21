@@ -5,9 +5,10 @@
 // AUTOUPDATE
 // TODO: It should emit only one error message.
 
-// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+6]]:8: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+7]]:8: ERROR: Opening symbol without a corresponding closing symbol.
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_require_close_bracket.carbon:[[@LINE+3]]:8: ERROR: Expected expression.
 // CHECK:STDERR: var x: [i32;;
 // CHECK:STDERR:        ^

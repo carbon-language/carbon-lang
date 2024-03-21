@@ -43,16 +43,18 @@ import Core;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:
   return a == b;
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: ERROR: Cannot access member of interface Eq in type D that does not implement that interface.
   // CHECK:STDERR:   return a != b;
   // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:
   return a != b;
 }
 
@@ -71,12 +73,13 @@ impl C as Core.Eq {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE+7]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
   // CHECK:STDERR:   return a == b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR: fail_no_impl_for_args.carbon:[[@LINE-8]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Equal[self: C](other: C) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a == b;
 }
 
@@ -315,13 +318,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+30, unused
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestNotEqual: <function> = fn_decl @TestNotEqual [template] {
-// CHECK:STDOUT:     %D.ref.loc15_20: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc15_17.1: D = param a
-// CHECK:STDOUT:     @TestNotEqual.%a: D = bind_name a, %a.loc15_17.1
-// CHECK:STDOUT:     %D.ref.loc15_26: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc15_23.1: D = param b
-// CHECK:STDOUT:     @TestNotEqual.%b: D = bind_name b, %b.loc15_23.1
-// CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
+// CHECK:STDOUT:     %D.ref.loc16_20: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc16_17.1: D = param a
+// CHECK:STDOUT:     @TestNotEqual.%a: D = bind_name a, %a.loc16_17.1
+// CHECK:STDOUT:     %D.ref.loc16_26: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc16_23.1: D = param b
+// CHECK:STDOUT:     @TestNotEqual.%b: D = bind_name b, %b.loc16_23.1
+// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: type = import_ref ir1, inst+1, used [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+30, unused
@@ -405,13 +408,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+15, unused
 // CHECK:STDOUT:   %TestLhsBad: <function> = fn_decl @TestLhsBad [template] {
-// CHECK:STDOUT:     %D.ref.loc24: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %a.loc24_15.1: D = param a
-// CHECK:STDOUT:     @TestLhsBad.%a: D = bind_name a, %a.loc24_15.1
-// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %b.loc24_21.1: C = param b
-// CHECK:STDOUT:     @TestLhsBad.%b: C = bind_name b, %b.loc24_21.1
-// CHECK:STDOUT:     %return.var.loc24: ref bool = var <return slot>
+// CHECK:STDOUT:     %D.ref.loc25: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %a.loc25_15.1: D = param a
+// CHECK:STDOUT:     @TestLhsBad.%a: D = bind_name a, %a.loc25_15.1
+// CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %b.loc25_21.1: C = param b
+// CHECK:STDOUT:     @TestLhsBad.%b: C = bind_name b, %b.loc25_21.1
+// CHECK:STDOUT:     %return.var.loc25: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+30, unused
@@ -475,11 +478,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
-// CHECK:STDOUT:   %.loc21_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc21_12.2: init bool = call %.loc21_12.1(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc21_16: bool = value_of_initializer %.loc21_12.2 [template = <error>]
-// CHECK:STDOUT:   %.loc21_12.3: bool = converted %.loc21_12.2, %.loc21_16 [template = <error>]
-// CHECK:STDOUT:   return %.loc21_12.3
+// CHECK:STDOUT:   %.loc22_12.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc22_12.2: init bool = call %.loc22_12.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc22_16: bool = value_of_initializer %.loc22_12.2 [template = <error>]
+// CHECK:STDOUT:   %.loc22_12.3: bool = converted %.loc22_12.2, %.loc22_16 [template = <error>]
+// CHECK:STDOUT:   return %.loc22_12.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLhsBad(%a: D, %b: C) -> bool {

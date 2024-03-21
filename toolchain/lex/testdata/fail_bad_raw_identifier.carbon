@@ -8,17 +8,19 @@
 // CHECK:STDOUT:     { index: 0, kind:  'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
 
 // Missing the character after `#`.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:2: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r#
 // CHECK:STDERR:  ^
+// CHECK:STDERR:
 r#
 // CHECK:STDOUT:     { index: 1, kind: 'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
 // CHECK:STDOUT:     { index: 2, kind:      'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#', has_trailing_space: true },
 
 // Not a valid identifier.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:2: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r#3
 // CHECK:STDERR:  ^
+// CHECK:STDERR:
 r#3
 // CHECK:STDOUT:     { index: 3, kind: 'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
 // CHECK:STDOUT:     { index: 4, kind:      'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#' },

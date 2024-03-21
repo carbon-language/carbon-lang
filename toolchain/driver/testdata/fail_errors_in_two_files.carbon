@@ -8,9 +8,10 @@
 
 // --- fail_file1.carbon
 
-// CHECK:STDERR: fail_file1.carbon:[[@LINE+3]]:24: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:24: ERROR: Opening symbol without a corresponding closing symbol.
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
+// CHECK:STDERR:
 fn run(String program) {
   return True;
 

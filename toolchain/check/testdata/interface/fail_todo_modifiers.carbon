@@ -5,13 +5,15 @@
 // AUTOUPDATE
 
 interface Modifiers {
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   final fn Final() { }
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
   final fn Final() { }
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default fn Default() { }
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn Default() { }
 }
 
@@ -43,14 +45,14 @@ private interface Private {
 // CHECK:STDOUT: interface @Modifiers {
 // CHECK:STDOUT:   %Self: Modifiers = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template] {}
-// CHECK:STDOUT:   %.loc11: <associated <function> in Modifiers> = assoc_entity element0, %Final [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <associated <function> in Modifiers> = assoc_entity element0, %Final [template = constants.%.3]
 // CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template] {}
-// CHECK:STDOUT:   %.loc15: <associated <function> in Modifiers> = assoc_entity element1, %Default [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <associated <function> in Modifiers> = assoc_entity element1, %Default [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Final = %.loc11
-// CHECK:STDOUT:   .Default = %.loc15
+// CHECK:STDOUT:   .Final = %.loc12
+// CHECK:STDOUT:   .Default = %.loc17
 // CHECK:STDOUT:   witness = (%Final, %Default)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

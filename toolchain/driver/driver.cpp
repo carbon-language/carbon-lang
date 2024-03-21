@@ -395,16 +395,16 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 class Driver::CompilationUnit {
  public:
   explicit CompilationUnit(Driver* driver, const CompileOptions& options,
+                           DiagnosticConsumer* consumer,
                            llvm::StringRef input_filename)
       : driver_(driver),
         options_(options),
         input_filename_(input_filename),
-        vlog_stream_(driver_->vlog_stream_),
-        stream_consumer_(driver_->error_stream_) {
+        vlog_stream_(driver_->vlog_stream_) {
     if (vlog_stream_ != nullptr || options_.stream_errors) {
-      consumer_ = &stream_consumer_;
+      consumer_ = consumer;
     } else {
-      sorting_consumer_ = SortingDiagnosticConsumer(stream_consumer_);
+      sorting_consumer_ = SortingDiagnosticConsumer(*consumer);
       consumer_ = &*sorting_consumer_;
     }
   }
@@ -620,7 +620,6 @@ class Driver::CompilationUnit {
   llvm::raw_pwrite_stream* vlog_stream_;
 
   // Diagnostics are sent to consumer_, with optional sorting.
-  StreamDiagnosticConsumer stream_consumer_;
   std::optional<SortingDiagnosticConsumer> sorting_consumer_;
   DiagnosticConsumer* consumer_;
 
@@ -666,9 +665,10 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
       }
     }
   });
+  StreamDiagnosticConsumer stream_consumer(error_stream_);
   for (const auto& input_filename : options.input_filenames) {
-    units.push_back(
-        std::make_unique<CompilationUnit>(this, options, input_filename));
+    units.push_back(std::make_unique<CompilationUnit>(
+        this, options, &stream_consumer, input_filename));
   }
 
   // Lex.

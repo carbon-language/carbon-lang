@@ -6,50 +6,58 @@
 
 class Access {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   private fn F();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   private fn F();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   protected fn G();
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected fn G();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   private var k: i32;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   private var k: i32;
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `access modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `access modifier`.
   // CHECK:STDERR:   protected var l: i32;
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected var l: i32;
 }
 
 base class Base {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   virtual fn H();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   virtual fn H();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   impl fn I();
   // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
   impl fn I();
 }
 
 abstract class Abstract {
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   abstract fn J();
   // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
   abstract fn J();
 
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `method modifier`.
   // CHECK:STDERR:   virtual fn K();
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   virtual fn K();
 
   // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `method modifier`.
@@ -83,15 +91,15 @@ abstract class Abstract {
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
-// CHECK:STDOUT:   %.loc22: <unbound element of class Access> = field_decl k, element0 [template]
-// CHECK:STDOUT:   %.loc27: <unbound element of class Access> = field_decl l, element1 [template]
+// CHECK:STDOUT:   %.loc25: <unbound element of class Access> = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc31: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .k = %.loc22
-// CHECK:STDOUT:   .l = %.loc27
+// CHECK:STDOUT:   .k = %.loc25
+// CHECK:STDOUT:   .l = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

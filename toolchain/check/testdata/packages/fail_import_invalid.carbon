@@ -6,46 +6,52 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+3]]:1: ERROR: Imports from the current package must omit the package name.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: Imports from the current package must omit the package name.
 // CHECK:STDERR: import Main;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+3]]:1: ERROR: Imports from the current package must omit the package name.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: Imports from the current package must omit the package name.
 // CHECK:STDERR: import Main library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Main library "lib";
 
 // --- fail_not_main.carbon
 
 package NotMain api;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main` from other packages.
+// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: ERROR: Cannot import `Main` from other packages.
 // CHECK:STDERR: import Main;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+3]]:1: ERROR: Cannot import `Main` from other packages.
+// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: ERROR: Cannot import `Main` from other packages.
 // CHECK:STDERR: import Main library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Main library "lib";
 
 // --- fail_this.carbon
 
 package This api;
 
-// CHECK:STDERR: fail_this.carbon:[[@LINE+3]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import This;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import This;
 
 // --- fail_this_lib.carbon
 
 package This library "lib" api;
 
-// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+3]]:1: ERROR: File cannot import itself.
+// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: ERROR: File cannot import itself.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library "lib";
 
 // --- implicit_api.carbon
@@ -56,9 +62,10 @@ package Implicit api;
 
 package Implicit impl;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Implicit;
 
 // --- implicit_lib_api.carbon
@@ -69,9 +76,10 @@ package Implicit library "lib" api;
 
 package Implicit library "lib" impl;
 
-// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
+// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Explicit import of `api` from `impl` file is redundant with implicit import.
 // CHECK:STDERR: import Implicit library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Implicit library "lib";
 
 // --- fail_not_found.carbon

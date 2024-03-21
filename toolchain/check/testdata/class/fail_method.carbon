@@ -16,25 +16,27 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: ERROR: Missing object argument in method call.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: ERROR: Missing object argument in method call.
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: Calling function declared here.
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-20]]:3: Calling function declared here.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: Calling function declared here.
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Class.WithSelf(c);
 
   // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: ERROR: Missing object argument in method call.
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-28]]:3: Calling function declared here.
+  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: Calling function declared here.
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   A();
@@ -96,15 +98,15 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %NoSelf.ref.loc18: <function> = name_ref NoSelf, @Class.%NoSelf [template = @Class.%NoSelf]
 // CHECK:STDOUT:   %.loc18: init () = call %NoSelf.ref.loc18()
-// CHECK:STDOUT:   %Class.ref.loc25: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc25: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc25: init () = call %WithSelf.ref.loc25(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Class.ref.loc32: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc32: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %c.ref.loc32: Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc32: init () = call %WithSelf.ref.loc32(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc26: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
+// CHECK:STDOUT:   %.loc26: init () = call %WithSelf.ref.loc26(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Class.ref.loc34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc34: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
+// CHECK:STDOUT:   %c.ref.loc34: Class = name_ref c, %c
+// CHECK:STDOUT:   %.loc34: init () = call %WithSelf.ref.loc34(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc40: init () = call %A.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc42: init () = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
