@@ -33,8 +33,8 @@ class NumericLiteralTest : public ::testing::Test {
   }
 
   auto Parse(llvm::StringRef text) -> NumericLiteral::Value {
-    Testing::SingleTokenDiagnosticTranslator translator(text);
-    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
+    Testing::SingleTokenDiagnosticConverter converter(text);
+    DiagnosticEmitter<const char*> emitter(converter, error_tracker);
     return Lex(text).ComputeValue(emitter);
   }
 

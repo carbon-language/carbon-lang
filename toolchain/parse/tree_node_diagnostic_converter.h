@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_PARSE_TREE_NODE_LOCATION_TRANSLATOR_H_
-#define CARBON_TOOLCHAIN_PARSE_TREE_NODE_LOCATION_TRANSLATOR_H_
+#ifndef CARBON_TOOLCHAIN_PARSE_TREE_NODE_DIAGNOSTIC_CONVERTER_H_
+#define CARBON_TOOLCHAIN_PARSE_TREE_NODE_DIAGNOSTIC_CONVERTER_H_
 
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -34,18 +34,18 @@ inline auto TokenOnly(NodeId node_id) -> NodeLocation {
   return NodeLocation(node_id, true);
 }
 
-class NodeLocationTranslator
-    : public DiagnosticLocationTranslator<NodeLocation> {
+class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
  public:
-  explicit NodeLocationTranslator(const Lex::TokenizedBuffer* tokens,
-                                  llvm::StringRef filename,
-                                  const Tree* parse_tree)
-      : token_translator_(tokens),
+  explicit NodeLocationConverter(const Lex::TokenizedBuffer* tokens,
+                                 llvm::StringRef filename,
+                                 const Tree* parse_tree)
+      : token_converter_(tokens),
         filename_(filename),
         parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto GetLocation(NodeLocation node_location) -> DiagnosticLocation override {
+  auto ConvertLocation(NodeLocation node_location) const
+      -> DiagnosticLocation override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
     if (!node_location.node_id().is_valid()) {
@@ -53,7 +53,7 @@ class NodeLocationTranslator
     }
 
     if (node_location.token_only()) {
-      return token_translator_.GetLocation(
+      return token_converter_.ConvertLocation(
           parse_tree_->node_token(node_location.node_id()));
     }
 
@@ -73,11 +73,12 @@ class NodeLocationTranslator
         end_token = desc_token;
       }
     }
-    DiagnosticLocation start_loc = token_translator_.GetLocation(start_token);
+    DiagnosticLocation start_loc =
+        token_converter_.ConvertLocation(start_token);
     if (start_token == end_token) {
       return start_loc;
     }
-    DiagnosticLocation end_loc = token_translator_.GetLocation(end_token);
+    DiagnosticLocation end_loc = token_converter_.ConvertLocation(end_token);
     // For multiline locations we simply return the rest of the line for now
     // since true multiline locations are not yet supported.
     if (start_loc.line_number != end_loc.line_number) {
@@ -92,11 +93,11 @@ class NodeLocationTranslator
   }
 
  private:
-  Lex::TokenLocationTranslator token_translator_;
+  Lex::TokenDiagnosticConverter token_converter_;
   llvm::StringRef filename_;
   const Tree* parse_tree_;
 };
 
 }  // namespace Carbon::Parse
 
-#endif  // CARBON_TOOLCHAIN_PARSE_TREE_NODE_LOCATION_TRANSLATOR_H_
+#endif  // CARBON_TOOLCHAIN_PARSE_TREE_NODE_DIAGNOSTIC_CONVERTER_H_
