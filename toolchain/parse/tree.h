@@ -492,10 +492,10 @@ struct Tree::ConvertTo<NodeIdInCategory<C>> {
   }
 };
 
-template <typename T, typename U>
-struct Tree::ConvertTo<NodeIdOneOf<T, U>> {
+template <typename... T>
+struct Tree::ConvertTo<NodeIdOneOf<T...>> {
   static auto AllowedFor(NodeKind kind) -> bool {
-    return kind == T::Kind || kind == U::Kind;
+    return ((kind == T::Kind) || ...);
   }
 };
 

@@ -141,14 +141,14 @@ class ErrorBuilder {
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  auto operator<<(const T& message) && -> ErrorBuilder&& {
+  auto operator<<(T&& message) && -> ErrorBuilder&& {
     *out_ << message;
     return std::move(*this);
   }
 
   // Accumulates string message for an lvalue error builder.
   template <typename T>
-  auto operator<<(const T& message) & -> ErrorBuilder& {
+  auto operator<<(T&& message) & -> ErrorBuilder& {
     *out_ << message;
     return *this;
   }

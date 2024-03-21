@@ -80,6 +80,7 @@ using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
 // NodeId with kind that matches one of the `T::Kind`s.
 template <typename... T>
 struct NodeIdOneOf : public NodeId {
+  static_assert(sizeof...(T) >= 2, "Expected at least two types.");
   constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
   template <const NodeKind& Kind>
   // NOLINTNEXTLINE(google-explicit-constructor)
