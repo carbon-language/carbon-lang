@@ -314,7 +314,7 @@ possible instantiations, rather than with specific, concrete types.
 
 Some of this is likely unavoidable or too costly to avoid, as most existing
 checked generics systems
-[have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html),
+[have undecidable aspects to their type system](https://web.archive.org/web/20231223005655/https://3fx.ch/typing-is-hard.html),
 including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
 Swift ([1](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024),
 [2](https://forums.swift.org/t/termination-checking-for-type-substitution/64504),
