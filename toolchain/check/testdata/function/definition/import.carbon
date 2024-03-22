@@ -12,15 +12,33 @@ fn A() {}
 fn B(b: i32) -> i32 { return b; }
 fn C(c: (i32,)) -> {.c: i32} { return {.c = c[0]}; }
 
-// --- b.carbon
+// --- basics.carbon
 
-library "b" api;
+library "basics" api;
 
 import library "a";
 
 var a: () = A();
 var b: i32 = B(1);
 var c: {.c: i32} = C((1,));
+
+// --- fail_def_ownership.carbon
+
+library "fail_def_ownership" api;
+
+import library "a";
+
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+5]]:1: ERROR: Only one library can declare function A without `extern`.
+// CHECK:STDERR: fn A() {};
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_def_ownership.carbon: Previously declared here.
+// CHECK:STDERR:
+fn A() {};
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+4]]:1: ERROR: Only one library can declare function B without `extern`.
+// CHECK:STDERR: fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_def_ownership.carbon: Previously declared here.
+fn B(b: i32) -> i32;
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
@@ -75,7 +93,7 @@ var c: {.c: i32} = C((1,));
 // CHECK:STDOUT:   return %.loc6_49.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -132,4 +150,30 @@ var c: {.c: i32} = C((1,));
 // CHECK:STDOUT:   assign file.%c.var, %.loc8_21
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_def_ownership.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %import_ref.1
+// CHECK:STDOUT:     .B = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, used [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unused
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
+// CHECK:STDOUT:     %b.loc16_6.1: i32 = param b
+// CHECK:STDOUT:     %b.loc16_6.2: i32 = bind_name b, %b.loc16_6.1
+// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:

@@ -18,8 +18,7 @@ fn F() {}
 
 package Other library "fn_extern" api;
 
-// TODO: Mark extern
-fn F();
+extern fn F();
 
 // --- other_fn_conflict.carbon
 
@@ -63,9 +62,9 @@ import Other library "fn";
 // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "fn_extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn F();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: other_fn_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_extern.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
@@ -133,15 +132,10 @@ import library "other_ns";
 // CHECK:STDERR:
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+5]]:1: ERROR: Only one library can declare function F without `extern`.
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import Other library "fn";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_main_namespace_conflict.carbon: Previously declared here.
 // CHECK:STDERR:
 fn Other.F() {}
 
@@ -350,12 +344,10 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, used [template = imports.%F]
-// CHECK:STDOUT:   %.loc27: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
+// CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
