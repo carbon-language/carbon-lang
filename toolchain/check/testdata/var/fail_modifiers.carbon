@@ -4,31 +4,36 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected var b: i32;
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 protected var b: i32;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: Semantics TODO: `access modifier`.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: Semantics TODO: `access modifier`.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:9: ERROR: `protected` not allowed on declaration with `private`.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: ERROR: `protected` not allowed on declaration with `private`.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `private` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `private` previously appeared here.
 // CHECK:STDERR: private protected var c: i32;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 private protected var c: i32;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+9]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: ERROR: `protected` not allowed on `var` declaration at file scope, `protected` is only allowed on class members.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+6]]:11: ERROR: `protected` repeated on declaration.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: ERROR: `protected` repeated on declaration.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: `protected` previously appeared here.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: `protected` previously appeared here.
 // CHECK:STDERR: protected protected var d: i32;
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 protected protected var d: i32;
 
 // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `abstract` not allowed on `var` declaration.

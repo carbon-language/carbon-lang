@@ -32,12 +32,13 @@ impl C as Core.AddAssign {
 }
 
 fn Test(a: C, b: D) -> C {
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+7]]:10: ERROR: Cannot implicitly convert from `D` to `C`.
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-10]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Op[self: C](other: C) -> C;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a + b;
 }
 
@@ -46,7 +47,7 @@ fn TestAssign(b: D) {
   // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `D` to `C`.
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-18]]:3: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE-19]]:3: Initializing parameter 1 of function declared here.
   // CHECK:STDERR:   fn Op[addr self: C*](other: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   a += b;
@@ -192,9 +193,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+1, used [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+18, unused
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
-// CHECK:STDOUT:     %D.ref.loc26: type = name_ref D, %D.decl [template = constants.%D]
-// CHECK:STDOUT:     %b.loc26_15.1: D = param b
-// CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc26_15.1
+// CHECK:STDOUT:     %D.ref.loc27: type = name_ref D, %D.decl [template = constants.%D]
+// CHECK:STDOUT:     %b.loc27_15.1: D = param b
+// CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc27_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir1, inst+22, used [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+38, unused
@@ -273,10 +274,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.1.%.1, element0 [template = @impl.1.%Op]
-// CHECK:STDOUT:   %.loc23_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc23_12.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc23_12.3: init C = call %.loc23_12.1(<invalid>) [template = <error>]
-// CHECK:STDOUT:   return %.loc23_12.3
+// CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc24_12.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc24_12.3: init C = call %.loc24_12.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   return %.loc24_12.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b: D) {
@@ -284,16 +285,16 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc27_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc27_15.2: init C = class_init (), %a.var [template = constants.%.12]
-// CHECK:STDOUT:   %.loc27_15.3: init C = converted %.loc27_15.1, %.loc27_15.2 [template = constants.%.12]
-// CHECK:STDOUT:   assign %a.var, %.loc27_15.3
+// CHECK:STDOUT:   %.loc28_15.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc28_15.2: init C = class_init (), %a.var [template = constants.%.12]
+// CHECK:STDOUT:   %.loc28_15.3: init C = converted %.loc28_15.1, %.loc28_15.2 [template = constants.%.12]
+// CHECK:STDOUT:   assign %a.var, %.loc28_15.3
 // CHECK:STDOUT:   %a.ref: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.2.%.1, element0 [template = @impl.2.%Op]
-// CHECK:STDOUT:   %.loc34_5.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc34_3: C* = addr_of %a.ref
-// CHECK:STDOUT:   %.loc34_5.2: init () = call %.loc34_5.1(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc35_5.1: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %.loc35_3: C* = addr_of %a.ref
+// CHECK:STDOUT:   %.loc35_5.2: init () = call %.loc35_5.1(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

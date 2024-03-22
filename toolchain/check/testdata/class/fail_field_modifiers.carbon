@@ -6,19 +6,22 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: ERROR: `default` not allowed on `var` declaration.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `var` declaration.
   // CHECK:STDERR:   default var j: i32;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: ERROR: `final` not allowed on `var` declaration.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `final` not allowed on `var` declaration.
   // CHECK:STDERR:   final var k: i32;
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: ERROR: `default` not allowed on `let` declaration outside of an interface.
+  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+4]]:3: ERROR: `default` not allowed on `let` declaration outside of an interface.
   // CHECK:STDERR:   default let l: i32 = 0;
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default let l: i32 = 0;
 
   // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+3]]:3: ERROR: `final` not allowed on `let` declaration outside of an interface.
@@ -45,16 +48,16 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: <unbound element of class Class> = field_decl j, element0 [template]
-// CHECK:STDOUT:   %.loc17: <unbound element of class Class> = field_decl k, element1 [template]
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc22
-// CHECK:STDOUT:   %.loc27: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc27
+// CHECK:STDOUT:   %.loc13: <unbound element of class Class> = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc19: <unbound element of class Class> = field_decl k, element1 [template]
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %l: i32 = bind_name l, %.loc25
+// CHECK:STDOUT:   %.loc30: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %m: i32 = bind_name m, %.loc30
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .j = %.loc12
-// CHECK:STDOUT:   .k = %.loc17
+// CHECK:STDOUT:   .j = %.loc13
+// CHECK:STDOUT:   .k = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

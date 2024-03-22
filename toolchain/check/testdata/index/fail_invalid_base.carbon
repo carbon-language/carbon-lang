@@ -9,20 +9,23 @@
 // properly.
 
 namespace N;
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Expression cannot be used as a value.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Expression cannot be used as a value.
 // CHECK:STDERR: var a: i32 = N[0];
 // CHECK:STDERR:              ^
+// CHECK:STDERR:
 var a: i32 = N[0];
 
 fn F();
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Expression cannot be used as a value.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Expression cannot be used as a value.
 // CHECK:STDERR: var b: i32 = F[1];
 // CHECK:STDERR:              ^
+// CHECK:STDERR:
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Type `{.a: i32, .b: i32}` does not support indexing.
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: ERROR: Type `type` does not support indexing.
@@ -67,20 +70,20 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc21: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %.loc26_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc26_28: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc26_29.1: {.a: i32, .b: i32} = struct_literal (%.loc26_20, %.loc26_28)
-// CHECK:STDOUT:   %.loc26_31: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc26_29.2: {.a: i32, .b: i32} = struct_value (%.loc26_20, %.loc26_28) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc26_29.3: {.a: i32, .b: i32} = converted %.loc26_29.1, %.loc26_29.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc29_20: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc29_28: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29_29.1: {.a: i32, .b: i32} = struct_literal (%.loc29_20, %.loc29_28)
+// CHECK:STDOUT:   %.loc29_31: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc29_29.2: {.a: i32, .b: i32} = struct_value (%.loc29_20, %.loc29_28) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc29_29.3: {.a: i32, .b: i32} = converted %.loc29_29.1, %.loc29_29.2 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %.loc31_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
-// CHECK:STDOUT:   %.loc31_33: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc34_33: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -6,12 +6,13 @@
 
 fn F() -> i32 {
   returned var v: i32 = 0;
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+6]]:3: ERROR: Can only `return var;` in the scope of a `returned var`.
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: ERROR: Can only `return var;` in the scope of a `returned var`.
   // CHECK:STDERR:   return 1;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: `returned var` was declared here.
   // CHECK:STDERR:   returned var v: i32 = 0;
   // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   return 1;
 }
 
@@ -57,13 +58,13 @@ fn G() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc18_16: <unbound element of class C> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc18_28: <unbound element of class C> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc19_16: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc19_28: <unbound element of class C> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .a = %.loc18_16
-// CHECK:STDOUT:   .b = %.loc18_28
+// CHECK:STDOUT:   .a = %.loc19_16
+// CHECK:STDOUT:   .b = %.loc19_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
@@ -72,7 +73,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign %v.var, %.loc8
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc16: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,16 +81,16 @@ fn G() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref C = bind_name c, %return
-// CHECK:STDOUT:   %.loc20_29: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_37: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc20_38.1: {.a: i32, .b: i32} = struct_literal (%.loc20_29, %.loc20_37)
-// CHECK:STDOUT:   %.loc20_38.2: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc20_38.3: init i32 = initialize_from %.loc20_29 to %.loc20_38.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_38.4: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc20_38.5: init i32 = initialize_from %.loc20_37 to %.loc20_38.4 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc20_38.6: init C = class_init (%.loc20_38.3, %.loc20_38.5), %return [template = constants.%.7]
-// CHECK:STDOUT:   %.loc20_38.7: init C = converted %.loc20_38.1, %.loc20_38.6 [template = constants.%.7]
-// CHECK:STDOUT:   assign %return, %.loc20_38.7
+// CHECK:STDOUT:   %.loc21_29: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_37: i32 = int_literal 2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_38.1: {.a: i32, .b: i32} = struct_literal (%.loc21_29, %.loc21_37)
+// CHECK:STDOUT:   %.loc21_38.2: ref i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc21_38.3: init i32 = initialize_from %.loc21_29 to %.loc21_38.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc21_38.4: ref i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc21_38.5: init i32 = initialize_from %.loc21_37 to %.loc21_38.4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc21_38.6: init C = class_init (%.loc21_38.3, %.loc21_38.5), %return [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21_38.7: init C = converted %.loc21_38.1, %.loc21_38.6 [template = constants.%.7]
+// CHECK:STDOUT:   assign %return, %.loc21_38.7
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

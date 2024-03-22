@@ -9,9 +9,10 @@ fn If1(b: bool) -> i32 {
     return 1;
   } else {
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: ERROR: Missing `return` at end of function with declared return type.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 fn If2(b: bool) -> i32 {
@@ -19,9 +20,10 @@ fn If2(b: bool) -> i32 {
   } else {
     return 2;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: ERROR: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: ERROR: Missing `return` at end of function with declared return type.
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 fn If3(b: bool) -> i32 {
@@ -52,14 +54,14 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If2: <function> = fn_decl @If2 [template] {
-// CHECK:STDOUT:     %b.loc17_8.1: bool = param b
-// CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc17_8.1
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:     %b.loc18_8.1: bool = param b
+// CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc18_8.1
+// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If3: <function> = fn_decl @If3 [template] {
-// CHECK:STDOUT:     %b.loc27_8.1: bool = param b
-// CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc27_8.1
-// CHECK:STDOUT:     %return.var.loc27: ref i32 = var <return slot>
+// CHECK:STDOUT:     %b.loc29_8.1: bool = param b
+// CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc29_8.1
+// CHECK:STDOUT:     %return.var.loc29: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,8 +89,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc20
+// CHECK:STDOUT:   %.loc21: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
@@ -99,8 +101,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc29: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc29
+// CHECK:STDOUT:   %.loc31: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   return %.loc31
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT: }

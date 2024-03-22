@@ -5,25 +5,30 @@
 // AUTOUPDATE
 
 fn F() {
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:5: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: ERROR: Expected identifier after `.`.
   // CHECK:STDERR:   a.self;
   // CHECK:STDERR:     ^~~~
+  // CHECK:STDERR:
   a.self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:5: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: ERROR: Expected identifier after `.`.
   // CHECK:STDERR:   a.Self;
   // CHECK:STDERR:     ^~~~
+  // CHECK:STDERR:
   a.Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:5: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: ERROR: Expected identifier after `.`.
   // CHECK:STDERR:   a.for;
   // CHECK:STDERR:     ^~~
+  // CHECK:STDERR:
   a.for;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: ERROR: Expected identifier after `->`.
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: ERROR: Expected identifier after `->`.
   // CHECK:STDERR:   p->self;
   // CHECK:STDERR:      ^~~~
+  // CHECK:STDERR:
   p->self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: ERROR: Expected identifier after `->`.
+  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: ERROR: Expected identifier after `->`.
   // CHECK:STDERR:   p->Self;
   // CHECK:STDERR:      ^~~~
+  // CHECK:STDERR:
   p->Self;
   // CHECK:STDERR: fail_keyword.carbon:[[@LINE+3]]:6: ERROR: Expected identifier after `->`.
   // CHECK:STDERR:   p->while;

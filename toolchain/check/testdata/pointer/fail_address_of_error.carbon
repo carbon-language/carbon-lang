@@ -5,13 +5,15 @@
 // AUTOUPDATE
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:4: ERROR: Name `undeclared` not found.
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: ERROR: Name `undeclared` not found.
   // CHECK:STDERR:   &undeclared;
   // CHECK:STDERR:    ^~~~~~~~~~
+  // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+6]]:3: ERROR: Cannot take the address of non-reference expression.
+  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+7]]:3: ERROR: Cannot take the address of non-reference expression.
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+3]]:6: ERROR: Name `undeclared` not found.
   // CHECK:STDERR:   &(&undeclared);
   // CHECK:STDERR:      ^~~~~~~~~~
@@ -29,11 +31,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11: <error> = addr_of %undeclared.ref.loc11 [template = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_5: <error> = addr_of %undeclared.ref.loc18 [template = <error>]
-// CHECK:STDOUT:   %.loc18_3: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc12: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12: <error> = addr_of %undeclared.ref.loc12 [template = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20_5: <error> = addr_of %undeclared.ref.loc20 [template = <error>]
+// CHECK:STDOUT:   %.loc20_3: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

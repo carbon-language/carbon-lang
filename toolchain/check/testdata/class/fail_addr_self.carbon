@@ -10,20 +10,22 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:      ^
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-8]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:
   c.F();
 
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:6: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:6: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   c.G();
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-15]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-16]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:
   c.G();
 
   // This call is OK.
@@ -32,7 +34,7 @@ fn F(c: Class, p: Class*) {
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: ERROR: Cannot implicitly convert from `Class*` to `Class`.
   // CHECK:STDERR:   (*p).G();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-26]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-28]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn G[addr self: Class]();
   // CHECK:STDERR:             ^~~~
   (*p).G();
@@ -92,26 +94,26 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c: Class, %p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc19: Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc19: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc19_4: <bound method> = bound_method %c.ref.loc19, %F.ref.loc19
-// CHECK:STDOUT:   %.loc19_6: init () = call %.loc19_4(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %c.ref.loc27: Class = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc27: <function> = name_ref G, @Class.%G [template = @Class.%G]
-// CHECK:STDOUT:   %.loc27_4: <bound method> = bound_method %c.ref.loc27, %G.ref.loc27
-// CHECK:STDOUT:   %.loc27_6: init () = call %.loc27_4(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %p.ref.loc30: Class* = name_ref p, %p
-// CHECK:STDOUT:   %.loc30_4.1: ref Class = deref %p.ref.loc30
-// CHECK:STDOUT:   %F.ref.loc30: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, %F.ref.loc30
-// CHECK:STDOUT:   %.loc30_4.2: Class* = addr_of %.loc30_4.1
-// CHECK:STDOUT:   %.loc30_9: init () = call %.loc30_7(%.loc30_4.2)
-// CHECK:STDOUT:   %p.ref.loc38: Class* = name_ref p, %p
-// CHECK:STDOUT:   %.loc38_4.1: ref Class = deref %p.ref.loc38
-// CHECK:STDOUT:   %G.ref.loc38: <function> = name_ref G, @Class.%G [template = @Class.%G]
-// CHECK:STDOUT:   %.loc38_7: <bound method> = bound_method %.loc38_4.1, %G.ref.loc38
-// CHECK:STDOUT:   %.loc38_4.2: Class* = addr_of %.loc38_4.1
-// CHECK:STDOUT:   %.loc38_9: init () = call %.loc38_7(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc20: Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc20: <function> = name_ref F, @Class.%F [template = @Class.%F]
+// CHECK:STDOUT:   %.loc20_4: <bound method> = bound_method %c.ref.loc20, %F.ref.loc20
+// CHECK:STDOUT:   %.loc20_6: init () = call %.loc20_4(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %c.ref.loc29: Class = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc29: <function> = name_ref G, @Class.%G [template = @Class.%G]
+// CHECK:STDOUT:   %.loc29_4: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
+// CHECK:STDOUT:   %.loc29_6: init () = call %.loc29_4(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %p.ref.loc32: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc32_4.1: ref Class = deref %p.ref.loc32
+// CHECK:STDOUT:   %F.ref.loc32: <function> = name_ref F, @Class.%F [template = @Class.%F]
+// CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
+// CHECK:STDOUT:   %.loc32_4.2: Class* = addr_of %.loc32_4.1
+// CHECK:STDOUT:   %.loc32_9: init () = call %.loc32_7(%.loc32_4.2)
+// CHECK:STDOUT:   %p.ref.loc40: Class* = name_ref p, %p
+// CHECK:STDOUT:   %.loc40_4.1: ref Class = deref %p.ref.loc40
+// CHECK:STDOUT:   %G.ref.loc40: <function> = name_ref G, @Class.%G [template = @Class.%G]
+// CHECK:STDOUT:   %.loc40_7: <bound method> = bound_method %.loc40_4.1, %G.ref.loc40
+// CHECK:STDOUT:   %.loc40_4.2: Class* = addr_of %.loc40_4.1
+// CHECK:STDOUT:   %.loc40_9: init () = call %.loc40_7(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

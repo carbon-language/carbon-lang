@@ -9,47 +9,52 @@ fn Run1(a: i32) {}
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 1 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Run0(1);
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
+  // CHECK:STDERR:
   Run0(1);
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 2 argument(s) passed to function expecting 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 2 argument(s) passed to function expecting 0 argument(s).
   // CHECK:STDERR:   Run0(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-15]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
+  // CHECK:STDERR:
   Run0(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 0 argument(s) passed to function expecting 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 0 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   Run1();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-22]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Run1();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 2 argument(s) passed to function expecting 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 2 argument(s) passed to function expecting 1 argument(s).
   // CHECK:STDERR:   Run1(0, 1);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-29]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Run1(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 0 argument(s) passed to function expecting 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: ERROR: 0 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   Run2();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-36]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Run2();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: ERROR: 1 argument(s) passed to function expecting 2 argument(s).
   // CHECK:STDERR:   Run2(0);
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-43]]:1: Calling function declared here.
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: Calling function declared here.
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   Run2(0);
@@ -101,24 +106,24 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run0.ref.loc18: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
-// CHECK:STDOUT:   %.loc18_8: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_7: init () = call %Run0.ref.loc18(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run0.ref.loc25: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
-// CHECK:STDOUT:   %.loc25_8: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc25_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc25_7: init () = call %Run0.ref.loc25(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run1.ref.loc33: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
-// CHECK:STDOUT:   %.loc33: init () = call %Run1.ref.loc33(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run1.ref.loc40: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
-// CHECK:STDOUT:   %.loc40_8: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc40_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc40_7: init () = call %Run1.ref.loc40(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run2.ref.loc48: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc48: init () = call %Run2.ref.loc48(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run2.ref.loc55: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc55_8: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc55_7: init () = call %Run2.ref.loc55(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run0.ref.loc19: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
+// CHECK:STDOUT:   %.loc19_8: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_7: init () = call %Run0.ref.loc19(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run0.ref.loc27: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
+// CHECK:STDOUT:   %.loc27_8: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc27_11: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc27_7: init () = call %Run0.ref.loc27(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run1.ref.loc36: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
+// CHECK:STDOUT:   %.loc36: init () = call %Run1.ref.loc36(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run1.ref.loc44: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
+// CHECK:STDOUT:   %.loc44_8: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc44_11: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc44_7: init () = call %Run1.ref.loc44(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run2.ref.loc53: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
+// CHECK:STDOUT:   %.loc53: init () = call %Run2.ref.loc53(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run2.ref.loc60: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
+// CHECK:STDOUT:   %.loc60_8: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc60_7: init () = call %Run2.ref.loc60(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

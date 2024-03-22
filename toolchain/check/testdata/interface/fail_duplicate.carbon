@@ -6,24 +6,26 @@
 
 interface Interface { }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of interface Interface.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+7]]:1: ERROR: Redefinition of interface Interface.
 // CHECK:STDERR: interface Interface {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Previous definition was here.
 // CHECK:STDERR: interface Interface { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 interface Interface {
   fn F();
 }
 
 fn Function();
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+7]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: interface Function;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-5]]:1: Name is previously declared here.
 // CHECK:STDERR: fn Function();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 interface Function;
 
 class Class;
@@ -52,11 +54,11 @@ interface Class { }
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl.loc7: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %Interface.decl.loc15: type = interface_decl @Interface [template = constants.%.1] {}
+// CHECK:STDOUT:   %Interface.decl.loc16: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template] {}
-// CHECK:STDOUT:   %.decl.loc27: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl.loc37: type = interface_decl @.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.decl.loc39: type = interface_decl @.2 [template = constants.%.3] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {

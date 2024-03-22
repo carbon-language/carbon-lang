@@ -9,12 +9,13 @@ base class B2 {}
 
 class C {
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: ERROR: Multiple `base` declarations in class. Multiple inheritance is not permitted.
   // CHECK:STDERR:   extend base: B2;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: Previous `base` declaration is here.
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend base: B2;
 }
 
@@ -80,13 +81,13 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B1.ref.loc23: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc23: <unbound element of class D> = base_decl B1, element0 [template]
-// CHECK:STDOUT:   %B1.ref.loc30: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc24: type = name_ref B1, file.%B1.decl [template = constants.%B1]
+// CHECK:STDOUT:   %.loc24: <unbound element of class D> = base_decl B1, element0 [template]
+// CHECK:STDOUT:   %B1.ref.loc31: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .base = %.loc23
+// CHECK:STDOUT:   .base = %.loc24
 // CHECK:STDOUT:   extend name_scope1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

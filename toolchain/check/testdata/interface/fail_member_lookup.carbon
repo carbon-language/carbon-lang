@@ -11,9 +11,10 @@ interface Interface {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:3: ERROR: Value of type `<associated <function> in Interface>` is not callable.
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: ERROR: Value of type `<associated <function> in Interface>` is not callable.
   // CHECK:STDERR:   Interface.F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   Interface.F();
 
   // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: ERROR: Cannot implicitly convert from `<associated type in Interface>` to `type`.
@@ -59,9 +60,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Interface.ref.loc17: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %Interface.ref.loc18: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in Interface> = name_ref F, @Interface.%.loc8 [template = constants.%.3]
-// CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
+// CHECK:STDOUT:   %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:   %T.ref: <associated type in Interface> = name_ref T, @Interface.%.loc10 [template = constants.%.5]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var

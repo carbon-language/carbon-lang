@@ -15,12 +15,13 @@ extern fn F();
 library "redecl" api;
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redundant redeclaration of function F.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of function F.
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 extern fn F();
 
 // --- fail_redecl_extern.carbon
@@ -28,20 +29,22 @@ extern fn F();
 library "redecl_extern" api;
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+6]]:1: ERROR: Redundant redeclaration of function F.
+// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of function F.
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F();
 
 // --- fail_member_extern.carbon
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
+  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn F();
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extern fn F();
   // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+3]]:3: ERROR: `extern` not allowed on `fn` declaration that is a member.
   // CHECK:STDERR:   extern fn G[self: Self]();
@@ -67,7 +70,7 @@ class C {
 // CHECK:STDOUT:     .F = %F.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc11: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -79,7 +82,7 @@ class C {
 // CHECK:STDOUT:     .F = %F.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc11: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -102,8 +105,8 @@ class C {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
-// CHECK:STDOUT:     %self.loc10_15.1: C = param self
-// CHECK:STDOUT:     %self.loc10_15.2: C = bind_name self, %self.loc10_15.1
+// CHECK:STDOUT:     %self.loc11_15.1: C = param self
+// CHECK:STDOUT:     %self.loc11_15.2: C = bind_name self, %self.loc11_15.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -114,5 +117,5 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[@C.%self.loc10_15.2: C]();
+// CHECK:STDOUT: fn @G[@C.%self.loc11_15.2: C]();
 // CHECK:STDOUT:

@@ -13,9 +13,10 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   C.F();
   // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: ERROR: Cannot access member of interface I in type C that does not implement that interface.
   // CHECK:STDERR:   c.F();
@@ -76,9 +77,9 @@ fn F(c: C) {
 // CHECK:STDOUT: fn @F.2(%c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc19: <associated <function> in I> = name_ref F, @C.%F [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref.loc20: <associated <function> in I> = name_ref F, @C.%F [template = constants.%.3]
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc23: <associated <function> in I> = name_ref F, @C.%F [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref.loc24: <associated <function> in I> = name_ref F, @C.%F [template = constants.%.3]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -6,24 +6,27 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
+// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package Main api;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Main api;
 
 // --- fail_main_impl.carbon
 
-// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
+// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package Main impl;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package Main impl;
 
 // --- fail_raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+3]]:1: ERROR: `Main//default` must omit `package` directive.
+// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: ERROR: `Main//default` must omit `package` directive.
 // CHECK:STDERR: package r#Main api;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 package r#Main api;
 
 // --- fail_main_lib.carbon

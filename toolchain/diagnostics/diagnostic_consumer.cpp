@@ -10,6 +10,12 @@
 namespace Carbon {
 
 auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
+  if (printed_diagnostic_) {
+    *stream_ << "\n";
+  } else {
+    printed_diagnostic_ = true;
+  }
+
   for (const auto& message : diagnostic.messages) {
     *stream_ << message.location.filename;
     if (message.location.line_number > 0) {

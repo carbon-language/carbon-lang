@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+6]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
+// CHECK:STDERR: fail_bad_run.carbon:[[@LINE+7]]:1: ERROR: Invalid signature for `Main.Run` function. Expected `fn ()` or `fn () -> i32`.
 // CHECK:STDERR: fn Run() -> String {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_run.carbon:[[@LINE+3]]:21: ERROR: Missing `return` at end of function with declared return type.
 // CHECK:STDERR: fn Run() -> String {}
 // CHECK:STDERR:                     ^

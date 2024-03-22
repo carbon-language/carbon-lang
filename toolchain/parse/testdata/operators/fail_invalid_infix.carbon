@@ -4,17 +4,20 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:19: ERROR: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:19: ERROR: Expected expression.
 // CHECK:STDERR: var a: i32 = n == ;
 // CHECK:STDERR:                   ^
+// CHECK:STDERR:
 var a: i32 = n == ;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:14: ERROR: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:14: ERROR: Expected expression.
 // CHECK:STDERR: var b: i32 = == n;
 // CHECK:STDERR:              ^~
+// CHECK:STDERR:
 var b: i32 = == n;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+6]]:14: ERROR: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+7]]:14: ERROR: Expected expression.
 // CHECK:STDERR: var c: i32 = == ;
 // CHECK:STDERR:              ^~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:17: ERROR: Expected expression.
 // CHECK:STDERR: var c: i32 = == ;
 // CHECK:STDERR:                 ^

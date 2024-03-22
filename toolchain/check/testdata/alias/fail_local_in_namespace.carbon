@@ -7,12 +7,14 @@
 namespace NS;
 
 fn F() -> bool {
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+6]]:9: ERROR: Name `NS` not found.
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+8]]:9: ERROR: Name `NS` not found.
   // CHECK:STDERR:   alias NS.a = false;
   // CHECK:STDERR:         ^~
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:16: ERROR: Alias initializer must be a name reference.
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:16: ERROR: Alias initializer must be a name reference.
   // CHECK:STDERR:   alias NS.a = false;
   // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR:
   alias NS.a = false;
   // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10: ERROR: Name `a` not found.
   // CHECK:STDERR:   return NS.a;
@@ -39,8 +41,8 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_16: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   %.loc16_9: <error> = bind_alias <invalid>, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_16: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc18_9: <error> = bind_alias <invalid>, <error> [template = <error>]
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>

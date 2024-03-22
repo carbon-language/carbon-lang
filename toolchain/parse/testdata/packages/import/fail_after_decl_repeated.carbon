@@ -6,22 +6,24 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-5]]:1: First declaration is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 import B;
 // Note this is still invalid, but doesn't warn because it's sequential.
 import C;
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: The `package` directive must be the first non-comment line.
 // CHECK:STDERR: package D;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-15]]:1: First non-comment line is here.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-16]]:1: First non-comment line is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
+// CHECK:STDERR:
 package D;
 
 fn E();
@@ -29,7 +31,7 @@ fn E();
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: import F;
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-25]]:1: First declaration is here.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-27]]:1: First declaration is here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~
 import F;

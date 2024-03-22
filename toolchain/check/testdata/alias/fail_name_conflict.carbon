@@ -5,12 +5,13 @@
 // AUTOUPDATE
 
 alias a = i32;
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:5: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:5: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: var a: i32 = 1;
 // CHECK:STDERR:     ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:7: Name is previously declared here.
 // CHECK:STDERR: alias a = i32;
 // CHECK:STDERR:       ^
+// CHECK:STDERR:
 var a: i32 = 1;
 
 var b: i32 = 2;
@@ -36,18 +37,18 @@ alias b = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.loc7: type = bind_alias a, i32 [template = i32]
 // CHECK:STDOUT:   %a.var: ref i32 = var a
-// CHECK:STDOUT:   %a.loc14: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.loc15: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc23: type = bind_alias <invalid>, i32 [template = i32]
+// CHECK:STDOUT:   %.loc24: type = bind_alias <invalid>, i32 [template = i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   assign file.%a.var, %.loc14
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   assign file.%b.var, %.loc16
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%a.var, %.loc15
+// CHECK:STDOUT:   %.loc17: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%b.var, %.loc17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

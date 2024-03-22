@@ -48,6 +48,8 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix) -> void;
 
   llvm::raw_ostream* stream_;
+  // Whethere we've printed a diagnostic. Used for printing separators.
+  bool printed_diagnostic_ = false;
 };
 
 // Returns a diagnostic consumer instance that prints to stderr.

@@ -5,9 +5,10 @@
 // AUTOUPDATE
 
 interface Interface {
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: ERROR: Semantics TODO: `interface modifier`.
   // CHECK:STDERR:   default fn F() {}
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn F() {}
 
   // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
@@ -35,20 +36,20 @@ interface Interface {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %.loc11: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %a.loc16_16.1: i32 = param a
-// CHECK:STDOUT:     %a.loc16_16.2: i32 = bind_name a, %a.loc16_16.1
-// CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
-// CHECK:STDOUT:     %b.loc16_24.2: i32 = bind_name b, %b.loc16_24.1
+// CHECK:STDOUT:     %a.loc17_16.1: i32 = param a
+// CHECK:STDOUT:     %a.loc17_16.2: i32 = bind_name a, %a.loc17_16.1
+// CHECK:STDOUT:     %b.loc17_24.1: i32 = param b
+// CHECK:STDOUT:     %b.loc17_24.2: i32 = bind_name b, %b.loc17_24.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <associated <function> in Interface> = assoc_entity element1, %G [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <associated <function> in Interface> = assoc_entity element1, %G [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc11
-// CHECK:STDOUT:   .G = %.loc16
+// CHECK:STDOUT:   .F = %.loc12
+// CHECK:STDOUT:   .G = %.loc17
 // CHECK:STDOUT:   witness = (%F, %G)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,5 +58,5 @@ interface Interface {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Interface.%a.loc16_16.2: i32, @Interface.%b.loc16_24.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @G(@Interface.%a.loc17_16.2: i32, @Interface.%b.loc17_24.2: i32) -> i32 = "int.add";
 // CHECK:STDOUT:

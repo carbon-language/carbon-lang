@@ -4,20 +4,23 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `abstract` not allowed on `interface` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `abstract` not allowed on `interface` declaration.
 // CHECK:STDERR: abstract interface Abstract {
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract interface Abstract {
 }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `default` not allowed on `interface` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `default` not allowed on `interface` declaration.
 // CHECK:STDERR: default interface Default;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 default interface Default;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `virtual` not allowed on `interface` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: ERROR: `virtual` not allowed on `interface` declaration.
 // CHECK:STDERR: virtual interface Virtual {
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 virtual interface Virtual {
 }
 

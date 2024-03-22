@@ -5,16 +5,18 @@
 // AUTOUPDATE
 
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:13: ERROR: Cannot evaluate type expression.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:13: ERROR: Cannot evaluate type expression.
 // CHECK:STDERR: fn Six() -> x { return 6; }
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
 let y:! type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:23: ERROR: Cannot implicitly convert from `i32` to `y`.
 // CHECK:STDERR: fn HalfDozen() -> y { return 6; }
 // CHECK:STDERR:                       ^~~~~~~~~
+// CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
@@ -34,13 +36,13 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> y {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 6 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

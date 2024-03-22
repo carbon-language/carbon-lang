@@ -8,12 +8,13 @@ class Class {
   fn G() -> i32 {
     // TODO: This should find the member function `F` even though it's declared
     // later.
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+9]]:12: ERROR: Member access into incomplete class `Class`.
+    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+10]]:12: ERROR: Member access into incomplete class `Class`.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:            ^~~~~~~
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
     // CHECK:STDERR: class Class {
     // CHECK:STDERR: ^~~~~~~~~~~~~
+    // CHECK:STDERR:
     // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:12: ERROR: Name `F` not found.
     // CHECK:STDERR:     return Class.F();
     // CHECK:STDERR:            ^~~~~~~
@@ -45,7 +46,7 @@ class Class {
 // CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var.loc23: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -63,7 +64,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc24
+// CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   return %.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

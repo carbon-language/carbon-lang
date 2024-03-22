@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+3]]:15: ERROR: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+4]]:15: ERROR: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR: interface Bar Baz {}
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR:
 interface Bar Baz {}
 
 interface Foo

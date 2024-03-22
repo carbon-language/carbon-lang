@@ -14,12 +14,13 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   s.a.F();
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
+  // CHECK:STDERR:
   s.a.F();
 
   // `b` has an object representation for `A`, but this is still invalid for
@@ -27,7 +28,7 @@ fn F(s: {.a: A}, b: B) {
   // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+6]]:8: ERROR: `addr self` method cannot be invoked on a value.
   // CHECK:STDERR:   b.a.F();
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-22]]:13: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:13: Initializing `addr self` parameter of method declared here.
   // CHECK:STDERR:   fn F[addr self: A*]();
   // CHECK:STDERR:             ^~~~
   b.a.F();
@@ -95,17 +96,17 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: fn @F.2(%s: {.a: A}, %b: B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: {.a: A} = name_ref s, %s
-// CHECK:STDOUT:   %.loc23_4: A = struct_access %s.ref, element0
-// CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @A.%F [template = @A.%F]
-// CHECK:STDOUT:   %.loc23_6: <bound method> = bound_method %.loc23_4, %F.ref.loc23
-// CHECK:STDOUT:   %.loc23_8: init () = call %.loc23_6(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc24_4: A = struct_access %s.ref, element0
+// CHECK:STDOUT:   %F.ref.loc24: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc24_6: <bound method> = bound_method %.loc24_4, %F.ref.loc24
+// CHECK:STDOUT:   %.loc24_8: init () = call %.loc24_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %b.ref: B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: <unbound element of class B> = name_ref a, @B.%.loc12 [template = @B.%.loc12]
-// CHECK:STDOUT:   %.loc33_4.1: ref A = class_element_access %b.ref, element0
-// CHECK:STDOUT:   %.loc33_4.2: A = bind_value %.loc33_4.1
-// CHECK:STDOUT:   %F.ref.loc33: <function> = name_ref F, @A.%F [template = @A.%F]
-// CHECK:STDOUT:   %.loc33_6: <bound method> = bound_method %.loc33_4.2, %F.ref.loc33
-// CHECK:STDOUT:   %.loc33_8: init () = call %.loc33_6(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc34_4.1: ref A = class_element_access %b.ref, element0
+// CHECK:STDOUT:   %.loc34_4.2: A = bind_value %.loc34_4.1
+// CHECK:STDOUT:   %F.ref.loc34: <function> = name_ref F, @A.%F [template = @A.%F]
+// CHECK:STDOUT:   %.loc34_6: <bound method> = bound_method %.loc34_4.2, %F.ref.loc34
+// CHECK:STDOUT:   %.loc34_8: init () = call %.loc34_6(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -19,30 +19,33 @@ library "lib" api;
 // --- fail_import.carbon
 
 import Api;
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Api;
 
 import Api library "lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Api library "lib";
 
 import library "lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library "lib";
 
 // --- fail_default_import.carbon

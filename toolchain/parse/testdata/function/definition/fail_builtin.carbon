@@ -4,13 +4,15 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:18: ERROR: Expected builtin function name after `=`.
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:18: ERROR: Expected builtin function name after `=`.
 // CHECK:STDERR: fn NotString() = banana;
 // CHECK:STDERR:                  ^~~~~~
+// CHECK:STDERR:
 fn NotString() = banana;
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:32: ERROR: `fn` declarations must end with a `;`.
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:32: ERROR: `fn` declarations must end with a `;`.
 // CHECK:STDERR: fn JunkAfterString() = "hello" "world";
 // CHECK:STDERR:                                ^~~~~~~
+// CHECK:STDERR:
 fn JunkAfterString() = "hello" "world";
 
 // CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:23: ERROR: Expected builtin function name after `=`.
