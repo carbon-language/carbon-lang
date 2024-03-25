@@ -83,7 +83,8 @@ class InstNamer {
         insts[fn.return_slot_id.index] = {
             fn_scope,
             GetScopeInfo(fn_scope).insts.AllocateName(
-                *this, sem_ir.insts().GetNodeId(fn.return_slot_id), "return")};
+                *this, sem_ir.insts().GetLocationId(fn.return_slot_id),
+                "return")};
       }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -268,7 +269,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, Parse::NodeId node,
+    auto AllocateName(const InstNamer& namer, SemIR::LocationId loc_id,
                       std::string name) -> Name {
       // The best (shortest) name for this instruction so far, and the current
       // name for it.
@@ -307,8 +308,9 @@ class InstNamer {
       }
 
       // Append location information to try to disambiguate.
-      if (node.is_valid()) {
-        auto token = namer.parse_tree_.node_token(node);
+      // TODO: Consider handling inst_id cases.
+      if (loc_id.is_node_id()) {
+        auto token = namer.parse_tree_.node_token(loc_id.node_id());
         llvm::raw_string_ostream(name)
             << ".loc" << namer.tokenized_buffer_.GetLineNumber(token);
         add_name();
@@ -344,29 +346,30 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     Parse::NodeId node_id = Parse::NodeId::Invalid) -> void {
+                     SemIR::LocationId loc_id = SemIR::LocationId::Invalid)
+      -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    if (!node_id.is_valid()) {
+    if (!loc_id.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        node_id = sem_ir_.insts().GetNodeId(block.front());
+        loc_id = sem_ir_.insts().GetLocationId(block.front());
       }
     }
 
     labels[block_id.index] = {
-        scope_id, GetScopeInfo(scope_id).labels.AllocateName(*this, node_id,
+        scope_id, GetScopeInfo(scope_id).labels.AllocateName(*this, loc_id,
                                                              std::move(name))};
   }
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeId scope_id, Parse::NodeId node_id, AnyBranch branch)
-      -> void {
+  auto AddBlockLabel(ScopeId scope_id, SemIR::LocationId loc_id,
+                     AnyBranch branch) -> void {
     llvm::StringRef name;
-    switch (parse_tree_.node_kind(node_id)) {
+    switch (parse_tree_.node_kind(loc_id.node_id())) {
       case Parse::NodeKind::IfExprIf:
         switch (branch.kind) {
           case BranchIf::Kind:
@@ -428,7 +431,7 @@ class InstNamer {
         break;
     }
 
-    AddBlockLabel(scope_id, branch.target_id, name.str(), node_id);
+    AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
   }
 
   auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void {
@@ -451,7 +454,7 @@ class InstNamer {
       auto add_inst_name = [&](std::string name) {
         insts[inst_id.index] = {
             scope_id, scope.insts.AllocateName(
-                          *this, sem_ir_.insts().GetNodeId(inst_id), name)};
+                          *this, sem_ir_.insts().GetLocationId(inst_id), name)};
       };
       auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
         add_inst_name(
@@ -459,7 +462,8 @@ class InstNamer {
       };
 
       if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
-        AddBlockLabel(scope_id, sem_ir_.insts().GetNodeId(inst_id), *branch);
+        AddBlockLabel(scope_id, sem_ir_.insts().GetLocationId(inst_id),
+                      *branch);
       }
 
       CARBON_KIND_SWITCH(untyped_inst) {

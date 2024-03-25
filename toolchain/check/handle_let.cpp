@@ -28,7 +28,7 @@ auto HandleLetInitializer(Context& context, Parse::LetInitializerId node_id)
 
 static auto BuildAssociatedConstantDecl(
     Context& context, Parse::LetDeclId node_id, SemIR::InstId pattern_id,
-    SemIR::NodeIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
+    SemIR::LocationIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
@@ -36,7 +36,7 @@ static auto BuildAssociatedConstantDecl(
     CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                       "Pattern in associated constant declaration must be a "
                       "single `:!` binding.");
-    context.emitter().Emit(pattern.node_id,
+    context.emitter().Emit(pattern.loc_id,
                            ExpectedSymbolicBindingInAssociatedConstant);
     context.name_scopes().Get(interface_info.scope_id).has_error = true;
     return;
@@ -55,7 +55,7 @@ static auto BuildAssociatedConstantDecl(
   // Add an associated entity name to the interface scope.
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context =
-      context.decl_name_stack().MakeUnqualifiedName(pattern.node_id, name_id);
+      context.decl_name_stack().MakeUnqualifiedName(pattern.loc_id, name_id);
   context.decl_name_stack().AddNameToLookup(name_context, assoc_id);
 }
 
@@ -98,7 +98,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Let);
 
-  auto pattern = context.insts().GetWithNodeId(pattern_id);
+  auto pattern = context.insts().GetWithLocationId(pattern_id);
   auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
 
   if (value_id) {
@@ -119,8 +119,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "Expected `=`; `let` declaration must have an initializer.");
-    context.emitter().Emit(Parse::TokenOnly(node_id),
-                           ExpectedInitializerAfterLet);
+    context.emitter().Emit(TokenOnly(node_id), ExpectedInitializerAfterLet);
     value_id = SemIR::InstId::BuiltinError;
   }
 

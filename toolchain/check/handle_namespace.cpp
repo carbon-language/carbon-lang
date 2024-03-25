@@ -37,10 +37,10 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
     // previous declaration. Otherwise, diagnose the issue.
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
-      // When the name conflict is an imported namespace, fill the parse node
+      // When the name conflict is an imported namespace, fill the location ID
       // so that future diagnostics point at this declaration.
       if (existing->import_id.is_valid() &&
-          !context.insts().GetNodeId(existing_inst_id).is_valid()) {
+          !context.insts().GetLocationId(existing_inst_id).is_valid()) {
         context.SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {

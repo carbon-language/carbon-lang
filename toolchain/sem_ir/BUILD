@@ -36,6 +36,7 @@ cc_library(
         "//toolchain/base:index_base",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:builtin_kind",
     ],
 )
@@ -92,6 +93,7 @@ cc_library(
         "file.h",
         "function.h",
         "impl.h",
+        "import_ir.h",
         "interface.h",
         "name.h",
         "name_scope.h",

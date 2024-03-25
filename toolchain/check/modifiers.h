@@ -26,14 +26,13 @@ auto CheckMethodModifiersOnFunction(Context& context,
                                     SemIR::NameScopeId target_scope_id) -> void;
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
-// `context_string` (and optional `context_node`) specifying the context in
+// `context_string` (and optional `context_loc_id`) specifying the context in
 // which those modifiers are forbidden.
 // TODO: Take another look at diagnostic phrasing for callers.
-auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
-                           Lex::TokenKind decl_kind,
-                           llvm::StringRef context_string,
-                           Parse::NodeId context_node = Parse::NodeId::Invalid)
-    -> void;
+auto ForbidModifiersOnDecl(
+    Context& context, KeywordModifierSet forbidden, Lex::TokenKind decl_kind,
+    llvm::StringRef context_string,
+    SemIR::LocationId context_loc_id = SemIR::LocationId::Invalid) -> void;
 
 // Reports a diagnostic (using `decl_kind`) if modifiers on this declaration are
 // not in `allowed`. Updates the declaration state in
