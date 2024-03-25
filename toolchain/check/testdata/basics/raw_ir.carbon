@@ -56,8 +56,8 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     inst+8:          {kind: PointerType, arg0: type4, type: typeTypeType}
 // CHECK:STDOUT:     inst+9:          {kind: FunctionDecl, arg0: function0, arg1: block5, type: type6}
 // CHECK:STDOUT:     inst+10:         {kind: NameRef, arg0: name1, arg1: inst+2, type: type1}
-// CHECK:STDOUT:     inst+11:         {kind: IntLiteral, arg0: int4, type: type1}
-// CHECK:STDOUT:     inst+12:         {kind: IntLiteral, arg0: int4, type: type1}
+// CHECK:STDOUT:     inst+11:         {kind: IntLiteral, arg0: int5, type: type1}
+// CHECK:STDOUT:     inst+12:         {kind: IntLiteral, arg0: int5, type: type1}
 // CHECK:STDOUT:     inst+13:         {kind: RealLiteral, arg0: real0, type: type3}
 // CHECK:STDOUT:     inst+14:         {kind: RealLiteral, arg0: real0, type: type3}
 // CHECK:STDOUT:     inst+15:         {kind: TupleLiteral, arg0: block7, type: type4}

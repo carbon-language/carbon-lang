@@ -80,15 +80,12 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.8: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.9: type = array_type %.8, i32 [template]
 // CHECK:STDOUT:   %.10: type = ptr_type [i32; 3] [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.12: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.13: <bound method> = bound_method %.11, @impl.%Op [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.15: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.16: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.18: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.19: [i32; 3] = tuple_value (%.11, %.12, %.14) [template]
+// CHECK:STDOUT:   %.11: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %.12: <bound method> = bound_method %.8, @impl.%Op [template]
+// CHECK:STDOUT:   %.13: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %.15: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.16: [i32; 3] = tuple_value (%.8, %.11, %.13) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -147,25 +144,25 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 3 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_29: i32 = int_literal 4 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc10_26: i32 = int_literal 3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_29: i32 = int_literal 4 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.11]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
-// CHECK:STDOUT:   %.loc10_34.1: <bound method> = bound_method %.loc10_32, %.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc10_34.2: init i32 = call %.loc10_34.1(%.loc10_32, %.loc10_36) [template = constants.%.14]
+// CHECK:STDOUT:   %.loc10_34.1: <bound method> = bound_method %.loc10_32, %.1 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc10_34.2: init i32 = call %.loc10_34.1(%.loc10_32, %.loc10_36) [template = constants.%.13]
 // CHECK:STDOUT:   %.loc10_37.1: (i32, i32, i32) = tuple_literal (%.loc10_26, %.loc10_29, %.loc10_34.2)
-// CHECK:STDOUT:   %.loc10_37.2: i32 = int_literal 0 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc10_37.2: i32 = int_literal 0 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc10_37.3: ref i32 = array_index file.%arr.var, %.loc10_37.2
-// CHECK:STDOUT:   %.loc10_37.4: init i32 = initialize_from %.loc10_26 to %.loc10_37.3 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_37.5: i32 = int_literal 1 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc10_37.4: init i32 = initialize_from %.loc10_26 to %.loc10_37.3 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_37.5: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_37.6: ref i32 = array_index file.%arr.var, %.loc10_37.5
-// CHECK:STDOUT:   %.loc10_37.7: init i32 = initialize_from %.loc10_29 to %.loc10_37.6 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc10_37.8: i32 = int_literal 2 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc10_37.7: init i32 = initialize_from %.loc10_29 to %.loc10_37.6 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc10_37.8: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_37.9: ref i32 = array_index file.%arr.var, %.loc10_37.8
-// CHECK:STDOUT:   %.loc10_37.10: init i32 = initialize_from %.loc10_34.2 to %.loc10_37.9 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc10_37.11: init [i32; 3] = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%.19]
-// CHECK:STDOUT:   %.loc10_37.12: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc10_37.10: init i32 = initialize_from %.loc10_34.2 to %.loc10_37.9 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc10_37.11: init [i32; 3] = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%.16]
+// CHECK:STDOUT:   %.loc10_37.12: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%.16]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc10_37.12
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
