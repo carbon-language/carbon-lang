@@ -117,9 +117,9 @@ auto Context::AddInstAndPush(SemIR::LocationIdAndInst loc_id_and_inst) -> void {
   node_stack_.Push(loc_id_and_inst.loc_id.node_id(), inst_id);
 }
 
-auto Context::ReplaceInstBeforeConstantUse(
+auto Context::ReplaceLocationIdAndInstBeforeConstantUse(
     SemIR::InstId inst_id, SemIR::LocationIdAndInst loc_id_and_inst) -> void {
-  sem_ir().insts().Set(inst_id, loc_id_and_inst);
+  sem_ir().insts().SetLocationIdAndInst(inst_id, loc_id_and_inst);
 
   CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
                 << "\n";
@@ -131,6 +131,23 @@ auto Context::ReplaceInstBeforeConstantUse(
   if (const_id.is_constant()) {
     CARBON_VLOG() << "Constant: " << loc_id_and_inst.inst << " -> "
                   << const_id.inst_id() << "\n";
+  }
+  constant_values().Set(inst_id, const_id);
+}
+
+auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
+                                           SemIR::Inst inst) -> void {
+  sem_ir().insts().Set(inst_id, inst);
+
+  CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << inst << "\n";
+
+  // Redo evaluation. This is only safe to do if this instruction has not
+  // already been used as a constant, which is the caller's responsibility to
+  // ensure.
+  auto const_id = TryEvalInst(*this, inst_id, inst);
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << inst << " -> " << const_id.inst_id()
+                  << "\n";
   }
   constant_values().Set(inst_id, const_id);
 }

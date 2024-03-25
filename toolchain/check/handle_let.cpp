@@ -46,7 +46,7 @@ static auto BuildAssociatedConstantDecl(
   // declaration.
   auto name_id =
       context.bind_names().Get(binding_pattern->bind_name_id).name_id;
-  context.ReplaceInstBeforeConstantUse(
+  context.ReplaceLocationIdAndInstBeforeConstantUse(
       pattern_id, {node_id, SemIR::AssociatedConstantDecl{
                                 binding_pattern->type_id, name_id}});
   auto decl_id = pattern_id;
@@ -130,8 +130,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   CARBON_CHECK(!bind_name.value_id.is_valid())
       << "Binding should not already have a value!";
   bind_name.value_id = *value_id;
-  pattern.inst = bind_name;
-  context.ReplaceInstBeforeConstantUse(pattern_id, pattern);
+  context.ReplaceInstBeforeConstantUse(pattern_id, bind_name);
   context.inst_block_stack().AddInstId(pattern_id);
 
   // Add the name of the binding to the current scope.

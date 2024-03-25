@@ -45,10 +45,15 @@ library "extern" api;
 
 import Other library "extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+5]]:8: ERROR: Variable has incomplete type `C`.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon: Class was forward declared here.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_extern.carbon:5:1: Class was forward declared here.
+// CHECK:STDERR: class C;
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 var c: Other.C = {};
 
@@ -213,7 +218,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc16: {} = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -72,8 +72,15 @@ class Context {
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
   // as a return slot.
-  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
-                                    SemIR::LocationIdAndInst loc_id_and_inst)
+  auto ReplaceLocationIdAndInstBeforeConstantUse(
+      SemIR::InstId inst_id, SemIR::LocationIdAndInst loc_id_and_inst) -> void;
+
+  // Replaces the value of the instruction `inst_id` with `inst`.
+  // The instruction is required to not have been used in any constant
+  // evaluation, either because it's newly created and entirely unused, or
+  // because it's only used in a position that constant evaluation ignores, such
+  // as a return slot.
+  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
   // Adds an import_ref instruction for the specified instruction in the
