@@ -22,15 +22,7 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %.11: i32 = int_literal 8 [template]
 // CHECK:STDOUT:   %.12: type = tuple_type (i32, i32, i32, i32, i32, i32, i32, i32, i32) [template]
 // CHECK:STDOUT:   %.13: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.15: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.16: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.17: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.18: i32 = int_literal 5 [template]
-// CHECK:STDOUT:   %.19: i32 = int_literal 6 [template]
-// CHECK:STDOUT:   %.20: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.21: i32 = int_literal 8 [template]
-// CHECK:STDOUT:   %.22: [i32; 9] = tuple_value (%.4, %.5, %.6, %.7, %.8, %.9, %.10, %.11, %.1) [template]
+// CHECK:STDOUT:   %.14: [i32; 9] = tuple_value (%.4, %.5, %.6, %.7, %.8, %.9, %.10, %.11, %.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,32 +50,32 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %.loc7_45.2: i32 = int_literal 0 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc7_45.3: ref i32 = array_index file.%a.var, %.loc7_45.2
 // CHECK:STDOUT:   %.loc7_45.4: init i32 = initialize_from %.loc7_20 to %.loc7_45.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_45.5: i32 = int_literal 1 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc7_45.5: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_45.6: ref i32 = array_index file.%a.var, %.loc7_45.5
 // CHECK:STDOUT:   %.loc7_45.7: init i32 = initialize_from %.loc7_23 to %.loc7_45.6 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_45.8: i32 = int_literal 2 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc7_45.8: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7_45.9: ref i32 = array_index file.%a.var, %.loc7_45.8
 // CHECK:STDOUT:   %.loc7_45.10: init i32 = initialize_from %.loc7_26 to %.loc7_45.9 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc7_45.11: i32 = int_literal 3 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc7_45.11: i32 = int_literal 3 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_45.12: ref i32 = array_index file.%a.var, %.loc7_45.11
 // CHECK:STDOUT:   %.loc7_45.13: init i32 = initialize_from %.loc7_29 to %.loc7_45.12 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_45.14: i32 = int_literal 4 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc7_45.14: i32 = int_literal 4 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc7_45.15: ref i32 = array_index file.%a.var, %.loc7_45.14
 // CHECK:STDOUT:   %.loc7_45.16: init i32 = initialize_from %.loc7_32 to %.loc7_45.15 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc7_45.17: i32 = int_literal 5 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc7_45.17: i32 = int_literal 5 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_45.18: ref i32 = array_index file.%a.var, %.loc7_45.17
 // CHECK:STDOUT:   %.loc7_45.19: init i32 = initialize_from %.loc7_35 to %.loc7_45.18 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc7_45.20: i32 = int_literal 6 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc7_45.20: i32 = int_literal 6 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc7_45.21: ref i32 = array_index file.%a.var, %.loc7_45.20
 // CHECK:STDOUT:   %.loc7_45.22: init i32 = initialize_from %.loc7_38 to %.loc7_45.21 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc7_45.23: i32 = int_literal 7 [template = constants.%.20]
+// CHECK:STDOUT:   %.loc7_45.23: i32 = int_literal 7 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc7_45.24: ref i32 = array_index file.%a.var, %.loc7_45.23
 // CHECK:STDOUT:   %.loc7_45.25: init i32 = initialize_from %.loc7_41 to %.loc7_45.24 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc7_45.26: i32 = int_literal 8 [template = constants.%.21]
+// CHECK:STDOUT:   %.loc7_45.26: i32 = int_literal 8 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc7_45.27: ref i32 = array_index file.%a.var, %.loc7_45.26
 // CHECK:STDOUT:   %.loc7_45.28: init i32 = initialize_from %.loc7_44 to %.loc7_45.27 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc7_45.29: init [i32; 9] = array_init (%.loc7_45.4, %.loc7_45.7, %.loc7_45.10, %.loc7_45.13, %.loc7_45.16, %.loc7_45.19, %.loc7_45.22, %.loc7_45.25, %.loc7_45.28) to file.%a.var [template = constants.%.22]
-// CHECK:STDOUT:   %.loc7_45.30: init [i32; 9] = converted %.loc7_45.1, %.loc7_45.29 [template = constants.%.22]
+// CHECK:STDOUT:   %.loc7_45.29: init [i32; 9] = array_init (%.loc7_45.4, %.loc7_45.7, %.loc7_45.10, %.loc7_45.13, %.loc7_45.16, %.loc7_45.19, %.loc7_45.22, %.loc7_45.25, %.loc7_45.28) to file.%a.var [template = constants.%.14]
+// CHECK:STDOUT:   %.loc7_45.30: init [i32; 9] = converted %.loc7_45.1, %.loc7_45.29 [template = constants.%.14]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_45.30
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

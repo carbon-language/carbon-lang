@@ -20,8 +20,6 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.8: type = array_type %.6, i32 [template]
 // CHECK:STDOUT:   %.9: type = ptr_type [i32; 3] [template]
 // CHECK:STDOUT:   %.10: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.12: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,12 +60,12 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_19.5: init i32 = initialize_from %.loc8_19.2 to %.loc8_19.4
 // CHECK:STDOUT:   %.loc8_19.6: ref i32 = tuple_access %a.ref, element1
 // CHECK:STDOUT:   %.loc8_19.7: i32 = bind_value %.loc8_19.6
-// CHECK:STDOUT:   %.loc8_19.8: i32 = int_literal 1 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc8_19.8: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_19.9: ref i32 = array_index file.%b.var, %.loc8_19.8
 // CHECK:STDOUT:   %.loc8_19.10: init i32 = initialize_from %.loc8_19.7 to %.loc8_19.9
 // CHECK:STDOUT:   %.loc8_19.11: ref i32 = tuple_access %a.ref, element2
 // CHECK:STDOUT:   %.loc8_19.12: i32 = bind_value %.loc8_19.11
-// CHECK:STDOUT:   %.loc8_19.13: i32 = int_literal 2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc8_19.13: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8_19.14: ref i32 = array_index file.%b.var, %.loc8_19.13
 // CHECK:STDOUT:   %.loc8_19.15: init i32 = initialize_from %.loc8_19.12 to %.loc8_19.14
 // CHECK:STDOUT:   %.loc8_19.16: init [i32; 3] = array_init (%.loc8_19.5, %.loc8_19.10, %.loc8_19.15) to file.%b.var

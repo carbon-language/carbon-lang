@@ -39,11 +39,10 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.22: type = tuple_type (i32, i32, i32, i32) [template]
 // CHECK:STDOUT:   %.23: type = ptr_type (i32, i32, i32, i32) [template]
 // CHECK:STDOUT:   %.24: (i32, i32, i32, i32) = tuple_value (%.19, %.20, %.4, %.21) [template]
-// CHECK:STDOUT:   %.25: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.26: [i32; 1] = tuple_value (%.17) [template]
-// CHECK:STDOUT:   %.27: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.28: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.29: {.a: i32, .b: i32} = struct_value (%.9, %.4) [template]
+// CHECK:STDOUT:   %.25: [i32; 1] = tuple_value (%.17) [template]
+// CHECK:STDOUT:   %.26: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.27: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.28: {.a: i32, .b: i32} = struct_value (%.9, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -116,27 +115,27 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc11_57: i32 = tuple_index %.loc11_54.3, %.loc11_56 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_58: type = array_type %.loc11_57, i32 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc11_5: ref [i32; 1] = splice_block file.%tuple_index.var {}
-// CHECK:STDOUT:   %.loc11_32.2: i32 = int_literal 0 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc11_32.2: i32 = int_literal 0 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc11_32.3: ref i32 = array_index %.loc11_5, %.loc11_32.2
 // CHECK:STDOUT:   %.loc11_32.4: init i32 = initialize_from %.loc11_30 to %.loc11_32.3 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc11_32.5: init [i32; 1] = array_init (%.loc11_32.4) to %.loc11_5 [template = constants.%.26]
-// CHECK:STDOUT:   %.loc11_32.6: init [i32; 1] = converted %.loc11_32.1, %.loc11_32.5 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc11_32.5: init [i32; 1] = array_init (%.loc11_32.4) to %.loc11_5 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc11_32.6: init [i32; 1] = converted %.loc11_32.1, %.loc11_32.5 [template = constants.%.25]
 // CHECK:STDOUT:   assign file.%tuple_index.var, %.loc11_32.6
 // CHECK:STDOUT:   %.loc13_32: i32 = int_literal 0 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc13_34.1: (i32,) = tuple_literal (%.loc13_32)
 // CHECK:STDOUT:   %.loc13_51: i32 = int_literal 3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_59: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_60.1: {.a: i32, .b: i32} = struct_literal (%.loc13_51, %.loc13_59)
-// CHECK:STDOUT:   %.loc13_60.2: {.a: i32, .b: i32} = struct_value (%.loc13_51, %.loc13_59) [template = constants.%.29]
-// CHECK:STDOUT:   %.loc13_60.3: {.a: i32, .b: i32} = converted %.loc13_60.1, %.loc13_60.2 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc13_60.2: {.a: i32, .b: i32} = struct_value (%.loc13_51, %.loc13_59) [template = constants.%.28]
+// CHECK:STDOUT:   %.loc13_60.3: {.a: i32, .b: i32} = converted %.loc13_60.1, %.loc13_60.2 [template = constants.%.28]
 // CHECK:STDOUT:   %.loc13_61: i32 = struct_access %.loc13_60.3, element1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_63: type = array_type %.loc13_61, i32 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc13_5: ref [i32; 1] = splice_block file.%struct_access.var {}
-// CHECK:STDOUT:   %.loc13_34.2: i32 = int_literal 0 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc13_34.2: i32 = int_literal 0 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc13_34.3: ref i32 = array_index %.loc13_5, %.loc13_34.2
 // CHECK:STDOUT:   %.loc13_34.4: init i32 = initialize_from %.loc13_32 to %.loc13_34.3 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc13_34.5: init [i32; 1] = array_init (%.loc13_34.4) to %.loc13_5 [template = constants.%.26]
-// CHECK:STDOUT:   %.loc13_34.6: init [i32; 1] = converted %.loc13_34.1, %.loc13_34.5 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc13_34.5: init [i32; 1] = array_init (%.loc13_34.4) to %.loc13_5 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc13_34.6: init [i32; 1] = converted %.loc13_34.1, %.loc13_34.5 [template = constants.%.25]
 // CHECK:STDOUT:   assign file.%struct_access.var, %.loc13_34.6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
