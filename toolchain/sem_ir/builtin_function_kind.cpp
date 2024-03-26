@@ -50,6 +50,19 @@ struct TypeParam {
   }
 };
 
+// Constraint that a type is a specific builtin. See ValidateSignature for
+// details.
+template <const InstId& BuiltinId>
+struct BuiltinType {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return sem_ir.types().GetInstId(type_id) == BuiltinId;
+  }
+};
+
+// Constraint that a type is `bool`.
+using Bool = BuiltinType<InstId::BuiltinBoolType>;
+
 // Constraint that requires the type to be an integer type. See
 // ValidateSignature for details.
 struct AnyInt {
@@ -123,9 +136,37 @@ using IntT = TypeParam<0, AnyInt>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
+// "int.negate": integer negation.
+constexpr BuiltinInfo IntNegate = {
+    "int.negate", ValidateSignature<auto(T)->T, Param<T, AnyInt>>};
+
 // "int.add": integer addition.
 constexpr BuiltinInfo IntAdd = {"int.add",
                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.sub": integer subtraction.
+constexpr BuiltinInfo IntSub = {
+    "int.sub", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+
+// "int.mul": integer multiplication.
+constexpr BuiltinInfo IntMul = {
+    "int.mul", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+
+// "int.div": integer division.
+constexpr BuiltinInfo IntDiv = {
+    "int.div", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+
+// "int.mod": integer modulo.
+constexpr BuiltinInfo IntMod = {
+    "int.mod", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+
+// "int.eq": integer equality comparison.
+constexpr BuiltinInfo IntEq = {
+    "int.eq", ValidateSignature<auto(T, T)->Bool, Param<T, AnyInt>>};
+
+// "int.neq": integer non-equality comparison.
+constexpr BuiltinInfo IntNeq = {
+    "int.neq", ValidateSignature<auto(T, T)->Bool, Param<T, AnyInt>>};
 
 }  // namespace BuiltinFunctionInfo
 
