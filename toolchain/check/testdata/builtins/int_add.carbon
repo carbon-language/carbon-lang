@@ -9,6 +9,7 @@
 fn Add(a: i32, b: i32) -> i32 = "int.add";
 
 var arr: [i32; Add(1, 2)];
+let arr_p: [i32; 3]* = &arr;
 
 fn RuntimeCall(a: i32, b: i32) -> i32 {
   return Add(a, b);
@@ -114,12 +115,18 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_19, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc5_18: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_20: type = ptr_type [i32; 3] [template = constants.%.5]
+// CHECK:STDOUT:   %arr.ref: ref [i32; 3] = name_ref arr, %arr
+// CHECK:STDOUT:   %.loc5_24: [i32; 3]* = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: [i32; 3]* = bind_name arr_p, %.loc5_24
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
-// CHECK:STDOUT:     %a.loc6_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc6_16.1
-// CHECK:STDOUT:     %b.loc6_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc6_24.1
-// CHECK:STDOUT:     %return.var.loc6: ref i32 = var <return slot>
+// CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
+// CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
+// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,10 +137,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc7_13.1: init i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc7_19: i32 = value_of_initializer %.loc7_13.1
-// CHECK:STDOUT:   %.loc7_13.2: i32 = converted %.loc7_13.1, %.loc7_19
-// CHECK:STDOUT:   return %.loc7_13.2
+// CHECK:STDOUT:   %.loc8_13.1: init i32 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19: i32 = value_of_initializer %.loc8_13.1
+// CHECK:STDOUT:   %.loc8_13.2: i32 = converted %.loc8_13.1, %.loc8_19
+// CHECK:STDOUT:   return %.loc8_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon
