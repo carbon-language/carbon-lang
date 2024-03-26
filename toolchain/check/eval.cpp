@@ -524,9 +524,17 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             // TODO: We should check that the size of the resulting array type
             // fits in 64 bits, not just that the bound does. Should we use a
             // 32-bit limit for 32-bit targets?
-            // TODO: Also check for a negative bound, once that's something we
-            // can distinguish from a large positive bound.
             const auto& bound_val = context.ints().Get(int_bound->int_id);
+            if (bound_val.isNegative()) {
+              // TODO: Skip this test if the bound type is unsigned.
+              CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
+                                "Array bound of {0} is negative.",
+                                llvm::APSInt);
+              context.emitter().Emit(
+                  bound_id, ArrayBoundNegative,
+                  llvm::APSInt(bound_val, /*isUnsigned=*/false));
+              return false;
+            }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                                 "Array bound of {0} is too large.",
