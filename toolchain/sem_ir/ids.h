@@ -494,8 +494,8 @@ struct ImportIRInstId : public IdBase, public Printable<InstId> {
 //
 // Contents:
 // - index > Invalid: A Parse::NodeId in the current IR.
-// - index == Invalid: Can be used for either.
 // - index < Invalid: An ImportIRInstId.
+// - index == Invalid: Can be used for either.
 struct LocationId : public IdBase, public Printable<FunctionId> {
   // An explicitly invalid function ID.
   static const LocationId Invalid;
