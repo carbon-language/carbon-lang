@@ -46,26 +46,26 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:     @Eq.%b: i32 = bind_name b, %b.loc2_15.1
 // CHECK:STDOUT:     %return.var.loc2: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eq.ref.loc9: <function> = name_ref Eq, %Eq [template = %Eq]
-// CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_26: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_22.1: init bool = call %Eq.ref.loc9(%.loc9_23, %.loc9_26) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_28: bool = value_of_initializer %.loc9_22.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_22.2: bool = converted %.loc9_22.1, %.loc9_28 [template = constants.%.2]
-// CHECK:STDOUT:   %b_true: bool = bind_name b_true, %.loc9_22.2
-// CHECK:STDOUT:   %Eq.ref.loc14: <function> = name_ref Eq, %Eq [template = %Eq]
-// CHECK:STDOUT:   %.loc14_24: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_27: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_23.1: init bool = call %Eq.ref.loc14(%.loc14_24, %.loc14_27) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_29: bool = value_of_initializer %.loc14_23.1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_23.2: bool = converted %.loc14_23.1, %.loc14_29 [template = constants.%.4]
-// CHECK:STDOUT:   %b_false: bool = bind_name b_false, %.loc14_23.2
+// CHECK:STDOUT:   %Eq.ref.loc5: <function> = name_ref Eq, %Eq [template = %Eq]
+// CHECK:STDOUT:   %.loc5_23: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc5_26: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc5_22.1: init bool = call %Eq.ref.loc5(%.loc5_23, %.loc5_26) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_28: bool = value_of_initializer %.loc5_22.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_22.2: bool = converted %.loc5_22.1, %.loc5_28 [template = constants.%.2]
+// CHECK:STDOUT:   %b_true: bool = bind_name b_true, %.loc5_22.2
+// CHECK:STDOUT:   %Eq.ref.loc6: <function> = name_ref Eq, %Eq [template = %Eq]
+// CHECK:STDOUT:   %.loc6_24: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_27: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_23.1: init bool = call %Eq.ref.loc6(%.loc6_24, %.loc6_27) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_29: bool = value_of_initializer %.loc6_23.1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_23.2: bool = converted %.loc6_23.1, %.loc6_29 [template = constants.%.4]
+// CHECK:STDOUT:   %b_false: bool = bind_name b_false, %.loc6_23.2
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
-// CHECK:STDOUT:     %a.loc16_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc16_16.1
-// CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc16_24.1
-// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
+// CHECK:STDOUT:     %a.loc8_16.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.1
+// CHECK:STDOUT:     %b.loc8_24.1: i32 = param b
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc8_24.1
+// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,10 +76,10 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc21_12.1: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc21_18: bool = value_of_initializer %.loc21_12.1
-// CHECK:STDOUT:   %.loc21_12.2: bool = converted %.loc21_12.1, %.loc21_18
-// CHECK:STDOUT:   return %.loc21_12.2
+// CHECK:STDOUT:   %.loc9_12.1: init bool = call %Eq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc9_18: bool = value_of_initializer %.loc9_12.1
+// CHECK:STDOUT:   %.loc9_12.2: bool = converted %.loc9_12.1, %.loc9_18
+// CHECK:STDOUT:   return %.loc9_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon
