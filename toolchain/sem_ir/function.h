@@ -5,19 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
-
-// A builtin function.
-// TODO: Move out to another file.
-enum class BuiltinFunctionKind : std::uint8_t {
-  // Not a builtin function.
-  None,
-  // "int.add", integer addition.
-  IntAdd,
-};
 
 // A function.
 struct Function : public Printable<Function> {

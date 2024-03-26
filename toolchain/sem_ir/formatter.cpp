@@ -12,6 +12,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -796,13 +797,11 @@ class Formatter {
       FormatType(fn.return_type_id);
     }
 
-    // TODO: Move this conversion of kind to string elsewhere.
-    switch (fn.builtin_kind) {
-      case BuiltinFunctionKind::None:
-        break;
-      case BuiltinFunctionKind::IntAdd:
-        out_ << " = \"int.add\"";
-        break;
+    if (fn.builtin_kind != BuiltinFunctionKind::None) {
+      out_ << " = \"";
+      out_.write_escaped(fn.builtin_kind.name(),
+                         /*UseHexEscapes=*/true);
+      out_ << "\"";
     }
 
     if (!fn.body_block_ids.empty()) {

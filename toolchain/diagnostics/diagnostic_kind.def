@@ -172,6 +172,7 @@ CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypePreviousNoReturn)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunSignature)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
+CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 
 // Class checking.
 CARBON_DIAGNOSTIC_KIND(BaseIsFinal)

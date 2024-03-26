@@ -1,0 +1,22 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macro is:
+// - CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name)
+//   Defines a builtin function type.
+
+#if !defined(CARBON_SEM_IR_BUILTIN_FUNCTION_KIND)
+#error \
+    "Must define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND x-macro to use this file."
+#endif
+
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(None)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(IntAdd)
+
+#undef CARBON_SEM_IR_BUILTIN_FUNCTION_KIND
