@@ -288,7 +288,7 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   return out;
 }
 
-// Associates a NodeId and Inst in order to provide type-checking that the
+// Associates a LocationId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
 struct LocationIdAndInst {
   // In cases where the NodeId is untyped, an inst_id, or the InstT is unknown,

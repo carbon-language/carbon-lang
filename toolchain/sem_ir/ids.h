@@ -490,9 +490,12 @@ struct ImportIRInstId : public IdBase, public Printable<InstId> {
   using IdBase::IdBase;
 };
 
-// A SemIR location used exclusively for diagnostic locations. If positive, it
-// corresponds to a Parse::NodeId in the current IR. If valid and negative, it
-// corresponds to an ImportIRInstId.
+// A SemIR location used exclusively for diagnostic locations.
+//
+// Contents:
+// - index > Invalid: A Parse::NodeId in the current IR.
+// - index == Invalid: Can be used for either.
+// - index < Invalid: An ImportIRInstId.
 struct LocationId : public IdBase, public Printable<FunctionId> {
   // An explicitly invalid function ID.
   static const LocationId Invalid;
