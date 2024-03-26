@@ -8,22 +8,23 @@
 #include <cstdint>
 
 #include "common/enum_base.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
 class File;
-struct InstId;
-struct TypeId;
 
 CARBON_DEFINE_RAW_ENUM_CLASS(BuiltinFunctionKind, std::uint8_t) {
-#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(K) CARBON_RAW_ENUM_ENUMERATOR(K)
+#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
+  CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/builtin_function_kind.def"
 };
 
 // A kind of builtin function.
 class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
  public:
-#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(K) CARBON_ENUM_CONSTANT_DECL(K)
+#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/builtin_function_kind.def"
 
   // Returns the builtin function kind with the given name, or None if the name
@@ -41,8 +42,8 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
                    TypeId return_type) const -> bool;
 };
 
-#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(K) \
-  CARBON_ENUM_CONSTANT_DEFINITION(BuiltinFunctionKind, K)
+#define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DEFINITION(BuiltinFunctionKind, Name)
 #include "toolchain/sem_ir/builtin_function_kind.def"
 
 }  // namespace Carbon::SemIR
