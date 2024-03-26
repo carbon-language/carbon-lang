@@ -40,8 +40,9 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
   auto ConvertLocation(SemIRLocation loc, ContextFnT context_fn) const
       -> DiagnosticLocation override {
     const auto* cursor_ir = sem_ir_;
-    auto cursor_inst_id = loc.inst_id;
+    auto cursor_inst_id = SemIR::InstId::Invalid;
 
+    // Notes an import on the diagnostic and updates cursors.
     auto follow_import_ref = [&](SemIR::ImportIRId ir_id,
                                  SemIR::InstId inst_id) {
       const auto& import_ir = cursor_ir->import_irs().Get(ir_id);
@@ -53,6 +54,8 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       cursor_inst_id = inst_id;
     };
 
+    // If the location is is an import, follows it and returns nullopt.
+    // Otherwise, it's a parse node, so return the final location.
     auto handle_loc =
         [&](SemIR::LocationId loc_id) -> std::optional<DiagnosticLocation> {
       if (loc_id.is_import_ir_inst_id()) {
@@ -66,11 +69,14 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       }
     };
 
-    // Parse nodes always refer to the current IR.
-    if (!loc.is_inst_id) {
+    if (loc.is_inst_id) {
+      cursor_inst_id = loc.inst_id;
+    } else {
+      // Parse nodes always refer to the current IR.
       if (auto diag_loc = handle_loc(loc.loc_id)) {
         return *diag_loc;
       }
+      CARBON_CHECK(cursor_inst_id.is_valid()) << "Should have been set";
     }
 
     while (true) {

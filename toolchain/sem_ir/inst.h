@@ -390,13 +390,15 @@ class InstStore {
     return loc_ids_[inst_id.index];
   }
 
-  // Overwrites a given instruction and location ID with a new value.
+  // Overwrites a given instruction with a new value.
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
+  // Overwrites a given instruction's location with a new value.
   auto SetLocationId(InstId inst_id, LocationId loc_id) -> void {
     loc_ids_[inst_id.index] = loc_id;
   }
 
+  // Overwrites a given instruction and location ID with a new value.
   auto SetLocationIdAndInst(InstId inst_id, LocationIdAndInst loc_id_and_inst)
       -> void {
     Set(inst_id, loc_id_and_inst.inst);

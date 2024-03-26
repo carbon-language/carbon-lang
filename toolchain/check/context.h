@@ -67,15 +67,14 @@ class Context {
   // result. Only valid if the LocationId is for a NodeId.
   auto AddInstAndPush(SemIR::LocationIdAndInst loc_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `loc_id_and_inst`.
-  // The instruction is required to not have been used in any constant
-  // evaluation, either because it's newly created and entirely unused, or
-  // because it's only used in a position that constant evaluation ignores, such
-  // as a return slot.
+  // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
+  // is required to not have been used in any constant evaluation, either
+  // because it's newly created and entirely unused, or because it's only used
+  // in a position that constant evaluation ignores, such as a return slot.
   auto ReplaceLocationIdAndInstBeforeConstantUse(
       SemIR::InstId inst_id, SemIR::LocationIdAndInst loc_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `inst`.
+  // Replaces the instruction `inst_id` with `inst`, not affecting location.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
