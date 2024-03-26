@@ -20,9 +20,9 @@ class DiagnosticConverter {
 
   virtual ~DiagnosticConverter() = default;
 
-  // Converts a LocationT to a DiagnosticLocation. The function may optionally
-  // provide context messages using context_fn, but these must be simple and
-  // already have converted locations.
+  // Converts a LocationT to a DiagnosticLocation. ConvertLocation may invoke
+  // context_fn to provide context messages, but they must already have
+  // converted locations.
   virtual auto ConvertLocation(LocationT loc, ContextFnT context_fn) const
       -> DiagnosticLocation = 0;
 
