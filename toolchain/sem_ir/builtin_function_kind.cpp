@@ -25,11 +25,15 @@ struct BuiltinInfo {
   ValidateFn* validate;
 };
 
+// The maximum number of type parameters any builtin needs.
+constexpr int MaxTypeParams = 1;
+
 // State used when validating a builtin signature that persists between
 // individual checks.
 struct ValidateState {
-  // The type `T`, if any.
-  TypeId t = TypeId::Invalid;
+  // The type values of type parameters in the builtin signature. Invalid if
+  // either no value has been deduced yet or the parameter is not used.
+  TypeId type_params[MaxTypeParams] = {TypeId::Invalid};
 };
 
 // Helper declaring a generic parameter with a constraint on its type. See
@@ -41,19 +45,28 @@ struct Param {
   }
 };
 
-// Constraint that a type is the first generic parameter of the builtin. See
+// Constraint that a type is generic type parameter `I` of the builtin. See
 // ValidateSignature for details.
-struct T {
+template <int I>
+struct TypeParam {
+  static_assert(I >= 0 && I < MaxTypeParams);
+
   static auto Check(const File& /*sem_ir*/, ValidateState& state,
                     TypeId type_id) -> bool {
-    if (state.t.is_valid() && type_id != state.t) {
+    if (state.type_params[I].is_valid() && type_id != state.type_params[I]) {
       return false;
     }
-    state.t = type_id;
+    state.type_params[I] = type_id;
     return true;
   }
-  static auto Get(ValidateState& state) -> TypeId { return state.t; }
+
+  static auto Get(ValidateState& state) -> TypeId {
+    return state.type_params[I];
+  }
 };
+
+// Convenience name for the first type parameter of a builtin.
+using T = TypeParam<0>;
 
 // Constraint that requires the type to be an integer type. See
 // ValidateSignature for details.
@@ -73,15 +86,18 @@ struct AnyInt {
 // Validates that this builtin has a signature matching the specified signature.
 //
 // `SignatureFnType` is a C++ function type that describes the signature that is
-// expected for this builtin. For example, `auto (AnyInt, T) -> T`. Types used
-// within the signature should provide a `Check` function that validates that
-// the Carbon type is expected:
+// expected for this builtin. For example, `auto (T, AnyInt) -> T` specifies
+// that the builtin returns the same type as its first parameter, and that its
+// second parameter is an integer. Types used within the signature should
+// provide a `Check` function that validates that the Carbon type is expected:
 //
 //   auto Check(const File&, ValidateState&, TypeId) -> bool;
 //
 // `Params` describes any generic parameters that appear in the signature, and
 // each listed type should be a `Param` specialization. For example,
-// `Param<T, AnyInt>` means `T:! AnyInt`.
+// `Param<T, AnyInt>` means `T:! AnyInt`; continuing the above example, this
+// constrains that the first parameter type and the return type are the same
+// integer type.
 template <typename SignatureFnType, typename... Params>
 static auto ValidateSignature(const File& sem_ir,
                               llvm::ArrayRef<TypeId> arg_types,
