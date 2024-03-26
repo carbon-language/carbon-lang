@@ -12,8 +12,6 @@
 
 namespace Carbon::SemIR {
 
-namespace BuiltinFunctionInfo {
-
 // A function that validates that a builtin was declared properly.
 using ValidateFn = auto(const File& sem_ir, llvm::ArrayRef<TypeId> arg_types,
                         TypeId return_type) -> bool;
@@ -36,37 +34,21 @@ struct ValidateState {
   TypeId type_params[MaxTypeParams] = {TypeId::Invalid};
 };
 
-// Helper declaring a generic parameter with a constraint on its type. See
-// ValidateSignature for details.
-template <typename ParamT, typename TypeConstraint>
-struct Param {
-  static auto Check(const File& sem_ir, ValidateState& state) -> bool {
-    return TypeConstraint::Check(sem_ir, state, ParamT::Get(state));
-  }
-};
-
-// Constraint that a type is generic type parameter `I` of the builtin. See
-// ValidateSignature for details.
-template <int I>
+// Constraint that a type is generic type parameter `I` of the builtin,
+// satisfying `TypeConstraint`. See ValidateSignature for details.
+template <int I, typename TypeConstraint>
 struct TypeParam {
   static_assert(I >= 0 && I < MaxTypeParams);
 
-  static auto Check(const File& /*sem_ir*/, ValidateState& state,
-                    TypeId type_id) -> bool {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
     if (state.type_params[I].is_valid() && type_id != state.type_params[I]) {
       return false;
     }
     state.type_params[I] = type_id;
-    return true;
-  }
-
-  static auto Get(ValidateState& state) -> TypeId {
-    return state.type_params[I];
+    return TypeConstraint::Check(sem_ir, state, type_id);
   }
 };
-
-// Convenience name for the first type parameter of a builtin.
-using T = TypeParam<0>;
 
 // Constraint that requires the type to be an integer type. See
 // ValidateSignature for details.
@@ -86,19 +68,22 @@ struct AnyInt {
 // Validates that this builtin has a signature matching the specified signature.
 //
 // `SignatureFnType` is a C++ function type that describes the signature that is
-// expected for this builtin. For example, `auto (T, AnyInt) -> T` specifies
-// that the builtin returns the same type as its first parameter, and that its
-// second parameter is an integer. Types used within the signature should
-// provide a `Check` function that validates that the Carbon type is expected:
+// expected for this builtin. For example, `auto (AnyInt, AnyInt) -> AnyInt`
+// specifies that the builtin takes values of two integer types and returns a
+// value of a third integer type. Types used within the signature should provide
+// a `Check` function that validates that the Carbon type is expected:
 //
 //   auto Check(const File&, ValidateState&, TypeId) -> bool;
 //
-// `Params` describes any generic parameters that appear in the signature, and
-// each listed type should be a `Param` specialization. For example,
-// `Param<T, AnyInt>` means `T:! AnyInt`; continuing the above example, this
-// constrains that the first parameter type and the return type are the same
-// integer type.
-template <typename SignatureFnType, typename... Params>
+// To constrain that the same type is used in multiple places in the signature,
+// `TypeParam<I, T>` can be used. For example:
+//
+// `auto (TypeParam<0, AnyInt>, AnyInt) -> TypeParam<0, AnyInt>`
+//
+// describes a builtin that takes two integers, and whose return type matches
+// its first parameter type. For convenience, typedefs for `TypeParam<I, T>`
+// are used in the descriptions of the builtins.
+template <typename SignatureFnType>
 static auto ValidateSignature(const File& sem_ir,
                               llvm::ArrayRef<TypeId> arg_types,
                               TypeId return_type) -> bool {
@@ -124,22 +109,23 @@ static auto ValidateSignature(const File& sem_ir,
     return false;
   }
 
-  // Generic parameters must have the right types.
-  if (!((Params::Check(sem_ir, state)) && ...)) {
-    return false;
-  }
   return true;
 }
 
 // Descriptions of builtin functions follow. For each builtin, a corresponding
 // `BuiltinInfo` constant is declared describing properties of that builtin.
+namespace BuiltinFunctionInfo {
+
+// Convenience name used in the builtin type signatures below for a first
+// generic type parameter that is constrained to be an integer type.
+using IntT = TypeParam<0, AnyInt>;
 
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
 // "int.add": integer addition.
-constexpr BuiltinInfo IntAdd = {
-    "int.add", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntAdd = {"int.add",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
 
 }  // namespace BuiltinFunctionInfo
 
@@ -182,7 +168,7 @@ auto BuiltinFunctionKind::ForCallee(const File& sem_ir, InstId callee_id)
 auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
                                       llvm::ArrayRef<TypeId> arg_types,
                                       TypeId return_type) const -> bool {
-  static constexpr BuiltinFunctionInfo::ValidateFn* ValidateFns[] = {
+  static constexpr ValidateFn* ValidateFns[] = {
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
   BuiltinFunctionInfo::Name.validate,
 #include "toolchain/sem_ir/builtin_function_kind.def"
