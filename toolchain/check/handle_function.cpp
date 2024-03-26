@@ -328,7 +328,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   auto param_refs = context.inst_blocks().Get(function.param_refs_id);
   param_type_ids.reserve(param_refs.size());
   for (auto param_id : param_refs) {
-    // TODO: We also need to track whether the parameter is declaraed with
+    // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());
   }
