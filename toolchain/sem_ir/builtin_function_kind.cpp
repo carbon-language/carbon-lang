@@ -69,6 +69,7 @@ struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
     if (sem_ir.types().GetInstId(type_id) == InstId::BuiltinIntType) {
+      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
       return true;
     }
     // TODO: Support iN for all N, and the Core.BigInt type we use to implement
