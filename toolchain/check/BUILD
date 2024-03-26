@@ -54,10 +54,13 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "eval.cpp",
+        "function.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
+        "merge.cpp",
         "modifiers.cpp",
         "return.cpp",
+        "subst.cpp",
     ],
     hdrs = [
         "context.h",
@@ -66,12 +69,15 @@ cc_library(
         "decl_state.h",
         "diagnostic_helpers.h",
         "eval.h",
+        "function.h",
         "import_ref.h",
         "inst_block_stack.h",
+        "merge.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
+        "subst.h",
     ],
     deps = [
         ":node_stack",
@@ -104,7 +110,6 @@ cc_library(
     deps = [
         ":call",
         ":context",
-        ":function",
         ":impl",
         ":import",
         ":interface",
@@ -156,25 +161,11 @@ cc_library(
 )
 
 cc_library(
-    name = "function",
-    srcs = ["function.cpp"],
-    hdrs = ["function.h"],
-    deps = [
-        ":context",
-        ":subst",
-        "//common:check",
-        "//toolchain/sem_ir:file",
-    ],
-)
-
-cc_library(
     name = "impl",
     srcs = ["impl.cpp"],
     hdrs = ["impl.h"],
     deps = [
         ":context",
-        ":function",
-        ":subst",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
@@ -219,7 +210,6 @@ cc_library(
     hdrs = ["member_access.h"],
     deps = [
         ":context",
-        ":subst",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
@@ -255,22 +245,6 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "subst",
-    srcs = ["subst.cpp"],
-    hdrs = ["subst.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
