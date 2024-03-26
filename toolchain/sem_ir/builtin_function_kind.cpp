@@ -63,20 +63,11 @@ struct BuiltinType {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<InstId::BuiltinBoolType>;
 
-// Constraint that requires the type to be an integer type. See
-// ValidateSignature for details.
-struct AnyInt {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
-    if (sem_ir.types().GetInstId(type_id) == InstId::BuiltinIntType) {
-      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
-      return true;
-    }
-    // TODO: Support iN for all N, and the Core.BigInt type we use to implement
-    // for integer literals.
-    return false;
-  }
-};
+// Constraint that requires the type to be an integer type.
+//
+// TODO: This only matches i32 for now. Support iN for all N, and the
+// Core.BigInt type we use to implement for integer literals.
+using AnyInt = BuiltinType<InstId::BuiltinIntType>;
 }  // namespace
 
 // Validates that this builtin has a signature matching the specified signature.
