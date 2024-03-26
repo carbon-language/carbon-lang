@@ -325,9 +325,12 @@ static auto IsValidBuiltinDeclaration(Context& context,
     -> bool {
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
+  auto implicit_param_refs =
+      context.inst_blocks().Get(function.implicit_param_refs_id);
   auto param_refs = context.inst_blocks().Get(function.param_refs_id);
-  param_type_ids.reserve(param_refs.size());
-  for (auto param_id : param_refs) {
+  param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
+  for (auto param_id :
+       llvm::concat<SemIR::InstId>(implicit_param_refs, param_refs)) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());
