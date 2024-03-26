@@ -78,7 +78,7 @@ struct AnyInt {
 // To constrain that the same type is used in multiple places in the signature,
 // `TypeParam<I, T>` can be used. For example:
 //
-// `auto (TypeParam<0, AnyInt>, AnyInt) -> TypeParam<0, AnyInt>`
+//   auto (TypeParam<0, AnyInt>, AnyInt) -> TypeParam<0, AnyInt>
 //
 // describes a builtin that takes two integers, and whose return type matches
 // its first parameter type. For convenience, typedefs for `TypeParam<I, T>`
@@ -139,11 +139,10 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
 // is unknown.
 auto BuiltinFunctionKind::ForBuiltinName(llvm::StringRef name)
     -> BuiltinFunctionKind {
-  return llvm::StringSwitch<BuiltinFunctionKind>(name)
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
-  .Case(BuiltinFunctionInfo::Name.name, BuiltinFunctionKind::Name)
+  if (name == BuiltinFunctionInfo::Name.name) { return BuiltinFunctionKind::Name; }
 #include "toolchain/sem_ir/builtin_function_kind.def"
-      .Default(BuiltinFunctionKind::None);
+  return BuiltinFunctionKind::None;
 }
 
 // Returns the builtin function kind corresponding to the given function
@@ -159,8 +158,7 @@ auto BuiltinFunctionKind::ForCallee(const File& sem_ir, InstId callee_id)
     return SemIR::BuiltinFunctionKind::None;
   }
   if (auto callee = sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(callee_id)) {
-    const auto& function = sem_ir.functions().Get(callee->function_id);
-    return function.builtin_kind;
+    return sem_ir.functions().Get(callee->function_id).builtin_kind;
   }
   return SemIR::BuiltinFunctionKind::None;
 }
