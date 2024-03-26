@@ -37,12 +37,17 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
+  // Converts an instruction's location to a diagnostic location, which will be
+  // the underlying line of code. Adds context for any imports used in the
+  // current SemIR to get to the underlying code.
   auto ConvertLocation(SemIRLocation loc, ContextFnT context_fn) const
       -> DiagnosticLocation override {
+    // Cursors for the current IR and instruction in that IR.
     const auto* cursor_ir = sem_ir_;
     auto cursor_inst_id = SemIR::InstId::Invalid;
 
-    // Notes an import on the diagnostic and updates cursors.
+    // Notes an import on the diagnostic and updates cursors to point at the
+    // imported IR.
     auto follow_import_ref = [&](SemIR::ImportIRId ir_id,
                                  SemIR::InstId inst_id) {
       const auto& import_ir = cursor_ir->import_irs().Get(ir_id);
@@ -64,15 +69,16 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
         follow_import_ref(import_ir_inst.ir_id, import_ir_inst.inst_id);
         return std::nullopt;
       } else {
+        // Parse nodes always refer to the current IR.
         return ConvertLocationInFile(cursor_ir, loc_id.node_id(),
                                      loc.token_only, context_fn);
       }
     };
 
+    // Handle the base location.
     if (loc.is_inst_id) {
       cursor_inst_id = loc.inst_id;
     } else {
-      // Parse nodes always refer to the current IR.
       if (auto diag_loc = handle_loc(loc.loc_id)) {
         return *diag_loc;
       }
