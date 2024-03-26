@@ -137,36 +137,36 @@ using IntT = TypeParam<0, AnyInt>;
 constexpr BuiltinInfo None = {"", nullptr};
 
 // "int.negate": integer negation.
-constexpr BuiltinInfo IntNegate = {
-    "int.negate", ValidateSignature<auto(T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntNegate = {"int.negate",
+                                   ValidateSignature<auto(IntT)->IntT>};
 
 // "int.add": integer addition.
 constexpr BuiltinInfo IntAdd = {"int.add",
                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.sub": integer subtraction.
-constexpr BuiltinInfo IntSub = {
-    "int.sub", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntSub = {"int.sub",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.mul": integer multiplication.
-constexpr BuiltinInfo IntMul = {
-    "int.mul", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntMul = {"int.mul",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.div": integer division.
-constexpr BuiltinInfo IntDiv = {
-    "int.div", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntDiv = {"int.div",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.mod": integer modulo.
-constexpr BuiltinInfo IntMod = {
-    "int.mod", ValidateSignature<auto(T, T)->T, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntMod = {"int.mod",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.eq": integer equality comparison.
-constexpr BuiltinInfo IntEq = {
-    "int.eq", ValidateSignature<auto(T, T)->Bool, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntEq = {"int.eq",
+                               ValidateSignature<auto(IntT, IntT)->Bool>};
 
 // "int.neq": integer non-equality comparison.
-constexpr BuiltinInfo IntNeq = {
-    "int.neq", ValidateSignature<auto(T, T)->Bool, Param<T, AnyInt>>};
+constexpr BuiltinInfo IntNeq = {"int.neq",
+                                ValidateSignature<auto(IntT, IntT)->Bool>};
 
 }  // namespace BuiltinFunctionInfo
 
