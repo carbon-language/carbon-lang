@@ -77,6 +77,7 @@ cc_library(
 cc_library(
     name = "file",
     srcs = [
+        "builtin_function_kind.cpp",
         "constant.cpp",
         "file.cpp",
         "inst_profile.cpp",
@@ -84,6 +85,7 @@ cc_library(
         "name.cpp",
     ],
     hdrs = [
+        "builtin_function_kind.h",
         "class.h",
         "constant.h",
         "copy_on_write_block.h",
@@ -95,6 +97,9 @@ cc_library(
         "name_scope.h",
         "type.h",
     ],
+    textual_hdrs = [
+        "builtin_function_kind.def",
+    ],
     deps = [
         ":block_value_store",
         ":builtin_kind",
@@ -103,6 +108,7 @@ cc_library(
         ":inst_kind",
         ":type_info",
         "//common:check",
+        "//common:enum_base",
         "//common:error",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",

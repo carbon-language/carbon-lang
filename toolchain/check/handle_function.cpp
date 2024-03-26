@@ -10,6 +10,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_diagnostic_converter.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -306,9 +307,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
   auto builtin_name = context.string_literal_values().Get(
       context.tokens().GetStringLiteralValue(
           context.parse_tree().node_token(name_id)));
-  auto kind = llvm::StringSwitch<SemIR::BuiltinFunctionKind>(builtin_name)
-                  .Case("int.add", SemIR::BuiltinFunctionKind::IntAdd)
-                  .Default(SemIR::BuiltinFunctionKind::None);
+  auto kind = SemIR::BuiltinFunctionKind::ForBuiltinName(builtin_name);
   if (kind == SemIR::BuiltinFunctionKind::None) {
     CARBON_DIAGNOSTIC(UnknownBuiltinFunctionName, Error,
                       "Unknown builtin function name \"{0}\".", std::string);
@@ -318,17 +317,56 @@ static auto LookupBuiltinFunctionKind(Context& context,
   return kind;
 }
 
+// Returns whether `function` is a valid declaration of the builtin
+// `builtin_kind`.
+static auto IsValidBuiltinDeclaration(Context& context,
+                                      const SemIR::Function& function,
+                                      SemIR::BuiltinFunctionKind builtin_kind)
+    -> bool {
+  // Form the list of parameter types for the declaration.
+  llvm::SmallVector<SemIR::TypeId> param_type_ids;
+  auto implicit_param_refs =
+      context.inst_blocks().Get(function.implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().Get(function.param_refs_id);
+  param_type_ids.reserve(implicit_param_refs.size() + param_refs.size());
+  for (auto param_id :
+       llvm::concat<SemIR::InstId>(implicit_param_refs, param_refs)) {
+    // TODO: We also need to track whether the parameter is declared with
+    // `var`.
+    param_type_ids.push_back(context.insts().Get(param_id).type_id());
+  }
+
+  // Get the return type. This is `()` if none was specified.
+  auto return_type_id = function.return_type_id;
+  if (!return_type_id.is_valid()) {
+    return_type_id = context.GetTupleType({});
+  }
+
+  return builtin_kind.IsValidType(context.sem_ir(), param_type_ids,
+                                  return_type_id);
+}
+
 auto HandleBuiltinFunctionDefinition(
     Context& context, Parse::BuiltinFunctionDefinitionId /*node_id*/) -> bool {
   auto name_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::BuiltinName>();
-  auto function_id =
+  auto [fn_node_id, function_id] =
       context.node_stack()
-          .Pop<Parse::NodeKind::BuiltinFunctionDefinitionStart>();
+          .PopWithNodeId<Parse::NodeKind::BuiltinFunctionDefinitionStart>();
 
-  auto& function = context.functions().Get(function_id);
-  function.builtin_kind = LookupBuiltinFunctionKind(context, name_id);
-
+  auto builtin_kind = LookupBuiltinFunctionKind(context, name_id);
+  if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    auto& function = context.functions().Get(function_id);
+    if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
+      function.builtin_kind = builtin_kind;
+    } else {
+      CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
+                        "Invalid signature for builtin function \"{0}\".",
+                        std::string);
+      context.emitter().Emit(fn_node_id, InvalidBuiltinSignature,
+                             builtin_kind.name().str());
+    }
+  }
   context.decl_name_stack().PopScope();
   return true;
 }

@@ -11,6 +11,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -167,26 +168,6 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
-// Returns the builtin function kind of the callee in a function call, or None
-// if the call is not to a builtin.
-static auto GetCalleeBuiltinFunctionKind(const SemIR::File& sem_ir,
-                                         SemIR::InstId callee_id)
-    -> SemIR::BuiltinFunctionKind {
-  if (auto bound_method =
-          sem_ir.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-    callee_id = bound_method->function_id;
-  }
-  callee_id = sem_ir.constant_values().Get(callee_id).inst_id();
-  if (!callee_id.is_valid()) {
-    return SemIR::BuiltinFunctionKind::None;
-  }
-  if (auto callee = sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(callee_id)) {
-    const auto& function = sem_ir.functions().Get(callee->function_id);
-    return function.builtin_kind;
-  }
-  return SemIR::BuiltinFunctionKind::None;
-}
-
 // Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
@@ -196,18 +177,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL() << "No callee in function call.";
 
     case SemIR::BuiltinFunctionKind::IntAdd: {
-      // TODO: Move type checking to the point where we make the call.
-      if (arg_ids.size() != 2) {
-        break;
-      }
-      auto lhs_type = context.sem_ir().insts().Get(arg_ids[0]).type_id();
-      auto rhs_type = context.sem_ir().insts().Get(arg_ids[1]).type_id();
-      auto result_type = context.sem_ir().insts().Get(inst_id).type_id();
-      if (lhs_type != rhs_type || lhs_type != result_type ||
-          context.sem_ir().types().GetInstId(lhs_type) !=
-              SemIR::InstId::BuiltinIntType) {
-        break;
-      }
       constexpr bool SignedOverflowIsUB = false;
       context.SetLocal(inst_id, context.builder().CreateAdd(
                                     context.GetValue(arg_ids[0]),
@@ -231,7 +200,7 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   // A null callee pointer value indicates this isn't a real function.
   if (!callee_value) {
     auto builtin_kind =
-        GetCalleeBuiltinFunctionKind(context.sem_ir(), inst.callee_id);
+        SemIR::BuiltinFunctionKind::ForCallee(context.sem_ir(), inst.callee_id);
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
   }
