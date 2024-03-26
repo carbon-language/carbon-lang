@@ -20,7 +20,6 @@ fn Run() {
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, i32 [template]
 // CHECK:STDOUT:   %.7: type = ptr_type [i32; 1] [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -57,7 +56,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_22.3: ref (i32,) = temporary %.loc10_22.2, %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_22.4: ref i32 = tuple_access %.loc10_22.3, element0
 // CHECK:STDOUT:   %.loc10_22.5: i32 = bind_value %.loc10_22.4
-// CHECK:STDOUT:   %.loc10_22.6: i32 = int_literal 0 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_22.6: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_22.7: ref i32 = array_index %t.var, %.loc10_22.6
 // CHECK:STDOUT:   %.loc10_22.8: init i32 = initialize_from %.loc10_22.5 to %.loc10_22.7
 // CHECK:STDOUT:   %.loc10_22.9: init [i32; 1] = array_init (%.loc10_22.8) to %t.var

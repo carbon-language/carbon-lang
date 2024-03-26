@@ -41,14 +41,13 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.7: String = string_literal "World" [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (i32, String, String) [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.12: type = tuple_type (i32, String*, String*) [template]
-// CHECK:STDOUT:   %.13: type = ptr_type (i32, String*, String*) [template]
-// CHECK:STDOUT:   %.14: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.15: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.16: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.17: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %.10: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.11: type = tuple_type (i32, String*, String*) [template]
+// CHECK:STDOUT:   %.12: type = ptr_type (i32, String*, String*) [template]
+// CHECK:STDOUT:   %.13: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.15: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.16: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,7 +76,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %c.var: ref [i32; 3] = var c
 // CHECK:STDOUT:   %c: ref [i32; 3] = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc26_18.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc26_18.2: type = converted %.loc26_18.1, constants.%.15 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc26_18.2: type = converted %.loc26_18.1, constants.%.14 [template = constants.%.14]
 // CHECK:STDOUT:   %t2.var: ref (i32, i32) = var t2
 // CHECK:STDOUT:   %t2: ref (i32, i32) = bind_name t2, %t2.var
 // CHECK:STDOUT:   %.loc30_14: i32 = int_literal 3 [template = constants.%.1]
@@ -105,7 +104,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc18_19.6: ref String = tuple_access %t1.ref, element1
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %.loc24_20: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc24_23: i32 = int_literal 2 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc24_23: i32 = int_literal 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc24_24: (i32, i32) = tuple_literal (%.loc24_20, %.loc24_23)
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %t2.ref: ref (i32, i32) = name_ref t2, file.%t2

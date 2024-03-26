@@ -6,10 +6,15 @@
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `295147905179352825855` is past the end of type `(i32,)`.
-// CHECK:STDERR: var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
-var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
+// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+4]]:14: ERROR: Tuple element index `1` is past the end of type `(i32,)`.
+// CHECK:STDERR: var c: i32 = b[1];
+// CHECK:STDERR:              ^~~~
+// CHECK:STDERR:
+var c: i32 = b[1];
+// CHECK:STDERR: fail_tuple_large_index.carbon:[[@LINE+3]]:14: ERROR: Tuple element index `2147483647` is past the end of type `(i32,)`.
+// CHECK:STDERR: var d: i32 = b[0x7FFF_FFFF];
+// CHECK:STDERR:              ^~~~~~~~~~~~~~
+var d: i32 = b[0x7FFF_FFFF];
 
 // CHECK:STDOUT: --- fail_tuple_large_index.carbon
 // CHECK:STDOUT:
@@ -18,7 +23,8 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.4: (i32,) = tuple_value (%.3) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 295147905179352825855 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 2147483647 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,6 +32,7 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_13.2: type = converted %.loc7_13.1, constants.%.2 [template = constants.%.2]
@@ -37,6 +44,8 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %b: ref (i32,) = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
+// CHECK:STDOUT:   %d.var: ref i32 = var d
+// CHECK:STDOUT:   %d: ref i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -52,10 +61,14 @@ var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
 // CHECK:STDOUT:   %.loc8_17.3: init (i32,) = tuple_init (%.loc8_17.2) to file.%b.var
 // CHECK:STDOUT:   %.loc8_17.4: init (i32,) = converted %a.ref, %.loc8_17.3
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_17.4
-// CHECK:STDOUT:   %b.ref: ref (i32,) = name_ref b, file.%b
-// CHECK:STDOUT:   %.loc12_16: i32 = int_literal 295147905179352825855 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_35: ref <error> = tuple_index %b.ref, <error>
+// CHECK:STDOUT:   %b.ref.loc13: ref (i32,) = name_ref b, file.%b
+// CHECK:STDOUT:   %.loc13_16: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_17: ref <error> = tuple_index %b.ref.loc13, <error>
 // CHECK:STDOUT:   assign file.%c.var, <error>
+// CHECK:STDOUT:   %b.ref.loc17: ref (i32,) = name_ref b, file.%b
+// CHECK:STDOUT:   %.loc17_16: i32 = int_literal 2147483647 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc17_27: ref <error> = tuple_index %b.ref.loc17, <error>
+// CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

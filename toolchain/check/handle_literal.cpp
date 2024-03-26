@@ -25,11 +25,26 @@ auto HandleBoolLiteralTrue(Context& context, Parse::BoolLiteralTrueId node_id)
 }
 
 auto HandleIntLiteral(Context& context, Parse::IntLiteralId node_id) -> bool {
+  // Convert the literal to i32.
+  // TODO: Form an integer literal value and a corresponding type here instead.
+  auto literal_int_id =
+      context.tokens().GetIntLiteral(context.parse_tree().node_token(node_id));
+  auto literal_val = context.ints().Get(literal_int_id);
+  if (literal_val.getActiveBits() > 31) {
+    CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
+                      "Integer literal with value {0} does not fit in i32.",
+                      llvm::APSInt);
+    context.emitter().Emit(node_id, IntLiteralTooLargeForI32,
+                           llvm::APSInt(literal_val, /*isUnsigned=*/true));
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+    return true;
+  }
+  // Literals are always represented as unsigned, so zero-extend if needed.
+  auto i32_val = literal_val.zextOrTrunc(32);
   context.AddInstAndPush(
       {node_id,
        SemIR::IntLiteral{context.GetBuiltinType(SemIR::BuiltinKind::IntType),
-                         context.tokens().GetIntLiteral(
-                             context.parse_tree().node_token(node_id))}});
+                         context.ints().Add(i32_val)}});
   return true;
 }
 
