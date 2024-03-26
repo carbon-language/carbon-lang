@@ -140,7 +140,9 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
 auto BuiltinFunctionKind::ForBuiltinName(llvm::StringRef name)
     -> BuiltinFunctionKind {
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
-  if (name == BuiltinFunctionInfo::Name.name) { return BuiltinFunctionKind::Name; }
+  if (name == BuiltinFunctionInfo::Name.name) {   \
+    return BuiltinFunctionKind::Name;             \
+  }
 #include "toolchain/sem_ir/builtin_function_kind.def"
   return BuiltinFunctionKind::None;
 }
