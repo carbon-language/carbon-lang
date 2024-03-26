@@ -302,9 +302,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
       << "Unexpected builtin kind";
 
   auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
-  // TODO: Integer values should be stored in the correct bit width for
-  // their types. For now we assume i32.
-  auto op_val = context.ints().Get(op.int_id).sextOrTrunc(32);
+  auto op_val = context.ints().Get(op.int_id);
 
   if (op_val.isMinSignedValue()) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
@@ -327,10 +325,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
     -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::IntLiteral>(rhs_id);
-  // TODO: Integer values should be stored in the correct bit width for
-  // their types. For now we assume i32.
-  auto lhs_val = context.ints().Get(lhs.int_id).sextOrTrunc(32);
-  auto rhs_val = context.ints().Get(rhs.int_id).sextOrTrunc(32);
+  auto lhs_val = context.ints().Get(lhs.int_id);
+  auto rhs_val = context.ints().Get(rhs.int_id);
 
   bool overflow = false;
   llvm::APInt result_val;
@@ -393,10 +389,10 @@ static auto PerformBuiltinIntComparison(Context& context,
                                         SemIR::InstId rhs_id,
                                         SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::IntLiteral>(rhs_id);
-  auto lhs_val = context.ints().Get(lhs.int_id).sextOrTrunc(32);
-  auto rhs_val = context.ints().Get(rhs.int_id).sextOrTrunc(32);
+  auto lhs_val = context.ints().Get(
+      context.insts().GetAs<SemIR::IntLiteral>(lhs_id).int_id);
+  auto rhs_val = context.ints().Get(
+      context.insts().GetAs<SemIR::IntLiteral>(rhs_id).int_id);
 
   bool result;
   switch (builtin_kind) {
