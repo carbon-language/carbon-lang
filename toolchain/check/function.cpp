@@ -273,6 +273,9 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
     prev_function.return_type_id = new_function.return_type_id;
     prev_function.return_slot_id = new_function.return_slot_id;
   }
+  if (!new_function.is_extern) {
+    prev_function.is_extern = false;
+  }
   return true;
 }
 
