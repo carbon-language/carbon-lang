@@ -46,7 +46,7 @@ auto SwitchOn(T&& switch_value) -> auto {
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
 // copyable.
 template <typename FnT, typename KindT>
-consteval auto CaseValue() -> KindT {
+consteval auto ForCase() -> KindT {
   using ArgT = llvm::function_traits<FnT>::template arg_t<0>;
   return ArgT::Kind;
 }
@@ -54,7 +54,7 @@ consteval auto CaseValue() -> KindT {
 // Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
 // generates `value.As<CaseT>()`.
 template <typename FnT, typename ValueT>
-auto CaseAs(ValueT&& kind_switch_value) -> auto {
+auto Cast(ValueT&& kind_switch_value) -> auto {
   using CaseT = llvm::function_traits<FnT>::template arg_t<0>;
   return kind_switch_value.template As<CaseT>();
 }
@@ -81,10 +81,10 @@ auto CaseAs(ValueT&& kind_switch_value) -> auto {
 //
 // NOLINTBEGIN(bugprone-macro-parentheses)
 #define CARBON_KIND(typed_variable_declaration)                                \
-  ::Carbon::Internal::Kind::CaseValue<                                         \
+  ::Carbon::Internal::Kind::ForCase<                                           \
       decltype([]([[maybe_unused]] typed_variable_declaration) {}),            \
       decltype(carbon_internal_kind_switch_kind)>()                            \
-      : if (typed_variable_declaration = ::Carbon::Internal::Kind::CaseAs<     \
+      : if (typed_variable_declaration = ::Carbon::Internal::Kind::Cast<       \
                 decltype([]([[maybe_unused]] typed_variable_declaration) {})>( \
                 carbon_internal_kind_switch_value);                            \
             false) {}                                                          \
