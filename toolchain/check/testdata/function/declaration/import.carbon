@@ -85,7 +85,7 @@ var b: i32 = B(1);
 var c: {.c: i32} = C((1,));
 var d: () = D();
 
-// --- fail_todo_merge_reverse.carbon
+// --- merge_reverse.carbon
 
 library "merge_reverse" api;
 
@@ -501,7 +501,7 @@ var d: () = D();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_merge_reverse.carbon
+// CHECK:STDOUT: --- merge_reverse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type (i32) [template]
@@ -530,17 +530,17 @@ var d: () = D();
 // CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, used [template = imports.%B.2]
 // CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, used [template = imports.%C.2]
 // CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, used [template = imports.%D.2]
-// CHECK:STDOUT:   %.loc29_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc29_9.2: type = converted %.loc29_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc31: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9: type = struct_type {.c: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %c.var: ref {.c: i32} = var c
 // CHECK:STDOUT:   %c: ref {.c: i32} = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc32_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc32_9.2: type = converted %.loc32_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
 // CHECK:STDOUT: }
@@ -564,22 +564,22 @@ var d: () = D();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
-// CHECK:STDOUT:   %.loc29: init () = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %.loc29
+// CHECK:STDOUT:   %.loc7: init () = call %A.ref()
+// CHECK:STDOUT:   assign file.%a.var, %.loc7
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
-// CHECK:STDOUT:   %.loc30_16: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc30_15: init i32 = call %B.ref(%.loc30_16)
-// CHECK:STDOUT:   assign file.%b.var, %.loc30_15
+// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_15: init i32 = call %B.ref(%.loc8_16)
+// CHECK:STDOUT:   assign file.%b.var, %.loc8_15
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
-// CHECK:STDOUT:   %.loc31_23: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc31_25.1: (i32,) = tuple_literal (%.loc31_23)
-// CHECK:STDOUT:   %.loc31_25.2: (i32,) = tuple_value (%.loc31_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc31_25.3: (i32,) = converted %.loc31_25.1, %.loc31_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc31_21: init {.c: i32} = call %C.ref(%.loc31_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc31_21
+// CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
+// CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
+// CHECK:STDOUT:   assign file.%c.var, %.loc9_21
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
-// CHECK:STDOUT:   %.loc32: init () = call %D.ref()
-// CHECK:STDOUT:   assign file.%d.var, %.loc32
+// CHECK:STDOUT:   %.loc10: init () = call %D.ref()
+// CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
