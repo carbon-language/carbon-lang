@@ -402,7 +402,6 @@ static auto PerformBuiltinIntComparison(Context& context,
     case SemIR::BuiltinFunctionKind::IntNeq:
       result = (lhs_val != rhs_val);
       break;
-
     default:
       CARBON_FATAL() << "Unexpected operation kind.";
   }
