@@ -30,6 +30,7 @@
 //   `.As<CaseT>` for `CARBON_KIND` to cast to.
 // - Each type passed to `CARBON_KIND` (`CaseT` above) provides
 //   `CaseT::Kind`, which is passed to the `case` keyword.
+//   `CaseT::Kind::RawEnumType` is the type returned by `.kind()`.
 //
 // Note, this is currently used primarily for Inst in toolchain. When more
 // use-cases are added, it would be worth considering whether the API
@@ -45,10 +46,10 @@ auto SwitchOn(T&& switch_value) -> auto {
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
 // copyable.
-template <typename FnT, typename KindT>
-consteval auto ForCase() -> KindT {
+template <typename FnT>
+consteval auto ForCase() -> auto {
   using ArgT = llvm::function_traits<FnT>::template arg_t<0>;
-  return ArgT::Kind;
+  return static_cast<decltype(ArgT::Kind)::RawEnumType>(ArgT::Kind);
 }
 
 // Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
@@ -66,11 +67,10 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
 }  // namespace Carbon::Internal::Kind
 
 // Produces a switch statement on value.kind().
-#define CARBON_KIND_SWITCH(value)                                \
-  switch (const auto& carbon_internal_kind_switch_value = value; \
-          auto carbon_internal_kind_switch_kind =                \
-              ::Carbon::Internal::Kind::SwitchOn(                \
-                  carbon_internal_kind_switch_value))
+#define CARBON_KIND_SWITCH(value)                            \
+  switch (                                                   \
+      const auto& carbon_internal_kind_switch_value = value; \
+      ::Carbon::Internal::Kind::SwitchOn(carbon_internal_kind_switch_value))
 
 // Produces a case-compatible block of code that also instantiates a local typed
 // variable. typed_variable_declaration looks like `int i`, with a space.
@@ -82,8 +82,7 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
 // NOLINTBEGIN(bugprone-macro-parentheses)
 #define CARBON_KIND(typed_variable_declaration)                                \
   ::Carbon::Internal::Kind::ForCase<                                           \
-      decltype([]([[maybe_unused]] typed_variable_declaration) {}),            \
-      decltype(carbon_internal_kind_switch_kind)>()                            \
+      decltype([]([[maybe_unused]] typed_variable_declaration) {})>()          \
       : if (typed_variable_declaration = ::Carbon::Internal::Kind::Cast<       \
                 decltype([]([[maybe_unused]] typed_variable_declaration) {})>( \
                 carbon_internal_kind_switch_value);                            \
