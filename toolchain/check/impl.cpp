@@ -47,10 +47,9 @@ static auto CheckAssociatedFunctionImplementation(
     return SemIR::InstId::BuiltinError;
   }
 
-  // TODO: Substitute the `Self` from the `impl` into the type in the interface
-  // before checking. Also, this should be a semantic check rather than a
-  // syntactic one. The functions should be allowed to have different signatures
-  // as long as we can synthesize a suitable thunk.
+  // TODO: This should be a semantic check rather than a syntactic one. The
+  // functions should be allowed to have different signatures as long as we can
+  // synthesize a suitable thunk.
   if (!CheckFunctionTypeMatches(context, impl_function_decl->function_id,
                                 interface_function_id, substitutions)) {
     return SemIR::InstId::BuiltinError;

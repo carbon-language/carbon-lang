@@ -43,8 +43,13 @@ auto HandleTypeImplAs(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id);
   context.node_stack().Push(node_id, self_type_id);
-  // TODO: `Self` should come into scope here, at least if it's not already in
-  // scope. Check the design for the latter case.
+
+  // Introduce `Self`. Note that we add this name lexically rather than adding
+  // to the `NameScopeId` of the `impl`, because this happens before we enter
+  // the `impl` scope or even identify which `impl` we're declaring.
+  // TODO: Revisit this once #3714 is resolved.
+  context.AddNameToLookup(SemIR::NameId::SelfType,
+                          context.types().GetInstId(self_type_id));
   return true;
 }
 
@@ -85,6 +90,8 @@ auto HandleDefaultSelfImplAs(Context& context,
     self_type_id = SemIR::TypeId::Error;
   }
 
+  // There's no need to push `Self` into scope here, because we can find it in
+  // the enclosing class scope.
   context.node_stack().Push(node_id, self_type_id);
   return true;
 }
