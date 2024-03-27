@@ -34,17 +34,19 @@
 // Note, this is currently used primarily for Inst in toolchain. When more
 // use-cases are added, it would be worth considering whether the API
 // requirements should change.
-namespace Carbon::Internal {
+namespace Carbon::Internal::Kind {
 
 // Given `CARBON_KIND_SWITCH(value)` this handles calling `value.kind()`.
 template <typename T>
-auto KindSwitch(T&& switch_value) -> auto {
+auto SwitchOn(T&& switch_value) -> auto {
   return switch_value.kind();
-};
+}
 
-// Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`.
+// Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
+// returns `KindT` because that may differ from `CaseT::Kind`, and may not be
+// copyable.
 template <typename FnT, typename KindT>
-constexpr auto KindCaseValue() -> KindT {
+consteval auto CaseValue() -> KindT {
   using ArgT = llvm::function_traits<FnT>::template arg_t<0>;
   return ArgT::Kind;
 }
@@ -52,7 +54,7 @@ constexpr auto KindCaseValue() -> KindT {
 // Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
 // generates `value.As<CaseT>()`.
 template <typename FnT, typename ValueT>
-auto KindCaseAs(ValueT&& kind_switch_value) -> auto {
+auto CaseAs(ValueT&& kind_switch_value) -> auto {
   using CaseT = llvm::function_traits<FnT>::template arg_t<0>;
   return kind_switch_value.template As<CaseT>();
 }
@@ -61,31 +63,31 @@ auto KindCaseAs(ValueT&& kind_switch_value) -> auto {
 #define CARBON_KIND_LABEL_(Line) \
   CARBON_KIND_MERGE_(carbon_internal_kind_case_, Line)
 
-}  // namespace Carbon::Internal
+}  // namespace Carbon::Internal::Kind
 
 // Produces a switch statement on value.kind().
-#define CARBON_KIND_SWITCH(value)                       \
-  switch (                                              \
-      auto&& carbon_internal_kind_switch_value = value; \
-      auto carbon_internal_kind_switch_kind =           \
-          ::Carbon::Internal::KindSwitch(carbon_internal_kind_switch_value))
+#define CARBON_KIND_SWITCH(value)                                \
+  switch (const auto& carbon_internal_kind_switch_value = value; \
+          auto carbon_internal_kind_switch_kind =                \
+              ::Carbon::Internal::Kind::SwitchOn(                \
+                  carbon_internal_kind_switch_value))
 
 // Produces a case-compatible block of code that also instantiates a local typed
-// variable.
+// variable. typed_variable_declaration looks like `int i`, with a space.
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
 //
 // NOLINTBEGIN(bugprone-macro-parentheses)
-#define CARBON_KIND(type_and_name)                                \
-  ::Carbon::Internal::KindCaseValue<                              \
-      decltype([]([[maybe_unused]] type_and_name) {}),            \
-      decltype(carbon_internal_kind_switch_kind)>()               \
-      : if (type_and_name = ::Carbon::Internal::KindCaseAs<       \
-                decltype([]([[maybe_unused]] type_and_name) {})>( \
-                carbon_internal_kind_switch_value);               \
-            false) {}                                             \
+#define CARBON_KIND(typed_variable_declaration)                                \
+  ::Carbon::Internal::Kind::CaseValue<                                         \
+      decltype([]([[maybe_unused]] typed_variable_declaration) {}),            \
+      decltype(carbon_internal_kind_switch_kind)>()                            \
+      : if (typed_variable_declaration = ::Carbon::Internal::Kind::CaseAs<     \
+                decltype([]([[maybe_unused]] typed_variable_declaration) {})>( \
+                carbon_internal_kind_switch_value);                            \
+            false) {}                                                          \
   else [[maybe_unused]] CARBON_KIND_LABEL_(__LINE__)
 // NOLINTEND(bugprone-macro-parentheses)
 
