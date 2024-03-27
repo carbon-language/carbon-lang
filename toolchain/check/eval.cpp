@@ -696,8 +696,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
         auto value =
             context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
         value.value =
-            (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
-                                                    : SemIR::BoolValue::False);
+            SemIR::BoolValue::From(value.value == SemIR::BoolValue::False);
         return MakeConstantResult(context, value, Phase::Template);
       }
       if (phase == Phase::UnknownDueToError) {
