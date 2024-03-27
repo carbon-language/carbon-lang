@@ -41,38 +41,39 @@ class Context {
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::LocationIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
+      -> SemIR::InstId;
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
+  auto AddPlaceholderInst(SemIR::LocationIdAndInst loc_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely. The instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
+  auto AddPlaceholderInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result.
-  auto AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void;
+  // result. Only valid if the LocationId is for a NodeId.
+  auto AddInstAndPush(SemIR::LocationIdAndInst loc_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `node_id_and_inst`.
+  // Replaces the value of the instruction `inst_id` with `loc_id_and_inst`.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
   // as a return slot.
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
-                                    SemIR::NodeIdAndInst node_id_and_inst)
+                                    SemIR::LocationIdAndInst loc_id_and_inst)
       -> void;
 
   // Adds an import_ref instruction for the specified instruction in the
@@ -87,7 +88,7 @@ class Context {
   // remain const.
   auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
       -> void {
-    sem_ir().insts().SetNodeId(inst_id, node_id);
+    sem_ir().insts().SetLocationId(inst_id, SemIR::LocationId(node_id));
   }
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
@@ -96,7 +97,7 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
+  auto LookupNameInDecl(SemIR::LocationId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
@@ -120,7 +121,7 @@ class Context {
       -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
+  auto DiagnoseNameNotFound(SemIR::LocationId loc_id, SemIR::NameId name_id)
       -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
@@ -322,6 +323,9 @@ class Context {
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
+  }
+  auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
+    return sem_ir().import_ir_insts();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {

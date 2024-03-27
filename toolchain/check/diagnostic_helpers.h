@@ -16,22 +16,30 @@ namespace Carbon::Check {
 // directly, or an inst ID which is later translated to a parse node.
 struct SemIRLocation {
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
+  SemIRLocation(SemIR::InstId inst_id)
+      : inst_id(inst_id), is_inst_id(true), token_only(false) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeLocation node_location)
-      : node_location(node_location), is_inst_id(false) {}
+  SemIRLocation(Parse::NodeId node_id) : SemIRLocation(node_id, false) {}
+
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeId node_id)
-      : SemIRLocation(Parse::NodeLocation(node_id)) {}
+  SemIRLocation(SemIR::LocationId loc_id) : SemIRLocation(loc_id, false) {}
+
+  explicit SemIRLocation(SemIR::LocationId loc_id, bool token_only)
+      : loc_id(loc_id), is_inst_id(false), token_only(token_only) {}
 
   union {
     SemIR::InstId inst_id;
-    Parse::NodeLocation node_location;
+    SemIR::LocationId loc_id;
   };
 
   bool is_inst_id;
+  bool token_only;
 };
+
+inline auto TokenOnly(SemIR::LocationId loc_id) -> SemIRLocation {
+  return SemIRLocation(loc_id, true);
+}
 
 // An integer value together with its type. The type is used to determine how to
 // format the value in diagnostics.

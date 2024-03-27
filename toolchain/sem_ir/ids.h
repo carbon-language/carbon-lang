@@ -10,6 +10,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 
 namespace Carbon::SemIR {
@@ -21,6 +22,7 @@ struct BindNameInfo;
 struct Class;
 struct Function;
 struct ImportIR;
+struct ImportIRInst;
 struct Interface;
 struct Impl;
 struct NameScope;
@@ -480,6 +482,67 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
     IndexBase::Print(out);
   }
 };
+
+// The ID of an ImportIRInst.
+struct ImportIRInstId : public IdBase, public Printable<InstId> {
+  using ValueType = ImportIRInst;
+
+  using IdBase::IdBase;
+};
+
+// A SemIR location used exclusively for diagnostic locations.
+//
+// Contents:
+// - index > Invalid: A Parse::NodeId in the current IR.
+// - index < Invalid: An ImportIRInstId.
+// - index == Invalid: Can be used for either.
+struct LocationId : public IdBase, public Printable<FunctionId> {
+  // An explicitly invalid function ID.
+  static const LocationId Invalid;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocationId(Parse::InvalidNodeId /*invalid*/)
+      : IdBase(InvalidIndex) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocationId(Parse::NodeId node_id) : IdBase(node_id.index) {
+    CARBON_CHECK(node_id.is_valid() == is_valid());
+  }
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocationId(ImportIRInstId inst_id)
+      : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
+    CARBON_CHECK(inst_id.is_valid() == is_valid());
+  }
+
+  auto is_node_id() const -> bool { return index > InvalidIndex; }
+  auto is_import_ir_inst_id() const -> bool { return index < InvalidIndex; }
+
+  // This is allowed to return an invalid NodeId, but should never be used for a
+  // valid InstId.
+  auto node_id() const -> Parse::NodeId {
+    CARBON_CHECK(is_node_id() || !is_valid());
+    return Parse::NodeId(index);
+  }
+
+  // This is allowed to return an invalid InstId, but should never be used for a
+  // valid NodeId.
+  auto import_ir_inst_id() const -> ImportIRInstId {
+    CARBON_CHECK(is_import_ir_inst_id() || !is_valid());
+    return ImportIRInstId(InvalidIndex + ImportIRInstId::InvalidIndex - index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "loc_";
+    if (is_node_id() || !is_valid()) {
+      out << node_id();
+    } else {
+      out << import_ir_inst_id();
+    }
+  }
+};
+
+constexpr LocationId LocationId::Invalid = LocationId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
 

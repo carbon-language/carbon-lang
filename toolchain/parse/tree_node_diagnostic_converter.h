@@ -30,10 +30,6 @@ class NodeLocation {
   bool token_only_;
 };
 
-inline auto TokenOnly(NodeId node_id) -> NodeLocation {
-  return NodeLocation(node_id, true);
-}
-
 class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
  public:
   explicit NodeLocationConverter(const Lex::TokenizedBuffer* tokens,

@@ -17,6 +17,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
@@ -39,15 +40,6 @@ struct BindNameInfo : public Printable<BindNameInfo> {
 };
 
 class File;
-
-struct ImportIR : public Printable<ImportIR> {
-  auto Print(llvm::raw_ostream& out) const -> void { out << node_id; }
-
-  // The node ID for the import.
-  Parse::ImportDirectiveId node_id;
-  // The imported IR.
-  const File* sem_ir;
-};
 
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
@@ -149,6 +141,12 @@ class File : public Printable<File> {
   auto import_irs() const -> const ValueStore<ImportIRId>& {
     return import_irs_;
   }
+  auto import_ir_insts() -> ValueStore<ImportIRInstId>& {
+    return import_ir_insts_;
+  }
+  auto import_ir_insts() const -> const ValueStore<ImportIRInstId>& {
+    return import_ir_insts_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -224,6 +222,10 @@ class File : public Printable<File> {
   // Related IRs. There will always be at least one entry, the builtin IR (used
   // for references of builtins).
   ValueStore<ImportIRId> import_irs_;
+
+  // Related IR instructions. These are created for LocationIds for instructions
+  // that are import-related.
+  ValueStore<ImportIRInstId> import_ir_insts_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_;
