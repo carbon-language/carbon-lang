@@ -63,17 +63,17 @@ class PendingBlock {
     if (insts_.empty()) {
       // 1) The block is empty. Replace `target_id` with an empty splice
       // pointing at `value_id`.
-      context_.ReplaceInstBeforeConstantUse(
+      context_.ReplaceLocationIdAndInstBeforeConstantUse(
           target_id, {value.loc_id,
                       SemIR::SpliceBlock{value.inst.type_id(),
                                          SemIR::InstBlockId::Empty, value_id}});
     } else if (insts_.size() == 1 && insts_[0] == value_id) {
       // 2) The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
-      context_.ReplaceInstBeforeConstantUse(target_id, value);
+      context_.ReplaceLocationIdAndInstBeforeConstantUse(target_id, value);
     } else {
       // 3) Anything else: splice it into the IR, replacing `target_id`.
-      context_.ReplaceInstBeforeConstantUse(
+      context_.ReplaceLocationIdAndInstBeforeConstantUse(
           target_id,
           {value.loc_id,
            SemIR::SpliceBlock{value.inst.type_id(),

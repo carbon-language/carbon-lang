@@ -102,7 +102,7 @@ static auto AddNamespace(
   auto namespace_id = context.AddPlaceholderInst({node_id, namespace_inst});
   namespace_inst.name_scope_id =
       context.name_scopes().Add(namespace_id, name_id, enclosing_scope_id);
-  context.ReplaceInstBeforeConstantUse(namespace_id, {node_id, namespace_inst});
+  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics.

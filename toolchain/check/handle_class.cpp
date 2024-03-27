@@ -108,7 +108,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
   }
 
   // Write the class ID into the ClassDecl.
-  context.ReplaceInstBeforeConstantUse(class_decl_id, {node_id, class_decl});
+  context.ReplaceInstBeforeConstantUse(class_decl_id, class_decl);
 
   if (is_new_class) {
     // Build the `Self` type using the resulting type constant.

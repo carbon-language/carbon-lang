@@ -132,10 +132,15 @@ import library "other_ns";
 // CHECK:STDERR:
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+5]]:1: ERROR: Only one library can declare function F without `extern`.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare function F without `extern`.
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon: Previously declared here.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_fn.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fn F() {}
+// CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn Other.F() {}
 

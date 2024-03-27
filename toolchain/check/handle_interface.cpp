@@ -88,8 +88,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.ReplaceInstBeforeConstantUse(interface_decl_id,
-                                       {node_id, interface_decl});
+  context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }

@@ -198,8 +198,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_info.decl_id,
-                                       {node_id, function_decl});
+  context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.

@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -36,38 +37,69 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
+  // Converts an instruction's location to a diagnostic location, which will be
+  // the underlying line of code. Adds context for any imports used in the
+  // current SemIR to get to the underlying code.
   auto ConvertLocation(SemIRLocation loc, ContextFnT context_fn) const
       -> DiagnosticLocation override {
-    // Parse nodes always refer to the current IR.
-    if (!loc.is_inst_id) {
-      CARBON_CHECK(loc.loc_id.is_node_id() || !loc.loc_id.is_valid())
-          << "TODO: Handle non-NodeId locs";
-      return ConvertLocationInFile(sem_ir_, loc.loc_id.node_id(),
-                                   loc.token_only, context_fn);
+    // Cursors for the current IR and instruction in that IR.
+    const auto* cursor_ir = sem_ir_;
+    auto cursor_inst_id = SemIR::InstId::Invalid;
+
+    // Notes an import on the diagnostic and updates cursors to point at the
+    // imported IR.
+    auto follow_import_ref = [&](SemIR::ImportIRId ir_id,
+                                 SemIR::InstId inst_id) {
+      const auto& import_ir = cursor_ir->import_irs().Get(ir_id);
+      auto context_loc = ConvertLocationInFile(cursor_ir, import_ir.node_id,
+                                               loc.token_only, context_fn);
+      CARBON_DIAGNOSTIC(InImport, Note, "In import.");
+      context_fn(context_loc, InImport);
+      cursor_ir = import_ir.sem_ir;
+      cursor_inst_id = inst_id;
+    };
+
+    // If the location is is an import, follows it and returns nullopt.
+    // Otherwise, it's a parse node, so return the final location.
+    auto handle_loc =
+        [&](SemIR::LocationId loc_id) -> std::optional<DiagnosticLocation> {
+      if (loc_id.is_import_ir_inst_id()) {
+        auto import_ir_inst =
+            cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+        follow_import_ref(import_ir_inst.ir_id, import_ir_inst.inst_id);
+        return std::nullopt;
+      } else {
+        // Parse nodes always refer to the current IR.
+        return ConvertLocationInFile(cursor_ir, loc_id.node_id(),
+                                     loc.token_only, context_fn);
+      }
+    };
+
+    // Handle the base location.
+    if (loc.is_inst_id) {
+      cursor_inst_id = loc.inst_id;
+    } else {
+      if (auto diag_loc = handle_loc(loc.loc_id)) {
+        return *diag_loc;
+      }
+      CARBON_CHECK(cursor_inst_id.is_valid()) << "Should have been set";
     }
 
-    const auto* cursor_ir = sem_ir_;
-    auto cursor_inst_id = loc.inst_id;
     while (true) {
       // If the parse node is valid, use it for the location.
       if (auto loc_id = cursor_ir->insts().GetLocationId(cursor_inst_id);
           loc_id.is_valid()) {
-        CARBON_CHECK(loc_id.is_node_id()) << "TODO: Handle non-NodeId locs";
-        return ConvertLocationInFile(cursor_ir, loc_id.node_id(),
-                                     loc.token_only, context_fn);
+        if (auto diag_loc = handle_loc(loc_id)) {
+          return *diag_loc;
+        }
+        continue;
       }
 
       // If the parse node was invalid, recurse through import references when
       // possible.
       if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
-        const auto& import_ir = cursor_ir->import_irs().Get(import_ref->ir_id);
-        auto context_loc = ConvertLocationInFile(cursor_ir, import_ir.node_id,
-                                                 loc.token_only, context_fn);
-        CARBON_DIAGNOSTIC(InImport, Note, "In import.");
-        context_fn(context_loc, InImport);
-        cursor_ir = import_ir.sem_ir;
-        cursor_inst_id = import_ref->inst_id;
+        follow_import_ref(import_ref->ir_id, import_ref->inst_id);
         continue;
       }
 
