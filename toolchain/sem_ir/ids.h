@@ -266,8 +266,13 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
   static const BoolValue True;
 
   // Returns the `BoolValue` corresponding to `b`.
-  static constexpr auto FromBool(bool b) -> BoolValue {
-    return b ? True : False;
+  static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
+
+  // Returns the `bool` corresponding to this `BoolValue`.
+  constexpr auto ToBool() -> bool {
+    CARBON_CHECK(*this == False || *this == True)
+        << "Invalid bool value " << index;
+    return *this != False;
   }
 
   using IdBase::IdBase;

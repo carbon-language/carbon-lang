@@ -354,8 +354,7 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
             : cond_value_id;
   auto short_circuit_result_id = context.AddInst(
       {node_id,
-       SemIR::BoolLiteral{bool_type_id, is_or ? SemIR::BoolValue::True
-                                              : SemIR::BoolValue::False}});
+       SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(is_or)}});
 
   // Create a block for the right-hand side and for the continuation.
   auto rhs_block_id =

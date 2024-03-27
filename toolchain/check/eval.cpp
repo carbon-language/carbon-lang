@@ -412,8 +412,7 @@ static auto PerformBuiltinIntComparison(Context& context,
   }
 
   return MakeConstantResult(
-      context,
-      SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::FromBool(result)},
+      context, SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
       Phase::Template);
 }
 
@@ -698,9 +697,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       if (phase == Phase::Template) {
         auto value =
             context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
-        value.value =
-            (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
-                                                    : SemIR::BoolValue::False);
+        value.value = SemIR::BoolValue::From(!value.value.ToBool());
         return MakeConstantResult(context, value, Phase::Template);
       }
       if (phase == Phase::UnknownDueToError) {
