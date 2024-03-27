@@ -78,8 +78,6 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-//
-// NOLINTBEGIN(bugprone-macro-parentheses)
 #define CARBON_KIND(typed_variable_declaration)                                \
   ::Carbon::Internal::Kind::ForCase<                                           \
       decltype([]([[maybe_unused]] typed_variable_declaration) {})>()          \
@@ -88,6 +86,5 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
                 carbon_internal_kind_switch_value);                            \
             false) {}                                                          \
   else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
-// NOLINTEND(bugprone-macro-parentheses)
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
