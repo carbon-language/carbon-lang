@@ -167,13 +167,12 @@ class DiagnosticEmitter {
   // type conversion when needed.
   template <typename Arg>
   auto MakeAny(Arg arg) -> llvm::Any {
-    if constexpr (Internal::DiagnosticTypeForArg<Arg>::Conversion ==
-                  DiagnosticTypeConversion::None) {
-      return arg;
-    } else {
-      return converter_->ConvertArg(
-          Internal::DiagnosticTypeForArg<Arg>::Conversion, arg);
-    }
+    llvm::Any converted = converter_->ConvertArg(arg);
+    using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
+    CARBON_CHECK(llvm::any_cast<Storage>(&converted))
+        << "Failed to convert argument of type " << typeid(Arg).name()
+        << " to its storage type " << typeid(Storage).name();
+    return converted;
   }
 
   template <typename LocT, typename AnnotateFn>

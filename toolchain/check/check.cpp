@@ -72,20 +72,14 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
     }
   }
 
-  auto ConvertArg(DiagnosticTypeConversion conversion, llvm::Any arg) const
-      -> llvm::Any override {
-    switch (conversion) {
-      case DiagnosticTypeConversion::NameId: {
-        auto name_id = llvm::any_cast<SemIR::NameId>(arg);
-        return sem_ir_->names().GetFormatted(name_id).str();
-      }
-      case DiagnosticTypeConversion::TypeId: {
-        auto type_id = llvm::any_cast<SemIR::TypeId>(arg);
-        return sem_ir_->StringifyType(type_id);
-      }
-      default:
-        return DiagnosticConverter<SemIRLocation>::ConvertArg(conversion, arg);
+  auto ConvertArg(llvm::Any arg) const -> llvm::Any override {
+    if (auto* name_id = llvm::any_cast<SemIR::NameId>(&arg)) {
+      return sem_ir_->names().GetFormatted(*name_id).str();
     }
+    if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
+      return sem_ir_->StringifyType(*type_id);
+    }
+    return DiagnosticConverter<SemIRLocation>::ConvertArg(arg);
   }
 
  private:
