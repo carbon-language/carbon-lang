@@ -58,15 +58,17 @@ auto KindCaseAs(ValueT&& kind_switch_value) -> auto {
 }
 
 #define CARBON_KIND_MERGE_(Prefix, Line) Prefix##Line
-#define CARBON_KIND_LABEL_(Line) CARBON_KIND_MERGE_(__carbon_kind_case_, Line)
+#define CARBON_KIND_LABEL_(Line) \
+  CARBON_KIND_MERGE_(carbon_internal_kind_case_, Line)
 
 }  // namespace Carbon::Internal
 
 // Produces a switch statement on value.kind().
-#define CARBON_KIND_SWITCH(value)                    \
-  switch (auto&& __carbon_kind_switch_value = value; \
-          auto __carbon_kind_switch_kind =           \
-              ::Carbon::Internal::KindSwitch(__carbon_kind_switch_value))
+#define CARBON_KIND_SWITCH(value)                       \
+  switch (                                              \
+      auto&& carbon_internal_kind_switch_value = value; \
+      auto carbon_internal_kind_switch_kind =           \
+          ::Carbon::Internal::KindSwitch(carbon_internal_kind_switch_value))
 
 // Produces a case-compatible block of code that also instantiates a local typed
 // variable.
@@ -79,10 +81,10 @@ auto KindCaseAs(ValueT&& kind_switch_value) -> auto {
 #define CARBON_KIND(type_and_name)                                \
   ::Carbon::Internal::KindCaseValue<                              \
       decltype([]([[maybe_unused]] type_and_name) {}),            \
-      decltype(__carbon_kind_switch_kind)>()                      \
+      decltype(carbon_internal_kind_switch_kind)>()               \
       : if (type_and_name = ::Carbon::Internal::KindCaseAs<       \
                 decltype([]([[maybe_unused]] type_and_name) {})>( \
-                __carbon_kind_switch_value);                      \
+                carbon_internal_kind_switch_value);               \
             false) {}                                             \
   else [[maybe_unused]] CARBON_KIND_LABEL_(__LINE__)
 // NOLINTEND(bugprone-macro-parentheses)
