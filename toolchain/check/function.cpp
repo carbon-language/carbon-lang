@@ -201,7 +201,6 @@ static auto CheckIsAllowedRedecl(Context& context, SemIR::LocationId loc_id,
   CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
   if (prev_is_import) {
     // TODO: Allow non-extern declarations in the same library.
-    // TODO: This is having some bug when `extern` comes before non-`extern`.
     if (!new_function.is_extern && !prev_function.is_extern) {
       CARBON_DIAGNOSTIC(
           FunctionNonExternRedecl, Error,

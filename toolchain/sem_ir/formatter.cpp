@@ -771,7 +771,13 @@ class Formatter {
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
 
-    out_ << "\nfn ";
+    out_ << "\n";
+
+    if (fn.is_extern) {
+      out_ << "extern ";
+    }
+
+    out_ << "fn ";
     FormatFunctionName(id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));

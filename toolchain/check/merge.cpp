@@ -63,7 +63,7 @@ auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
     case SemIR::FunctionDecl::Kind: {
       auto new_fn = context.functions().Get(
           new_inst->As<SemIR::FunctionDecl>().function_id);
-      auto prev_fn_id = new_inst->As<SemIR::FunctionDecl>().function_id;
+      auto prev_fn_id = prev_inst->As<SemIR::FunctionDecl>().function_id;
       // TODO: May need to "spoil" the new function to prevent it from being
       // emitted, since it will already be added.
       MergeFunctionRedecl(context, context.insts().GetLocationId(new_inst_id),

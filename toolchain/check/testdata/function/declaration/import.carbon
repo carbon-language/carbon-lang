@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: fail_todo_merge_reverse.carbon: ERROR: Only one library can declare function A without `extern`.
 
 // ============================================================================
 // Setup files
@@ -91,28 +90,6 @@ var d: () = D();
 library "merge_reverse" api;
 
 import library "extern_api";
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+22]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:4:1: Previously declared here.
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon: ERROR: Only one library can declare function B without `extern`.
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+14]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:5:1: Previously declared here.
-// CHECK:STDERR: fn B(b: i32) -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_merge_reverse.carbon: ERROR: Only one library can declare function C without `extern`.
-// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+6]]:1: In import.
-// CHECK:STDERR: import library "api";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: api.carbon:6:1: Previously declared here.
-// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import library "api";
 
 var a: () = A();
@@ -158,7 +135,7 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_api.carbon
 // CHECK:STDOUT:
@@ -192,13 +169,13 @@ var d: () = D();
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
+// CHECK:STDOUT: extern fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
@@ -246,7 +223,7 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -332,7 +309,7 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -412,13 +389,13 @@ var d: () = D();
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
+// CHECK:STDOUT: extern fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -486,21 +463,21 @@ var d: () = D();
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1();
+// CHECK:STDOUT: extern fn @A.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.1(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @B.1(%b: i32) -> i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.2(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.1(%c: (i32,)) -> {.c: i32};
+// CHECK:STDOUT: extern fn @C.1(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.1();
+// CHECK:STDOUT: extern fn @D.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.2();
+// CHECK:STDOUT: extern fn @D.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -580,9 +557,9 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.1();
+// CHECK:STDOUT: extern fn @D.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.2();
+// CHECK:STDOUT: extern fn @D.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
