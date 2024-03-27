@@ -83,10 +83,8 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       return sem_ir_->StringifyType(*type_id);
     }
     if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
-      // TODO: Once unsigned integers are supported, compute the signedness
-      // here.
-      constexpr bool IsUnsigned = false;
-      return llvm::APSInt(typed_int->value, IsUnsigned);
+      return llvm::APSInt(typed_int->value,
+                          !sem_ir_->types().IsSignedInt(typed_int->type));
     }
     return DiagnosticConverter<SemIRLocation>::ConvertArg(arg);
   }

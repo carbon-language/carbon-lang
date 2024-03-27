@@ -1150,6 +1150,13 @@ class Formatter {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
+  auto FormatInstructionRHS(IntLiteral inst) -> void {
+    out_ << " ";
+    sem_ir_.ints()
+        .Get(inst.int_id)
+        .print(out_, sem_ir_.types().IsSignedInt(inst.type_id));
+  }
+
   auto FormatInstructionRHS(ImportRefUnused inst) -> void {
     // Don't format the inst_id because it refers to a different IR.
     // TODO: Consider a better way to format the InstID from other IRs.
@@ -1212,6 +1219,7 @@ class Formatter {
   auto FormatArg(ImportIRId id) -> void { out_ << id; }
 
   auto FormatArg(IntId id) -> void {
+    // We don't know the signedness to use here. Default to unsigned.
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
   }
 
