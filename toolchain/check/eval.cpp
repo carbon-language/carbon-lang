@@ -408,7 +408,7 @@ static auto PerformBuiltinIntComparison(Context& context,
 
   return MakeConstantResult(
       context,
-      SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::FromBool(result)},
+      SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
       Phase::Template);
 }
 

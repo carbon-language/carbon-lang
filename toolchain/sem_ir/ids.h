@@ -266,7 +266,7 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
   static const BoolValue True;
 
   // Returns the `BoolValue` corresponding to `b`.
-  static constexpr auto FromBool(bool b) -> BoolValue {
+  static constexpr auto From(bool b) -> BoolValue {
     return b ? True : False;
   }
 
