@@ -191,60 +191,93 @@ auto CheckFunctionTypeMatches(Context& context,
                      context.functions().Get(prev_function_id), substitutions);
 }
 
+// Checks to see if a structurally valid redeclaration is allowed in context.
+// These all still merge.
+static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
+                                 SemIR::Function& new_function,
+                                 bool new_is_definition,
+                                 SemIR::Function& prev_function,
+                                 bool prev_is_import) -> void {
+  CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
+  if (prev_is_import) {
+    // TODO: Allow non-extern declarations in the same library.
+    if (!new_function.is_extern && !prev_function.is_extern) {
+      CARBON_DIAGNOSTIC(
+          FunctionNonExternRedecl, Error,
+          "Only one library can declare function {0} without `extern`.",
+          SemIR::NameId);
+      context.emitter()
+          .Build(node_id, FunctionNonExternRedecl, prev_function.name_id)
+          .Note(prev_function.decl_id, FunctionPreviousDecl)
+          .Emit();
+      return;
+    }
+  } else {
+    if (!new_is_definition) {
+      CARBON_DIAGNOSTIC(FunctionRedecl, Error,
+                        "Redundant redeclaration of function {0}.",
+                        SemIR::NameId);
+      context.emitter()
+          .Build(node_id, FunctionRedecl, prev_function.name_id)
+          .Note(prev_function.decl_id, FunctionPreviousDecl)
+          .Emit();
+      return;
+    }
+    if (prev_function.definition_id.is_valid()) {
+      CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
+                        "Redefinition of function {0}.", SemIR::NameId);
+      CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
+                        "Previously defined here.");
+      context.emitter()
+          .Build(node_id, FunctionRedefinition, prev_function.name_id)
+          .Note(prev_function.definition_id, FunctionPreviousDefinition)
+          .Emit();
+      return;
+    }
+    // `extern` definitions are prevented in handle_function.cpp; this is only
+    // checking for a non-`extern` definition after an `extern` declaration.
+    if (prev_function.is_extern) {
+      CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
+                        "Redeclaring `extern` function `{0}` as non-`extern`.",
+                        SemIR::NameId);
+      CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
+                        "Previously declared `extern` here.");
+      context.emitter()
+          .Build(node_id, FunctionDefiningExtern, prev_function.name_id)
+          .Note(prev_function.decl_id, FunctionPreviousExternDecl)
+          .Emit();
+      return;
+    }
+  }
+}
+
 // TODO: Detect conflicting cross-file declarations, as well as uses of imported
 // declarations followed by a redeclaration.
 auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
-                         SemIR::Function& new_function,
-                         SemIR::FunctionId prev_function_id, bool is_definition)
-    -> bool {
+                         SemIR::Function& new_function, bool new_is_definition,
+                         SemIR::FunctionId prev_function_id,
+                         bool prev_is_import) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
   if (!CheckRedecl(context, new_function, prev_function, {})) {
     return false;
   }
 
-  if (!is_definition) {
-    CARBON_DIAGNOSTIC(FunctionRedecl, Error,
-                      "Redundant redeclaration of function {0}.",
-                      SemIR::NameId);
-    CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
-    context.emitter()
-        .Build(node_id, FunctionRedecl, prev_function.name_id)
-        .Note(prev_function.decl_id, FunctionPreviousDecl)
-        .Emit();
-    // The diagnostic doesn't prevent a merge.
-    return true;
-  } else if (prev_function.definition_id.is_valid()) {
-    CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                      "Redefinition of function {0}.", SemIR::NameId);
-    CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                      "Previously defined here.");
-    context.emitter()
-        .Build(node_id, FunctionRedefinition, prev_function.name_id)
-        .Note(prev_function.definition_id, FunctionPreviousDefinition)
-        .Emit();
-    // The second definition will be unused as a consequence of the error.
-    return true;
-  } else if (prev_function.is_extern) {
-    CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
-                      "Cannot define `extern` function `{0}`.", SemIR::NameId);
-    CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
-                      "Previously declared `extern` here.");
-    context.emitter()
-        .Build(node_id, FunctionDefiningExtern, prev_function.name_id)
-        .Note(prev_function.decl_id, FunctionPreviousExternDecl)
-        .Emit();
-    // The diagnostic doesn't prevent a merge.
-    return true;
-  }
+  CheckIsAllowedRedecl(context, node_id, new_function, new_is_definition,
+                       prev_function, prev_is_import);
 
-  // Track the signature from the definition, so that IDs in the body
-  // match IDs in the signature.
-  prev_function.definition_id = new_function.definition_id;
-  prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
-  prev_function.param_refs_id = new_function.param_refs_id;
-  prev_function.return_type_id = new_function.return_type_id;
-  prev_function.return_slot_id = new_function.return_slot_id;
+  if (new_is_definition) {
+    // Track the signature from the definition, so that IDs in the body
+    // match IDs in the signature.
+    prev_function.definition_id = new_function.definition_id;
+    prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
+    prev_function.param_refs_id = new_function.param_refs_id;
+    prev_function.return_type_id = new_function.return_type_id;
+    prev_function.return_slot_id = new_function.return_slot_id;
+  }
+  if (!new_function.is_extern) {
+    prev_function.is_extern = false;
+  }
   return true;
 }
 

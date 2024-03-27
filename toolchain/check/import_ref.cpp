@@ -707,8 +707,11 @@ class ImportRefResolver {
              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
          .return_type_id = new_return_type_id,
          .return_slot_id = new_return_slot,
+         .is_extern = function.is_extern,
          .builtin_kind = function.builtin_kind});
     // Write the function ID into the FunctionDecl.
+    // TODO: The Invalid NodeId means it's hard to associate diagnostics. We
+    // should replace this.
     context_.ReplaceInstBeforeConstantUse(
         function_decl_id, {Parse::NodeId::Invalid, function_decl});
     return {context_.constant_values().Get(function_decl_id)};
