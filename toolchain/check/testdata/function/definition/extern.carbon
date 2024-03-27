@@ -19,7 +19,7 @@ extern fn F() {}
 library "def_for_extern_decl" api;
 
 extern fn F();
-// CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Cannot define `extern` function `F`.
+// CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaring `extern` function `F` as non-`extern`.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE-4]]:1: Previously declared `extern` here.

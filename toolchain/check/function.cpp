@@ -234,9 +234,11 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
           .Emit();
       return;
     }
-    if (new_is_definition && prev_function.is_extern) {
+    // `extern` definitions are prevented in handle_function.cpp; this is only
+    // checking for a non-`extern` definition after an `extern` declaration.
+    if (prev_function.is_extern) {
       CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
-                        "Cannot define `extern` function `{0}`.",
+                        "Redeclaring `extern` function `{0}` as non-`extern`.",
                         SemIR::NameId);
       CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
                         "Previously declared `extern` here.");
