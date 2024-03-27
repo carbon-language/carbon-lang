@@ -265,6 +265,11 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
   static const BoolValue False;
   static const BoolValue True;
 
+  // Returns the `BoolValue` corresponding to `b`.
+  static constexpr auto FromBool(bool b) -> BoolValue {
+    return b ? True : False;
+  }
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     if (*this == False) {

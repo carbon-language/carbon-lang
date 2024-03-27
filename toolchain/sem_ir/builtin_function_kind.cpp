@@ -50,19 +50,24 @@ struct TypeParam {
   }
 };
 
-// Constraint that requires the type to be an integer type. See
-// ValidateSignature for details.
-struct AnyInt {
+// Constraint that a type is a specific builtin. See ValidateSignature for
+// details.
+template <const InstId& BuiltinId>
+struct BuiltinType {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
-    if (sem_ir.types().GetInstId(type_id) == InstId::BuiltinIntType) {
-      return true;
-    }
-    // TODO: Support iN for all N, and the Core.BigInt type we use to implement
-    // for integer literals.
-    return false;
+    return sem_ir.types().GetInstId(type_id) == BuiltinId;
   }
 };
+
+// Constraint that a type is `bool`.
+using Bool = BuiltinType<InstId::BuiltinBoolType>;
+
+// Constraint that requires the type to be an integer type.
+//
+// TODO: This only matches i32 for now. Support iN for all N, and the
+// Core.BigInt type we use to implement for integer literals.
+using AnyInt = BuiltinType<InstId::BuiltinIntType>;
 }  // namespace
 
 // Validates that this builtin has a signature matching the specified signature.
@@ -123,9 +128,37 @@ using IntT = TypeParam<0, AnyInt>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
+// "int.negate": integer negation.
+constexpr BuiltinInfo IntNegate = {"int.negate",
+                                   ValidateSignature<auto(IntT)->IntT>};
+
 // "int.add": integer addition.
 constexpr BuiltinInfo IntAdd = {"int.add",
                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.sub": integer subtraction.
+constexpr BuiltinInfo IntSub = {"int.sub",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.mul": integer multiplication.
+constexpr BuiltinInfo IntMul = {"int.mul",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.div": integer division.
+constexpr BuiltinInfo IntDiv = {"int.div",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.mod": integer modulo.
+constexpr BuiltinInfo IntMod = {"int.mod",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.eq": integer equality comparison.
+constexpr BuiltinInfo IntEq = {"int.eq",
+                               ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "int.neq": integer non-equality comparison.
+constexpr BuiltinInfo IntNeq = {"int.neq",
+                                ValidateSignature<auto(IntT, IntT)->Bool>};
 
 }  // namespace BuiltinFunctionInfo
 
