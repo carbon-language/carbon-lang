@@ -172,17 +172,69 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> void {
+  constexpr bool SignedOverflowIsUB = false;
+
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "No callee in function call.";
 
+    case SemIR::BuiltinFunctionKind::IntNegate: {
+      // Lower `-x` as `0 - x`.
+      auto* operand = context.GetValue(arg_ids[0]);
+      context.SetLocal(inst_id,
+                       context.builder().CreateSub(
+                           llvm::ConstantInt::getNullValue(operand->getType()),
+                           operand, "neg",
+                           /*HasNUW=*/false,
+                           /*HasNSW=*/SignedOverflowIsUB));
+      return;
+    }
     case SemIR::BuiltinFunctionKind::IntAdd: {
-      constexpr bool SignedOverflowIsUB = false;
       context.SetLocal(inst_id, context.builder().CreateAdd(
                                     context.GetValue(arg_ids[0]),
                                     context.GetValue(arg_ids[1]), "add",
                                     /*HasNUW=*/false,
                                     /*HasNSW=*/SignedOverflowIsUB));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntSub: {
+      context.SetLocal(inst_id, context.builder().CreateSub(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "sub",
+                                    /*HasNUW=*/false,
+                                    /*HasNSW=*/SignedOverflowIsUB));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntMul: {
+      context.SetLocal(inst_id, context.builder().CreateMul(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "mul",
+                                    /*HasNUW=*/false,
+                                    /*HasNSW=*/SignedOverflowIsUB));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntDiv: {
+      context.SetLocal(inst_id, context.builder().CreateSDiv(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "div"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntMod: {
+      context.SetLocal(inst_id, context.builder().CreateSRem(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "rem"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntEq: {
+      context.SetLocal(inst_id, context.builder().CreateICmpEQ(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "eq"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntNeq: {
+      context.SetLocal(inst_id, context.builder().CreateICmpNE(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "neq"));
       return;
     }
   }

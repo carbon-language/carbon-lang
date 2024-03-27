@@ -286,8 +286,134 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   return context.constant_values().Get(elements[index_val.getZExtValue()]);
 }
 
+// Issues a diagnostic for a compile-time division by zero.
+static auto DiagnoseDivisionByZero(Context& context, SemIRLocation loc)
+    -> void {
+  CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
+  context.emitter().Emit(loc, CompileTimeDivisionByZero);
+}
+
+// Performs a builtin unary integer -> integer operation.
+static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
+                                     SemIR::BuiltinFunctionKind builtin_kind,
+                                     SemIR::InstId arg_id)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(builtin_kind == SemIR::BuiltinFunctionKind::IntNegate)
+      << "Unexpected builtin kind";
+
+  auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
+  auto op_val = context.ints().Get(op.int_id);
+
+  if (op_val.isMinSignedValue()) {
+    CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
+                      "Integer overflow in negation of {0}.", llvm::APSInt);
+    context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
+                           llvm::APSInt(op_val, false));
+  }
+  op_val.negate();
+
+  auto result = context.ints().Add(op_val);
+  return MakeConstantResult(context, SemIR::IntLiteral{op.type_id, result},
+                            Phase::Template);
+}
+
+// Performs a builtin binary integer -> integer operation.
+static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
+                                      SemIR::BuiltinFunctionKind builtin_kind,
+                                      SemIR::InstId lhs_id,
+                                      SemIR::InstId rhs_id)
+    -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::IntLiteral>(rhs_id);
+  auto lhs_val = context.ints().Get(lhs.int_id);
+  auto rhs_val = context.ints().Get(rhs.int_id);
+
+  bool overflow = false;
+  llvm::APInt result_val;
+  llvm::StringLiteral op_str = "<error>";
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntAdd:
+      result_val = lhs_val.sadd_ov(rhs_val, overflow);
+      op_str = "+";
+      break;
+    case SemIR::BuiltinFunctionKind::IntSub:
+      result_val = lhs_val.ssub_ov(rhs_val, overflow);
+      op_str = "-";
+      break;
+    case SemIR::BuiltinFunctionKind::IntMul:
+      result_val = lhs_val.smul_ov(rhs_val, overflow);
+      op_str = "*";
+      break;
+    case SemIR::BuiltinFunctionKind::IntDiv:
+      if (rhs_val.isZero()) {
+        DiagnoseDivisionByZero(context, loc);
+        return SemIR::ConstantId::Error;
+      }
+      result_val = lhs_val.sdiv_ov(rhs_val, overflow);
+      op_str = "/";
+      break;
+    case SemIR::BuiltinFunctionKind::IntMod:
+      if (rhs_val.isZero()) {
+        DiagnoseDivisionByZero(context, loc);
+        return SemIR::ConstantId::Error;
+      }
+      result_val = lhs_val.srem(rhs_val);
+      // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
+      // <signed min> % -1 overflows because <signed min> / -1 overflows.
+      overflow = (lhs_val.isMinSignedValue() && rhs_val.isAllOnes());
+      op_str = "%";
+      break;
+
+    default:
+      CARBON_FATAL() << "Unexpected operation kind.";
+  }
+
+  if (overflow) {
+    CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
+                      "Integer overflow in calculation {0} {1} {2}.",
+                      llvm::APSInt, llvm::StringLiteral, llvm::APSInt);
+    context.emitter().Emit(loc, CompileTimeIntegerOverflow,
+                           llvm::APSInt(lhs_val, false), op_str,
+                           llvm::APSInt(rhs_val, false));
+  }
+
+  auto result = context.ints().Add(result_val);
+  return MakeConstantResult(context, SemIR::IntLiteral{lhs.type_id, result},
+                            Phase::Template);
+}
+
+// Performs a builtin integer comparison.
+static auto PerformBuiltinIntComparison(Context& context,
+                                        SemIR::BuiltinFunctionKind builtin_kind,
+                                        SemIR::InstId lhs_id,
+                                        SemIR::InstId rhs_id,
+                                        SemIR::TypeId bool_type_id)
+    -> SemIR::ConstantId {
+  auto lhs_val = context.ints().Get(
+      context.insts().GetAs<SemIR::IntLiteral>(lhs_id).int_id);
+  auto rhs_val = context.ints().Get(
+      context.insts().GetAs<SemIR::IntLiteral>(rhs_id).int_id);
+
+  bool result;
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntEq:
+      result = (lhs_val == rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::IntNeq:
+      result = (lhs_val != rhs_val);
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected operation kind.";
+  }
+
+  return MakeConstantResult(
+      context,
+      SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::FromBool(result)},
+      Phase::Template);
+}
+
 static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
-                               SemIR::Call /*call*/,
+                               SemIR::Call call,
                                SemIR::BuiltinFunctionKind builtin_kind,
                                llvm::ArrayRef<SemIR::InstId> arg_ids,
                                Phase phase) -> SemIR::ConstantId {
@@ -295,28 +421,38 @@ static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "Not a builtin function.";
 
-    case SemIR::BuiltinFunctionKind::IntAdd: {
+    // Unary integer -> integer operations.
+    case SemIR::BuiltinFunctionKind::IntNegate: {
+      // TODO: Complement.
       if (phase != Phase::Template) {
         break;
       }
-      auto lhs = context.insts().GetAs<SemIR::IntLiteral>(arg_ids[0]);
-      auto rhs = context.insts().GetAs<SemIR::IntLiteral>(arg_ids[1]);
-      // TODO: Integer values should be stored in the correct bit width for
-      // their types. For now we assume i32.
-      auto lhs_val = context.ints().Get(lhs.int_id).sextOrTrunc(32);
-      auto rhs_val = context.ints().Get(rhs.int_id).sextOrTrunc(32);
-      bool overflow = false;
-      auto result = context.ints().Add(lhs_val.sadd_ov(rhs_val, overflow));
-      if (overflow) {
-        CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
-                          "Integer overflow in calculation {0} + {1}.",
-                          llvm::APSInt, llvm::APSInt);
-        context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                               llvm::APSInt(lhs_val, false),
-                               llvm::APSInt(rhs_val, false));
+      return PerformBuiltinUnaryIntOp(context, loc, builtin_kind, arg_ids[0]);
+    }
+
+    // Homogeneous binary integer -> integer operations.
+    case SemIR::BuiltinFunctionKind::IntAdd:
+    case SemIR::BuiltinFunctionKind::IntSub:
+    case SemIR::BuiltinFunctionKind::IntMul:
+    case SemIR::BuiltinFunctionKind::IntDiv:
+    case SemIR::BuiltinFunctionKind::IntMod: {
+      // TODO: Bitwise operators.
+      if (phase != Phase::Template) {
+        break;
       }
-      return MakeConstantResult(context, SemIR::IntLiteral{lhs.type_id, result},
-                                phase);
+      return PerformBuiltinBinaryIntOp(context, loc, builtin_kind, arg_ids[0],
+                                       arg_ids[1]);
+    }
+
+    // Integer comparisons.
+    case SemIR::BuiltinFunctionKind::IntEq:
+    case SemIR::BuiltinFunctionKind::IntNeq: {
+      // TODO: Relational comparisons.
+      if (phase != Phase::Template) {
+        break;
+      }
+      return PerformBuiltinIntComparison(context, builtin_kind, arg_ids[0],
+                                         arg_ids[1], call.type_id);
     }
   }
 
@@ -383,9 +519,17 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             // TODO: We should check that the size of the resulting array type
             // fits in 64 bits, not just that the bound does. Should we use a
             // 32-bit limit for 32-bit targets?
-            // TODO: Also check for a negative bound, once that's something we
-            // can represent.
             const auto& bound_val = context.ints().Get(int_bound->int_id);
+            if (bound_val.isNegative()) {
+              // TODO: Skip this test if the bound type is unsigned.
+              CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
+                                "Array bound of {0} is negative.",
+                                llvm::APSInt);
+              context.emitter().Emit(
+                  bound_id, ArrayBoundNegative,
+                  llvm::APSInt(bound_val, /*isUnsigned=*/false));
+              return false;
+            }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                                 "Array bound of {0} is too large.",
