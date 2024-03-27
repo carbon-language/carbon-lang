@@ -10,39 +10,18 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
-
-// Diagnostic locations produced by checking may be either a parse node
-// directly, or an inst ID which is later translated to a parse node.
-struct SemIRLocation {
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeLocation node_location)
-      : node_location(node_location), is_inst_id(false) {}
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeId node_id)
-      : SemIRLocation(Parse::NodeLocation(node_id)) {}
-
-  union {
-    SemIR::InstId inst_id;
-    Parse::NodeLocation node_location;
-  };
-
-  bool is_inst_id;
-};
 
 // Context and shared functionality for semantics handlers.
 class Context {

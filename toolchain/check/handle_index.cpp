@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "llvm/ADT/APSInt.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/inst.h"
@@ -25,10 +24,10 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(
         TupleIndexOutOfBounds, Error,
-        "Tuple element index `{0}` is past the end of type `{1}`.",
-        llvm::APSInt, SemIR::TypeId);
+        "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
+        SemIR::TypeId);
     context.emitter().Emit(node_id, TupleIndexOutOfBounds,
-                           llvm::APSInt(index_val, /*isUnsigned=*/true),
+                           TypedInt{index_inst.type_id, index_val},
                            operand_inst.type_id());
     return nullptr;
   }

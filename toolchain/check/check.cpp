@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
@@ -25,6 +26,8 @@ namespace Carbon::Check {
 #include "toolchain/parse/node_kind.def"
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
+//
+// TODO: Move this to diagnostic_helpers.cpp.
 class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
  public:
   explicit SemIRDiagnosticConverter(
@@ -78,6 +81,12 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
     }
     if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
       return sem_ir_->StringifyType(*type_id);
+    }
+    if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
+      // TODO: Once unsigned integers are supported, compute the signedness
+      // here.
+      constexpr bool IsUnsigned = false;
+      return llvm::APSInt(typed_int->value, IsUnsigned);
     }
     return DiagnosticConverter<SemIRLocation>::ConvertArg(arg);
   }
