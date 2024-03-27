@@ -64,6 +64,7 @@ cc_library(
         "convert.h",
         "decl_name_stack.h",
         "decl_state.h",
+        "diagnostic_helpers.h",
         "eval.h",
         "import_ref.h",
         "inst_block_stack.h",

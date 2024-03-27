@@ -4,9 +4,9 @@
 
 #include "toolchain/check/eval.h"
 
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -259,9 +259,9 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
           context.ints().Get(bound->int_id).ule(index_val.getZExtValue())) {
         CARBON_DIAGNOSTIC(ArrayIndexOutOfBounds, Error,
                           "Array index `{0}` is past the end of type `{1}`.",
-                          llvm::APSInt, SemIR::TypeId);
+                          TypedInt, SemIR::TypeId);
         context.emitter().Emit(index_inst.index_id, ArrayIndexOutOfBounds,
-                               llvm::APSInt(index_val, /*isUnsigned=*/true),
+                               TypedInt{index->type_id, index_val},
                                aggregate_type_id);
         return SemIR::ConstantId::Error;
       }
@@ -306,9 +306,9 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
 
   if (op_val.isMinSignedValue()) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
-                      "Integer overflow in negation of {0}.", llvm::APSInt);
+                      "Integer overflow in negation of {0}.", TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
-                           llvm::APSInt(op_val, false));
+                           TypedInt{op.type_id, op_val});
   }
   op_val.negate();
 
@@ -370,11 +370,11 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
 
   if (overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
-                      "Integer overflow in calculation {0} {1} {2}.",
-                      llvm::APSInt, llvm::StringLiteral, llvm::APSInt);
+                      "Integer overflow in calculation {0} {1} {2}.", TypedInt,
+                      llvm::StringLiteral, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
-                           llvm::APSInt(lhs_val, false), op_str,
-                           llvm::APSInt(rhs_val, false));
+                           TypedInt{lhs.type_id, lhs_val}, op_str,
+                           TypedInt{rhs.type_id, rhs_val});
   }
 
   auto result = context.ints().Add(result_val);
@@ -523,18 +523,16 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             if (bound_val.isNegative()) {
               // TODO: Skip this test if the bound type is unsigned.
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
-                                "Array bound of {0} is negative.",
-                                llvm::APSInt);
-              context.emitter().Emit(
-                  bound_id, ArrayBoundNegative,
-                  llvm::APSInt(bound_val, /*isUnsigned=*/false));
+                                "Array bound of {0} is negative.", TypedInt);
+              context.emitter().Emit(bound_id, ArrayBoundNegative,
+                                     TypedInt{int_bound->type_id, bound_val});
               return false;
             }
             if (bound_val.getActiveBits() > 64) {
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                                "Array bound of {0} is too large.",
-                                llvm::APInt);
-              context.emitter().Emit(bound_id, ArrayBoundTooLarge, bound_val);
+                                "Array bound of {0} is too large.", TypedInt);
+              context.emitter().Emit(bound_id, ArrayBoundTooLarge,
+                                     TypedInt{int_bound->type_id, bound_val});
               return false;
             }
             return true;
