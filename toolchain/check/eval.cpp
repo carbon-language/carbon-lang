@@ -304,7 +304,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
   auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
   auto op_val = context.ints().Get(op.int_id);
 
-  if (op_val.isMinSignedValue()) {
+  if (context.types().IsSignedInt(op.type_id) && op_val.isMinSignedValue()) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                       "Integer overflow in negation of {0}.", TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
@@ -328,20 +328,24 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
   auto lhs_val = context.ints().Get(lhs.int_id);
   auto rhs_val = context.ints().Get(rhs.int_id);
 
+  bool is_signed = context.types().IsSignedInt(lhs.type_id);
   bool overflow = false;
   llvm::APInt result_val;
   llvm::StringLiteral op_str = "<error>";
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntAdd:
-      result_val = lhs_val.sadd_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.sadd_ov(rhs_val, overflow) : lhs_val + rhs_val;
       op_str = "+";
       break;
     case SemIR::BuiltinFunctionKind::IntSub:
-      result_val = lhs_val.ssub_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.ssub_ov(rhs_val, overflow) : lhs_val - rhs_val;
       op_str = "-";
       break;
     case SemIR::BuiltinFunctionKind::IntMul:
-      result_val = lhs_val.smul_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.smul_ov(rhs_val, overflow) : lhs_val * rhs_val;
       op_str = "*";
       break;
     case SemIR::BuiltinFunctionKind::IntDiv:
@@ -349,7 +353,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
         DiagnoseDivisionByZero(context, loc);
         return SemIR::ConstantId::Error;
       }
-      result_val = lhs_val.sdiv_ov(rhs_val, overflow);
+      result_val = is_signed ? lhs_val.sdiv_ov(rhs_val, overflow)
+                             : lhs_val.udiv(rhs_val);
       op_str = "/";
       break;
     case SemIR::BuiltinFunctionKind::IntMod:
@@ -357,10 +362,10 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
         DiagnoseDivisionByZero(context, loc);
         return SemIR::ConstantId::Error;
       }
-      result_val = lhs_val.srem(rhs_val);
+      result_val = is_signed ? lhs_val.srem(rhs_val) : lhs_val.urem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
-      overflow = (lhs_val.isMinSignedValue() && rhs_val.isAllOnes());
+      overflow = is_signed && lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
       op_str = "%";
       break;
 
@@ -520,8 +525,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             // fits in 64 bits, not just that the bound does. Should we use a
             // 32-bit limit for 32-bit targets?
             const auto& bound_val = context.ints().Get(int_bound->int_id);
-            if (bound_val.isNegative()) {
-              // TODO: Skip this test if the bound type is unsigned.
+            if (context.types().IsSignedInt(int_bound->type_id) &&
+                bound_val.isNegative()) {
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                                 "Array bound of {0} is negative.", TypedInt);
               context.emitter().Emit(bound_id, ArrayBoundNegative,

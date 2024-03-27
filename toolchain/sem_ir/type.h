@@ -83,6 +83,11 @@ class TypeStore : public ValueStore<TypeId> {
     return GetValueRepr(type_id).kind != ValueRepr::Unknown;
   }
 
+  // Determines whether the given type is a signed integer type.
+  auto IsSignedInt(TypeId int_type_id) const -> bool {
+    return GetInstId(int_type_id) == InstId::BuiltinIntType;
+  }
+
  private:
   InstStore* insts_;
 };

@@ -15,7 +15,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 4294967295 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal -1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

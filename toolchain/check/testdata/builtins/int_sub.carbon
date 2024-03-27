@@ -91,9 +91,9 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 2147483647 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2147483649 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal -2147483647 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2147483648 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal -2147483648 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
