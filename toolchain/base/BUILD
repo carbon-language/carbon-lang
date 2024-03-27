@@ -16,6 +16,14 @@ cc_library(
 )
 
 cc_library(
+    name = "kind_switch",
+    hdrs = ["kind_switch.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "pretty_stack_trace_function",
     hdrs = ["pretty_stack_trace_function.h"],
     deps = [
