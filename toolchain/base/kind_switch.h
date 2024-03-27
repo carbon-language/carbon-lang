@@ -59,9 +59,9 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
   return kind_switch_value.template As<CaseT>();
 }
 
-#define CARBON_KIND_MERGE_(Prefix, Line) Prefix##Line
-#define CARBON_KIND_LABEL_(Line) \
-  CARBON_KIND_MERGE_(carbon_internal_kind_case_, Line)
+#define CARBON_INTERNAL_KIND_MERGE(Prefix, Line) Prefix##Line
+#define CARBON_INTERNAL_KIND_LABEL(Line) \
+  CARBON_INTERNAL_KIND_MERGE(carbon_internal_kind_case_, Line)
 
 }  // namespace Carbon::Internal::Kind
 
@@ -88,7 +88,7 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
                 decltype([]([[maybe_unused]] typed_variable_declaration) {})>( \
                 carbon_internal_kind_switch_value);                            \
             false) {}                                                          \
-  else [[maybe_unused]] CARBON_KIND_LABEL_(__LINE__)
+  else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
 // NOLINTEND(bugprone-macro-parentheses)
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
