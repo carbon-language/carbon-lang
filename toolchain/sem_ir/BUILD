@@ -127,6 +127,7 @@ cc_library(
         ":ids",
         ":inst_kind",
         "//common:ostream",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",

@@ -9,6 +9,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
@@ -446,7 +447,7 @@ class InstNamer {
         continue;
       }
 
-      auto inst = sem_ir_.insts().Get(inst_id);
+      auto untyped_inst = sem_ir_.insts().Get(inst_id);
       auto add_inst_name = [&](std::string name) {
         insts[inst_id.index] = {
             scope_id, scope.insts.AllocateName(
@@ -457,59 +458,55 @@ class InstNamer {
             (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
       };
 
-      if (auto branch = inst.TryAs<AnyBranch>()) {
+      if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
         AddBlockLabel(scope_id, sem_ir_.insts().GetNodeId(inst_id), *branch);
       }
 
-      switch (inst.kind()) {
-        case AddrPattern::Kind: {
+      CARBON_KIND_SWITCH(untyped_inst) {
+        case CARBON_KIND(AddrPattern inst): {
           // TODO: We need to assign names to parameters that appear in
           // function declarations, which may be nested within a pattern. For
           // now, just look through `addr`, but we should find a better way to
           // visit parameters.
-          CollectNamesInBlock(scope_id, inst.As<AddrPattern>().inner_id);
+          CollectNamesInBlock(scope_id, inst.inner_id);
           break;
         }
-        case AssociatedConstantDecl::Kind: {
-          add_inst_name_id(inst.As<AssociatedConstantDecl>().name_id);
+        case CARBON_KIND(AssociatedConstantDecl inst): {
+          add_inst_name_id(inst.name_id);
           continue;
         }
         case BindAlias::Kind:
         case BindName::Kind:
         case BindSymbolicName::Kind: {
-          add_inst_name_id(sem_ir_.bind_names()
-                               .Get(inst.As<AnyBindName>().bind_name_id)
-                               .name_id);
+          auto inst = untyped_inst.As<AnyBindName>();
+          add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
           continue;
         }
-        case ClassDecl::Kind: {
-          add_inst_name_id(
-              sem_ir_.classes().Get(inst.As<ClassDecl>().class_id).name_id,
-              ".decl");
-          CollectNamesInBlock(scope_id, inst.As<ClassDecl>().decl_block_id);
+        case CARBON_KIND(ClassDecl inst): {
+          add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id,
+                           ".decl");
+          CollectNamesInBlock(scope_id, inst.decl_block_id);
           continue;
         }
-        case ClassType::Kind: {
-          add_inst_name_id(
-              sem_ir_.classes().Get(inst.As<ClassType>().class_id).name_id);
+        case CARBON_KIND(ClassType inst): {
+          add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
           continue;
         }
-        case FunctionDecl::Kind: {
-          add_inst_name_id(sem_ir_.functions()
-                               .Get(inst.As<FunctionDecl>().function_id)
-                               .name_id);
-          CollectNamesInBlock(scope_id, inst.As<FunctionDecl>().decl_block_id);
+        case CARBON_KIND(FunctionDecl inst): {
+          add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
+          CollectNamesInBlock(scope_id, inst.decl_block_id);
           continue;
         }
-        case ImplDecl::Kind: {
-          CollectNamesInBlock(scope_id, inst.As<ImplDecl>().decl_block_id);
+        case CARBON_KIND(ImplDecl inst): {
+          CollectNamesInBlock(scope_id, inst.decl_block_id);
           break;
         }
         case ImportRefUnused::Kind:
         case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
-          // When building import refs, we frequently add instructions without a
-          // block. Constants that refer to them need to be separately named.
+          // When building import refs, we frequently add instructions without
+          // a block. Constants that refer to them need to be separately
+          // named.
           auto const_id = sem_ir_.constant_values().Get(inst_id);
           if (const_id.is_valid() && const_id.is_template() &&
               !insts[const_id.inst_id().index].second) {
@@ -517,35 +514,32 @@ class InstNamer {
           }
           continue;
         }
-        case InterfaceDecl::Kind: {
-          add_inst_name_id(sem_ir_.interfaces()
-                               .Get(inst.As<InterfaceDecl>().interface_id)
-                               .name_id,
+        case CARBON_KIND(InterfaceDecl inst): {
+          add_inst_name_id(sem_ir_.interfaces().Get(inst.interface_id).name_id,
                            ".decl");
-          CollectNamesInBlock(scope_id, inst.As<InterfaceDecl>().decl_block_id);
+          CollectNamesInBlock(scope_id, inst.decl_block_id);
           continue;
         }
-        case NameRef::Kind: {
-          add_inst_name_id(inst.As<NameRef>().name_id, ".ref");
+        case CARBON_KIND(NameRef inst): {
+          add_inst_name_id(inst.name_id, ".ref");
           continue;
         }
         // The namespace is specified here due to the name conflict.
-        case SemIR::Namespace::Kind: {
-          add_inst_name_id(sem_ir_.name_scopes()
-                               .Get(inst.As<SemIR::Namespace>().name_scope_id)
-                               .name_id);
+        case CARBON_KIND(SemIR::Namespace inst): {
+          add_inst_name_id(
+              sem_ir_.name_scopes().Get(inst.name_scope_id).name_id);
           continue;
         }
-        case Param::Kind: {
-          add_inst_name_id(inst.As<Param>().name_id);
+        case CARBON_KIND(Param inst): {
+          add_inst_name_id(inst.name_id);
           continue;
         }
-        case SpliceBlock::Kind: {
-          CollectNamesInBlock(scope_id, inst.As<SpliceBlock>().block_id);
+        case CARBON_KIND(SpliceBlock inst): {
+          CollectNamesInBlock(scope_id, inst.block_id);
           break;
         }
-        case VarStorage::Kind: {
-          add_inst_name_id(inst.As<VarStorage>().name_id, ".var");
+        case CARBON_KIND(VarStorage inst): {
+          add_inst_name_id(inst.name_id, ".var");
           continue;
         }
         default: {
@@ -554,7 +548,7 @@ class InstNamer {
       }
 
       // Sequentially number all remaining values.
-      if (inst.kind().value_kind() != InstValueKind::None) {
+      if (untyped_inst.kind().value_kind() != InstValueKind::None) {
         add_inst_name("");
       }
     }
