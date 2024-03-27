@@ -6,6 +6,7 @@
 
 #include "common/check.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -242,15 +243,11 @@ auto ImportLibraryFromCurrentPackage(Context& context,
     } else {
       // Leave a placeholder that the inst comes from the other IR.
       auto target_id = context.AddImportRef(ir_id, import_inst_id);
-      // TODO: When importing from other packages, the scope's names should
-      // be changed to allow for ambiguous names. When importing from the
-      // current package, as is currently being done, we should issue a
-      // diagnostic on conflicts.
       auto [it, success] = context.name_scopes()
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});
       if (!success) {
-        context.DiagnoseDuplicateName(target_id, it->second);
+        MergeImportRef(context, target_id, it->second);
       }
     }
   }

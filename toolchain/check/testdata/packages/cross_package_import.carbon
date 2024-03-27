@@ -199,7 +199,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other_fn_conflict.carbon
 // CHECK:STDOUT:
@@ -300,7 +300,7 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT: extern fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:

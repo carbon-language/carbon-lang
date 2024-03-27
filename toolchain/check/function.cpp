@@ -193,7 +193,7 @@ auto CheckFunctionTypeMatches(Context& context,
 
 // Checks to see if a structurally valid redeclaration is allowed in context.
 // These all still merge.
-static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
+static auto CheckIsAllowedRedecl(Context& context, SemIR::LocationId loc_id,
                                  SemIR::Function& new_function,
                                  bool new_is_definition,
                                  SemIR::Function& prev_function,
@@ -207,7 +207,7 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
           "Only one library can declare function {0} without `extern`.",
           SemIR::NameId);
       context.emitter()
-          .Build(node_id, FunctionNonExternRedecl, prev_function.name_id)
+          .Build(loc_id, FunctionNonExternRedecl, prev_function.name_id)
           .Note(prev_function.decl_id, FunctionPreviousDecl)
           .Emit();
       return;
@@ -218,7 +218,7 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
                         "Redundant redeclaration of function {0}.",
                         SemIR::NameId);
       context.emitter()
-          .Build(node_id, FunctionRedecl, prev_function.name_id)
+          .Build(loc_id, FunctionRedecl, prev_function.name_id)
           .Note(prev_function.decl_id, FunctionPreviousDecl)
           .Emit();
       return;
@@ -229,7 +229,7 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
       CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
                         "Previously defined here.");
       context.emitter()
-          .Build(node_id, FunctionRedefinition, prev_function.name_id)
+          .Build(loc_id, FunctionRedefinition, prev_function.name_id)
           .Note(prev_function.definition_id, FunctionPreviousDefinition)
           .Emit();
       return;
@@ -243,7 +243,7 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
       CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
                         "Previously declared `extern` here.");
       context.emitter()
-          .Build(node_id, FunctionDefiningExtern, prev_function.name_id)
+          .Build(loc_id, FunctionDefiningExtern, prev_function.name_id)
           .Note(prev_function.decl_id, FunctionPreviousExternDecl)
           .Emit();
       return;
@@ -253,7 +253,7 @@ static auto CheckIsAllowedRedecl(Context& context, Parse::NodeId node_id,
 
 // TODO: Detect conflicting cross-file declarations, as well as uses of imported
 // declarations followed by a redeclaration.
-auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
+auto MergeFunctionRedecl(Context& context, SemIR::LocationId loc_id,
                          SemIR::Function& new_function, bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
                          bool prev_is_import) -> bool {
@@ -263,7 +263,7 @@ auto MergeFunctionRedecl(Context& context, Parse::NodeId node_id,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, node_id, new_function, new_is_definition,
+  CheckIsAllowedRedecl(context, loc_id, new_function, new_is_definition,
                        prev_function, prev_is_import);
 
   if (new_is_definition) {
