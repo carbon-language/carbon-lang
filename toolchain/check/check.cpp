@@ -36,10 +36,11 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
-  auto ConvertLocation(SemIRLocation loc) const -> DiagnosticLocation override {
+  auto ConvertLocation(SemIRLocation loc, ContextFnT context_fn) const
+      -> DiagnosticLocation override {
     // Parse nodes always refer to the current IR.
     if (!loc.is_inst_id) {
-      return ConvertLocationInFile(sem_ir_, loc.node_location);
+      return ConvertLocationInFile(sem_ir_, loc.node_location, context_fn);
     }
 
     const auto* cursor_ir = sem_ir_;
@@ -48,14 +49,19 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       // If the parse node is valid, use it for the location.
       if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
           node_id.is_valid()) {
-        return ConvertLocationInFile(cursor_ir, node_id);
+        return ConvertLocationInFile(cursor_ir, node_id, context_fn);
       }
 
       // If the parse node was invalid, recurse through import references when
       // possible.
       if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
-        cursor_ir = cursor_ir->import_irs().Get(import_ref->ir_id);
+        const auto& import_ir = cursor_ir->import_irs().Get(import_ref->ir_id);
+        auto context_loc =
+            ConvertLocationInFile(cursor_ir, import_ir.node_id, context_fn);
+        CARBON_DIAGNOSTIC(InImport, Note, "In import.");
+        context_fn(context_loc, InImport);
+        cursor_ir = import_ir.sem_ir;
         cursor_inst_id = import_ref->inst_id;
         continue;
       }
@@ -71,7 +77,8 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       }
 
       // Invalid parse node but not an import; just nothing to point at.
-      return ConvertLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      return ConvertLocationInFile(cursor_ir, Parse::NodeId::Invalid,
+                                   context_fn);
     }
   }
 
@@ -91,11 +98,12 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
 
  private:
   auto ConvertLocationInFile(const SemIR::File* sem_ir,
-                             Parse::NodeLocation node_location) const
+                             Parse::NodeLocation node_location,
+                             ContextFnT context_fn) const
       -> DiagnosticLocation {
     auto it = node_converters_->find(sem_ir);
     CARBON_CHECK(it != node_converters_->end());
-    return it->second->ConvertLocation(node_location);
+    return it->second->ConvertLocation(node_location, context_fn);
   }
 
   const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
@@ -191,7 +199,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
       ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import_sem_ir);
+                                      import.names.node_id, import_sem_ir);
       error_in_import |= import_sem_ir.name_scopes()
                              .Get(SemIR::NameScopeId::Package)
                              .has_error;
@@ -216,13 +224,14 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
       continue;
     }
 
-    llvm::SmallVector<const SemIR::File*> sem_irs;
+    llvm::SmallVector<SemIR::ImportIR> import_irs;
     for (auto import : package_imports.imports) {
-      sem_irs.push_back(&**import.unit_info->unit->sem_ir);
+      import_irs.push_back({.node_id = import.names.node_id,
+                            .sem_ir = &**import.unit_info->unit->sem_ir});
     }
     ImportLibrariesFromOtherPackage(context, namespace_type_id,
                                     package_imports.node_id, package_id,
-                                    sem_irs, package_imports.has_load_error);
+                                    import_irs, package_imports.has_load_error);
   }
 
   CARBON_CHECK(context.import_irs().size() == num_irs)

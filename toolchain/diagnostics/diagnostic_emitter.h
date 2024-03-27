@@ -65,8 +65,7 @@ class DiagnosticEmitter {
               Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
       CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
           << static_cast<int>(diagnostic_base.Level);
-      AddMessage(emitter_, location, diagnostic_base,
-                 {emitter_->MakeAny<Args>(args)...});
+      AddMessage(location, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
       return *this;
     }
 
@@ -89,18 +88,39 @@ class DiagnosticEmitter {
         const Internal::DiagnosticBase<Args...>& diagnostic_base,
         llvm::SmallVector<llvm::Any> args)
         : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
-      AddMessage(emitter, location, diagnostic_base, std::move(args));
+      AddMessage(location, diagnostic_base, std::move(args));
       CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
     }
 
+    // Adds a message to the diagnostic, handling conversion of the location and
+    // arguments.
     template <typename... Args>
-    auto AddMessage(DiagnosticEmitter<LocationT>* emitter, LocationT location,
+    auto AddMessage(LocationT location,
                     const Internal::DiagnosticBase<Args...>& diagnostic_base,
                     llvm::SmallVector<llvm::Any> args) -> void {
+      AddMessageWithDiagnosticLocation(
+          emitter_->converter_->ConvertLocation(
+              location,
+              [&](DiagnosticLocation location,
+                  const Internal::DiagnosticBase<>& diagnostic_base) {
+                AddMessageWithDiagnosticLocation(location, diagnostic_base,
+                                                 args);
+              }),
+          diagnostic_base, args);
+    }
+
+    // Adds a message to the diagnostic, handling conversion of the arguments. A
+    // DiagnosticLocation must be provided instead of a LocationT in order to
+    // avoid potential recursion.
+    template <typename... Args>
+    auto AddMessageWithDiagnosticLocation(
+        DiagnosticLocation location,
+        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        llvm::SmallVector<llvm::Any> args) {
       diagnostic_.messages.emplace_back(DiagnosticMessage{
           .kind = diagnostic_base.Kind,
           .level = diagnostic_base.Level,
-          .location = emitter->converter_->ConvertLocation(location),
+          .location = location,
           .format = diagnostic_base.Format,
           .format_args = std::move(args),
           .format_fn = [](const DiagnosticMessage& message) -> std::string {

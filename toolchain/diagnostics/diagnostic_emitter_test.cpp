@@ -18,7 +18,8 @@ using ::Carbon::Testing::IsSingleDiagnostic;
 using testing::ElementsAre;
 
 struct FakeDiagnosticConverter : DiagnosticConverter<int> {
-  auto ConvertLocation(int n) const -> DiagnosticLocation override {
+  auto ConvertLocation(int n, ContextFnT /*context_fn*/) const
+      -> DiagnosticLocation override {
     return {.line_number = 1, .column_number = n};
   }
 };

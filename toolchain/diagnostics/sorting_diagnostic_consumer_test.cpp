@@ -20,7 +20,7 @@ using ::testing::InSequence;
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
 
 struct FakeDiagnosticConverter : DiagnosticConverter<DiagnosticLocation> {
-  auto ConvertLocation(DiagnosticLocation loc) const
+  auto ConvertLocation(DiagnosticLocation loc, ContextFnT /*context_fn*/) const
       -> DiagnosticLocation override {
     return loc;
   }

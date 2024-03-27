@@ -15,12 +15,6 @@ fn NS.Foo() {}
 
 package Example library "fn" api;
 
-// CHECK:STDERR: fn.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn NS() {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
 fn NS() {}
 
 // --- fail_conflict.carbon
@@ -28,6 +22,18 @@ fn NS() {}
 package Example library "namespace_then_fn" api;
 
 import library "namespace";
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fn.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn NS() {}
+// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "namespace";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: namespace.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: namespace NS;
+// CHECK:STDERR: ^~~~~~~~~~~~~
 import library "fn";
 
 fn NS.Bar() {}

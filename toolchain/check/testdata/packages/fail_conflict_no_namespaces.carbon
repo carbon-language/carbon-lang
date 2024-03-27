@@ -14,12 +14,6 @@ fn Foo();
 
 package Example library "var" api;
 
-// CHECK:STDERR: var.carbon:[[@LINE+6]]:5: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: var Foo: i32;
-// CHECK:STDERR:     ^~~
-// CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn Foo();
-// CHECK:STDERR: ^~~~~~~~~
 var Foo: i32;
 
 // --- fail_conflict.carbon
@@ -27,6 +21,18 @@ var Foo: i32;
 package Example library "conflict" api;
 
 import library "fn";
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "var";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: var.carbon:4:5: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: var Foo: i32;
+// CHECK:STDERR:     ^~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn Foo();
+// CHECK:STDERR: ^~~~~~~~~
 import library "var";
 
 // CHECK:STDOUT: --- fn.carbon

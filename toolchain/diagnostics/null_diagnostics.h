@@ -11,8 +11,10 @@ namespace Carbon {
 
 template <typename LocationT>
 inline auto NullDiagnosticConverter() -> DiagnosticConverter<LocationT>& {
-  struct Converter : DiagnosticConverter<LocationT> {
-    auto ConvertLocation(LocationT /*loc*/) const
+  struct Converter : public DiagnosticConverter<LocationT> {
+    auto ConvertLocation(
+        LocationT /*loc*/,
+        DiagnosticConverter<LocationT>::ContextFnT /*context_fn*/) const
         -> DiagnosticLocation override {
       return {};
     }

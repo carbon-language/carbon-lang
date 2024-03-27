@@ -18,9 +18,12 @@ import library "a";
 
 // TODO: This should be an error until we can be clear whether `a` or `b` should
 // own the definition, as there might be a separate definition in `a`'s impl.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Foo() {}
 // CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: fail_b.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "a";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn Foo();
 // CHECK:STDERR: ^~~~~~~~~
@@ -44,7 +47,7 @@ fn Foo() {}
 // CHECK:STDOUT:     .Foo = %import_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%Foo]
-// CHECK:STDOUT:   %.loc14: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %.loc17: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
