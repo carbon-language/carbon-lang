@@ -639,7 +639,32 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     return {.success = false};
   }
 
+  // Prepare CompilationUnits before building scope exit handlers.
+  StreamDiagnosticConsumer stream_consumer(error_stream_);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  units.reserve(options.input_filenames.size());
+  for (const auto& input_filename : options.input_filenames) {
+    units.push_back(std::make_unique<CompilationUnit>(
+        this, options, &stream_consumer, input_filename));
+  }
+
+  auto on_exit = llvm::make_scope_exit([&]() {
+    // Shared values will always be printed after per-file printing.
+    if (options.dump_shared_values) {
+      for (const auto& unit : units) {
+        unit->PrintSharedValues();
+      }
+    }
+
+    // The diagnostics consumer must be flushed before compilation artifacts are
+    // destructed, because diagnostics can refer to their state. This ensures
+    // they're flushed in order of arguments, rather than order of destruction.
+    for (auto& unit : units) {
+      unit->Flush();
+    }
+  });
+
+  // Returns a RunResult object. Called whenever Compile returns.
   auto make_result = [&]() {
     RunResult result = {.success = true};
     for (const auto& unit : units) {
@@ -649,27 +674,6 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     }
     return result;
   };
-  auto flush = llvm::make_scope_exit([&]() {
-    // The diagnostics consumer must be flushed before compilation artifacts are
-    // destructed, because diagnostics can refer to their state. This ensures
-    // they're flushed in order of arguments, rather than order of destruction.
-    for (auto& unit : units) {
-      unit->Flush();
-    }
-  });
-  // Shared values will always be printed last.
-  auto dump_shared_values = llvm::make_scope_exit([&]() {
-    if (options.dump_shared_values) {
-      for (const auto& unit : units) {
-        unit->PrintSharedValues();
-      }
-    }
-  });
-  StreamDiagnosticConsumer stream_consumer(error_stream_);
-  for (const auto& input_filename : options.input_filenames) {
-    units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, input_filename));
-  }
 
   // Lex.
   for (auto& unit : units) {
