@@ -33,8 +33,8 @@ impl C as SelfNested {
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.7: C = struct_value () [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (@impl.1.%F) [template]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (@impl.1.%F) [template]
+// CHECK:STDOUT:   %.8: C = struct_value () [template]
 // CHECK:STDOUT:   %.9: type = interface_type @SelfNested [template]
 // CHECK:STDOUT:   %.10: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.11: type = struct_type {.x: Self, .y: i32} [symbolic]
@@ -128,7 +128,7 @@ impl C as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc15_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.8]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -163,8 +163,8 @@ impl C as SelfNested {
 // CHECK:STDOUT: fn @F.2[@impl.1.%self.loc15_8.2: C](@impl.1.%x.loc15_17.2: C) -> @impl.1.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_38.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc15_38.2: init C = class_init (), @impl.1.%return.var [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_38.3: init C = converted %.loc15_38.1, %.loc15_38.2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_38.2: init C = class_init (), @impl.1.%return.var [template = constants.%.8]
+// CHECK:STDOUT:   %.loc15_38.3: init C = converted %.loc15_38.1, %.loc15_38.2 [template = constants.%.8]
 // CHECK:STDOUT:   return %.loc15_38.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

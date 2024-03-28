@@ -175,8 +175,6 @@ auto HandleInterfaceDefinition(Context& context,
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-  context.decl_name_stack().PopScope();
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
   // The interface type is now fully defined.
@@ -184,6 +182,7 @@ auto HandleInterfaceDefinition(Context& context,
   if (!interface_info.associated_entities_id.is_valid()) {
     interface_info.associated_entities_id = associated_entities_id;
   }
+  // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
 

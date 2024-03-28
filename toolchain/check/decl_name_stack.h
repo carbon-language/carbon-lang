@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/scope_index.h"
+#include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -137,6 +138,21 @@ class DeclNameStack {
     };
   };
 
+  // Information about a declaration name that has been temporarily removed from
+  // the stack and will later be restored. Names can only be suspended once they
+  // are finished.
+  struct SuspendedName {
+    // The declaration name information.
+    NameContext name_context;
+
+    // Suspended scopes. We only preallocate space for two of these, because
+    // suspended names are usually used for classes and functions with
+    // unqualified names, which only need at most two scopes -- one scope for
+    // the parameter and one scope for the entity itself, and we can store quite
+    // a few of these when processing a large class definition.
+    llvm::SmallVector<ScopeStack::SuspendedScope, 2> scopes;
+  };
+
   explicit DeclNameStack(Context* context) : context_(context) {}
 
   // Pushes processing of a new declaration name, which will be used
@@ -172,6 +188,13 @@ class DeclNameStack {
   //
   // This should be called at the end of the declaration.
   auto PopScope() -> void;
+
+  // Temporarily remove the current declaration name and its associated scopes
+  // from the stack. Can only be called once the name is finished.
+  auto Suspend() -> SuspendedName;
+
+  // Restore a previously suspended name.
+  auto Restore(SuspendedName sus) -> void;
 
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to

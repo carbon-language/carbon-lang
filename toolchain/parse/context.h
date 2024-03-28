@@ -307,6 +307,15 @@ class Context {
     tree_->imports_.push_back(package);
   }
 
+  // Adds a function definition start node, and begins tracking an inline method
+  // body if necessary.
+  auto AddFunctionDefinitionStart(Lex::TokenIndex token, int subtree_start,
+                                  bool has_error) -> void;
+  // Adds a function definition node, and ends tracking an inline method body if
+  // necessary.
+  auto AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
+                             bool has_error) -> void;
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -357,6 +366,7 @@ class Context {
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+  llvm::SmallVector<InlineMethodIndex> enclosing_inline_method_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::FileStart;

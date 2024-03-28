@@ -218,12 +218,12 @@ auto HandleFunctionDecl(Context& context, Parse::FunctionDeclId node_id)
   return true;
 }
 
-auto HandleFunctionDefinitionStart(Context& context,
-                                   Parse::FunctionDefinitionStartId node_id)
-    -> bool {
-  // Process the declaration portion of the function.
-  auto [function_id, decl_id] =
-      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+// Processes a function definition after a signature for which we have already
+// built a function ID. This logic is shared between processing regular function
+// definitions and delayed parsing of inline method definitions.
+static auto HandleFunctionDefinitionAfterSignature(
+    Context& context, Parse::FunctionDefinitionStartId node_id,
+    SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
   auto& function = context.functions().Get(function_id);
 
   // Create the function scope and the entry block.
@@ -232,7 +232,7 @@ auto HandleFunctionDefinitionStart(Context& context,
   context.scope_stack().Push(decl_id);
   context.AddCurrentCodeBlockToFunction();
 
-  // Bring the implicit and explicit parameters into scope.
+  // Check the parameter types are complete.
   for (auto param_id : llvm::concat<SemIR::InstId>(
            context.inst_blocks().Get(function.implicit_param_refs_id),
            context.inst_blocks().Get(function.param_refs_id))) {
@@ -257,6 +257,33 @@ auto HandleFunctionDefinitionStart(Context& context,
   }
 
   context.node_stack().Push(node_id, function_id);
+}
+
+auto HandleFunctionDefinitionSuspend(Context& context,
+                                     Parse::FunctionDefinitionStartId node_id)
+    -> SuspendedFunction {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  return {function_id, decl_id, context.decl_name_stack().Suspend()};
+}
+
+auto HandleFunctionDefinitionResume(
+    Context& context, Parse::FunctionDefinitionStartId node_id,
+    SuspendedFunction sus_fn) -> void {
+  context.decl_name_stack().Restore(sus_fn.saved_name_state);
+  HandleFunctionDefinitionAfterSignature(context, node_id, sus_fn.function_id,
+                                         sus_fn.decl_id);
+}
+
+auto HandleFunctionDefinitionStart(Context& context,
+                                   Parse::FunctionDefinitionStartId node_id)
+    -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  HandleFunctionDefinitionAfterSignature(context, node_id, function_id,
+                                         decl_id);
   return true;
 }
 

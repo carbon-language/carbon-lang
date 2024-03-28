@@ -125,8 +125,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.2: type = interface_type @BitXor [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.5: C = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (@impl.1.%Op) [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%Op) [template]
+// CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @BitXorAssign [template]
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
@@ -216,7 +216,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc9_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.6]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -249,8 +249,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc9_9.2: C](@impl.1.%other.loc9_18.2: C) -> @impl.1.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc10_13.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

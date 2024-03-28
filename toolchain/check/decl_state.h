@@ -115,6 +115,12 @@ class DeclStateStack {
   // declaration currently being processed.
   auto innermost() -> DeclState& { return stack_.back(); }
 
+  // Gets the state of declaration at the given depth. A depth of 0 is the top
+  // of the stack.
+  auto Peek(int depth = 0) -> DeclState& {
+    return stack_[stack_.size() - depth - 1];
+  }
+
   // Exits a declaration of kind `k`.
   auto Pop(DeclState::DeclKind k) -> void {
     CARBON_CHECK(stack_.back().kind == k)

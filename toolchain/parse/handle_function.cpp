@@ -44,8 +44,8 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::OpenCurlyBrace: {
-      context.AddNode(NodeKind::FunctionDefinitionStart, context.Consume(),
-                      state.subtree_start, state.has_error);
+      context.AddFunctionDefinitionStart(context.Consume(), state.subtree_start,
+                                         state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
       context.PushState(state, State::FunctionDefinitionFinish);
@@ -93,8 +93,8 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::FunctionDefinition, context.Consume(),
-                  state.subtree_start, state.has_error);
+  context.AddFunctionDefinition(context.Consume(), state.subtree_start,
+                                state.has_error);
 }
 
 }  // namespace Carbon::Parse

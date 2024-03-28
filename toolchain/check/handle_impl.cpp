@@ -276,7 +276,7 @@ auto HandleImplDefinition(Context& context, Parse::ImplDefinitionId /*node_id*/)
   }
 
   context.inst_block_stack().Pop();
-  context.decl_name_stack().PopScope();
+  // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
 

@@ -16,8 +16,37 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
+
+struct InlineMethod;
+
+// The index of an inline method within the parse tree's inline method store.
+struct InlineMethodIndex : public IndexBase {
+  using ValueType = InlineMethod;
+
+  static const InlineMethodIndex Invalid;
+
+  using IndexBase::IndexBase;
+};
+
+constexpr InlineMethodIndex InlineMethodIndex::Invalid =
+    InlineMethodIndex(InvalidIndex);
+
+// A method that is defined inline.
+//
+// Such methods are processed out of order, with their bodies parsed after the
+// enclosing declaration is complete. Some additional information is tracked for
+// these methods in the parse tree to support this reordering.
+struct InlineMethod {
+  // The node that starts the function definition.
+  FunctionDefinitionStartId start_id;
+  // The function definition node.
+  FunctionDefinitionId definition_id = NodeId::Invalid;
+  // The index of the next method that is not nested within this one.
+  InlineMethodIndex next_method_index = InlineMethodIndex::Invalid;
+};
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
 struct File;
@@ -149,6 +178,9 @@ class Tree : public Printable<Tree> {
     return packaging_directive_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
+  auto inline_methods() const -> const ValueStore<InlineMethodIndex>& {
+    return inline_methods_;
+  }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -339,6 +371,7 @@ class Tree : public Printable<Tree> {
 
   std::optional<PackagingDirective> packaging_directive_;
   llvm::SmallVector<PackagingNames> imports_;
+  ValueStore<InlineMethodIndex> inline_methods_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

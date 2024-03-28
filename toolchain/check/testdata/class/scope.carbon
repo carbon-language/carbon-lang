@@ -27,8 +27,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,7 +61,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -78,8 +78,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.2: type = interface_type @BitComplement [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.5: C = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (@impl.%Op) [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Op) [template]
+// CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @BitComplement, <function> [template]
 // CHECK:STDOUT:   %.8: <associated <function> in BitComplement> = assoc_entity element0, file.%import_ref.6 [template]
 // CHECK:STDOUT: }
@@ -128,7 +128,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc9_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.6]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -143,8 +143,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @Op.1[@impl.%self.loc9_9.2: C]() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc10_13.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
