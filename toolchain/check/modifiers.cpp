@@ -11,7 +11,7 @@ namespace Carbon::Check {
 static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
                              Lex::TokenKind decl_kind,
                              llvm::StringRef context_string,
-                             SemIR::LocationId context_loc_id) -> void {
+                             SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}.",
                     Lex::TokenKind, Lex::TokenKind, std::string);
@@ -41,7 +41,7 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
-                           SemIR::LocationId context_loc_id) -> void {
+                           SemIR::LocId context_loc_id) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
   if (!not_allowed) {
@@ -121,12 +121,12 @@ auto CheckMethodModifiersOnFunction(Context& context,
       if (inheritance_kind == SemIR::Class::Final) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                               " in a non-abstract non-base `class` definition",
-                              context.insts().GetLocationId(target_id));
+                              context.insts().GetLocId(target_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                               " in a non-abstract `class` definition",
-                              context.insts().GetLocationId(target_id));
+                              context.insts().GetLocId(target_id));
       }
       return;
     }

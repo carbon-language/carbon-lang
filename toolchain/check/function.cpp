@@ -193,7 +193,7 @@ auto CheckFunctionTypeMatches(Context& context,
 
 // Checks to see if a structurally valid redeclaration is allowed in context.
 // These all still merge.
-static auto CheckIsAllowedRedecl(Context& context, SemIR::LocationId loc_id,
+static auto CheckIsAllowedRedecl(Context& context, SemIR::LocId loc_id,
                                  SemIR::Function& new_function,
                                  bool new_is_definition,
                                  SemIR::Function& prev_function,
@@ -253,7 +253,7 @@ static auto CheckIsAllowedRedecl(Context& context, SemIR::LocationId loc_id,
 
 // TODO: Detect conflicting cross-file declarations, as well as uses of imported
 // declarations followed by a redeclaration.
-auto MergeFunctionRedecl(Context& context, SemIR::LocationId loc_id,
+auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
                          SemIR::Function& new_function, bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
                          bool prev_is_import) -> bool {

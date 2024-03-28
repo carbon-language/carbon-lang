@@ -9,13 +9,12 @@
 
 namespace Carbon {
 
-template <typename LocationT>
-inline auto NullDiagnosticConverter() -> DiagnosticConverter<LocationT>& {
-  struct Converter : public DiagnosticConverter<LocationT> {
-    auto ConvertLocation(
-        LocationT /*loc*/,
-        DiagnosticConverter<LocationT>::ContextFnT /*context_fn*/) const
-        -> DiagnosticLocation override {
+template <typename LocT>
+inline auto NullDiagnosticConverter() -> DiagnosticConverter<LocT>& {
+  struct Converter : public DiagnosticConverter<LocT> {
+    auto ConvertLoc(LocT /*loc*/,
+                    DiagnosticConverter<LocT>::ContextFnT /*context_fn*/) const
+        -> DiagnosticLoc override {
       return {};
     }
   };
@@ -31,10 +30,10 @@ inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
   return *consumer;
 }
 
-template <typename LocationT>
-inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocationT>& {
-  static auto* emitter = new DiagnosticEmitter<LocationT>(
-      NullDiagnosticConverter<LocationT>(), NullDiagnosticConsumer());
+template <typename LocT>
+inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocT>& {
+  static auto* emitter = new DiagnosticEmitter<LocT>(
+      NullDiagnosticConverter<LocT>(), NullDiagnosticConsumer());
   return *emitter;
 }
 

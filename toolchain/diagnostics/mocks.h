@@ -31,15 +31,14 @@ inline auto IsDiagnosticMessage(testing::Matcher<DiagnosticKind> kind,
     -> testing::Matcher<DiagnosticMessage> {
   using testing::AllOf;
   using testing::Field;
-  return AllOf(
-      Field("kind", &DiagnosticMessage::kind, kind),
-      Field("level", &DiagnosticMessage::level, level),
-      Field(&DiagnosticMessage::location,
-            AllOf(Field("line_number", &DiagnosticLocation::line_number,
-                        line_number),
-                  Field("column_number", &DiagnosticLocation::column_number,
-                        column_number))),
-      IsDiagnosticMessageString(message));
+  return AllOf(Field("kind", &DiagnosticMessage::kind, kind),
+               Field("level", &DiagnosticMessage::level, level),
+               Field(&DiagnosticMessage::loc,
+                     AllOf(Field("line_number", &DiagnosticLoc::line_number,
+                                 line_number),
+                           Field("column_number", &DiagnosticLoc::column_number,
+                                 column_number))),
+               IsDiagnosticMessageString(message));
 }
 
 inline auto IsDiagnostic(

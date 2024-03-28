@@ -28,7 +28,7 @@ auto CheckFunctionTypeMatches(Context& context,
 //
 // If merging is successful, updates the FunctionId on new_function and returns
 // true. Otherwise, returns false. Prints a diagnostic when appropriate.
-auto MergeFunctionRedecl(Context& context, SemIR::LocationId loc_id,
+auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
                          SemIR::Function& new_function, bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
                          bool prev_is_imported) -> bool;

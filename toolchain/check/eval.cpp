@@ -287,14 +287,13 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
 }
 
 // Issues a diagnostic for a compile-time division by zero.
-static auto DiagnoseDivisionByZero(Context& context, SemIRLocation loc)
-    -> void {
+static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
 // Performs a builtin unary integer -> integer operation.
-static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
+static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
@@ -318,7 +317,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
 }
 
 // Performs a builtin binary integer -> integer operation.
-static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
+static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                                       SemIR::BuiltinFunctionKind builtin_kind,
                                       SemIR::InstId lhs_id,
                                       SemIR::InstId rhs_id)
@@ -416,8 +415,7 @@ static auto PerformBuiltinIntComparison(Context& context,
       Phase::Template);
 }
 
-static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
-                               SemIR::Call call,
+static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
                                SemIR::BuiltinFunctionKind builtin_kind,
                                llvm::ArrayRef<SemIR::InstId> arg_ids,
                                Phase phase) -> SemIR::ConstantId {
@@ -463,7 +461,7 @@ static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
   return SemIR::ConstantId::NotConstant;
 }
 
-static auto PerformCall(Context& context, SemIRLocation loc, SemIR::Call call)
+static auto PerformCall(Context& context, SemIRLoc loc, SemIR::Call call)
     -> SemIR::ConstantId {
   Phase phase = Phase::Template;
 

@@ -124,7 +124,7 @@ class DeclNameStack {
     SemIR::NameScopeId target_scope_id;
 
     // The last location ID used.
-    SemIR::LocationId loc_id = SemIR::LocationId::Invalid;
+    SemIR::LocId loc_id = SemIR::LocId::Invalid;
 
     union {
       // The ID of a resolved qualifier, including both identifiers and
@@ -176,14 +176,13 @@ class DeclNameStack {
   // unqualified name in the current context. This is suitable for adding to
   // name lookup in situations where a qualified name is not permitted, such as
   // a pattern binding.
-  auto MakeUnqualifiedName(SemIR::LocationId loc_id, SemIR::NameId name_id)
+  auto MakeUnqualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id)
       -> NameContext;
 
   // Applies a Name from the name stack to the top of the declaration name
   // stack. This will enter the scope corresponding to the name if the name
   // describes an existing scope, such as a namespace or a defined class.
-  auto ApplyNameQualifier(SemIR::LocationId loc_id, SemIR::NameId name_id)
-      -> void;
+  auto ApplyNameQualifier(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
@@ -199,12 +198,12 @@ class DeclNameStack {
   auto MakeEmptyNameContext() -> NameContext;
 
   // Applies a Name from the name stack to given name context.
-  auto ApplyNameQualifierTo(NameContext& name_context, SemIR::LocationId loc_id,
+  auto ApplyNameQualifierTo(NameContext& name_context, SemIR::LocId loc_id,
                             SemIR::NameId name_id, bool is_unqualified) -> void;
 
   // Returns true if the context is in a state where it can resolve qualifiers.
   // Updates name_context as needed.
-  auto TryResolveQualifier(NameContext& name_context, SemIR::LocationId loc_id)
+  auto TryResolveQualifier(NameContext& name_context, SemIR::LocId loc_id)
       -> bool;
 
   // Updates the scope on name_context as needed. This is called after

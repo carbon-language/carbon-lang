@@ -11,16 +11,16 @@
 
 namespace Carbon::Parse {
 
-class NodeLocation {
+class NodeLoc {
  public:
   // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeLocation(NodeId node_id) : NodeLocation(node_id, false) {}
-  NodeLocation(NodeId node_id, bool token_only)
+  NodeLoc(NodeId node_id) : NodeLoc(node_id, false) {}
+  NodeLoc(NodeId node_id, bool token_only)
       : node_id_(node_id), token_only_(token_only) {}
   // TODO: Have some other way of representing diagnostic that applies to a file
   // as a whole.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeLocation(InvalidNodeId node_id) : NodeLocation(node_id, false) {}
+  NodeLoc(InvalidNodeId node_id) : NodeLoc(node_id, false) {}
 
   auto node_id() const -> NodeId { return node_id_; }
   auto token_only() const -> bool { return token_only_; }
@@ -30,35 +30,33 @@ class NodeLocation {
   bool token_only_;
 };
 
-class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
+class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
  public:
-  explicit NodeLocationConverter(const Lex::TokenizedBuffer* tokens,
-                                 llvm::StringRef filename,
-                                 const Tree* parse_tree)
+  explicit NodeLocConverter(const Lex::TokenizedBuffer* tokens,
+                            llvm::StringRef filename, const Tree* parse_tree)
       : token_converter_(tokens),
         filename_(filename),
         parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
-  auto ConvertLocation(NodeLocation node_location, ContextFnT context_fn) const
-      -> DiagnosticLocation override {
+  auto ConvertLoc(NodeLoc node_loc, ContextFnT context_fn) const
+      -> DiagnosticLoc override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
-    if (!node_location.node_id().is_valid()) {
+    if (!node_loc.node_id().is_valid()) {
       return {.filename = filename_};
     }
 
-    if (node_location.token_only()) {
-      return token_converter_.ConvertLocation(
-          parse_tree_->node_token(node_location.node_id()), context_fn);
+    if (node_loc.token_only()) {
+      return token_converter_.ConvertLoc(
+          parse_tree_->node_token(node_loc.node_id()), context_fn);
     }
 
     // Construct a location that encompasses all tokens that descend from this
     // node (including the root).
-    Lex::TokenIndex start_token =
-        parse_tree_->node_token(node_location.node_id());
+    Lex::TokenIndex start_token = parse_tree_->node_token(node_loc.node_id());
     Lex::TokenIndex end_token = start_token;
-    for (NodeId desc : parse_tree_->postorder(node_location.node_id())) {
+    for (NodeId desc : parse_tree_->postorder(node_loc.node_id())) {
       Lex::TokenIndex desc_token = parse_tree_->node_token(desc);
       if (!desc_token.is_valid()) {
         continue;
@@ -69,13 +67,12 @@ class NodeLocationConverter : public DiagnosticConverter<NodeLocation> {
         end_token = desc_token;
       }
     }
-    DiagnosticLocation start_loc =
-        token_converter_.ConvertLocation(start_token, context_fn);
+    DiagnosticLoc start_loc =
+        token_converter_.ConvertLoc(start_token, context_fn);
     if (start_token == end_token) {
       return start_loc;
     }
-    DiagnosticLocation end_loc =
-        token_converter_.ConvertLocation(end_token, context_fn);
+    DiagnosticLoc end_loc = token_converter_.ConvertLoc(end_token, context_fn);
     // For multiline locations we simply return the rest of the line for now
     // since true multiline locations are not yet supported.
     if (start_loc.line_number != end_loc.line_number) {

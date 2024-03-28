@@ -158,7 +158,7 @@ class ImportRefResolver {
     return initial_work < work_stack_.size();
   }
 
-  auto AddImportIRInst(SemIR::InstId inst_id) -> SemIR::LocationId {
+  auto AddImportIRInst(SemIR::InstId inst_id) -> SemIR::LocId {
     return context_.import_ir_insts().Add(
         {.ir_id = import_ir_id_, .inst_id = inst_id});
   }
@@ -274,10 +274,9 @@ class ImportRefResolver {
         }
       }
       if (addr_inst) {
-        new_param_id =
-            context_.AddInstInNoBlock(SemIR::LocationIdAndInst::Untyped(
-                AddImportIRInst(ref_id),
-                SemIR::AddrPattern{type_id, new_param_id}));
+        new_param_id = context_.AddInstInNoBlock(SemIR::LocIdAndInst::Untyped(
+            AddImportIRInst(ref_id),
+            SemIR::AddrPattern{type_id, new_param_id}));
       }
       new_param_refs.push_back(new_param_id);
     }
@@ -486,7 +485,7 @@ class ImportRefResolver {
     }
 
     // Import the instruction in order to update contained base_type_id.
-    auto inst_id = context_.AddInstInNoBlock(SemIR::LocationIdAndInst::Untyped(
+    auto inst_id = context_.AddInstInNoBlock(SemIR::LocIdAndInst::Untyped(
         AddImportIRInst(import_inst_id),
         SemIR::BaseDecl{context_.GetTypeIdForTypeConstant(type_const_id),
                         context_.GetTypeIdForTypeConstant(base_type_const_id),
@@ -532,7 +531,7 @@ class ImportRefResolver {
         SemIR::ClassDecl{SemIR::TypeId::Invalid, SemIR::ClassId::Invalid,
                          SemIR::InstBlockId::Empty};
     auto class_decl_id =
-        context_.AddPlaceholderInst(SemIR::LocationIdAndInst::Untyped(
+        context_.AddPlaceholderInst(SemIR::LocIdAndInst::Untyped(
             AddImportIRInst(import_class.decl_id), class_decl));
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
@@ -664,7 +663,7 @@ class ImportRefResolver {
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
-    auto inst_id = context_.AddInstInNoBlock(SemIR::LocationIdAndInst::Untyped(
+    auto inst_id = context_.AddInstInNoBlock(SemIR::LocIdAndInst::Untyped(
         AddImportIRInst(import_inst_id),
         SemIR::FieldDecl{context_.GetTypeIdForTypeConstant(const_id),
                          GetLocalNameId(inst.name_id), inst.index}));
@@ -699,7 +698,7 @@ class ImportRefResolver {
         context_.GetTypeIdForTypeConstant(type_const_id),
         SemIR::FunctionId::Invalid, SemIR::InstBlockId::Empty};
     auto function_decl_id =
-        context_.AddPlaceholderInstInNoBlock(SemIR::LocationIdAndInst::Untyped(
+        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst::Untyped(
             AddImportIRInst(function.decl_id), function_decl));
 
     auto new_return_type_id =
@@ -737,7 +736,7 @@ class ImportRefResolver {
                                                SemIR::InterfaceId::Invalid,
                                                SemIR::InstBlockId::Empty};
     auto interface_decl_id =
-        context_.AddPlaceholderInst(SemIR::LocationIdAndInst::Untyped(
+        context_.AddPlaceholderInst(SemIR::LocIdAndInst::Untyped(
             AddImportIRInst(import_interface.decl_id), interface_decl));
 
     // Start with an incomplete interface.

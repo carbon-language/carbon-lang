@@ -15,7 +15,7 @@ auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
       .target_scope_id = context_->scope_stack().PeekNameScopeId()};
 }
 
-auto DeclNameStack::MakeUnqualifiedName(SemIR::LocationId loc_id,
+auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
                                         SemIR::NameId name_id) -> NameContext {
   NameContext context = MakeEmptyNameContext();
   ApplyNameQualifierTo(context, loc_id, name_id, /*is_unqualified=*/true);
@@ -125,14 +125,14 @@ auto DeclNameStack::AddNameToLookup(NameContext name_context,
   }
 }
 
-auto DeclNameStack::ApplyNameQualifier(SemIR::LocationId loc_id,
+auto DeclNameStack::ApplyNameQualifier(SemIR::LocId loc_id,
                                        SemIR::NameId name_id) -> void {
   ApplyNameQualifierTo(decl_name_stack_.back(), loc_id, name_id,
                        /*is_unqualified=*/false);
 }
 
 auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
-                                         SemIR::LocationId loc_id,
+                                         SemIR::LocId loc_id,
                                          SemIR::NameId name_id,
                                          bool is_unqualified) -> void {
   if (TryResolveQualifier(name_context, loc_id)) {
@@ -241,7 +241,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
 }
 
 auto DeclNameStack::TryResolveQualifier(NameContext& name_context,
-                                        SemIR::LocationId loc_id) -> bool {
+                                        SemIR::LocId loc_id) -> bool {
   // Update has_qualifiers based on the state before any possible changes. If
   // this is the first qualifier, it may just be the name.
   name_context.has_qualifiers = name_context.state != NameContext::State::Empty;

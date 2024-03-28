@@ -45,7 +45,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
   switch (operand_type_inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = operand_type_inst.As<SemIR::ArrayType>();
-      auto index_node_id = context.insts().GetLocationId(index_inst_id);
+      auto index_node_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
           context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
@@ -74,7 +74,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
     }
     case SemIR::TupleType::Kind: {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      auto index_node_id = context.insts().GetLocationId(index_inst_id);
+      auto index_node_id = context.insts().GetLocId(index_inst_id);
       index_inst_id = ConvertToValueOfType(
           context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
