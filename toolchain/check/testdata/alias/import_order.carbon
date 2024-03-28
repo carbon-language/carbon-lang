@@ -62,10 +62,10 @@ var i32_val: i32 = a_val;
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:     .i32_val = %i32_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, used [template = i32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, used [template = i32]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+5, used [template = i32]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+7, used [template = i32]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loc_32 [template = i32]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+3, loc_25 [template = i32]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+5, loc_18 [template = i32]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+7, loc_11 [template = i32]
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.4 [template = i32]
 // CHECK:STDOUT:   %d_val.var: ref i32 = var d_val
 // CHECK:STDOUT:   %d_val: ref i32 = bind_name d_val, %d_val.var

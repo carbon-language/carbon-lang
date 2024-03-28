@@ -198,10 +198,10 @@ var d: () = D();
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, used [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_15 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_24 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_39 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_53 [template = imports.%D]
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -269,10 +269,10 @@ var d: () = D();
 // CHECK:STDOUT:     .c = %c.loc13
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, used [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_11 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_17 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_28 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_47 [template = imports.%D]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
@@ -355,10 +355,10 @@ var d: () = D();
 // CHECK:STDOUT:     .c = %c.loc13
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, used [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_11 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_17 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_28 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_47 [template = imports.%D]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc7_13.1: i32 = param b
@@ -440,14 +440,14 @@ var d: () = D();
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, used [template = imports.%B.1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%C.1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%D.1]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+1, used [template = imports.%A.2]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, used [template = imports.%B.2]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, used [template = imports.%C.2]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, used [template = imports.%D.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D]
+// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
+// CHECK:STDOUT:   %.2: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
+// CHECK:STDOUT:   %.3: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
+// CHECK:STDOUT:   %.4: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -481,21 +481,21 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
 // CHECK:STDOUT:   %.loc7: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %.loc7
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_15: init i32 = call %B.ref(%.loc8_16)
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_15
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
 // CHECK:STDOUT:   assign file.%c.var, %.loc9_21
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return
@@ -522,14 +522,14 @@ var d: () = D();
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, used [template = imports.%B.1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, used [template = imports.%C.1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, used [template = imports.%D.1]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+1, used [template = imports.%A.2]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, used [template = imports.%B.2]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, used [template = imports.%C.2]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, used [template = imports.%D.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D]
+// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
+// CHECK:STDOUT:   %.2: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
+// CHECK:STDOUT:   %.3: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
+// CHECK:STDOUT:   %.4: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -563,21 +563,21 @@ var d: () = D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
 // CHECK:STDOUT:   %.loc7: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %.loc7
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_15: init i32 = call %B.ref(%.loc8_16)
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_15
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
 // CHECK:STDOUT:   assign file.%c.var, %.loc9_21
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return

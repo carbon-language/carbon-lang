@@ -107,8 +107,10 @@ File::File(SharedValueStores& value_stores, std::string filename,
         for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
           // We can reuse the type_id from the builtin IR's inst because they're
           // special-cased values.
-          insts_.AddInNoBlock(ImportRefUsed{
-              inst.type_id(), ImportIRId::Builtins, SemIR::InstId(i)});
+          auto import_ir_inst_id = import_ir_insts_.Add(
+              {.ir_id = ImportIRId::Builtins, .inst_id = SemIR::InstId(i)});
+          insts_.AddInNoBlock(
+              ImportRefLoaded{inst.type_id(), import_ir_inst_id});
         }
       }) {}
 
@@ -199,6 +201,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Builtin::Kind:
     case ClassType::Kind:
     case FacetTypeAccess::Kind:
+    case ImportRefLoaded::Kind:
     case ImportRefUsed::Kind:
     case InterfaceType::Kind:
     case NameRef::Kind:
@@ -236,7 +239,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FieldDecl::Kind:
     case FunctionDecl::Kind:
     case ImplDecl::Kind:
-    case ImportRefUnused::Kind:
+    case ImportRefUnloaded::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
     case InterfaceWitness::Kind:
@@ -374,11 +377,13 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         push_inst_id(inst.As<FacetTypeAccess>().facet_id);
         break;
       }
+      case ImportRefLoaded::Kind:
       case ImportRefUsed::Kind: {
-        auto import_ref = inst.As<ImportRefUsed>();
+        auto import_ir_inst = sem_ir.import_ir_insts().Get(
+            inst.As<AnyImportRef>().import_ir_inst_id);
         steps.push_back(
-            {.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id).sem_ir,
-             .inst_id = import_ref.inst_id});
+            {.sem_ir = *sem_ir.import_irs().Get(import_ir_inst.ir_id).sem_ir,
+             .inst_id = import_ir_inst.inst_id});
         break;
       }
       case InterfaceType::Kind: {
@@ -485,7 +490,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
-      case ImportRefUnused::Kind:
+      case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
@@ -550,17 +555,19 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FieldDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
-      case ImportRefUnused::Kind:
+      case ImportRefUnloaded::Kind:
       case Namespace::Kind:
       case Return::Kind:
       case ReturnExpr::Kind:
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
+      case ImportRefLoaded::Kind:
       case ImportRefUsed::Kind: {
-        auto import_ref = inst.As<ImportRefUsed>();
-        ir = ir->import_irs().Get(import_ref.ir_id).sem_ir;
-        inst_id = import_ref.inst_id;
+        auto import_ir_inst = ir->import_ir_insts().Get(
+            inst.As<AnyImportRef>().import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+        inst_id = import_ir_inst.inst_id;
         continue;
       }
 

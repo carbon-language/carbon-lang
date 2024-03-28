@@ -138,9 +138,10 @@ static auto CopySingleNameScopeFromImportIR(
     SemIR::NameId name_id) -> SemIR::NameScopeId {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
-    return context.AddInst(SemIR::ImportRefUsed{.type_id = namespace_type_id,
-                                                .ir_id = ir_id,
-                                                .inst_id = import_inst_id});
+    auto import_ir_inst_id = context.import_ir_insts().Add(
+        {.ir_id = ir_id, .inst_id = import_inst_id});
+    return context.AddInst(SemIR::ImportRefLoaded{
+        .type_id = namespace_type_id, .import_ir_inst_id = import_ir_inst_id});
   };
   auto [namespace_scope_id, namespace_const_id, _] =
       AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,
@@ -242,7 +243,8 @@ auto ImportLibraryFromCurrentPackage(Context& context,
           import_namespace_inst->name_scope_id, enclosing_scope_id, name_id);
     } else {
       // Leave a placeholder that the inst comes from the other IR.
-      auto target_id = context.AddImportRef(ir_id, import_inst_id);
+      auto target_id =
+          context.AddImportRef({.ir_id = ir_id, .inst_id = import_inst_id});
       auto [it, success] = context.name_scopes()
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});

@@ -461,23 +461,31 @@ struct ImplDecl {
 
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
-  static constexpr InstKind Kinds[] = {InstKind::ImportRefUnused,
+  static constexpr InstKind Kinds[] = {InstKind::ImportRefUnloaded,
+                                       InstKind::ImportRefLoaded,
                                        InstKind::ImportRefUsed};
 
   InstKind kind;
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
 };
 
-// An imported entity that hasn't yet been referenced. If referenced, it should
-// turn into an ImportRefUsed.
-struct ImportRefUnused {
+// An imported entity that is not yet been loaded.
+struct ImportRefUnloaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefUnused.Define<Parse::InvalidNodeId>("import_ref");
+      InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>("import_ref");
 
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
+};
+
+// A imported entity that is loaded, but has not yet had a use associated.
+struct ImportRefLoaded {
+  // No parse node: any parse node logic must use the referenced IR.
+  static constexpr auto Kind =
+      InstKind::ImportRefLoaded.Define<Parse::InvalidNodeId>("import_ref");
+
+  TypeId type_id;
+  ImportIRInstId import_ir_inst_id;
 };
 
 // An imported entity that has a reference, and thus should be emitted.
@@ -487,8 +495,9 @@ struct ImportRefUsed {
       InstKind::ImportRefUsed.Define<Parse::InvalidNodeId>("import_ref");
 
   TypeId type_id;
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
+  // A location to reference for queries about the use.
+  LocId used_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression

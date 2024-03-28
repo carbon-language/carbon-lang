@@ -48,24 +48,22 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
     // Notes an import on the diagnostic and updates cursors to point at the
     // imported IR.
-    auto follow_import_ref = [&](SemIR::ImportIRId ir_id,
-                                 SemIR::InstId inst_id) {
-      const auto& import_ir = cursor_ir->import_irs().Get(ir_id);
+    auto follow_import_ref = [&](SemIR::ImportIRInstId import_ir_inst_id) {
+      auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
+      const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
       auto context_loc = ConvertLocInFile(cursor_ir, import_ir.node_id,
                                           loc.token_only, context_fn);
       CARBON_DIAGNOSTIC(InImport, Note, "In import.");
       context_fn(context_loc, InImport);
       cursor_ir = import_ir.sem_ir;
-      cursor_inst_id = inst_id;
+      cursor_inst_id = import_ir_inst.inst_id;
     };
 
     // If the location is is an import, follows it and returns nullopt.
     // Otherwise, it's a parse node, so return the final location.
     auto handle_loc = [&](SemIR::LocId loc_id) -> std::optional<DiagnosticLoc> {
       if (loc_id.is_import_ir_inst_id()) {
-        auto import_ir_inst =
-            cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
-        follow_import_ref(import_ir_inst.ir_id, import_ir_inst.inst_id);
+        follow_import_ref(loc_id.import_ir_inst_id());
         return std::nullopt;
       } else {
         // Parse nodes always refer to the current IR.
@@ -98,7 +96,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
       // possible.
       if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
-        follow_import_ref(import_ref->ir_id, import_ref->inst_id);
+        follow_import_ref(import_ref->import_ir_inst_id);
         continue;
       }
 

@@ -86,7 +86,7 @@ static auto BuildInterfaceWitness(
        .replacement_id = context.types().GetConstantId(impl.self_id)}};
 
   for (auto decl_id : assoc_entities) {
-    TryResolveImportRefUnused(context, decl_id);
+    LoadImportRef(context, decl_id, impl.definition_id);
     auto const_id = context.constant_values().Get(decl_id);
     CARBON_CHECK(const_id.is_constant()) << "Non-constant associated entity";
     auto decl = context.insts().Get(const_id.inst_id());

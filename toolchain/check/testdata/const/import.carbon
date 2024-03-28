@@ -76,9 +76,9 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unused
-// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir1, inst+7, used
-// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir1, inst+15, used
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir1, inst+7, loc_12
+// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir1, inst+15, loc_22
 // CHECK:STDOUT:   %.loc6_8: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_17: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref const i32* = var a

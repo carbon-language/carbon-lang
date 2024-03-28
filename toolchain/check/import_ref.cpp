@@ -5,6 +5,7 @@
 #include "toolchain/check/import_ref.h"
 
 #include "common/check.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/parse/node_ids.h"
@@ -328,12 +329,13 @@ class ImportRefResolver {
     }
   }
 
-  // Adds ImportRefUnused entries for members of the imported scope, for name
+  // Adds ImportRefUnloaded entries for members of the imported scope, for name
   // lookup.
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
                               SemIR::NameScope& new_scope) -> void {
     for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
-      auto ref_id = context_.AddImportRef(import_ir_id_, entry_inst_id);
+      auto ref_id = context_.AddImportRef(
+          {.ir_id = import_ir_id_, .inst_id = entry_inst_id});
       CARBON_CHECK(
           new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
               .second);
@@ -353,7 +355,7 @@ class ImportRefResolver {
     new_associated_entities.reserve(associated_entities.size());
     for (auto inst_id : associated_entities) {
       new_associated_entities.push_back(
-          context_.AddImportRef(import_ir_id_, inst_id));
+          context_.AddImportRef({.ir_id = import_ir_id_, .inst_id = inst_id}));
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
@@ -445,7 +447,8 @@ class ImportRefResolver {
     }
 
     // Add a lazy reference to the target declaration.
-    auto decl_id = context_.AddImportRef(import_ir_id_, inst.decl_id);
+    auto decl_id = context_.AddImportRef(
+        {.ir_id = import_ir_id_, .inst_id = inst.decl_id});
 
     auto inst_id = context_.AddInstInNoBlock(
         {AddImportIRInst(inst.decl_id),
@@ -707,9 +710,11 @@ class ImportRefResolver {
             : SemIR::TypeId::Invalid;
     auto new_return_slot = SemIR::InstId::Invalid;
     if (function.return_slot_id.is_valid()) {
-      context_.AddInstInNoBlock({SemIR::ImportRefUsed{
+      auto import_ir_inst_id = context_.import_ir_insts().Add(
+          {.ir_id = import_ir_id_, .inst_id = function.return_slot_id});
+      context_.AddInstInNoBlock({SemIR::ImportRefLoaded{
           context_.GetTypeIdForTypeConstant(return_slot_const_id),
-          import_ir_id_, function.return_slot_id}});
+          import_ir_inst_id}});
     }
     function_decl.function_id = context_.functions().Add(
         {.name_id = GetLocalNameId(function.name_id),
@@ -919,32 +924,61 @@ class ImportRefResolver {
   llvm::SmallVector<Work> work_stack_;
 };
 
-auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id)
-    -> void {
-  auto inst = context.insts().Get(inst_id);
-  auto import_ref = inst.TryAs<SemIR::ImportRefUnused>();
-  if (!import_ref) {
-    return;
+// Returns the LocId corresponding to the input location.
+static auto SemIRLocToLocId(Context& context, SemIRLoc loc) -> SemIR::LocId {
+  if (loc.is_inst_id) {
+    return context.insts().GetLocId(loc.inst_id);
+  } else {
+    return loc.loc_id;
   }
+}
 
-  const SemIR::File& import_ir =
-      *context.import_irs().Get(import_ref->ir_id).sem_ir;
-  auto import_inst = import_ir.insts().Get(import_ref->inst_id);
+// Replace the ImportRefUnloaded instruction with an appropriate ImportRef. This
+// doesn't use ReplaceInstBeforeConstantUse because it would trigger
+// TryEvalInst, which we want to avoid with ImportRefs.
+static auto SetInst(Context& context, SemIR::InstId inst_id,
+                    SemIR::TypeId type_id,
+                    SemIR::ImportIRInstId import_ir_inst_id, SemIRLoc loc,
+                    bool set_if_invalid_loc) -> void {
+  if (auto loc_id = SemIRLocToLocId(context, loc); loc_id.is_valid()) {
+    context.sem_ir().insts().Set(
+        inst_id, SemIR::ImportRefUsed{type_id, import_ir_inst_id, loc_id});
+  } else if (set_if_invalid_loc) {
+    context.sem_ir().insts().Set(
+        inst_id, SemIR::ImportRefLoaded{type_id, import_ir_inst_id});
+  }
+}
 
-  ImportRefResolver resolver(context, import_ref->ir_id);
-  auto type_id = resolver.ResolveType(import_inst.type_id());
-  auto constant_id = resolver.Resolve(import_ref->inst_id);
+auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
+    -> void {
+  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
+    case CARBON_KIND(SemIR::ImportRefLoaded inst): {
+      SetInst(context, inst_id, inst.type_id, inst.import_ir_inst_id, loc,
+              /*set_if_invalid_loc=*/false);
+      return;
+    }
+    case CARBON_KIND(SemIR::ImportRefUnloaded inst): {
+      auto import_ir_inst =
+          context.import_ir_insts().Get(inst.import_ir_inst_id);
 
-  // Replace the ImportRefUnused instruction with an ImportRefUsed. This doesn't
-  // use ReplaceInstBeforeConstantUse because it would trigger TryEvalInst, and
-  // we're instead doing constant evaluation here in order to minimize recursion
-  // risks.
-  context.sem_ir().insts().Set(
-      inst_id,
-      SemIR::ImportRefUsed{type_id, import_ref->ir_id, import_ref->inst_id});
+      const SemIR::File& import_ir =
+          *context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+      auto import_inst = import_ir.insts().Get(import_ir_inst.inst_id);
 
-  // Store the constant for both the ImportRefUsed and imported instruction.
-  context.constant_values().Set(inst_id, constant_id);
+      ImportRefResolver resolver(context, import_ir_inst.ir_id);
+      auto type_id = resolver.ResolveType(import_inst.type_id());
+      auto constant_id = resolver.Resolve(import_ir_inst.inst_id);
+
+      SetInst(context, inst_id, type_id, inst.import_ir_inst_id, loc,
+              /*set_if_invalid_loc=*/true);
+
+      // Store the constant for both the ImportRefUsed and imported instruction.
+      context.constant_values().Set(inst_id, constant_id);
+      return;
+    }
+    default:
+      return;
+  }
 }
 
 }  // namespace Carbon::Check

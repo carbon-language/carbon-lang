@@ -502,7 +502,7 @@ class InstNamer {
           CollectNamesInBlock(scope_id, inst.decl_block_id);
           break;
         }
-        case ImportRefUnused::Kind:
+        case ImportRefUnloaded::Kind:
         case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
           // When building import refs, we frequently add instructions without
@@ -938,11 +938,11 @@ class Formatter {
     out_ << "\n";
   }
 
-  // Don't print a constant for ImportRefUnused.
-  auto FormatInstruction(InstId inst_id, ImportRefUnused inst) -> void {
+  // Don't print a constant for ImportRefUnloaded.
+  auto FormatInstruction(InstId inst_id, ImportRefUnloaded inst) -> void {
     Indent();
     FormatInstructionLHS(inst_id, inst);
-    out_ << ImportRefUnused::Kind.ir_name();
+    out_ << ImportRefUnloaded::Kind.ir_name();
     FormatInstructionRHS(inst);
     out_ << "\n";
   }
@@ -1003,9 +1003,10 @@ class Formatter {
     }
   }
 
-  // Print ImportRefUnused with type-like semantics even though it lacks a
+  // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstructionLHS(InstId inst_id, ImportRefUnused /*inst*/) -> void {
+  auto FormatInstructionLHS(InstId inst_id, ImportRefUnloaded /*inst*/)
+      -> void {
     FormatInstName(inst_id);
     out_ << " = ";
   }
@@ -1158,16 +1159,18 @@ class Formatter {
         .print(out_, sem_ir_.types().IsSignedInt(inst.type_id));
   }
 
-  auto FormatInstructionRHS(ImportRefUnused inst) -> void {
-    // Don't format the inst_id because it refers to a different IR.
-    // TODO: Consider a better way to format the InstID from other IRs.
-    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", unused";
+  auto FormatInstructionRHS(ImportRefUnloaded inst) -> void {
+    FormatArgs(inst.import_ir_inst_id);
+    out_ << ", unloaded";
+  }
+
+  auto FormatInstructionRHS(ImportRefLoaded inst) -> void {
+    FormatArgs(inst.import_ir_inst_id);
+    out_ << ", loaded";
   }
 
   auto FormatInstructionRHS(ImportRefUsed inst) -> void {
-    // Don't format the inst_id because it refers to a different IR.
-    // TODO: Consider a better way to format the InstID from other IRs.
-    out_ << " " << inst.ir_id << ", " << inst.inst_id << ", used";
+    FormatArgs(inst.import_ir_inst_id, inst.used_id);
   }
 
   auto FormatInstructionRHS(SpliceBlock inst) -> void {
@@ -1219,9 +1222,29 @@ class Formatter {
 
   auto FormatArg(ImportIRId id) -> void { out_ << id; }
 
+  auto FormatArg(ImportIRInstId id) -> void {
+    // Don't format the inst_id because it refers to a different IR.
+    // TODO: Consider a better way to format the InstID from other IRs.
+    auto import_ir_inst = sem_ir_.import_ir_insts().Get(id);
+    out_ << import_ir_inst.ir_id << ", " << import_ir_inst.inst_id;
+  }
+
   auto FormatArg(IntId id) -> void {
     // We don't know the signedness to use here. Default to unsigned.
     sem_ir_.ints().Get(id).print(out_, /*isSigned=*/false);
+  }
+
+  auto FormatArg(LocId id) -> void {
+    if (id.is_import_ir_inst_id()) {
+      out_ << "{";
+      FormatArg(id.import_ir_inst_id());
+      out_ << "}";
+    } else {
+      // TODO: For a NodeId, this prints the index of the node. Do we want it to
+      // print a line number or something in order to make it less dependent on
+      // parse?
+      out_ << id;
+    }
   }
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }

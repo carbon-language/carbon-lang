@@ -52,8 +52,8 @@ var c: i32 = b;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir1, inst+7, used
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir1, inst+7, loc_14
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT: }

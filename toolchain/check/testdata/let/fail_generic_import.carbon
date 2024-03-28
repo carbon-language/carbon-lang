@@ -37,7 +37,7 @@ let a: T = 0;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .T = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic = <unexpected instref inst+2>]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, loc_7 [symbolic = <unexpected instref inst+2>]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+2>]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a: T = bind_name a, <error>

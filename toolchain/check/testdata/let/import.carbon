@@ -34,7 +34,7 @@ let b:! bool = a;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: bool = import_ref ir1, inst+1, used [symbolic = <unexpected instref inst+3>]
+// CHECK:STDOUT:   %import_ref: bool = import_ref ir1, inst+1, loc_10 [symbolic = <unexpected instref inst+3>]
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %import_ref [symbolic = <unexpected instref inst+3>]
 // CHECK:STDOUT:   %b: bool = bind_symbolic_name b, %a.ref [symbolic]
 // CHECK:STDOUT: }
