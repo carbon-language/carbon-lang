@@ -399,12 +399,12 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 //
 // expr . ( ... )
 //      ^
-//   1. ParenExpr
+//   1. OnlyParenExpr
 //   2. CompoundMemberAccess
 //
 // expr -> ( ... )
 //      ^~
-//   1. ParenExpr
+//   1. OnlyParenExpr
 //   2. CompoundPointerMemberAccess
 CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
 
@@ -814,6 +814,21 @@ CARBON_PARSE_STATE_VARIANTS3(ParenCondition, If, While, Match)
 //                   ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
+
+// Handles compound member access `(` after `->` or `.`
+//
+// ( ... )
+// ^
+//   1. Expr
+//   2. OnlyParenExprFinish
+//   3. ParenExprFinish
+CARBON_PARSE_STATE(OnlyParenExpr)
+
+// Handles the `)` after `->(`... or `.(`...
+//
+// ( ... )
+//       ^
+CARBON_PARSE_STATE(OnlyParenExprFinish)
 
 // Handles the `(` of a parenthesized single expression
 //

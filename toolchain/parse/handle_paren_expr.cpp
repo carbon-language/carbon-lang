@@ -6,6 +6,38 @@
 
 namespace Carbon::Parse {
 
+auto HandleOnlyParenExpr(Context& context) -> void {
+  auto state = context.PopState();
+
+  // Advance past the open paren.
+  context.AddLeafNode(NodeKind::ExprOpenParen,
+                      context.ConsumeChecked(Lex::TokenKind::OpenParen));
+
+  context.PushState(state, State::ParenExprFinish);
+  context.PushState(State::OnlyParenExprFinish);
+  context.PushState(State::Expr);
+}
+
+auto HandleOnlyParenExprFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(UnexpectedTokenInCompoundMemberAccess, Error,
+                        "Expected `)`.");
+      context.emitter().Emit(*context.position(),
+                             UnexpectedTokenInCompoundMemberAccess);
+      context.ReturnErrorOnState();
+    }
+
+    // Recover from the invalid token.
+    auto end_of_element = context.FindNextOf({Lex::TokenKind::CloseParen});
+    // The lexer guarantees that parentheses are balanced.
+    CARBON_CHECK(end_of_element) << "missing matching `(` for `)`";
+    context.SkipTo(*end_of_element);
+  }
+}
+
 auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
