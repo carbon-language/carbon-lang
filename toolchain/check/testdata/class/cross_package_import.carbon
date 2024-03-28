@@ -62,18 +62,12 @@ var c: Other.C = {};
 library "fail_merge_define_extern" api;
 
 import Other library "define";
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Semantics TODO: `Merging not yet supported.`.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
-// CHECK:STDERR: import Other library "define";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
 import Other library "extern";
 
 // CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
@@ -260,10 +254,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc23_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc23_19.3: init C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc23_19.3
+// CHECK:STDOUT:   %.loc17_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc17_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17_19.3: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc17_19.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
