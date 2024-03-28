@@ -179,10 +179,9 @@ class ErrorBuilder {
 // argument separator.
 #define CARBON_PROTECT_COMMAS(...) __VA_ARGS__
 
-#define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)                    \
-  if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
-      !(unique_name).ok()) {                                              \
-    return std::move(unique_name).error();                                \
+#define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)  \
+  if (auto unique_name = (expr); !(unique_name).ok()) { \
+    return std::move(unique_name).error();              \
   }
 
 #define CARBON_RETURN_IF_ERROR(expr)                                    \
@@ -190,12 +189,12 @@ class ErrorBuilder {
       CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), \
       CARBON_PROTECT_COMMAS(expr))
 
-#define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)          \
-  auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
-  if (!(unique_name).ok()) {                                          \
-    return std::move(unique_name).error();                            \
-  }                                                                   \
-  var = std::move(*(unique_name)); /* NOLINT(bugprone-macro-parentheses) */
+#define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr) \
+  auto unique_name = (expr);                                 \
+  if (!(unique_name).ok()) {                                 \
+    return std::move(unique_name).error();                   \
+  }                                                          \
+  var = std::move(*(unique_name));
 
 #define CARBON_ASSIGN_OR_RETURN(var, expr)                                 \
   CARBON_ASSIGN_OR_RETURN_IMPL(                                            \

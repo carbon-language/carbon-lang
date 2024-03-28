@@ -10,14 +10,17 @@ WarningsAsErrors: '*'
 
 # - bugprone-exception-escape finds issues like out-of-memory in main(). We
 #   don't use exceptions, so it's unlikely to find real issues.
+# - bugprone-macro-parentheses has false positives in places such as using an
+#   argument to declare a name, which cannot have parentheses. For our limited
+#   use of macros, this is a common conflict.
+# - bugprone-switch-missing-default-case has false positives for `enum_base.h`.
+#   Clang's built-in switch warnings cover most of our risk of bugs here.
 # - bugprone-unchecked-optional-access in clang-tidy 16 has false positives on
 #   code like:
 #     while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
 #       inst_id = name_ref->value_id;
 #                 ^ unchecked access to optional value
 #     }
-# - bugprone-switch-missing-default-case has false positives for `enum_base.h`.
-#   Clang's built-in switch warnings cover most of our risk of bugs here.
 # - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-designated-initializers is disabled because it fires on
 #   creation of SemIR typed insts, for which we do not currently want to use
@@ -28,9 +31,10 @@ WarningsAsErrors: '*'
 #   modernize-pass-by-value.
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
-  -bugprone-exception-escape, -bugprone-narrowing-conversions,
-  -bugprone-switch-missing-default-case, -bugprone-unchecked-optional-access,
-  google-*, -google-readability-function-size, -google-readability-todo,
+  -bugprone-exception-escape, -bugprone-macro-parentheses,
+  -bugprone-narrowing-conversions, -bugprone-switch-missing-default-case,
+  -bugprone-unchecked-optional-access, google-*,
+  -google-readability-function-size, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,
   misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
