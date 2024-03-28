@@ -662,6 +662,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     for (auto& unit : units) {
       unit->Flush();
     }
+    stream_consumer.Flush();
   });
 
   // Returns a RunResult object. Called whenever Compile returns.
