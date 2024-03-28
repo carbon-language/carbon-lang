@@ -27,8 +27,8 @@ static auto HandleDeclNameAndParams(Context& context, State after_name)
                       Lex::TokenKind);
     Lex::TokenIndex token = *context.position();
     if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
-      // The end of file is often an especially unhelpful location. If that's
-      // the best we can do here, back up the location to the introducer itself.
+      // The end of file is an unhelpful diagnostic location. Instead, use the
+      // introducer token.
       token = state.token;
     }
     context.emitter().Emit(token, ExpectedDeclName,
