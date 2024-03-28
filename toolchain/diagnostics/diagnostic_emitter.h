@@ -103,7 +103,7 @@ class DiagnosticEmitter {
               loc,
               [&](DiagnosticLoc loc,
                   const Internal::DiagnosticBase<>& diagnostic_base) {
-                AddMessageWithDiagnosticLoc(loc, diagnostic_base, args);
+                AddMessageWithDiagnosticLoc(loc, diagnostic_base, {});
               }),
           diagnostic_base, args);
     }
@@ -136,7 +136,9 @@ class DiagnosticEmitter {
     static auto FormatFn(const DiagnosticMessage& message,
                          std::index_sequence<N...> /*indices*/) -> std::string {
       static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
-      CARBON_CHECK(message.format_args.size() == sizeof...(Args));
+      CARBON_CHECK(message.format_args.size() == sizeof...(Args))
+          << "Argument count mismatch on " << message.kind << ": "
+          << message.format_args.size() << " != " << sizeof...(Args);
       return llvm::formatv(
           message.format.data(),
           llvm::any_cast<
