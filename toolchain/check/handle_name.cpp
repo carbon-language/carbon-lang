@@ -19,13 +19,25 @@ auto HandleMemberAccessExpr(Context& context, Parse::MemberAccessExprId node_id)
     auto member_id =
         PerformCompoundMemberAccess(context, node_id, base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
-  } else {
+    return true;
+  }
+
+  if (context.node_stack().PeekIsName()) {
     SemIR::NameId name_id = context.node_stack().PopName();
     auto base_id = context.node_stack().PopExpr();
     auto member_id = PerformMemberAccess(context, node_id, base_id, name_id);
     context.node_stack().Push(node_id, member_id);
+    return true;
   }
-  return true;
+
+  CARBON_DIAGNOSTIC(MemberAccessOfInvalidOperand, Error,
+                    "Cannot access non-field as member.");
+
+  auto builder =
+      context.emitter().Build(TokenOnly(node_id), MemberAccessOfInvalidOperand);
+  builder.Emit();
+
+  return false;
 }
 
 auto HandlePointerMemberAccessExpr(Context& context,
@@ -50,7 +62,10 @@ auto HandlePointerMemberAccessExpr(Context& context,
     auto member_id = PerformCompoundMemberAccess(context, node_id,
                                                  deref_base_id, member_expr_id);
     context.node_stack().Push(node_id, member_id);
-  } else {
+    return true;
+  }
+
+  if (context.node_stack().PeekIsName()) {
     SemIR::NameId name_id = context.node_stack().PopName();
     auto base_id = context.node_stack().PopExpr();
     auto deref_base_id = PerformPointerDereference(context, node_id, base_id,
@@ -58,9 +73,17 @@ auto HandlePointerMemberAccessExpr(Context& context,
     auto member_id =
         PerformMemberAccess(context, node_id, deref_base_id, name_id);
     context.node_stack().Push(node_id, member_id);
+    return true;
   }
 
-  return true;
+  CARBON_DIAGNOSTIC(PointerMemberAccessOfInvalidOperand, Error,
+                    "Cannot access non-field as member.");
+
+  auto builder = context.emitter().Build(TokenOnly(node_id),
+                                         PointerMemberAccessOfInvalidOperand);
+  builder.Emit();
+
+  return false;
 }
 
 static auto GetIdentifierAsName(Context& context, Parse::NodeId node_id)
