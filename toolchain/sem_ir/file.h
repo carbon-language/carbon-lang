@@ -223,7 +223,7 @@ class File : public Printable<File> {
   // for references of builtins).
   ValueStore<ImportIRId> import_irs_;
 
-  // Related IR instructions. These are created for LocationIds for instructions
+  // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
   ValueStore<ImportIRInstId> import_ir_insts_;
 

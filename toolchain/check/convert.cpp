@@ -96,7 +96,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
         << sem_ir.insts().Get(return_slot_id);
     auto init = sem_ir.insts().Get(init_id);
     return context.AddInst(
-        {sem_ir.insts().GetLocationId(init_id),
+        {sem_ir.insts().GetLocId(init_id),
          SemIR::Temporary{init.type_id(), return_slot_id, init_id}});
   }
 
@@ -111,7 +111,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // materialize and initialize a temporary, rather than two separate
   // instructions.
   auto init = sem_ir.insts().Get(init_id);
-  auto loc_id = sem_ir.insts().GetLocationId(init_id);
+  auto loc_id = sem_ir.insts().GetLocId(init_id);
   auto temporary_id =
       context.AddInst({loc_id, SemIR::TemporaryStorage{init.type_id()}});
   return context.AddInst(
@@ -131,7 +131,7 @@ static auto MaterializeIfInitializing(Context& context, SemIR::InstId expr_id)
 
 // Creates and adds an instruction to perform element access into an aggregate.
 template <typename AccessInstT, typename InstBlockT>
-static auto MakeElementAccessInst(Context& context, SemIR::LocationId loc_id,
+static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId aggregate_id,
                                   SemIR::TypeId elem_type_id, InstBlockT& block,
                                   std::size_t i) {
@@ -166,7 +166,7 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocationId loc_id,
 // instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
-    Context& context, SemIR::LocationId loc_id, SemIR::InstId src_id,
+    Context& context, SemIR::LocId loc_id, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
@@ -206,7 +206,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   auto tuple_elem_types = sem_ir.type_blocks().Get(tuple_type.elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocationId(value_id);
+  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -290,7 +290,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   auto dest_elem_types = sem_ir.type_blocks().Get(dest_type.elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocationId(value_id);
+  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -374,7 +374,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   auto dest_elem_fields = sem_ir.inst_blocks().Get(dest_type.fields_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocationId(value_id);
+  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
 
   // If we're initializing from a struct literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -539,7 +539,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
     target.init_id =
-        target_block.AddInst({context.insts().GetLocationId(value_id),
+        target_block.AddInst({context.insts().GetLocId(value_id),
                               SemIR::TemporaryStorage{target.type_id}});
   }
 
@@ -549,7 +549,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   if (need_temporary) {
     target_block.InsertHere();
     result_id = context.AddInst(
-        {context.insts().GetLocationId(value_id),
+        {context.insts().GetLocId(value_id),
          SemIR::Temporary{target.type_id, target.init_id, result_id}});
   }
   return result_id;
@@ -596,7 +596,7 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
 
 // Performs a conversion from a derived class value or reference to a base class
 // value or reference.
-static auto ConvertDerivedToBase(Context& context, SemIR::LocationId loc_id,
+static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId value_id,
                                  const InheritancePath& path) -> SemIR::InstId {
   // Materialize a temporary if necessary.
@@ -614,7 +614,7 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocationId loc_id,
 
 // Performs a conversion from a derived class pointer to a base class pointer.
 static auto ConvertDerivedPointerToBasePointer(
-    Context& context, SemIR::LocationId loc_id, SemIR::PointerType src_ptr_type,
+    Context& context, SemIR::LocId loc_id, SemIR::PointerType src_ptr_type,
     SemIR::TypeId dest_ptr_type_id, SemIR::InstId ptr_id,
     const InheritancePath& path) -> SemIR::InstId {
   // Form `*p`.
@@ -651,7 +651,7 @@ static auto IsValidExprCategoryForConversionTarget(
   }
 }
 
-static auto PerformBuiltinConversion(Context& context, SemIR::LocationId loc_id,
+static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
@@ -849,7 +849,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   return SemIR::InstId::BuiltinError;
 }
 
-auto Convert(Context& context, SemIR::LocationId loc_id, SemIR::InstId expr_id,
+auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
@@ -923,7 +923,7 @@ auto Convert(Context& context, SemIR::LocationId loc_id, SemIR::InstId expr_id,
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
     expr_id = context.AddInst(
-        {context.insts().GetLocationId(orig_expr_id),
+        {context.insts().GetLocId(orig_expr_id),
          SemIR::Converted{target.type_id, orig_expr_id, expr_id}});
   }
 
@@ -974,7 +974,7 @@ auto Convert(Context& context, SemIR::LocationId loc_id, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = context.AddInst({context.insts().GetLocationId(expr_id),
+      expr_id = context.AddInst({context.insts().GetLocId(expr_id),
                                  SemIR::BindValue{expr.type_id(), expr_id}});
       // We now have a value expression.
       [[fallthrough]];
@@ -1001,9 +1001,8 @@ auto Convert(Context& context, SemIR::LocationId loc_id, SemIR::InstId expr_id,
   return expr_id;
 }
 
-auto Initialize(Context& context, SemIR::LocationId loc_id,
-                SemIR::InstId target_id, SemIR::InstId value_id)
-    -> SemIR::InstId {
+auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
+                SemIR::InstId value_id) -> SemIR::InstId {
   PendingBlock target_block(context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializer,
@@ -1014,33 +1013,33 @@ auto Initialize(Context& context, SemIR::LocationId loc_id,
 
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  return Convert(context, context.insts().GetLocationId(expr_id), expr_id,
+  return Convert(context, context.insts().GetLocId(expr_id), expr_id,
                  {.kind = ConversionTarget::Value,
                   .type_id = context.insts().Get(expr_id).type_id()});
 }
 
 auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  return Convert(context, context.insts().GetLocationId(expr_id), expr_id,
+  return Convert(context, context.insts().GetLocId(expr_id), expr_id,
                  {.kind = ConversionTarget::ValueOrRef,
                   .type_id = context.insts().Get(expr_id).type_id()});
 }
 
-auto ConvertToValueOfType(Context& context, SemIR::LocationId loc_id,
+auto ConvertToValueOfType(Context& context, SemIR::LocId loc_id,
                           SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, loc_id, expr_id,
                  {.kind = ConversionTarget::Value, .type_id = type_id});
 }
 
-auto ConvertToValueOrRefOfType(Context& context, SemIR::LocationId loc_id,
+auto ConvertToValueOrRefOfType(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId {
   return Convert(context, loc_id, expr_id,
                  {.kind = ConversionTarget::ValueOrRef, .type_id = type_id});
 }
 
-auto ConvertToBoolValue(Context& context, SemIR::LocationId loc_id,
+auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
@@ -1057,7 +1056,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 CARBON_DIAGNOSTIC(InCallToFunction, Note, "Calling function declared here.");
 
 // Convert the object argument in a method call to match the `self` parameter.
-static auto ConvertSelf(Context& context, SemIR::LocationId call_loc_id,
+static auto ConvertSelf(Context& context, SemIR::LocId call_loc_id,
                         SemIR::InstId callee_id,
                         std::optional<SemIR::AddrPattern> addr_pattern,
                         SemIR::InstId self_param_id, SemIR::Param self_param,
@@ -1099,7 +1098,7 @@ static auto ConvertSelf(Context& context, SemIR::LocationId call_loc_id,
         context.emitter().Emit(TokenOnly(call_loc_id), AddrSelfIsNonRef);
         return SemIR::InstId::BuiltinError;
     }
-    auto loc_id = context.insts().GetLocationId(self_or_addr_id);
+    auto loc_id = context.insts().GetLocId(self_or_addr_id);
     self_or_addr_id = context.AddInst(
         {loc_id, SemIR::AddrOf{context.GetPointerType(self.type_id()),
                                self_or_addr_id}});
@@ -1109,7 +1108,7 @@ static auto ConvertSelf(Context& context, SemIR::LocationId call_loc_id,
                               self_param.type_id);
 }
 
-auto ConvertCallArgs(Context& context, SemIR::LocationId call_loc_id,
+auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id, SemIR::InstId callee_id,
@@ -1191,8 +1190,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocationId call_loc_id,
   return context.inst_blocks().Add(args);
 }
 
-auto ExprAsType(Context& context, SemIR::LocationId loc_id,
-                SemIR::InstId value_id) -> SemIR::TypeId {
+auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
+    -> SemIR::TypeId {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeId::TypeType);
   if (type_inst_id == SemIR::InstId::BuiltinError) {

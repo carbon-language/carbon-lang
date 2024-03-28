@@ -12,9 +12,8 @@ namespace Carbon {
 
 namespace {
 struct FilenameConverter : DiagnosticConverter<llvm::StringRef> {
-  auto ConvertLocation(llvm::StringRef filename,
-                       ContextFnT /*context_fn*/) const
-      -> DiagnosticLocation override {
+  auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
+      -> DiagnosticLoc override {
     return {.filename = filename};
   }
 };

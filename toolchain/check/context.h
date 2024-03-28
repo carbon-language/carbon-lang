@@ -26,7 +26,7 @@ namespace Carbon::Check {
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // Stores references for work.
@@ -35,44 +35,43 @@ class Context {
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(SemIRLocation loc, std::string label) -> bool;
+  auto TODO(SemIRLoc loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::LocationIdAndInst loc_id_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
-      -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::LocationIdAndInst loc_id_and_inst)
-      -> SemIR::InstId;
+  auto AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely. The instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
+  auto AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result. Only valid if the LocationId is for a NodeId.
-  auto AddInstAndPush(SemIR::LocationIdAndInst loc_id_and_inst) -> void;
+  // result. Only valid if the LocId is for a NodeId.
+  auto AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void;
 
   // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
   // is required to not have been used in any constant evaluation, either
   // because it's newly created and entirely unused, or because it's only used
   // in a position that constant evaluation ignores, such as a return slot.
-  auto ReplaceLocationIdAndInstBeforeConstantUse(
-      SemIR::InstId inst_id, SemIR::LocationIdAndInst loc_id_and_inst) -> void;
+  auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
+                                            SemIR::LocIdAndInst loc_id_and_inst)
+      -> void;
 
   // Replaces the instruction `inst_id` with `inst`, not affecting location.
   // The instruction is required to not have been used in any constant
@@ -94,7 +93,7 @@ class Context {
   // remain const.
   auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
       -> void {
-    sem_ir().insts().SetLocationId(inst_id, SemIR::LocationId(node_id));
+    sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
@@ -103,7 +102,7 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(SemIR::LocationId loc_id, SemIR::NameId name_id,
+  auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
@@ -113,7 +112,7 @@ class Context {
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
-  auto LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
@@ -123,12 +122,10 @@ class Context {
       -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIRLocation dup_def, SemIRLocation prev_def)
-      -> void;
+  auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(SemIR::LocationId loc_id, SemIR::NameId name_id)
-      -> void;
+  auto DiagnoseNameNotFound(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)

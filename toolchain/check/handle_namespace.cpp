@@ -40,7 +40,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
       // When the name conflict is an imported namespace, fill the location ID
       // so that future diagnostics point at this declaration.
       if (existing->import_id.is_valid() &&
-          !context.insts().GetLocationId(existing_inst_id).is_valid()) {
+          !context.insts().GetLocId(existing_inst_id).is_valid()) {
         context.SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {

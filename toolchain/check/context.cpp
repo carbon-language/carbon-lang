@@ -51,7 +51,7 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
        SemIR::TypeId::TypeType});
 }
 
-auto Context::TODO(SemIRLocation loc, std::string label) -> bool {
+auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: `{0}`.",
                     std::string);
   emitter_->Emit(loc, SemanticsTodo, std::move(label));
@@ -68,7 +68,7 @@ auto Context::VerifyOnFinish() -> void {
   param_and_arg_refs_stack_.VerifyOnFinish();
 }
 
-auto Context::AddInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
+auto Context::AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG() << "AddInst: " << loc_id_and_inst.inst << "\n";
@@ -83,22 +83,21 @@ auto Context::AddInstInNoBlock(SemIR::LocationIdAndInst loc_id_and_inst)
   return inst_id;
 }
 
-auto Context::AddInst(SemIR::LocationIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
+auto Context::AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
   auto inst_id = AddInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInstInNoBlock(
-    SemIR::LocationIdAndInst loc_id_and_inst) -> SemIR::InstId {
+auto Context::AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
   auto inst_id = sem_ir().insts().AddInNoBlock(loc_id_and_inst);
   CARBON_VLOG() << "AddPlaceholderInst: " << loc_id_and_inst.inst << "\n";
   constant_values().Set(inst_id, SemIR::ConstantId::Invalid);
   return inst_id;
 }
 
-auto Context::AddPlaceholderInst(SemIR::LocationIdAndInst loc_id_and_inst)
+auto Context::AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = AddPlaceholderInstInNoBlock(loc_id_and_inst);
   inst_block_stack_.AddInstId(inst_id);
@@ -112,14 +111,14 @@ auto Context::AddConstant(SemIR::Inst inst, bool is_symbolic)
   return const_id;
 }
 
-auto Context::AddInstAndPush(SemIR::LocationIdAndInst loc_id_and_inst) -> void {
+auto Context::AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void {
   auto inst_id = AddInst(loc_id_and_inst);
   node_stack_.Push(loc_id_and_inst.loc_id.node_id(), inst_id);
 }
 
-auto Context::ReplaceLocationIdAndInstBeforeConstantUse(
-    SemIR::InstId inst_id, SemIR::LocationIdAndInst loc_id_and_inst) -> void {
-  sem_ir().insts().SetLocationIdAndInst(inst_id, loc_id_and_inst);
+auto Context::ReplaceLocIdAndInstBeforeConstantUse(
+    SemIR::InstId inst_id, SemIR::LocIdAndInst loc_id_and_inst) -> void {
+  sem_ir().insts().SetLocIdAndInst(inst_id, loc_id_and_inst);
 
   CARBON_VLOG() << "ReplaceInst: " << inst_id << " -> " << loc_id_and_inst.inst
                 << "\n";
@@ -169,8 +168,8 @@ auto Context::AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
   return import_ref_id;
 }
 
-auto Context::DiagnoseDuplicateName(SemIRLocation dup_def,
-                                    SemIRLocation prev_def) -> void {
+auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
+    -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "Duplicate name being declared in the same scope.");
   CARBON_DIAGNOSTIC(NameDeclPrevious, Note,
@@ -180,8 +179,8 @@ auto Context::DiagnoseDuplicateName(SemIRLocation dup_def,
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(SemIR::LocationId loc_id,
-                                   SemIR::NameId name_id) -> void {
+auto Context::DiagnoseNameNotFound(SemIR::LocId loc_id, SemIR::NameId name_id)
+    -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     SemIR::NameId);
   emitter_->Emit(loc_id, NameNotFound, name_id);
@@ -226,7 +225,7 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
   }
 }
 
-auto Context::LookupNameInDecl(SemIR::LocationId loc_id, SemIR::NameId name_id,
+auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                                SemIR::NameScopeId scope_id) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
@@ -296,7 +295,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 }
 
 // Handles lookup through the import_ir_scopes for LookupNameInExactScope.
-static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
+static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
                                    SemIR::NameId name_id,
                                    const SemIR::NameScope& scope)
     -> SemIR::InstId {
@@ -350,7 +349,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLocation loc,
   return result_id;
 }
 
-auto Context::LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
+auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {

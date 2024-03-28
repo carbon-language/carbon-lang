@@ -83,8 +83,7 @@ class InstNamer {
         insts[fn.return_slot_id.index] = {
             fn_scope,
             GetScopeInfo(fn_scope).insts.AllocateName(
-                *this, sem_ir.insts().GetLocationId(fn.return_slot_id),
-                "return")};
+                *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
       }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -269,7 +268,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, SemIR::LocationId loc_id,
+    auto AllocateName(const InstNamer& namer, SemIR::LocId loc_id,
                       std::string name) -> Name {
       // The best (shortest) name for this instruction so far, and the current
       // name for it.
@@ -346,8 +345,7 @@ class InstNamer {
 
   auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
                      std::string name = "",
-                     SemIR::LocationId loc_id = SemIR::LocationId::Invalid)
-      -> void {
+                     SemIR::LocId loc_id = SemIR::LocId::Invalid) -> void {
     if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
@@ -355,7 +353,7 @@ class InstNamer {
     if (!loc_id.is_valid()) {
       if (const auto& block = sem_ir_.inst_blocks().Get(block_id);
           !block.empty()) {
-        loc_id = sem_ir_.insts().GetLocationId(block.front());
+        loc_id = sem_ir_.insts().GetLocId(block.front());
       }
     }
 
@@ -366,8 +364,8 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeId scope_id, SemIR::LocationId loc_id,
-                     AnyBranch branch) -> void {
+  auto AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id, AnyBranch branch)
+      -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(loc_id.node_id())) {
       case Parse::NodeKind::IfExprIf:
@@ -454,7 +452,7 @@ class InstNamer {
       auto add_inst_name = [&](std::string name) {
         insts[inst_id.index] = {
             scope_id, scope.insts.AllocateName(
-                          *this, sem_ir_.insts().GetLocationId(inst_id), name)};
+                          *this, sem_ir_.insts().GetLocId(inst_id), name)};
       };
       auto add_inst_name_id = [&](NameId name_id, llvm::StringRef suffix = "") {
         add_inst_name(
@@ -462,8 +460,7 @@ class InstNamer {
       };
 
       if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
-        AddBlockLabel(scope_id, sem_ir_.insts().GetLocationId(inst_id),
-                      *branch);
+        AddBlockLabel(scope_id, sem_ir_.insts().GetLocId(inst_id), *branch);
       }
 
       CARBON_KIND_SWITCH(untyped_inst) {

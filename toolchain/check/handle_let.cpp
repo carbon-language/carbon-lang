@@ -28,7 +28,7 @@ auto HandleLetInitializer(Context& context, Parse::LetInitializerId node_id)
 
 static auto BuildAssociatedConstantDecl(
     Context& context, Parse::LetDeclId node_id, SemIR::InstId pattern_id,
-    SemIR::LocationIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
+    SemIR::LocIdAndInst pattern, SemIR::InterfaceId interface_id) -> void {
   auto& interface_info = context.interfaces().Get(interface_id);
 
   auto binding_pattern = pattern.inst.TryAs<SemIR::BindSymbolicName>();
@@ -46,7 +46,7 @@ static auto BuildAssociatedConstantDecl(
   // declaration.
   auto name_id =
       context.bind_names().Get(binding_pattern->bind_name_id).name_id;
-  context.ReplaceLocationIdAndInstBeforeConstantUse(
+  context.ReplaceLocIdAndInstBeforeConstantUse(
       pattern_id, {node_id, SemIR::AssociatedConstantDecl{
                                 binding_pattern->type_id, name_id}});
   auto decl_id = pattern_id;
@@ -98,7 +98,7 @@ auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Let);
 
-  auto pattern = context.insts().GetWithLocationId(pattern_id);
+  auto pattern = context.insts().GetWithLocId(pattern_id);
   auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
 
   if (value_id) {

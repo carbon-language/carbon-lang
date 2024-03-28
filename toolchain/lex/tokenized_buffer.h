@@ -119,8 +119,8 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
       : buffer_(buffer) {}
 
   // Map the given token into a diagnostic location.
-  auto ConvertLocation(TokenIndex token, ContextFnT context_fn) const
-      -> DiagnosticLocation override;
+  auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
+      -> DiagnosticLoc override;
 
  private:
   const TokenizedBuffer* buffer_;
@@ -147,7 +147,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the line and 1-based column number of the first character after
   // this token.
-  auto GetEndLocation(TokenIndex token) const -> std::pair<LineIndex, int>;
+  auto GetEndLoc(TokenIndex token) const -> std::pair<LineIndex, int>;
 
   // Returns the source text lexed into this token.
   auto GetTokenText(TokenIndex token) const -> llvm::StringRef;
@@ -256,8 +256,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     // Map the given position within the source buffer into a diagnostic
     // location.
-    auto ConvertLocation(const char* loc, ContextFnT context_fn) const
-        -> DiagnosticLocation override;
+    auto ConvertLoc(const char* loc, ContextFnT context_fn) const
+        -> DiagnosticLoc override;
 
    private:
     const TokenizedBuffer* buffer_;

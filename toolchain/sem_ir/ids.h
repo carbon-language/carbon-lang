@@ -496,21 +496,20 @@ struct ImportIRInstId : public IdBase, public Printable<InstId> {
 // - index > Invalid: A Parse::NodeId in the current IR.
 // - index < Invalid: An ImportIRInstId.
 // - index == Invalid: Can be used for either.
-struct LocationId : public IdBase, public Printable<FunctionId> {
+struct LocId : public IdBase, public Printable<FunctionId> {
   // An explicitly invalid function ID.
-  static const LocationId Invalid;
+  static const LocId Invalid;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocationId(Parse::InvalidNodeId /*invalid*/)
-      : IdBase(InvalidIndex) {}
+  constexpr LocId(Parse::InvalidNodeId /*invalid*/) : IdBase(InvalidIndex) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocationId(Parse::NodeId node_id) : IdBase(node_id.index) {
+  constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
     CARBON_CHECK(node_id.is_valid() == is_valid());
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocationId(ImportIRInstId inst_id)
+  constexpr LocId(ImportIRInstId inst_id)
       : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
     CARBON_CHECK(inst_id.is_valid() == is_valid());
   }
@@ -542,7 +541,7 @@ struct LocationId : public IdBase, public Printable<FunctionId> {
   }
 };
 
-constexpr LocationId LocationId::Invalid = LocationId(Parse::NodeId::Invalid);
+constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
 

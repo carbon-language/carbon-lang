@@ -19,9 +19,9 @@ using ::testing::InSequence;
 
 CARBON_DIAGNOSTIC(TestDiagnostic, Error, "{0}", llvm::StringLiteral);
 
-struct FakeDiagnosticConverter : DiagnosticConverter<DiagnosticLocation> {
-  auto ConvertLocation(DiagnosticLocation loc, ContextFnT /*context_fn*/) const
-      -> DiagnosticLocation override {
+struct FakeDiagnosticConverter : DiagnosticConverter<DiagnosticLoc> {
+  auto ConvertLoc(DiagnosticLoc loc, ContextFnT /*context_fn*/) const
+      -> DiagnosticLoc override {
     return loc;
   }
 };
@@ -30,7 +30,7 @@ TEST(SortedDiagnosticEmitterTest, SortErrors) {
   FakeDiagnosticConverter converter;
   Testing::MockDiagnosticConsumer consumer;
   SortingDiagnosticConsumer sorting_consumer(consumer);
-  DiagnosticEmitter<DiagnosticLocation> emitter(converter, sorting_consumer);
+  DiagnosticEmitter<DiagnosticLoc> emitter(converter, sorting_consumer);
 
   emitter.Emit({"f", "line", 2, 1}, TestDiagnostic, "M1");
   emitter.Emit({"f", "line", 1, 1}, TestDiagnostic, "M2");

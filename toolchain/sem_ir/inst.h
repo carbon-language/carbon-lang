@@ -288,15 +288,15 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   return out;
 }
 
-// Associates a LocationId and Inst in order to provide type-checking that the
+// Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
-struct LocationIdAndInst {
+struct LocIdAndInst {
   // In cases where the NodeId is untyped, an inst_id, or the InstT is unknown,
   // the NodeId check can't be done at compile time.
   // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
   // corresponds.
-  static auto Untyped(LocationId loc_id, Inst inst) -> LocationIdAndInst {
-    return LocationIdAndInst(loc_id, inst, /*is_untyped=*/true);
+  static auto Untyped(LocId loc_id, Inst inst) -> LocIdAndInst {
+    return LocIdAndInst(loc_id, inst, /*is_untyped=*/true);
   }
 
   // For the common case, support construction as:
@@ -304,7 +304,7 @@ struct LocationIdAndInst {
   template <typename InstT>
     requires(Internal::HasNodeId<InstT>)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  LocationIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+  LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
       : loc_id(node_id), inst(inst) {}
 
   // For cases with no parse node, support construction as:
@@ -312,23 +312,22 @@ struct LocationIdAndInst {
   template <typename InstT>
     requires(!Internal::HasNodeId<InstT>)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  LocationIdAndInst(InstT inst) : loc_id(Parse::NodeId::Invalid), inst(inst) {}
+  LocIdAndInst(InstT inst) : loc_id(Parse::NodeId::Invalid), inst(inst) {}
 
-  // If TypedNodeId is Parse::NodeId, allow construction with a LocationId
+  // If TypedNodeId is Parse::NodeId, allow construction with a LocId
   // rather than requiring Untyped.
   // TODO: This is somewhat historical due to fetching the NodeId from insts()
   // for things like Temporary; should we require Untyped in these cases?
   template <typename InstT>
     requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
                           Parse::NodeId>)
-  LocationIdAndInst(LocationId loc_id, InstT inst)
-      : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  LocationId loc_id;
+  LocId loc_id;
   Inst inst;
 
  private:
-  explicit LocationIdAndInst(LocationId loc_id, Inst inst, bool /*is_untyped*/)
+  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
       : loc_id(loc_id), inst(inst) {}
 };
 
@@ -340,7 +339,7 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(LocationIdAndInst loc_id_and_inst) -> InstId {
+  auto AddInNoBlock(LocIdAndInst loc_id_and_inst) -> InstId {
     loc_ids_.push_back(loc_id_and_inst.loc_id);
     return values_.Add(loc_id_and_inst.inst);
   }
@@ -349,8 +348,8 @@ class InstStore {
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
   // Returns the requested instruction and its location ID.
-  auto GetWithLocationId(InstId inst_id) const -> LocationIdAndInst {
-    return LocationIdAndInst::Untyped(GetLocationId(inst_id), Get(inst_id));
+  auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
+    return LocIdAndInst::Untyped(GetLocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -383,7 +382,7 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetLocationId(InstId inst_id) const -> LocationId {
+  auto GetLocId(InstId inst_id) const -> LocId {
     CARBON_CHECK(inst_id.index >= 0) << inst_id.index;
     CARBON_CHECK(inst_id.index < (int)loc_ids_.size())
         << inst_id.index << " " << loc_ids_.size();
@@ -394,15 +393,14 @@ class InstStore {
   auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
 
   // Overwrites a given instruction's location with a new value.
-  auto SetLocationId(InstId inst_id, LocationId loc_id) -> void {
+  auto SetLocId(InstId inst_id, LocId loc_id) -> void {
     loc_ids_[inst_id.index] = loc_id;
   }
 
   // Overwrites a given instruction and location ID with a new value.
-  auto SetLocationIdAndInst(InstId inst_id, LocationIdAndInst loc_id_and_inst)
-      -> void {
+  auto SetLocIdAndInst(InstId inst_id, LocIdAndInst loc_id_and_inst) -> void {
     Set(inst_id, loc_id_and_inst.inst);
-    SetLocationId(inst_id, loc_id_and_inst.loc_id);
+    SetLocId(inst_id, loc_id_and_inst.loc_id);
   }
 
   // Reserves space.
@@ -415,7 +413,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<LocationId> loc_ids_;
+  llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId> values_;
 };
 

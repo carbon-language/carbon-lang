@@ -22,7 +22,7 @@ struct ImportIR : public Printable<ImportIR> {
 };
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
-// LocationId.
+// LocId.
 struct ImportIRInst : public Printable<ImportIRInst> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << ir_id << ":" << inst_id;

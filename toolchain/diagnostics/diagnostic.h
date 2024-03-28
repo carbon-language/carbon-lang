@@ -42,10 +42,10 @@ enum class DiagnosticLevel : int8_t {
           ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 
-// A location for a diagnostic in a file. The lifetime of a DiagnosticLocation
+// A location for a diagnostic in a file. The lifetime of a DiagnosticLoc
 // is required to be less than SourceBuffer that it refers to due to the
 // contained filename and line references.
-struct DiagnosticLocation {
+struct DiagnosticLoc {
   // Name of the file or buffer that this diagnostic refers to.
   llvm::StringRef filename;
   // A reference to the line of the error.
@@ -68,7 +68,7 @@ struct DiagnosticMessage {
   DiagnosticLevel level;
 
   // The calculated location of the diagnostic.
-  DiagnosticLocation location;
+  DiagnosticLoc loc;
 
   // The diagnostic's format string. This, along with format_args, will be
   // passed to format_fn.
