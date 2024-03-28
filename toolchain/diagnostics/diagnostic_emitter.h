@@ -101,9 +101,10 @@ class DiagnosticEmitter {
       AddMessageWithDiagnosticLoc(
           emitter_->converter_->ConvertLoc(
               loc,
-              [&](DiagnosticLoc loc,
-                  const Internal::DiagnosticBase<>& diagnostic_base) {
-                AddMessageWithDiagnosticLoc(loc, diagnostic_base, {});
+              [&](DiagnosticLoc context_loc,
+                  const Internal::DiagnosticBase<>& context_diagnostic_base) {
+                AddMessageWithDiagnosticLoc(context_loc,
+                                            context_diagnostic_base, {});
               }),
           diagnostic_base, args);
     }
