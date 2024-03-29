@@ -103,7 +103,8 @@ class Context {
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id) -> SemIR::InstId;
+                        SemIR::NameScopeId scope_id, bool mark_imports_used)
+      -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id)
@@ -113,7 +114,8 @@ class Context {
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
-                              const SemIR::NameScope& scope) -> SemIR::InstId;
+                              const SemIR::NameScope& scope,
+                              bool mark_imports_used) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
   // it extends, returning the referenced instruction.

@@ -92,8 +92,8 @@ static auto BuildInterfaceWitness(
     auto decl = context.insts().Get(const_id.inst_id());
     if (auto fn_decl = decl.TryAs<SemIR::FunctionDecl>()) {
       auto& fn = context.functions().Get(fn_decl->function_id);
-      auto impl_decl_id =
-          context.LookupNameInExactScope(decl_id, fn.name_id, impl_scope);
+      auto impl_decl_id = context.LookupNameInExactScope(
+          decl_id, fn.name_id, impl_scope, /*mark_imports_used=*/true);
       if (impl_decl_id.is_valid()) {
         used_decl_ids.push_back(impl_decl_id);
         table.push_back(CheckAssociatedFunctionImplementation(

@@ -82,7 +82,7 @@ var a: Incomplete;
 // CHECK:STDOUT:     .Incomplete = %import_ref.2
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loc_10 [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+4, loc_15 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {

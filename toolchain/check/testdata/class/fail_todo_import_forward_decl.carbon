@@ -56,7 +56,7 @@ class ForwardDecl {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ForwardDecl = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, loc_10 [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, loaded [template = constants.%ForwardDecl]
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %ForwardDecl.decl: invalid = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
 // CHECK:STDOUT:   }

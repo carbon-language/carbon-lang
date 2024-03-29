@@ -332,7 +332,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loc_16 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loaded [template = imports.%F]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
