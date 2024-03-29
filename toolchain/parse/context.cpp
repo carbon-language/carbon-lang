@@ -445,8 +445,8 @@ static auto ParsingInMethodContext(Context& context) -> bool {
 }
 
 auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
-                                         int subtree_start,
-                                         bool has_error) -> void {
+                                         int subtree_start, bool has_error)
+    -> void {
   if (ParsingInMethodContext(*this)) {
     enclosing_inline_method_stack_.push_back(tree_->inline_methods_.Add(
         {.start_id =
@@ -461,8 +461,10 @@ auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
   if (ParsingInMethodContext(*this)) {
     auto method_index = enclosing_inline_method_stack_.pop_back_val();
     auto& method = tree_->inline_methods_.Get(method_index);
-    method.definition_id = FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
-    method.next_method_index = InlineMethodIndex(tree_->inline_methods().size());
+    method.definition_id =
+        FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
+    method.next_method_index =
+        InlineMethodIndex(tree_->inline_methods().size());
   }
 
   AddNode(NodeKind::FunctionDefinition, token, subtree_start, has_error);

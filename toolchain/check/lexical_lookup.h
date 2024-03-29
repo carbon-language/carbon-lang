@@ -28,7 +28,7 @@ class LexicalLookup {
     ScopeIndex scope_index;
   };
 
-  // A lookup result that has been temporarily remvoed from scope.
+  // A lookup result that has been temporarily removed from scope.
   struct SuspendedResult {
     // The lookup index.
     size_t index;

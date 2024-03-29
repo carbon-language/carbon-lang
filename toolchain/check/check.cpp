@@ -292,7 +292,9 @@ struct NextInlineMethodCache {
 static auto IsInDelayedMethodScope(Context& context) -> bool {
   auto inst_id = context.name_scopes().GetInstIdIfValid(
       context.decl_name_stack().PeekTargetScope());
-  if (!inst_id.is_valid()) { return false; }
+  if (!inst_id.is_valid()) {
+    return false;
+  }
   switch (context.insts().Get(inst_id).kind()) {
     case SemIR::ClassDecl::Kind:
     case SemIR::ImplDecl::Kind:
@@ -365,14 +367,13 @@ struct InlineMethodWorklist {
   using Task =
       std::variant<ParseSkippedMethod, EnterMethodScope, LeaveMethodScope>;
 
-  InlineMethodWorklist() {
-    worklist.reserve(64);
-  }
+  InlineMethodWorklist() { worklist.reserve(64); }
 
   // Suspend the current function definition and push a task onto the worklist
   // to finish it later.
   auto SuspendFunctionAndPush(Context& context, Parse::InlineMethodIndex index,
-                              Parse::FunctionDefinitionStartId node_id) -> void {
+                              Parse::FunctionDefinitionStartId node_id)
+      -> void {
     worklist.push_back(ParseSkippedMethod{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
   }
@@ -380,9 +381,9 @@ struct InlineMethodWorklist {
   // Push a task to re-enter a method scope, so that functions defined within it
   // are parsed in the right context.
   auto PushEnterMethodScope(Context& context) -> void {
-        method_scopes.push_back(worklist.size());
-        worklist.push_back(
-            EnterMethodScope{std::nullopt, IsInDelayedMethodScope(context)});
+    method_scopes.push_back(worklist.size());
+    worklist.push_back(
+        EnterMethodScope{std::nullopt, IsInDelayedMethodScope(context)});
   }
 
   // Suspend the current method scope, which is finished but still on the
@@ -443,8 +444,8 @@ struct InlineMethodWorklist {
 
   // A worklist of parsing tasks we'll need to do later.
   // Don't allocate any inline storage here. A Task is fairly large, so we never
-  // want this to live on the stack. Instead, we reserve space in the constructor
-  // for a fairly large number of inline method definitions.
+  // want this to live on the stack. Instead, we reserve space in the
+  // constructor for a fairly large number of inline method definitions.
   llvm::SmallVector<Task, 0> worklist;
 
   // Indexes in `worklist` of method scopes that are currently still open.
@@ -586,7 +587,7 @@ struct NodeIdTraversal {
 
   llvm::SmallVector<Chunk> chunks;
 };
-}
+}  // namespace
 
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.

@@ -26,7 +26,7 @@ struct Overload : Fs... {
 template <typename... Fs>
 Overload(Fs...) -> Overload<Fs...>;
 
-}
+}  // namespace Internal
 
 // Pattern-match against the type of the value stored in the variant `V`. Each
 // element of `fs` should be a function that takes one or more of the variant
@@ -39,4 +39,4 @@ auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
 
 }  // namespace Carbon
 
-#endif  // CARBON_COMMON_STRING_HELPERS_H_
+#endif  // CARBON_COMMON_VARIANT_HELPERS_H_

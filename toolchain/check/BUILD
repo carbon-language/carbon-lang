@@ -112,6 +112,7 @@ cc_library(
         ":operator",
         ":pointer_dereference",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//common:variant_helpers",
         "//toolchain/base:pretty_stack_trace_function",

@@ -268,9 +268,9 @@ auto HandleFunctionDefinitionSuspend(Context& context,
   return {function_id, decl_id, context.decl_name_stack().Suspend()};
 }
 
-auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
-    SuspendedFunction sus_fn) -> void {
+auto HandleFunctionDefinitionResume(Context& context,
+                                    Parse::FunctionDefinitionStartId node_id,
+                                    SuspendedFunction sus_fn) -> void {
   context.decl_name_stack().Restore(sus_fn.saved_name_state);
   HandleFunctionDefinitionAfterSignature(context, node_id, sus_fn.function_id,
                                          sus_fn.decl_id);

@@ -68,7 +68,7 @@ auto DeclNameStack::Suspend() -> SuspendedName {
       << "Missing call to FinishName before Suspend";
   SuspendedName result = {decl_name_stack_.pop_back_val(), {}};
   auto enclosing_index = result.name_context.enclosing_scope;
-  auto &scope_stack = context_->scope_stack();
+  auto& scope_stack = context_->scope_stack();
   while (scope_stack.PeekIndex() > enclosing_index) {
     result.scopes.push_back(scope_stack.Suspend());
   }
