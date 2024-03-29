@@ -14,9 +14,14 @@ auto HandleOnlyParenExpr(Context& context) -> void {
   context.AddLeafNode(NodeKind::ExprOpenParen, open_paren);
 
   state.token = open_paren;
-  context.PushState(state, State::ParenExprFinish);
   context.PushState(state, State::OnlyParenExprFinish);
   context.PushState(State::Expr);
+}
+
+static auto FinishParenExpr(Context& context,
+                            const Context::StateStackEntry& state) -> void {
+  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
+                  state.has_error);
 }
 
 auto HandleOnlyParenExprFinish(Context& context) -> void {
@@ -28,12 +33,14 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
                         "Expected `)`.");
       context.emitter().Emit(*context.position(),
                              UnexpectedTokenInCompoundMemberAccess);
-      context.ReturnErrorOnState();
+      state.has_error = true;
     }
 
     // Recover from the invalid token.
     context.SkipTo(context.tokens().GetMatchedClosingToken(state.token));
   }
+
+  FinishParenExpr(context, state);
 }
 
 auto HandleParenExpr(Context& context) -> void {
@@ -89,8 +96,7 @@ auto HandleTupleLiteralElementFinish(Context& context) -> void {
 auto HandleParenExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
-                  state.has_error);
+  FinishParenExpr(context, state);
 }
 
 auto HandleTupleLiteralFinish(Context& context) -> void {

@@ -821,7 +821,6 @@ CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
 // ^
 //   1. Expr
 //   2. OnlyParenExprFinish
-//   3. ParenExprFinish
 CARBON_PARSE_STATE(OnlyParenExpr)
 
 // Handles the `)` after `->(`... or `.(`...
