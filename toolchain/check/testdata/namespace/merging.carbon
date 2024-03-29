@@ -95,16 +95,16 @@ fn Run() {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <namespace> = import_ref ir1, inst+1, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %.1, [template] {
-// CHECK:STDOUT:     .A = %import_ref.1
-// CHECK:STDOUT:     .B1 = %import_ref.2
-// CHECK:STDOUT:     .B2 = %import_ref.3
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .A = %import_ref.2
+// CHECK:STDOUT:     .B1 = %import_ref.3
+// CHECK:STDOUT:     .B2 = %import_ref.4
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loc_33 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+2, loc_39 [template = imports.%B1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+5, loc_45 [template = imports.%B2]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+2, loc_33 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, loc_39 [template = imports.%B1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, loc_45 [template = imports.%B2]
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
@@ -118,13 +118,13 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.2 [template = imports.%A]
 // CHECK:STDOUT:   %.loc12: init () = call %A.ref()
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%import_ref.2 [template = imports.%B1]
+// CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%import_ref.3 [template = imports.%B1]
 // CHECK:STDOUT:   %.loc13: init () = call %B1.ref()
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%import_ref.3 [template = imports.%B2]
+// CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%import_ref.4 [template = imports.%B2]
 // CHECK:STDOUT:   %.loc14: init () = call %B2.ref()
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]

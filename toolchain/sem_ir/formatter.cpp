@@ -503,6 +503,7 @@ class InstNamer {
           break;
         }
         case ImportRefUnloaded::Kind:
+        case ImportRefLoaded::Kind:
         case ImportRefUsed::Kind: {
           add_inst_name("import_ref");
           // When building import refs, we frequently add instructions without

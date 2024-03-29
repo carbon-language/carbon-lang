@@ -270,14 +270,14 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F]
-// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+7>]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
 // CHECK:STDOUT:   %.loc8: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -308,14 +308,14 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F]
-// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+3, loaded [template = <unexpected instref inst+7>]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
 // CHECK:STDOUT:   %.loc24: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -330,9 +330,9 @@ fn Other.G() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <namespace> = import_ref ir1, inst+1, loaded
-// CHECK:STDOUT:   %Other: <namespace> = namespace %.1, [template] {}
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+1, loc_16 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loc_16 [template = imports.%F]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

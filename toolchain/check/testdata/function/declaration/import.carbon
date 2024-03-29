@@ -459,14 +459,14 @@ import library "extern_api";
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D]
-// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
-// CHECK:STDOUT:   %.2: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
-// CHECK:STDOUT:   %.3: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
-// CHECK:STDOUT:   %.4: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B.1]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+1, loaded [template = imports.%A.2]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, loaded [template = imports.%B.2]
+// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, loaded [template = imports.%C.2]
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, loaded [template = imports.%D.2]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -500,21 +500,21 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
 // CHECK:STDOUT:   %.loc7: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %.loc7
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_15: init i32 = call %B.ref(%.loc8_16)
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_15
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
 // CHECK:STDOUT:   assign file.%c.var, %.loc9_21
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return
@@ -541,14 +541,14 @@ import library "extern_api";
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D]
-// CHECK:STDOUT:   %.1: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
-// CHECK:STDOUT:   %.2: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
-// CHECK:STDOUT:   %.3: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
-// CHECK:STDOUT:   %.4: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_19 [template = imports.%A.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loc_28 [template = imports.%B.1]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loc_43 [template = imports.%C.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loc_57 [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+1, loaded [template = imports.%A.2]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, loaded [template = imports.%B.2]
+// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, loaded [template = imports.%C.2]
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, loaded [template = imports.%D.2]
 // CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -582,21 +582,21 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
 // CHECK:STDOUT:   %.loc7: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %.loc7
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_15: init i32 = call %B.ref(%.loc8_16)
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_15
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
 // CHECK:STDOUT:   assign file.%c.var, %.loc9_21
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return
@@ -641,19 +641,19 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %.1
-// CHECK:STDOUT:     .B = %.2
-// CHECK:STDOUT:     .C = %.3
-// CHECK:STDOUT:     .D = %.4
+// CHECK:STDOUT:     .A = %import_ref.1
+// CHECK:STDOUT:     .B = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
+// CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <function> = import_ref ir1, inst+1, loaded [template = <unexpected instref inst+7>]
-// CHECK:STDOUT:   %.2: <function> = import_ref ir1, inst+5, loaded [template = <unexpected instref inst+12>]
-// CHECK:STDOUT:   %.3: <function> = import_ref ir1, inst+17, loaded [template = <unexpected instref inst+24>]
-// CHECK:STDOUT:   %.4: <function> = import_ref ir1, inst+18, loaded [template = <unexpected instref inst+29>]
-// CHECK:STDOUT:   %.5: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
-// CHECK:STDOUT:   %.6: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
-// CHECK:STDOUT:   %.7: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
-// CHECK:STDOUT:   %.8: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loaded [template = imports.%A.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+5, loaded [template = imports.%B.1]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+17, loaded [template = imports.%C.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+18, loaded [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+1, loaded [template = imports.%A.2]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+5, loaded [template = imports.%B.2]
+// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+17, loaded [template = imports.%C.2]
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+18, loaded [template = imports.%D.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A.1();

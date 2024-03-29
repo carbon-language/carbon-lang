@@ -38,8 +38,8 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <namespace> = import_ref ir1, inst+1, loaded
-// CHECK:STDOUT:   %NS: <namespace> = namespace %.1, [template] {
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
