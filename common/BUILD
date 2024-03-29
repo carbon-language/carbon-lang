@@ -239,6 +239,11 @@ cc_test(
 )
 
 cc_library(
+    name = "variant_helpers",
+    hdrs = ["variant_helpers.h"],
+)
+
+cc_library(
     name = "vlog",
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],
