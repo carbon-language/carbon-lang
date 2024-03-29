@@ -139,7 +139,7 @@ class FileTestAutoupdater {
   // Looks for the patterns in the line. Returns the first match, or defaulted
   // information if not found.
   auto GetFileAndLineNumber(
-      llvm::DenseMap<llvm::StringRef, int> file_to_number_map,
+      const llvm::DenseMap<llvm::StringRef, int>& file_to_number_map,
       int default_file_number, const std::string& check_line)
       -> FileAndLineNumber;
 
