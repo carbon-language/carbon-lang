@@ -472,10 +472,10 @@ static auto TryConsumeSplit(
   return true;
 }
 
-// Transforms a `FileCheck` pattern into a single complete regex by escaping all
-// regex characters outside of the designated `{{...}}` regex sequences, and
-// switching those to a normal regex sub-pattern syntax.
-static void TransformFileCheckToRegex(std::string& str) {
+// Converts a `FileCheck`-style expectation string into a single complete regex
+// string by escaping all regex characters outside of the designated `{{...}}`
+// regex sequences, and switching those to a normal regex sub-pattern syntax.
+static void ConvertExpectationStringToRegex(std::string& str) {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
       case '(':
@@ -588,7 +588,7 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
   // Otherwise, we need to turn the entire string into a regex by escaping
   // things outside the regex region and transforming the regex region into a
   // normal syntax.
-  TransformFileCheckToRegex(str);
+  ConvertExpectationStringToRegex(str);
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
