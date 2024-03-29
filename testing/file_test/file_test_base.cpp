@@ -472,6 +472,56 @@ static auto TryConsumeSplit(
   return true;
 }
 
+// Transforms a `FileCheck` pattern into a single complete regex by escaping all
+// regex characters outside of the designated `{{...}}` regex sequences, and
+// switching those to a normal regex sub-pattern syntax.
+static void TransformFileCheckToRegex(std::string& str) {
+  for (int pos = 0; pos < static_cast<int>(str.size());) {
+    switch (str[pos]) {
+      case '(':
+      case ')':
+      case '[':
+      case ']':
+      case '}':
+      case '.':
+      case '^':
+      case '$':
+      case '*':
+      case '+':
+      case '?':
+      case '|':
+      case '\\': {
+        // Escape regex characters.
+        str.insert(pos, "\\");
+        pos += 2;
+        break;
+      }
+      case '{': {
+        if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
+          // Single `{`, escape it.
+          str.insert(pos, "\\");
+          pos += 2;
+          break;
+        }
+
+        // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
+        str.replace(pos, 2, "(");
+        for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
+          if (str[pos] == '}' && str[pos + 1] == '}') {
+            str.replace(pos, 2, ")");
+            ++pos;
+            break;
+          }
+        }
+        break;
+      }
+      default: {
+        ++pos;
+      }
+    }
+  }
+}
+
 // Transforms an expectation on a given line from `FileCheck` syntax into a
 // standard regex matcher.
 static auto TransformExpectation(int line_index, llvm::StringRef in)
@@ -538,50 +588,7 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
   // Otherwise, we need to turn the entire string into a regex by escaping
   // things outside the regex region and transforming the regex region into a
   // normal syntax.
-  for (int pos = 0; pos < static_cast<int>(str.size());) {
-    switch (str[pos]) {
-      case '(':
-      case ')':
-      case '[':
-      case ']':
-      case '}':
-      case '.':
-      case '^':
-      case '$':
-      case '*':
-      case '+':
-      case '?':
-      case '|':
-      case '\\': {
-        // Escape regex characters.
-        str.insert(pos, "\\");
-        pos += 2;
-        break;
-      }
-      case '{': {
-        if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
-          // Single `{`, escape it.
-          str.insert(pos, "\\");
-          pos += 2;
-          break;
-        }
-
-        // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
-        str.replace(pos, 2, "(");
-        for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
-          if (str[pos] == '}' && str[pos + 1] == '}') {
-            str.replace(pos, 2, ")");
-            ++pos;
-            break;
-          }
-        }
-        break;
-      }
-      default: {
-        ++pos;
-      }
-    }
-  }
+  TransformFileCheckToRegex(str);
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
