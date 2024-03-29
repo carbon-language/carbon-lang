@@ -10,11 +10,12 @@ auto HandleOnlyParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
   // Advance past the open paren.
-  context.AddLeafNode(NodeKind::ExprOpenParen,
-                      context.ConsumeChecked(Lex::TokenKind::OpenParen));
+  auto open_paren = context.ConsumeChecked(Lex::TokenKind::OpenParen);
+  context.AddLeafNode(NodeKind::ExprOpenParen, open_paren);
 
+  state.token = open_paren;
   context.PushState(state, State::ParenExprFinish);
-  context.PushState(State::OnlyParenExprFinish);
+  context.PushState(state, State::OnlyParenExprFinish);
   context.PushState(State::Expr);
 }
 
@@ -31,10 +32,7 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
     }
 
     // Recover from the invalid token.
-    auto end_of_element = context.FindNextOf({Lex::TokenKind::CloseParen});
-    // The lexer guarantees that parentheses are balanced.
-    CARBON_CHECK(end_of_element) << "missing matching `(` for `)`";
-    context.SkipTo(*end_of_element);
+    context.SkipTo(context.tokens().GetMatchedClosingToken(state.token));
   }
 }
 
