@@ -479,14 +479,84 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
   if (in.empty()) {
     return Matcher<std::string>{StrEq("")};
   }
-  if (in[0] != ' ') {
+  if (!in.consume_front(" ")) {
     return ErrorBuilder() << "Malformated CHECK line: " << in;
   }
-  std::string str = in.substr(1).str();
+  // Try to avoid an extra string copy if the input is already in a viable form.
+  if (in.find("[[") == llvm::StringRef::npos &&
+      in.find("{{") == llvm::StringRef::npos) {
+    return Matcher<std::string>{StrEq(in)};
+  }
+
+  // We'll have to either insert special sequences or process as a regex. Either
+  // way, we need scratch space so create a copy.
+  std::string str = in.str();
+
+  // First scan the string to expand any keywords and see if we need to process
+  // it as a regex. We don't expand the regex here to simplify escaping below.
+  bool has_regex = false;
+  for (int pos = 0; pos < static_cast<int>(str.size());) {
+    switch (str[pos]) {
+      case '[': {
+        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
+        if (!line_keyword_cursor.consume_front("[[")) {
+          // Just step over a single square bracket.
+          ++pos;
+          break;
+        }
+
+        static constexpr llvm::StringLiteral LineKeyword = "@LINE";
+        if (!line_keyword_cursor.consume_front(LineKeyword)) {
+          return ErrorBuilder()
+                 << "Unexpected [[, should be {{\\[\\[}} at `"
+                 << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+        }
+
+        // Allow + or - here; consumeInteger handles -.
+        line_keyword_cursor.consume_front("+");
+        int offset;
+        // consumeInteger returns true for errors, not false.
+        if (line_keyword_cursor.consumeInteger(10, offset) ||
+            !line_keyword_cursor.consume_front("]]")) {
+          return ErrorBuilder()
+                 << "Unexpected @LINE offset at `"
+                 << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+        }
+        std::string int_str = llvm::Twine(line_index + offset).str();
+        int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
+        str.replace(pos, remove_len, int_str);
+        pos += int_str.size();
+        break;
+      }
+      case '{': {
+        if (pos + 1 != static_cast<int>(str.size()) && str[pos + 1] != '{') {
+          // Save that we found a regex region, we'll expand it below.
+          has_regex = true;
+          // Do an extra increment to move past the second curly.
+          ++pos;
+        }
+        ++pos;
+        break;
+      }
+      default: {
+        ++pos;
+      }
+    }
+  }
+  // If we didn't find a regex region, we can just use the adjusted string
+  // directly as a matcher.
+  if (!has_regex) {
+    return Matcher<std::string>{StrEq(str)};
+  }
+
+  // Otherwise, we need to turn the entire string into a regex by escaping
+  // things outside the regex region and transforming the regex region into a
+  // normal syntax.
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
       case '(':
       case ')':
+      case '[':
       case ']':
       case '}':
       case '.':
@@ -502,51 +572,21 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
         pos += 2;
         break;
       }
-      case '[': {
-        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
-        if (line_keyword_cursor.consume_front("[[")) {
-          static constexpr llvm::StringLiteral LineKeyword = "@LINE";
-          if (line_keyword_cursor.consume_front(LineKeyword)) {
-            // Allow + or - here; consumeInteger handles -.
-            line_keyword_cursor.consume_front("+");
-            int offset;
-            // consumeInteger returns true for errors, not false.
-            if (line_keyword_cursor.consumeInteger(10, offset) ||
-                !line_keyword_cursor.consume_front("]]")) {
-              return ErrorBuilder()
-                     << "Unexpected @LINE offset at `"
-                     << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-            }
-            std::string int_str = llvm::Twine(line_index + offset).str();
-            int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
-            str.replace(pos, remove_len, int_str);
-            pos += int_str.size();
-          } else {
-            return ErrorBuilder()
-                   << "Unexpected [[, should be {{\\[\\[}} at `"
-                   << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-          }
-        } else {
-          // Escape the `[`.
-          str.insert(pos, "\\");
-          pos += 2;
-        }
-        break;
-      }
       case '{': {
         if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
           // Single `{`, escape it.
           str.insert(pos, "\\");
           pos += 2;
-        } else {
-          // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
-          str.replace(pos, 2, "(");
-          for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
-            if (str[pos] == '}' && str[pos + 1] == '}') {
-              str.replace(pos, 2, ")");
-              ++pos;
-              break;
-            }
+          break;
+        }
+
+        // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
+        str.replace(pos, 2, "(");
+        for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
+          if (str[pos] == '}' && str[pos + 1] == '}') {
+            str.replace(pos, 2, ")");
+            ++pos;
+            break;
           }
         }
         break;
@@ -556,7 +596,6 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
       }
     }
   }
-
   return Matcher<std::string>{MatchesRegex(str)};
 }
 
