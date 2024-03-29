@@ -10,7 +10,10 @@ interface Simple {
 
 class C {
   impl as Simple {
-    fn F() {}
+    fn F() {
+      // C is a complete type here.
+      var c: C = {};
+    }
   }
 }
 
@@ -23,6 +26,9 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type {} [template]
+// CHECK:STDOUT:   %.8: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,6 +73,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %c.var: ref C = var c
+// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT:   %.loc15_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc15_19.2: init C = class_init (), %c.var [template = constants.%.8]
+// CHECK:STDOUT:   %.loc15_19.3: init C = converted %.loc15_19.1, %.loc15_19.2 [template = constants.%.8]
+// CHECK:STDOUT:   assign %c.var, %.loc15_19.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

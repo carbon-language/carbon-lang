@@ -271,10 +271,10 @@ struct NextInlineMethodCache {
 };
 }  // namespace
 
-// Determines whether we are currently in a scope in which method definitions
-// are delayed. When entering another delayed method scope, the inner
-// declaration's methods are parsed at the end of the outer declaration, not the
-// inner one.  For example:
+// Determines whether we are currently declaring a name in a scope in which
+// method definitions are delayed. When entering another delayed method scope,
+// the inner declaration's methods are parsed at the end of the outer
+// declaration, not the inner one.  For example:
 //
 // ```
 // class A {
@@ -291,7 +291,7 @@ struct NextInlineMethodCache {
 // ```
 static auto IsInDelayedMethodScope(Context& context) -> bool {
   auto inst_id = context.name_scopes().GetInstIdIfValid(
-      context.scope_stack().PeekNameScopeId());
+      context.decl_name_stack().PeekTargetScope());
   if (!inst_id.is_valid()) { return false; }
   switch (context.insts().Get(inst_id).kind()) {
     case SemIR::ClassDecl::Kind:
