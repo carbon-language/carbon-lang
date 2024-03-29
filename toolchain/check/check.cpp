@@ -253,21 +253,33 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 namespace {
 // State used to track the next inline method body that we will encounter and
 // need to reorder.
-struct NextInlineMethodCache {
-  const Parse::Tree* tree;
-  Parse::InlineMethodIndex index = Parse::InlineMethodIndex::Invalid;
-  Parse::NodeId start_id = Parse::NodeId::Invalid;
+class NextInlineMethodCache {
+ public:
+  explicit NextInlineMethodCache(const Parse::Tree* tree) : tree_(tree) {
+    SkipTo(Parse::InlineMethodIndex(0));
+  }
 
   // Set the specified inline method index as being the next one to parse.
   auto SkipTo(Parse::InlineMethodIndex next_index) -> void {
-    index = next_index;
-    if (static_cast<std::size_t>(index.index) ==
-        tree->inline_methods().size()) {
-      start_id = Parse::NodeId::Invalid;
+    index_ = next_index;
+    if (static_cast<std::size_t>(index_.index) ==
+        tree_->inline_methods().size()) {
+      start_id_ = Parse::NodeId::Invalid;
     } else {
-      start_id = tree->inline_methods().Get(index).start_id;
+      start_id_ = tree_->inline_methods().Get(index_).start_id;
     }
   }
+
+  // Returns the index of the next inline method to be parsed.
+  auto index() const -> Parse::InlineMethodIndex { return index_; }
+
+  // Returns the ID of the start node of the next inline method.
+  auto start_id() const -> Parse::NodeId { return start_id_; }
+
+ private:
+  const Parse::Tree* tree_;
+  Parse::InlineMethodIndex index_ = Parse::InlineMethodIndex::Invalid;
+  Parse::NodeId start_id_ = Parse::NodeId::Invalid;
 };
 }  // namespace
 
@@ -338,7 +350,8 @@ static auto IsEndOfDelayedMethodScope(Parse::NodeKind kind) -> bool {
 namespace {
 // A worklist of pending tasks to perform to parse skipped inline method
 // bodies.
-struct InlineMethodWorklist {
+class InlineMethodWorklist {
+ public:
   // A worklist task that indicates we should parse a skipped method.
   struct ParseSkippedMethod {
     // The method that we skipped.
@@ -367,22 +380,22 @@ struct InlineMethodWorklist {
   using Task =
       std::variant<ParseSkippedMethod, EnterMethodScope, LeaveMethodScope>;
 
-  InlineMethodWorklist() { worklist.reserve(64); }
+  InlineMethodWorklist() { worklist_.reserve(64); }
 
   // Suspend the current function definition and push a task onto the worklist
   // to finish it later.
   auto SuspendFunctionAndPush(Context& context, Parse::InlineMethodIndex index,
                               Parse::FunctionDefinitionStartId node_id)
       -> void {
-    worklist.push_back(ParseSkippedMethod{
+    worklist_.push_back(ParseSkippedMethod{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
   }
 
   // Push a task to re-enter a method scope, so that functions defined within it
   // are parsed in the right context.
   auto PushEnterMethodScope(Context& context) -> void {
-    method_scopes.push_back(worklist.size());
-    worklist.push_back(
+    method_scopes_.push_back(worklist_.size());
+    worklist_.push_back(
         EnterMethodScope{std::nullopt, IsInDelayedMethodScope(context)});
   }
 
@@ -391,72 +404,184 @@ struct InlineMethodWorklist {
   // inline methods. Returns `true` if inline methods should be parsed
   // immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> bool {
-    auto method_scope_index = method_scopes.pop_back_val();
+    auto method_scope_index = method_scopes_.pop_back_val();
 
     // If we've not found any inline method definitions in this scope, clean up
     // the stack.
-    if (method_scope_index == worklist.size() - 1) {
+    if (method_scope_index == worklist_.size() - 1) {
       context.decl_name_stack().PopScope();
-      worklist.pop_back();
+      worklist_.pop_back();
       return false;
     }
 
     // If we're in a nested method scope, keep track of its scope but don't
     // parse methods now.
-    auto& enter_scope = get<EnterMethodScope>(worklist[method_scope_index]);
+    auto& enter_scope = get<EnterMethodScope>(worklist_[method_scope_index]);
     if (enter_scope.in_method_scope) {
       // This is a nested method scope. Suspend the inner scope so we can
       // restore it when we come to parse the method bodies.
       enter_scope.sus_name = context.decl_name_stack().Suspend();
 
       // Enqueue a task to leave the nested scope.
-      worklist.push_back(LeaveMethodScope{.in_method_scope = true});
+      worklist_.push_back(LeaveMethodScope{.in_method_scope = true});
       return false;
     }
 
     // We're at the end of a non-nested method scope. Prepare to start parsing
     // inline methods. Enqueue a task to leave this outer scope and end parsing
     // inline methods.
-    worklist.push_back(LeaveMethodScope{.in_method_scope = false});
+    worklist_.push_back(LeaveMethodScope{.in_method_scope = false});
 
     // We'll process the worklist in reverse index order, so reverse the part of
     // it we're about to execute so we run our tasks in the order in which they
     // were pushed.
-    std::reverse(worklist.begin() + method_scope_index, worklist.end());
+    std::reverse(worklist_.begin() + method_scope_index, worklist_.end());
 
     // Pop the `EnterMethodScope` that's now on the end of the worklist.
     // We stay in that scope rather than suspending then immediately
     // resuming it.
-    CARBON_CHECK(holds_alternative<EnterMethodScope>(worklist.back()))
+    CARBON_CHECK(holds_alternative<EnterMethodScope>(worklist_.back()))
         << "Unexpected task in worklist.";
-    worklist.pop_back();
+    worklist_.pop_back();
     return true;
   }
 
   // Pop the next task off the worklist.
-  auto Pop() -> Task { return worklist.pop_back_val(); }
+  auto Pop() -> Task { return worklist_.pop_back_val(); }
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
-    CARBON_CHECK(worklist.empty() && method_scopes.empty())
+    CARBON_CHECK(worklist_.empty() && method_scopes_.empty())
         << "Tasks left behind on worklist.";
   }
 
+ private:
   // A worklist of parsing tasks we'll need to do later.
   // Don't allocate any inline storage here. A Task is fairly large, so we never
   // want this to live on the stack. Instead, we reserve space in the
   // constructor for a fairly large number of inline method definitions.
-  llvm::SmallVector<Task, 0> worklist;
+  llvm::SmallVector<Task, 0> worklist_;
 
   // Indexes in `worklist` of method scopes that are currently still open.
-  llvm::SmallVector<size_t> method_scopes;
+  llvm::SmallVector<size_t> method_scopes_;
 };
 }  // namespace
 
 namespace {
 // A traversal of the node IDs in the parse tree, in the order in which we need
 // to check them.
-struct NodeIdTraversal {
+class NodeIdTraversal {
+ public:
+  explicit NodeIdTraversal(Context& context)
+      : context_(context), next_inline_method_(&context.parse_tree()) {
+    chunks_.push_back({.it = context.parse_tree().postorder().begin(),
+                       .end = context.parse_tree().postorder().end(),
+                       .next_method = Parse::InlineMethodIndex::Invalid});
+  }
+
+  // Finds the next `NodeId` to parse. Returns nullopt if the traversal is
+  // complete.
+  auto Next() -> std::optional<Parse::NodeId> {
+    while (true) {
+      // If we're parsing skipped methods, find the next method we're parsing,
+      // restore the suspended state, and add a corresponding `Chunk` to the top
+      // of the chunk list.
+      if (chunks_.back().parsing_skipped_methods) {
+        VariantMatch(
+            worklist_.Pop(),
+            // Entering a nested class.
+            [&](InlineMethodWorklist::EnterMethodScope&& enter) {
+              CARBON_CHECK(enter.sus_name)
+                  << "Entering a scope with no suspension information.";
+              context_.decl_name_stack().Restore(std::move(*enter.sus_name));
+            },
+            // Leaving a nested class or the top-level class.
+            [&](InlineMethodWorklist::LeaveMethodScope&& leave) {
+              if (!leave.in_method_scope) {
+                // We're done with parsing skipped methods.
+                chunks_.back().parsing_skipped_methods = false;
+              }
+              context_.decl_name_stack().PopScope();
+            },
+            // Resume parsing this method.
+            [&](InlineMethodWorklist::ParseSkippedMethod&& parse_method) {
+              auto& [method_index, sus_fn] = parse_method;
+              const auto& method =
+                  context_.parse_tree().inline_methods().Get(method_index);
+              HandleFunctionDefinitionResume(context_, method.start_id,
+                                             std::move(*sus_fn));
+              chunks_.push_back(
+                  {.it = context_.parse_tree().postorder(method.start_id).end(),
+                   .end = context_.parse_tree()
+                              .postorder(method.definition_id)
+                              .end(),
+                   .next_method = next_inline_method_.index()});
+              ++method_index.index;
+              next_inline_method_.SkipTo(method_index);
+            });
+        continue;
+      }
+
+      // If we're not parsing skipped methods, produce the next parse node for
+      // this chunk. If we've run out of parse nodes, we're done with this chunk
+      // of the parse tree.
+      if (chunks_.back().it == chunks_.back().end) {
+        auto old_chunk = chunks_.pop_back_val();
+
+        // If we're out of chunks, then we're done entirely.
+        if (chunks_.empty()) {
+          worklist_.VerifyEmpty();
+          return std::nullopt;
+        }
+
+        next_inline_method_.SkipTo(old_chunk.next_method);
+        continue;
+      }
+
+      auto node_id = *chunks_.back().it;
+
+      // If we've reached the start of an inline method, skip to the end of it,
+      // and track that we need to parse it later.
+      if (node_id == next_inline_method_.start_id()) {
+        const auto& method = context_.parse_tree().inline_methods().Get(
+            next_inline_method_.index());
+        worklist_.SuspendFunctionAndPush(context_, next_inline_method_.index(),
+                                         method.start_id);
+
+        // Continue parsing after the end of the definition.
+        chunks_.back().it =
+            context_.parse_tree().postorder(method.definition_id).end();
+        next_inline_method_.SkipTo(method.next_method_index);
+        continue;
+      }
+
+      ++chunks_.back().it;
+      return node_id;
+    }
+  }
+
+  // Performs any processing necessary before handling a node.
+  auto BeforeHandle(Parse::NodeKind parse_kind) -> void {
+    // When we reach the start of a delayed method scope, add a task to the
+    // worklist to parse future skipped methods in the new context.
+    if (IsStartOfDelayedMethodScope(parse_kind)) {
+      worklist_.PushEnterMethodScope(context_);
+    }
+  }
+
+  // Performs any processing necessary after handling a node.
+  auto AfterHandle(Parse::NodeKind parse_kind) -> void {
+    // When we reach the end of a delayed method scope, add a task to the
+    // worklist to leave the scope. If this is not a nested scope, start parsing
+    // the skipped methods now.
+    if (IsEndOfDelayedMethodScope(parse_kind)) {
+      if (worklist_.SuspendFinishedScopeAndPush(context_)) {
+        chunks_.back().parsing_skipped_methods = true;
+      }
+    }
+  }
+
+ private:
   // A chunk of the parse tree that we need to parse.
   struct Chunk {
     Parse::Tree::PostorderIterator it;
@@ -470,122 +595,10 @@ struct NodeIdTraversal {
     bool parsing_skipped_methods = false;
   };
 
-  explicit NodeIdTraversal(Context& ctx) : context(ctx) {
-    next_inline_method.SkipTo(Parse::InlineMethodIndex(0));
-    chunks.push_back({.it = context.parse_tree().postorder().begin(),
-                      .end = context.parse_tree().postorder().end(),
-                      .next_method = Parse::InlineMethodIndex::Invalid});
-  }
-
-  // Finds the next `NodeId` to parse. Returns nullopt if the traversal is
-  // complete.
-  auto Next() -> std::optional<Parse::NodeId> {
-    while (true) {
-      // If we're parsing skipped methods, find the next method we're parsing,
-      // restore the suspended state, and add a corresponding `Chunk` to the top
-      // of the chunk list.
-      if (chunks.back().parsing_skipped_methods) {
-        VariantMatch(
-            worklist.Pop(),
-            // Entering a nested class.
-            [&](InlineMethodWorklist::EnterMethodScope&& enter) {
-              CARBON_CHECK(enter.sus_name)
-                  << "Entering a scope with no suspension information.";
-              context.decl_name_stack().Restore(std::move(*enter.sus_name));
-            },
-            // Leaving a nested class or the top-level class.
-            [&](InlineMethodWorklist::LeaveMethodScope&& leave) {
-              if (!leave.in_method_scope) {
-                // We're done with parsing skipped methods.
-                chunks.back().parsing_skipped_methods = false;
-              }
-              context.decl_name_stack().PopScope();
-            },
-            // Resume parsing this method.
-            [&](InlineMethodWorklist::ParseSkippedMethod&& parse_method) {
-              auto& [method_index, sus_fn] = parse_method;
-              const auto& method =
-                  context.parse_tree().inline_methods().Get(method_index);
-              HandleFunctionDefinitionResume(context, method.start_id,
-                                             std::move(*sus_fn));
-              chunks.push_back(
-                  {.it = context.parse_tree().postorder(method.start_id).end(),
-                   .end = context.parse_tree()
-                              .postorder(method.definition_id)
-                              .end(),
-                   .next_method = next_inline_method.index});
-              ++method_index.index;
-              next_inline_method.SkipTo(method_index);
-            });
-        continue;
-      }
-
-      // If we're not parsing skipped methods, produce the next parse node for
-      // this chunk. If we've run out of parse nodes, we're done with this chunk
-      // of the parse tree.
-      if (chunks.back().it == chunks.back().end) {
-        auto old_chunk = chunks.pop_back_val();
-
-        // If we're out of chunks, then we're done entirely.
-        if (chunks.empty()) {
-          worklist.VerifyEmpty();
-          return std::nullopt;
-        }
-
-        next_inline_method.SkipTo(old_chunk.next_method);
-        continue;
-      }
-
-      auto node_id = *chunks.back().it;
-
-      // If we've reached the start of an inline method, skip to the end of it,
-      // and track that we need to parse it later.
-      if (node_id == next_inline_method.start_id) {
-        const auto& method =
-            context.parse_tree().inline_methods().Get(next_inline_method.index);
-        worklist.SuspendFunctionAndPush(context, next_inline_method.index,
-                                        method.start_id);
-
-        // Continue parsing after the end of the definition.
-        chunks.back().it =
-            context.parse_tree().postorder(method.definition_id).end();
-        next_inline_method.SkipTo(method.next_method_index);
-        continue;
-      }
-
-      ++chunks.back().it;
-      return node_id;
-    }
-  }
-
-  // Performs any processing necessary before handling a node.
-  auto BeforeHandle(Parse::NodeKind parse_kind) -> void {
-    // When we reach the start of a delayed method scope, add a task to the
-    // worklist to parse future skipped methods in the new context.
-    if (IsStartOfDelayedMethodScope(parse_kind)) {
-      worklist.PushEnterMethodScope(context);
-    }
-  }
-
-  // Performs any processing necessary after handling a node.
-  auto AfterHandle(Parse::NodeKind parse_kind) -> void {
-    // When we reach the end of a delayed method scope, add a task to the
-    // worklist to leave the scope. If this is not a nested scope, start parsing
-    // the skipped methods now.
-    if (IsEndOfDelayedMethodScope(parse_kind)) {
-      if (worklist.SuspendFinishedScopeAndPush(context)) {
-        chunks.back().parsing_skipped_methods = true;
-      }
-    }
-  }
-
-  Context& context;
-
-  NextInlineMethodCache next_inline_method = {.tree = &context.parse_tree()};
-
-  InlineMethodWorklist worklist;
-
-  llvm::SmallVector<Chunk> chunks;
+  Context& context_;
+  NextInlineMethodCache next_inline_method_;
+  InlineMethodWorklist worklist_;
+  llvm::SmallVector<Chunk> chunks_;
 };
 }  // namespace
 
