@@ -97,6 +97,25 @@ var b: i32 = B(1);
 var c: {.c: i32} = C((1,));
 var d: () = D();
 
+// --- unloaded.carbon
+
+library "unloaded" api;
+
+import library "api";
+
+// --- unloaded_extern.carbon
+
+library "unloaded_extern" api;
+
+import library "extern_api";
+
+// --- loaded_merge.carbon
+
+library "loaded_merge" api;
+
+import library "api";
+import library "extern_api";
+
 // CHECK:STDOUT: --- api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -582,4 +601,74 @@ var d: () = D();
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- unloaded.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %import_ref.1
+// CHECK:STDOUT:     .B = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
+// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+18, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- unloaded_extern.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %import_ref.1
+// CHECK:STDOUT:     .B = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
+// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+18, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- loaded_merge.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %.1
+// CHECK:STDOUT:     .B = %.2
+// CHECK:STDOUT:     .C = %.3
+// CHECK:STDOUT:     .D = %.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.1: <function> = import_ref ir1, inst+1, loaded [template = <unexpected instref inst+7>]
+// CHECK:STDOUT:   %.2: <function> = import_ref ir1, inst+5, loaded [template = <unexpected instref inst+12>]
+// CHECK:STDOUT:   %.3: <function> = import_ref ir1, inst+17, loaded [template = <unexpected instref inst+24>]
+// CHECK:STDOUT:   %.4: <function> = import_ref ir1, inst+18, loaded [template = <unexpected instref inst+29>]
+// CHECK:STDOUT:   %.5: <function> = import_ref ir2, inst+1, loaded [template = <unexpected instref inst+6>]
+// CHECK:STDOUT:   %.6: <function> = import_ref ir2, inst+5, loaded [template = <unexpected instref inst+9>]
+// CHECK:STDOUT:   %.7: <function> = import_ref ir2, inst+17, loaded [template = <unexpected instref inst+20>]
+// CHECK:STDOUT:   %.8: <function> = import_ref ir2, inst+18, loaded [template = <unexpected instref inst+28>]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @A.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A.2();
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @B.1(%b: i32) -> i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.2(%b: i32) -> i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @C.1(%c: (i32,)) -> {.c: i32};
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @D.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @D.2();
 // CHECK:STDOUT:
