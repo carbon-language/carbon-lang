@@ -387,7 +387,7 @@ struct InlineMethodWorklist {
   }
 
   // Suspend the current method scope, which is finished but still on the
-  // decl_names_stack, and push a task to leave the scope when we're parsing
+  // decl_name_stack, and push a task to leave the scope when we're parsing
   // inline methods. Returns `true` if inline methods should be parsed
   // immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> bool {
