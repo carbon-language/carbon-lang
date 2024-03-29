@@ -482,69 +482,55 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
   if (!in.consume_front(" ")) {
     return ErrorBuilder() << "Malformated CHECK line: " << in;
   }
-  // Try to avoid an extra string copy if the input is already in a viable form.
-  if (in.find("[[") == llvm::StringRef::npos &&
-      in.find("{{") == llvm::StringRef::npos) {
+
+  // Check early if we have a regex component as we can avoid building an
+  // expensive matcher when not using those.
+  bool has_regex = in.find("{{") != llvm::StringRef::npos;
+
+  // Now scan the string and expand any keywords. Note that this needs to be
+  // `size_t` to correctly store `npos`.
+  size_t keyword_pos = in.find("[[");
+
+  // If there are neither keywords nor regex sequences, we can match the
+  // incoming string directly.
+  if (!has_regex && keyword_pos == llvm::StringRef::npos) {
     return Matcher<std::string>{StrEq(in)};
   }
 
-  // We'll have to either insert special sequences or process as a regex. Either
-  // way, we need scratch space so create a copy.
   std::string str = in.str();
 
-  // First scan the string to expand any keywords and see if we need to process
-  // it as a regex. We don't expand the regex here to simplify escaping below.
-  bool has_regex = false;
-  for (int pos = 0; pos < static_cast<int>(str.size());) {
-    switch (str[pos]) {
-      case '[': {
-        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
-        if (!line_keyword_cursor.consume_front("[[")) {
-          // Just step over a single square bracket.
-          ++pos;
-          break;
-        }
+  // First expand the keywords.
+  while (keyword_pos != std::string::npos) {
+    llvm::StringRef line_keyword_cursor =
+        llvm::StringRef(str).substr(keyword_pos);
+    CARBON_CHECK(line_keyword_cursor.consume_front("[["));
 
-        static constexpr llvm::StringLiteral LineKeyword = "@LINE";
-        if (!line_keyword_cursor.consume_front(LineKeyword)) {
-          return ErrorBuilder()
-                 << "Unexpected [[, should be {{\\[\\[}} at `"
-                 << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-        }
-
-        // Allow + or - here; consumeInteger handles -.
-        line_keyword_cursor.consume_front("+");
-        int offset;
-        // consumeInteger returns true for errors, not false.
-        if (line_keyword_cursor.consumeInteger(10, offset) ||
-            !line_keyword_cursor.consume_front("]]")) {
-          return ErrorBuilder()
-                 << "Unexpected @LINE offset at `"
-                 << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-        }
-        std::string int_str = llvm::Twine(line_index + offset).str();
-        int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
-        str.replace(pos, remove_len, int_str);
-        pos += int_str.size();
-        break;
-      }
-      case '{': {
-        if (pos + 1 != static_cast<int>(str.size()) && str[pos + 1] != '{') {
-          // Save that we found a regex region, we'll expand it below.
-          has_regex = true;
-          // Do an extra increment to move past the second curly.
-          ++pos;
-        }
-        ++pos;
-        break;
-      }
-      default: {
-        ++pos;
-      }
+    static constexpr llvm::StringLiteral LineKeyword = "@LINE";
+    if (!line_keyword_cursor.consume_front(LineKeyword)) {
+      return ErrorBuilder()
+             << "Unexpected [[, should be {{\\[\\[}} at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
     }
+
+    // Allow + or - here; consumeInteger handles -.
+    line_keyword_cursor.consume_front("+");
+    int offset;
+    // consumeInteger returns true for errors, not false.
+    if (line_keyword_cursor.consumeInteger(10, offset) ||
+        !line_keyword_cursor.consume_front("]]")) {
+      return ErrorBuilder()
+             << "Unexpected @LINE offset at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+    }
+    std::string int_str = llvm::Twine(line_index + offset).str();
+    int remove_len = (line_keyword_cursor.data() - str.data()) - keyword_pos;
+    str.replace(keyword_pos, remove_len, int_str);
+    keyword_pos += int_str.size();
+    // Find the next keyword start or the end of the string.
+    keyword_pos = str.find("[[", keyword_pos);
   }
-  // If we didn't find a regex region, we can just use the adjusted string
-  // directly as a matcher.
+
+  // If there was no regex, we can directly match the adjusted string.
   if (!has_regex) {
     return Matcher<std::string>{StrEq(str)};
   }
