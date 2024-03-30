@@ -362,7 +362,10 @@ class InlineMethodWorklist {
   using Task =
       std::variant<ParseSkippedMethod, EnterMethodScope, LeaveMethodScope>;
 
-  InlineMethodWorklist() { worklist_.reserve(64); }
+  InlineMethodWorklist() {
+    // See declaration of `worklist_`.
+    worklist_.reserve(64);
+  }
 
   // Suspend the current function definition and push a task onto the worklist
   // to finish it later.
