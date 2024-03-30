@@ -483,9 +483,8 @@ class NodeIdTraversal {
     // worklist to leave the scope. If this is not a nested scope, start parsing
     // the skipped methods now.
     if (IsEndOfDelayedMethodScope(parse_kind)) {
-      if (worklist_.SuspendFinishedScopeAndPush(context_)) {
-        chunks_.back().parsing_skipped_methods = true;
-      }
+      chunks_.back().parsing_skipped_methods =
+          worklist_.SuspendFinishedScopeAndPush(context_);
     }
   }
 
