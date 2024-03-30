@@ -339,14 +339,14 @@ class InlineMethodWorklist {
     // The method that we skipped.
     Parse::InlineMethodIndex method_index;
     // The suspended function. Only present when `method_index` is valid.
-    std::optional<SuspendedFunction> sus_fn;
+    std::optional<SuspendedFunction> suspended_fn;
   };
 
   // A worklist task that indicates we should enter a nested method scope, which
   // is a scope like a class or interface that can have skipped method bodies.
   struct EnterMethodScope {
     // The suspended scope. This is only set once we reach the end of the scope.
-    std::optional<DeclNameStack::SuspendedName> sus_name;
+    std::optional<DeclNameStack::SuspendedName> suspended_name;
     // Whether this scope is itself within a method scope. If so, we'll delay
     // processing its contents until we reach the end of the enclosing scope.
     bool in_method_scope;
@@ -402,7 +402,7 @@ class InlineMethodWorklist {
     if (enter_scope.in_method_scope) {
       // This is a nested method scope. Suspend the inner scope so we can
       // restore it when we come to parse the method bodies.
-      enter_scope.sus_name = context.decl_name_stack().Suspend();
+      enter_scope.suspended_name = context.decl_name_stack().Suspend();
 
       // Enqueue a task to leave the nested scope.
       worklist_.push_back(LeaveMethodScope{.in_method_scope = true});
@@ -517,9 +517,10 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
           worklist_.Pop(),
           // Entering a nested class.
           [&](InlineMethodWorklist::EnterMethodScope&& enter) {
-            CARBON_CHECK(enter.sus_name)
+            CARBON_CHECK(enter.suspended_name)
                 << "Entering a scope with no suspension information.";
-            context_.decl_name_stack().Restore(std::move(*enter.sus_name));
+            context_.decl_name_stack().Restore(
+                std::move(*enter.suspended_name));
           },
           // Leaving a nested class or the top-level class.
           [&](InlineMethodWorklist::LeaveMethodScope&& leave) {
@@ -531,11 +532,11 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
           },
           // Resume parsing this method.
           [&](InlineMethodWorklist::ParseSkippedMethod&& parse_method) {
-            auto& [method_index, sus_fn] = parse_method;
+            auto& [method_index, suspended_fn] = parse_method;
             const auto& method =
                 context_.parse_tree().inline_methods().Get(method_index);
             HandleFunctionDefinitionResume(context_, method.start_id,
-                                           std::move(*sus_fn));
+                                           std::move(*suspended_fn));
             chunks_.push_back(
                 {.it = context_.parse_tree().postorder(method.start_id).end(),
                  .end = context_.parse_tree()

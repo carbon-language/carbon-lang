@@ -88,8 +88,8 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
   // true, this `move` defends against `NameContext` growing more state later.
   // NOLINTNEXTLINE(performance-move-const-arg)
   decl_name_stack_.push_back(std::move(sus.name_context));
-  for (auto& sus_scope : llvm::reverse(sus.scopes)) {
-    context_->scope_stack().Restore(std::move(sus_scope));
+  for (auto& suspended_scope : llvm::reverse(sus.scopes)) {
+    context_->scope_stack().Restore(std::move(suspended_scope));
   }
 }
 
