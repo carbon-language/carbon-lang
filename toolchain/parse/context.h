@@ -366,6 +366,9 @@ class Context {
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+
+  // The inline method indexes of inline method definitions that have begun but
+  // not yet finished.
   llvm::SmallVector<InlineMethodIndex> enclosing_inline_method_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.

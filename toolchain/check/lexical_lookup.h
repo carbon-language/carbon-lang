@@ -31,7 +31,7 @@ class LexicalLookup {
   // A lookup result that has been temporarily removed from scope.
   struct SuspendedResult {
     // The lookup index.
-    size_t index;
+    uint32_t index;
     // The lookup result.
     SemIR::InstId inst_id;
   };
@@ -58,7 +58,9 @@ class LexicalLookup {
     auto& results = lookup_[index];
     CARBON_CHECK(!results.empty())
         << "Suspending a nonexistent result for " << name_id << ".";
-    return {index, results.pop_back_val().inst_id};
+    CARBON_CHECK(index <= std::numeric_limits<uint32_t>::max())
+        << "Unexpectedly large index " << index << " for name ID";
+    return {static_cast<uint32_t>(index), results.pop_back_val().inst_id};
   }
 
   // Restore a previously-suspended lookup result.
@@ -69,7 +71,8 @@ class LexicalLookup {
  private:
   // Get the index at which the specified name is stored in `lookup_`.
   auto GetLookupIndex(SemIR::NameId name_id) -> size_t {
-    return name_id.index + SemIR::NameId::NonIndexValueCount;
+    return static_cast<ssize_t>(name_id.index) +
+           SemIR::NameId::NonIndexValueCount;
   }
 
   // Maps identifiers to name lookup results.
