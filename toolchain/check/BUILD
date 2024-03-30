@@ -95,7 +95,10 @@ cc_library(
 
 cc_library(
     name = "check",
-    srcs = ["check.cpp"] +
+    srcs = [
+        "check.cpp",
+        "handle.h",
+    ] +
     # Glob handler files to avoid missing any.
     glob([
         "handle_*.cpp",

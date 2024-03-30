@@ -13,6 +13,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
@@ -24,25 +25,6 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-// Parse node handlers. Returns false for unrecoverable errors.
-#define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(Context& context, Parse::Name##Id node_id) -> bool;
-#include "toolchain/parse/node_kind.def"
-
-// Handle suspending the definition of a function. This is used for inline
-// methods, which are processed out of the normal lexical order. This plus
-// HandleFunctionDefinitionResume carry out the same actions as
-// HandleFunctionDefinitionStart, except that the various context stacks are
-// cleared out in between.
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
-    -> SuspendedFunction;
-
-// Handle resuming the definition of a function, after a previous suspension.
-auto HandleFunctionDefinitionResume(Context& context,
-                                    Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction sus_fn) -> void;
 
 // Handles the transformation of a SemIRLocation to a DiagnosticLocation.
 //
