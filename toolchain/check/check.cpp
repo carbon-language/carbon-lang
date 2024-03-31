@@ -394,52 +394,7 @@ class DeferredDefinitionWorklist {
   // on the decl_name_stack, and push a task to leave the scope when we're
   // parsing deferred definitions. Returns `true` if deferred definitions should
   // be parsed immediately.
-  auto SuspendFinishedScopeAndPush(Context& context) -> bool {
-    auto scope_index = enclosing_scopes_.pop_back_val();
-
-    // If we've not found any deferred definitions in this scope, clean up the
-    // stack.
-    if (scope_index == worklist_.size() - 1) {
-      context.decl_name_stack().PopScope();
-      worklist_.pop_back();
-      return false;
-    }
-
-    // If we're finishing a nested deferred definition scope, keep track of that
-    // but don't parse deferred definitions now.
-    auto& enter_scope =
-        get<EnterDeferredDefinitionScope>(worklist_[scope_index]);
-    if (enter_scope.in_deferred_definition_scope) {
-      // This is a nested deferred definition scope. Suspend the inner scope so
-      // we can restore it when we come to parse the deferred definitions.
-      enter_scope.suspended_name = context.decl_name_stack().Suspend();
-
-      // Enqueue a task to leave the nested scope.
-      worklist_.push_back(
-          LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
-      return false;
-    }
-
-    // We're at the end of a non-nested deferred definition scope. Prepare to
-    // start parsing deferred definitions. Enqueue a task to leave this outer
-    // scope and end parsing deferred definitions.
-    worklist_.push_back(
-        LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
-
-    // We'll process the worklist in reverse index order, so reverse the part of
-    // it we're about to execute so we run our tasks in the order in which they
-    // were pushed.
-    std::reverse(worklist_.begin() + scope_index, worklist_.end());
-
-    // Pop the `EnterDeferredDefinitionScope` that's now on the end of the
-    // worklist. We stay in that scope rather than suspending then immediately
-    // resuming it.
-    CARBON_CHECK(
-        holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
-        << "Unexpected task in worklist.";
-    worklist_.pop_back();
-    return true;
-  }
+  auto SuspendFinishedScopeAndPush(Context& context) -> bool;
 
   // Pop the next task off the worklist.
   auto Pop() -> Task { return worklist_.pop_back_val(); }
@@ -463,6 +418,53 @@ class DeferredDefinitionWorklist {
   llvm::SmallVector<size_t> enclosing_scopes_;
 };
 }  // namespace
+
+auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
+    -> bool {
+  auto scope_index = enclosing_scopes_.pop_back_val();
+
+  // If we've not found any deferred definitions in this scope, clean up the
+  // stack.
+  if (scope_index == worklist_.size() - 1) {
+    context.decl_name_stack().PopScope();
+    worklist_.pop_back();
+    return false;
+  }
+
+  // If we're finishing a nested deferred definition scope, keep track of that
+  // but don't parse deferred definitions now.
+  auto& enter_scope = get<EnterDeferredDefinitionScope>(worklist_[scope_index]);
+  if (enter_scope.in_deferred_definition_scope) {
+    // This is a nested deferred definition scope. Suspend the inner scope so we
+    // can restore it when we come to parse the deferred definitions.
+    enter_scope.suspended_name = context.decl_name_stack().Suspend();
+
+    // Enqueue a task to leave the nested scope.
+    worklist_.push_back(
+        LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
+    return false;
+  }
+
+  // We're at the end of a non-nested deferred definition scope. Prepare to
+  // start parsing deferred definitions. Enqueue a task to leave this outer
+  // scope and end parsing deferred definitions.
+  worklist_.push_back(
+      LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
+
+  // We'll process the worklist in reverse index order, so reverse the part of
+  // it we're about to execute so we run our tasks in the order in which they
+  // were pushed.
+  std::reverse(worklist_.begin() + scope_index, worklist_.end());
+
+  // Pop the `EnterDeferredDefinitionScope` that's now on the end of the
+  // worklist. We stay in that scope rather than suspending then immediately
+  // resuming it.
+  CARBON_CHECK(
+      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
+      << "Unexpected task in worklist.";
+  worklist_.pop_back();
+  return true;
+}
 
 namespace {
 // A traversal of the node IDs in the parse tree, in the order in which we need
@@ -515,6 +517,45 @@ class NodeIdTraversal {
     bool parsing_deferred_definitions = false;
   };
 
+  // Re-enter a nested deferred definition scope.
+  auto PerformTask(
+      DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter)
+      -> void {
+    CARBON_CHECK(enter.suspended_name)
+        << "Entering a scope with no suspension information.";
+    context_.decl_name_stack().Restore(std::move(*enter.suspended_name));
+  }
+
+  // Leave a nested or top-level deferred definition scope.
+  auto PerformTask(
+      DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&& leave)
+      -> void {
+    if (!leave.in_deferred_definition_scope) {
+      // We're done with parsing deferred definitions.
+      chunks_.back().parsing_deferred_definitions = false;
+    }
+    context_.decl_name_stack().PopScope();
+  }
+
+  // Resume parsing a deferred definition.
+  auto PerformTask(
+      DeferredDefinitionWorklist::ParseSkippedDefinition&& parse_definition)
+      -> void {
+    auto& [definition_index, suspended_fn] = parse_definition;
+    const auto& definition_info =
+        context_.parse_tree().deferred_definitions().Get(definition_index);
+    HandleFunctionDefinitionResume(context_, definition_info.start_id,
+                                   std::move(suspended_fn));
+    chunks_.push_back(
+        {.it = context_.parse_tree().postorder(definition_info.start_id).end(),
+         .end = context_.parse_tree()
+                    .postorder(definition_info.definition_id)
+                    .end(),
+         .next_definition = next_deferred_definition_.index()});
+    ++definition_index.index;
+    next_deferred_definition_.SkipTo(definition_index);
+  }
+
   Context& context_;
   NextDeferredDefinitionCache next_deferred_definition_;
   DeferredDefinitionWorklist worklist_;
@@ -528,45 +569,9 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     // check, restore its suspended state, and add a corresponding `Chunk` to
     // the top of the chunk list.
     if (chunks_.back().parsing_deferred_definitions) {
-      VariantMatch(
-          worklist_.Pop(),
-          // Entering a nested class.
-          [&](DeferredDefinitionWorklist::EnterDeferredDefinitionScope&&
-                  enter) {
-            CARBON_CHECK(enter.suspended_name)
-                << "Entering a scope with no suspension information.";
-            context_.decl_name_stack().Restore(
-                std::move(*enter.suspended_name));
-          },
-          // Leaving a nested class or the top-level class.
-          [&](DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&&
-                  leave) {
-            if (!leave.in_deferred_definition_scope) {
-              // We're done with parsing deferred definitions.
-              chunks_.back().parsing_deferred_definitions = false;
-            }
-            context_.decl_name_stack().PopScope();
-          },
-          // Resume parsing this definition.
-          [&](DeferredDefinitionWorklist::ParseSkippedDefinition&&
-                  parse_definition) {
-            auto& [definition_index, suspended_fn] = parse_definition;
-            const auto& definition_info =
-                context_.parse_tree().deferred_definitions().Get(
-                    definition_index);
-            HandleFunctionDefinitionResume(context_, definition_info.start_id,
-                                           std::move(suspended_fn));
-            chunks_.push_back(
-                {.it = context_.parse_tree()
-                           .postorder(definition_info.start_id)
-                           .end(),
-                 .end = context_.parse_tree()
-                            .postorder(definition_info.definition_id)
-                            .end(),
-                 .next_definition = next_deferred_definition_.index()});
-            ++definition_index.index;
-            next_deferred_definition_.SkipTo(definition_index);
-          });
+      std::visit(
+          [&](auto&& task) { PerformTask(std::forward<decltype(task)>(task)); },
+          worklist_.Pop());
       continue;
     }
 
