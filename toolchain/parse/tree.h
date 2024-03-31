@@ -20,32 +20,35 @@
 
 namespace Carbon::Parse {
 
-struct InlineMethod;
+struct DeferredDefinition;
 
-// The index of an inline method within the parse tree's inline method store.
-struct InlineMethodIndex : public IndexBase {
-  using ValueType = InlineMethod;
+// The index of a deferred function definition within the parse tree's deferred
+// definition store.
+struct DeferredDefinitionIndex : public IndexBase {
+  using ValueType = DeferredDefinition;
 
-  static const InlineMethodIndex Invalid;
+  static const DeferredDefinitionIndex Invalid;
 
   using IndexBase::IndexBase;
 };
 
-constexpr InlineMethodIndex InlineMethodIndex::Invalid =
-    InlineMethodIndex(InvalidIndex);
+constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
+    DeferredDefinitionIndex(InvalidIndex);
 
-// A method that is defined inline.
+// A function whose definition is deferred because it is defined inline in a
+// class or similar scope.
 //
-// Such methods are processed out of order, with their bodies parsed after the
+// Such functions are processed out of order, with their bodies parsed after the
 // enclosing declaration is complete. Some additional information is tracked for
-// these methods in the parse tree to support this reordering.
-struct InlineMethod {
+// these functions in the parse tree to support this reordering.
+struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
   FunctionDefinitionId definition_id = NodeId::Invalid;
   // The index of the next method that is not nested within this one.
-  InlineMethodIndex next_method_index = InlineMethodIndex::Invalid;
+  DeferredDefinitionIndex next_definition_index =
+      DeferredDefinitionIndex::Invalid;
 };
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
@@ -178,8 +181,9 @@ class Tree : public Printable<Tree> {
     return packaging_directive_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
-  auto inline_methods() const -> const ValueStore<InlineMethodIndex>& {
-    return inline_methods_;
+  auto deferred_definitions() const
+      -> const ValueStore<DeferredDefinitionIndex>& {
+    return deferred_definitions_;
   }
 
   // See the other Print comments.
@@ -371,7 +375,7 @@ class Tree : public Printable<Tree> {
 
   std::optional<PackagingDirective> packaging_directive_;
   llvm::SmallVector<PackagingNames> imports_;
-  ValueStore<InlineMethodIndex> inline_methods_;
+  ValueStore<DeferredDefinitionIndex> deferred_definitions_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

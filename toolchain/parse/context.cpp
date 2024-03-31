@@ -430,9 +430,9 @@ auto Context::EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
   emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
 }
 
-// Returns whether we are currently parsing in a context in which methods can be
-// declared, such as a class or interface.
-static auto ParsingInMethodContext(Context& context) -> bool {
+// Returns whether we are currently parsing in a scope in which function
+// definitions are deferred, such as a class or interface.
+static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
   auto& stack = context.state_stack();
   if (stack.size() < 2 || stack.back().state != State::DeclScopeLoop) {
     return false;
@@ -447,10 +447,11 @@ static auto ParsingInMethodContext(Context& context) -> bool {
 auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
                                          int subtree_start, bool has_error)
     -> void {
-  if (ParsingInMethodContext(*this)) {
-    enclosing_inline_method_stack_.push_back(tree_->inline_methods_.Add(
-        {.start_id =
-             FunctionDefinitionStartId(NodeId(tree_->node_impls_.size()))}));
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    enclosing_deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add(
+            {.start_id = FunctionDefinitionStartId(
+                 NodeId(tree_->node_impls_.size()))}));
   }
 
   AddNode(NodeKind::FunctionDefinitionStart, token, subtree_start, has_error);
@@ -458,13 +459,13 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
 
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
                                     bool has_error) -> void {
-  if (ParsingInMethodContext(*this)) {
-    auto method_index = enclosing_inline_method_stack_.pop_back_val();
-    auto& method = tree_->inline_methods_.Get(method_index);
-    method.definition_id =
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = enclosing_deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id =
         FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
-    method.next_method_index =
-        InlineMethodIndex(tree_->inline_methods().size());
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
   }
 
   AddNode(NodeKind::FunctionDefinition, token, subtree_start, has_error);

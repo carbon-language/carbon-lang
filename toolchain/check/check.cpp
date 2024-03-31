@@ -233,42 +233,43 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
 }
 
 namespace {
-// State used to track the next inline method body that we will encounter and
-// need to reorder.
-class NextInlineMethodCache {
+// State used to track the next deferred function definition that we will
+// encounter and need to reorder.
+class NextDeferredDefinitionCache {
  public:
-  explicit NextInlineMethodCache(const Parse::Tree* tree) : tree_(tree) {
-    SkipTo(Parse::InlineMethodIndex(0));
+  explicit NextDeferredDefinitionCache(const Parse::Tree* tree) : tree_(tree) {
+    SkipTo(Parse::DeferredDefinitionIndex(0));
   }
 
-  // Set the specified inline method index as being the next one to parse.
-  auto SkipTo(Parse::InlineMethodIndex next_index) -> void {
+  // Set the specified deferred definition index as being the next one to parse.
+  auto SkipTo(Parse::DeferredDefinitionIndex next_index) -> void {
     index_ = next_index;
     if (static_cast<std::size_t>(index_.index) ==
-        tree_->inline_methods().size()) {
+        tree_->deferred_definitions().size()) {
       start_id_ = Parse::NodeId::Invalid;
     } else {
-      start_id_ = tree_->inline_methods().Get(index_).start_id;
+      start_id_ = tree_->deferred_definitions().Get(index_).start_id;
     }
   }
 
-  // Returns the index of the next inline method to be parsed.
-  auto index() const -> Parse::InlineMethodIndex { return index_; }
+  // Returns the index of the next deferred definition to be parsed.
+  auto index() const -> Parse::DeferredDefinitionIndex { return index_; }
 
-  // Returns the ID of the start node of the next inline method.
+  // Returns the ID of the start node of the next deferred definition.
   auto start_id() const -> Parse::NodeId { return start_id_; }
 
  private:
   const Parse::Tree* tree_;
-  Parse::InlineMethodIndex index_ = Parse::InlineMethodIndex::Invalid;
+  Parse::DeferredDefinitionIndex index_ =
+      Parse::DeferredDefinitionIndex::Invalid;
   Parse::NodeId start_id_ = Parse::NodeId::Invalid;
 };
 }  // namespace
 
 // Determines whether we are currently declaring a name in a scope in which
-// method definitions are delayed. When entering another delayed method scope,
-// the inner declaration's methods are parsed at the end of the outer
-// declaration, not the inner one.  For example:
+// function definitions are deferred. When entering another deferred definition
+// scope, the inner scope's function definitions are parsed at the end of the
+// outer scope, not the inner one.  For example:
 //
 // ```
 // class A {
@@ -283,7 +284,7 @@ class NextInlineMethodCache {
 //   } // C.G is parsed here.
 // }
 // ```
-static auto IsInDelayedMethodScope(Context& context) -> bool {
+static auto IsInDeferredDefinitionScope(Context& context) -> bool {
   auto inst_id = context.name_scopes().GetInstIdIfValid(
       context.decl_name_stack().PeekTargetScope());
   if (!inst_id.is_valid()) {
@@ -301,8 +302,9 @@ static auto IsInDelayedMethodScope(Context& context) -> bool {
   }
 }
 
-// Determines whether this node kind is the start of a delayed method scope.
-static auto IsStartOfDelayedMethodScope(Parse::NodeKind kind) -> bool {
+// Determines whether this node kind is the start of a deferred definition
+// scope.
+static auto IsStartOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
   switch (kind) {
     case Parse::NodeKind::ClassDefinitionStart:
     case Parse::NodeKind::ImplDefinitionStart:
@@ -315,8 +317,8 @@ static auto IsStartOfDelayedMethodScope(Parse::NodeKind kind) -> bool {
   }
 }
 
-// Determines whether this node kind is the end of a delayed method scope.
-static auto IsEndOfDelayedMethodScope(Parse::NodeKind kind) -> bool {
+// Determines whether this node kind is the end of a deferred definition scope.
+static auto IsEndOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
   switch (kind) {
     case Parse::NodeKind::ClassDefinition:
     case Parse::NodeKind::ImplDefinition:
@@ -330,102 +332,110 @@ static auto IsEndOfDelayedMethodScope(Parse::NodeKind kind) -> bool {
 }
 
 namespace {
-// A worklist of pending tasks to perform to parse skipped inline method
-// bodies.
-class InlineMethodWorklist {
+// A worklist of pending tasks to perform to parse deferred function definitions
+// in the right order.
+class DeferredDefinitionWorklist {
  public:
-  // A worklist task that indicates we should parse a skipped method.
-  struct ParseSkippedMethod {
-    // The method that we skipped.
-    Parse::InlineMethodIndex method_index;
-    // The suspended function. Only present when `method_index` is valid.
-    std::optional<SuspendedFunction> suspended_fn;
+  // A worklist task that indicates we should parse a deferred function
+  // definition that we previously skipped.
+  struct ParseSkippedDefinition {
+    // The definition that we skipped.
+    Parse::DeferredDefinitionIndex definition_index;
+    // The suspended function.
+    SuspendedFunction suspended_fn;
   };
 
-  // A worklist task that indicates we should enter a nested method scope, which
-  // is a scope like a class or interface that can have skipped method bodies.
-  struct EnterMethodScope {
+  // A worklist task that indicates we should enter a nested deferred definition
+  // scope.
+  struct EnterDeferredDefinitionScope {
     // The suspended scope. This is only set once we reach the end of the scope.
     std::optional<DeclNameStack::SuspendedName> suspended_name;
-    // Whether this scope is itself within a method scope. If so, we'll delay
-    // processing its contents until we reach the end of the enclosing scope.
-    bool in_method_scope;
+    // Whether this scope is itself within an outer deferred definition scope.
+    // If so, we'll delay processing its contents until we reach the end of the
+    // enclosing scope.
+    bool in_deferred_definition_scope;
   };
 
-  // A worklist task that indicates we should leave a method scope.
-  struct LeaveMethodScope {
-    // Whether this scope is itself within a method scope.
-    bool in_method_scope;
+  // A worklist task that indicates we should leave a deferred definition scope.
+  struct LeaveDeferredDefinitionScope {
+    // Whether this scope is within another deferred definition scope.
+    bool in_deferred_definition_scope;
   };
 
   // A pending parsing task.
   using Task =
-      std::variant<ParseSkippedMethod, EnterMethodScope, LeaveMethodScope>;
+      std::variant<ParseSkippedDefinition, EnterDeferredDefinitionScope,
+                   LeaveDeferredDefinitionScope>;
 
-  InlineMethodWorklist() {
+  DeferredDefinitionWorklist() {
     // See declaration of `worklist_`.
     worklist_.reserve(64);
   }
 
   // Suspend the current function definition and push a task onto the worklist
   // to finish it later.
-  auto SuspendFunctionAndPush(Context& context, Parse::InlineMethodIndex index,
+  auto SuspendFunctionAndPush(Context& context,
+                              Parse::DeferredDefinitionIndex index,
                               Parse::FunctionDefinitionStartId node_id)
       -> void {
-    worklist_.push_back(ParseSkippedMethod{
+    worklist_.push_back(ParseSkippedDefinition{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
   }
 
-  // Push a task to re-enter a method scope, so that functions defined within it
-  // are parsed in the right context.
-  auto PushEnterMethodScope(Context& context) -> void {
-    method_scopes_.push_back(worklist_.size());
-    worklist_.push_back(
-        EnterMethodScope{std::nullopt, IsInDelayedMethodScope(context)});
+  // Push a task to re-enter a function scope, so that functions defined within
+  // it are parsed in the right context.
+  auto PushEnterDeferredDefinitionScope(Context& context) -> void {
+    enclosing_scopes_.push_back(worklist_.size());
+    worklist_.push_back(EnterDeferredDefinitionScope{
+        std::nullopt, IsInDeferredDefinitionScope(context)});
   }
 
-  // Suspend the current method scope, which is finished but still on the
-  // decl_name_stack, and push a task to leave the scope when we're parsing
-  // inline methods. Returns `true` if inline methods should be parsed
-  // immediately.
+  // Suspend the current deferred definition scope, which is finished but still
+  // on the decl_name_stack, and push a task to leave the scope when we're
+  // parsing deferred definitions. Returns `true` if deferred definitions should
+  // be parsed immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> bool {
-    auto method_scope_index = method_scopes_.pop_back_val();
+    auto scope_index = enclosing_scopes_.pop_back_val();
 
-    // If we've not found any inline method definitions in this scope, clean up
-    // the stack.
-    if (method_scope_index == worklist_.size() - 1) {
+    // If we've not found any deferred definitions in this scope, clean up the
+    // stack.
+    if (scope_index == worklist_.size() - 1) {
       context.decl_name_stack().PopScope();
       worklist_.pop_back();
       return false;
     }
 
-    // If we're in a nested method scope, keep track of its scope but don't
-    // parse methods now.
-    auto& enter_scope = get<EnterMethodScope>(worklist_[method_scope_index]);
-    if (enter_scope.in_method_scope) {
-      // This is a nested method scope. Suspend the inner scope so we can
-      // restore it when we come to parse the method bodies.
+    // If we're finishing a nested deferred definition scope, keep track of that
+    // but don't parse deferred definitions now.
+    auto& enter_scope =
+        get<EnterDeferredDefinitionScope>(worklist_[scope_index]);
+    if (enter_scope.in_deferred_definition_scope) {
+      // This is a nested deferred definition scope. Suspend the inner scope so
+      // we can restore it when we come to parse the deferred definitions.
       enter_scope.suspended_name = context.decl_name_stack().Suspend();
 
       // Enqueue a task to leave the nested scope.
-      worklist_.push_back(LeaveMethodScope{.in_method_scope = true});
+      worklist_.push_back(
+          LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
       return false;
     }
 
-    // We're at the end of a non-nested method scope. Prepare to start parsing
-    // inline methods. Enqueue a task to leave this outer scope and end parsing
-    // inline methods.
-    worklist_.push_back(LeaveMethodScope{.in_method_scope = false});
+    // We're at the end of a non-nested deferred definition scope. Prepare to
+    // start parsing deferred definitions. Enqueue a task to leave this outer
+    // scope and end parsing deferred definitions.
+    worklist_.push_back(
+        LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
 
     // We'll process the worklist in reverse index order, so reverse the part of
     // it we're about to execute so we run our tasks in the order in which they
     // were pushed.
-    std::reverse(worklist_.begin() + method_scope_index, worklist_.end());
+    std::reverse(worklist_.begin() + scope_index, worklist_.end());
 
-    // Pop the `EnterMethodScope` that's now on the end of the worklist.
-    // We stay in that scope rather than suspending then immediately
+    // Pop the `EnterDeferredDefinitionScope` that's now on the end of the
+    // worklist. We stay in that scope rather than suspending then immediately
     // resuming it.
-    CARBON_CHECK(holds_alternative<EnterMethodScope>(worklist_.back()))
+    CARBON_CHECK(
+        holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
         << "Unexpected task in worklist.";
     worklist_.pop_back();
     return true;
@@ -436,19 +446,21 @@ class InlineMethodWorklist {
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
-    CARBON_CHECK(worklist_.empty() && method_scopes_.empty())
+    CARBON_CHECK(worklist_.empty() && enclosing_scopes_.empty())
         << "Tasks left behind on worklist.";
   }
 
  private:
   // A worklist of parsing tasks we'll need to do later.
+  //
   // Don't allocate any inline storage here. A Task is fairly large, so we never
   // want this to live on the stack. Instead, we reserve space in the
-  // constructor for a fairly large number of inline method definitions.
+  // constructor for a fairly large number of deferred definitions.
   llvm::SmallVector<Task, 0> worklist_;
 
-  // Indexes in `worklist` of method scopes that are currently still open.
-  llvm::SmallVector<size_t> method_scopes_;
+  // Indexes in `worklist` of deferred definition scopes that are currently
+  // still open.
+  llvm::SmallVector<size_t> enclosing_scopes_;
 };
 }  // namespace
 
@@ -458,10 +470,11 @@ namespace {
 class NodeIdTraversal {
  public:
   explicit NodeIdTraversal(Context& context)
-      : context_(context), next_inline_method_(&context.parse_tree()) {
-    chunks_.push_back({.it = context.parse_tree().postorder().begin(),
-                       .end = context.parse_tree().postorder().end(),
-                       .next_method = Parse::InlineMethodIndex::Invalid});
+      : context_(context), next_deferred_definition_(&context.parse_tree()) {
+    chunks_.push_back(
+        {.it = context.parse_tree().postorder().begin(),
+         .end = context.parse_tree().postorder().end(),
+         .next_definition = Parse::DeferredDefinitionIndex::Invalid});
   }
 
   // Finds the next `NodeId` to parse. Returns nullopt if the traversal is
@@ -470,20 +483,20 @@ class NodeIdTraversal {
 
   // Performs any processing necessary before handling a node.
   auto BeforeHandle(Parse::NodeKind parse_kind) -> void {
-    // When we reach the start of a delayed method scope, add a task to the
-    // worklist to parse future skipped methods in the new context.
-    if (IsStartOfDelayedMethodScope(parse_kind)) {
-      worklist_.PushEnterMethodScope(context_);
+    // When we reach the start of a deferred definition scope, add a task to the
+    // worklist to check future skipped definitions in the new context.
+    if (IsStartOfDeferredDefinitionScope(parse_kind)) {
+      worklist_.PushEnterDeferredDefinitionScope(context_);
     }
   }
 
   // Performs any processing necessary after handling a node.
   auto AfterHandle(Parse::NodeKind parse_kind) -> void {
-    // When we reach the end of a delayed method scope, add a task to the
+    // When we reach the end of a deferred definition scope, add a task to the
     // worklist to leave the scope. If this is not a nested scope, start parsing
-    // the skipped methods now.
-    if (IsEndOfDelayedMethodScope(parse_kind)) {
-      chunks_.back().parsing_skipped_methods =
+    // the deferred definitions now.
+    if (IsEndOfDeferredDefinitionScope(parse_kind)) {
+      chunks_.back().parsing_deferred_definitions =
           worklist_.SuspendFinishedScopeAndPush(context_);
     }
   }
@@ -493,67 +506,73 @@ class NodeIdTraversal {
   struct Chunk {
     Parse::Tree::PostorderIterator it;
     Parse::Tree::PostorderIterator end;
-    // The next method to parse after this chunk completes.
-    Parse::InlineMethodIndex next_method;
-    // Whether we are currently parsing skipped methods, rather than the tokens
-    // of this chunk. If so, we'll pull tasks off `worklist` and execute them
-    // until we're done with this batch of skipped methods. Otherwise, we'll
-    // pull node IDs from `*it` until it reaches `end`.
-    bool parsing_skipped_methods = false;
+    // The next definition that will be encountered after this chunk completes.
+    Parse::DeferredDefinitionIndex next_definition;
+    // Whether we are currently parsing deferred definitions, rather than the
+    // tokens of this chunk. If so, we'll pull tasks off `worklist` and execute
+    // them until we're done with this batch of deferred definitions. Otherwise,
+    // we'll pull node IDs from `*it` until it reaches `end`.
+    bool parsing_deferred_definitions = false;
   };
 
   Context& context_;
-  NextInlineMethodCache next_inline_method_;
-  InlineMethodWorklist worklist_;
+  NextDeferredDefinitionCache next_deferred_definition_;
+  DeferredDefinitionWorklist worklist_;
   llvm::SmallVector<Chunk> chunks_;
 };
 }  // namespace
 
 auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
   while (true) {
-    // If we're parsing skipped methods, find the next method we're parsing,
-    // restore the suspended state, and add a corresponding `Chunk` to the top
-    // of the chunk list.
-    if (chunks_.back().parsing_skipped_methods) {
+    // If we're parsing deferred definitions, find the next definition we should
+    // check, restore its suspended state, and add a corresponding `Chunk` to
+    // the top of the chunk list.
+    if (chunks_.back().parsing_deferred_definitions) {
       VariantMatch(
           worklist_.Pop(),
           // Entering a nested class.
-          [&](InlineMethodWorklist::EnterMethodScope&& enter) {
+          [&](DeferredDefinitionWorklist::EnterDeferredDefinitionScope&&
+                  enter) {
             CARBON_CHECK(enter.suspended_name)
                 << "Entering a scope with no suspension information.";
             context_.decl_name_stack().Restore(
                 std::move(*enter.suspended_name));
           },
           // Leaving a nested class or the top-level class.
-          [&](InlineMethodWorklist::LeaveMethodScope&& leave) {
-            if (!leave.in_method_scope) {
-              // We're done with parsing skipped methods.
-              chunks_.back().parsing_skipped_methods = false;
+          [&](DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&&
+                  leave) {
+            if (!leave.in_deferred_definition_scope) {
+              // We're done with parsing deferred definitions.
+              chunks_.back().parsing_deferred_definitions = false;
             }
             context_.decl_name_stack().PopScope();
           },
-          // Resume parsing this method.
-          [&](InlineMethodWorklist::ParseSkippedMethod&& parse_method) {
-            auto& [method_index, suspended_fn] = parse_method;
-            const auto& method =
-                context_.parse_tree().inline_methods().Get(method_index);
-            HandleFunctionDefinitionResume(context_, method.start_id,
-                                           std::move(*suspended_fn));
+          // Resume parsing this definition.
+          [&](DeferredDefinitionWorklist::ParseSkippedDefinition&&
+                  parse_definition) {
+            auto& [definition_index, suspended_fn] = parse_definition;
+            const auto& definition_info =
+                context_.parse_tree().deferred_definitions().Get(
+                    definition_index);
+            HandleFunctionDefinitionResume(context_, definition_info.start_id,
+                                           std::move(suspended_fn));
             chunks_.push_back(
-                {.it = context_.parse_tree().postorder(method.start_id).end(),
+                {.it = context_.parse_tree()
+                           .postorder(definition_info.start_id)
+                           .end(),
                  .end = context_.parse_tree()
-                            .postorder(method.definition_id)
+                            .postorder(definition_info.definition_id)
                             .end(),
-                 .next_method = next_inline_method_.index()});
-            ++method_index.index;
-            next_inline_method_.SkipTo(method_index);
+                 .next_definition = next_deferred_definition_.index()});
+            ++definition_index.index;
+            next_deferred_definition_.SkipTo(definition_index);
           });
       continue;
     }
 
-    // If we're not parsing skipped methods, produce the next parse node for
-    // this chunk. If we've run out of parse nodes, we're done with this chunk
-    // of the parse tree.
+    // If we're not parsing deferred definitions, produce the next parse node
+    // for this chunk. If we've run out of parse nodes, we're done with this
+    // chunk of the parse tree.
     if (chunks_.back().it == chunks_.back().end) {
       auto old_chunk = chunks_.pop_back_val();
 
@@ -563,24 +582,26 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
         return std::nullopt;
       }
 
-      next_inline_method_.SkipTo(old_chunk.next_method);
+      next_deferred_definition_.SkipTo(old_chunk.next_definition);
       continue;
     }
 
     auto node_id = *chunks_.back().it;
 
-    // If we've reached the start of an inline method, skip to the end of it,
-    // and track that we need to parse it later.
-    if (node_id == next_inline_method_.start_id()) {
-      const auto& method = context_.parse_tree().inline_methods().Get(
-          next_inline_method_.index());
-      worklist_.SuspendFunctionAndPush(context_, next_inline_method_.index(),
-                                       method.start_id);
+    // If we've reached the start of a deferred definition, skip to the end of
+    // it, and track that we need to parse it later.
+    if (node_id == next_deferred_definition_.start_id()) {
+      const auto& definition_info =
+          context_.parse_tree().deferred_definitions().Get(
+              next_deferred_definition_.index());
+      worklist_.SuspendFunctionAndPush(context_,
+                                       next_deferred_definition_.index(),
+                                       definition_info.start_id);
 
       // Continue parsing after the end of the definition.
       chunks_.back().it =
-          context_.parse_tree().postorder(method.definition_id).end();
-      next_inline_method_.SkipTo(method.next_method_index);
+          context_.parse_tree().postorder(definition_info.definition_id).end();
+      next_deferred_definition_.SkipTo(definition_info.next_definition_index);
       continue;
     }
 

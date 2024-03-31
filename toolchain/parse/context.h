@@ -307,11 +307,11 @@ class Context {
     tree_->imports_.push_back(package);
   }
 
-  // Adds a function definition start node, and begins tracking an inline method
-  // body if necessary.
+  // Adds a function definition start node, and begins tracking a deferred
+  // definition if necessary.
   auto AddFunctionDefinitionStart(Lex::TokenIndex token, int subtree_start,
                                   bool has_error) -> void;
-  // Adds a function definition node, and ends tracking an inline method body if
+  // Adds a function definition node, and ends tracking a deferred definition if
   // necessary.
   auto AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
                              bool has_error) -> void;
@@ -367,9 +367,10 @@ class Context {
 
   llvm::SmallVector<StateStackEntry> state_stack_;
 
-  // The inline method indexes of inline method definitions that have begun but
-  // not yet finished.
-  llvm::SmallVector<InlineMethodIndex> enclosing_inline_method_stack_;
+  // The deferred definition indexes of functions whose definitions have begun
+  // but not yet finished.
+  llvm::SmallVector<DeferredDefinitionIndex>
+      enclosing_deferred_definition_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::FileStart;
