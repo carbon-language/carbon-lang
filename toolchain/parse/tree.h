@@ -38,9 +38,9 @@ constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
 // A function whose definition is deferred because it is defined inline in a
 // class or similar scope.
 //
-// Such functions are processed out of order, with their bodies parsed after the
-// enclosing declaration is complete. Some additional information is tracked for
-// these functions in the parse tree to support this reordering.
+// Such functions are type-checked out of order, with their bodies checked after
+// the enclosing declaration is complete. Some additional information is tracked
+// for these functions in the parse tree to support this reordering.
 struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
