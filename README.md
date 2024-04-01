@@ -1,3 +1,5 @@
+#pragma
+
 # Carbon Language: <br/> An experimental successor to C++
 
 <!--
