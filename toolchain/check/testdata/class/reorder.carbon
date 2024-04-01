@@ -14,7 +14,7 @@ class Class {
   }
 }
 
-// CHECK:STDOUT: --- fail_reorder.carbon
+// CHECK:STDOUT: --- reorder.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
