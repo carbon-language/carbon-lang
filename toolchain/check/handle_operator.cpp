@@ -343,7 +343,7 @@ auto HandlePrefixOperatorStar(Context& context,
 static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
                                       bool is_or) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().PopExpr();
+  auto [cond_node, cond_value_id] = context.node_stack().PopExprWithNodeId();
   cond_value_id = ConvertToBoolValue(context, node_id, cond_value_id);
   auto bool_type_id = context.insts().Get(cond_value_id).type_id();
 
@@ -361,6 +361,11 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
       context.AddDominatedBlockAndBranchIf(node_id, branch_value_id);
   auto end_block_id = context.AddDominatedBlockAndBranchWithArg(
       node_id, short_circuit_result_id);
+
+  // Push the branch condition and result for use when handling the complete
+  // expression.
+  context.node_stack().Push(cond_node, branch_value_id);
+  context.node_stack().Push(cond_node, short_circuit_result_id);
 
   // Push the resumption and the right-hand side blocks, and start emitting the
   // right-hand operand.
@@ -391,6 +396,8 @@ auto HandleShortCircuitOperandOr(Context& context,
 static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
+  auto short_circuit_result_id = context.node_stack().PopExpr();
+  auto branch_value_id = context.node_stack().PopExpr();
 
   // The first operand is wrapped in a ShortCircuitOperand, which we
   // already handled by creating a RHS block and a resumption block, which
@@ -405,9 +412,12 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   context.AddCurrentCodeBlockToFunction(node_id);
 
   // Collect the result from either the first or second operand.
-  context.AddInstAndPush(
+  auto result_id = context.AddInst(
       {node_id, SemIR::BlockArg{context.insts().Get(rhs_id).type_id(),
                                 resume_block_id}});
+  context.SetBlockArgResultBeforeConstantUse(result_id, branch_value_id, rhs_id,
+                                             short_circuit_result_id);
+  context.node_stack().Push(node_id, result_id);
   return true;
 }
 

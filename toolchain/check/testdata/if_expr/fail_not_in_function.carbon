@@ -4,7 +4,6 @@
 //
 // AUTOUPDATE
 
-// TODO: Should work with compile-time evaluation.
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
@@ -20,16 +19,11 @@
 let x: i32 = if true then 1 else 0;
 
 class C {
-  // TODO: Should work with compile-time evaluation.
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+15]]:10: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+11]]:10: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+11]]:10: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+7]]:10: ERROR: Cannot evaluate type expression.
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+7]]:10: ERROR: Semantics TODO: `Control flow expressions are currently only supported inside functions.`.
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -46,20 +40,22 @@ class C {
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type C, i32 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc20: i32 = block_arg <unexpected instblockref block6>
-// CHECK:STDOUT:   %x: i32 = bind_name x, %.loc20
+// CHECK:STDOUT:   %.loc19: i32 = block_arg <unexpected instblockref block6> [template = constants.%.2]
+// CHECK:STDOUT:   %x: i32 = bind_name x, %.loc19
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc39: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc39 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %.loc33: bool = bool_literal true [template = constants.%.1]
+// CHECK:STDOUT:   if %.loc33 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected instref inst+21>
+// CHECK:STDOUT:   .n = <unexpected instref inst+22>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

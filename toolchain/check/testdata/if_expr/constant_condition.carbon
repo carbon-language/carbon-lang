@@ -15,6 +15,18 @@ fn G() -> i32 {
   return if false then A() else B();
 }
 
+fn Constant() -> i32 {
+  var v: if true then i32 else i32* = 1;
+  var w: if false then i32 else i32* = &v;
+  return *w;
+}
+
+fn PartiallyConstant(t: type) -> i32 {
+  var v: if true then i32 else t = 1;
+  var w: if false then t else i32* = &v;
+  return *w;
+}
+
 // CHECK:STDOUT: --- constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -22,6 +34,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -30,6 +43,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .Constant = %Constant
+// CHECK:STDOUT:     .PartiallyConstant = %PartiallyConstant
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
 // CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
@@ -42,6 +57,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %return.var.loc14: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Constant: <function> = fn_decl @Constant [template] {
+// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %PartiallyConstant: <function> = fn_decl @PartiallyConstant [template] {
+// CHECK:STDOUT:     %t.loc24_22.1: type = param t
+// CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_name t, %t.loc24_22.1
+// CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,5 +126,90 @@ fn G() -> i32 {
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc15_10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Constant() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc19_13: bool = bool_literal true [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc19_13 br !if.expr.then.loc19 else br !if.expr.else.loc19
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then.loc19:
+// CHECK:STDOUT:   br !if.expr.result.loc19(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else.loc19:
+// CHECK:STDOUT:   %.loc19_35: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:   br !if.expr.result.loc19(%.loc19_35)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result.loc19:
+// CHECK:STDOUT:   %.loc19_10: type = block_arg !if.expr.result.loc19 [template = i32]
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc19_39: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign %v.var, %.loc19_39
+// CHECK:STDOUT:   %.loc20_13: bool = bool_literal false [template = constants.%.4]
+// CHECK:STDOUT:   if %.loc20_13 br !if.expr.then.loc20 else br !if.expr.else.loc20
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then.loc20:
+// CHECK:STDOUT:   br !if.expr.result.loc20(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else.loc20:
+// CHECK:STDOUT:   %.loc20_36: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:   br !if.expr.result.loc20(%.loc20_36)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result.loc20:
+// CHECK:STDOUT:   %.loc20_10: type = block_arg !if.expr.result.loc20 [template = constants.%.5]
+// CHECK:STDOUT:   %w.var: ref i32* = var w
+// CHECK:STDOUT:   %w: ref i32* = bind_name w, %w.var
+// CHECK:STDOUT:   %v.ref: ref i32 = name_ref v, %v
+// CHECK:STDOUT:   %.loc20_40: i32* = addr_of %v.ref
+// CHECK:STDOUT:   assign %w.var, %.loc20_40
+// CHECK:STDOUT:   %w.ref: ref i32* = name_ref w, %w
+// CHECK:STDOUT:   %.loc21_11: i32* = bind_value %w.ref
+// CHECK:STDOUT:   %.loc21_10.1: ref i32 = deref %.loc21_11
+// CHECK:STDOUT:   %.loc21_10.2: i32 = bind_value %.loc21_10.1
+// CHECK:STDOUT:   return %.loc21_10.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @PartiallyConstant(%t: type) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_13: bool = bool_literal true [template = constants.%.3]
+// CHECK:STDOUT:   if %.loc25_13 br !if.expr.then.loc25 else br !if.expr.else.loc25
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then.loc25:
+// CHECK:STDOUT:   br !if.expr.result.loc25(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else.loc25:
+// CHECK:STDOUT:   %t.ref.loc25: type = name_ref t, %t
+// CHECK:STDOUT:   br !if.expr.result.loc25(%t.ref.loc25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result.loc25:
+// CHECK:STDOUT:   %.loc25_10: type = block_arg !if.expr.result.loc25 [template = i32]
+// CHECK:STDOUT:   %v.var: ref i32 = var v
+// CHECK:STDOUT:   %v: ref i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc25_36: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign %v.var, %.loc25_36
+// CHECK:STDOUT:   %.loc26_13: bool = bool_literal false [template = constants.%.4]
+// CHECK:STDOUT:   if %.loc26_13 br !if.expr.then.loc26 else br !if.expr.else.loc26
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then.loc26:
+// CHECK:STDOUT:   %t.ref.loc26: type = name_ref t, %t
+// CHECK:STDOUT:   br !if.expr.result.loc26(%t.ref.loc26)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else.loc26:
+// CHECK:STDOUT:   %.loc26_34: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:   br !if.expr.result.loc26(%.loc26_34)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result.loc26:
+// CHECK:STDOUT:   %.loc26_10: type = block_arg !if.expr.result.loc26 [template = constants.%.5]
+// CHECK:STDOUT:   %w.var: ref i32* = var w
+// CHECK:STDOUT:   %w: ref i32* = bind_name w, %w.var
+// CHECK:STDOUT:   %v.ref: ref i32 = name_ref v, %v
+// CHECK:STDOUT:   %.loc26_38: i32* = addr_of %v.ref
+// CHECK:STDOUT:   assign %w.var, %.loc26_38
+// CHECK:STDOUT:   %w.ref: ref i32* = name_ref w, %w
+// CHECK:STDOUT:   %.loc27_11: i32* = bind_value %w.ref
+// CHECK:STDOUT:   %.loc27_10.1: ref i32 = deref %.loc27_11
+// CHECK:STDOUT:   %.loc27_10.2: i32 = bind_value %.loc27_10.1
+// CHECK:STDOUT:   return %.loc27_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

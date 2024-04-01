@@ -184,7 +184,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   br !and.result(%.loc49_14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc49_10.2: bool = block_arg !and.result
+// CHECK:STDOUT:   %.loc49_10.2: bool = block_arg !and.result [template = constants.%.16]
 // CHECK:STDOUT:   %.loc49_3: bool* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H [template = file.%H]
 // CHECK:STDOUT:   %.loc54_5.1: init {.a: i32} = call %H.ref()
