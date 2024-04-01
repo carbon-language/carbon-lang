@@ -160,7 +160,7 @@ fn Main() {
 // CHECK:STDOUT:   br !if.expr.result.loc45(%.loc45_24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc45:
-// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45
+// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc45_29: i32 = int_literal 3 [template = constants.%.4]
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   %a.var: ref i32 = var a

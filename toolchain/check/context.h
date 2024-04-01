@@ -177,6 +177,17 @@ class Context {
       Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
 
+  // Sets the constant value of a block argument created as the result of a
+  // branch.  `select_id` should be a `BlockArg` that selects between two
+  // values. `cond_id` is the condition, `if_false` is the value to use if the
+  // condition is false, and `if_true` is the value to use if the condition is
+  // true.  We don't track enough information in the `BlockArg` inst for
+  // `TryEvalInst` to do this itself.
+  auto SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
+                                          SemIR::InstId cond_id,
+                                          SemIR::InstId if_true,
+                                          SemIR::InstId if_false) -> void;
+
   // Add the current code block to the enclosing function.
   // TODO: The node_id is taken for expressions, which can occur in
   // non-function contexts. This should be refactored to support non-function

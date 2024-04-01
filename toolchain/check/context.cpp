@@ -479,6 +479,35 @@ auto Context::AddConvergenceBlockWithArgAndPush(
   return AddInst({node_id, SemIR::BlockArg{result_type_id, new_block_id}});
 }
 
+auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
+                                                 SemIR::InstId cond_id,
+                                                 SemIR::InstId if_true,
+                                                 SemIR::InstId if_false)
+    -> void {
+  CARBON_CHECK(insts().Is<SemIR::BlockArg>(select_id));
+
+  // Determine the constant result based on the condition value.
+  SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
+  auto cond_const_id = constant_values().Get(cond_id);
+  if (!cond_const_id.is_template()) {
+    // Symbolic or non-constant condition means a non-constant result.
+  } else if (auto literal = insts().TryGetAs<SemIR::BoolLiteral>(
+                 cond_const_id.inst_id())) {
+    const_id = constant_values().Get(literal.value().value.ToBool() ? if_true
+                                                                    : if_false);
+  } else {
+    CARBON_CHECK(cond_const_id == SemIR::ConstantId::Error)
+        << "Unexpected constant branch condition.";
+    const_id = SemIR::ConstantId::Error;
+  }
+
+  if (const_id.is_constant()) {
+    CARBON_VLOG() << "Constant: " << insts().Get(select_id) << " -> "
+                  << const_id.inst_id() << "\n";
+    constant_values().Set(select_id, const_id);
+  }
+}
+
 // Add the current code block to the enclosing function.
 auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
   CARBON_CHECK(!inst_block_stack().empty()) << "no current code block";
