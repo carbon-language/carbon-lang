@@ -103,7 +103,7 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
 }
 
 auto FileTestAutoupdater::GetFileAndLineNumber(
-    llvm::DenseMap<llvm::StringRef, int> file_to_number_map,
+    const llvm::DenseMap<llvm::StringRef, int>& file_to_number_map,
     int default_file_number, const std::string& check_line)
     -> FileAndLineNumber {
   for (const auto& replacement : line_number_replacements_) {
@@ -157,18 +157,29 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
   }
 
   // `{{` and `[[` are escaped as a regex matcher.
-  RE2 double_brace_re(R"(\{\{)");
-  RE2 double_square_bracket_re(R"(\[\[)");
+  static RE2 double_brace_re(R"(\{\{)");
+  static RE2 double_square_bracket_re(R"(\[\[)");
   // End-of-line whitespace is replaced with a regex matcher to make it visible.
-  RE2 end_of_line_whitespace_re(R"((\s+)$)");
+  static RE2 end_of_line_whitespace_re(R"((\s+)$)");
 
   // The default file number for when no specific file is found.
   int default_file_number = 0;
 
   llvm::SmallVector<CheckLine> check_lines;
   for (const auto& line : lines) {
-    std::string check_line = llvm::formatv("// CHECK:{0}:{1}{2}", label,
-                                           line.empty() ? "" : " ", line);
+    // This code is relatively hot in our testing, and because when testing it
+    // isn't run with an optimizer we benefit from making it use simple
+    // constructs. For this reason, we avoid `llvm::formatv` and similar tools.
+    std::string check_line;
+    check_line.reserve(line.size() + strlen(label) + strlen("// CHECK:: "));
+    check_line.append("// CHECK:");
+    check_line.append(label);
+    check_line.append(":");
+    if (!line.empty()) {
+      check_line.append(" ");
+      check_line.append(line);
+    }
+
     RE2::Replace(&check_line, double_brace_re, R"({{\\{\\{}})");
     RE2::Replace(&check_line, double_square_bracket_re, R"({{\\[\\[}})");
     RE2::Replace(&check_line, end_of_line_whitespace_re, R"({{\1}})");

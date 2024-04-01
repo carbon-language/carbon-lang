@@ -26,7 +26,7 @@ from typing import Dict, List, NamedTuple, Set
 IGNORED = set(["MyDiagnostic", "TestDiagnostic", "TestDiagnosticNote"])
 
 
-class Location(NamedTuple):
+class Loc(NamedTuple):
     """A location for a diagnostic."""
 
     def __str__(self) -> str:
@@ -49,7 +49,7 @@ def load_diagnostic_kind() -> Set[str]:
 
 def load_diagnostic_uses_in(
     path: Path,
-) -> Dict[str, List[Location]]:
+) -> Dict[str, List[Loc]]:
     """Returns the path's CARBON_DIAGNOSTIC uses."""
     content = path.read_text()
 
@@ -57,18 +57,18 @@ def load_diagnostic_uses_in(
     line = 1
     line_offset = 0
 
-    found: Dict[str, List[Location]] = collections.defaultdict(lambda: [])
+    found: Dict[str, List[Loc]] = collections.defaultdict(lambda: [])
     for m in re.finditer(r"CARBON_DIAGNOSTIC\(\s*(\w+),", content):
         diag = m.group(1)
         if diag in IGNORED:
             continue
         line += content.count("\n", line_offset, m.start())
         line_offset = m.start()
-        found[diag].append(Location(path, line))
+        found[diag].append(Loc(path, line))
     return found
 
 
-def load_diagnostic_uses() -> Dict[str, List[Location]]:
+def load_diagnostic_uses() -> Dict[str, List[Loc]]:
     """Returns all CARBON_DIAGNOSTIC uses."""
     globs = itertools.chain(
         *[Path("toolchain").glob(f"**/*.{ext}") for ext in ("h", "cpp")]
@@ -76,14 +76,14 @@ def load_diagnostic_uses() -> Dict[str, List[Location]]:
     with futures.ThreadPoolExecutor() as exec:
         results = exec.map(load_diagnostic_uses_in, globs)
 
-    found: Dict[str, List[Location]] = collections.defaultdict(lambda: [])
+    found: Dict[str, List[Loc]] = collections.defaultdict(lambda: [])
     for result in results:
         for diag, locations in result.items():
             found[diag].extend(locations)
     return found
 
 
-def check_uniqueness(uses: Dict[str, List[Location]]) -> bool:
+def check_uniqueness(uses: Dict[str, List[Loc]]) -> bool:
     """If any diagnostic is non-unique, prints an error and returns true."""
     has_errors = False
     for diag in sorted(uses.keys()):
@@ -95,7 +95,7 @@ def check_uniqueness(uses: Dict[str, List[Location]]) -> bool:
     return has_errors
 
 
-def check_unused(decls: Set[str], uses: Dict[str, List[Location]]) -> bool:
+def check_unused(decls: Set[str], uses: Dict[str, List[Loc]]) -> bool:
     """If any diagnostic is unused, prints an error and returns true."""
     unused = decls.difference(uses.keys())
     if not unused:

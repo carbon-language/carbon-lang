@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -69,7 +70,8 @@ File::File(SharedValueStores& value_stores, std::string filename,
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
   CARBON_CHECK(builtins != nullptr);
-  auto builtins_id = import_irs_.Add(builtins);
+  auto builtins_id =
+      import_irs_.Add({.node_id = Parse::NodeId::Invalid, .sem_ir = builtins});
   CARBON_CHECK(builtins_id == ImportIRId::Builtins)
       << "Builtins must be the first IR";
 
@@ -105,8 +107,8 @@ File::File(SharedValueStores& value_stores, std::string filename,
         for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
           // We can reuse the type_id from the builtin IR's inst because they're
           // special-cased values.
-          insts_.AddInNoBlock({ImportRefUsed{
-              inst.type_id(), ImportIRId::Builtins, SemIR::InstId(i)}});
+          insts_.AddInNoBlock(ImportRefUsed{
+              inst.type_id(), ImportIRId::Builtins, SemIR::InstId(i)});
         }
       }) {}
 
@@ -374,8 +376,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       }
       case ImportRefUsed::Kind: {
         auto import_ref = inst.As<ImportRefUsed>();
-        steps.push_back({.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id),
-                         .inst_id = import_ref.inst_id});
+        steps.push_back(
+            {.sem_ir = *sem_ir.import_irs().Get(import_ref.ir_id).sem_ir,
+             .inst_id = import_ref.inst_id});
         break;
       }
       case InterfaceType::Kind: {
@@ -556,7 +559,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case ImportRefUsed::Kind: {
         auto import_ref = inst.As<ImportRefUsed>();
-        ir = ir->import_irs().Get(import_ref.ir_id);
+        ir = ir->import_irs().Get(import_ref.ir_id).sem_ir;
         inst_id = import_ref.inst_id;
         continue;
       }

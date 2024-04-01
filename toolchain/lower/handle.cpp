@@ -172,6 +172,8 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> void {
+  // TODO: Consider setting this to true in the performance build mode if the
+  // result type is a signed integer type.
   constexpr bool SignedOverflowIsUB = false;
 
   switch (builtin_kind) {

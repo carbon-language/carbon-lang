@@ -6,6 +6,43 @@
 
 namespace Carbon::Parse {
 
+auto HandleOnlyParenExpr(Context& context) -> void {
+  auto state = context.PopState();
+
+  // Advance past the open paren.
+  auto open_paren = context.ConsumeChecked(Lex::TokenKind::OpenParen);
+  context.AddLeafNode(NodeKind::ExprOpenParen, open_paren);
+
+  state.token = open_paren;
+  context.PushState(state, State::OnlyParenExprFinish);
+  context.PushState(State::Expr);
+}
+
+static auto FinishParenExpr(Context& context,
+                            const Context::StateStackEntry& state) -> void {
+  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
+                  state.has_error);
+}
+
+auto HandleOnlyParenExprFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
+    if (!state.has_error) {
+      CARBON_DIAGNOSTIC(UnexpectedTokenInCompoundMemberAccess, Error,
+                        "Expected `)`.");
+      context.emitter().Emit(*context.position(),
+                             UnexpectedTokenInCompoundMemberAccess);
+      state.has_error = true;
+    }
+
+    // Recover from the invalid token.
+    context.SkipTo(context.tokens().GetMatchedClosingToken(state.token));
+  }
+
+  FinishParenExpr(context, state);
+}
+
 auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
@@ -59,8 +96,7 @@ auto HandleTupleLiteralElementFinish(Context& context) -> void {
 auto HandleParenExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(NodeKind::ParenExpr, context.Consume(), state.subtree_start,
-                  state.has_error);
+  FinishParenExpr(context, state);
 }
 
 auto HandleTupleLiteralFinish(Context& context) -> void {

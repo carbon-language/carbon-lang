@@ -11,17 +11,17 @@ namespace Carbon::Check {
 static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
                              Lex::TokenKind decl_kind,
                              llvm::StringRef context_string,
-                             Parse::NodeId context_node) -> void {
+                             SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}.",
                     Lex::TokenKind, Lex::TokenKind, std::string);
   auto diag = context.emitter().Build(modifier_node, ModifierNotAllowedOn,
                                       context.token_kind(modifier_node),
                                       decl_kind, context_string.str());
-  if (context_node.is_valid()) {
+  if (context_loc_id.is_valid()) {
     CARBON_DIAGNOSTIC(ModifierNotInContext, Note,
                       "Containing definition here.");
-    diag.Note(context_node, ModifierNotInContext);
+    diag.Note(context_loc_id, ModifierNotInContext);
   }
   diag.Emit();
 }
@@ -41,7 +41,7 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
 auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
                            Lex::TokenKind decl_kind,
                            llvm::StringRef context_string,
-                           Parse::NodeId context_node) -> void {
+                           SemIR::LocId context_loc_id) -> void {
   auto& s = context.decl_state_stack().innermost();
   auto not_allowed = s.modifier_set & forbidden;
   if (!not_allowed) {
@@ -53,7 +53,7 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
     auto order = static_cast<ModifierOrder>(order_index);
     if (!!(not_allowed & ModifierOrderAsSet(order))) {
       ReportNotAllowed(context, s.modifier_node_id(order), decl_kind,
-                       context_string, context_node);
+                       context_string, context_loc_id);
       s.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }
@@ -121,12 +121,12 @@ auto CheckMethodModifiersOnFunction(Context& context,
       if (inheritance_kind == SemIR::Class::Final) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Virtual, decl_kind,
                               " in a non-abstract non-base `class` definition",
-                              context.insts().GetNodeId(target_id));
+                              context.insts().GetLocId(target_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         ForbidModifiersOnDecl(context, KeywordModifierSet::Abstract, decl_kind,
                               " in a non-abstract `class` definition",
-                              context.insts().GetNodeId(target_id));
+                              context.insts().GetLocId(target_id));
       }
       return;
     }

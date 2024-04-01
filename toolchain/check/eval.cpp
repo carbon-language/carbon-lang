@@ -287,14 +287,13 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
 }
 
 // Issues a diagnostic for a compile-time division by zero.
-static auto DiagnoseDivisionByZero(Context& context, SemIRLocation loc)
-    -> void {
+static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
 // Performs a builtin unary integer -> integer operation.
-static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
+static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
@@ -304,7 +303,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
   auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
   auto op_val = context.ints().Get(op.int_id);
 
-  if (op_val.isMinSignedValue()) {
+  if (context.types().IsSignedInt(op.type_id) && op_val.isMinSignedValue()) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                       "Integer overflow in negation of {0}.", TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
@@ -318,7 +317,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLocation loc,
 }
 
 // Performs a builtin binary integer -> integer operation.
-static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
+static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                                       SemIR::BuiltinFunctionKind builtin_kind,
                                       SemIR::InstId lhs_id,
                                       SemIR::InstId rhs_id)
@@ -328,20 +327,24 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
   auto lhs_val = context.ints().Get(lhs.int_id);
   auto rhs_val = context.ints().Get(rhs.int_id);
 
+  bool is_signed = context.types().IsSignedInt(lhs.type_id);
   bool overflow = false;
   llvm::APInt result_val;
   llvm::StringLiteral op_str = "<error>";
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntAdd:
-      result_val = lhs_val.sadd_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.sadd_ov(rhs_val, overflow) : lhs_val + rhs_val;
       op_str = "+";
       break;
     case SemIR::BuiltinFunctionKind::IntSub:
-      result_val = lhs_val.ssub_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.ssub_ov(rhs_val, overflow) : lhs_val - rhs_val;
       op_str = "-";
       break;
     case SemIR::BuiltinFunctionKind::IntMul:
-      result_val = lhs_val.smul_ov(rhs_val, overflow);
+      result_val =
+          is_signed ? lhs_val.smul_ov(rhs_val, overflow) : lhs_val * rhs_val;
       op_str = "*";
       break;
     case SemIR::BuiltinFunctionKind::IntDiv:
@@ -349,7 +352,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
         DiagnoseDivisionByZero(context, loc);
         return SemIR::ConstantId::Error;
       }
-      result_val = lhs_val.sdiv_ov(rhs_val, overflow);
+      result_val = is_signed ? lhs_val.sdiv_ov(rhs_val, overflow)
+                             : lhs_val.udiv(rhs_val);
       op_str = "/";
       break;
     case SemIR::BuiltinFunctionKind::IntMod:
@@ -357,10 +361,10 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLocation loc,
         DiagnoseDivisionByZero(context, loc);
         return SemIR::ConstantId::Error;
       }
-      result_val = lhs_val.srem(rhs_val);
+      result_val = is_signed ? lhs_val.srem(rhs_val) : lhs_val.urem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
-      overflow = (lhs_val.isMinSignedValue() && rhs_val.isAllOnes());
+      overflow = is_signed && lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
       op_str = "%";
       break;
 
@@ -407,13 +411,11 @@ static auto PerformBuiltinIntComparison(Context& context,
   }
 
   return MakeConstantResult(
-      context,
-      SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::FromBool(result)},
+      context, SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
       Phase::Template);
 }
 
-static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
-                               SemIR::Call call,
+static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
                                SemIR::BuiltinFunctionKind builtin_kind,
                                llvm::ArrayRef<SemIR::InstId> arg_ids,
                                Phase phase) -> SemIR::ConstantId {
@@ -459,7 +461,7 @@ static auto PerformBuiltinCall(Context& context, SemIRLocation loc,
   return SemIR::ConstantId::NotConstant;
 }
 
-static auto PerformCall(Context& context, SemIRLocation loc, SemIR::Call call)
+static auto PerformCall(Context& context, SemIRLoc loc, SemIR::Call call)
     -> SemIR::ConstantId {
   Phase phase = Phase::Template;
 
@@ -520,8 +522,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
             // fits in 64 bits, not just that the bound does. Should we use a
             // 32-bit limit for 32-bit targets?
             const auto& bound_val = context.ints().Get(int_bound->int_id);
-            if (bound_val.isNegative()) {
-              // TODO: Skip this test if the bound type is unsigned.
+            if (context.types().IsSignedInt(int_bound->type_id) &&
+                bound_val.isNegative()) {
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                                 "Array bound of {0} is negative.", TypedInt);
               context.emitter().Emit(bound_id, ArrayBoundNegative,
@@ -693,9 +695,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       if (phase == Phase::Template) {
         auto value =
             context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
-        value.value =
-            (value.value == SemIR::BoolValue::False ? SemIR::BoolValue::True
-                                                    : SemIR::BoolValue::False);
+        value.value = SemIR::BoolValue::From(!value.value.ToBool());
         return MakeConstantResult(context, value, Phase::Template);
       }
       if (phase == Phase::UnknownDueToError) {

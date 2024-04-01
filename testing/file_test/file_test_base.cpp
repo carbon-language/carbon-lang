@@ -472,21 +472,15 @@ static auto TryConsumeSplit(
   return true;
 }
 
-// Transforms an expectation on a given line from `FileCheck` syntax into a
-// standard regex matcher.
-static auto TransformExpectation(int line_index, llvm::StringRef in)
-    -> ErrorOr<Matcher<std::string>> {
-  if (in.empty()) {
-    return Matcher<std::string>{StrEq("")};
-  }
-  if (in[0] != ' ') {
-    return ErrorBuilder() << "Malformated CHECK line: " << in;
-  }
-  std::string str = in.substr(1).str();
+// Converts a `FileCheck`-style expectation string into a single complete regex
+// string by escaping all regex characters outside of the designated `{{...}}`
+// regex sequences, and switching those to a normal regex sub-pattern syntax.
+static void ConvertExpectationStringToRegex(std::string& str) {
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
       case '(':
       case ')':
+      case '[':
       case ']':
       case '}':
       case '.':
@@ -502,51 +496,21 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
         pos += 2;
         break;
       }
-      case '[': {
-        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
-        if (line_keyword_cursor.consume_front("[[")) {
-          static constexpr llvm::StringLiteral LineKeyword = "@LINE";
-          if (line_keyword_cursor.consume_front(LineKeyword)) {
-            // Allow + or - here; consumeInteger handles -.
-            line_keyword_cursor.consume_front("+");
-            int offset;
-            // consumeInteger returns true for errors, not false.
-            if (line_keyword_cursor.consumeInteger(10, offset) ||
-                !line_keyword_cursor.consume_front("]]")) {
-              return ErrorBuilder()
-                     << "Unexpected @LINE offset at `"
-                     << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-            }
-            std::string int_str = llvm::Twine(line_index + offset).str();
-            int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
-            str.replace(pos, remove_len, int_str);
-            pos += int_str.size();
-          } else {
-            return ErrorBuilder()
-                   << "Unexpected [[, should be {{\\[\\[}} at `"
-                   << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-          }
-        } else {
-          // Escape the `[`.
-          str.insert(pos, "\\");
-          pos += 2;
-        }
-        break;
-      }
       case '{': {
         if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
           // Single `{`, escape it.
           str.insert(pos, "\\");
           pos += 2;
-        } else {
-          // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
-          str.replace(pos, 2, "(");
-          for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
-            if (str[pos] == '}' && str[pos + 1] == '}') {
-              str.replace(pos, 2, ")");
-              ++pos;
-              break;
-            }
+          break;
+        }
+
+        // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
+        str.replace(pos, 2, "(");
+        for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
+          if (str[pos] == '}' && str[pos + 1] == '}') {
+            str.replace(pos, 2, ")");
+            ++pos;
+            break;
           }
         }
         break;
@@ -556,7 +520,75 @@ static auto TransformExpectation(int line_index, llvm::StringRef in)
       }
     }
   }
+}
 
+// Transforms an expectation on a given line from `FileCheck` syntax into a
+// standard regex matcher.
+static auto TransformExpectation(int line_index, llvm::StringRef in)
+    -> ErrorOr<Matcher<std::string>> {
+  if (in.empty()) {
+    return Matcher<std::string>{StrEq("")};
+  }
+  if (!in.consume_front(" ")) {
+    return ErrorBuilder() << "Malformated CHECK line: " << in;
+  }
+
+  // Check early if we have a regex component as we can avoid building an
+  // expensive matcher when not using those.
+  bool has_regex = in.find("{{") != llvm::StringRef::npos;
+
+  // Now scan the string and expand any keywords. Note that this needs to be
+  // `size_t` to correctly store `npos`.
+  size_t keyword_pos = in.find("[[");
+
+  // If there are neither keywords nor regex sequences, we can match the
+  // incoming string directly.
+  if (!has_regex && keyword_pos == llvm::StringRef::npos) {
+    return Matcher<std::string>{StrEq(in)};
+  }
+
+  std::string str = in.str();
+
+  // First expand the keywords.
+  while (keyword_pos != std::string::npos) {
+    llvm::StringRef line_keyword_cursor =
+        llvm::StringRef(str).substr(keyword_pos);
+    CARBON_CHECK(line_keyword_cursor.consume_front("[["));
+
+    static constexpr llvm::StringLiteral LineKeyword = "@LINE";
+    if (!line_keyword_cursor.consume_front(LineKeyword)) {
+      return ErrorBuilder()
+             << "Unexpected [[, should be {{\\[\\[}} at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+    }
+
+    // Allow + or - here; consumeInteger handles -.
+    line_keyword_cursor.consume_front("+");
+    int offset;
+    // consumeInteger returns true for errors, not false.
+    if (line_keyword_cursor.consumeInteger(10, offset) ||
+        !line_keyword_cursor.consume_front("]]")) {
+      return ErrorBuilder()
+             << "Unexpected @LINE offset at `"
+             << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+    }
+    std::string int_str = llvm::Twine(line_index + offset).str();
+    int remove_len = (line_keyword_cursor.data() - str.data()) - keyword_pos;
+    str.replace(keyword_pos, remove_len, int_str);
+    keyword_pos += int_str.size();
+    // Find the next keyword start or the end of the string.
+    keyword_pos = str.find("[[", keyword_pos);
+  }
+
+  // If there was no regex, we can directly match the adjusted string.
+  if (!has_regex) {
+    return Matcher<std::string>{StrEq(str)};
+  }
+
+  // Otherwise, we need to turn the entire string into a regex by escaping
+  // things outside the regex region and transforming the regex region into a
+  // normal syntax.
+  ConvertExpectationStringToRegex(str);
   return Matcher<std::string>{MatchesRegex(str)};
 }
 

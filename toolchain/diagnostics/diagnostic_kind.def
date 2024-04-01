@@ -86,6 +86,7 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
+CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
 
 // Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(FirstDecl)
@@ -127,6 +128,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
+// Location context.
+CARBON_DIAGNOSTIC_KIND(InImport)
+
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(IncorrectExtension)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtensionImplNote)
@@ -157,6 +161,7 @@ CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
 // Function declaration checking.
 CARBON_DIAGNOSTIC_KIND(FunctionPreviousDecl)
 CARBON_DIAGNOSTIC_KIND(FunctionRedecl)
+CARBON_DIAGNOSTIC_KIND(FunctionNonExternRedecl)
 CARBON_DIAGNOSTIC_KIND(FunctionPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(FunctionRedefinition)
 CARBON_DIAGNOSTIC_KIND(FunctionDefiningExtern)

@@ -12,12 +12,21 @@ namespace Carbon {
 
 // An interface that can convert some representation of a location into a
 // diagnostic location.
-template <typename LocationT>
+template <typename LocT>
 class DiagnosticConverter {
  public:
+  // Callback type used to report context messages from ConvertLoc.
+  // Note that the first parameter type is DiagnosticLoc rather than
+  // LocT, because ConvertLoc must not recurse.
+  using ContextFnT = llvm::function_ref<void(
+      DiagnosticLoc, const Internal::DiagnosticBase<>&)>;
+
   virtual ~DiagnosticConverter() = default;
 
-  virtual auto ConvertLocation(LocationT loc) const -> DiagnosticLocation = 0;
+  // Converts a LocT to a DiagnosticLoc. ConvertLoc may invoke
+  // context_fn to provide context messages.
+  virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
+      -> DiagnosticLoc = 0;
 
   // Converts arg types as needed. Not all uses require conversion, so the
   // default returns the argument unchanged.

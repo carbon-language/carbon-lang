@@ -20,7 +20,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // Create the appropriate kind of binding for this pattern.
   auto make_bind_name = [&](SemIR::TypeId type_id,
-                            SemIR::InstId value_id) -> SemIR::NodeIdAndInst {
+                            SemIR::InstId value_id) -> SemIR::LocIdAndInst {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(

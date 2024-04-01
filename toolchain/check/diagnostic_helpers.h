@@ -14,24 +14,32 @@ namespace Carbon::Check {
 
 // Diagnostic locations produced by checking may be either a parse node
 // directly, or an inst ID which is later translated to a parse node.
-struct SemIRLocation {
+struct SemIRLoc {
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
+  SemIRLoc(SemIR::InstId inst_id)
+      : inst_id(inst_id), is_inst_id(true), token_only(false) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeLocation node_location)
-      : node_location(node_location), is_inst_id(false) {}
+  SemIRLoc(Parse::NodeId node_id) : SemIRLoc(node_id, false) {}
+
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeId node_id)
-      : SemIRLocation(Parse::NodeLocation(node_id)) {}
+  SemIRLoc(SemIR::LocId loc_id) : SemIRLoc(loc_id, false) {}
+
+  explicit SemIRLoc(SemIR::LocId loc_id, bool token_only)
+      : loc_id(loc_id), is_inst_id(false), token_only(token_only) {}
 
   union {
     SemIR::InstId inst_id;
-    Parse::NodeLocation node_location;
+    SemIR::LocId loc_id;
   };
 
   bool is_inst_id;
+  bool token_only;
 };
+
+inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
+  return SemIRLoc(loc_id, true);
+}
 
 // An integer value together with its type. The type is used to determine how to
 // format the value in diagnostics.

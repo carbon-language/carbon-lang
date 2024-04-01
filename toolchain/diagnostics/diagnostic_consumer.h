@@ -43,6 +43,7 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
       : stream_(&stream) {}
 
   auto HandleDiagnostic(Diagnostic diagnostic) -> void override;
+  auto Flush() -> void override { stream_->flush(); }
 
  private:
   auto Print(const DiagnosticMessage& message, llvm::StringRef prefix) -> void;

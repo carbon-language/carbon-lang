@@ -165,14 +165,22 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Check whether this is a redeclaration.
-  auto existing_id =
+  auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
-  if (existing_id.is_valid()) {
-    if (auto existing_function_decl =
-            context.insts().Get(existing_id).TryAs<SemIR::FunctionDecl>()) {
-      if (MergeFunctionRedecl(context, node_id, function_info,
+  if (prev_id.is_valid()) {
+    auto prev_inst = context.insts().Get(prev_id);
+    bool prev_is_import = false;
+
+    if (prev_inst.Is<SemIR::ImportRefUsed>()) {
+      prev_inst =
+          context.insts().Get(context.constant_values().Get(prev_id).inst_id());
+      prev_is_import = true;
+    }
+
+    if (auto existing_function_decl = prev_inst.TryAs<SemIR::FunctionDecl>()) {
+      if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
                               existing_function_decl->function_id,
-                              is_definition)) {
+                              prev_is_import)) {
         // When merging, use the existing function rather than adding a new one.
         function_decl.function_id = existing_function_decl->function_id;
       }
@@ -180,7 +188,7 @@ static auto BuildFunctionDecl(Context& context,
       // This is a redeclaration of something other than a function. This
       // includes the case where an associated function redeclares another
       // associated function.
-      context.DiagnoseDuplicateName(function_info.decl_id, existing_id);
+      context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
     }
   }
 
@@ -190,8 +198,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_info.decl_id,
-                                       {node_id, function_decl});
+  context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.

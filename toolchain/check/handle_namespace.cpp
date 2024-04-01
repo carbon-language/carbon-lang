@@ -28,7 +28,7 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
   namespace_inst.name_scope_id = context.name_scopes().Add(
       namespace_id, name_context.name_id_for_new_inst(),
       name_context.enclosing_scope_id_for_new_inst());
-  context.ReplaceInstBeforeConstantUse(namespace_id, {node_id, namespace_inst});
+  context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);
 
   auto existing_inst_id =
       context.decl_name_stack().LookupOrAddName(name_context, namespace_id);
@@ -37,10 +37,10 @@ auto HandleNamespace(Context& context, Parse::NamespaceId node_id) -> bool {
     // previous declaration. Otherwise, diagnose the issue.
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
-      // When the name conflict is an imported namespace, fill the parse node
+      // When the name conflict is an imported namespace, fill the location ID
       // so that future diagnostics point at this declaration.
       if (existing->import_id.is_valid() &&
-          !context.insts().GetNodeId(existing_inst_id).is_valid()) {
+          !context.insts().GetLocId(existing_inst_id).is_valid()) {
         context.SetNamespaceNodeId(existing_inst_id, node_id);
       }
     } else {

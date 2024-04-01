@@ -45,17 +45,16 @@ library "extern" api;
 
 import Other library "extern";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+11]]:8: ERROR: Variable has incomplete type `C`.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE+10]]:8: ERROR: Variable has incomplete type `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR: fail_extern.carbon: Class was forward declared here.
-// CHECK:STDERR:
-// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_extern.carbon:5:1: Class was forward declared here.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 var c: Other.C = {};
 
 // --- fail_merge_define_extern.carbon
@@ -63,18 +62,24 @@ var c: Other.C = {};
 library "fail_merge_define_extern" api;
 
 import Other library "define";
-import Other library "extern";
-
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+10]]:8: In name lookup for `C`.
-// CHECK:STDERR: var c: Other.C = {};
-// CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn C() {}
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import Other library "extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
+import Other library "extern";
+
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
+// CHECK:STDERR: var c: Other.C = {};
+// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:
 var c: Other.C = {};
 
 // --- fail_conflict.carbon
@@ -82,6 +87,18 @@ var c: Other.C = {};
 library "conflict" api;
 
 import Other library "define";
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import Other library "conflict";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn C() {}
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: class C {}
+// CHECK:STDERR: ^~~~~~~~~
 import Other library "conflict";
 
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: In name lookup for `C`.
@@ -201,7 +218,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc16: {} = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -243,10 +260,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc17_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_19.3: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc17_19.3
+// CHECK:STDOUT:   %.loc23_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc23_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc23_19.3: init C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc23_19.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,10 +302,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc10_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_19.3: init C = converted %.loc10_19.1, %.loc10_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc10_19.3
+// CHECK:STDOUT:   %.loc22_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc22_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc22_19.3: init C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc22_19.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

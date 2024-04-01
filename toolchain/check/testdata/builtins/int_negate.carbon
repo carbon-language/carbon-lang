@@ -116,7 +116,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 4294967295 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal -1 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.1, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type [i32; 1] [template]
 // CHECK:STDOUT: }
@@ -306,9 +306,9 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 2147483647 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 2147483649 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal -2147483647 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2147483648 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal -2147483648 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

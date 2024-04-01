@@ -61,7 +61,7 @@ class C {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl.carbon
 // CHECK:STDOUT:
@@ -73,7 +73,7 @@ class C {
 // CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_extern.carbon
 // CHECK:STDOUT:

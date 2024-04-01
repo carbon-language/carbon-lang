@@ -10,9 +10,9 @@ void PrintTo(const Diagnostic& diagnostic, std::ostream* os) {
   *os << "Diagnostic{";
   PrintTo(diagnostic.level, os);
   for (const auto& message : diagnostic.messages) {
-    *os << ", {" << message.location.filename << ":"
-        << message.location.line_number << ":" << message.location.column_number
-        << ", \"" << message.format_fn(message) << "}";
+    *os << ", {" << message.loc.filename << ":" << message.loc.line_number
+        << ":" << message.loc.column_number << ", \""
+        << message.format_fn(message) << "}";
   }
   *os << "\"}";
 }

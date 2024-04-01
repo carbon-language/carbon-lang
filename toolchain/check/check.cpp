@@ -15,6 +15,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -26,38 +27,79 @@
 
 namespace Carbon::Check {
 
-// Handles the transformation of a SemIRLocation to a DiagnosticLocation.
+// Handles the transformation of a SemIRLoc to a DiagnosticLoc.
 //
 // TODO: Move this to diagnostic_helpers.cpp.
-class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
+class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
  public:
   explicit SemIRDiagnosticConverter(
-      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+      const llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*>*
           node_converters,
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
-  auto ConvertLocation(SemIRLocation loc) const -> DiagnosticLocation override {
-    // Parse nodes always refer to the current IR.
-    if (!loc.is_inst_id) {
-      return ConvertLocationInFile(sem_ir_, loc.node_location);
+  // Converts an instruction's location to a diagnostic location, which will be
+  // the underlying line of code. Adds context for any imports used in the
+  // current SemIR to get to the underlying code.
+  auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
+      -> DiagnosticLoc override {
+    // Cursors for the current IR and instruction in that IR.
+    const auto* cursor_ir = sem_ir_;
+    auto cursor_inst_id = SemIR::InstId::Invalid;
+
+    // Notes an import on the diagnostic and updates cursors to point at the
+    // imported IR.
+    auto follow_import_ref = [&](SemIR::ImportIRId ir_id,
+                                 SemIR::InstId inst_id) {
+      const auto& import_ir = cursor_ir->import_irs().Get(ir_id);
+      auto context_loc = ConvertLocInFile(cursor_ir, import_ir.node_id,
+                                          loc.token_only, context_fn);
+      CARBON_DIAGNOSTIC(InImport, Note, "In import.");
+      context_fn(context_loc, InImport);
+      cursor_ir = import_ir.sem_ir;
+      cursor_inst_id = inst_id;
+    };
+
+    // If the location is is an import, follows it and returns nullopt.
+    // Otherwise, it's a parse node, so return the final location.
+    auto handle_loc = [&](SemIR::LocId loc_id) -> std::optional<DiagnosticLoc> {
+      if (loc_id.is_import_ir_inst_id()) {
+        auto import_ir_inst =
+            cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+        follow_import_ref(import_ir_inst.ir_id, import_ir_inst.inst_id);
+        return std::nullopt;
+      } else {
+        // Parse nodes always refer to the current IR.
+        return ConvertLocInFile(cursor_ir, loc_id.node_id(), loc.token_only,
+                                context_fn);
+      }
+    };
+
+    // Handle the base location.
+    if (loc.is_inst_id) {
+      cursor_inst_id = loc.inst_id;
+    } else {
+      if (auto diag_loc = handle_loc(loc.loc_id)) {
+        return *diag_loc;
+      }
+      CARBON_CHECK(cursor_inst_id.is_valid()) << "Should have been set";
     }
 
-    const auto* cursor_ir = sem_ir_;
-    auto cursor_inst_id = loc.inst_id;
     while (true) {
       // If the parse node is valid, use it for the location.
-      if (auto node_id = cursor_ir->insts().GetNodeId(cursor_inst_id);
-          node_id.is_valid()) {
-        return ConvertLocationInFile(cursor_ir, node_id);
+      if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+          loc_id.is_valid()) {
+        if (auto diag_loc = handle_loc(loc_id)) {
+          return *diag_loc;
+        }
+        continue;
       }
 
       // If the parse node was invalid, recurse through import references when
       // possible.
       if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
               cursor_inst_id)) {
-        cursor_ir = cursor_ir->import_irs().Get(import_ref->ir_id);
-        cursor_inst_id = import_ref->inst_id;
+        follow_import_ref(import_ref->ir_id, import_ref->inst_id);
         continue;
       }
 
@@ -72,7 +114,8 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       }
 
       // Invalid parse node but not an import; just nothing to point at.
-      return ConvertLocationInFile(cursor_ir, Parse::NodeId::Invalid);
+      return ConvertLocInFile(cursor_ir, Parse::NodeId::Invalid, loc.token_only,
+                              context_fn);
     }
   }
 
@@ -84,24 +127,23 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLocation> {
       return sem_ir_->StringifyType(*type_id);
     }
     if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
-      // TODO: Once unsigned integers are supported, compute the signedness
-      // here.
-      constexpr bool IsUnsigned = false;
-      return llvm::APSInt(typed_int->value, IsUnsigned);
+      return llvm::APSInt(typed_int->value,
+                          !sem_ir_->types().IsSignedInt(typed_int->type));
     }
-    return DiagnosticConverter<SemIRLocation>::ConvertArg(arg);
+    return DiagnosticConverter<SemIRLoc>::ConvertArg(arg);
   }
 
  private:
-  auto ConvertLocationInFile(const SemIR::File* sem_ir,
-                             Parse::NodeLocation node_location) const
-      -> DiagnosticLocation {
+  auto ConvertLocInFile(const SemIR::File* sem_ir, Parse::NodeId node_id,
+                        bool token_only, ContextFnT context_fn) const
+      -> DiagnosticLoc {
     auto it = node_converters_->find(sem_ir);
     CARBON_CHECK(it != node_converters_->end());
-    return it->second->ConvertLocation(node_location);
+    return it->second->ConvertLoc(Parse::NodeLoc(node_id, token_only),
+                                  context_fn);
   }
 
-  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+  const llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*>*
       node_converters_;
   const SemIR::File* sem_ir_;
 };
@@ -139,9 +181,9 @@ struct UnitInfo {
   Unit* unit;
 
   // Emitter information.
-  Parse::NodeLocationConverter converter;
+  Parse::NodeLocConverter converter;
   ErrorTrackingDiagnosticConsumer err_tracker;
-  DiagnosticEmitter<Parse::NodeLocation> emitter;
+  DiagnosticEmitter<Parse::NodeLoc> emitter;
 
   // A map of package names to outgoing imports. If the
   // import's target isn't available, the unit will be nullptr to assist with
@@ -194,7 +236,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
     for (const auto& import : self_import->second.imports) {
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
       ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import_sem_ir);
+                                      import.names.node_id, import_sem_ir);
       error_in_import |= import_sem_ir.name_scopes()
                              .Get(SemIR::NameScopeId::Package)
                              .has_error;
@@ -219,13 +261,14 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
       continue;
     }
 
-    llvm::SmallVector<const SemIR::File*> sem_irs;
+    llvm::SmallVector<SemIR::ImportIR> import_irs;
     for (auto import : package_imports.imports) {
-      sem_irs.push_back(&**import.unit_info->unit->sem_ir);
+      import_irs.push_back({.node_id = import.names.node_id,
+                            .sem_ir = &**import.unit_info->unit->sem_ir});
     }
     ImportLibrariesFromOtherPackage(context, namespace_type_id,
                                     package_imports.node_id, package_id,
-                                    sem_irs, package_imports.has_load_error);
+                                    import_irs, package_imports.has_load_error);
   }
 
   CARBON_CHECK(context.import_irs().size() == num_irs)
@@ -644,7 +687,7 @@ static auto ProcessNodeIds(Context& context,
 
 // Produces and checks the IR for the provided Parse::Tree.
 static auto CheckParseTree(
-    llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>*
+    llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*>*
         node_converters,
     const SemIR::File& builtin_ir, UnitInfo& unit_info,
     llvm::raw_ostream* vlog_stream) -> void {
@@ -970,8 +1013,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     }
   }
 
-  llvm::DenseMap<const SemIR::File*, Parse::NodeLocationConverter*>
-      node_converters;
+  llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*> node_converters;
 
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.

@@ -92,7 +92,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %.2: i32 = int_literal 65536 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 2147418112 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 32768 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2147483648 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal -2147483648 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

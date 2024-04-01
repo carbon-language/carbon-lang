@@ -19,7 +19,7 @@ import Core;
 // TODO: This should be in `Core`, but currently impl lookup only looks in the
 // current file.
 impl i32 as Core.Add {
-  fn Op[self: i32](other: i32) -> i32 = "int.add";
+  fn Op[self: Self](other: Self) -> Self = "int.add";
 }
 
 var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
@@ -125,10 +125,13 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Add {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
+// CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
 // CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
-// CHECK:STDOUT:     %other.loc7_20.1: i32 = param other
-// CHECK:STDOUT:     %other.loc7_20.2: i32 = bind_name other, %other.loc7_20.1
+// CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, i32 [template = i32]
+// CHECK:STDOUT:     %other.loc7_21.1: i32 = param other
+// CHECK:STDOUT:     %other.loc7_21.2: i32 = bind_name other, %other.loc7_21.1
+// CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.2]
@@ -138,7 +141,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_20.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.2: i32) -> i32 = "int.add";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;
 // CHECK:STDOUT:
