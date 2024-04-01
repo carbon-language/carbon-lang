@@ -483,17 +483,14 @@ class NodeIdTraversal {
   // complete.
   auto Next() -> std::optional<Parse::NodeId>;
 
-  // Performs any processing necessary before handling a node.
-  auto BeforeHandle(Parse::NodeKind parse_kind) -> void {
+  // Performs any processing necessary after we type-check a node.
+  auto Handle(Parse::NodeKind parse_kind) -> void {
     // When we reach the start of a deferred definition scope, add a task to the
     // worklist to check future skipped definitions in the new context.
     if (IsStartOfDeferredDefinitionScope(parse_kind)) {
       worklist_.PushEnterDeferredDefinitionScope(context_);
     }
-  }
 
-  // Performs any processing necessary after handling a node.
-  auto AfterHandle(Parse::NodeKind parse_kind) -> void {
     // When we reach the end of a deferred definition scope, add a task to the
     // worklist to leave the scope. If this is not a nested scope, start parsing
     // the deferred definitions now.
@@ -627,8 +624,6 @@ static auto ProcessNodeIds(Context& context,
     auto node_id = *maybe_node_id;
     auto parse_kind = context.parse_tree().node_kind(node_id);
 
-    traversal.BeforeHandle(parse_kind);
-
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                                         \
   case Parse::NodeKind::Name: {                                              \
@@ -642,7 +637,7 @@ static auto ProcessNodeIds(Context& context,
 #include "toolchain/parse/node_kind.def"
     }
 
-    traversal.AfterHandle(parse_kind);
+    traversal.Handle(parse_kind);
   }
   return true;
 }
