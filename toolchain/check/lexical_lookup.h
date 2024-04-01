@@ -30,7 +30,8 @@ class LexicalLookup {
 
   // A lookup result that has been temporarily removed from scope.
   struct SuspendedResult {
-    // The lookup index.
+    // The lookup index. This is stored in 32 bits to keep this type small. This
+    // helps to keep SuspendedFunctions small.
     uint32_t index;
     // The lookup result.
     SemIR::InstId inst_id;
