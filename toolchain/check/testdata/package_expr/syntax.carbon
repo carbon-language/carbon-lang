@@ -9,16 +9,11 @@
 package Global api;
 
 var x: i32 = 0;
-
-fn Main() {
-  var x: i32 = 1;
-
-  var y: i32 = package.x;
-}
+var y: i32 = package.x;
 
 // --- inside_fn.carbon
 
-package Insidefinition api;
+package InsideFn api;
 
 var x: i32 = 0;
 
@@ -46,38 +41,27 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.var: ref i32 = var x
-// CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   assign %x.var, %.loc7
 // CHECK:STDOUT:   %y.var: ref i32 = var y
 // CHECK:STDOUT:   %y: ref i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
-// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc9: i32 = bind_value %x.ref
-// CHECK:STDOUT:   assign %y.var, %.loc9
-// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
+// CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
+// CHECK:STDOUT:   %x.ref: ref i32 = name_ref x, file.%x
+// CHECK:STDOUT:   %.loc5: i32 = bind_value %x.ref
+// CHECK:STDOUT:   assign file.%y.var, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
