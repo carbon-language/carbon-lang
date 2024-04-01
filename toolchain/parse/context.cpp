@@ -11,8 +11,11 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/state.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
@@ -422,6 +425,47 @@ auto Context::EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
                     "have a `{{ ... }` block for a definition.",
                     Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
+}
+
+// Returns whether we are currently parsing in a scope in which function
+// definitions are deferred, such as a class or interface.
+static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
+  auto& stack = context.state_stack();
+  if (stack.size() < 2 || stack.back().state != State::DeclScopeLoop) {
+    return false;
+  }
+  auto state = stack[stack.size() - 2].state;
+  return state == State::DeclDefinitionFinishAsClass ||
+         state == State::DeclDefinitionFinishAsImpl ||
+         state == State::DeclDefinitionFinishAsInterface ||
+         state == State::DeclDefinitionFinishAsNamedConstraint;
+}
+
+auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
+                                         int subtree_start, bool has_error)
+    -> void {
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    enclosing_deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add(
+            {.start_id = FunctionDefinitionStartId(
+                 NodeId(tree_->node_impls_.size()))}));
+  }
+
+  AddNode(NodeKind::FunctionDefinitionStart, token, subtree_start, has_error);
+}
+
+auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
+                                    bool has_error) -> void {
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = enclosing_deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id =
+        FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
+  }
+
+  AddNode(NodeKind::FunctionDefinition, token, subtree_start, has_error);
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

@@ -239,6 +239,15 @@ cc_test(
 )
 
 cc_library(
+    name = "variant_helpers",
+    hdrs = ["variant_helpers.h"],
+    deps = [
+        ":error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "vlog",
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],

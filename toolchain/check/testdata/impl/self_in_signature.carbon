@@ -43,10 +43,10 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.5: type = tuple_type () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.7: C = struct_value () [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (@impl.1.%F) [template]
-// CHECK:STDOUT:   %.9: D = struct_value () [template]
-// CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%F) [template]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (@impl.1.%F) [template]
+// CHECK:STDOUT:   %.8: C = struct_value () [template]
+// CHECK:STDOUT:   %.9: <witness> = interface_witness (@impl.2.%F) [template]
+// CHECK:STDOUT:   %.10: D = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = interface_type @SelfNested [template]
 // CHECK:STDOUT:   %.12: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.13: type = struct_type {.x: Self, .y: i32} [symbolic]
@@ -154,7 +154,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc16_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.8]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -172,7 +172,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc20_32: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %return.var: ref D = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.10]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
@@ -230,16 +230,16 @@ impl D as SelfNested {
 // CHECK:STDOUT: fn @F.2[@impl.1.%self.loc16_8.2: C](@impl.1.%x.loc16_17.2: C) -> @impl.1.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc16_38.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc16_38.2: init C = class_init (), @impl.1.%return.var [template = constants.%.7]
-// CHECK:STDOUT:   %.loc16_38.3: init C = converted %.loc16_38.1, %.loc16_38.2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16_38.2: init C = class_init (), @impl.1.%return.var [template = constants.%.8]
+// CHECK:STDOUT:   %.loc16_38.3: init C = converted %.loc16_38.1, %.loc16_38.2 [template = constants.%.8]
 // CHECK:STDOUT:   return %.loc16_38.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3[@impl.2.%self.loc20_8.2: D](@impl.2.%x.loc20_20.2: D) -> @impl.2.%return.var: D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20_47.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc20_47.2: init D = class_init (), @impl.2.%return.var [template = constants.%.9]
-// CHECK:STDOUT:   %.loc20_47.3: init D = converted %.loc20_47.1, %.loc20_47.2 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc20_47.2: init D = class_init (), @impl.2.%return.var [template = constants.%.10]
+// CHECK:STDOUT:   %.loc20_47.3: init D = converted %.loc20_47.1, %.loc20_47.2 [template = constants.%.10]
 // CHECK:STDOUT:   return %.loc20_47.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

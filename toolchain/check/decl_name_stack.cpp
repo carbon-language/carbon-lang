@@ -63,6 +63,36 @@ auto DeclNameStack::PopScope() -> void {
   decl_name_stack_.pop_back();
 }
 
+auto DeclNameStack::Suspend() -> SuspendedName {
+  CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
+      << "Missing call to FinishName before Suspend";
+  SuspendedName result = {decl_name_stack_.pop_back_val(), {}};
+  auto enclosing_index = result.name_context.enclosing_scope;
+  auto& scope_stack = context_->scope_stack();
+  while (scope_stack.PeekIndex() > enclosing_index) {
+    result.scopes.push_back(scope_stack.Suspend());
+  }
+  CARBON_CHECK(scope_stack.PeekIndex() == enclosing_index)
+      << "Scope index " << enclosing_index
+      << " does not enclose the current scope " << scope_stack.PeekIndex();
+  return result;
+}
+
+auto DeclNameStack::Restore(SuspendedName sus) -> void {
+  // The enclosing state must be the same when a name is restored.
+  CARBON_CHECK(context_->scope_stack().PeekIndex() ==
+               sus.name_context.enclosing_scope)
+      << "Name restored at the wrong position in the name stack.";
+
+  // clang-tidy warns that the `std::move` below has no effect. While that's
+  // true, this `move` defends against `NameContext` growing more state later.
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  decl_name_stack_.push_back(std::move(sus.name_context));
+  for (auto& suspended_scope : llvm::reverse(sus.scopes)) {
+    context_->scope_stack().Restore(std::move(suspended_scope));
+  }
+}
+
 auto DeclNameStack::LookupOrAddName(NameContext name_context,
                                     SemIR::InstId target_id) -> SemIR::InstId {
   switch (name_context.state) {

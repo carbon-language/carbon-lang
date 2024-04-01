@@ -18,7 +18,7 @@ fn Main() {
 
 // --- inside_fn.carbon
 
-package InsideFn api;
+package Insidefinition api;
 
 var x: i32 = 0;
 

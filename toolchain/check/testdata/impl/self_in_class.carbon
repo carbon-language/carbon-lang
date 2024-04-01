@@ -23,9 +23,9 @@ class A {
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @DefaultConstructible, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in DefaultConstructible> = assoc_entity element0, @DefaultConstructible.%Make [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Make) [template]
-// CHECK:STDOUT:   %.6: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%Make) [template]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,7 +58,7 @@ class A {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Make) [template = constants.%.5]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Make) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make
@@ -78,7 +78,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   return %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

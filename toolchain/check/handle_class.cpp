@@ -332,12 +332,12 @@ auto HandleClassDefinition(Context& context,
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-  context.decl_name_stack().PopScope();
 
   // The class type is now fully defined.
   auto& class_info = context.classes().Get(class_id);
   class_info.object_repr_id = context.GetStructType(fields_id);
+
+  // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
 

@@ -23,12 +23,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = ptr_type Class [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
-// CHECK:STDOUT:   %Self: type = class_type @Self [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type Class [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
+// CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
+// CHECK:STDOUT:   %Self: type = class_type @Self [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,11 +81,11 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc9: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %Self.var: ref Class* = var r#Self
 // CHECK:STDOUT:   %Self: ref Class* = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   %Self.ref.loc10_12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_16: type = ptr_type Class [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref Class* = var p
 // CHECK:STDOUT:   %p: ref Class* = bind_name p, %p.var
 // CHECK:STDOUT:   %Self.ref.loc10_20: ref Class* = name_ref r#Self, %Self

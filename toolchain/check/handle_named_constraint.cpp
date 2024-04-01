@@ -14,6 +14,7 @@ auto HandleNamedConstraintDecl(Context& context,
 auto HandleNamedConstraintDefinition(Context& context,
                                      Parse::NamedConstraintDefinitionId node_id)
     -> bool {
+  // Note that the decl_name_stack will be popped by `ProcessNodeIds`.
   return context.TODO(node_id, "HandleNamedConstraintDefinition");
 }
 

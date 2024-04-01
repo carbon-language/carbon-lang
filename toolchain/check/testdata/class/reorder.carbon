@@ -6,18 +6,6 @@
 
 class Class {
   fn G() -> i32 {
-    // TODO: This should find the member function `F` even though it's declared
-    // later.
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+10]]:12: ERROR: Member access into incomplete class `Class`.
-    // CHECK:STDERR:     return Class.F();
-    // CHECK:STDERR:            ^~~~~~~
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE-7]]:1: Class is incomplete within its definition.
-    // CHECK:STDERR: class Class {
-    // CHECK:STDERR: ^~~~~~~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_reorder.carbon:[[@LINE+3]]:12: ERROR: Name `F` not found.
-    // CHECK:STDERR:     return Class.F();
-    // CHECK:STDERR:            ^~~~~~~
     return Class.F();
   }
 
@@ -26,12 +14,12 @@ class Class {
   }
 }
 
-// CHECK:STDOUT: --- fail_reorder.carbon
+// CHECK:STDOUT: --- reorder.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,7 +34,7 @@ class Class {
 // CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
+// CHECK:STDOUT:     %return.var.loc12: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -58,13 +46,16 @@ class Class {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [template = <error>]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
+// CHECK:STDOUT:   %.loc9_19.1: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc9_21: i32 = value_of_initializer %.loc9_19.1
+// CHECK:STDOUT:   %.loc9_19.2: i32 = converted %.loc9_19.1, %.loc9_21
+// CHECK:STDOUT:   return %.loc9_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc25: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc25
+// CHECK:STDOUT:   %.loc13: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   return %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

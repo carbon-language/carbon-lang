@@ -186,6 +186,7 @@ cc_library(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:variant_helpers",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",

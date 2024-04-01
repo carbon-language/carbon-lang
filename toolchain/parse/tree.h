@@ -16,8 +16,40 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
+
+struct DeferredDefinition;
+
+// The index of a deferred function definition within the parse tree's deferred
+// definition store.
+struct DeferredDefinitionIndex : public IndexBase {
+  using ValueType = DeferredDefinition;
+
+  static const DeferredDefinitionIndex Invalid;
+
+  using IndexBase::IndexBase;
+};
+
+constexpr DeferredDefinitionIndex DeferredDefinitionIndex::Invalid =
+    DeferredDefinitionIndex(InvalidIndex);
+
+// A function whose definition is deferred because it is defined inline in a
+// class or similar scope.
+//
+// Such functions are type-checked out of order, with their bodies checked after
+// the enclosing declaration is complete. Some additional information is tracked
+// for these functions in the parse tree to support this reordering.
+struct DeferredDefinition {
+  // The node that starts the function definition.
+  FunctionDefinitionStartId start_id;
+  // The function definition node.
+  FunctionDefinitionId definition_id = NodeId::Invalid;
+  // The index of the next method that is not nested within this one.
+  DeferredDefinitionIndex next_definition_index =
+      DeferredDefinitionIndex::Invalid;
+};
 
 // Defined in typed_nodes.h. Include that to call `Tree::ExtractFile()`.
 struct File;
@@ -149,6 +181,10 @@ class Tree : public Printable<Tree> {
     return packaging_directive_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
+  auto deferred_definitions() const
+      -> const ValueStore<DeferredDefinitionIndex>& {
+    return deferred_definitions_;
+  }
 
   // See the other Print comments.
   auto Print(llvm::raw_ostream& output) const -> void;
@@ -339,6 +375,7 @@ class Tree : public Printable<Tree> {
 
   std::optional<PackagingDirective> packaging_directive_;
   llvm::SmallVector<PackagingNames> imports_;
+  ValueStore<DeferredDefinitionIndex> deferred_definitions_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

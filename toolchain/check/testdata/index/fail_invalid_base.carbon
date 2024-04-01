@@ -4,10 +4,6 @@
 //
 // AUTOUPDATE
 
-// TODO: The errors here are in bad locations. We should build a SemIR
-// representation for a reference to a name so that we can track the location
-// properly.
-
 namespace N;
 // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: ERROR: Expression cannot be used as a value.
 // CHECK:STDERR: var a: i32 = N[0];
@@ -70,20 +66,20 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
-// CHECK:STDOUT:   %.loc16: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %.loc29_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc29_28: i32 = int_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc29_29.1: {.a: i32, .b: i32} = struct_literal (%.loc29_20, %.loc29_28)
-// CHECK:STDOUT:   %.loc29_31: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc29_29.2: {.a: i32, .b: i32} = struct_value (%.loc29_20, %.loc29_28) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc29_29.3: {.a: i32, .b: i32} = converted %.loc29_29.1, %.loc29_29.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc25_20: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc25_28: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_29.1: {.a: i32, .b: i32} = struct_literal (%.loc25_20, %.loc25_28)
+// CHECK:STDOUT:   %.loc25_31: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = struct_value (%.loc25_20, %.loc25_28) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc25_29.3: {.a: i32, .b: i32} = converted %.loc25_29.1, %.loc25_29.2 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %.loc34_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
-// CHECK:STDOUT:   %.loc34_33: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc30_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc30_33: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
