@@ -173,7 +173,8 @@ static auto BuildFunctionDecl(Context& context,
 
     if (auto existing_function_decl =
             prev_inst.inst.TryAs<SemIR::FunctionDecl>()) {
-      if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
+      if (MergeFunctionRedecl(context, node_id, function_info,
+                              /*new_is_import=*/false, is_definition,
                               existing_function_decl->function_id,
                               prev_inst.is_import)) {
         // When merging, use the existing function rather than adding a new one.

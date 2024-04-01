@@ -8,14 +8,20 @@
 // Setup files
 // ============================================================================
 
-// --- a.carbon
+// --- fns.carbon
 
-library "a" api;
+library "fns" api;
 
 fn A() {}
 fn B(b: i32) -> i32 { return b; }
 fn C(c: (i32,)) -> {.c: i32} { return {.c = c[0]}; }
 fn D();
+
+// --- extern.carbon
+
+library "extern" api;
+
+extern fn A();
 
 // ============================================================================
 // Test files
@@ -25,7 +31,7 @@ fn D();
 
 library "basics" api;
 
-import library "a";
+import library "fns";
 
 var a: () = A();
 var b: i32 = B(1);
@@ -35,15 +41,15 @@ var c: {.c: i32} = C((1,));
 
 library "def_ownership" api;
 
-import library "a";
+import library "fns";
 
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare function A without `extern`.
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: import library "a";
+// CHECK:STDERR: import library "fns";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: Previously declared here.
+// CHECK:STDERR: fns.carbon:4:1: Previously declared here.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -52,33 +58,39 @@ fn A() {};
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-16]]:1: In import.
-// CHECK:STDERR: import library "a";
+// CHECK:STDERR: import library "fns";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:5:1: Previously declared here.
+// CHECK:STDERR: fns.carbon:5:1: Previously declared here.
 // CHECK:STDERR: fn B(b: i32) -> i32 { return b; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
 
+// --- redecl_then_def.carbon
+
+library "redecl_then_def" api;
+
+import library "extern";
+
+fn A();
+fn A() {}
+
 // --- fail_mix_extern_decl.carbon
 
 library "mix_extern_decl" api;
 
-import library "a";
+import library "fns";
 
 extern fn D();
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+9]]:1: ERROR: Only one library can declare function D without `extern`.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclaring `extern` function `D` as non-`extern`.
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-6]]:1: In import.
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:7:1: Previously declared here.
-// CHECK:STDERR: fn D();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared `extern` here.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 fn D() {}
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- fns.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type (type) [template]
@@ -134,6 +146,17 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- extern.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
@@ -199,10 +222,10 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %import_ref.1
-// CHECK:STDOUT:     .B = %import_ref.2
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loaded [template = imports.%A]
 // CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loaded [template = imports.%B]
@@ -223,6 +246,22 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- redecl_then_def.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A.loc6
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loaded [template = imports.%A]
+// CHECK:STDOUT:   %A.loc6: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mix_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -230,14 +269,14 @@ fn D() {}
 // CHECK:STDOUT:     .A = %import_ref.1
 // CHECK:STDOUT:     .B = %import_ref.2
 // CHECK:STDOUT:     .C = %import_ref.3
-// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:     .D = %D.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, loaded [template = imports.%D]
 // CHECK:STDOUT:   %D.loc6: <function> = fn_decl @D [template] {}
-// CHECK:STDOUT:   %D.loc16: <function> = fn_decl @D [template] {}
+// CHECK:STDOUT:   %D.loc13: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {

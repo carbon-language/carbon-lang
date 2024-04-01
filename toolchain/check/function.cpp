@@ -4,6 +4,7 @@
 
 #include "toolchain/check/function.h"
 
+#include "toolchain/check/merge.h"
 #include "toolchain/check/subst.h"
 
 namespace Carbon::Check {
@@ -251,10 +252,9 @@ static auto CheckIsAllowedRedecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// TODO: Detect conflicting cross-file declarations, as well as uses of imported
-// declarations followed by a redeclaration.
 auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
-                         SemIR::Function& new_function, bool new_is_definition,
+                         SemIR::Function& new_function, bool new_is_import,
+                         bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
                          bool prev_is_import) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
@@ -275,8 +275,12 @@ auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
     prev_function.return_type_id = new_function.return_type_id;
     prev_function.return_slot_id = new_function.return_slot_id;
   }
-  if (!new_function.is_extern) {
-    prev_function.is_extern = false;
+  if ((prev_is_import && !new_is_import) ||
+      (prev_function.is_extern && !new_function.is_extern)) {
+    prev_function.is_extern = new_function.is_extern;
+    prev_function.decl_id = new_function.decl_id;
+    ReplacePrevInstForMerge(context, prev_function.enclosing_scope_id,
+                            prev_function.name_id, new_function.decl_id);
   }
   return true;
 }
