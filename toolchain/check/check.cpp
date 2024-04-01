@@ -8,7 +8,6 @@
 
 #include "common/check.h"
 #include "common/error.h"
-#include "common/variant_helpers.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -284,7 +283,8 @@ class NextDeferredDefinitionCache {
     SkipTo(Parse::DeferredDefinitionIndex(0));
   }
 
-  // Set the specified deferred definition index as being the next one to parse.
+  // Set the specified deferred definition index as being the next one that will
+  // be encountered.
   auto SkipTo(Parse::DeferredDefinitionIndex next_index) -> void {
     index_ = next_index;
     if (static_cast<std::size_t>(index_.index) ==
@@ -295,7 +295,7 @@ class NextDeferredDefinitionCache {
     }
   }
 
-  // Returns the index of the next deferred definition to be parsed.
+  // Returns the index of the next deferred definition to be encountered.
   auto index() const -> Parse::DeferredDefinitionIndex { return index_; }
 
   // Returns the ID of the start node of the next deferred definition.
@@ -311,7 +311,7 @@ class NextDeferredDefinitionCache {
 
 // Determines whether we are currently declaring a name in a scope in which
 // function definitions are deferred. When entering another deferred definition
-// scope, the inner scope's function definitions are parsed at the end of the
+// scope, the inner scope's function definitions are checked at the end of the
 // outer scope, not the inner one.  For example:
 //
 // ```
@@ -319,12 +319,12 @@ class NextDeferredDefinitionCache {
 //   class B {
 //     fn F() -> A { return {}; }
 //   }
-// } // A.B.F is parsed here, with A complete.
+// } // A.B.F is type-checked here, with A complete.
 //
 // fn F() {
 //   class C {
 //     fn G() {}
-//   } // C.G is parsed here.
+//   } // C.G is type-checked here.
 // }
 // ```
 static auto IsInDeferredDefinitionScope(Context& context) -> bool {
@@ -375,13 +375,13 @@ static auto IsEndOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
 }
 
 namespace {
-// A worklist of pending tasks to perform to parse deferred function definitions
+// A worklist of pending tasks to perform to check deferred function definitions
 // in the right order.
 class DeferredDefinitionWorklist {
  public:
-  // A worklist task that indicates we should parse a deferred function
+  // A worklist task that indicates we should check a deferred function
   // definition that we previously skipped.
-  struct ParseSkippedDefinition {
+  struct CheckSkippedDefinition {
     // The definition that we skipped.
     Parse::DeferredDefinitionIndex definition_index;
     // The suspended function.
@@ -405,9 +405,9 @@ class DeferredDefinitionWorklist {
     bool in_deferred_definition_scope;
   };
 
-  // A pending parsing task.
+  // A pending type-checking task.
   using Task =
-      std::variant<ParseSkippedDefinition, EnterDeferredDefinitionScope,
+      std::variant<CheckSkippedDefinition, EnterDeferredDefinitionScope,
                    LeaveDeferredDefinitionScope>;
 
   DeferredDefinitionWorklist() {
@@ -421,12 +421,12 @@ class DeferredDefinitionWorklist {
                               Parse::DeferredDefinitionIndex index,
                               Parse::FunctionDefinitionStartId node_id)
       -> void {
-    worklist_.push_back(ParseSkippedDefinition{
+    worklist_.push_back(CheckSkippedDefinition{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
   }
 
   // Push a task to re-enter a function scope, so that functions defined within
-  // it are parsed in the right context.
+  // it are type-checked in the right context.
   auto PushEnterDeferredDefinitionScope(Context& context) -> void {
     enclosing_scopes_.push_back(worklist_.size());
     worklist_.push_back(EnterDeferredDefinitionScope{
@@ -435,8 +435,8 @@ class DeferredDefinitionWorklist {
 
   // Suspend the current deferred definition scope, which is finished but still
   // on the decl_name_stack, and push a task to leave the scope when we're
-  // parsing deferred definitions. Returns `true` if deferred definitions should
-  // be parsed immediately.
+  // type-checking deferred definitions. Returns `true` if the current list of
+  // deferred definitions should be type-checked immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> bool;
 
   // Pop the next task off the worklist.
@@ -449,7 +449,7 @@ class DeferredDefinitionWorklist {
   }
 
  private:
-  // A worklist of parsing tasks we'll need to do later.
+  // A worklist of type-checking tasks we'll need to do later.
   //
   // Don't allocate any inline storage here. A Task is fairly large, so we never
   // want this to live on the stack. Instead, we reserve space in the
@@ -475,11 +475,11 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   }
 
   // If we're finishing a nested deferred definition scope, keep track of that
-  // but don't parse deferred definitions now.
+  // but don't type-check deferred definitions now.
   auto& enter_scope = get<EnterDeferredDefinitionScope>(worklist_[scope_index]);
   if (enter_scope.in_deferred_definition_scope) {
     // This is a nested deferred definition scope. Suspend the inner scope so we
-    // can restore it when we come to parse the deferred definitions.
+    // can restore it when we come to type-check the deferred definitions.
     enter_scope.suspended_name = context.decl_name_stack().Suspend();
 
     // Enqueue a task to leave the nested scope.
@@ -489,8 +489,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   }
 
   // We're at the end of a non-nested deferred definition scope. Prepare to
-  // start parsing deferred definitions. Enqueue a task to leave this outer
-  // scope and end parsing deferred definitions.
+  // start checking deferred definitions. Enqueue a task to leave this outer
+  // scope and end checking deferred definitions.
   worklist_.push_back(
       LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
 
@@ -522,7 +522,7 @@ class NodeIdTraversal {
          .next_definition = Parse::DeferredDefinitionIndex::Invalid});
   }
 
-  // Finds the next `NodeId` to parse. Returns nullopt if the traversal is
+  // Finds the next `NodeId` to type-check. Returns nullopt if the traversal is
   // complete.
   auto Next() -> std::optional<Parse::NodeId>;
 
@@ -535,26 +535,26 @@ class NodeIdTraversal {
     }
 
     // When we reach the end of a deferred definition scope, add a task to the
-    // worklist to leave the scope. If this is not a nested scope, start parsing
-    // the deferred definitions now.
+    // worklist to leave the scope. If this is not a nested scope, start
+    // checking the deferred definitions now.
     if (IsEndOfDeferredDefinitionScope(parse_kind)) {
-      chunks_.back().parsing_deferred_definitions =
+      chunks_.back().checking_deferred_definitions =
           worklist_.SuspendFinishedScopeAndPush(context_);
     }
   }
 
  private:
-  // A chunk of the parse tree that we need to parse.
+  // A chunk of the parse tree that we need to type-check.
   struct Chunk {
     Parse::Tree::PostorderIterator it;
     Parse::Tree::PostorderIterator end;
     // The next definition that will be encountered after this chunk completes.
     Parse::DeferredDefinitionIndex next_definition;
-    // Whether we are currently parsing deferred definitions, rather than the
+    // Whether we are currently checking deferred definitions, rather than the
     // tokens of this chunk. If so, we'll pull tasks off `worklist` and execute
     // them until we're done with this batch of deferred definitions. Otherwise,
     // we'll pull node IDs from `*it` until it reaches `end`.
-    bool parsing_deferred_definitions = false;
+    bool checking_deferred_definitions = false;
   };
 
   // Re-enter a nested deferred definition scope.
@@ -571,15 +571,15 @@ class NodeIdTraversal {
       DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&& leave)
       -> void {
     if (!leave.in_deferred_definition_scope) {
-      // We're done with parsing deferred definitions.
-      chunks_.back().parsing_deferred_definitions = false;
+      // We're done with checking deferred definitions.
+      chunks_.back().checking_deferred_definitions = false;
     }
     context_.decl_name_stack().PopScope();
   }
 
-  // Resume parsing a deferred definition.
+  // Resume checking a deferred definition.
   auto PerformTask(
-      DeferredDefinitionWorklist::ParseSkippedDefinition&& parse_definition)
+      DeferredDefinitionWorklist::CheckSkippedDefinition&& parse_definition)
       -> void {
     auto& [definition_index, suspended_fn] = parse_definition;
     const auto& definition_info =
@@ -605,17 +605,17 @@ class NodeIdTraversal {
 
 auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
   while (true) {
-    // If we're parsing deferred definitions, find the next definition we should
-    // check, restore its suspended state, and add a corresponding `Chunk` to
-    // the top of the chunk list.
-    if (chunks_.back().parsing_deferred_definitions) {
+    // If we're checking deferred definitions, find the next definition we
+    // should check, restore its suspended state, and add a corresponding
+    // `Chunk` to the top of the chunk list.
+    if (chunks_.back().checking_deferred_definitions) {
       std::visit(
           [&](auto&& task) { PerformTask(std::forward<decltype(task)>(task)); },
           worklist_.Pop());
       continue;
     }
 
-    // If we're not parsing deferred definitions, produce the next parse node
+    // If we're not checking deferred definitions, produce the next parse node
     // for this chunk. If we've run out of parse nodes, we're done with this
     // chunk of the parse tree.
     if (chunks_.back().it == chunks_.back().end) {
@@ -634,7 +634,7 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     auto node_id = *chunks_.back().it;
 
     // If we've reached the start of a deferred definition, skip to the end of
-    // it, and track that we need to parse it later.
+    // it, and track that we need to check it later.
     if (node_id == next_deferred_definition_.start_id()) {
       const auto& definition_info =
           context_.parse_tree().deferred_definitions().Get(
@@ -643,7 +643,7 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
                                        next_deferred_definition_.index(),
                                        definition_info.start_id);
 
-      // Continue parsing after the end of the definition.
+      // Continue type-checking the parse tree after the end of the definition.
       chunks_.back().it =
           context_.parse_tree().postorder(definition_info.definition_id).end();
       next_deferred_definition_.SkipTo(definition_info.next_definition_index);
