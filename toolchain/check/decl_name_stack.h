@@ -161,9 +161,16 @@ class DeclNameStack {
 
   // Peeks the current target scope of the name on top of the stack. Note that
   // if we're still processing the name qualifiers, this can change before the
-  // name is completed.
-  auto PeekTargetScope() -> SemIR::NameScopeId {
+  // name is completed. Also, if the name up to this point was already declared
+  // and is a scope, this will be that scope, rather than the scope enclosing
+  // it.
+  auto PeekTargetScope() const -> SemIR::NameScopeId {
     return decl_name_stack_.back().target_scope_id;
+  }
+
+  // Peeks the enclosing scope index of the name on top of the stack.
+  auto PeekEnclosingScope() const -> ScopeIndex {
+    return decl_name_stack_.back().enclosing_scope;
   }
 
   // Finishes the current declaration name processing, returning the final

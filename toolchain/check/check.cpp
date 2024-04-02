@@ -8,6 +8,8 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "common/variant_helpers.h"
+#include "common/vlog.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -307,42 +309,6 @@ class NextDeferredDefinitionCache {
 };
 }  // namespace
 
-// Determines whether we are currently declaring a name in a scope in which
-// function definitions are deferred. When entering another deferred definition
-// scope, the inner scope's function definitions are checked at the end of the
-// outer scope, not the inner one.  For example:
-//
-// ```
-// class A {
-//   class B {
-//     fn F() -> A { return {}; }
-//   }
-// } // A.B.F is type-checked here, with A complete.
-//
-// fn F() {
-//   class C {
-//     fn G() {}
-//   } // C.G is type-checked here.
-// }
-// ```
-static auto IsInDeferredDefinitionScope(Context& context) -> bool {
-  auto inst_id = context.name_scopes().GetInstIdIfValid(
-      context.decl_name_stack().PeekTargetScope());
-  if (!inst_id.is_valid()) {
-    return false;
-  }
-  switch (context.insts().Get(inst_id).kind()) {
-    case SemIR::ClassDecl::Kind:
-    case SemIR::ImplDecl::Kind:
-    case SemIR::InterfaceDecl::Kind:
-      // TODO: Named constraints, mixins.
-      return true;
-
-    default:
-      return false;
-  }
-}
-
 // Determines whether this node kind is the start of a deferred definition
 // scope.
 static auto IsStartOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
@@ -393,7 +359,21 @@ class DeferredDefinitionWorklist {
     std::optional<DeclNameStack::SuspendedName> suspended_name;
     // Whether this scope is itself within an outer deferred definition scope.
     // If so, we'll delay processing its contents until we reach the end of the
-    // enclosing scope.
+    // enclosing scope. For example:
+    //
+    // ```
+    // class A {
+    //   class B {
+    //     fn F() -> A { return {}; }
+    //   }
+    // } // A.B.F is type-checked here, with A complete.
+    //
+    // fn F() {
+    //   class C {
+    //     fn G() {}
+    //   } // C.G is type-checked here.
+    // }
+    // ```
     bool in_deferred_definition_scope;
   };
 
@@ -408,10 +388,14 @@ class DeferredDefinitionWorklist {
       std::variant<CheckSkippedDefinition, EnterDeferredDefinitionScope,
                    LeaveDeferredDefinitionScope>;
 
-  DeferredDefinitionWorklist() {
+  explicit DeferredDefinitionWorklist(llvm::raw_ostream* vlog_stream)
+      : vlog_stream_(vlog_stream) {
     // See declaration of `worklist_`.
     worklist_.reserve(64);
   }
+
+  static constexpr llvm::StringLiteral VlogPrefix =
+      "DeferredDefinitionWorklist ";
 
   // Suspend the current function definition and push a task onto the worklist
   // to finish it later.
@@ -421,14 +405,21 @@ class DeferredDefinitionWorklist {
       -> void {
     worklist_.push_back(CheckSkippedDefinition{
         index, HandleFunctionDefinitionSuspend(context, node_id)});
+    CARBON_VLOG() << VlogPrefix << "Push CheckSkippedDefinition " << index.index
+                  << "\n";
   }
 
   // Push a task to re-enter a function scope, so that functions defined within
   // it are type-checked in the right context.
   auto PushEnterDeferredDefinitionScope(Context& context) -> void {
-    enclosing_scopes_.push_back(worklist_.size());
-    worklist_.push_back(EnterDeferredDefinitionScope{
-        std::nullopt, IsInDeferredDefinitionScope(context)});
+    bool nested = !enclosing_scopes_.empty() &&
+                  enclosing_scopes_.back().second ==
+                      context.decl_name_stack().PeekEnclosingScope();
+    enclosing_scopes_.push_back(
+        {worklist_.size(), context.scope_stack().PeekIndex()});
+    worklist_.push_back(EnterDeferredDefinitionScope{std::nullopt, nested});
+    CARBON_VLOG() << VlogPrefix << "Push EnterDeferredDefinitionScope "
+                  << (nested ? "(nested)" : "(non-nested)") << "\n";
   }
 
   // Suspend the current deferred definition scope, which is finished but still
@@ -438,7 +429,29 @@ class DeferredDefinitionWorklist {
   auto SuspendFinishedScopeAndPush(Context& context) -> bool;
 
   // Pop the next task off the worklist.
-  auto Pop() -> Task { return worklist_.pop_back_val(); }
+  auto Pop() -> Task {
+    if (vlog_stream_) {
+      VariantMatch(
+          worklist_.back(),
+          [&](CheckSkippedDefinition& definition) {
+            CARBON_VLOG() << VlogPrefix << "Handle CheckSkippedDefinition "
+                          << definition.definition_index.index << "\n";
+          },
+          [&](EnterDeferredDefinitionScope& enter) {
+            CARBON_CHECK(enter.in_deferred_definition_scope);
+            CARBON_VLOG() << VlogPrefix
+                          << "Handle EnterDeferredDefinitionScope (nested)\n";
+          },
+          [&](LeaveDeferredDefinitionScope& leave) {
+            bool nested = leave.in_deferred_definition_scope;
+            CARBON_VLOG() << VlogPrefix
+                          << "Handle LeaveDeferredDefinitionScope "
+                          << (nested ? "(nested)" : "(non-nested)") << "\n";
+          });
+    }
+
+    return worklist_.pop_back_val();
+  }
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
@@ -447,6 +460,8 @@ class DeferredDefinitionWorklist {
   }
 
  private:
+  llvm::raw_ostream* vlog_stream_;
+
   // A worklist of type-checking tasks we'll need to do later.
   //
   // Don't allocate any inline storage here. A Task is fairly large, so we never
@@ -455,20 +470,21 @@ class DeferredDefinitionWorklist {
   llvm::SmallVector<Task, 0> worklist_;
 
   // Indexes in `worklist` of deferred definition scopes that are currently
-  // still open.
-  llvm::SmallVector<size_t> enclosing_scopes_;
+  // still open, and the corresponding scope indexes.
+  llvm::SmallVector<std::pair<size_t, ScopeIndex>> enclosing_scopes_;
 };
 }  // namespace
 
 auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     -> bool {
-  auto scope_index = enclosing_scopes_.pop_back_val();
+  auto scope_index = enclosing_scopes_.pop_back_val().first;
 
   // If we've not found any deferred definitions in this scope, clean up the
   // stack.
   if (scope_index == worklist_.size() - 1) {
     context.decl_name_stack().PopScope();
     worklist_.pop_back();
+    CARBON_VLOG() << VlogPrefix << "Pop EnterDeferredDefinitionScope (empty)\n";
     return false;
   }
 
@@ -483,6 +499,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     // Enqueue a task to leave the nested scope.
     worklist_.push_back(
         LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
+    CARBON_VLOG() << VlogPrefix
+                  << "Push LeaveDeferredDefinitionScope (nested)\n";
     return false;
   }
 
@@ -491,6 +509,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   // scope and end checking deferred definitions.
   worklist_.push_back(
       LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
+  CARBON_VLOG() << VlogPrefix
+                << "Push LeaveDeferredDefinitionScope (non-nested)\n";
 
   // We'll process the worklist in reverse index order, so reverse the part of
   // it we're about to execute so we run our tasks in the order in which they
@@ -504,6 +524,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
       holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()))
       << "Unexpected task in worklist.";
   worklist_.pop_back();
+  CARBON_VLOG() << VlogPrefix
+                << "Handle EnterDeferredDefinitionScope (non-nested)\n";
   return true;
 }
 
@@ -512,8 +534,10 @@ namespace {
 // to check them.
 class NodeIdTraversal {
  public:
-  explicit NodeIdTraversal(Context& context)
-      : context_(context), next_deferred_definition_(&context.parse_tree()) {
+  explicit NodeIdTraversal(Context& context, llvm::raw_ostream* vlog_stream)
+      : context_(context),
+        next_deferred_definition_(&context.parse_tree()),
+        worklist_(vlog_stream) {
     chunks_.push_back(
         {.it = context.parse_tree().postorder().begin(),
          .end = context.parse_tree().postorder().end(),
@@ -656,10 +680,10 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
-static auto ProcessNodeIds(Context& context,
+static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
                            ErrorTrackingDiagnosticConsumer& err_tracker)
     -> bool {
-  NodeIdTraversal traversal(context);
+  NodeIdTraversal traversal(context, vlog_stream);
 
   while (auto maybe_node_id = traversal.Next()) {
     auto node_id = *maybe_node_id;
@@ -709,7 +733,7 @@ static auto CheckParseTree(
 
   InitPackageScopeAndImports(context, unit_info);
 
-  if (!ProcessNodeIds(context, unit_info.err_tracker)) {
+  if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker)) {
     context.sem_ir().set_has_errors(true);
     return;
   }

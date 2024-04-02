@@ -1,0 +1,48 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+class Class {
+  fn F() {}
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE+6]]:3: ERROR: Redefinition of function F.
+  // CHECK:STDERR:   fn F() {}
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_method_redefinition.carbon:[[@LINE-4]]:3: Previously defined here.
+  // CHECK:STDERR:   fn F() {}
+  // CHECK:STDERR:   ^~~~~~~~
+  fn F() {}
+}
+
+// CHECK:STDOUT: --- fail_method_redefinition.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Class: type = class_type @Class [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT:   %F.loc8: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.loc15: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
+// CHECK:STDOUT:   .F = %F.loc8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc15:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
