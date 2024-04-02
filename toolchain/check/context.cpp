@@ -14,6 +14,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst_block_stack.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
@@ -337,11 +338,10 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       continue;
     }
     auto import_inst_id = context.AddImportRef(import_ir_id, it->second);
-    TryResolveImportRefUnused(context, import_inst_id);
     if (result_id.is_valid()) {
-      // TODO: Add generalized merge functionality (merge_decls.h?).
-      context.DiagnoseDuplicateName(import_inst_id, result_id);
+      MergeImportRef(context, import_inst_id, result_id);
     } else {
+      TryResolveImportRefUnused(context, import_inst_id);
       result_id = import_inst_id;
     }
   }
