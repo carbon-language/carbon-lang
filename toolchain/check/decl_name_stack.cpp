@@ -168,7 +168,8 @@ auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
   if (TryResolveQualifier(name_context, loc_id)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDecl(
-        name_context.loc_id, name_id, name_context.target_scope_id);
+        name_context.loc_id, name_id, name_context.target_scope_id,
+        /*mark_imports_used=*/false);
     if (!resolved_inst_id.is_valid()) {
       // Invalid indicates an unresolved name. Store it and return.
       name_context.state = NameContext::State::Unresolved;

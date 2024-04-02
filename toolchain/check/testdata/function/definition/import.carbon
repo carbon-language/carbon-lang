@@ -204,8 +204,8 @@ fn D() {}
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_10 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_17 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loaded [template = imports.%B]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unloaded
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
@@ -235,7 +235,7 @@ fn D() {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, loc_11 [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, loaded [template = imports.%D]
 // CHECK:STDOUT:   %D.loc6: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT:   %D.loc16: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }

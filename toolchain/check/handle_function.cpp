@@ -8,6 +8,7 @@
 #include "toolchain/check/decl_state.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -168,19 +169,13 @@ static auto BuildFunctionDecl(Context& context,
   auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
   if (prev_id.is_valid()) {
-    auto prev_inst = context.insts().Get(prev_id);
-    bool prev_is_import = false;
+    auto prev_inst = ResolvePrevInstForMerge(context, node_id, prev_id);
 
-    if (prev_inst.Is<SemIR::ImportRefUsed>()) {
-      prev_inst =
-          context.insts().Get(context.constant_values().Get(prev_id).inst_id());
-      prev_is_import = true;
-    }
-
-    if (auto existing_function_decl = prev_inst.TryAs<SemIR::FunctionDecl>()) {
+    if (auto existing_function_decl =
+            prev_inst.inst.TryAs<SemIR::FunctionDecl>()) {
       if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
                               existing_function_decl->function_id,
-                              prev_is_import)) {
+                              prev_inst.is_import)) {
         // When merging, use the existing function rather than adding a new one.
         function_decl.function_id = existing_function_decl->function_id;
       }

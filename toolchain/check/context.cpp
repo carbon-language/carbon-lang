@@ -227,7 +227,8 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
 }
 
 auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                               SemIR::NameScopeId scope_id) -> SemIR::InstId {
+                               SemIR::NameScopeId scope_id,
+                               bool mark_imports_used) -> SemIR::InstId {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
@@ -263,7 +264,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(loc_id, name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(loc_id, name_id, name_scopes().Get(scope_id),
+                                  mark_imports_used);
   }
 }
 
@@ -298,8 +300,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 // Handles lookup through the import_ir_scopes for LookupNameInExactScope.
 static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
                                    SemIR::NameId name_id,
-                                   const SemIR::NameScope& scope)
-    -> SemIR::InstId {
+                                   const SemIR::NameScope& scope,
+                                   bool mark_imports_used) -> SemIR::InstId {
   auto identifier_id = name_id.AsIdentifierId();
   llvm::StringRef identifier;
   if (identifier_id.is_valid()) {
@@ -342,7 +344,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     if (result_id.is_valid()) {
       MergeImportRef(context, import_inst_id, result_id);
     } else {
-      LoadImportRef(context, import_inst_id, loc);
+      LoadImportRef(context, import_inst_id,
+                    mark_imports_used ? loc : SemIR::LocId::Invalid);
       result_id = import_inst_id;
     }
   }
@@ -351,14 +354,16 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
-                                     const SemIR::NameScope& scope)
-    -> SemIR::InstId {
+                                     const SemIR::NameScope& scope,
+                                     bool mark_imports_used) -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    LoadImportRef(*this, it->second, loc);
+    LoadImportRef(*this, it->second,
+                  mark_imports_used ? loc : SemIR::LocId::Invalid);
     return it->second;
   }
   if (!scope.import_ir_scopes.empty()) {
-    return LookupInImportIRScopes(*this, loc, name_id, scope);
+    return LookupInImportIRScopes(*this, loc, name_id, scope,
+                                  mark_imports_used);
   }
   return SemIR::InstId::Invalid;
 }
@@ -375,7 +380,8 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
     const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope);
+    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope,
+                                                  /*mark_imports_used=*/true);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);

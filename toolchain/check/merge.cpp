@@ -6,8 +6,33 @@
 
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
+                             SemIR::InstId prev_inst_id) -> PrevInstForMerge {
+  PrevInstForMerge prev_inst{.inst = context.insts().Get(prev_inst_id),
+                             .is_import = false};
+  if (auto import_ref = prev_inst.inst.TryAs<SemIR::ImportRefUsed>()) {
+    CARBON_DIAGNOSTIC(
+        RedeclOfUsedImport, Error,
+        "Redeclaration of imported entity that was previously used.");
+    CARBON_DIAGNOSTIC(UsedImportLoc, Note, "Import used here.");
+    context.emitter()
+        .Build(node_id, RedeclOfUsedImport)
+        .Note(import_ref->used_id, UsedImportLoc)
+        .Emit();
+
+  } else if (!prev_inst.inst.Is<SemIR::ImportRefLoaded>()) {
+    return prev_inst;
+  }
+
+  prev_inst.is_import = true;
+  prev_inst.inst = context.insts().Get(
+      context.constant_values().Get(prev_inst_id).inst_id());
+  return prev_inst;
+}
 
 // Returns the instruction to consider when merging the given inst_id. Returns
 // nullopt if merging is infeasible and no diagnostic should be printed.
