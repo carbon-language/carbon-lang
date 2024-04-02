@@ -67,6 +67,16 @@ static auto ResolveMergeableInst(Context& context, SemIR::InstId inst_id)
   return context.insts().Get(const_id.inst_id());
 }
 
+auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
+                             SemIR::NameId name_id, SemIR::InstId new_inst_id)
+    -> void {
+  auto& names = context.name_scopes().Get(scope_id).names;
+  auto it = names.find(name_id);
+  if (it != names.end()) {
+    it->second = new_inst_id;
+  }
+}
+
 auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
                     SemIR::InstId prev_inst_id) -> void {
   auto new_inst = ResolveMergeableInst(context, new_inst_id);
@@ -93,6 +103,7 @@ auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
       // emitted, since it will already be added.
       MergeFunctionRedecl(context, context.insts().GetLocId(new_inst_id),
                           new_fn,
+                          /*new_is_import=*/true,
                           /*new_is_definition=*/false, prev_fn_id,
                           /*prev_is_imported=*/true);
       return;

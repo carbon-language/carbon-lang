@@ -24,6 +24,13 @@ struct PrevInstForMerge {
 auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
                              SemIR::InstId prev_inst_id) -> PrevInstForMerge;
 
+// When the prior name lookup result is an import and we are successfully
+// merging, replace the name lookup result with the reference in the current
+// file.
+auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
+                             SemIR::NameId name_id, SemIR::InstId new_inst_id)
+    -> void;
+
 // Merges an import ref at new_inst_id another at prev_inst_id. May print a
 // diagnostic if merging is invalid.
 auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
