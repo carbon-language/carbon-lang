@@ -105,7 +105,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .package_b = %package_b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loc_17 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+1, loc_17 [template = imports.%B]
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %b.var: ref () = var b

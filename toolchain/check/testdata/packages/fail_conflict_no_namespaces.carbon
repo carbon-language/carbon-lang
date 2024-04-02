@@ -62,8 +62,8 @@ import library "var";
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loaded [template = imports.%Foo]
-// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir2, inst+2, loaded
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loaded [template = imports.%Foo]
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir3, inst+2, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();

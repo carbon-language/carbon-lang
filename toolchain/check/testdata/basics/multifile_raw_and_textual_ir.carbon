@@ -21,7 +21,7 @@ fn B() {}
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 1
+// CHECK:STDOUT:   import_irs_size: 2
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}
@@ -68,7 +68,7 @@ fn B() {}
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 1
+// CHECK:STDOUT:   import_irs_size: 2
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
 // CHECK:STDOUT:   bind_names:      {}

@@ -219,8 +219,7 @@ class File : public Printable<File> {
   // Storage for impls.
   ImplStore impls_;
 
-  // Related IRs. There will always be at least one entry, the builtin IR (used
-  // for references of builtins).
+  // Related IRs. There are some fixed entries at the start; see ImportIRId.
   ValueStore<ImportIRId> import_irs_;
 
   // Related IR instructions. These are created for LocIds for instructions

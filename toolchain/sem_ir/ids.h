@@ -32,7 +32,7 @@ struct TypeInfo;
 struct InstId : public IdBase, public Printable<InstId> {
   using ValueType = Inst;
 
-  // An explicitly invalid instruction ID.
+  // An explicitly invalid ID.
   static const InstId Invalid;
 
 // Builtin instruction IDs.
@@ -173,7 +173,7 @@ constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 struct BindNameId : public IdBase, public Printable<BindNameId> {
   using ValueType = BindNameInfo;
 
-  // An explicitly invalid function ID.
+  // An explicitly invalid ID.
   static const BindNameId Invalid;
 
   using IdBase::IdBase;
@@ -189,7 +189,7 @@ constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
 struct FunctionId : public IdBase, public Printable<FunctionId> {
   using ValueType = Function;
 
-  // An explicitly invalid function ID.
+  // An explicitly invalid ID.
   static const FunctionId Invalid;
 
   using IdBase::IdBase;
@@ -205,7 +205,7 @@ constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
 struct ClassId : public IdBase, public Printable<ClassId> {
   using ValueType = Class;
 
-  // An explicitly invalid class ID.
+  // An explicitly invalid ID.
   static const ClassId Invalid;
 
   using IdBase::IdBase;
@@ -221,7 +221,7 @@ constexpr ClassId ClassId::Invalid = ClassId(InvalidIndex);
 struct InterfaceId : public IdBase, public Printable<InterfaceId> {
   using ValueType = Interface;
 
-  // An explicitly invalid interface ID.
+  // An explicitly invalid ID.
   static const InterfaceId Invalid;
 
   using IdBase::IdBase;
@@ -237,7 +237,7 @@ constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
 struct ImplId : public IdBase, public Printable<ImplId> {
   using ValueType = Impl;
 
-  // An explicitly invalid interface ID.
+  // An explicitly invalid ID.
   static const ImplId Invalid;
 
   using IdBase::IdBase;
@@ -253,7 +253,17 @@ constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   using ValueType = ImportIR;
 
+  // An explicitly invalid ID.
+  static const ImportIRId Invalid;
+
+  // The builtin IR's import location.
   static const ImportIRId Builtins;
+
+  // The implicit `api` import, for an `impl` file. A null entry is added if
+  // there is none, as in an `api`, in which case this ID should not show up in
+  // instructions.
+  static const ImportIRId ApiForImpl;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
@@ -261,7 +271,9 @@ struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   }
 };
 
+constexpr ImportIRId ImportIRId::Invalid = ImportIRId(InvalidIndex);
 constexpr ImportIRId ImportIRId::Builtins = ImportIRId(0);
+constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(1);
 
 // A boolean value.
 struct BoolValue : public IdBase, public Printable<BoolValue> {
@@ -487,8 +499,13 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
 struct ImportIRInstId : public IdBase, public Printable<InstId> {
   using ValueType = ImportIRInst;
 
+  // An explicitly invalid ID.
+  static const ImportIRInstId Invalid;
+
   using IdBase::IdBase;
 };
+
+constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
 
 // A SemIR location used exclusively for diagnostic locations.
 //
@@ -497,7 +514,7 @@ struct ImportIRInstId : public IdBase, public Printable<InstId> {
 // - index < Invalid: An ImportIRInstId.
 // - index == Invalid: Can be used for either.
 struct LocId : public IdBase, public Printable<LocId> {
-  // An explicitly invalid function ID.
+  // An explicitly invalid ID.
   static const LocId Invalid;
 
   using IdBase::IdBase;

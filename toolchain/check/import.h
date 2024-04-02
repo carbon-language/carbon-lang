@@ -17,6 +17,7 @@ namespace Carbon::Check {
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
+                                     bool is_api_for_impl,
                                      const SemIR::File& import_sem_ir) -> void;
 
 // Adds another package's imports to name lookup, with all libraries together.

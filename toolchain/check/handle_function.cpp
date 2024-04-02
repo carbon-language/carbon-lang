@@ -169,14 +169,15 @@ static auto BuildFunctionDecl(Context& context,
   auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
   if (prev_id.is_valid()) {
-    auto prev_inst = ResolvePrevInstForMerge(context, node_id, prev_id);
+    auto prev_inst_for_merge =
+        ResolvePrevInstForMerge(context, node_id, prev_id);
 
     if (auto existing_function_decl =
-            prev_inst.inst.TryAs<SemIR::FunctionDecl>()) {
+            prev_inst_for_merge.inst.TryAs<SemIR::FunctionDecl>()) {
       if (MergeFunctionRedecl(context, node_id, function_info,
                               /*new_is_import=*/false, is_definition,
                               existing_function_decl->function_id,
-                              prev_inst.is_import)) {
+                              prev_inst_for_merge.import_ir_inst_id)) {
         // When merging, use the existing function rather than adding a new one.
         function_decl.function_id = existing_function_decl->function_id;
       }

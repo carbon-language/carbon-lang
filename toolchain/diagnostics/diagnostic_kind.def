@@ -180,6 +180,7 @@ CARBON_DIAGNOSTIC_KIND(InvalidMainRunSignature)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
+CARBON_DIAGNOSTIC_KIND(FunctionExternMismatch)
 
 // Class checking.
 CARBON_DIAGNOSTIC_KIND(BaseIsFinal)
