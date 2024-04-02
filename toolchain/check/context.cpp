@@ -152,10 +152,10 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
+auto Context::AddImportRef(SemIR::ImportIRInst import_ir_inst)
     -> SemIR::InstId {
-  auto import_ref_id =
-      AddPlaceholderInstInNoBlock({SemIR::ImportRefUnused{ir_id, inst_id}});
+  auto import_ref_id = AddPlaceholderInstInNoBlock(
+      SemIR::ImportRefUnloaded{import_ir_insts().Add(import_ir_inst)});
 
   // We can't insert this instruction into whatever block we happen to be in,
   // because this function is typically called by name lookup in the middle of
@@ -337,11 +337,12 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    auto import_inst_id = context.AddImportRef(import_ir_id, it->second);
+    auto import_inst_id =
+        context.AddImportRef({.ir_id = import_ir_id, .inst_id = it->second});
     if (result_id.is_valid()) {
       MergeImportRef(context, import_inst_id, result_id);
     } else {
-      TryResolveImportRefUnused(context, import_inst_id);
+      LoadImportRef(context, import_inst_id, loc);
       result_id = import_inst_id;
     }
   }
@@ -353,7 +354,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    TryResolveImportRefUnused(*this, it->second);
+    LoadImportRef(*this, it->second, loc);
     return it->second;
   }
   if (!scope.import_ir_scopes.empty()) {
@@ -786,13 +787,16 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildImportRefUsedValueRepr(SemIR::TypeId type_id,
-                                   SemIR::ImportRefUsed import_ref) const
+  auto BuildAnyImportRefValueRepr(SemIR::TypeId type_id,
+                                  SemIR::AnyImportRef import_ref) const
       -> SemIR::ValueRepr {
-    const auto& import_ir = context_.import_irs().Get(import_ref.ir_id).sem_ir;
-    auto import_inst = import_ir->insts().Get(import_ref.inst_id);
-    CARBON_CHECK(import_inst.kind() != SemIR::InstKind::ImportRefUsed)
-        << "If ImportRefUsed can point at another, this would be recursive.";
+    auto import_ir_inst =
+        context_.import_ir_insts().Get(import_ref.import_ir_inst_id);
+    const auto& import_ir =
+        context_.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+    auto import_inst = import_ir->insts().Get(import_ir_inst.inst_id);
+    CARBON_CHECK(!import_inst.Is<SemIR::AnyImportRef>())
+        << "If ImportRef can point at another, this would be recursive.";
     return BuildValueRepr(type_id, import_inst);
   }
 
@@ -917,7 +921,7 @@ class TypeCompleter {
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
-      case SemIR::ImportRefUnused::Kind:
+      case SemIR::ImportRefUnloaded::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::InterfaceWitness::Kind:
@@ -956,9 +960,10 @@ class TypeCompleter {
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
 
+      case SemIR::ImportRefLoaded::Kind:
       case SemIR::ImportRefUsed::Kind:
-        return BuildImportRefUsedValueRepr(type_id,
-                                           inst.As<SemIR::ImportRefUsed>());
+        return BuildAnyImportRefValueRepr(type_id,
+                                          inst.As<SemIR::AnyImportRef>());
 
       case SemIR::StructType::Kind:
         return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());

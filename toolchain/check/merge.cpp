@@ -15,13 +15,13 @@ static auto ResolveMergeableInst(Context& context, SemIR::InstId inst_id)
     -> std::optional<SemIR::Inst> {
   auto inst = context.insts().Get(inst_id);
   switch (inst.kind()) {
-    case SemIR::ImportRefUnused::Kind:
-      // Resolve before merging.
-      TryResolveImportRefUnused(context, inst_id);
+    case SemIR::ImportRefUnloaded::Kind:
+      // Load before merging.
+      LoadImportRef(context, inst_id, SemIR::LocId::Invalid);
       break;
 
     case SemIR::ImportRefUsed::Kind:
-      // Already resolved.
+      // Already loaded.
       break;
 
     case SemIR::Namespace::Kind:

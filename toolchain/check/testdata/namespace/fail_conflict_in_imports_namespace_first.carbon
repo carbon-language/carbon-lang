@@ -75,13 +75,13 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.2
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+1, used [template = imports.%NS]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+1, loaded [template = imports.%NS]
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

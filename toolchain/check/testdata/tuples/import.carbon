@@ -125,8 +125,8 @@ var b: (((i32,), i32), (i32, i32)) = b_ref;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref (i32,) = import_ref ir1, inst+6, used
-// CHECK:STDOUT:   %import_ref.2: ref (((i32,), i32), (i32, i32)) = import_ref ir1, inst+34, used
+// CHECK:STDOUT:   %import_ref.1: ref (i32,) = import_ref ir1, inst+6, loc_13
+// CHECK:STDOUT:   %import_ref.2: ref (((i32,), i32), (i32, i32)) = import_ref ir1, inst+34, loc_35
 // CHECK:STDOUT:   %.loc4_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc4_13.2: type = converted %.loc4_13.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a

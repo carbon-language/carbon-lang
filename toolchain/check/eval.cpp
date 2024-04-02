@@ -650,6 +650,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     // TODO: These need special handling.
     case SemIR::BindValue::Kind:
     case SemIR::Deref::Kind:
+    case SemIR::ImportRefLoaded::Kind:
     case SemIR::ImportRefUsed::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
@@ -733,9 +734,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::VarStorage::Kind:
       break;
 
-    case SemIR::ImportRefUnused::Kind:
-      CARBON_FATAL() << "ImportRefUnused should transform to ImportRefUsed "
-                        "before TryEvalInst.";
+    case SemIR::ImportRefUnloaded::Kind:
+      CARBON_FATAL()
+          << "ImportRefUnloaded should be loaded before TryEvalInst.";
   }
   return SemIR::ConstantId::NotConstant;
 }

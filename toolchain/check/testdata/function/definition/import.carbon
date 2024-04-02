@@ -155,10 +155,10 @@ fn D() {}
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, used [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+20, used [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unused
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_15 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_24 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+20, loc_39 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unloaded
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -204,10 +204,10 @@ fn D() {}
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, used [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unused
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unused
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_10 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_17 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unloaded
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc27_6.1: i32 = param b
@@ -232,10 +232,10 @@ fn D() {}
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unused
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unused
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, used [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, loc_11 [template = imports.%D]
 // CHECK:STDOUT:   %D.loc6: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT:   %D.loc16: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }

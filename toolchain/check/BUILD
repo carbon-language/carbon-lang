@@ -84,6 +84,7 @@ cc_library(
         "//common:check",
         "//common:vlog",
         "//toolchain/base:index_base",
+        "//toolchain/base:kind_switch",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",

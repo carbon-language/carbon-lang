@@ -58,8 +58,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a_ref = %import_ref.2
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unused
-// CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir1, inst+9, used
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir1, inst+9, loc_11
 // CHECK:STDOUT:   %.loc4: type = ptr_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref i32* = var a
 // CHECK:STDOUT:   %a: ref i32* = bind_name a, %a.var

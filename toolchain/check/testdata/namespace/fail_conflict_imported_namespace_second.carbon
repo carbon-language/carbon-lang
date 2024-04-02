@@ -53,7 +53,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, used [template = imports.%NS]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loc_10 [template = imports.%NS]
 // CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }

@@ -78,10 +78,10 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+3, used
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+8, used
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, used
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+16, used
+// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+3, loc_10
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+8, loc_17
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, loc_24
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+16, loc_31
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b

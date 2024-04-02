@@ -19,6 +19,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
@@ -83,8 +84,7 @@ class Context {
 
   // Adds an import_ref instruction for the specified instruction in the
   // specified IR. The import_ref is initially marked as unused.
-  auto AddImportRef(SemIR::ImportIRId ir_id, SemIR::InstId inst_id)
-      -> SemIR::InstId;
+  auto AddImportRef(SemIR::ImportIRInst import_ir_inst) -> SemIR::InstId;
 
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus

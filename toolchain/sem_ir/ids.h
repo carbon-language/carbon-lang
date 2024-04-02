@@ -496,9 +496,11 @@ struct ImportIRInstId : public IdBase, public Printable<InstId> {
 // - index > Invalid: A Parse::NodeId in the current IR.
 // - index < Invalid: An ImportIRInstId.
 // - index == Invalid: Can be used for either.
-struct LocId : public IdBase, public Printable<FunctionId> {
+struct LocId : public IdBase, public Printable<LocId> {
   // An explicitly invalid function ID.
   static const LocId Invalid;
+
+  using IdBase::IdBase;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::InvalidNodeId /*invalid*/) : IdBase(InvalidIndex) {}

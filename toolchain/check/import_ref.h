@@ -10,9 +10,10 @@
 
 namespace Carbon::Check {
 
-// If the passed in instruction ID is a ImportRefUnused, resolves it for use.
-// Otherwise, errors.
-auto TryResolveImportRefUnused(Context& context, SemIR::InstId inst_id) -> void;
+// If the passed in instruction ID is an ImportRefUnloaded, loads it for use.
+// The result will be an ImportRefUsed.
+auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
+    -> void;
 
 }  // namespace Carbon::Check
 

@@ -19,16 +19,16 @@
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instTypeType:    {kind: ImportRefUsed, arg0: ir0, arg1: instTypeType, type: typeTypeType}
-// CHECK:STDOUT:     instError:       {kind: ImportRefUsed, arg0: ir0, arg1: instError, type: typeError}
-// CHECK:STDOUT:     instBoolType:    {kind: ImportRefUsed, arg0: ir0, arg1: instBoolType, type: typeTypeType}
-// CHECK:STDOUT:     instIntType:     {kind: ImportRefUsed, arg0: ir0, arg1: instIntType, type: typeTypeType}
-// CHECK:STDOUT:     instFloatType:   {kind: ImportRefUsed, arg0: ir0, arg1: instFloatType, type: typeTypeType}
-// CHECK:STDOUT:     instStringType:  {kind: ImportRefUsed, arg0: ir0, arg1: instStringType, type: typeTypeType}
-// CHECK:STDOUT:     instFunctionType: {kind: ImportRefUsed, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
-// CHECK:STDOUT:     instBoundMethodType: {kind: ImportRefUsed, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
-// CHECK:STDOUT:     instNamespaceType: {kind: ImportRefUsed, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     instWitnessType: {kind: ImportRefUsed, arg0: ir0, arg1: instWitnessType, type: typeTypeType}
+// CHECK:STDOUT:     instTypeType:    {kind: ImportRefLoaded, arg0: 0, type: typeTypeType}
+// CHECK:STDOUT:     instError:       {kind: ImportRefLoaded, arg0: 1, type: typeError}
+// CHECK:STDOUT:     instBoolType:    {kind: ImportRefLoaded, arg0: 2, type: typeTypeType}
+// CHECK:STDOUT:     instIntType:     {kind: ImportRefLoaded, arg0: 3, type: typeTypeType}
+// CHECK:STDOUT:     instFloatType:   {kind: ImportRefLoaded, arg0: 4, type: typeTypeType}
+// CHECK:STDOUT:     instStringType:  {kind: ImportRefLoaded, arg0: 5, type: typeTypeType}
+// CHECK:STDOUT:     instFunctionType: {kind: ImportRefLoaded, arg0: 6, type: typeTypeType}
+// CHECK:STDOUT:     instBoundMethodType: {kind: ImportRefLoaded, arg0: 7, type: typeTypeType}
+// CHECK:STDOUT:     instNamespaceType: {kind: ImportRefLoaded, arg0: 8, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: ImportRefLoaded, arg0: 9, type: typeTypeType}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType

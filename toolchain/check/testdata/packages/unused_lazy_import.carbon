@@ -31,6 +31,6 @@ package Implicit impl;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %import_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unused
+// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
