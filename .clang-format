@@ -10,6 +10,7 @@ AllowShortLoopsOnASingleLine: 'false'
 DerivePointerAlignment: 'false'
 ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'
+InsertBraces: 'true'
 PointerAlignment: Left
 # We abuse control macros for formatting other kinds of macros.
 SpaceBeforeParens: ControlStatementsExceptControlMacros
