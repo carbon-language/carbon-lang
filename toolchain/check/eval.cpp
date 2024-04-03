@@ -449,8 +449,8 @@ static auto PerformBuiltinIntComparison(Context& context,
                                         SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
-  auto lhs_val = context.ints().Get(lhs.int_id);
-  auto rhs_val = context.ints().Get(
+  const auto& lhs_val = context.ints().Get(lhs.int_id);
+  const auto& rhs_val = context.ints().Get(
       context.insts().GetAs<SemIR::IntLiteral>(rhs_id).int_id);
   bool is_signed = context.types().IsSignedInt(lhs.type_id);
 
