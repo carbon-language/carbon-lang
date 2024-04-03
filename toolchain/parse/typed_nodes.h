@@ -630,17 +630,18 @@ struct IndexExpr {
   AnyExprId index;
 };
 
-using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
+using ParenExprStart = LeafNode<NodeKind::ParenExprStart>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
   static constexpr auto Kind =
       NodeKind::ParenExpr.Define(NodeCategory::Expr | NodeCategory::MemberExpr);
 
-  ExprOpenParenId left_paren;
+  ParenExprStartId start;
   AnyExprId expr;
 };
 
+using TupleLiteralStart = LeafNode<NodeKind::TupleLiteralStart>;
 using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
@@ -648,7 +649,7 @@ struct TupleLiteral {
   static constexpr auto Kind =
       NodeKind::TupleLiteral.Define(NodeCategory::Expr);
 
-  ExprOpenParenId left_paren;
+  TupleLiteralStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> elements;
 };
 

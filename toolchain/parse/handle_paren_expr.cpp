@@ -11,7 +11,7 @@ auto HandleOnlyParenExpr(Context& context) -> void {
 
   // Advance past the open paren.
   auto open_paren = context.ConsumeChecked(Lex::TokenKind::OpenParen);
-  context.AddLeafNode(NodeKind::ExprOpenParen, open_paren);
+  context.AddLeafNode(NodeKind::ParenExprStart, open_paren);
 
   state.token = open_paren;
   context.PushState(state, State::OnlyParenExprFinish);
@@ -46,8 +46,9 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
 auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
-  // Advance past the open paren.
-  context.AddLeafNode(NodeKind::ExprOpenParen,
+  // Advance past the open paren. The placeholder will be replaced at the end
+  // based on whether we determine this is a tuple or parenthesized expression.
+  context.AddLeafNode(NodeKind::Placeholder,
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
@@ -96,12 +97,16 @@ auto HandleTupleLiteralElementFinish(Context& context) -> void {
 auto HandleParenExprFinish(Context& context) -> void {
   auto state = context.PopState();
 
+  context.ReplacePlaceholderNode(state.subtree_start, NodeKind::ParenExprStart,
+                                 state.token);
   FinishParenExpr(context, state);
 }
 
 auto HandleTupleLiteralFinish(Context& context) -> void {
   auto state = context.PopState();
 
+  context.ReplacePlaceholderNode(state.subtree_start,
+                                 NodeKind::TupleLiteralStart, state.token);
   context.AddNode(NodeKind::TupleLiteral, context.Consume(),
                   state.subtree_start, state.has_error);
 }
