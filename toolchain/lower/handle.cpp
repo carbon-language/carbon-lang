@@ -190,15 +190,17 @@ static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
   }
 }
 
+// Returns whether the specified instruction has a signed integer type.
+static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
+    -> bool {
+  return context.sem_ir().types().IsSignedInt(
+      context.sem_ir().insts().Get(int_id).type_id());
+}
+
 // Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> void {
-  auto is_signed = [&](SemIR::InstId int_id) {
-    return context.sem_ir().types().IsSignedInt(
-        context.sem_ir().insts().Get(int_id).type_id());
-  };
-
   // TODO: Consider setting this to true in the performance build mode if the
   // result type is a signed integer type.
   constexpr bool SignedOverflowIsUB = false;
@@ -288,7 +290,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      context.SetLocal(inst_id, is_signed(inst_id)
+      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
                                     ? context.builder().CreateAShr(
                                           context.GetValue(arg_ids[0]),
                                           context.GetValue(arg_ids[1]), "shr")
@@ -303,11 +305,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
     case SemIR::BuiltinFunctionKind::IntGreaterEq: {
-      context.SetLocal(inst_id, context.builder().CreateICmp(
-                                    GetBuiltinICmpPredicate(
-                                        builtin_kind, is_signed(arg_ids[0])),
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "cmp"));
+      context.SetLocal(inst_id,
+                       context.builder().CreateICmp(
+                           GetBuiltinICmpPredicate(
+                               builtin_kind, IsSignedInt(context, arg_ids[0])),
+                           context.GetValue(arg_ids[0]),
+                           context.GetValue(arg_ids[1]), "cmp"));
       return;
     }
   }
