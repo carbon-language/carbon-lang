@@ -1111,11 +1111,10 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
 
   // Look for the `r` token. Note that this is always in bounds because we
   // create a start of file token.
-  TokenIndex maybe_r_index = buffer_.tokens().end()[-1];
+  auto& prev_token_info = buffer_.token_infos_.back();
 
   // If the previous token isn't the identifier `r`, or the character after `#`
   // isn't the start of an identifier, this is not a raw identifier.
-  auto& prev_token_info = buffer_.GetTokenInfo(maybe_r_index);
   if (prev_token_info.kind != TokenKind::Identifier ||
       source_text[position - 1] != 'r' ||
       position + 1 == static_cast<ssize_t>(source_text.size()) ||
@@ -1139,7 +1138,7 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
   // diagnostics are unclear.
   prev_token_info.ident_id =
       buffer_.value_stores_->identifiers().Add(identifier_text);
-  return LexResult(maybe_r_index);
+  return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
 }
 
 auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
