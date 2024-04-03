@@ -74,6 +74,22 @@ static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
                                            : SemIR::ConstantId::NotConstant;
 }
 
+// Converts a bool value into a ConstantId.
+static auto MakeBoolResult(Context& context, SemIR::TypeId bool_type_id,
+                           bool result) -> SemIR::ConstantId {
+  return MakeConstantResult(
+      context, SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
+      Phase::Template);
+}
+
+// Converts an APInt value into a ConstantId.
+static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
+                          llvm::APInt value) -> SemIR::ConstantId {
+  auto result = context.ints().Add(std::move(value));
+  return MakeConstantResult(context, SemIR::IntLiteral{type_id, result},
+                            Phase::Template);
+}
+
 // `GetConstantValue` checks to see whether the provided ID describes a value
 // with constant phase, and if so, returns the corresponding constant value.
 // Overloads are provided for different kinds of ID.
@@ -292,14 +308,6 @@ static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
-// Converts an APInt value into a ConstantId.
-static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
-                          llvm::APInt value) -> SemIR::ConstantId {
-  auto result = context.ints().Add(std::move(value));
-  return MakeConstantResult(context, SemIR::IntLiteral{type_id, result},
-                            Phase::Template);
-}
-
 // Performs a builtin unary integer -> integer operation.
 static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::BuiltinFunctionKind builtin_kind,
@@ -478,9 +486,7 @@ static auto PerformBuiltinIntComparison(Context& context,
       CARBON_FATAL() << "Unexpected operation kind.";
   }
 
-  return MakeConstantResult(
-      context, SemIR::BoolLiteral{bool_type_id, SemIR::BoolValue::From(result)},
-      Phase::Template);
+  return MakeBoolResult(context, bool_type_id, result);
 }
 
 static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
@@ -773,8 +779,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       if (phase == Phase::Template) {
         auto value =
             context.insts().GetAs<SemIR::BoolLiteral>(const_id.inst_id());
-        value.value = SemIR::BoolValue::From(!value.value.ToBool());
-        return MakeConstantResult(context, value, Phase::Template);
+        return MakeBoolResult(context, value.type_id, !value.value.ToBool());
       }
       if (phase == Phase::UnknownDueToError) {
         return SemIR::ConstantId::Error;
