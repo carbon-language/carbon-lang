@@ -3,9 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// --- fail_bad_raw_identifier.carbon
 // CHECK:STDOUT: - filename: fail_bad_raw_identifier.carbon
 // CHECK:STDOUT:   tokens: [
 // CHECK:STDOUT:     { index:  0, kind:     'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+
 
 // Missing the character after `#`.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
@@ -47,11 +50,11 @@ r#r#foo
 
 // Other identifier characters don't start a raw string.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
-// CHECK:STDERR: f#foo
+// CHECK:STDERR: s#foo
 // CHECK:STDERR:  ^
 // CHECK:STDERR:
-f#foo
-// CHECK:STDOUT:     { index: 11, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'f', identifier: 2 },
+s#foo
+// CHECK:STDOUT:     { index: 11, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 's', identifier: 2 },
 // CHECK:STDOUT:     { index: 12, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#' },
 // CHECK:STDOUT:     { index: 13, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  3, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
@@ -66,9 +69,10 @@ arr#foo
 // CHECK:STDOUT:     { index: 16, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
 // Whitespace between `r` and `#` isn't allowed.
-// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:3: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:3: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r #foo
 // CHECK:STDERR:   ^
+// CHECK:STDERR:
 r #foo
 // CHECK:STDOUT:     { index: 17, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0, has_trailing_space: true },
 // CHECK:STDOUT:     { index: 18, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  3, indent: 1, spelling: '#' },
@@ -80,4 +84,19 @@ r#"hello"#
 // CHECK:STDOUT:     { index: 21, kind: 'StringLiteral', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#"hello"#', value: `hello`, has_trailing_space: true },
 
 // CHECK:STDOUT:     { index: 22, kind:       'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:   ]
+// --- fail_hash_at_start_of_file.carbon
+// CHECK:STDOUT: - filename: fail_hash_at_start_of_file.carbon
+// CHECK:STDOUT:   tokens: [
+// CHECK:STDOUT:     { index: 0, kind:  'FileStart', line: {{ *\d+}}, column:  1, indent: 1, spelling: '', has_trailing_space: true },
+
+// Ensure that we correctly handle a `#` as the first token in the file.
+// CHECK:STDERR: fail_hash_at_start_of_file.carbon:[[@LINE+3]]:1: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: #foo
+// CHECK:STDERR: ^
+#foo
+// CHECK:STDOUT:     { index: 1, kind:      'Error', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: '#' },
+// CHECK:STDOUT:     { index: 2, kind: 'Identifier', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: 'foo', identifier: 0, has_trailing_space: true },
+
+// CHECK:STDOUT:     { index: 3, kind:    'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
