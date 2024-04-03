@@ -33,7 +33,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
-// CHECK:STDOUT:             {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '}', has_error: yes},

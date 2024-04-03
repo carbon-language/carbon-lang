@@ -821,12 +821,12 @@ struct ChoiceDefinition {
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
 };
 
-// Struct literals and struct type literals
+// Struct type and value literals
 // ----------------------------------------
 
 // `{`
-using StructLiteralOrStructTypeLiteralStart =
-    LeafNode<NodeKind::StructLiteralOrStructTypeLiteralStart>;
+using StructLiteralStart = LeafNode<NodeKind::StructLiteralStart>;
+using StructTypeLiteralStart = LeafNode<NodeKind::StructTypeLiteralStart>;
 // `,`
 using StructComma = LeafNode<NodeKind::StructComma>;
 
@@ -838,16 +838,16 @@ struct StructFieldDesignator {
 };
 
 // `.a = 0`
-struct StructFieldValue {
-  static constexpr auto Kind = NodeKind::StructFieldValue.Define();
+struct StructField {
+  static constexpr auto Kind = NodeKind::StructField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId expr;
 };
 
 // `.a: i32`
-struct StructFieldType {
-  static constexpr auto Kind = NodeKind::StructFieldType.Define();
+struct StructTypeField {
+  static constexpr auto Kind = NodeKind::StructTypeField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId type_expr;
@@ -858,8 +858,8 @@ struct StructLiteral {
   static constexpr auto Kind =
       NodeKind::StructLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldValueId, StructCommaId> fields;
+  StructLiteralStartId start;
+  CommaSeparatedList<StructFieldId, StructCommaId> fields;
 };
 
 // Struct type literals, such as `{.a: i32}`.
@@ -867,8 +867,8 @@ struct StructTypeLiteral {
   static constexpr auto Kind =
       NodeKind::StructTypeLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldTypeId, StructCommaId> fields;
+  StructTypeLiteralStartId start;
+  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
 };
 
 // `class` declarations and definitions
