@@ -6,23 +6,10 @@
 
 namespace Carbon::Check {
 
-auto HandleExprOpenParen(Context& context, Parse::ExprOpenParenId node_id)
-    -> bool {
+auto HandleTupleLiteralStart(Context& context,
+                             Parse::TupleLiteralStartId node_id) -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
-  return true;
-}
-
-auto HandleParenExpr(Context& context, Parse::ParenExprId node_id) -> bool {
-  auto value_id = context.node_stack().PopExpr();
-
-  // This always is always pushed at the open paren. It's only used for tuples,
-  // not paren exprs, but we still need to clean up.
-  context.param_and_arg_refs_stack().PopAndDiscard();
-
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ExprOpenParen>();
-  context.node_stack().Push(node_id, value_id);
   return true;
 }
 
@@ -35,10 +22,10 @@ auto HandleTupleLiteralComma(Context& context,
 auto HandleTupleLiteral(Context& context, Parse::TupleLiteralId node_id)
     -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
-      Parse::NodeKind::ExprOpenParen);
+      Parse::NodeKind::TupleLiteralStart);
 
   context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::ExprOpenParen>();
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::TupleLiteralStart>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::TypeId> type_ids;
   type_ids.reserve(inst_block.size());

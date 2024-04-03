@@ -438,7 +438,6 @@ class NodeStack {
         case Parse::NodeKind::BuiltinName:
         case Parse::NodeKind::ClassIntroducer:
         case Parse::NodeKind::CodeBlockStart:
-        case Parse::NodeKind::ExprOpenParen:
         case Parse::NodeKind::FunctionIntroducer:
         case Parse::NodeKind::IfStatementElse:
         case Parse::NodeKind::ImplicitParamListStart:
@@ -446,11 +445,13 @@ class NodeStack {
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::LetIntroducer:
+        case Parse::NodeKind::ParenExprStart:
         case Parse::NodeKind::QualifiedName:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
         case Parse::NodeKind::StructLiteralOrStructTypeLiteralStart:
+        case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
         case Parse::NodeKind::VariableInitializer:
         case Parse::NodeKind::VariableIntroducer:
