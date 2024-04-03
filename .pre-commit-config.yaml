@@ -81,7 +81,7 @@ repos:
       - id: clang-format
         name: clang-format
         entry: clang-format
-        types_or: [c++, proto]
+        types_or: [c++, proto, def]
         language: python
         args: ['-i']
         additional_dependencies: ['clang-format==17.0.1']

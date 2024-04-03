@@ -1188,7 +1188,8 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 // class/impl/interface/constraint name ( ... ) ???
 //                                              ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
+                             NamedConstraint)
 
 // Handles processing of a completed `base: B` declaration.
 //
@@ -1358,8 +1359,8 @@ CARBON_PARSE_STATE(ChoiceDefinitionStart)
 //   1. ChoiceAlternativeFinish
 CARBON_PARSE_STATE(ChoiceAlternative)
 
-// Finishes parsing a choice's alternative, including the optional trailing `,`. If there
-// are more alternatives, enqueues another alternative parsing state.
+// Finishes parsing a choice's alternative, including the optional trailing `,`.
+// If there are more alternatives, enqueues another alternative parsing state.
 //
 // ... , }
 //     ^
