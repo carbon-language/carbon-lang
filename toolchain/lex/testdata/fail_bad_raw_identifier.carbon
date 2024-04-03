@@ -38,7 +38,7 @@ r#á
 // CHECK:STDOUT:     { index:  6, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
 // CHECK:STDOUT:     { index:  7, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#á', has_trailing_space: true },
 
-// Raw `r` identifier doesn't start a second raw string.
+// Raw `r` identifier doesn't start a second raw identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r#r#foo
 // CHECK:STDERR:    ^
@@ -48,7 +48,7 @@ r#r#foo
 // CHECK:STDOUT:     { index:  9, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: '#' },
 // CHECK:STDOUT:     { index: 10, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
-// Other identifier characters don't start a raw string.
+// Other identifier characters don't start a raw identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: s#foo
 // CHECK:STDERR:  ^
@@ -58,7 +58,7 @@ s#foo
 // CHECK:STDOUT:     { index: 12, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#' },
 // CHECK:STDOUT:     { index: 13, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  3, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
-// Identifier ending in `r` doesn't start a raw string.
+// Identifier ending in `r` doesn't start a raw identifier.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: arr#foo
 // CHECK:STDERR:    ^
