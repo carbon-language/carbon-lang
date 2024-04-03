@@ -517,7 +517,6 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     case SemIR::BuiltinFunctionKind::IntXor:
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      // TODO: Bitwise operators.
       if (phase != Phase::Template) {
         break;
       }
@@ -532,7 +531,6 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
     case SemIR::BuiltinFunctionKind::IntGreaterEq: {
-      // TODO: Relational comparisons.
       if (phase != Phase::Template) {
         break;
       }
