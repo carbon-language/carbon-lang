@@ -45,29 +45,39 @@ r#r#foo
 // CHECK:STDOUT:     { index:  9, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: '#' },
 // CHECK:STDOUT:     { index: 10, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
+// Other identifier characters don't start a raw string.
+// CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:2: ERROR: Encountered unrecognized characters while parsing.
+// CHECK:STDERR: f#foo
+// CHECK:STDERR:  ^
+// CHECK:STDERR:
+f#foo
+// CHECK:STDOUT:     { index: 11, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'f', identifier: 2 },
+// CHECK:STDOUT:     { index: 12, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#' },
+// CHECK:STDOUT:     { index: 13, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  3, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
+
 // Identifier ending in `r` doesn't start a raw string.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+4]]:4: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: arr#foo
 // CHECK:STDERR:    ^
 // CHECK:STDERR:
 arr#foo
-// CHECK:STDOUT:     { index: 11, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'arr', identifier: 2 },
-// CHECK:STDOUT:     { index: 12, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: '#' },
-// CHECK:STDOUT:     { index: 13, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 14, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'arr', identifier: 3 },
+// CHECK:STDOUT:     { index: 15, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  4, indent: 1, spelling: '#' },
+// CHECK:STDOUT:     { index: 16, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
 // Whitespace between `r` and `#` isn't allowed.
 // CHECK:STDERR: fail_bad_raw_identifier.carbon:[[@LINE+3]]:3: ERROR: Encountered unrecognized characters while parsing.
 // CHECK:STDERR: r #foo
 // CHECK:STDERR:   ^
 r #foo
-// CHECK:STDOUT:     { index: 14, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0, has_trailing_space: true },
-// CHECK:STDOUT:     { index: 15, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  3, indent: 1, spelling: '#' },
-// CHECK:STDOUT:     { index: 16, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  4, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 17, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 18, kind:         'Error', line: {{ *}}[[@LINE-2]], column:  3, indent: 1, spelling: '#' },
+// CHECK:STDOUT:     { index: 19, kind:    'Identifier', line: {{ *}}[[@LINE-3]], column:  4, indent: 1, spelling: 'foo', identifier: 1, has_trailing_space: true },
 
 // This is an `r` identifier followed by a string literal.
 r#"hello"#
-// CHECK:STDOUT:     { index: 17, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
-// CHECK:STDOUT:     { index: 18, kind: 'StringLiteral', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#"hello"#', value: `hello`, has_trailing_space: true },
+// CHECK:STDOUT:     { index: 20, kind:    'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'r', identifier: 0 },
+// CHECK:STDOUT:     { index: 21, kind: 'StringLiteral', line: {{ *}}[[@LINE-2]], column:  2, indent: 1, spelling: '#"hello"#', value: `hello`, has_trailing_space: true },
 
-// CHECK:STDOUT:     { index: 19, kind:       'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT:     { index: 22, kind:       'FileEnd', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT:   ]
