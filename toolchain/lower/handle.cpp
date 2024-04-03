@@ -12,7 +12,6 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -168,6 +167,36 @@ auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
+// Get the predicate to use for an `icmp` instruction generated for the
+// specified builtin.
+static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
+                                    bool is_signed)
+    -> llvm::CmpInst::Predicate {
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntEq:
+      return llvm::CmpInst::ICMP_EQ;
+    case SemIR::BuiltinFunctionKind::IntNeq:
+      return llvm::CmpInst::ICMP_NE;
+    case SemIR::BuiltinFunctionKind::IntLess:
+      return is_signed ? llvm::CmpInst::ICMP_SLT : llvm::CmpInst::ICMP_ULT;
+    case SemIR::BuiltinFunctionKind::IntLessEq:
+      return is_signed ? llvm::CmpInst::ICMP_SLE : llvm::CmpInst::ICMP_ULE;
+    case SemIR::BuiltinFunctionKind::IntGreater:
+      return is_signed ? llvm::CmpInst::ICMP_SGT : llvm::CmpInst::ICMP_UGT;
+    case SemIR::BuiltinFunctionKind::IntGreaterEq:
+      return is_signed ? llvm::CmpInst::ICMP_SGE : llvm::CmpInst::ICMP_UGE;
+    default:
+      CARBON_FATAL() << "Unexpected builtin kind " << builtin_kind;
+  }
+}
+
+// Returns whether the specified instruction has a signed integer type.
+static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
+    -> bool {
+  return context.sem_ir().types().IsSignedInt(
+      context.sem_ir().insts().Get(int_id).type_id());
+}
+
 // Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
@@ -189,6 +218,15 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                            operand, "neg",
                            /*HasNUW=*/false,
                            /*HasNSW=*/SignedOverflowIsUB));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntComplement: {
+      // Lower `^x` as `-1 ^ x`.
+      auto* operand = context.GetValue(arg_ids[0]);
+      context.SetLocal(inst_id,
+                       context.builder().CreateXor(
+                           llvm::ConstantInt::getSigned(operand->getType(), -1),
+                           operand, "cmpl"));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntAdd: {
@@ -227,16 +265,52 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[1]), "rem"));
       return;
     }
-    case SemIR::BuiltinFunctionKind::IntEq: {
-      context.SetLocal(inst_id, context.builder().CreateICmpEQ(
+    case SemIR::BuiltinFunctionKind::IntAnd: {
+      context.SetLocal(inst_id, context.builder().CreateAnd(
                                     context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "eq"));
+                                    context.GetValue(arg_ids[1]), "and"));
       return;
     }
-    case SemIR::BuiltinFunctionKind::IntNeq: {
-      context.SetLocal(inst_id, context.builder().CreateICmpNE(
+    case SemIR::BuiltinFunctionKind::IntOr: {
+      context.SetLocal(inst_id, context.builder().CreateOr(
                                     context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "neq"));
+                                    context.GetValue(arg_ids[1]), "or"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntXor: {
+      context.SetLocal(inst_id, context.builder().CreateXor(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "xor"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntLeftShift: {
+      context.SetLocal(inst_id, context.builder().CreateShl(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "shl"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntRightShift: {
+      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
+                                    ? context.builder().CreateAShr(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "shr")
+                                    : context.builder().CreateLShr(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "shr"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntEq:
+    case SemIR::BuiltinFunctionKind::IntNeq:
+    case SemIR::BuiltinFunctionKind::IntLess:
+    case SemIR::BuiltinFunctionKind::IntLessEq:
+    case SemIR::BuiltinFunctionKind::IntGreater:
+    case SemIR::BuiltinFunctionKind::IntGreaterEq: {
+      context.SetLocal(inst_id,
+                       context.builder().CreateICmp(
+                           GetBuiltinICmpPredicate(
+                               builtin_kind, IsSignedInt(context, arg_ids[0])),
+                           context.GetValue(arg_ids[0]),
+                           context.GetValue(arg_ids[1]), "cmp"));
       return;
     }
   }
