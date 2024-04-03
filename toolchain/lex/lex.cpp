@@ -1119,13 +1119,13 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
       source_text[position - 1] != 'r' ||
       position + 1 == static_cast<ssize_t>(source_text.size()) ||
       !IsIdStartByteTable[static_cast<unsigned char>(
-          source_text[position + 1])]) {
+          source_text[position + 1])] ||
+      prev_token_info.token_line != current_line() ||
+      prev_token_info.column != ComputeColumn(position) - 1) {
     [[clang::musttail]] return LexStringLiteral(source_text, position);
   }
-  int column = ComputeColumn(position);
-  if (prev_token_info.column != column - 1) {
-    [[clang::musttail]] return LexStringLiteral(source_text, position);
-  }
+  CARBON_DCHECK(buffer_.value_stores_->identifiers().Get(
+                    prev_token_info.ident_id) == "r");
 
   // Take the valid characters off the front of the source buffer.
   llvm::StringRef identifier_text =
