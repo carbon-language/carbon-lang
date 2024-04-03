@@ -1279,7 +1279,7 @@ class Lexer::ErrorRecoveryBuffer {
     for (auto [next_offset, info] : new_tokens_) {
       buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
                                   old_tokens.begin() + next_offset.index);
-      buffer_.token_infos_.push_back(info);
+      buffer_.AddToken(info);
       old_tokens_offset = next_offset.index;
     }
     buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
