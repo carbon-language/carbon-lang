@@ -8,7 +8,11 @@
 
 fn Negate(a: i32) -> i32 = "int.negate";
 
-var arr: [i32; Negate(Negate(1))];
+var arr: [i32; Negate(Negate(123))];
+// CHECK:STDERR: int_negate.carbon:[[@LINE+4]]:1: ERROR: Cannot implicitly convert from `[i32; 123]*` to `[i32; 1]*`.
+// CHECK:STDERR: let arr_p: [i32; 1]* = &arr;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let arr_p: [i32; 1]* = &arr;
 
 let n: i32 = Negate(1);
@@ -115,10 +119,14 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT: --- int_negate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal -1 [template]
+// CHECK:STDOUT:   %.1: i32 = int_literal 123 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal -123 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.1, i32 [template]
-// CHECK:STDOUT:   %.4: type = ptr_type [i32; 1] [template]
+// CHECK:STDOUT:   %.4: type = ptr_type [i32; 123] [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: type = array_type %.5, i32 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type [i32; 1] [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal -1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -134,32 +142,32 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.ref.loc4_16: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Negate.ref.loc4_23: <function> = name_ref Negate, %Negate [template = %Negate]
-// CHECK:STDOUT:   %.loc4_30: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_30: i32 = int_literal 123 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_29.1: init i32 = call %Negate.ref.loc4_23(%.loc4_30) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_22.1: i32 = value_of_initializer %.loc4_29.1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_29.2: i32 = converted %.loc4_29.1, %.loc4_22.1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc4_22.2: init i32 = call %Negate.ref.loc4_16(%.loc4_29.2) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc4_33: type = array_type %.loc4_22.2, i32 [template = constants.%.3]
-// CHECK:STDOUT:   %arr.var: ref [i32; 1] = var arr
-// CHECK:STDOUT:   %arr: ref [i32; 1] = bind_name arr, %arr.var
-// CHECK:STDOUT:   %.loc5_18: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc5_19: type = array_type %.loc5_18, i32 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc5_20: type = ptr_type [i32; 1] [template = constants.%.4]
-// CHECK:STDOUT:   %arr.ref: ref [i32; 1] = name_ref arr, %arr
-// CHECK:STDOUT:   %.loc5_24: [i32; 1]* = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: [i32; 1]* = bind_name arr_p, %.loc5_24
-// CHECK:STDOUT:   %Negate.ref.loc7: <function> = name_ref Negate, %Negate [template = %Negate]
-// CHECK:STDOUT:   %.loc7_21: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc7_20.1: init i32 = call %Negate.ref.loc7(%.loc7_21) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_23: i32 = value_of_initializer %.loc7_20.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_20.2: i32 = converted %.loc7_20.1, %.loc7_23 [template = constants.%.2]
-// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7_20.2
+// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_22.2, i32 [template = constants.%.3]
+// CHECK:STDOUT:   %arr.var: ref [i32; 123] = var arr
+// CHECK:STDOUT:   %arr: ref [i32; 123] = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_19: type = array_type %.loc9_18, i32 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_20: type = ptr_type [i32; 1] [template = constants.%.7]
+// CHECK:STDOUT:   %arr.ref: ref [i32; 123] = name_ref arr, %arr
+// CHECK:STDOUT:   %.loc9_24: [i32; 123]* = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: [i32; 1]* = bind_name arr_p, <error>
+// CHECK:STDOUT:   %Negate.ref.loc11: <function> = name_ref Negate, %Negate [template = %Negate]
+// CHECK:STDOUT:   %.loc11_21: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc11_20.1: init i32 = call %Negate.ref.loc11(%.loc11_21) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_23: i32 = value_of_initializer %.loc11_20.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_20.2: i32 = converted %.loc11_20.1, %.loc11_23 [template = constants.%.8]
+// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc11_20.2
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
-// CHECK:STDOUT:     %a.loc9_16.1: i32 = param a
-// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc9_16.1
-// CHECK:STDOUT:     %b.loc9_24.1: i32 = param b
-// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc9_24.1
-// CHECK:STDOUT:     %return.var.loc9: ref i32 = var <return slot>
+// CHECK:STDOUT:     %a.loc13_16.1: i32 = param a
+// CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc13_16.1
+// CHECK:STDOUT:     %b.loc13_24.1: i32 = param b
+// CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc13_24.1
+// CHECK:STDOUT:     %return.var.loc13: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,10 +177,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc10_16.1: init i32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc10_19: i32 = value_of_initializer %.loc10_16.1
-// CHECK:STDOUT:   %.loc10_16.2: i32 = converted %.loc10_16.1, %.loc10_19
-// CHECK:STDOUT:   return %.loc10_16.2
+// CHECK:STDOUT:   %.loc14_16.1: init i32 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc14_19: i32 = value_of_initializer %.loc14_16.1
+// CHECK:STDOUT:   %.loc14_16.2: i32 = converted %.loc14_16.1, %.loc14_19
+// CHECK:STDOUT:   return %.loc14_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon

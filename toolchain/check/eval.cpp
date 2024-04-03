@@ -292,28 +292,41 @@ static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   context.emitter().Emit(loc, CompileTimeDivisionByZero);
 }
 
+// Converts an APInt value into a ConstantId.
+static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
+                          llvm::APInt value) -> SemIR::ConstantId {
+  auto result = context.ints().Add(std::move(value));
+  return MakeConstantResult(context, SemIR::IntLiteral{type_id, result},
+                            Phase::Template);
+}
+
 // Performs a builtin unary integer -> integer operation.
 static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::BuiltinFunctionKind builtin_kind,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  CARBON_CHECK(builtin_kind == SemIR::BuiltinFunctionKind::IntNegate)
-      << "Unexpected builtin kind";
-
   auto op = context.insts().GetAs<SemIR::IntLiteral>(arg_id);
   auto op_val = context.ints().Get(op.int_id);
 
-  if (context.types().IsSignedInt(op.type_id) && op_val.isMinSignedValue()) {
-    CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
-                      "Integer overflow in negation of {0}.", TypedInt);
-    context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
-                           TypedInt{op.type_id, op_val});
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntNegate:
+      if (context.types().IsSignedInt(op.type_id) &&
+          op_val.isMinSignedValue()) {
+        CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
+                          "Integer overflow in negation of {0}.", TypedInt);
+        context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
+                               TypedInt{op.type_id, op_val});
+      }
+      op_val.negate();
+      break;
+    case SemIR::BuiltinFunctionKind::IntComplement:
+      op_val.flipAllBits();
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected builtin kind";
   }
-  op_val.negate();
 
-  auto result = context.ints().Add(op_val);
-  return MakeConstantResult(context, SemIR::IntLiteral{op.type_id, result},
-                            Phase::Template);
+  return MakeIntResult(context, op.type_id, std::move(op_val));
 }
 
 // Performs a builtin binary integer -> integer operation.
@@ -324,14 +337,15 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
     -> SemIR::ConstantId {
   auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::IntLiteral>(rhs_id);
-  auto lhs_val = context.ints().Get(lhs.int_id);
-  auto rhs_val = context.ints().Get(rhs.int_id);
+  const auto& lhs_val = context.ints().Get(lhs.int_id);
+  const auto& rhs_val = context.ints().Get(rhs.int_id);
 
   bool is_signed = context.types().IsSignedInt(lhs.type_id);
   bool overflow = false;
   llvm::APInt result_val;
   llvm::StringLiteral op_str = "<error>";
   switch (builtin_kind) {
+    // Arithmetic.
     case SemIR::BuiltinFunctionKind::IntAdd:
       result_val =
           is_signed ? lhs_val.sadd_ov(rhs_val, overflow) : lhs_val + rhs_val;
@@ -368,6 +382,49 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       op_str = "%";
       break;
 
+    // Bitwise.
+    case SemIR::BuiltinFunctionKind::IntAnd:
+      result_val = lhs_val & rhs_val;
+      op_str = "&";
+      break;
+    case SemIR::BuiltinFunctionKind::IntOr:
+      result_val = lhs_val | rhs_val;
+      op_str = "|";
+      break;
+    case SemIR::BuiltinFunctionKind::IntXor:
+      result_val = lhs_val ^ rhs_val;
+      op_str = "^";
+      break;
+
+    // Bit shift.
+    case SemIR::BuiltinFunctionKind::IntLeftShift:
+    case SemIR::BuiltinFunctionKind::IntRightShift:
+      op_str = (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift)
+                   ? llvm::StringLiteral("<<")
+                   : llvm::StringLiteral(">>");
+      if (rhs_val.uge(lhs_val.getBitWidth()) ||
+          (rhs_val.isNegative() && context.types().IsSignedInt(rhs.type_id))) {
+        CARBON_DIAGNOSTIC(
+            CompileTimeShiftOutOfRange, Error,
+            "Shift distance not in range [0, {0}) in {1} {2} {3}.", unsigned,
+            TypedInt, llvm::StringLiteral, TypedInt);
+        context.emitter().Emit(loc, CompileTimeShiftOutOfRange,
+                               lhs_val.getBitWidth(),
+                               TypedInt{lhs.type_id, lhs_val}, op_str,
+                               TypedInt{rhs.type_id, rhs_val});
+        // TODO: Is it useful to recover by returning 0 or -1?
+        return SemIR::ConstantId::Error;
+      }
+
+      if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
+        result_val = lhs_val.shl(rhs_val);
+      } else if (is_signed) {
+        result_val = lhs_val.ashr(rhs_val);
+      } else {
+        result_val = lhs_val.lshr(rhs_val);
+      }
+      break;
+
     default:
       CARBON_FATAL() << "Unexpected operation kind.";
   }
@@ -381,9 +438,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
                            TypedInt{rhs.type_id, rhs_val});
   }
 
-  auto result = context.ints().Add(result_val);
-  return MakeConstantResult(context, SemIR::IntLiteral{lhs.type_id, result},
-                            Phase::Template);
+  return MakeIntResult(context, lhs.type_id, std::move(result_val));
 }
 
 // Performs a builtin integer comparison.
@@ -393,10 +448,11 @@ static auto PerformBuiltinIntComparison(Context& context,
                                         SemIR::InstId rhs_id,
                                         SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
-  auto lhs_val = context.ints().Get(
-      context.insts().GetAs<SemIR::IntLiteral>(lhs_id).int_id);
+  auto lhs = context.insts().GetAs<SemIR::IntLiteral>(lhs_id);
+  auto lhs_val = context.ints().Get(lhs.int_id);
   auto rhs_val = context.ints().Get(
       context.insts().GetAs<SemIR::IntLiteral>(rhs_id).int_id);
+  bool is_signed = context.types().IsSignedInt(lhs.type_id);
 
   bool result;
   switch (builtin_kind) {
@@ -405,6 +461,18 @@ static auto PerformBuiltinIntComparison(Context& context,
       break;
     case SemIR::BuiltinFunctionKind::IntNeq:
       result = (lhs_val != rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::IntLess:
+      result = is_signed ? lhs_val.slt(rhs_val) : lhs_val.ult(rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::IntLessEq:
+      result = is_signed ? lhs_val.sle(rhs_val) : lhs_val.ule(rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::IntGreater:
+      result = is_signed ? lhs_val.sgt(rhs_val) : lhs_val.sgt(rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::IntGreaterEq:
+      result = is_signed ? lhs_val.sge(rhs_val) : lhs_val.sge(rhs_val);
       break;
     default:
       CARBON_FATAL() << "Unexpected operation kind.";
@@ -424,20 +492,25 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
       CARBON_FATAL() << "Not a builtin function.";
 
     // Unary integer -> integer operations.
-    case SemIR::BuiltinFunctionKind::IntNegate: {
-      // TODO: Complement.
+    case SemIR::BuiltinFunctionKind::IntNegate:
+    case SemIR::BuiltinFunctionKind::IntComplement: {
       if (phase != Phase::Template) {
         break;
       }
       return PerformBuiltinUnaryIntOp(context, loc, builtin_kind, arg_ids[0]);
     }
 
-    // Homogeneous binary integer -> integer operations.
+    // Binary integer -> integer operations.
     case SemIR::BuiltinFunctionKind::IntAdd:
     case SemIR::BuiltinFunctionKind::IntSub:
     case SemIR::BuiltinFunctionKind::IntMul:
     case SemIR::BuiltinFunctionKind::IntDiv:
-    case SemIR::BuiltinFunctionKind::IntMod: {
+    case SemIR::BuiltinFunctionKind::IntMod:
+    case SemIR::BuiltinFunctionKind::IntAnd:
+    case SemIR::BuiltinFunctionKind::IntOr:
+    case SemIR::BuiltinFunctionKind::IntXor:
+    case SemIR::BuiltinFunctionKind::IntLeftShift:
+    case SemIR::BuiltinFunctionKind::IntRightShift: {
       // TODO: Bitwise operators.
       if (phase != Phase::Template) {
         break;
@@ -448,7 +521,11 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
 
     // Integer comparisons.
     case SemIR::BuiltinFunctionKind::IntEq:
-    case SemIR::BuiltinFunctionKind::IntNeq: {
+    case SemIR::BuiltinFunctionKind::IntNeq:
+    case SemIR::BuiltinFunctionKind::IntLess:
+    case SemIR::BuiltinFunctionKind::IntLessEq:
+    case SemIR::BuiltinFunctionKind::IntGreater:
+    case SemIR::BuiltinFunctionKind::IntGreaterEq: {
       // TODO: Relational comparisons.
       if (phase != Phase::Template) {
         break;

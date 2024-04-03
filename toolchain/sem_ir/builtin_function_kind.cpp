@@ -24,14 +24,14 @@ struct BuiltinInfo {
 };
 
 // The maximum number of type parameters any builtin needs.
-constexpr int MaxTypeParams = 1;
+constexpr int MaxTypeParams = 2;
 
 // State used when validating a builtin signature that persists between
 // individual checks.
 struct ValidateState {
   // The type values of type parameters in the builtin signature. Invalid if
   // either no value has been deduced yet or the parameter is not used.
-  TypeId type_params[MaxTypeParams] = {TypeId::Invalid};
+  TypeId type_params[MaxTypeParams] = {TypeId::Invalid, TypeId::Invalid};
 };
 
 // Constraint that a type is generic type parameter `I` of the builtin,
@@ -125,6 +125,10 @@ namespace BuiltinFunctionInfo {
 // generic type parameter that is constrained to be an integer type.
 using IntT = TypeParam<0, AnyInt>;
 
+// Convenience name used in the builtin type signatures below for a second
+// generic type parameter that is constrained to be an integer type.
+using IntU = TypeParam<1, AnyInt>;
+
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
@@ -152,6 +156,30 @@ constexpr BuiltinInfo IntDiv = {"int.div",
 constexpr BuiltinInfo IntMod = {"int.mod",
                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
+// "int.complement": integer bitwise complement.
+constexpr BuiltinInfo IntComplement = {"int.complement",
+                                       ValidateSignature<auto(IntT)->IntT>};
+
+// "int.and": integer bitwise and.
+constexpr BuiltinInfo IntAnd = {"int.and",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.or": integer bitwise or.
+constexpr BuiltinInfo IntOr = {"int.or",
+                               ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.xor": integer bitwise xor.
+constexpr BuiltinInfo IntXor = {"int.xor",
+                                ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.leftshift": integer left shift.
+constexpr BuiltinInfo IntLeftShift = {
+    "int.leftshift", ValidateSignature<auto(IntT, IntU)->IntT>};
+
+// "int.leftshift": integer right shift.
+constexpr BuiltinInfo IntRightShift = {
+    "int.rightshift", ValidateSignature<auto(IntT, IntU)->IntT>};
+
 // "int.eq": integer equality comparison.
 constexpr BuiltinInfo IntEq = {"int.eq",
                                ValidateSignature<auto(IntT, IntT)->Bool>};
@@ -159,6 +187,22 @@ constexpr BuiltinInfo IntEq = {"int.eq",
 // "int.neq": integer non-equality comparison.
 constexpr BuiltinInfo IntNeq = {"int.neq",
                                 ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "int.less": integer less than comparison.
+constexpr BuiltinInfo IntLess = {"int.less",
+                                 ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "int.lesseq": integer less than or equal comparison.
+constexpr BuiltinInfo IntLessEq = {"int.lesseq",
+                                   ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "int.greater": integer greater than comparison.
+constexpr BuiltinInfo IntGreater = {"int.greater",
+                                    ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "int.greatereq": integer greater than or equal comparison.
+constexpr BuiltinInfo IntGreaterEq = {
+    "int.greatereq", ValidateSignature<auto(IntT, IntT)->Bool>};
 
 }  // namespace BuiltinFunctionInfo
 
