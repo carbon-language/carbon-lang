@@ -413,10 +413,11 @@ class DeferredDefinitionWorklist {
   // it are type-checked in the right context.
   auto PushEnterDeferredDefinitionScope(Context& context) -> void {
     bool nested = !enclosing_scopes_.empty() &&
-                  enclosing_scopes_.back().second ==
+                  enclosing_scopes_.back().scope_index ==
                       context.decl_name_stack().PeekEnclosingScope();
     enclosing_scopes_.push_back(
-        {worklist_.size(), context.scope_stack().PeekIndex()});
+        {.worklist_start_index = worklist_.size(),
+         .scope_index = context.scope_stack().PeekIndex()});
     worklist_.push_back(EnterDeferredDefinitionScope{std::nullopt, nested});
     CARBON_VLOG() << VlogPrefix << "Push EnterDeferredDefinitionScope "
                   << (nested ? "(nested)" : "(non-nested)") << "\n";
@@ -469,19 +470,26 @@ class DeferredDefinitionWorklist {
   // constructor for a fairly large number of deferred definitions.
   llvm::SmallVector<Task, 0> worklist_;
 
-  // Indexes in `worklist` of deferred definition scopes that are currently
-  // still open, and the corresponding scope indexes.
-  llvm::SmallVector<std::pair<size_t, ScopeIndex>> enclosing_scopes_;
+  // A deferred definition scope that is currently still open.
+  struct EnclosingScope {
+    // The index in worklist_ of the EnterDeferredDefinitionScope task.
+    size_t worklist_start_index;
+    // The corresponding lexical scope index.
+    ScopeIndex scope_index;
+  };
+
+  // The deferred definition scopes enclosing the current checking actions.
+  llvm::SmallVector<EnclosingScope> enclosing_scopes_;
 };
 }  // namespace
 
 auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     -> bool {
-  auto scope_index = enclosing_scopes_.pop_back_val().first;
+  auto start_index = enclosing_scopes_.pop_back_val().worklist_start_index;
 
   // If we've not found any deferred definitions in this scope, clean up the
   // stack.
-  if (scope_index == worklist_.size() - 1) {
+  if (start_index == worklist_.size() - 1) {
     context.decl_name_stack().PopScope();
     worklist_.pop_back();
     CARBON_VLOG() << VlogPrefix << "Pop EnterDeferredDefinitionScope (empty)\n";
@@ -490,7 +498,7 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
 
   // If we're finishing a nested deferred definition scope, keep track of that
   // but don't type-check deferred definitions now.
-  auto& enter_scope = get<EnterDeferredDefinitionScope>(worklist_[scope_index]);
+  auto& enter_scope = get<EnterDeferredDefinitionScope>(worklist_[start_index]);
   if (enter_scope.in_deferred_definition_scope) {
     // This is a nested deferred definition scope. Suspend the inner scope so we
     // can restore it when we come to type-check the deferred definitions.
@@ -515,7 +523,7 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   // We'll process the worklist in reverse index order, so reverse the part of
   // it we're about to execute so we run our tasks in the order in which they
   // were pushed.
-  std::reverse(worklist_.begin() + scope_index, worklist_.end());
+  std::reverse(worklist_.begin() + start_index, worklist_.end());
 
   // Pop the `EnterDeferredDefinitionScope` that's now on the end of the
   // worklist. We stay in that scope rather than suspending then immediately
