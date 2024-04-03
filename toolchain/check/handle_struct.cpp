@@ -17,8 +17,7 @@ auto HandleStructTypeLiteralStart(Context& context,
 }
 
 auto HandleStructLiteralStart(Context& context,
-                                   Parse::StructLiteralStartId node_id)
-    -> bool {
+                              Parse::StructLiteralStartId node_id) -> bool {
   context.scope_stack().Push();
   context.node_stack().Push(node_id);
   context.args_type_info_stack().Push();
@@ -40,8 +39,7 @@ auto HandleStructComma(Context& context, Parse::StructCommaId /*node_id*/)
   return true;
 }
 
-auto HandleStructField(Context& context, Parse::StructFieldId node_id)
-    -> bool {
+auto HandleStructField(Context& context, Parse::StructFieldId node_id) -> bool {
   auto value_inst_id = context.node_stack().PopExpr();
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
@@ -95,8 +93,8 @@ static auto DiagnoseDuplicateNames(Context& context,
   return false;
 }
 
-auto HandleStructLiteral(Context& context,
-                              Parse::StructLiteralId node_id) -> bool {
+auto HandleStructLiteral(Context& context, Parse::StructLiteralId node_id)
+    -> bool {
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralStart);
 

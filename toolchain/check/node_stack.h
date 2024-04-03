@@ -445,7 +445,6 @@ class NodeStack {
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::LetIntroducer:
-        case Parse::NodeKind::ParenExprStart:
         case Parse::NodeKind::QualifiedName:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
