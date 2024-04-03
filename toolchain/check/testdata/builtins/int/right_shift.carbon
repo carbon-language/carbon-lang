@@ -28,19 +28,11 @@ fn Negate(a: i32) -> i32 = "int.negate";
 
 // -1 >> 1 is -1.
 var arr1: [i32; Negate(RightShift(Negate(1), 1))];
-// CHECK:STDERR: arith_shift.carbon:[[@LINE+4]]:26: ERROR: Name `arr` not found.
-// CHECK:STDERR: let arr1_p: [i32; 1]* = &arr;
-// CHECK:STDERR:                          ^~~
-// CHECK:STDERR:
-let arr1_p: [i32; 1]* = &arr;
+let arr1_p: [i32; 1]* = &arr1;
 
-// -10 >> 2 is -2.
+// -10 >> 2 is -3.
 var arr2: [i32; Negate(RightShift(Negate(10), 2))];
-// CHECK:STDERR: arith_shift.carbon:[[@LINE+4]]:26: ERROR: Name `arr` not found.
-// CHECK:STDERR: let arr2_p: [i32; 2]* = &arr;
-// CHECK:STDERR:                          ^~~
-// CHECK:STDERR:
-let arr2_p: [i32; 2]* = &arr;
+let arr2_p: [i32; 3]* = &arr2;
 
 // --- fail_bad_shift.carbon
 
@@ -140,8 +132,6 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, i32 [template]
 // CHECK:STDOUT:   %.11: type = ptr_type [i32; 3] [template]
-// CHECK:STDOUT:   %.12: type = array_type %.7, i32 [template]
-// CHECK:STDOUT:   %.13: type = ptr_type [i32; 2] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -178,33 +168,33 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc10_49: type = array_type %.loc10_23.2, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %arr1.var: ref [i32; 1] = var arr1
 // CHECK:STDOUT:   %arr1: ref [i32; 1] = bind_name arr1, %arr1.var
-// CHECK:STDOUT:   %.loc15_19: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc15_20: type = array_type %.loc15_19, i32 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_21: type = ptr_type [i32; 1] [template = constants.%.4]
-// CHECK:STDOUT:   %arr.ref.loc15: <error> = name_ref arr, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_25: <error> = addr_of %arr.ref.loc15 [template = <error>]
-// CHECK:STDOUT:   %arr1_p: [i32; 1]* = bind_name arr1_p, <error>
-// CHECK:STDOUT:   %Negate.ref.loc18_17: <function> = name_ref Negate, %Negate [template = %Negate]
-// CHECK:STDOUT:   %RightShift.ref.loc18: <function> = name_ref RightShift, %RightShift [template = %RightShift]
-// CHECK:STDOUT:   %Negate.ref.loc18_35: <function> = name_ref Negate, %Negate [template = %Negate]
-// CHECK:STDOUT:   %.loc18_42: i32 = int_literal 10 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_41.1: init i32 = call %Negate.ref.loc18_35(%.loc18_42) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_47: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc18_34.1: i32 = value_of_initializer %.loc18_41.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_41.2: i32 = converted %.loc18_41.1, %.loc18_34.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18_34.2: init i32 = call %RightShift.ref.loc18(%.loc18_41.2, %.loc18_47) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_23.1: i32 = value_of_initializer %.loc18_34.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_34.3: i32 = converted %.loc18_34.2, %.loc18_23.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc18_23.2: init i32 = call %Negate.ref.loc18_17(%.loc18_34.3) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc18_50: type = array_type %.loc18_23.2, i32 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc11_19: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_20: type = array_type %.loc11_19, i32 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_21: type = ptr_type [i32; 1] [template = constants.%.4]
+// CHECK:STDOUT:   %arr1.ref: ref [i32; 1] = name_ref arr1, %arr1
+// CHECK:STDOUT:   %.loc11_25: [i32; 1]* = addr_of %arr1.ref
+// CHECK:STDOUT:   %arr1_p: [i32; 1]* = bind_name arr1_p, %.loc11_25
+// CHECK:STDOUT:   %Negate.ref.loc14_17: <function> = name_ref Negate, %Negate [template = %Negate]
+// CHECK:STDOUT:   %RightShift.ref.loc14: <function> = name_ref RightShift, %RightShift [template = %RightShift]
+// CHECK:STDOUT:   %Negate.ref.loc14_35: <function> = name_ref Negate, %Negate [template = %Negate]
+// CHECK:STDOUT:   %.loc14_42: i32 = int_literal 10 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14_41.1: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_47: i32 = int_literal 2 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc14_34.1: i32 = value_of_initializer %.loc14_41.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_41.2: i32 = converted %.loc14_41.1, %.loc14_34.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_34.2: init i32 = call %RightShift.ref.loc14(%.loc14_41.2, %.loc14_47) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_23.1: i32 = value_of_initializer %.loc14_34.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_34.3: i32 = converted %.loc14_34.2, %.loc14_23.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_23.2: init i32 = call %Negate.ref.loc14_17(%.loc14_34.3) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14_50: type = array_type %.loc14_23.2, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr2.var: ref [i32; 3] = var arr2
 // CHECK:STDOUT:   %arr2: ref [i32; 3] = bind_name arr2, %arr2.var
-// CHECK:STDOUT:   %.loc23_19: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc23_20: type = array_type %.loc23_19, i32 [template = constants.%.12]
-// CHECK:STDOUT:   %.loc23_21: type = ptr_type [i32; 2] [template = constants.%.13]
-// CHECK:STDOUT:   %arr.ref.loc23: <error> = name_ref arr, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc23_25: <error> = addr_of %arr.ref.loc23 [template = <error>]
-// CHECK:STDOUT:   %arr2_p: [i32; 2]* = bind_name arr2_p, <error>
+// CHECK:STDOUT:   %.loc15_19: i32 = int_literal 3 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc15_20: type = array_type %.loc15_19, i32 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_21: type = ptr_type [i32; 3] [template = constants.%.11]
+// CHECK:STDOUT:   %arr2.ref: ref [i32; 3] = name_ref arr2, %arr2
+// CHECK:STDOUT:   %.loc15_25: [i32; 3]* = addr_of %arr2.ref
+// CHECK:STDOUT:   %arr2_p: [i32; 3]* = bind_name arr2_p, %.loc15_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
