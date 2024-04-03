@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// --- int_rightshift.carbon
+// --- int_right_shift.carbon
 
-fn RightShift(a: i32, b: i32) -> i32 = "int.rightshift";
+fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 
 var arr: [i32; RightShift(22, 2)];
 let arr_p: [i32; 5]* = &arr;
@@ -23,7 +23,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package ArithShift api;
 
-fn RightShift(a: i32, b: i32) -> i32 = "int.rightshift";
+fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 fn Negate(a: i32) -> i32 = "int.negate";
 
 // -1 >> 1 is -1.
@@ -46,7 +46,7 @@ let arr2_p: [i32; 2]* = &arr;
 
 package BadShift api;
 
-fn RightShift(a: i32, b: i32) -> i32 = "int.rightshift";
+fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 fn Negate(a: i32) -> i32 = "int.negate";
 
 // Shift greater than size is disallowed.
@@ -68,7 +68,7 @@ let size_3: i32 = RightShift(1, 33);
 // CHECK:STDERR:                     ^~~~~~~~~~~
 let negative: i32 = RightShift(1, Negate(1));
 
-// CHECK:STDOUT: --- int_rightshift.carbon
+// CHECK:STDOUT: --- int_right_shift.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 22 [template]
@@ -113,7 +113,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.rightshift";
+// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -207,7 +207,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %arr2_p: [i32; 2]* = bind_name arr2_p, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.rightshift";
+// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
 // CHECK:STDOUT:
@@ -273,7 +273,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc24_31.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.rightshift";
+// CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
 // CHECK:STDOUT:

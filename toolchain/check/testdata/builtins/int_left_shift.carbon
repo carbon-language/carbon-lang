@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-// --- int_leftshift.carbon
+// --- int_left_shift.carbon
 
-fn LeftShift(a: i32, b: i32) -> i32 = "int.leftshift";
+fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 
 var arr: [i32; LeftShift(5, 2)];
 let arr_p: [i32; 20]* = &arr;
@@ -21,7 +21,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package BadShift api;
 
-fn LeftShift(a: i32, b: i32) -> i32 = "int.leftshift";
+fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 fn Negate(a: i32) -> i32 = "int.negate";
 
 // Shift greater than size is disallowed.
@@ -59,7 +59,7 @@ let no_overflow_2: i32 = LeftShift(0, 32);
 // CHECK:STDERR:                     ^~~~~~~~~~
 let negative: i32 = LeftShift(1, Negate(1));
 
-// CHECK:STDOUT: --- int_leftshift.carbon
+// CHECK:STDOUT: --- int_left_shift.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 5 [template]
@@ -104,7 +104,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.leftshift";
+// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -209,7 +209,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc40_30.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.leftshift";
+// CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
 // CHECK:STDOUT:

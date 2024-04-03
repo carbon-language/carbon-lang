@@ -34,10 +34,10 @@ fn TestOr(a: i32, b: i32) -> i32 { return Or(a, b); }
 fn Xor(a: i32, b: i32) -> i32 = "int.xor";
 fn TestXor(a: i32, b: i32) -> i32 { return Xor(a, b); }
 
-fn LeftShift(a: i32, b: i32) -> i32 = "int.leftshift";
+fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 fn TestLeftShift(a: i32, b: i32) -> i32 { return LeftShift(a, b); }
 
-fn RightShift(a: i32, b: i32) -> i32 = "int.rightshift";
+fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 fn TestRightShift(a: i32, b: i32) -> i32 { return RightShift(a, b); }
 
 fn Eq(a: i32, b: i32) -> bool = "int.eq";
@@ -49,13 +49,13 @@ fn TestNeq(a: i32, b: i32) -> bool { return Neq(a, b); }
 fn Less(a: i32, b: i32) -> bool = "int.less";
 fn TestLess(a: i32, b: i32) -> bool { return Less(a, b); }
 
-fn LessEq(a: i32, b: i32) -> bool = "int.lesseq";
+fn LessEq(a: i32, b: i32) -> bool = "int.less_eq";
 fn TestLessEq(a: i32, b: i32) -> bool { return LessEq(a, b); }
 
 fn Greater(a: i32, b: i32) -> bool = "int.greater";
 fn TestGreater(a: i32, b: i32) -> bool { return Greater(a, b); }
 
-fn GreaterEq(a: i32, b: i32) -> bool = "int.greatereq";
+fn GreaterEq(a: i32, b: i32) -> bool = "int.greater_eq";
 fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 
 // CHECK:STDOUT: ; ModuleID = 'int.carbon'

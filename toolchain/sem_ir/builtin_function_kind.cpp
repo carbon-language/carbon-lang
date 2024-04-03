@@ -172,13 +172,13 @@ constexpr BuiltinInfo IntOr = {"int.or",
 constexpr BuiltinInfo IntXor = {"int.xor",
                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
-// "int.leftshift": integer left shift.
+// "int.left_shift": integer left shift.
 constexpr BuiltinInfo IntLeftShift = {
-    "int.leftshift", ValidateSignature<auto(IntT, IntU)->IntT>};
+    "int.left_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
 
-// "int.leftshift": integer right shift.
+// "int.left_shift": integer right shift.
 constexpr BuiltinInfo IntRightShift = {
-    "int.rightshift", ValidateSignature<auto(IntT, IntU)->IntT>};
+    "int.right_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
 
 // "int.eq": integer equality comparison.
 constexpr BuiltinInfo IntEq = {"int.eq",
@@ -192,17 +192,17 @@ constexpr BuiltinInfo IntNeq = {"int.neq",
 constexpr BuiltinInfo IntLess = {"int.less",
                                  ValidateSignature<auto(IntT, IntT)->Bool>};
 
-// "int.lesseq": integer less than or equal comparison.
-constexpr BuiltinInfo IntLessEq = {"int.lesseq",
+// "int.less_eq": integer less than or equal comparison.
+constexpr BuiltinInfo IntLessEq = {"int.less_eq",
                                    ValidateSignature<auto(IntT, IntT)->Bool>};
 
 // "int.greater": integer greater than comparison.
 constexpr BuiltinInfo IntGreater = {"int.greater",
                                     ValidateSignature<auto(IntT, IntT)->Bool>};
 
-// "int.greatereq": integer greater than or equal comparison.
+// "int.greater_eq": integer greater than or equal comparison.
 constexpr BuiltinInfo IntGreaterEq = {
-    "int.greatereq", ValidateSignature<auto(IntT, IntT)->Bool>};
+    "int.greater_eq", ValidateSignature<auto(IntT, IntT)->Bool>};
 
 }  // namespace BuiltinFunctionInfo
 
