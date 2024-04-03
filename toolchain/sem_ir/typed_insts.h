@@ -669,7 +669,8 @@ struct StructInit {
 
 struct StructLiteral {
   static constexpr auto Kind =
-      InstKind::StructLiteral.Define<Parse::StructLiteralId>("struct_literal");
+      InstKind::StructLiteral.Define<Parse::StructLiteralId>(
+          "struct_literal");
 
   TypeId type_id;
   InstBlockId elements_id;

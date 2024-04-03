@@ -595,42 +595,40 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprThen, 1, Then)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3, CARBON_IF_VALID(Else))
 
 // Struct literals, such as `{.a = 0}`:
-//   StructLiteralOrStructTypeLiteralStart
+//   StructLiteralStart
 //         _external_: IdentifierName or BaseName
 //       StructFieldDesignator
 //       _external_: expression
-//     StructFieldValue
+//     StructField
 //     StructComma
 //   _repeated_
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
-//   StructLiteralOrStructTypeLiteralStart
+//   StructTypeLiteralStart
 //         _external_: IdentifierName or BaseName
 //       StructFieldDesignator
 //       _external_: type expression
-//     StructFieldType
+//     StructTypeField
 //     StructComma
 //   _repeated_
 // StructTypeLiteral
 //
-// Elements (StructFieldValue and StructFieldType, respectively) and StructComma
+// Elements (StructField and StructTypeField, respectively) and StructComma
 // may repeat with StructComma as a separator.
 //
-// When a valid StructFieldType or StructFieldValue cannot be formed, elements
+// When a valid StructTypeField or StructField cannot be formed, elements
 // may be replaced by InvalidParse, which may have a preceding sibling
 // StructFieldDesignator if one was successfully parsed.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralOrStructTypeLiteralStart, 0,
-                                   OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralStart, 0, OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructTypeLiteralStart, 0, OpenCurlyBrace)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, 1, Period)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldValue, 2, Equal)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldType, 2, Colon)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructField, 2, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructTypeField, 2, Colon)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0, Comma)
-CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
-                               StructLiteralOrStructTypeLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral, StructLiteralStart,
                                CloseCurlyBrace)
-CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
-                               StructLiteralOrStructTypeLiteralStart,
+CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral, StructTypeLiteralStart,
                                CloseCurlyBrace)
 
 // Various modifiers. These are all a single token.
@@ -805,15 +803,14 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseIntroducer, 0, Case)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardIntroducer, 0, If)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardStart, 0,
                                    CARBON_IF_VALID(OpenParen))
-CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseGuard,
-                               MatchCaseGuardIntroducer,
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseGuard, MatchCaseGuardIntroducer,
                                CARBON_IF_VALID(CloseParen))
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseEqualGreater, 0,
                                    CARBON_IF_VALID(EqualGreater))
 CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseStart, MatchCaseIntroducer,
-                                   CARBON_IF_VALID(OpenCurlyBrace))
+                               CARBON_IF_VALID(OpenCurlyBrace))
 CARBON_PARSE_NODE_KIND_BRACKET(MatchCase, MatchCaseStart,
-                                   CARBON_IF_VALID(CloseCurlyBrace))
+                               CARBON_IF_VALID(CloseCurlyBrace))
 
 // `default`:
 //     MatchDefaultIntroducer
