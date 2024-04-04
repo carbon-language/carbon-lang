@@ -302,6 +302,19 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   return context.constant_values().Get(elements[index_val.getZExtValue()]);
 }
 
+// Enforces that the byte width is 64 for a float.
+static auto ValidateFloatByteWidth(Context& context, SemIRLoc loc,
+                                   SemIR::InstId inst_id) -> bool {
+  auto inst = context.insts().GetAs<SemIR::IntLiteral>(inst_id);
+  if (context.ints().Get(inst.int_id) == 64) {
+    return true;
+  }
+
+  CARBON_DIAGNOSTIC(CompileTimeFloatByteWidth, Error, "Byte width must be 64.");
+  context.emitter().Emit(loc, CompileTimeFloatByteWidth);
+  return false;
+}
+
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
@@ -496,6 +509,30 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "Not a builtin function.";
+
+    case SemIR::BuiltinFunctionKind::IntMake32: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      return context.constant_values().Get(SemIR::InstId::BuiltinIntType);
+    }
+
+    case SemIR::BuiltinFunctionKind::FloatMake: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      if (!ValidateFloatByteWidth(context, loc, arg_ids[0])) {
+        return SemIR::ConstantId::Error;
+      }
+      return context.constant_values().Get(SemIR::InstId::BuiltinFloatType);
+    }
+
+    case SemIR::BuiltinFunctionKind::BoolMake: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      return context.constant_values().Get(SemIR::InstId::BuiltinBoolType);
+    }
 
     // Unary integer -> integer operations.
     case SemIR::BuiltinFunctionKind::IntNegate:
