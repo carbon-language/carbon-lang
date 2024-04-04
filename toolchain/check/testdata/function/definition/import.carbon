@@ -178,10 +178,10 @@ fn D() {}
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_15 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_24 [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+20, loc_39 [template = imports.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_15 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+6, loc_24 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+20, loc_39 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+30, unloaded
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
@@ -227,10 +227,10 @@ fn D() {}
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loaded [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loaded [template = imports.%B]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+6, loaded [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+30, unloaded
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc27_6.1: i32 = param b
@@ -252,7 +252,7 @@ fn D() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.loc6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+1, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+1, loaded [template = imports.%A]
 // CHECK:STDOUT:   %A.loc6: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }
@@ -271,10 +271,10 @@ fn D() {}
 // CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %D.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+30, loaded [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+20, unloaded
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+30, loaded [template = imports.%D]
 // CHECK:STDOUT:   %D.loc6: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT:   %D.loc13: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }

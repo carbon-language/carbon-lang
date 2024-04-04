@@ -15,7 +15,7 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 1
+// CHECK:STDOUT:   import_irs_size: 2
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+9}}
 // CHECK:STDOUT:   bind_names:

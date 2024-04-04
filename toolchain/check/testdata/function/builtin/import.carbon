@@ -53,7 +53,7 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+6, loc_11 [template = imports.%Add]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+6, loc_11 [template = imports.%Add]
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %import_ref [template = imports.%Add]
 // CHECK:STDOUT:   %.loc4_25: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_28: i32 = int_literal 2 [template = constants.%.2]

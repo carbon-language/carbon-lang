@@ -7,14 +7,16 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
-struct PrevInstForMerge {
+struct InstForMerge {
   // The resolved instruction.
   SemIR::Inst inst;
-  // Whether an import was encountered during resolution.
-  bool is_import;
+  // The imported instruction, or invalid if not an import. This should
+  // typically only be used for the ImportIRId, but we only load it if needed.
+  SemIR::ImportIRInstId import_ir_inst_id;
 };
 
 // Resolves prev_inst_id for merging (or name conflicts). This handles imports
@@ -22,7 +24,7 @@ struct PrevInstForMerge {
 // previously used, it notes it, although an invalid redeclaration may diagnose
 // for other reasons too.
 auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
-                             SemIR::InstId prev_inst_id) -> PrevInstForMerge;
+                             SemIR::InstId prev_inst_id) -> InstForMerge;
 
 // When the prior name lookup result is an import and we are successfully
 // merging, replace the name lookup result with the reference in the current

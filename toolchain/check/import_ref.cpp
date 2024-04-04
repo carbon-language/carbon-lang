@@ -700,9 +700,12 @@ class ImportRefResolver {
     auto function_decl = SemIR::FunctionDecl{
         context_.GetTypeIdForTypeConstant(type_const_id),
         SemIR::FunctionId::Invalid, SemIR::InstBlockId::Empty};
-    auto function_decl_id =
-        context_.AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst::Untyped(
-            AddImportIRInst(function.decl_id), function_decl));
+    // Prefer pointing diagnostics towards a definition.
+    auto imported_loc_id = AddImportIRInst(function.definition_id.is_valid()
+                                               ? function.definition_id
+                                               : function.decl_id);
+    auto function_decl_id = context_.AddPlaceholderInstInNoBlock(
+        SemIR::LocIdAndInst::Untyped(imported_loc_id, function_decl));
 
     auto new_return_type_id =
         return_type_const_id.is_valid()
@@ -727,7 +730,10 @@ class ImportRefResolver {
          .return_type_id = new_return_type_id,
          .return_slot_id = new_return_slot,
          .is_extern = function.is_extern,
-         .builtin_kind = function.builtin_kind});
+         .builtin_kind = function.builtin_kind,
+         .definition_id = function.definition_id.is_valid()
+                              ? function_decl_id
+                              : SemIR::InstId::Invalid});
     // Write the function ID into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(function_decl_id, function_decl);
     return {context_.constant_values().Get(function_decl_id)};

@@ -184,10 +184,10 @@ struct UnitInfo {
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLoc> emitter;
 
-  // A map of package names to outgoing imports. If the
-  // import's target isn't available, the unit will be nullptr to assist with
-  // name lookup. Invalid imports (for example, `import Main;`) aren't added
-  // because they won't add identifiers to name lookup.
+  // A map of package names to outgoing imports. If a package includes
+  // unavailable library imports, it has an entry with has_load_error set.
+  // Invalid imports (for example, `import Main;`) aren't added because they
+  // won't add identifiers to name lookup.
   llvm::DenseMap<IdentifierId, PackageImports> package_imports_map;
 
   // The remaining number of imports which must be checked before this unit can
@@ -197,6 +197,10 @@ struct UnitInfo {
   // A list of incoming imports. This will be empty for `impl` files, because
   // imports only touch `api` files.
   llvm::SmallVector<UnitInfo*> incoming_imports;
+
+  // True if this is an `impl` file and an `api` implicit import has
+  // successfully been added. Used for determining the number of import IRs.
+  bool has_api_for_impl = false;
 };
 
 // Add imports to the root block.
@@ -207,6 +211,10 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   size_t num_irs = context.import_irs().size();
   for (auto& [_, package_imports] : unit_info.package_imports_map) {
     num_irs += package_imports.imports.size();
+  }
+  if (unit_info.has_api_for_impl) {
+    // One of the IRs replaces ImportIRId::ApiForImpl.
+    --num_irs;
   }
   context.import_ir_constant_values().resize(
       num_irs, SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
@@ -232,10 +240,15 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
   if (self_import != unit_info.package_imports_map.end()) {
     bool error_in_import = self_import->second.has_load_error;
+    const auto& packaging = context.parse_tree().packaging_directive();
+    auto current_library_id =
+        packaging ? packaging->names.library_id : StringLiteralValueId::Invalid;
     for (const auto& import : self_import->second.imports) {
+      bool is_api_for_impl = current_library_id == import.names.library_id;
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
       ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import.names.node_id, import_sem_ir);
+                                      import.names.node_id, is_api_for_impl,
+                                      import_sem_ir);
       error_in_import |= import_sem_ir.name_scopes()
                              .Get(SemIR::NameScopeId::Package)
                              .has_error;
@@ -271,7 +284,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
   }
 
   CARBON_CHECK(context.import_irs().size() == num_irs)
-      << "Created an unexpected number of IRs";
+      << "Created an unexpected number of IRs: expected " << num_irs
+      << ", have " << context.import_irs().size();
 }
 
 namespace {
@@ -901,6 +915,12 @@ static auto TrackImport(
     package_imports_it->second.imports.push_back({import, api->second});
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
+
+    // If this is the implicit import, note it was successfully imported.
+    if (!explicit_import_map) {
+      CARBON_CHECK(!import.package_id.is_valid());
+      unit_info.has_api_for_impl = true;
+    }
   } else {
     // The imported api is missing.
     package_imports_it->second.has_load_error = true;
@@ -1067,6 +1087,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // on a part of it.
     // TODO: Better identify cycles, maybe try to untangle them.
     for (auto& unit_info : unit_infos) {
+      const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
       if (unit_info.imports_remaining > 0) {
         for (auto& [package_id, package_imports] :
              unit_info.package_imports_map) {
@@ -1084,6 +1105,10 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.
               package_imports.has_load_error = true;
+              if (packaging && !package_id.is_valid() &&
+                  packaging->names.library_id == import_it->names.library_id) {
+                unit_info.has_api_for_impl = false;
+              }
               import_it = package_imports.imports.erase(import_it);
             }
           }

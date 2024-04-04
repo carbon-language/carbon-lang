@@ -210,9 +210,19 @@ static auto CopyEnclosingNameScopesFromImportIR(
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
+                                     bool is_api_for_impl,
                                      const SemIR::File& import_sem_ir) -> void {
-  auto ir_id =
-      context.import_irs().Add({.node_id = node_id, .sem_ir = &import_sem_ir});
+  auto ir_id = SemIR::ImportIRId::Invalid;
+  if (is_api_for_impl) {
+    ir_id = SemIR::ImportIRId::ApiForImpl;
+    auto& import_ir = context.import_irs().Get(ir_id);
+    CARBON_CHECK(import_ir.sem_ir == nullptr) << "ApiForImpl is only set once";
+    import_ir = {.node_id = node_id, .sem_ir = &import_sem_ir};
+  } else {
+    ir_id = context.import_irs().Add(
+        {.node_id = node_id, .sem_ir = &import_sem_ir});
+  }
+
   context.import_ir_constant_values()[ir_id.index].Set(
       SemIR::InstId::PackageNamespace,
       context.constant_values().Get(SemIR::InstId::PackageNamespace));

@@ -56,7 +56,7 @@ fn NS();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir2, inst+1, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc17: <function> = fn_decl @.1 [template] {}

@@ -238,8 +238,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loc_28 [template = imports.%F2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loc_28 [template = imports.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -270,8 +270,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -308,8 +308,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+1, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+3, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -330,9 +330,9 @@ fn Other.G() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+1, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+1, loaded [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loaded [template = imports.%F]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
