@@ -209,6 +209,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "No callee in function call.";
 
+    case SemIR::BuiltinFunctionKind::BoolMakeType:
+    case SemIR::BuiltinFunctionKind::FloatMakeType:
+    case SemIR::BuiltinFunctionKind::IntMakeType32:
+      context.SetLocal(inst_id, context.GetTypeAsValue());
+      return;
+
     case SemIR::BuiltinFunctionKind::IntNegate: {
       // Lower `-x` as `0 - x`.
       auto* operand = context.GetValue(arg_ids[0]);
