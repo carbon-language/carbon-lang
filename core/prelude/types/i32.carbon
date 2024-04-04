@@ -2,21 +2,29 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "i32" api;
+package Core library "prelude/types/i32" api;
 
 import library "prelude/operators";
+
+// TODO: Remove these once prelude/operators re-exports their contents.
+import library "prelude/operators/arithmetic";
+import library "prelude/operators/bitwise";
+import library "prelude/operators/comparison";
 
 impl i32 as Add {
   fn Op[self: Self](other: Self) -> Self = "int.add";
 }
 impl i32 as AddAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
+    // TODO: Once operator lookup works inside Core.
+    // *self = *self + other;
+    *self = self->(Add.Op)(other);
   }
 }
 impl i32 as Inc {
   fn Op[addr self: Self*]() {
-    *self += 1;
+    // *self += 1;
+    self->(AddAssign.Op)(1);
   }
 }
 
@@ -25,7 +33,8 @@ impl i32 as BitAnd {
 }
 impl i32 as BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self & other;
+    // *self = *self & other;
+    *self = self->(BitAnd.Op)(other);
   }
 }
 
@@ -38,7 +47,8 @@ impl i32 as BitOr {
 }
 impl i32 as BitOrAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self | other;
+    // *self = *self | other;
+    *self = self->(BitOr.Op)(other);
   }
 }
 
@@ -47,7 +57,8 @@ impl i32 as BitXor {
 }
 impl i32 as BitXorAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self ^ other;
+    // *self = *self ^ other;
+    *self = self->(BitXor.Op)(other);
   }
 }
 
@@ -56,7 +67,8 @@ impl i32 as Div {
 }
 impl i32 as DivAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self / other;
+    // *self = *self / other;
+    *self = self->(Div.Op)(other);
   }
 }
 
@@ -70,7 +82,8 @@ impl i32 as LeftShift {
 }
 impl i32 as LeftShiftAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self << other;
+    // *self = *self << other;
+    *self = self->(LeftShift.Op)(other);
   }
 }
 
@@ -79,7 +92,8 @@ impl i32 as Mod {
 }
 impl i32 as ModAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self % other;
+    // *self = *self % other;
+    *self = self->(Mod.Op)(other);
   }
 }
 
@@ -88,7 +102,8 @@ impl i32 as Mul {
 }
 impl i32 as MulAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self * other;
+    // *self = *self * other;
+    *self = self->(Mul.Op)(other);
   }
 }
 
@@ -109,7 +124,8 @@ impl i32 as RightShift {
 }
 impl i32 as RightShiftAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self >> other;
+    // *self = *self >> other;
+    *self = self->(RightShift.Op)(other);
   }
 }
 
@@ -118,11 +134,13 @@ impl i32 as Sub {
 }
 impl i32 as SubAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self - other;
+    // *self = *self - other;
+    *self = self->(Sub.Op)(other);
   }
 }
 impl i32 as Dec {
   fn Op[addr self: Self*]() {
-    *self -= 1;
+    // *self -= 1;
+    self->(SubAssign.Op)(1);
   }
 }
