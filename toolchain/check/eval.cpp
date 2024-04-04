@@ -302,16 +302,16 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   return context.constant_values().Get(elements[index_val.getZExtValue()]);
 }
 
-// Enforces that the byte width is 64 for a float.
-static auto ValidateFloatByteWidth(Context& context, SemIRLoc loc,
-                                   SemIR::InstId inst_id) -> bool {
+// Enforces that the bit width is 64 for a float.
+static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+                                  SemIR::InstId inst_id) -> bool {
   auto inst = context.insts().GetAs<SemIR::IntLiteral>(inst_id);
   if (context.ints().Get(inst.int_id) == 64) {
     return true;
   }
 
-  CARBON_DIAGNOSTIC(CompileTimeFloatByteWidth, Error, "Byte width must be 64.");
-  context.emitter().Emit(loc, CompileTimeFloatByteWidth);
+  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "Bit width must be 64.");
+  context.emitter().Emit(loc, CompileTimeFloatBitWidth);
   return false;
 }
 
@@ -510,27 +510,22 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "Not a builtin function.";
 
-    case SemIR::BuiltinFunctionKind::IntMake32: {
-      if (phase != Phase::Template) {
-        break;
-      }
+    case SemIR::BuiltinFunctionKind::IntMakeType32: {
       return context.constant_values().Get(SemIR::InstId::BuiltinIntType);
     }
 
-    case SemIR::BuiltinFunctionKind::FloatMake: {
+    case SemIR::BuiltinFunctionKind::FloatMakeType: {
+      // TODO: Support a symbolic constant width.
       if (phase != Phase::Template) {
         break;
       }
-      if (!ValidateFloatByteWidth(context, loc, arg_ids[0])) {
+      if (!ValidateFloatBitWidth(context, loc, arg_ids[0])) {
         return SemIR::ConstantId::Error;
       }
       return context.constant_values().Get(SemIR::InstId::BuiltinFloatType);
     }
 
-    case SemIR::BuiltinFunctionKind::BoolMake: {
-      if (phase != Phase::Template) {
-        break;
-      }
+    case SemIR::BuiltinFunctionKind::BoolMakeType: {
       return context.constant_values().Get(SemIR::InstId::BuiltinBoolType);
     }
 

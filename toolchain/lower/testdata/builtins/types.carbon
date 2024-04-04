@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 
-fn Int() -> type = "int.make_32";
-fn Float(size: i32) -> type = "float.make";
-fn Bool() -> type = "bool.make";
+fn Int() -> type = "int.make_type_32";
+fn Float(size: i32) -> type = "float.make_type";
+fn Bool() -> type = "bool.make_type";
 
 fn F() {
   var i: Int() = 0;

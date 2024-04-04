@@ -70,7 +70,8 @@ using Bool = BuiltinType<InstId::BuiltinBoolType>;
 using AnyInt = BuiltinType<InstId::BuiltinIntType>;
 
 // Constraint that requires the type to be the type type.
-using TypeT = BuiltinType<InstId::BuiltinTypeType>;
+using Type = BuiltinType<InstId::BuiltinTypeType>;
+
 }  // namespace
 
 // Validates that this builtin has a signature matching the specified signature.
@@ -137,16 +138,16 @@ constexpr BuiltinInfo None = {"", nullptr};
 
 // Returns the `i32` type. Doesn't take a bit size because we need an integer
 // type as a basis for that.
-constexpr BuiltinInfo IntMake32 = {"int.make_32",
-                                   ValidateSignature<auto()->TypeT>};
+constexpr BuiltinInfo IntMakeType32 = {"int.make_type_32",
+                                       ValidateSignature<auto()->Type>};
 
 // Returns float types, such as `f64`. Currently only supports `f64`.
-constexpr BuiltinInfo FloatMake = {"float.make",
-                                   ValidateSignature<auto(IntT)->TypeT>};
+constexpr BuiltinInfo FloatMakeType = {"float.make_type",
+                                       ValidateSignature<auto(IntT)->Type>};
 
 // Returns the `bool` type.
-constexpr BuiltinInfo BoolMake = {"bool.make",
-                                  ValidateSignature<auto()->TypeT>};
+constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
+                                      ValidateSignature<auto()->Type>};
 
 // "int.negate": integer negation.
 constexpr BuiltinInfo IntNegate = {"int.negate",
