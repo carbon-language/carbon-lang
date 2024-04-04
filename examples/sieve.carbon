@@ -29,7 +29,7 @@ impl i32 as Core.BitAnd {
 }
 impl i32 as Core.BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
+    *self = *self & other;
   }
 }
 
@@ -42,7 +42,7 @@ impl i32 as Core.BitOr {
 }
 impl i32 as Core.BitOrAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
+    *self = *self | other;
   }
 }
 
