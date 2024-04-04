@@ -119,7 +119,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
   // TODO: Likely want a different filename on Windows.
   auto empty_file = MakeTestFile("");
   EXPECT_FALSE(driver_
-                   .RunCommand({"compile", "--disable-prelude-import",
+                   .RunCommand({"compile", "--no-prelude-import",
                                 "--output=/dev/empty", empty_file})
                    .success);
   EXPECT_THAT(test_error_stream_.TakeStr(),
@@ -129,7 +129,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
 TEST_F(DriverTest, DumpTokens) {
   auto file = MakeTestFile("Hello World");
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--disable-prelude-import",
+                  .RunCommand({"compile", "--no-prelude-import",
                                "--phase=lex", "--dump-tokens", file})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -141,7 +141,7 @@ TEST_F(DriverTest, DumpTokens) {
 TEST_F(DriverTest, DumpParseTree) {
   auto file = MakeTestFile("var v: () = ();");
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--disable-prelude-import",
+                  .RunCommand({"compile", "--no-prelude-import",
                                "--phase=parse", "--dump-parse-tree", file})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -155,7 +155,7 @@ TEST_F(DriverTest, StdoutOutput) {
   MakeTestFile("fn Main() {}", "test.carbon");
 
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--disable-prelude-import",
+                  .RunCommand({"compile", "--no-prelude-import",
                                "--output=-", "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -164,7 +164,7 @@ TEST_F(DriverTest, StdoutOutput) {
 
   EXPECT_TRUE(
       driver_
-          .RunCommand({"compile", "--disable-prelude-import", "--output=-",
+          .RunCommand({"compile", "--no-prelude-import", "--output=-",
                        "--force-obj-output", "test.carbon"})
           .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
@@ -187,7 +187,7 @@ TEST_F(DriverTest, FileOutput) {
   // Object output (the default) uses `.o`.
   // TODO: This should actually reflect the platform defaults.
   EXPECT_TRUE(
-      driver_.RunCommand({"compile", "--disable-prelude-import", "test.carbon"})
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
           .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Ensure we wrote an object file of some form with the correct name.
@@ -200,7 +200,7 @@ TEST_F(DriverTest, FileOutput) {
   // Assembly output uses `.s`.
   // TODO: This should actually reflect the platform defaults.
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--disable-prelude-import",
+                  .RunCommand({"compile", "--no-prelude-import",
                                "--asm-output", "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));

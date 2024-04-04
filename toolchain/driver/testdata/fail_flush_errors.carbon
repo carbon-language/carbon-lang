@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --disable-prelude-import %s
+// ARGS: compile --no-prelude-import %s
 //
 // AUTOUPDATE
 

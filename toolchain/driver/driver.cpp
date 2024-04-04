@@ -257,12 +257,15 @@ Dump the generated assembly to stdout after codegen.
         [&](auto& arg_b) { arg_b.Set(&dump_asm); });
     b.AddFlag(
         {
-            .name = "disable-prelude-import",
+            .name = "prelude-import",
             .help = R"""(
-Disables the implicit prelude import.
+Whether to use the implicit prelude import. Enabled by default.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&disable_prelude_import); });
+        [&](auto& arg_b) {
+          arg_b.Default(true);
+          arg_b.Set(&prelude_import);
+        });
     b.AddStringOption(
         {
             .name = "exclude-dump-file-prefix",
@@ -294,7 +297,7 @@ Excludes files with the given prefix from dumps.
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
-  bool disable_prelude_import = false;
+  bool prelude_import = false;
 
   llvm::StringRef exclude_dump_file_prefix;
 };
@@ -734,7 +737,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
   Check::CheckParseTrees(builtins, llvm::MutableArrayRef(check_units),
-                         options.disable_prelude_import, vlog_stream_);
+                         options.prelude_import, vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {

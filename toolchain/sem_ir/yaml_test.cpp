@@ -37,7 +37,7 @@ TEST(SemIRTest, YAML) {
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
   auto run_result =
-      d.RunCommand({"compile", "--disable-prelude-import", "--phase=check",
+      d.RunCommand({"compile", "--no-prelude-import", "--phase=check",
                     "--dump-raw-sem-ir", "test.carbon"});
   EXPECT_TRUE(run_result.success);
 

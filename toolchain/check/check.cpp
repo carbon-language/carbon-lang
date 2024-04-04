@@ -1028,8 +1028,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 }
 
 auto CheckParseTrees(const SemIR::File& builtin_ir,
-                     llvm::MutableArrayRef<Unit> units,
-                     bool disable_prelude_imports,
+                     llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::raw_ostream* vlog_stream) -> void {
   // Prepare diagnostic emitters in case we run into issues during package
   // checking.
@@ -1060,10 +1059,10 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    // TODO: Add --disable-prelude-import for `/no_prelude/` subdirs.
+    // TODO: Add --no-prelude-import for `/no_prelude/` subdirs.
     IdentifierId core_ident_id =
         unit_info.unit->value_stores->identifiers().Add("Core");
-    if (!disable_prelude_imports &&
+    if (prelude_import &&
         !(packaging && packaging->names.package_id == core_ident_id)) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
