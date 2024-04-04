@@ -25,7 +25,7 @@ impl i32 as BitAnd {
 }
 impl i32 as BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
+    *self = *self & other;
   }
 }
 
@@ -38,7 +38,7 @@ impl i32 as BitOr {
 }
 impl i32 as BitOrAssign {
   fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
+    *self = *self | other;
   }
 }
 
