@@ -4,7 +4,7 @@
 
 package Core library "i32" api;
 
-import library "operators";
+import library "prelude/operators";
 
 impl i32 as Add {
   fn Op[self: Self](other: Self) -> Self = "int.add";
@@ -12,6 +12,11 @@ impl i32 as Add {
 impl i32 as AddAssign {
   fn Op[addr self: Self*](other: Self) {
     *self = *self + other;
+  }
+}
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self += 1;
   }
 }
 
@@ -46,12 +51,6 @@ impl i32 as BitXorAssign {
   }
 }
 
-impl i32 as Dec {
-  fn Op[addr self: Self*]() {
-    *self = *self - 1;
-  }
-}
-
 impl i32 as Div {
   fn Op[self: Self](other: Self) -> Self = "int.div";
 }
@@ -64,12 +63,6 @@ impl i32 as DivAssign {
 impl i32 as Eq {
   fn Equal[self: Self](other: Self) -> bool = "int.eq";
   fn NotEqual[self: Self](other: Self) -> bool = "int.neq";
-}
-
-impl i32 as Inc {
-  fn Op[addr self: Self*]() {
-    *self = *self + 1;
-  }
 }
 
 impl i32 as LeftShift {
@@ -126,5 +119,10 @@ impl i32 as Sub {
 impl i32 as SubAssign {
   fn Op[addr self: Self*](other: Self) {
     *self = *self - other;
+  }
+}
+impl i32 as Dec {
+  fn Op[addr self: Self*]() {
+    *self -= 1;
   }
 }

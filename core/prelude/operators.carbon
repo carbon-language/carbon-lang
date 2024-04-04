@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "operators" api;
+package Core library "prelude/operators" api;
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
