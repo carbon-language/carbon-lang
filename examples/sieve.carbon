@@ -4,11 +4,12 @@
 
 // Compute and return the number of primes less than 1000.
 
-import Core library "operators";
+import Core library "prelude/operators/arithmetic";
+import Core library "prelude/operators/comparison";
 
-// TODO: Copied from i32.carbon.
+// TODO: Copied from core/prelude/types/i32.carbon.
 // Remove the following, once we do cross-file impl lookup.
-// import Core library "i32";
+// import Core library "prelude/types/i32";
 
 impl i32 as Core.Add {
   fn Op[self: Self](other: Self) -> Self = "int.add";
@@ -24,37 +25,6 @@ impl i32 as Core.Inc {
   }
 }
 
-impl i32 as Core.BitAnd {
-  fn Op[self: Self](other: Self) -> Self = "int.and";
-}
-impl i32 as Core.BitAndAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self & other;
-  }
-}
-
-impl i32 as Core.BitComplement {
-  fn Op[self: Self]() -> Self = "int.complement";
-}
-
-impl i32 as Core.BitOr {
-  fn Op[self: Self](other: Self) -> Self = "int.or";
-}
-impl i32 as Core.BitOrAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self | other;
-  }
-}
-
-impl i32 as Core.BitXor {
-  fn Op[self: Self](other: Self) -> Self = "int.xor";
-}
-impl i32 as Core.BitXorAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self ^ other;
-  }
-}
-
 impl i32 as Core.Div {
   fn Op[self: Self](other: Self) -> Self = "int.div";
 }
@@ -67,15 +37,6 @@ impl i32 as Core.DivAssign {
 impl i32 as Core.Eq {
   fn Equal[self: Self](other: Self) -> bool = "int.eq";
   fn NotEqual[self: Self](other: Self) -> bool = "int.neq";
-}
-
-impl i32 as Core.LeftShift {
-  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
-}
-impl i32 as Core.LeftShiftAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self << other;
-  }
 }
 
 impl i32 as Core.Mod {
@@ -106,15 +67,6 @@ impl i32 as Core.Ordered {
   fn LessOrEquivalent[self: Self](other: Self) -> bool = "int.less_eq";
   fn Greater[self: Self](other: Self) -> bool = "int.greater";
   fn GreaterOrEquivalent[self: Self](other: Self) -> bool = "int.greater_eq";
-}
-
-impl i32 as Core.RightShift {
-  fn Op[self: Self](other: Self) -> Self = "int.right_shift";
-}
-impl i32 as Core.RightShiftAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self >> other;
-  }
 }
 
 impl i32 as Core.Sub {
