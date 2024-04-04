@@ -58,17 +58,17 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  auto const_id = sem_ir().constant_values().Get(inst_id);
+  if (const_id.is_constant()) {
+    inst_id = const_id.inst_id();
+  }
+
   // All builtins are types, with the same empty lowered value.
   if (inst_id.is_builtin()) {
     return GetTypeAsValue();
   }
 
   auto target = sem_ir().insts().Get(inst_id);
-  while (auto alias = target.TryAs<SemIR::BindAlias>()) {
-    inst_id = alias->value_id;
-    target = sem_ir().insts().Get(inst_id);
-  }
-
   if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
   }
