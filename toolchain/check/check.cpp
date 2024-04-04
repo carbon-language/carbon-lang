@@ -1029,6 +1029,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 
 auto CheckParseTrees(const SemIR::File& builtin_ir,
                      llvm::MutableArrayRef<Unit> units,
+                     bool disable_prelude_imports,
                      llvm::raw_ostream* vlog_stream) -> void {
   // Prepare diagnostic emitters in case we run into issues during package
   // checking.
@@ -1047,17 +1048,31 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
-    if (const auto& packaging =
-            unit_info.unit->parse_tree->packaging_directive()) {
-      if (packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
-        // An `impl` has an implicit import of its `api`.
-        auto implicit_names = packaging->names;
-        implicit_names.package_id = IdentifierId::Invalid;
-        TrackImport(api_map, nullptr, unit_info, implicit_names);
-      }
+    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+      // An `impl` has an implicit import of its `api`.
+      auto implicit_names = packaging->names;
+      implicit_names.package_id = IdentifierId::Invalid;
+      TrackImport(api_map, nullptr, unit_info, implicit_names);
     }
 
     llvm::DenseMap<ImportKey, Parse::NodeId> explicit_import_map;
+
+    // Add the prelude import. It's added to explicit_import_map so that it can
+    // conflict with an explicit import of the prelude.
+    // TODO: Add --disable-prelude-import for `/no_prelude/` subdirs.
+    IdentifierId core_ident_id =
+        unit_info.unit->value_stores->identifiers().Add("Core");
+    if (!disable_prelude_imports &&
+        !(packaging && packaging->names.package_id == core_ident_id)) {
+      auto prelude_id =
+          unit_info.unit->value_stores->string_literal_values().Add("prelude");
+      TrackImport(api_map, &explicit_import_map, unit_info,
+                  {.node_id = Parse::InvalidNodeId(),
+                   .package_id = core_ident_id,
+                   .library_id = prelude_id});
+    }
+
     for (const auto& import : unit_info.unit->parse_tree->imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import);
     }

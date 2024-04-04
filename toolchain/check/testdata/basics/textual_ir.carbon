@@ -2,24 +2,24 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --dump-sem-ir %s
+// ARGS: compile --disable-prelude-import --phase=check --dump-sem-ir %s
 //
 // Check that the command-line flag to dump textual IR works.
 //
 // AUTOUPDATE
 
-fn Foo(n: i32) -> (i32, i32, f64) {
-  return (n, 2, 3.4);
+fn Foo(n: ()) -> ((), ()) {
+  return (n, ());
 }
 
 // CHECK:STDOUT: --- textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (i32, i32, f64) [template]
-// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32, f64) [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.5: f64 = real_literal 34e-1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: type = tuple_type ((), ()) [template]
+// CHECK:STDOUT:   %.3: type = ptr_type ((), ()) [template]
+// CHECK:STDOUT:   %.4: () = tuple_value () [template]
+// CHECK:STDOUT:   %.5: ((), ()) = tuple_value (%.4, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,28 +27,33 @@ fn Foo(n: i32) -> (i32, i32, f64) {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
-// CHECK:STDOUT:     %n.loc11_8.1: i32 = param n
-// CHECK:STDOUT:     @Foo.%n: i32 = bind_name n, %n.loc11_8.1
-// CHECK:STDOUT:     %.loc11_33.1: (type, type, type) = tuple_literal (i32, i32, f64)
-// CHECK:STDOUT:     %.loc11_33.2: type = converted %.loc11_33.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     @Foo.%return: ref (i32, i32, f64) = var <return slot>
+// CHECK:STDOUT:     %.loc11_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %n.loc11_8.1: () = param n
+// CHECK:STDOUT:     @Foo.%n: () = bind_name n, %n.loc11_8.1
+// CHECK:STDOUT:     %.loc11_20.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_24.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_25.1: ((), ()) = tuple_literal (%.loc11_20.1, %.loc11_24.1)
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_24.2: type = converted %.loc11_24.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %.loc11_25.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     @Foo.%return: ref ((), ()) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n: i32) -> %return: (i32, i32, f64) {
+// CHECK:STDOUT: fn @Foo(%n: ()) -> %return: ((), ()) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc12_14: i32 = int_literal 2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_17: f64 = real_literal 34e-1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_20.1: (i32, i32, f64) = tuple_literal (%n.ref, %.loc12_14, %.loc12_17)
-// CHECK:STDOUT:   %.loc12_20.2: ref i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc12_20.3: init i32 = initialize_from %n.ref to %.loc12_20.2
-// CHECK:STDOUT:   %.loc12_20.4: ref i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc12_20.5: init i32 = initialize_from %.loc12_14 to %.loc12_20.4 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_20.6: ref f64 = tuple_access %return, element2
-// CHECK:STDOUT:   %.loc12_20.7: init f64 = initialize_from %.loc12_17 to %.loc12_20.6 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_20.8: init (i32, i32, f64) = tuple_init (%.loc12_20.3, %.loc12_20.5, %.loc12_20.7) to %return
-// CHECK:STDOUT:   %.loc12_20.9: init (i32, i32, f64) = converted %.loc12_20.1, %.loc12_20.8
-// CHECK:STDOUT:   return %.loc12_20.9
+// CHECK:STDOUT:   %n.ref: () = name_ref n, %n
+// CHECK:STDOUT:   %.loc12_15.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_16.1: ((), ()) = tuple_literal (%n.ref, %.loc12_15.1)
+// CHECK:STDOUT:   %.loc12_16.2: ref () = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc12_11.1: init () = tuple_init () to %.loc12_16.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_11.2: init () = converted %n.ref, %.loc12_11.1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.3: ref () = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc12_15.2: init () = tuple_init () to %.loc12_16.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_15.3: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.4: init ((), ()) = tuple_init (%.loc12_11.2, %.loc12_15.3) to %return [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_16.5: init ((), ()) = converted %.loc12_16.1, %.loc12_16.4 [template = constants.%.5]
+// CHECK:STDOUT:   return %.loc12_16.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -94,6 +94,7 @@ extern class ExternDefined {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .DuplicatePrivate = %DuplicatePrivate.decl
 // CHECK:STDOUT:     .TwoAccess = %TwoAccess.decl
 // CHECK:STDOUT:     .TwoAbstract = %TwoAbstract.decl
@@ -102,6 +103,7 @@ extern class ExternDefined {}
 // CHECK:STDOUT:     .AbstractAndBase = %AbstractAndBase.decl
 // CHECK:STDOUT:     .ExternDefined = %ExternDefined.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %DuplicatePrivate.decl: type = class_decl @DuplicatePrivate [template = constants.%DuplicatePrivate] {}
 // CHECK:STDOUT:   %TwoAccess.decl: type = class_decl @TwoAccess [template = constants.%TwoAccess] {}
 // CHECK:STDOUT:   %TwoAbstract.decl: type = class_decl @TwoAbstract [template = constants.%TwoAbstract] {}

@@ -31,10 +31,12 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .a_ptr_ref = %a_ptr_ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc4: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref const i32 = var <return slot>
@@ -73,12 +75,14 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .F = %import_ref.1
 // CHECK:STDOUT:     .a_ref = %import_ref.2
 // CHECK:STDOUT:     .a_ptr_ref = %import_ref.3
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir1, inst+7, loc_12
-// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir1, inst+15, loc_22
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir1, inst+8, loc_12
+// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir1, inst+16, loc_22
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc6_8: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_17: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref const i32* = var a

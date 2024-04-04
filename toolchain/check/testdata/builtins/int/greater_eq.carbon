@@ -42,6 +42,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .GreaterEq = %GreaterEq
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:     .True = %True.decl
@@ -49,6 +50,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %GreaterEq: <function> = fn_decl @GreaterEq [template] {
 // CHECK:STDOUT:     %a.loc2_14.1: i32 = param a
 // CHECK:STDOUT:     @GreaterEq.%a: i32 = bind_name a, %a.loc2_14.1

@@ -47,8 +47,10 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Deref = %Deref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Deref: <function> = fn_decl @Deref [template] {
 // CHECK:STDOUT:     %n.loc7_10.1: i32 = param n
 // CHECK:STDOUT:     @Deref.%n: i32 = bind_name n, %n.loc7_10.1

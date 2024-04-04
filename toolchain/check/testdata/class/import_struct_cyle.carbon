@@ -39,9 +39,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Cycle = %Cycle.decl.loc4
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc6_18: type = ptr_type Cycle [template = constants.%.1]
@@ -77,13 +79,15 @@ fn Run() {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cycle = %import_ref.1
 // CHECK:STDOUT:     .a = %import_ref.2
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir2, inst+11, loc_14
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir2, inst+12, loc_14
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir2, inst+18, loc_24 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir2, inst+19, loc_24 [template = imports.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {

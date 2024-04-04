@@ -44,8 +44,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Float = %Float
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float: <function> = fn_decl @Float [template] {
 // CHECK:STDOUT:     %size.loc4_10.1: i32 = param size
 // CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %size.loc4_10.1
@@ -65,10 +67,12 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Float = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .GetFloat = %GetFloat
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_11 [template = imports.%Float]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Float]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref: <function> = name_ref Float, %import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_13.1: init type = call %Float.ref(%.loc6_14) [template = f64]
@@ -112,11 +116,13 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Float = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .invalid_float = %invalid_float
 // CHECK:STDOUT:     .dyn_size = %dyn_size
 // CHECK:STDOUT:     .dyn = %dyn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_11 [template = imports.%Float]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Float]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref.loc10: <function> = name_ref Float, %import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_25.1: init type = call %Float.ref.loc10(%.loc10_26) [template = <error>]

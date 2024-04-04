@@ -141,6 +141,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .CallClassFunction = %CallClassFunction
 // CHECK:STDOUT:     .global_var = %global_var
@@ -154,6 +155,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     .CallTakeIncomplete = %CallTakeIncomplete
 // CHECK:STDOUT:     .CallReturnIncomplete = %CallReturnIncomplete
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %CallClassFunction: <function> = fn_decl @CallClassFunction [template] {}

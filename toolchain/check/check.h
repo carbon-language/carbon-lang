@@ -34,6 +34,7 @@ struct Unit {
 // checking.
 auto CheckParseTrees(const SemIR::File& builtin_ir,
                      llvm::MutableArrayRef<Unit> units,
+                     bool disable_prelude_imports,
                      llvm::raw_ostream* vlog_stream) -> void;
 
 }  // namespace Carbon::Check

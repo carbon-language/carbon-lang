@@ -27,10 +27,12 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Or = %Or
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Or: <function> = fn_decl @Or [template] {
 // CHECK:STDOUT:     %a.loc2_7.1: i32 = param a
 // CHECK:STDOUT:     @Or.%a: i32 = bind_name a, %a.loc2_7.1

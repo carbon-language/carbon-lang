@@ -23,10 +23,12 @@ abstract class C {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl.loc7
 // CHECK:STDOUT:     .B = %B.decl.loc8
 // CHECK:STDOUT:     .C = %C.decl.loc9
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl.loc8: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C [template = constants.%C] {}

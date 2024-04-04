@@ -47,11 +47,13 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .tuple_copy = %tuple_copy
 // CHECK:STDOUT:     .struct_copy = %struct_copy
 // CHECK:STDOUT:     .tuple_index = %tuple_index
 // CHECK:STDOUT:     .struct_access = %struct_access
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7_26.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc7_26.2: type = converted %.loc7_26.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %tuple_copy.var: ref (i32, i32) = var tuple_copy

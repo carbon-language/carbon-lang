@@ -12,8 +12,10 @@ fn Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo.loc7
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo.loc7: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT:   %Foo.loc9: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT: }

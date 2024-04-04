@@ -46,8 +46,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
@@ -63,8 +65,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .B1 = %B1
 // CHECK:STDOUT:     .B2 = %B2
@@ -93,18 +97,20 @@ fn Run() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .B1 = %import_ref.3
 // CHECK:STDOUT:     .B2 = %import_ref.4
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+2, loc_33 [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir3, inst+2, loc_39 [template = imports.%B1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+5, loc_45 [template = imports.%B2]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+3, loc_33 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir3, inst+3, loc_39 [template = imports.%B1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+6, loc_45 [template = imports.%B2]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}

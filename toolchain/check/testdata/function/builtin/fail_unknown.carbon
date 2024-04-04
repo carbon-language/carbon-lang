@@ -13,8 +13,10 @@ fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .UnknownBuiltin = %UnknownBuiltin
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %UnknownBuiltin: <function> = fn_decl @UnknownBuiltin [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

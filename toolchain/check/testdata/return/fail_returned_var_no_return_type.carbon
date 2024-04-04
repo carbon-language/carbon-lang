@@ -23,8 +23,10 @@ fn Procedure() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Procedure = %Procedure
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Procedure: <function> = fn_decl @Procedure [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

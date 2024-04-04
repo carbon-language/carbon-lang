@@ -45,9 +45,11 @@ var b: (((i32,), i32), (i32, i32)) = b_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .b_ref = %b_ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc4_17.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a_ref.var: ref (i32,) = var a_ref
@@ -122,11 +124,13 @@ var b: (((i32,), i32), (i32, i32)) = b_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a_ref = %import_ref.1
 // CHECK:STDOUT:     .b_ref = %import_ref.2
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref (i32,) = import_ref ir1, inst+6, loc_13
-// CHECK:STDOUT:   %import_ref.2: ref (((i32,), i32), (i32, i32)) = import_ref ir1, inst+34, loc_35
+// CHECK:STDOUT:   %import_ref.1: ref (i32,) = import_ref ir1, inst+7, loc_13
+// CHECK:STDOUT:   %import_ref.2: ref (((i32,), i32), (i32, i32)) = import_ref ir1, inst+35, loc_35
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc4_13.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc4_13.2: type = converted %.loc4_13.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref (i32,) = var a

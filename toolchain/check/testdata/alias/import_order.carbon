@@ -8,7 +8,8 @@
 
 library "a" api;
 
-alias a = i32;
+class C { var v: i32; }
+alias a = C;
 alias b = a;
 alias c = b;
 alias d = c;
@@ -20,84 +21,140 @@ library "b" api;
 import library "a";
 
 // Access imports in reverse order of export.
-var d_val: d = 1;
-var c_val: c = d_val;
-var b_val: b = c_val;
-var a_val: a = b_val;
-var i32_val: i32 = a_val;
+var d_val: d = {.v = 0};
+var c_val: c = {.v = d_val.v};
+var b_val: b = {.v = c_val.v};
+var a_val: a = {.v = b_val.v};
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type C, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.v: i32} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: type = bind_alias a, i32 [template = i32]
-// CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = i32]
-// CHECK:STDOUT:   %b: type = bind_alias b, %a [template = i32]
-// CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = i32]
-// CHECK:STDOUT:   %c: type = bind_alias c, %b [template = i32]
-// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = i32]
-// CHECK:STDOUT:   %d: type = bind_alias d, %c [template = i32]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = constants.%C]
+// CHECK:STDOUT:   %b: type = bind_alias b, %a [template = constants.%C]
+// CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
+// CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
+// CHECK:STDOUT:   %d: type = bind_alias d, %c [template = constants.%C]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc4: <unbound element of class C> = field_decl v, element0 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .v = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.v: i32} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type {.v: i32} [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %.4: C = struct_value (%.3) [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type C, i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a = %import_ref.1
-// CHECK:STDOUT:     .b = %import_ref.2
-// CHECK:STDOUT:     .c = %import_ref.3
-// CHECK:STDOUT:     .d = %import_ref.4
+// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .a = %import_ref.2
+// CHECK:STDOUT:     .b = %import_ref.3
+// CHECK:STDOUT:     .c = %import_ref.4
+// CHECK:STDOUT:     .d = %import_ref.5
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .d_val = %d_val
 // CHECK:STDOUT:     .c_val = %c_val
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .a_val = %a_val
-// CHECK:STDOUT:     .i32_val = %i32_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_32 [template = i32]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+3, loc_25 [template = i32]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+5, loc_18 [template = i32]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+7, loc_11 [template = i32]
-// CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.4 [template = i32]
-// CHECK:STDOUT:   %d_val.var: ref i32 = var d_val
-// CHECK:STDOUT:   %d_val: ref i32 = bind_name d_val, %d_val.var
-// CHECK:STDOUT:   %c.ref: type = name_ref c, %import_ref.3 [template = i32]
-// CHECK:STDOUT:   %c_val.var: ref i32 = var c_val
-// CHECK:STDOUT:   %c_val: ref i32 = bind_name c_val, %c_val.var
-// CHECK:STDOUT:   %b.ref: type = name_ref b, %import_ref.2 [template = i32]
-// CHECK:STDOUT:   %b_val.var: ref i32 = var b_val
-// CHECK:STDOUT:   %b_val: ref i32 = bind_name b_val, %b_val.var
-// CHECK:STDOUT:   %a.ref: type = name_ref a, %import_ref.1 [template = i32]
-// CHECK:STDOUT:   %a_val.var: ref i32 = var a_val
-// CHECK:STDOUT:   %a_val: ref i32 = bind_name a_val, %a_val.var
-// CHECK:STDOUT:   %i32_val.var: ref i32 = var i32_val
-// CHECK:STDOUT:   %i32_val: ref i32 = bind_name i32_val, %i32_val.var
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+10, loc_51 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+12, loc_37 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+14, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+16, loc_11 [template = constants.%C]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C.decl: invalid = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir2, inst+5, loc_31 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]
+// CHECK:STDOUT:   %d_val.var: ref C = var d_val
+// CHECK:STDOUT:   %d_val: ref C = bind_name d_val, %d_val.var
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %import_ref.4 [template = constants.%C]
+// CHECK:STDOUT:   %c_val.var: ref C = var c_val
+// CHECK:STDOUT:   %c_val: ref C = bind_name c_val, %c_val.var
+// CHECK:STDOUT:   %b.ref: type = name_ref b, %import_ref.3 [template = constants.%C]
+// CHECK:STDOUT:   %b_val.var: ref C = var b_val
+// CHECK:STDOUT:   %b_val: ref C = bind_name b_val, %b_val.var
+// CHECK:STDOUT:   %a.ref: type = name_ref a, %import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %a_val.var: ref C = var a_val
+// CHECK:STDOUT:   %a_val: ref C = bind_name a_val, %a_val.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .v = file.%import_ref.6
+// CHECK:STDOUT:   .Self = file.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   assign file.%d_val.var, %.loc7
-// CHECK:STDOUT:   %d_val.ref: ref i32 = name_ref d_val, file.%d_val
-// CHECK:STDOUT:   %.loc8: i32 = bind_value %d_val.ref
-// CHECK:STDOUT:   assign file.%c_val.var, %.loc8
-// CHECK:STDOUT:   %c_val.ref: ref i32 = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %.loc9: i32 = bind_value %c_val.ref
-// CHECK:STDOUT:   assign file.%b_val.var, %.loc9
-// CHECK:STDOUT:   %b_val.ref: ref i32 = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %.loc10: i32 = bind_value %b_val.ref
-// CHECK:STDOUT:   assign file.%a_val.var, %.loc10
-// CHECK:STDOUT:   %a_val.ref: ref i32 = name_ref a_val, file.%a_val
-// CHECK:STDOUT:   %.loc11: i32 = bind_value %a_val.ref
-// CHECK:STDOUT:   assign file.%i32_val.var, %.loc11
+// CHECK:STDOUT:   %.loc7_22: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_23.1: {.v: i32} = struct_literal (%.loc7_22)
+// CHECK:STDOUT:   %.loc7_23.2: ref i32 = class_element_access file.%d_val.var, element0
+// CHECK:STDOUT:   %.loc7_23.3: init i32 = initialize_from %.loc7_22 to %.loc7_23.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_23.4: init C = class_init (%.loc7_23.3), file.%d_val.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_23.5: init C = converted %.loc7_23.1, %.loc7_23.4 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%d_val.var, %.loc7_23.5
+// CHECK:STDOUT:   %d_val.ref: ref C = name_ref d_val, file.%d_val
+// CHECK:STDOUT:   %v.ref.loc8: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc8_27.1: ref i32 = class_element_access %d_val.ref, element0
+// CHECK:STDOUT:   %.loc8_29.1: {.v: i32} = struct_literal (%.loc8_27.1)
+// CHECK:STDOUT:   %.loc8_27.2: i32 = bind_value %.loc8_27.1
+// CHECK:STDOUT:   %.loc8_29.2: ref i32 = class_element_access file.%c_val.var, element0
+// CHECK:STDOUT:   %.loc8_29.3: init i32 = initialize_from %.loc8_27.2 to %.loc8_29.2
+// CHECK:STDOUT:   %.loc8_29.4: init C = class_init (%.loc8_29.3), file.%c_val.var
+// CHECK:STDOUT:   %.loc8_29.5: init C = converted %.loc8_29.1, %.loc8_29.4
+// CHECK:STDOUT:   assign file.%c_val.var, %.loc8_29.5
+// CHECK:STDOUT:   %c_val.ref: ref C = name_ref c_val, file.%c_val
+// CHECK:STDOUT:   %v.ref.loc9: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc9_27.1: ref i32 = class_element_access %c_val.ref, element0
+// CHECK:STDOUT:   %.loc9_29.1: {.v: i32} = struct_literal (%.loc9_27.1)
+// CHECK:STDOUT:   %.loc9_27.2: i32 = bind_value %.loc9_27.1
+// CHECK:STDOUT:   %.loc9_29.2: ref i32 = class_element_access file.%b_val.var, element0
+// CHECK:STDOUT:   %.loc9_29.3: init i32 = initialize_from %.loc9_27.2 to %.loc9_29.2
+// CHECK:STDOUT:   %.loc9_29.4: init C = class_init (%.loc9_29.3), file.%b_val.var
+// CHECK:STDOUT:   %.loc9_29.5: init C = converted %.loc9_29.1, %.loc9_29.4
+// CHECK:STDOUT:   assign file.%b_val.var, %.loc9_29.5
+// CHECK:STDOUT:   %b_val.ref: ref C = name_ref b_val, file.%b_val
+// CHECK:STDOUT:   %v.ref.loc10: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %.loc10_27.1: ref i32 = class_element_access %b_val.ref, element0
+// CHECK:STDOUT:   %.loc10_29.1: {.v: i32} = struct_literal (%.loc10_27.1)
+// CHECK:STDOUT:   %.loc10_27.2: i32 = bind_value %.loc10_27.1
+// CHECK:STDOUT:   %.loc10_29.2: ref i32 = class_element_access file.%a_val.var, element0
+// CHECK:STDOUT:   %.loc10_29.3: init i32 = initialize_from %.loc10_27.2 to %.loc10_29.2
+// CHECK:STDOUT:   %.loc10_29.4: init C = class_init (%.loc10_29.3), file.%a_val.var
+// CHECK:STDOUT:   %.loc10_29.5: init C = converted %.loc10_29.1, %.loc10_29.4
+// CHECK:STDOUT:   assign file.%a_val.var, %.loc10_29.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

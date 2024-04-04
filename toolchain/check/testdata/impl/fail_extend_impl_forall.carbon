@@ -41,9 +41,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .GenericInterface = %GenericInterface.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %GenericInterface.decl: type = interface_decl @GenericInterface [template = constants.%.1] {
 // CHECK:STDOUT:     %T.loc11_28.1: type = param T
 // CHECK:STDOUT:     %T.loc11_28.2: type = bind_symbolic_name T, %T.loc11_28.1 [symbolic]

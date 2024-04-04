@@ -42,6 +42,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Less = %Less
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:     .True = %True.decl
@@ -49,6 +50,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Less: <function> = fn_decl @Less [template] {
 // CHECK:STDOUT:     %a.loc2_9.1: i32 = param a
 // CHECK:STDOUT:     @Less.%a: i32 = bind_name a, %a.loc2_9.1

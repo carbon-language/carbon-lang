@@ -20,8 +20,10 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .While = %While
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %While: <function> = fn_decl @While [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

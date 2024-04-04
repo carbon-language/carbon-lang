@@ -7,9 +7,17 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: ERROR: Semantics TODO: `missing or invalid operator interface`.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+15]]:10: ERROR: Name `Add` not found.
   // CHECK:STDERR:   return 12 + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+11]]:10: ERROR: Semantics TODO: `missing or invalid operator interface`.
+  // CHECK:STDERR:   return 12 + 3.4 + 12;
+  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+7]]:10: ERROR: Name `Add` not found.
+  // CHECK:STDERR:   return 12 + 3.4 + 12;
+  // CHECK:STDERR:          ^~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:10: ERROR: Semantics TODO: `missing or invalid operator interface`.
   // CHECK:STDERR:   return 12 + 3.4 + 12;
@@ -26,8 +34,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
@@ -35,9 +45,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_10: i32 = int_literal 12 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_15: f64 = real_literal 34e-1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_21: i32 = int_literal 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc25_10: i32 = int_literal 12 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc25_15: f64 = real_literal 34e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc25_21: i32 = int_literal 12 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

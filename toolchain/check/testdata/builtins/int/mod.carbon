@@ -68,10 +68,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Mod = %Mod
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Mod: <function> = fn_decl @Mod [template] {
 // CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
 // CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc2_8.1
@@ -127,10 +129,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Mod = %Mod
 // CHECK:STDOUT:     .Sub = %Sub
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Mod: <function> = fn_decl @Mod [template] {
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
 // CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc4_8.1
@@ -218,8 +222,10 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Mod = %Mod
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Mod: <function> = fn_decl @Mod [template] {
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
 // CHECK:STDOUT:     @Mod.%a: i32 = bind_name a, %a.loc4_8.1

@@ -24,7 +24,10 @@ let c: i32 = 0x8000_0000;
 // CHECK:STDOUT: --- fail_numeric_literal_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a: i32 = bind_name a, <error>
 // CHECK:STDOUT:   %b: i32 = bind_name b, <error>
 // CHECK:STDOUT:   %c: i32 = bind_name c, <error>

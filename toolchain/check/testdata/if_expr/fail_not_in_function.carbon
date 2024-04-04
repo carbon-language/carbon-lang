@@ -56,6 +56,6 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected instref inst+22>
+// CHECK:STDOUT:   .n = <unexpected instref inst+23>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
