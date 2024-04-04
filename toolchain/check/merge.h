@@ -15,8 +15,7 @@ struct InstForMerge {
   // The resolved instruction.
   SemIR::Inst inst;
   // The imported instruction, or invalid if not an import. This should
-  // typically only be used for the ImportIRId, but we only resolve that if
-  // needed.
+  // typically only be used for the ImportIRId, but we only load it if needed.
   SemIR::ImportIRInstId import_ir_inst_id;
 };
 
