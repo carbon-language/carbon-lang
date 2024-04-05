@@ -15,6 +15,9 @@ namespace Carbon::Check {
 auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
     -> void;
 
+// Load all impls declared in IRs imported into this context.
+auto ImportImpls(Context& context) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_REF_H_

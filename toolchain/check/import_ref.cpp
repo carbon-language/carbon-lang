@@ -301,7 +301,11 @@ class ImportRefResolver {
     if (!inst_id.is_valid()) {
       // Map scopes that aren't associated with an instruction to invalid
       // scopes. For now, such scopes aren't used, and we don't have a good way
-      // to rmmap them.
+      // to remap them.
+      return SemIR::NameScopeId::Invalid;
+    }
+    if (import_ir_.insts().Is<SemIR::ImplDecl>(inst_id)) {
+      // TODO: Import the scope for an `impl` definition.
       return SemIR::NameScopeId::Invalid;
     }
     auto const_id = GetLocalConstantId(inst_id);
@@ -408,6 +412,9 @@ class ImportRefResolver {
 
       case SemIR::InstKind::InterfaceDecl:
         return TryResolveTypedInst(inst.As<SemIR::InterfaceDecl>(), const_id);
+
+      case SemIR::InstKind::InterfaceWitness:
+        return TryResolveTypedInst(inst.As<SemIR::InterfaceWitness>());
 
       case SemIR::InstKind::InterfaceType:
         return TryResolveTypedInst(inst.As<SemIR::InterfaceType>());
@@ -834,6 +841,31 @@ class ImportRefResolver {
     return {interface_const_id};
   }
 
+  auto TryResolveTypedInst(SemIR::InterfaceWitness inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    llvm::SmallVector<SemIR::InstId> elements;
+    auto import_elements = import_ir_.inst_blocks().Get(inst.elements_id);
+    elements.reserve(import_elements.size());
+    for (auto import_elem_id : import_elements) {
+      if (auto const_id = GetLocalConstantId(import_elem_id);
+          const_id.is_valid()) {
+        elements.push_back(const_id.inst_id());
+      }
+    }
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    CARBON_CHECK(elements.size() == import_elements.size())
+        << "Failed to import an element without adding new work.";
+
+    auto elements_id = context_.inst_blocks().Add(elements);
+    return {TryEvalInst(
+        context_, SemIR::InstId::Invalid,
+        SemIR::InterfaceWitness{
+            context_.GetBuiltinType(SemIR::BuiltinKind::WitnessType),
+            elements_id})};
+  }
+
   auto TryResolveTypedInst(SemIR::PointerType inst) -> ResolveResult {
     auto initial_work = work_stack_.size();
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
@@ -984,6 +1016,46 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
     }
     default:
       return;
+  }
+}
+
+// Imports the impl `import_impl_id` from the imported IR `import_ir`.
+static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
+                       const SemIR::File& import_ir,
+                       SemIR::ImplId import_impl_id) -> void {
+  // Resolve the imported impl to a local impl ID.
+  ImportRefResolver resolver(context, import_ir_id);
+  const auto& import_impl = import_ir.impls().Get(import_impl_id);
+  auto self_id = resolver.ResolveType(import_impl.self_id);
+  auto constraint_id = resolver.ResolveType(import_impl.constraint_id);
+
+  // Import the definition if the impl is defined.
+  // TODO: Do we need to check for multiple definitions?
+  auto impl_id = context.impls().LookupOrAdd(self_id, constraint_id);
+  if (import_impl.is_defined()) {
+    // TODO: Create a scope for the `impl` if necessary.
+    // TODO: Consider importing the definition_id.
+
+    auto& impl = context.impls().Get(impl_id);
+    impl.witness_id = context.AddImportRef(
+        {.ir_id = import_ir_id, .inst_id = import_impl.witness_id});
+  }
+}
+
+// TODO: This doesn't belong in this file. Consider moving the import resolver
+// and this file elsewhere.
+auto ImportImpls(Context& context) -> void {
+  for (auto [import_index, import_ir] :
+       llvm::enumerate(context.import_irs().array_ref())) {
+    if (!import_ir.sem_ir) {
+      continue;
+    }
+
+    auto import_ir_id = SemIR::ImportIRId(import_index);
+    for (auto impl_index : llvm::seq(import_ir.sem_ir->impls().size())) {
+      auto impl_id = SemIR::ImplId(impl_index);
+      ImportImpl(context, import_ir_id, *import_ir.sem_ir, impl_id);
+    }
   }
 }
 

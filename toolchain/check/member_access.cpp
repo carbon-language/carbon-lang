@@ -5,6 +5,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/inst.h"
@@ -120,7 +121,7 @@ static auto ScopeNeedsImplLookup(Context& context,
 // Given a type and an interface, searches for an impl that describes how that
 // type implements that interface, and returns the corresponding witness.
 // Returns an invalid InstId if no matching impl is found.
-static auto LookupInterfaceWitness(Context& context,
+static auto LookupInterfaceWitness(Context& context, SemIRLoc loc,
                                    SemIR::ConstantId type_const_id,
                                    SemIR::InterfaceId interface_id)
     -> SemIR::InstId {
@@ -141,7 +142,11 @@ static auto LookupInterfaceWitness(Context& context,
     if (interface_type->interface_id != interface_id) {
       continue;
     }
-    // TODO: Diagnose if the impl isn't defined yet?
+    if (!impl.witness_id.is_valid()) {
+      // TODO: Diagnose if the impl isn't defined yet?
+      return SemIR::InstId::Invalid;
+    }
+    LoadImportRef(context, impl.witness_id, loc);
     return impl.witness_id;
   }
   return SemIR::InstId::Invalid;
@@ -154,8 +159,8 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
   auto& interface = context.interfaces().Get(assoc_type.interface_id);
-  auto witness_id =
-      LookupInterfaceWitness(context, type_const_id, assoc_type.interface_id);
+  auto witness_id = LookupInterfaceWitness(context, node_id, type_const_id,
+                                           assoc_type.interface_id);
   if (!witness_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
                       "Cannot access member of interface {0} in type {1} "
