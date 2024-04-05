@@ -16,6 +16,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_kind.h"
@@ -754,6 +755,10 @@ static auto CheckParseTree(
   context.inst_block_stack().Push();
 
   InitPackageScopeAndImports(context, unit_info);
+
+  // Import all impls declared in imports.
+  // TODO: Do this selectively when we see an impl query.
+  ImportImpls(context);
 
   if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker)) {
     context.sem_ir().set_has_errors(true);
