@@ -997,6 +997,7 @@ class TypeCompleter {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
+      case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);

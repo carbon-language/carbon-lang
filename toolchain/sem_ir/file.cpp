@@ -209,6 +209,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ImportRefLoaded::Kind:
     case ImportRefUsed::Kind:
     case InterfaceType::Kind:
+    case IntType::Kind:
     case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
@@ -396,6 +397,21 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
                                      .Get(inst.As<InterfaceType>().interface_id)
                                      .name_id;
         out << sem_ir.names().GetFormatted(interface_name_id);
+        break;
+      }
+      case IntType::Kind: {
+        auto int_type = inst.As<IntType>();
+        if (step.index == 1) {
+          out << ")";
+        } else if (auto width_value = sem_ir.insts().TryGetAs<IntLiteral>(
+                       int_type.bit_width_id)) {
+          out << (int_type.int_kind.is_signed() ? "i" : "u");
+          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
+        } else {
+          out << (int_type.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
+          steps.push_back(step.Next());
+          push_inst_id(int_type.bit_width_id);
+        }
         break;
       }
       case NameRef::Kind: {
@@ -610,6 +626,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
       case IntLiteral::Kind:
+      case IntType::Kind:
       case Param::Kind:
       case PointerType::Kind:
       case RealLiteral::Kind:

@@ -166,7 +166,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto GetStringLiteralValue(TokenIndex token) const -> StringLiteralValueId;
 
   // Returns the size specified in a `*TypeLiteral()` token.
-  auto GetTypeLiteralSize(TokenIndex token) const -> const llvm::APInt&;
+  auto GetTypeLiteralSize(TokenIndex token) const -> IntId;
 
   // Returns the closing token matched with the given opening token.
   //
