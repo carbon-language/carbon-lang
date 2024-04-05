@@ -312,18 +312,17 @@ class ImportRefResolver {
     if (!const_id.is_valid()) {
       return SemIR::NameScopeId::Invalid;
     }
-    switch (auto name_scope_inst = context_.insts().Get(const_id.inst_id());
-            name_scope_inst.kind()) {
-      case SemIR::Namespace::Kind:
-        return name_scope_inst.As<SemIR::Namespace>().name_scope_id;
-      case SemIR::ClassType::Kind:
-        return context_.classes()
-            .Get(name_scope_inst.As<SemIR::ClassType>().class_id)
-            .scope_id;
-      case SemIR::InterfaceType::Kind:
-        return context_.interfaces()
-            .Get(name_scope_inst.As<SemIR::InterfaceType>().interface_id)
-            .scope_id;
+    auto name_scope_inst = context_.insts().Get(const_id.inst_id());
+    CARBON_KIND_SWITCH(name_scope_inst) {
+      case CARBON_KIND(SemIR::Namespace inst): {
+        return inst.name_scope_id;
+      }
+      case CARBON_KIND(SemIR::ClassType inst): {
+        return context_.classes().Get(inst.class_id).scope_id;
+      }
+      case CARBON_KIND(SemIR::InterfaceType inst): {
+        return context_.interfaces().Get(inst.interface_id).scope_id;
+      }
       default:
         if (const_id == SemIR::ConstantId::Error) {
           return SemIR::NameScopeId::Invalid;
@@ -380,68 +379,67 @@ class ImportRefResolver {
       return {context_.constant_values().Get(inst_id)};
     }
 
-    auto inst = import_ir_.insts().Get(inst_id);
-
-    switch (inst.kind()) {
-      case SemIR::InstKind::AssociatedEntity:
-        return TryResolveTypedInst(inst.As<SemIR::AssociatedEntity>());
-
-      case SemIR::InstKind::AssociatedEntityType:
-        return TryResolveTypedInst(inst.As<SemIR::AssociatedEntityType>());
-
-      case SemIR::InstKind::BaseDecl:
-        return TryResolveTypedInst(inst.As<SemIR::BaseDecl>(), inst_id);
-
-      case SemIR::InstKind::BindAlias:
-        return TryResolveTypedInst(inst.As<SemIR::BindAlias>());
-
-      case SemIR::InstKind::ClassDecl:
-        return TryResolveTypedInst(inst.As<SemIR::ClassDecl>(), const_id);
-
-      case SemIR::InstKind::ClassType:
-        return TryResolveTypedInst(inst.As<SemIR::ClassType>());
-
-      case SemIR::InstKind::ConstType:
-        return TryResolveTypedInst(inst.As<SemIR::ConstType>());
-
-      case SemIR::InstKind::FieldDecl:
-        return TryResolveTypedInst(inst.As<SemIR::FieldDecl>(), inst_id);
-
-      case SemIR::InstKind::FunctionDecl:
-        return TryResolveTypedInst(inst.As<SemIR::FunctionDecl>());
-
-      case SemIR::InstKind::InterfaceDecl:
-        return TryResolveTypedInst(inst.As<SemIR::InterfaceDecl>(), const_id);
-
-      case SemIR::InstKind::InterfaceWitness:
-        return TryResolveTypedInst(inst.As<SemIR::InterfaceWitness>());
-
-      case SemIR::InstKind::InterfaceType:
-        return TryResolveTypedInst(inst.As<SemIR::InterfaceType>());
-
-      case SemIR::InstKind::PointerType:
-        return TryResolveTypedInst(inst.As<SemIR::PointerType>());
-
-      case SemIR::InstKind::StructType:
-        return TryResolveTypedInst(inst.As<SemIR::StructType>(), inst_id);
-
-      case SemIR::InstKind::TupleType:
-        return TryResolveTypedInst(inst.As<SemIR::TupleType>());
-
-      case SemIR::InstKind::UnboundElementType:
-        return TryResolveTypedInst(inst.As<SemIR::UnboundElementType>());
-
-      case SemIR::InstKind::BindName:
+    auto untyped_inst = import_ir_.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(untyped_inst) {
+      case CARBON_KIND(SemIR::AssociatedEntity inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::AssociatedEntityType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::BaseDecl inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::BindAlias inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::BindName inst): {
         // TODO: This always returns `ConstantId::NotConstant`.
         return {TryEvalInst(context_, inst_id, inst)};
-
-      case SemIR::InstKind::BindSymbolicName:
-        return TryResolveTypedInst(inst.As<SemIR::BindSymbolicName>(), inst_id);
-
+      }
+      case CARBON_KIND(SemIR::BindSymbolicName inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::ClassDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::ClassType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ConstType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::FieldDecl inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::FunctionDecl inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::InterfaceDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::InterfaceWitness inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::InterfaceType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::PointerType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::StructType inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::TupleType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::UnboundElementType inst): {
+        return TryResolveTypedInst(inst);
+      }
       default:
         context_.TODO(
             AddImportIRInst(inst_id),
-            llvm::formatv("TryResolveInst on {0}", inst.kind()).str());
+            llvm::formatv("TryResolveInst on {0}", untyped_inst.kind()).str());
         return {SemIR::ConstantId::Error};
     }
   }
