@@ -1032,11 +1032,11 @@ static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
   // Import the definition if the impl is defined.
   // TODO: Do we need to check for multiple definitions?
   auto impl_id = context.impls().LookupOrAdd(self_id, constraint_id);
-  auto& impl = context.impls().Get(impl_id);
   if (import_impl.is_defined()) {
     // TODO: Create a scope for the `impl` if necessary.
     // TODO: Consider importing the definition_id.
 
+    auto& impl = context.impls().Get(impl_id);
     impl.witness_id = context.AddImportRef(
         {.ir_id = import_ir_id, .inst_id = import_impl.witness_id});
   }
