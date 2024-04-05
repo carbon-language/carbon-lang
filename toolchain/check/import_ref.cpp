@@ -715,7 +715,7 @@ class ImportRefResolver {
     if (function.return_slot_id.is_valid()) {
       auto import_ir_inst_id = context_.import_ir_insts().Add(
           {.ir_id = import_ir_id_, .inst_id = function.return_slot_id});
-      context_.AddInstInNoBlock({SemIR::ImportRefLoaded{
+      new_return_slot = context_.AddInstInNoBlock({SemIR::ImportRefLoaded{
           context_.GetTypeIdForTypeConstant(return_slot_const_id),
           import_ir_inst_id}});
     }
