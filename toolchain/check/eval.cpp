@@ -302,6 +302,56 @@ static auto PerformAggregateIndex(Context& context, SemIR::Inst inst)
   return context.constant_values().Get(elements[index_val.getZExtValue()]);
 }
 
+// Enforces that an integer type has a valid bit width.
+auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
+    -> bool {
+  auto bit_width =
+      context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
+  if (!bit_width) {
+    // Symbolic bit width.
+    return true;
+  }
+  const auto& bit_width_val = context.ints().Get(bit_width->int_id);
+  if (bit_width_val.isZero() ||
+      (context.types().IsSignedInt(bit_width->type_id) &&
+       bit_width_val.isNegative())) {
+    CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
+                      "Integer type width of {0} is not positive.", TypedInt);
+    context.emitter().Emit(loc, IntWidthNotPositive,
+                           TypedInt{bit_width->type_id, bit_width_val});
+    return false;
+  }
+  // TODO: Pick a maximum size and document it in the design. For now
+  // we use 2^^23, because that's the largest size that LLVM supports.
+  constexpr int MaxIntWidth = 1 << 23;
+  if (bit_width_val.ugt(MaxIntWidth)) {
+    CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
+                      "Integer type width of {0} is greater than the "
+                      "maximum supported size of {1}.",
+                      TypedInt, int);
+    context.emitter().Emit(loc, IntWidthTooLarge,
+                           TypedInt{bit_width->type_id, bit_width_val},
+                           MaxIntWidth);
+    return false;
+  }
+  return true;
+}
+
+// Forms a constant int type as an evaluation result. Requires that width_id is
+// constant.
+auto MakeIntTypeResult(Context& context, SemIRLoc loc, SemIR::IntKind int_kind,
+                       SemIR::InstId width_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::IntType{
+      .type_id = context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
+      .int_kind = int_kind,
+      .bit_width_id = width_id};
+  if (!ValidateIntType(context, loc, result)) {
+    return SemIR::ConstantId::Error;
+  }
+  return MakeConstantResult(context, result, phase);
+}
+
 // Enforces that the bit width is 64 for a float.
 static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
                                   SemIR::InstId inst_id) -> bool {
@@ -515,23 +565,13 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
-      return MakeConstantResult(
-          context,
-          SemIR::IntType{
-              .type_id = context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
-              .int_kind = SemIR::IntKind::Signed,
-              .bit_width_id = arg_ids[0]},
-          phase);
+      return MakeIntTypeResult(context, loc, SemIR::IntKind::Signed, arg_ids[0],
+                               phase);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned: {
-      return MakeConstantResult(
-          context,
-          SemIR::IntType{
-              .type_id = context.GetBuiltinType(SemIR::BuiltinKind::TypeType),
-              .int_kind = SemIR::IntKind::Unsigned,
-              .bit_width_id = arg_ids[0]},
-          phase);
+      return MakeIntTypeResult(context, loc, SemIR::IntKind::Unsigned,
+                               arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::FloatMakeType: {
@@ -687,38 +727,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildAndValidateIfFieldsAreConstant(
           context, inst,
           [&](SemIR::IntType result) {
-            auto bit_width = context.insts().TryGetAs<SemIR::IntLiteral>(
-                result.bit_width_id);
-            if (!bit_width) {
-              // Symbolic bit width.
-              return true;
-            }
-            const auto& bit_width_val = context.ints().Get(bit_width->int_id);
-            if (bit_width_val.isZero() ||
-                (context.types().IsSignedInt(bit_width->type_id) &&
-                 bit_width_val.isNegative())) {
-              CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
-                                "Integer type width of {0} is not positive.",
-                                TypedInt);
-              context.emitter().Emit(
-                  inst.As<SemIR::IntType>().bit_width_id, IntWidthNotPositive,
-                  TypedInt{bit_width->type_id, bit_width_val});
-              return false;
-            }
-            // TODO: Pick a maximum size and document it in the design. For now
-            // we use 2^^23, because that's the largest size that LLVM supports.
-            constexpr int MaxIntWidth = 1 << 23;
-            if (bit_width_val.ugt(MaxIntWidth)) {
-              CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
-                                "Integer type width of {0} is greater than the "
-                                "maximum supported size of {1}.",
-                                TypedInt, int);
-              context.emitter().Emit(
-                  inst.As<SemIR::IntType>().bit_width_id, IntWidthTooLarge,
-                  TypedInt{bit_width->type_id, bit_width_val}, MaxIntWidth);
-              return false;
-            }
-            return true;
+            return ValidateIntType(
+                context, inst.As<SemIR::IntType>().bit_width_id, result);
           },
           &SemIR::IntType::bit_width_id);
     case SemIR::PointerType::Kind:
