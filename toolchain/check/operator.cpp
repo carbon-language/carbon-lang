@@ -60,7 +60,9 @@ auto BuildUnaryOperator(Context& context, Parse::AnyExprId node_id, Operator op,
                         SemIR::InstId operand_id) -> SemIR::InstId {
   auto op_fn = GetOperatorOpFunction(context, node_id, op);
   if (!op_fn.is_valid()) {
-    context.TODO(node_id, "missing or invalid operator interface");
+    context.TODO(node_id,
+                 "missing or invalid operator interface, also avoid duplicate "
+                 "diagnostic if prelude is unavailable");
     return SemIR::InstId::BuiltinError;
   }
 

@@ -129,8 +129,8 @@ TEST_F(DriverTest, CompileCommandErrors) {
 TEST_F(DriverTest, DumpTokens) {
   auto file = MakeTestFile("Hello World");
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--phase=lex", "--dump-tokens", file})
+                  .RunCommand({"compile", "--no-prelude-import", "--phase=lex",
+                               "--dump-tokens", file})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
@@ -155,18 +155,17 @@ TEST_F(DriverTest, StdoutOutput) {
   MakeTestFile("fn Main() {}", "test.carbon");
 
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--output=-", "test.carbon"})
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                               "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // The default is textual assembly.
   EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("Main:"));
 
-  EXPECT_TRUE(
-      driver_
-          .RunCommand({"compile", "--no-prelude-import", "--output=-",
-                       "--force-obj-output", "test.carbon"})
-          .success);
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                               "--force-obj-output", "test.carbon"})
+                  .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   std::string output = test_output_stream_.TakeStr();
   auto result =
@@ -200,8 +199,8 @@ TEST_F(DriverTest, FileOutput) {
   // Assembly output uses `.s`.
   // TODO: This should actually reflect the platform defaults.
   EXPECT_TRUE(driver_
-                  .RunCommand({"compile", "--no-prelude-import",
-                               "--asm-output", "test.carbon"})
+                  .RunCommand({"compile", "--no-prelude-import", "--asm-output",
+                               "test.carbon"})
                   .success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // TODO: This may need to be tailored to other assembly formats.

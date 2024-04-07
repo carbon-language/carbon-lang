@@ -5,11 +5,12 @@
 // AUTOUPDATE
 
 var a: (i32, i32) = (12, 6);
+// TODO: Only diagnose this once, and make the diagnostic clearer.
 // CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+7]]:16: ERROR: Name `Negate` not found.
 // CHECK:STDERR: var b: i32 = a[-10];
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Semantics TODO: `missing or invalid operator interface`.
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
 // CHECK:STDERR: var b: i32 = a[-10];
 // CHECK:STDERR:                ^~~
 var b: i32 = a[-10];
@@ -54,8 +55,8 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.loc7_27.7: init (i32, i32) = converted %.loc7_27.1, %.loc7_27.6 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_27.7
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc15_17: i32 = int_literal 10 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_19: ref <error> = tuple_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc16_17: i32 = int_literal 10 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc16_19: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

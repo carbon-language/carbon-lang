@@ -29,7 +29,7 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    CARBON_RETURN_IF_ERROR(AddFile(fs, "core/prelude/prelude.carbon"));
+    CARBON_RETURN_IF_ERROR(AddFile(fs, "core/prelude.carbon"));
 
     Driver driver(fs, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
@@ -70,7 +70,7 @@ class ToolchainFileTest : public FileTestBase {
     }
 
     args.insert(args.end(), {"--exclude-dump-file-prefix=core/",
-                             "core/prelude/prelude.carbon", "%s"});
+                             "core/prelude.carbon", "%s"});
     return args;
   }
 
