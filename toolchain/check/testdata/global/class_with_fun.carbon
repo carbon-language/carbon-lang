@@ -23,10 +23,12 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .ret_a = %ret_a
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %ret_a: <function> = fn_decl @ret_a [template] {
 // CHECK:STDOUT:     %A.ref.loc8: type = name_ref A, %A.decl [template = constants.%A]

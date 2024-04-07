@@ -34,10 +34,12 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .AccessBInA = %AccessBInA
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %AccessBInA: <function> = fn_decl @AccessBInA [template] {

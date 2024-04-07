@@ -33,7 +33,7 @@ struct Unit {
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
 auto CheckParseTrees(const SemIR::File& builtin_ir,
-                     llvm::MutableArrayRef<Unit> units,
+                     llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::raw_ostream* vlog_stream) -> void;
 
 }  // namespace Carbon::Check

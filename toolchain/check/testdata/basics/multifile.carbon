@@ -18,8 +18,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -32,8 +34,10 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

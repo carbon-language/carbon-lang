@@ -34,10 +34,12 @@ fn OuterN.InnerN.CallABC() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .OuterN = %OuterN
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .CallA = %CallA
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %OuterN: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .InnerN = %InnerN
 // CHECK:STDOUT:     .B = %B

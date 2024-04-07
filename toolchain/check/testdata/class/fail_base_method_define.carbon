@@ -42,9 +42,11 @@ fn D.C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.3 [template] {}
@@ -77,7 +79,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .F = file.%F
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

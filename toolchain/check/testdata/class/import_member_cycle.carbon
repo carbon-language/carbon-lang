@@ -33,8 +33,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Cycle = %Cycle.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Cycle.decl: type = class_decl @Cycle [template = constants.%Cycle] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -59,12 +61,14 @@ fn Run() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Cycle = %import_ref.1
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_16 [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_16 [template = constants.%Cycle]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {

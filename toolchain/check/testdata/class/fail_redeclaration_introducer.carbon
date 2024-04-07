@@ -96,6 +96,7 @@ base class G;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl.loc7
 // CHECK:STDOUT:     .B = %B.decl.loc17
 // CHECK:STDOUT:     .C = %C.decl.loc27
@@ -104,6 +105,7 @@ base class G;
 // CHECK:STDOUT:     .F = %F.decl.loc57
 // CHECK:STDOUT:     .G = %G.decl.loc67
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl.loc7: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %A.decl.loc15: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl.loc17: type = class_decl @B [template = constants.%B] {}

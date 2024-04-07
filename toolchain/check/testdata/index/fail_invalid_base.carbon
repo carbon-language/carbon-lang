@@ -42,6 +42,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .F = %F
@@ -49,6 +50,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var

@@ -23,7 +23,10 @@ let a: T = 0;
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,9 +39,11 @@ let a: T = 0;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .T = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, loc_7 [symbolic = <unexpected instref inst+2>]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+2>]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loc_7 [symbolic = <unexpected instref inst+3>]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+3>]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a: T = bind_name a, <error>
 // CHECK:STDOUT: }

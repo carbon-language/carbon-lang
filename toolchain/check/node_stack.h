@@ -502,7 +502,9 @@ class NodeStack {
   auto RequireIdKind(Parse::NodeKind parse_kind, Id::Kind id_kind) const
       -> void {
     CARBON_CHECK(NodeKindToIdKind(parse_kind) == id_kind)
-        << "Unexpected Id::Kind mapping for " << parse_kind;
+        << "Unexpected Id::Kind mapping for " << parse_kind << ": expected "
+        << static_cast<int>(id_kind) << ", found "
+        << static_cast<int>(NodeKindToIdKind(parse_kind));
   }
 
   // Require an entry to have the given Parse::NodeKind.

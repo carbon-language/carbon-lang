@@ -29,11 +29,13 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Complement = %Complement
 // CHECK:STDOUT:     .And = %And
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Complement: <function> = fn_decl @Complement [template] {
 // CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
 // CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.1

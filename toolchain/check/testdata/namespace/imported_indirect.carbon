@@ -42,8 +42,10 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -52,11 +54,13 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir2, inst+1, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir2, inst+2, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,23 +69,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .B = %B
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir2, inst+3, loaded
-// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = %C
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- d.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
@@ -91,10 +79,30 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir2, inst+5, loaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C: <namespace> = namespace [template] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- d.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir2, inst+4, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref ir2, inst+6, loaded
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,6 +120,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
@@ -126,7 +135,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+7, loc_23 [template = imports.%D]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+8, loc_23 [template = imports.%D]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc5_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e

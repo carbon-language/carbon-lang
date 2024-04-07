@@ -41,10 +41,12 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
 // CHECK:STDOUT:     .Access = %Access
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template] {
@@ -80,7 +82,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .d = %.loc16
 // CHECK:STDOUT:   .e = %.loc17
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%p: Derived*) -> i32* {

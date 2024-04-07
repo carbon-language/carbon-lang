@@ -24,9 +24,11 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Add = %Add
 // CHECK:STDOUT:     .a = %a.loc9
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
 // CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc7_8.1

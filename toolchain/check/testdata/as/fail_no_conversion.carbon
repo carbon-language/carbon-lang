@@ -19,7 +19,10 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc10_17.1: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc10_17.2: type = converted %.loc10_17.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_21: i32 = int_literal 1 [template = constants.%.4]

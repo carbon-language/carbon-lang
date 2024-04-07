@@ -51,6 +51,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Derived = %Derived.decl.loc7
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Call = %Call
@@ -58,6 +59,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     .PassDerivedToBase = %PassDerivedToBase
 // CHECK:STDOUT:     .PassDerivedToBaseIndirect = %PassDerivedToBaseIndirect
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Derived.decl.loc7: type = class_decl @Derived [template = constants.%Derived] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl.loc14: type = class_decl @Derived [template = constants.%Derived] {}
@@ -108,7 +110,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {

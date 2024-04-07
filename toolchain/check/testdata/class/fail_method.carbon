@@ -53,10 +53,12 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.ref.loc12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]

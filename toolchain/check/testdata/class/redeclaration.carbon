@@ -23,8 +23,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.decl.loc9: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {

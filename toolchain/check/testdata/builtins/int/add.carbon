@@ -97,10 +97,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Add = %Add
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
 // CHECK:STDOUT:     %a.loc2_8.1: i32 = param a
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc2_8.1
@@ -153,6 +155,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .TooFew = %TooFew
 // CHECK:STDOUT:     .TooMany = %TooMany
 // CHECK:STDOUT:     .BadReturnType = %BadReturnType
@@ -165,6 +168,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     .RuntimeCallTooMany = %RuntimeCallTooMany
 // CHECK:STDOUT:     .RuntimeCallBadReturnType = %RuntimeCallBadReturnType
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %TooFew: <function> = fn_decl @TooFew [template] {
 // CHECK:STDOUT:     %a.loc8_11.1: i32 = param a
 // CHECK:STDOUT:     @TooFew.%a: i32 = bind_name a, %a.loc8_11.1
@@ -294,8 +298,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Add = %Add
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
 // CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc4_8.1

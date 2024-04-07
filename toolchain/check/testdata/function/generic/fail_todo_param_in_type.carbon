@@ -13,8 +13,10 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %N.loc10_6.1: i32 = param N
 // CHECK:STDOUT:     @F.%N: i32 = bind_symbolic_name N, %N.loc10_6.1 [symbolic]

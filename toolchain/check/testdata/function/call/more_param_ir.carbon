@@ -26,9 +26,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
 // CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
 // CHECK:STDOUT:     @Foo.%a: i32 = bind_name a, %a.loc7_8.1

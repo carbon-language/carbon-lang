@@ -67,12 +67,14 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C1 = %C1.decl
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:     .C3 = %C3.decl
 // CHECK:STDOUT:     .C4 = %C4.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [template = constants.%C1] {}
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {}
@@ -92,7 +94,7 @@ class C4 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT:   .base = %.loc14
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -111,7 +113,7 @@ class C4 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT:   .base = %.loc37
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
@@ -121,6 +123,6 @@ class C4 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4
 // CHECK:STDOUT:   .base = %.loc47
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

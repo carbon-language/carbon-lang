@@ -60,8 +60,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,8 +76,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F.loc12
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
@@ -89,8 +93,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F.loc12
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %F.loc13: <function> = fn_decl @F [template] {}
@@ -105,8 +111,10 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F.loc4
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %F.loc11: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }

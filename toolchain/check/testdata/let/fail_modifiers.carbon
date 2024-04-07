@@ -86,7 +86,10 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %b: i32 = bind_name b, %.loc11
 // CHECK:STDOUT:   %.loc17: i32 = int_literal 1 [template = constants.%.1]

@@ -28,9 +28,11 @@ var c: i32 = b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
@@ -50,10 +52,12 @@ var c: i32 = b;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = %import_ref.1
 // CHECK:STDOUT:     .b = %import_ref.2
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir2, inst+7, loc_14
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir2, inst+8, loc_14
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %c.var: ref i32 = var c
 // CHECK:STDOUT:   %c: ref i32 = bind_name c, %c.var
 // CHECK:STDOUT: }

@@ -40,11 +40,13 @@ protected interface Protected;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Default = %Default.decl
 // CHECK:STDOUT:     .Virtual = %Virtual.decl
 // CHECK:STDOUT:     .Protected = %Protected.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Abstract.decl: type = interface_decl @Abstract [template = constants.%.1] {}
 // CHECK:STDOUT:   %Default.decl: type = interface_decl @Default [template = constants.%.2] {}
 // CHECK:STDOUT:   %Virtual.decl: type = interface_decl @Virtual [template = constants.%.3] {}

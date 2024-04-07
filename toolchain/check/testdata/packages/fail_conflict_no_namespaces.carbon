@@ -39,8 +39,10 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,8 +52,10 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
@@ -61,9 +65,11 @@ import library "var";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.1
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loaded [template = imports.%Foo]
-// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir3, inst+2, loaded
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loaded [template = imports.%Foo]
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir3, inst+3, loaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();

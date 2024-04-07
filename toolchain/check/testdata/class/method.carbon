@@ -68,6 +68,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .Call = %Call
 // CHECK:STDOUT:     .CallAlias = %CallAlias
@@ -79,6 +80,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     .CallFOnInitializingExpr = %CallFOnInitializingExpr
 // CHECK:STDOUT:     .CallGOnInitializingExpr = %CallGOnInitializingExpr
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]

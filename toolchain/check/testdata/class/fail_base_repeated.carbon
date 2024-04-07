@@ -48,11 +48,13 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
@@ -77,7 +79,7 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc11
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -88,6 +90,6 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc24
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

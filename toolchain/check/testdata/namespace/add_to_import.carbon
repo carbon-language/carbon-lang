@@ -22,8 +22,10 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,12 +38,14 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+1, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }

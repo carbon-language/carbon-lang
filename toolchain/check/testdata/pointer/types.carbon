@@ -22,9 +22,11 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Ptr = %Ptr
 // CHECK:STDOUT:     .ConstPtr = %ConstPtr
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Ptr: <function> = fn_decl @Ptr [template] {
 // CHECK:STDOUT:     %.loc7_14: type = ptr_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %p.loc7_8.1: i32* = param p

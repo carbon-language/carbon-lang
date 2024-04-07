@@ -57,12 +57,14 @@ fn E() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.loc7
 // CHECK:STDOUT:     .B = %B.loc17
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:     .D = %D.loc37
 // CHECK:STDOUT:     .E = %E.loc47
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %A.loc15: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT:   %B.loc17: <function> = fn_decl @B [template] {

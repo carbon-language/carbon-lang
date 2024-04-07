@@ -18,8 +18,10 @@ var x: (1, );
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12: (i32,) = tuple_literal (%.loc10_9)
 // CHECK:STDOUT:   %x.var: ref <error> = var x

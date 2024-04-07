@@ -56,10 +56,12 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Undefined = %Undefined.decl
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%.1] {}
 // CHECK:STDOUT:   %.loc16: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {}

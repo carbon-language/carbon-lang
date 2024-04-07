@@ -31,9 +31,11 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, %I.decl [template = constants.%.1]

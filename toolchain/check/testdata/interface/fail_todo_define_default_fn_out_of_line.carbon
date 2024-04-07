@@ -46,8 +46,10 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %.loc28: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:   %.loc36: <function> = fn_decl @.2 [template] {

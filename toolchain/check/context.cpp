@@ -180,11 +180,11 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
-auto Context::DiagnoseNameNotFound(SemIR::LocId loc_id, SemIR::NameId name_id)
+auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found.",
                     SemIR::NameId);
-  emitter_->Emit(loc_id, NameNotFound, name_id);
+  emitter_->Emit(loc, NameNotFound, name_id);
 }
 
 auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
@@ -414,6 +414,58 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
   }
 
   return result_id;
+}
+
+// Returns the scope of the Core package, or Invalid if it's not found.
+//
+// TODO: Consider tracking the Core package in SemIR so we don't need to use
+// name lookup to find it.
+static auto GetCorePackage(Context& context, SemIRLoc loc)
+    -> SemIR::NameScopeId {
+  auto core_ident_id = context.identifiers().Add("Core");
+  auto packaging = context.parse_tree().packaging_directive();
+  if (packaging && packaging->names.package_id == core_ident_id) {
+    return SemIR::NameScopeId::Package;
+  }
+  auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
+
+  // Look up `package.Core`.
+  auto core_inst_id = context.LookupNameInExactScope(
+      loc, core_name_id, context.name_scopes().Get(SemIR::NameScopeId::Package),
+      /*mark_imports_used=*/true);
+  if (!core_inst_id.is_valid()) {
+    context.DiagnoseNameNotFound(loc, core_name_id);
+    return SemIR::NameScopeId::Invalid;
+  }
+
+  // We expect it to be a namespace.
+  if (auto namespace_inst =
+          context.insts().TryGetAs<SemIR::Namespace>(core_inst_id)) {
+    return namespace_inst->name_scope_id;
+  }
+  // TODO: This should really diagnose the name issue.
+  context.DiagnoseNameNotFound(loc, core_name_id);
+  return SemIR::NameScopeId::Invalid;
+}
+
+auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
+    -> SemIR::InstId {
+  auto core_package_id = GetCorePackage(*this, loc);
+  if (!core_package_id.is_valid()) {
+    return SemIR::InstId::BuiltinError;
+  }
+
+  auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
+  auto inst_id =
+      LookupNameInExactScope(loc, name_id, name_scopes().Get(core_package_id),
+                             /*mark_imports_used=*/true);
+  if (!inst_id.is_valid()) {
+    DiagnoseNameNotFound(loc, name_id);
+    return SemIR::InstId::BuiltinError;
+  }
+
+  // Look through import_refs and aliases.
+  return constant_values().Get(inst_id).inst_id();
 }
 
 template <typename BranchNode, typename... Args>

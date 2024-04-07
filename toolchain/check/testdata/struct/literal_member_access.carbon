@@ -24,9 +24,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %.loc7: type = struct_type {.x: i32, .y: i32, .z: i32} [template = constants.%.1]
 // CHECK:STDOUT:     @G.%return: ref {.x: i32, .y: i32, .z: i32} = var <return slot>

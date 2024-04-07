@@ -164,8 +164,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,8 +180,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,8 +193,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %x.loc4_6.1: i32 = param x
 // CHECK:STDOUT:     @F.%x: i32 = bind_name x, %x.loc4_6.1
@@ -206,8 +212,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F2 = %F2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F2: <function> = fn_decl @F2 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,8 +228,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,13 +243,15 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loc_28 [template = imports.%F2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir3, inst+2, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir4, inst+2, loc_28 [template = imports.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -265,13 +277,15 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir3, inst+2, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir4, inst+2, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -290,8 +304,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,13 +319,15 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+1, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+3, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir3, inst+2, loc_22 [template = imports.%F.1]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir4, inst+4, loaded [template = imports.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -329,10 +347,12 @@ fn Other.G() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = %Other
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir2, inst+2, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+1, loaded [template = imports.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+2, loaded [template = imports.%F]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,8 +365,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }
@@ -363,8 +385,10 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:   }

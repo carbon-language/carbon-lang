@@ -33,8 +33,10 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .array_index = %array_index
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc12_24: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_25: type = array_type %.loc12_24, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %array_index.var: ref [i32; 1] = var array_index

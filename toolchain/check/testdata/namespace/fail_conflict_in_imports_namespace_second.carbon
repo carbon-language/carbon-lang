@@ -42,8 +42,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,8 +58,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
@@ -74,14 +78,16 @@ fn NS.Bar() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir3, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir3, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.3
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

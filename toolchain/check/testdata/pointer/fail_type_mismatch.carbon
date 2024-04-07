@@ -23,8 +23,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .ConstMismatch = %ConstMismatch
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch [template] {
 // CHECK:STDOUT:     %.loc7_28.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_28.2: type = converted %.loc7_28.1, constants.%.1 [template = constants.%.1]

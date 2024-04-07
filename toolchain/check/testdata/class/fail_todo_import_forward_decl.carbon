@@ -37,8 +37,10 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %ForwardDecl.decl: type = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,8 +57,10 @@ class ForwardDecl {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .ForwardDecl = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+1, loaded [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+2, loaded [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %ForwardDecl.decl: invalid = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
 // CHECK:STDOUT:   }
