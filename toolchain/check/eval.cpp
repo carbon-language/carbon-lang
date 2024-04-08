@@ -327,7 +327,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
   if (bit_width_val.ugt(MaxIntWidth)) {
     CARBON_DIAGNOSTIC(IntWidthTooLarge, Error,
                       "Integer type width of {0} is greater than the "
-                      "maximum supported size of {1}.",
+                      "maximum supported width of {1}.",
                       TypedInt, int);
     context.emitter().Emit(loc, IntWidthTooLarge,
                            TypedInt{bit_width->type_id, bit_width_val},
