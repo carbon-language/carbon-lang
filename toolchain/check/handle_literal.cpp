@@ -81,6 +81,7 @@ auto HandleBoolTypeLiteral(Context& context, Parse::BoolTypeLiteralId node_id)
   return true;
 }
 
+// Shared implementation for handling `iN` and `uN` literals.
 static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
                                               Parse::NodeId node_id,
                                               SemIR::IntKind int_kind,
