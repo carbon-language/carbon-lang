@@ -212,6 +212,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeType32:
+    case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
+    case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
@@ -260,15 +262,23 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::IntDiv: {
-      context.SetLocal(inst_id, context.builder().CreateSDiv(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "div"));
+      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
+                                    ? context.builder().CreateSDiv(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "div")
+                                    : context.builder().CreateUDiv(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "div"));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntMod: {
-      context.SetLocal(inst_id, context.builder().CreateSRem(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "rem"));
+      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
+                                    ? context.builder().CreateSRem(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "rem")
+                                    : context.builder().CreateURem(
+                                          context.GetValue(arg_ids[0]),
+                                          context.GetValue(arg_ids[1]), "rem"));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntAnd: {

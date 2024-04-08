@@ -567,6 +567,17 @@ struct IntLiteral {
   IntId int_id;
 };
 
+struct IntType {
+  static constexpr auto Kind =
+      InstKind::IntType.Define<Parse::NodeId>("int_type");
+
+  TypeId type_id;
+  IntKind int_kind;
+  // TODO: Consider adding a more compact way of representing either a small
+  // unsigned integer bit width or an inst_id.
+  InstId bit_width_id;
+};
+
 struct NameRef {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =

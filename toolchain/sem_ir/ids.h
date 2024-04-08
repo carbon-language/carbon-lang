@@ -305,6 +305,33 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
+// An integer kind value -- either "signed" or "unsigned".
+//
+// This might eventually capture any other properties of an integer type that
+// affect its semantics, such as overflow behavior.
+struct IntKind : public IdBase, public Printable<IntKind> {
+  static const IntKind Unsigned;
+  static const IntKind Signed;
+
+  using IdBase::IdBase;
+
+  // Returns whether this type is signed.
+  constexpr auto is_signed() -> bool { return *this == Signed; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (*this == Unsigned) {
+      out << "unsigned";
+    } else if (*this == Signed) {
+      out << "signed";
+    } else {
+      CARBON_FATAL() << "Invalid int kind value " << index;
+    }
+  }
+};
+
+constexpr IntKind IntKind::Unsigned = IntKind(0);
+constexpr IntKind IntKind::Signed = IntKind(1);
+
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
 struct NameId : public IdBase, public Printable<NameId> {

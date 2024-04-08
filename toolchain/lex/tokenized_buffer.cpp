@@ -134,11 +134,10 @@ auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
   return token_info.string_literal_id;
 }
 
-auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const
-    -> const llvm::APInt& {
+auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   const auto& token_info = GetTokenInfo(token);
   CARBON_CHECK(token_info.kind.is_sized_type_literal()) << token_info.kind;
-  return value_stores_->ints().Get(token_info.int_id);
+  return token_info.int_id;
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const

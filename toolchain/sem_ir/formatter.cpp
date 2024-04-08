@@ -1219,6 +1219,8 @@ class Formatter {
 
   auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
 
+  auto FormatArg(IntKind k) -> void { k.Print(out_); }
+
   auto FormatArg(ImplId id) -> void { FormatImplName(id); }
 
   auto FormatArg(ImportIRId id) -> void { out_ << id; }

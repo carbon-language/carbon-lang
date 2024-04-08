@@ -64,10 +64,16 @@ struct BuiltinType {
 using Bool = BuiltinType<InstId::BuiltinBoolType>;
 
 // Constraint that requires the type to be an integer type.
-//
-// TODO: This only matches i32 for now. Support iN for all N, and the
-// Core.BigInt type we use to implement for integer literals.
-using AnyInt = BuiltinType<InstId::BuiltinIntType>;
+struct AnyInt {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    // TODO: Support Core.BigInt once it exists.
+    if (BuiltinType<InstId::BuiltinIntType>::Check(sem_ir, state, type_id)) {
+      return true;
+    }
+    return sem_ir.types().Is<IntType>(type_id);
+  }
+};
 
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<InstId::BuiltinTypeType>;
@@ -141,9 +147,18 @@ constexpr BuiltinInfo None = {"", nullptr};
 constexpr BuiltinInfo IntMakeType32 = {"int.make_type_32",
                                        ValidateSignature<auto()->Type>};
 
+// Returns the `iN` type.
+// TODO: Should we use a more specific type as the type of the bit width?
+constexpr BuiltinInfo IntMakeTypeSigned = {
+    "int.make_type_signed", ValidateSignature<auto(AnyInt)->Type>};
+
+// Returns the `uN` type.
+constexpr BuiltinInfo IntMakeTypeUnsigned = {
+    "int.make_type_unsigned", ValidateSignature<auto(AnyInt)->Type>};
+
 // Returns float types, such as `f64`. Currently only supports `f64`.
 constexpr BuiltinInfo FloatMakeType = {"float.make_type",
-                                       ValidateSignature<auto(IntT)->Type>};
+                                       ValidateSignature<auto(AnyInt)->Type>};
 
 // Returns the `bool` type.
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",

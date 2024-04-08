@@ -319,6 +319,13 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       // Return an empty struct as a placeholder.
       // TODO: Should we model an interface as a witness table?
       return llvm::StructType::get(*llvm_context_);
+    case SemIR::IntType::Kind: {
+      auto width = sem_ir_->insts().TryGetAs<SemIR::IntLiteral>(
+          inst.As<SemIR::IntType>().bit_width_id);
+      CARBON_CHECK(width) << "Can't lower int type with symbolic width";
+      return llvm::IntegerType::get(
+          *llvm_context_, sem_ir_->ints().Get(width->int_id).getZExtValue());
+    }
     case SemIR::PointerType::Kind:
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
     case SemIR::StructType::Kind: {

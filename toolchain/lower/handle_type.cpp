@@ -37,6 +37,11 @@ auto HandleInterfaceType(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 
+auto HandleIntType(FunctionContext& context, SemIR::InstId inst_id,
+                   SemIR::IntType /*inst*/) -> void {
+  context.SetLocal(inst_id, context.GetTypeAsValue());
+}
+
 auto HandlePointerType(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::PointerType /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());

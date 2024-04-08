@@ -941,22 +941,19 @@ TEST_F(LexerTest, TypeLiterals) {
                   {.kind = TokenKind::FileEnd, .line = 6, .column = 3},
               }));
 
-  auto token_i1 = buffer.tokens().begin() + 2;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i1), 1);
-  auto token_i20 = buffer.tokens().begin() + 3;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i20), 20);
-  auto token_i999999999999 = buffer.tokens().begin() + 4;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_i999999999999), 999999999999ULL);
-  auto token_u1 = buffer.tokens().begin() + 7;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u1), 1);
-  auto token_u64 = buffer.tokens().begin() + 8;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_u64), 64);
-  auto token_f32 = buffer.tokens().begin() + 10;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f32), 32);
-  auto token_f80 = buffer.tokens().begin() + 11;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f80), 80);
-  auto token_f1 = buffer.tokens().begin() + 12;
-  EXPECT_EQ(buffer.GetTypeLiteralSize(*token_f1), 1);
+  auto type_size = [&](int token_index) {
+    auto token = buffer.tokens().begin()[token_index];
+    return value_stores_.ints().Get(buffer.GetTypeLiteralSize(token));
+  };
+
+  EXPECT_EQ(type_size(2), 1);
+  EXPECT_EQ(type_size(3), 20);
+  EXPECT_EQ(type_size(4), 999999999999ULL);
+  EXPECT_EQ(type_size(7), 1);
+  EXPECT_EQ(type_size(8), 64);
+  EXPECT_EQ(type_size(10), 32);
+  EXPECT_EQ(type_size(11), 80);
+  EXPECT_EQ(type_size(12), 1);
 }
 
 TEST_F(LexerTest, TypeLiteralTooManyDigits) {
