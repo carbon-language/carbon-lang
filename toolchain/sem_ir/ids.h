@@ -313,10 +313,11 @@ struct IntKind : public IdBase, public Printable<IntKind> {
   static const IntKind Unsigned;
   static const IntKind Signed;
 
-  // Returns whether this type is signed.
+  using IdBase::IdBase;
+
+    // Returns whether this type is signed.
   constexpr auto is_signed() -> bool { return *this == Signed; }
 
-  using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     if (*this == Unsigned) {
       out << "unsigned";
