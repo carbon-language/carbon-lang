@@ -44,10 +44,12 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .If1 = %If1
 // CHECK:STDOUT:     .If2 = %If2
 // CHECK:STDOUT:     .If3 = %If3
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %If1: <function> = fn_decl @If1 [template] {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @If1.%b: bool = bind_name b, %b.loc7_8.1

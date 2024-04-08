@@ -40,8 +40,10 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <function> = fn_decl @NS [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -52,8 +54,10 @@ fn NS.Foo();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+1, loaded [template = imports.%NS]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+2, loaded [template = imports.%NS]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }

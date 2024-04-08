@@ -17,7 +17,10 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: --- fail_deref_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %undeclared.ref.loc11: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc11: ref <error> = deref <error>
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>

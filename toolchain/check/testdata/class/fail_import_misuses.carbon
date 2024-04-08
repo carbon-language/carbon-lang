@@ -53,9 +53,11 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT: }
@@ -80,11 +82,13 @@ var a: Incomplete;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Empty = %import_ref.1
 // CHECK:STDOUT:     .Incomplete = %import_ref.2
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+4, loc_15 [template = constants.%Incomplete]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+5, loc_15 [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {
 // CHECK:STDOUT:     %Empty.decl: invalid = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }

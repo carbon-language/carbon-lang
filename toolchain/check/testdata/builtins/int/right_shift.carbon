@@ -72,10 +72,12 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .RightShift = %RightShift
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %RightShift: <function> = fn_decl @RightShift [template] {
 // CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
 // CHECK:STDOUT:     @RightShift.%a: i32 = bind_name a, %a.loc2_15.1
@@ -136,11 +138,13 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .RightShift = %RightShift
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:     .arr1 = %arr1
 // CHECK:STDOUT:     .arr2 = %arr2
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %RightShift: <function> = fn_decl @RightShift [template] {
 // CHECK:STDOUT:     %a.loc6_15.1: i32 = param a
 // CHECK:STDOUT:     @RightShift.%a: i32 = bind_name a, %a.loc6_15.1
@@ -214,9 +218,11 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .RightShift = %RightShift
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %RightShift: <function> = fn_decl @RightShift [template] {
 // CHECK:STDOUT:     %a.loc4_15.1: i32 = param a
 // CHECK:STDOUT:     @RightShift.%a: i32 = bind_name a, %a.loc4_15.1

@@ -26,12 +26,14 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Cond = %Cond
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .H = %H
 // CHECK:STDOUT:     .While = %While
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond [template] {
 // CHECK:STDOUT:     %return.var: ref bool = var <return slot>
 // CHECK:STDOUT:   }

@@ -25,10 +25,12 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:     .Baz = %Baz.loc10
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Baz = %Baz.loc13
 // CHECK:STDOUT:   }

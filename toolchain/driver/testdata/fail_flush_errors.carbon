@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile %s
+// ARGS: compile --no-prelude-import %s
 //
 // AUTOUPDATE
 
@@ -26,7 +26,7 @@ fn F() {
   undeclared2;
 
   // Add the name into the string table via a declaration rather than an expression.
-  if (true) { var undeclared3: i32 = 0; }
+  if (true) { var undeclared3: () = (); }
   // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+3]]:3: ERROR: Name `undeclared3` not found.
   // CHECK:STDERR:   undeclared3;
   // CHECK:STDERR:   ^~~~~~~~~~~

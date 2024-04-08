@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -28,6 +29,8 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
+    CARBON_RETURN_IF_ERROR(AddFile(fs, "core/prelude.carbon"));
+
     Driver driver(fs, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
@@ -39,26 +42,36 @@ class ToolchainFileTest : public FileTestBase {
     llvm::erase_if(result.per_file_success,
                    [](std::pair<llvm::StringRef, bool> entry) {
                      return entry.first == "." || entry.first == "-" ||
-                            entry.first.starts_with("not_file");
+                            entry.first.starts_with("not_file") ||
+                            entry.first.starts_with("core/");
                    });
     return result;
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    if (component_ == "check") {
-      return {"compile", "--phase=check", "--dump-sem-ir", "%s"};
-    } else if (component_ == "lex") {
-      return {"compile", "--phase=lex", "--dump-tokens", "%s"};
-    } else if (component_ == "lower") {
-      return {"compile", "--phase=lower", "--dump-llvm-ir", "%s"};
+    llvm::SmallVector<std::string> args = {"compile",
+                                           "--phase=" + component_.str()};
+
+    if (component_ == "lex") {
+      args.insert(args.end(), {"--dump-tokens", "%s"});
+      return args;
     } else if (component_ == "parse") {
-      return {"compile", "--phase=parse", "--dump-parse-tree", "%s"};
-    } else if (component_ == "codegen" || component_ == "driver") {
-      CARBON_FATAL() << "ARGS is always set in these tests";
+      args.insert(args.end(), {"--dump-parse-tree", "%s"});
+      return args;
+    }
+
+    if (component_ == "check") {
+      args.push_back("--dump-sem-ir");
+    } else if (component_ == "lower") {
+      args.push_back("--dump-llvm-ir");
     } else {
       CARBON_FATAL() << "Unexpected test component " << component_ << ": "
                      << test_name();
     }
+
+    args.insert(args.end(), {"--exclude-dump-file-prefix=core/",
+                             "core/prelude.carbon", "%s"});
+    return args;
   }
 
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
@@ -102,6 +115,20 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
+  // Adds a file to the fs.
+  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+      -> ErrorOr<Success> {
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+        llvm::MemoryBuffer::getFile(path);
+    if (file.getError()) {
+      return ErrorBuilder() << file.getError().message();
+    }
+    if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
+      return ErrorBuilder() << "Duplicate file: " << path;
+    }
+    return Success();
+  }
+
   // Returns the toolchain subdirectory being tested.
   static auto GetComponent(llvm::StringRef test_name) -> llvm::StringRef {
     // This handles cases where the toolchain directory may be copied into a

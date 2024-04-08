@@ -23,8 +23,10 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .VarScope = %VarScope
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope [template] {
 // CHECK:STDOUT:     %b.loc7_13.1: bool = param b
 // CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc7_13.1

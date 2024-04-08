@@ -52,6 +52,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .t1 = %t1
 // CHECK:STDOUT:     .b = %b
@@ -59,6 +60,7 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:     .t2 = %t2
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc11_14: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a

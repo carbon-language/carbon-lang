@@ -24,8 +24,10 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Test = %Test
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

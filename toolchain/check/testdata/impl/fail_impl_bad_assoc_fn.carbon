@@ -260,6 +260,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .NoF = %NoF.decl
 // CHECK:STDOUT:     .FNotFunction = %FNotFunction.decl
@@ -280,6 +281,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     .SelfNestedBadParam = %SelfNestedBadParam.decl
 // CHECK:STDOUT:     .SelfNestedBadReturnType = %SelfNestedBadReturnType.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %NoF.decl: type = class_decl @NoF [template = constants.%NoF] {}
 // CHECK:STDOUT:   %FNotFunction.decl: type = class_decl @FNotFunction [template = constants.%FNotFunction] {}

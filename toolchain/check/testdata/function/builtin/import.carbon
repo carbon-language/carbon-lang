@@ -8,6 +8,8 @@
 
 package Core api;
 
+import library "prelude";
+
 fn Add(a: i32, b: i32) -> i32 = "int.add";
 
 // --- use.carbon
@@ -23,10 +25,10 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     .Add = %Add
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
-// CHECK:STDOUT:     %a.loc4_8.1: i32 = param a
-// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc4_8.1
-// CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
-// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc4_16.1
+// CHECK:STDOUT:     %a.loc6_8.1: i32 = param a
+// CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc6_8.1
+// CHECK:STDOUT:     %b.loc6_16.1: i32 = param b
+// CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc6_16.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -53,7 +55,7 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+6, loc_11 [template = imports.%Add]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir3, inst+6, loc_11 [template = imports.%Add]
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %import_ref [template = imports.%Add]
 // CHECK:STDOUT:   %.loc4_25: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_28: i32 = int_literal 2 [template = constants.%.2]

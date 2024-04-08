@@ -98,6 +98,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .WrongOrder = %WrongOrder
 // CHECK:STDOUT:     .DuplicateVirtual = %DuplicateVirtual
 // CHECK:STDOUT:     .TwoAccess = %TwoAccess
@@ -106,6 +107,7 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:     .ModifiersConflict2 = %ModifiersConflict2
 // CHECK:STDOUT:     .ExternOrderAndConflict = %ExternOrderAndConflict
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %WrongOrder: <function> = fn_decl @WrongOrder [template] {}
 // CHECK:STDOUT:   %DuplicateVirtual: <function> = fn_decl @DuplicateVirtual [template] {}
 // CHECK:STDOUT:   %TwoAccess: <function> = fn_decl @TwoAccess [template] {}

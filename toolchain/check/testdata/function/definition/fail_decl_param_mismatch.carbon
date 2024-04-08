@@ -72,6 +72,7 @@ fn K() -> bool { return false; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .H = %H
@@ -79,6 +80,7 @@ fn K() -> bool { return false; }
 // CHECK:STDOUT:     .J = %J
 // CHECK:STDOUT:     .K = %K
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template] {
 // CHECK:STDOUT:     %x.loc15_6.1: i32 = param x

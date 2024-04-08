@@ -22,8 +22,10 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Bool = %Bool
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bool: <function> = fn_decl @Bool [template] {
 // CHECK:STDOUT:     %return.var: ref type = var <return slot>
 // CHECK:STDOUT:   }
@@ -40,9 +42,11 @@ var b: Bool() = false;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Bool = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+2, loc_11 [template = imports.%Bool]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+3, loc_11 [template = imports.%Bool]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bool.ref: <function> = name_ref Bool, %import_ref [template = imports.%Bool]
 // CHECK:STDOUT:   %.loc6_12.1: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13: type = value_of_initializer %.loc6_12.1 [template = bool]

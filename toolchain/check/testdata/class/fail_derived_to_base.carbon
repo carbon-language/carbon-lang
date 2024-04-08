@@ -55,6 +55,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A1 = %A1.decl
 // CHECK:STDOUT:     .A2 = %A2.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
@@ -62,6 +63,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:     .ConvertIncomplete = %ConvertIncomplete
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A1.decl: type = class_decl @A1 [template = constants.%A1] {}
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [template = constants.%A2] {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {}
@@ -111,7 +113,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17
-// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT:   extend name_scope3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

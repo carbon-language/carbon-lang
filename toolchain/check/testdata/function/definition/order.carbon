@@ -12,10 +12,12 @@ fn Baz() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:     .Baz = %Baz
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template] {}
 // CHECK:STDOUT:   %Baz: <function> = fn_decl @Baz [template] {}

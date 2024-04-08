@@ -57,8 +57,10 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl.loc7
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.decl.loc20: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
@@ -74,9 +76,9 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = <unexpected instref inst+3>
-// CHECK:STDOUT:   .H = <unexpected instref inst+4>
-// CHECK:STDOUT:   .I = <unexpected instref inst+5>
+// CHECK:STDOUT:   .F = <unexpected instref inst+4>
+// CHECK:STDOUT:   .H = <unexpected instref inst+5>
+// CHECK:STDOUT:   .I = <unexpected instref inst+6>
 // CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

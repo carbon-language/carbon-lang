@@ -21,8 +21,10 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc8_23: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc8_32: type = ptr_type const i32 [template = constants.%.2]

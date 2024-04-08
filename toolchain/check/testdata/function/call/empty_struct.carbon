@@ -22,9 +22,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Echo = %Echo
 // CHECK:STDOUT:     .Main = %Main
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template] {
 // CHECK:STDOUT:     %.loc7_13.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_13.2: type = converted %.loc7_13.1, constants.%.1 [template = constants.%.1]

@@ -255,6 +255,26 @@ Dump the generated assembly to stdout after codegen.
 )""",
         },
         [&](auto& arg_b) { arg_b.Set(&dump_asm); });
+    b.AddFlag(
+        {
+            .name = "prelude-import",
+            .help = R"""(
+Whether to use the implicit prelude import. Enabled by default.
+)""",
+        },
+        [&](auto& arg_b) {
+          arg_b.Default(true);
+          arg_b.Set(&prelude_import);
+        });
+    b.AddStringOption(
+        {
+            .name = "exclude-dump-file-prefix",
+            .value_name = "PREFIX",
+            .help = R"""(
+Excludes files with the given prefix from dumps.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&exclude_dump_file_prefix); });
   }
 
   Phase phase;
@@ -277,6 +297,9 @@ Dump the generated assembly to stdout after codegen.
   bool stream_errors = false;
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
+  bool prelude_import = false;
+
+  llvm::StringRef exclude_dump_file_prefix;
 };
 
 struct Driver::Options {
@@ -428,7 +451,7 @@ class Driver::CompilationUnit {
 
     LogCall("Lex::Lex",
             [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-    if (options_.dump_tokens) {
+    if (options_.dump_tokens && IncludeInDumps()) {
       consumer_->Flush();
       driver_->output_stream_ << tokens_;
     }
@@ -445,7 +468,7 @@ class Driver::CompilationUnit {
     LogCall("Parse::Parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
     });
-    if (options_.dump_parse_tree) {
+    if (options_.dump_parse_tree && IncludeInDumps()) {
       consumer_->Flush();
       parse_tree_->Print(driver_->output_stream_, options_.preorder_parse_tree);
     }
@@ -475,7 +498,7 @@ class Driver::CompilationUnit {
     consumer_->Flush();
 
     CARBON_VLOG() << "*** Raw SemIR::File ***\n" << *sem_ir_ << "\n";
-    if (options_.dump_raw_sem_ir) {
+    if (options_.dump_raw_sem_ir && IncludeInDumps()) {
       sem_ir_->Print(driver_->output_stream_, options_.builtin_sem_ir);
       if (options_.dump_sem_ir) {
         driver_->output_stream_ << "\n";
@@ -486,7 +509,7 @@ class Driver::CompilationUnit {
       CARBON_VLOG() << "*** SemIR::File ***\n";
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_, *vlog_stream_);
     }
-    if (options_.dump_sem_ir) {
+    if (options_.dump_sem_ir && IncludeInDumps()) {
       SemIR::FormatFile(*tokens_, *parse_tree_, *sem_ir_,
                         driver_->output_stream_);
     }
@@ -510,7 +533,7 @@ class Driver::CompilationUnit {
                      /*ShouldPreserveUseListOrder=*/false,
                      /*IsForDebug=*/true);
     }
-    if (options_.dump_llvm_ir) {
+    if (options_.dump_llvm_ir && IncludeInDumps()) {
       module_->print(driver_->output_stream_, /*AAW=*/nullptr,
                      /*ShouldPreserveUseListOrder=*/true);
     }
@@ -611,6 +634,12 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** " << label << " done ***\n";
   }
 
+  // Returns true if the file can be dumped.
+  auto IncludeInDumps() const -> bool {
+    return options_.exclude_dump_file_prefix.empty() ||
+           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
+  }
+
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
@@ -708,7 +737,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
   Check::CheckParseTrees(builtins, llvm::MutableArrayRef(check_units),
-                         vlog_stream_);
+                         options.prelude_import, vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {
     if (unit->has_source()) {

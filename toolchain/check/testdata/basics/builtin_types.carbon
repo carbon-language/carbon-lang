@@ -20,10 +20,12 @@ var test_type: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_i32 = %test_i32
 // CHECK:STDOUT:     .test_f64 = %test_f64
 // CHECK:STDOUT:     .test_type = %test_type
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64

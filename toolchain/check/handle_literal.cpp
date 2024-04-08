@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -77,6 +78,10 @@ auto HandleStringLiteral(Context& context, Parse::StringLiteralId node_id)
 
 auto HandleBoolTypeLiteral(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
+  // TODO: Migrate once functions can be in prelude.carbon.
+  // auto fn_inst_id = context.LookupNameInCore(node_id, "Bool");
+  // auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+  // context.node_stack().Push(node_id, type_inst_id);
   context.node_stack().Push(node_id, SemIR::InstId::BuiltinBoolType);
   return true;
 }
@@ -95,6 +100,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
+  // TODO: Migrate to a call to `Core.Int` or `Core.UInt`.
   auto width_id = MakeI32Literal(context, node_id, size_id);
   context.AddInstAndPush(
       {node_id, SemIR::IntType{.type_id = context.GetBuiltinType(
@@ -134,6 +140,16 @@ auto HandleFloatTypeLiteral(Context& context, Parse::FloatTypeLiteralId node_id)
   if (text != "f64") {
     return context.TODO(node_id, "Currently only f64 is allowed");
   }
+  // TODO: Migrate once functions can be in prelude.carbon.
+  // auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
+  // auto width_inst_id = context.AddInstInNoBlock(
+  //     {node_id,
+  //      SemIR::IntLiteral{
+  //          context.GetBuiltinType(SemIR::BuiltinKind::IntType),
+  //          context.ints().Add(llvm::APInt(/*numBits=*/32, /*val=*/64))}});
+  // auto type_inst_id =
+  //     PerformCall(context, node_id, fn_inst_id, {width_inst_id});
+  // context.node_stack().Push(node_id, type_inst_id);
   context.node_stack().Push(node_id, SemIR::InstId::BuiltinFloatType);
   return true;
 }

@@ -20,9 +20,11 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Add = %Add
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
 // CHECK:STDOUT:     %a.loc7_8.1: i32 = param a
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc7_8.1

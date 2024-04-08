@@ -17,8 +17,10 @@ var a: [1; 1];
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc10_9: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_13: type = array_type %.loc10_12, <error> [template = <error>]

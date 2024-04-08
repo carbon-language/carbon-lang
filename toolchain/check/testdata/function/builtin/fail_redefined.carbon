@@ -37,10 +37,12 @@ fn C(n: i32, m: i32) -> i32 = "int.add";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.loc7
 // CHECK:STDOUT:     .B = %B.loc17
 // CHECK:STDOUT:     .C = %C.loc27
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A [template] {
 // CHECK:STDOUT:     %n.loc7_6.1: i32 = param n
 // CHECK:STDOUT:     %n.loc7_6.2: i32 = bind_name n, %n.loc7_6.1

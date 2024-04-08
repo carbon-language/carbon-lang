@@ -44,12 +44,14 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:     .NonInstanceCall = %NonInstanceCall
 // CHECK:STDOUT:     .InstanceCall = %InstanceCall
 // CHECK:STDOUT:     .NonInstanceCallIndirect = %NonInstanceCallIndirect
 // CHECK:STDOUT:     .InstanceCallIndirect = %InstanceCallIndirect
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]

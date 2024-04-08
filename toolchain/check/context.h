@@ -123,11 +123,15 @@ class Context {
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
+  // Returns the instruction corresponding to a name in the core package, or
+  // BuiltinError if not found.
+  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+
   // Prints a diagnostic for a duplicate name.
   auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
+  auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)

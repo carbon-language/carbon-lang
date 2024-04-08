@@ -27,9 +27,11 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Not = %Not
 // CHECK:STDOUT:     .Constant = %Constant
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not [template] {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc7_8.1

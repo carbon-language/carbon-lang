@@ -22,8 +22,10 @@ var i: Int() = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Int = %Int
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int: <function> = fn_decl @Int [template] {
 // CHECK:STDOUT:     %return.var: ref type = var <return slot>
 // CHECK:STDOUT:   }
@@ -40,9 +42,11 @@ var i: Int() = 0;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+2, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+3, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc6_11.1: init type = call %Int.ref() [template = i32]
 // CHECK:STDOUT:   %.loc6_12: type = value_of_initializer %.loc6_11.1 [template = i32]

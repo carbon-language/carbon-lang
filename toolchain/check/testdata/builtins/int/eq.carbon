@@ -45,12 +45,14 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Eq = %Eq
 // CHECK:STDOUT:     .True = %True.decl
 // CHECK:STDOUT:     .False = %False.decl
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Eq: <function> = fn_decl @Eq [template] {
 // CHECK:STDOUT:     %a.loc2_7.1: i32 = param a
 // CHECK:STDOUT:     @Eq.%a: i32 = bind_name a, %a.loc2_7.1
@@ -147,8 +149,10 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .WrongResult = %WrongResult
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %WrongResult: <function> = fn_decl @WrongResult [template] {
 // CHECK:STDOUT:     %a.loc7_16.1: i32 = param a
 // CHECK:STDOUT:     @WrongResult.%a: i32 = bind_name a, %a.loc7_16.1

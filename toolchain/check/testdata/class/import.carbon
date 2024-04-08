@@ -60,11 +60,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .Field = %Field.decl
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc11
 // CHECK:STDOUT:     .Incomplete = %Incomplete.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   %Field.decl: type = class_decl @Field [template = constants.%Field] {}
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc11: type = class_decl @ForwardDeclared [template = constants.%ForwardDeclared] {}
@@ -140,22 +142,24 @@ fn Run() {
 // CHECK:STDOUT:     .Field = %import_ref.2
 // CHECK:STDOUT:     .ForwardDeclared = %import_ref.3
 // CHECK:STDOUT:     .Incomplete = %import_ref.4
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_16 [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+4, loc_24 [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+11, loc_42 [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+25, loc_71 [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_16 [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+5, loc_24 [template = constants.%Field]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+12, loc_42 [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+26, loc_71 [template = constants.%Incomplete]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir2, inst+7, loc_36 [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+24, loc_56 [template = imports.%G]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+17, loc_50 [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir2, inst+8, loc_36 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+25, loc_56 [template = imports.%G]
+// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+18, loc_50 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+18, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {

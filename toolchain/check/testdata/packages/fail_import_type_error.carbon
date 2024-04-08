@@ -43,11 +43,13 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .b_ref = %b_ref
 // CHECK:STDOUT:     .c_ref = %c_ref
 // CHECK:STDOUT:     .d_ref = %d_ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
 // CHECK:STDOUT:   %a_ref: ref <error> = bind_name a_ref, %a_ref.var
@@ -73,15 +75,17 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     .b_ref = %import_ref.2
 // CHECK:STDOUT:     .c_ref = %import_ref.3
 // CHECK:STDOUT:     .d_ref = %import_ref.4
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+3, loc_10
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+8, loc_17
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, loc_24
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+16, loc_31
+// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+4, loc_10
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+9, loc_17
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+13, loc_24
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+17, loc_31
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b

@@ -36,12 +36,14 @@ fn Initializing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Value = %Value
 // CHECK:STDOUT:     .Reference = %Reference
 // CHECK:STDOUT:     .Make = %Make
 // CHECK:STDOUT:     .Initializing = %Initializing
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {}
 // CHECK:STDOUT:   %Value: <function> = fn_decl @Value [template] {
 // CHECK:STDOUT:     %X.ref.loc13: type = name_ref X, %X.decl [template = constants.%X]
