@@ -60,7 +60,7 @@ library "fail_oversized" api;
 
 import library "types";
 
-// CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: ERROR: Integer type width of 1000000000 is greater than the maximum supported size of 8388608.
+// CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: ERROR: Integer type width of 1000000000 is greater than the maximum supported width of 8388608.
 // CHECK:STDERR: var m: Int(1000000000);
 // CHECK:STDERR:        ^~~~
 var m: Int(1000000000);
@@ -69,8 +69,10 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Int = %Int
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int: <function> = fn_decl @Int [template] {
 // CHECK:STDOUT:     %n.loc4_8.1: i32 = param n
 // CHECK:STDOUT:     @Int.%n: i32 = bind_name n, %n.loc4_8.1
@@ -93,11 +95,13 @@ var m: Int(1000000000);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .Symbolic = %Symbolic
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_13 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_13 [template = imports.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Int.ref.loc6_9: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %.loc6_13: i32 = int_literal 64 [template = constants.%.1]
@@ -176,9 +180,11 @@ var m: Int(1000000000);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_11.1: init type = call %Int.ref(%.loc10_12) [template = <error>]
@@ -200,10 +206,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:     .n = %n.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_23 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_23 [template = imports.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %n.loc6_11.1: i32 = param n
 // CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc6_11.1
@@ -235,9 +243,11 @@ var m: Int(1000000000);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+4, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc9_12: i32 = int_literal 1000000000 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_11.1: init type = call %Int.ref(%.loc9_12) [template = <error>]

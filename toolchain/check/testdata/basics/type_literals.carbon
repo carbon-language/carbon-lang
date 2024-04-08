@@ -29,7 +29,7 @@ var test_i1: i1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_i15: i15;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported size of 8388608.
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported width of 8388608.
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -66,7 +66,7 @@ var test_u1: u1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_u15: u15;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported size of 8388608.
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: ERROR: Integer type width of 1000000000 is greater than the maximum supported width of 8388608.
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,10 +120,12 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_i8 = %test_i8
 // CHECK:STDOUT:     .test_i16 = %test_i16
 // CHECK:STDOUT:     .test_i64 = %test_i64
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc3_14.2: type = int_type signed, %.loc3_14.1 [template = constants.%.2]
 // CHECK:STDOUT:   %test_i8.var: ref i8 = var test_i8
@@ -150,12 +152,14 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_i0 = %test_i0
 // CHECK:STDOUT:     .test_i1 = %test_i1
 // CHECK:STDOUT:     .test_i15 = %test_i15
 // CHECK:STDOUT:     .test_i1000000000 = %test_i1000000000
 // CHECK:STDOUT:     .test_i10000000000000000000 = %test_i10000000000000000000
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %i0.ref: <error> = name_ref i0, <error> [template = <error>]
 // CHECK:STDOUT:   %test_i0.var: ref <error> = var test_i0
 // CHECK:STDOUT:   %test_i0: ref <error> = bind_name test_i0, %test_i0.var
@@ -189,10 +193,12 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_u8 = %test_u8
 // CHECK:STDOUT:     .test_u16 = %test_u16
 // CHECK:STDOUT:     .test_u64 = %test_u64
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc3_14.1: i32 = int_literal 8 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc3_14.2: type = int_type unsigned, %.loc3_14.1 [template = constants.%.2]
 // CHECK:STDOUT:   %test_u8.var: ref u8 = var test_u8
@@ -219,12 +225,14 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .test_u0 = %test_u0
 // CHECK:STDOUT:     .test_u1 = %test_u1
 // CHECK:STDOUT:     .test_u15 = %test_u15
 // CHECK:STDOUT:     .test_u1000000000 = %test_u1000000000
 // CHECK:STDOUT:     .test_u10000000000000000000 = %test_u10000000000000000000
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %u0.ref: <error> = name_ref u0, <error> [template = <error>]
 // CHECK:STDOUT:   %test_u0.var: ref <error> = var test_u0
 // CHECK:STDOUT:   %test_u0: ref <error> = bind_name test_u0, %test_u0.var
