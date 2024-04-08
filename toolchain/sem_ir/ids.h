@@ -315,7 +315,7 @@ struct IntKind : public IdBase, public Printable<IntKind> {
 
   using IdBase::IdBase;
 
-    // Returns whether this type is signed.
+  // Returns whether this type is signed.
   constexpr auto is_signed() -> bool { return *this == Signed; }
 
   auto Print(llvm::raw_ostream& out) const -> void {
