@@ -15,7 +15,8 @@ auto main(int orig_argc, char** orig_argv) -> int {
   llvm::SmallVector<char*> injected_argv_storage(orig_argv,
                                                  orig_argv + orig_argc + 1);
   char injected_flag[] = "--benchmark_counters_tabular";
-  injected_argv_storage.insert(injected_argv_storage.begin() + 1, injected_flag);
+  injected_argv_storage.insert(injected_argv_storage.begin() + 1,
+                               injected_flag);
   char** argv = injected_argv_storage.data();
   int argc = injected_argv_storage.size() - 1;
 
