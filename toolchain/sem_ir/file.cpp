@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
@@ -319,28 +320,26 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       steps.push_back({.sem_ir = sem_ir, .inst_id = inst_id});
     };
 
-    auto inst = sem_ir.insts().Get(step.inst_id);
-    switch (inst.kind()) {
-      case ArrayType::Kind: {
-        auto array = inst.As<ArrayType>();
+    auto untyped_inst = sem_ir.insts().Get(step.inst_id);
+    CARBON_KIND_SWITCH(untyped_inst) {
+      case CARBON_KIND(ArrayType inst): {
         if (step.index == 0) {
           out << "[";
           steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(array.element_type_id));
+          push_inst_id(sem_ir.types().GetInstId(inst.element_type_id));
         } else if (step.index == 1) {
-          out << "; " << sem_ir.GetArrayBoundValue(array.bound_id) << "]";
+          out << "; " << sem_ir.GetArrayBoundValue(inst.bound_id) << "]";
         }
         break;
       }
-      case AssociatedEntityType::Kind: {
-        auto assoc = inst.As<AssociatedEntityType>();
+      case CARBON_KIND(AssociatedEntityType inst): {
         if (step.index == 0) {
           out << "<associated ";
           steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(assoc.entity_type_id));
+          push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
         } else {
           auto interface_name_id =
-              sem_ir.interfaces().Get(assoc.interface_id).name_id;
+              sem_ir.interfaces().Get(inst.interface_id).name_id;
           out << " in " << sem_ir.names().GetFormatted(interface_name_id)
               << ">";
         }
@@ -348,26 +347,24 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       }
       case BindAlias::Kind:
       case BindSymbolicName::Kind: {
-        auto name_id = inst.As<AnyBindName>().bind_name_id;
+        auto name_id = untyped_inst.As<AnyBindName>().bind_name_id;
         out << sem_ir.names().GetFormatted(
             sem_ir.bind_names().Get(name_id).name_id);
         break;
       }
-      case ClassType::Kind: {
-        auto class_name_id =
-            sem_ir.classes().Get(inst.As<ClassType>().class_id).name_id;
+      case CARBON_KIND(ClassType inst): {
+        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
         out << sem_ir.names().GetFormatted(class_name_id);
         break;
       }
-      case ConstType::Kind: {
+      case CARBON_KIND(ConstType inst): {
         if (step.index == 0) {
           out << "const ";
 
           // Add parentheses if required.
-          auto inner_type_inst_id =
-              sem_ir.types().GetInstId(inst.As<ConstType>().inner_id);
+          auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
           if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
-              GetTypePrecedence(inst.kind())) {
+              GetTypePrecedence(SemIR::ConstType::Kind)) {
             out << "(";
             steps.push_back(step.Next());
           }
@@ -378,58 +375,55 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
-      case FacetTypeAccess::Kind: {
+      case CARBON_KIND(FacetTypeAccess inst): {
         // Print `T as type` as simply `T`.
-        push_inst_id(inst.As<FacetTypeAccess>().facet_id);
+        push_inst_id(inst.facet_id);
         break;
       }
       case ImportRefLoaded::Kind:
       case ImportRefUsed::Kind: {
         auto import_ir_inst = sem_ir.import_ir_insts().Get(
-            inst.As<AnyImportRef>().import_ir_inst_id);
+            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
         steps.push_back(
             {.sem_ir = *sem_ir.import_irs().Get(import_ir_inst.ir_id).sem_ir,
              .inst_id = import_ir_inst.inst_id});
         break;
       }
-      case InterfaceType::Kind: {
-        auto interface_name_id = sem_ir.interfaces()
-                                     .Get(inst.As<InterfaceType>().interface_id)
-                                     .name_id;
+      case CARBON_KIND(InterfaceType inst): {
+        auto interface_name_id =
+            sem_ir.interfaces().Get(inst.interface_id).name_id;
         out << sem_ir.names().GetFormatted(interface_name_id);
         break;
       }
-      case IntType::Kind: {
-        auto int_type = inst.As<IntType>();
+      case CARBON_KIND(IntType inst): {
         if (step.index == 1) {
           out << ")";
-        } else if (auto width_value = sem_ir.insts().TryGetAs<IntLiteral>(
-                       int_type.bit_width_id)) {
-          out << (int_type.int_kind.is_signed() ? "i" : "u");
+        } else if (auto width_value =
+                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+          out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
-          out << (int_type.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
+          out << (inst.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
           steps.push_back(step.Next());
-          push_inst_id(int_type.bit_width_id);
+          push_inst_id(inst.bit_width_id);
         }
         break;
       }
-      case NameRef::Kind: {
-        out << sem_ir.names().GetFormatted(inst.As<NameRef>().name_id);
+      case CARBON_KIND(NameRef inst): {
+        out << sem_ir.names().GetFormatted(inst.name_id);
         break;
       }
-      case PointerType::Kind: {
+      case CARBON_KIND(PointerType inst): {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          push_inst_id(
-              sem_ir.types().GetInstId(inst.As<PointerType>().pointee_id));
+          push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
         } else if (step.index == 1) {
           out << "*";
         }
         break;
       }
-      case StructType::Kind: {
-        auto refs = sem_ir.inst_blocks().Get(inst.As<StructType>().fields_id);
+      case CARBON_KIND(StructType inst): {
+        auto refs = sem_ir.inst_blocks().Get(inst.fields_id);
         if (refs.empty()) {
           out << "{}";
           break;
@@ -446,14 +440,13 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         push_inst_id(refs[step.index]);
         break;
       }
-      case StructTypeField::Kind: {
-        auto field = inst.As<StructTypeField>();
-        out << "." << sem_ir.names().GetFormatted(field.name_id) << ": ";
-        push_inst_id(sem_ir.types().GetInstId(field.field_type_id));
+      case CARBON_KIND(StructTypeField inst): {
+        out << "." << sem_ir.names().GetFormatted(inst.name_id) << ": ";
+        push_inst_id(sem_ir.types().GetInstId(inst.field_type_id));
         break;
       }
-      case TupleType::Kind: {
-        auto refs = sem_ir.type_blocks().Get(inst.As<TupleType>().elements_id);
+      case CARBON_KIND(TupleType inst): {
+        auto refs = sem_ir.type_blocks().Get(inst.elements_id);
         if (refs.empty()) {
           out << "()";
           break;
@@ -474,12 +467,11 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
         break;
       }
-      case UnboundElementType::Kind: {
+      case CARBON_KIND(UnboundElementType inst): {
         if (step.index == 0) {
           out << "<unbound element of class ";
           steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(
-              inst.As<UnboundElementType>().class_type_id));
+          push_inst_id(sem_ir.types().GetInstId(inst.class_type_id));
         } else {
           out << ">";
         }
@@ -566,8 +558,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   ExprCategory value_category = ExprCategory::Value;
 
   while (true) {
-    auto inst = ir->insts().Get(inst_id);
-    switch (inst.kind()) {
+    auto untyped_inst = ir->insts().Get(inst_id);
+    CARBON_KIND_SWITCH(untyped_inst) {
       case Assign::Kind:
       case BaseDecl::Kind:
       case Branch::Kind:
@@ -586,23 +578,23 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImportRefLoaded::Kind:
       case ImportRefUsed::Kind: {
         auto import_ir_inst = ir->import_ir_insts().Get(
-            inst.As<AnyImportRef>().import_ir_inst_id);
+            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
         continue;
       }
 
-      case BindAlias::Kind: {
-        inst_id = inst.As<BindAlias>().value_id;
+      case CARBON_KIND(BindAlias inst): {
+        inst_id = inst.value_id;
         continue;
       }
-      case NameRef::Kind: {
-        inst_id = inst.As<NameRef>().value_id;
+      case CARBON_KIND(NameRef inst): {
+        inst_id = inst.value_id;
         continue;
       }
 
-      case Converted::Kind: {
-        inst_id = inst.As<Converted>().result_id;
+      case CARBON_KIND(Converted inst): {
+        inst_id = inst.result_id;
         continue;
       }
 
@@ -640,25 +632,25 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ValueOfInitializer::Kind:
         return value_category;
 
-      case Builtin::Kind: {
-        if (inst.As<Builtin>().builtin_kind == BuiltinKind::Error) {
+      case CARBON_KIND(Builtin inst): {
+        if (inst.builtin_kind == BuiltinKind::Error) {
           return ExprCategory::Error;
         }
         return value_category;
       }
 
-      case BindName::Kind: {
-        inst_id = inst.As<BindName>().value_id;
+      case CARBON_KIND(BindName inst): {
+        inst_id = inst.value_id;
         continue;
       }
 
-      case ArrayIndex::Kind: {
-        inst_id = inst.As<ArrayIndex>().array_id;
+      case CARBON_KIND(ArrayIndex inst): {
+        inst_id = inst.array_id;
         continue;
       }
 
-      case ClassElementAccess::Kind: {
-        inst_id = inst.As<ClassElementAccess>().base_id;
+      case CARBON_KIND(ClassElementAccess inst): {
+        inst_id = inst.base_id;
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
@@ -666,23 +658,23 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case StructAccess::Kind: {
-        inst_id = inst.As<StructAccess>().struct_id;
+      case CARBON_KIND(StructAccess inst): {
+        inst_id = inst.struct_id;
         continue;
       }
 
-      case TupleAccess::Kind: {
-        inst_id = inst.As<TupleAccess>().tuple_id;
+      case CARBON_KIND(TupleAccess inst): {
+        inst_id = inst.tuple_id;
         continue;
       }
 
-      case TupleIndex::Kind: {
-        inst_id = inst.As<TupleIndex>().tuple_id;
+      case CARBON_KIND(TupleIndex inst): {
+        inst_id = inst.tuple_id;
         continue;
       }
 
-      case SpliceBlock::Kind: {
-        inst_id = inst.As<SpliceBlock>().result_id;
+      case CARBON_KIND(SpliceBlock inst): {
+        inst_id = inst.result_id;
         continue;
       }
 
