@@ -12,7 +12,8 @@
 auto main(int orig_argc, char** orig_argv) -> int {
   // Inject a flag to override the defaults for benchmarks. This can still be
   // disabled by user arguments.
-  llvm::SmallVector<char*> injected_argv_storage(orig_argv, orig_argv + orig_argc + 1);
+  llvm::SmallVector<char*> injected_argv_storage(orig_argv,
+                                                 orig_argv + orig_argc + 1);
   char injected_flag[] = "--benchmark_counters_tabular";
   injected_argv_storage.insert(injected_argv_storage.begin() + 1, injected_flag);
   char** argv = injected_argv_storage.data();
