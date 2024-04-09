@@ -307,6 +307,12 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^~~~~~~
 //   1. DeclScopeLoop
 //
+// adapt ...
+// ^~~~~
+//   1. Expr
+//   2. AdaptDecl
+//   3. DeclScopeLoop
+//
 // alias ...
 // ^~~~~
 //   1. Alias
@@ -1191,12 +1197,21 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
                              NamedConstraint)
 
+// Handles processing of a completed `adapt T` declaration.
+//
+// adapt T ;
+//         ^
+// adapt T ??? ;
+//         ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(AdaptDecl)
+
 // Handles processing of a completed `base: B` declaration.
 //
 // base: B ;
 //         ^
 // base: B ??? ;
-//         ^
+//         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(BaseDecl)
 

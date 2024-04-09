@@ -664,6 +664,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
 CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
                                CARBON_IF_VALID(Semi))
 
+// `adapt`:
+//   AdaptIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: expression
+// AdaptDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AdaptIntroducer, 0, Adapt)
+CARBON_PARSE_NODE_KIND_BRACKET(AdaptDecl, AdaptIntroducer,
+                               CARBON_IF_VALID(Semi))
+
 // `base`:
 //   BaseIntroducer
 //   _repeated_ _external_: modifier

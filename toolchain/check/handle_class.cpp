@@ -172,6 +172,18 @@ auto HandleClassDefinitionStart(Context& context,
   return true;
 }
 
+auto HandleAdaptIntroducer(Context& /*context*/,
+                           Parse::AdaptIntroducerId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId /*node_id*/) -> bool {
+  auto adapted_expr_id = context.node_stack().PopExpr();
+  (void)adapted_expr_id;
+  // TODO: Process the `adapt` declaration.
+  return true;
+}
+
 auto HandleBaseIntroducer(Context& context, Parse::BaseIntroducerId /*node_id*/)
     -> bool {
   context.decl_state_stack().Push(DeclState::Base);

@@ -904,6 +904,20 @@ struct ClassDefinition {
   llvm::SmallVector<AnyDeclId> members;
 };
 
+// Adapter declaration
+// -------------------
+
+// `adapt`
+using AdaptIntroducer = LeafNode<NodeKind::AdaptIntroducer>;
+// `adapt SomeType;`
+struct AdaptDecl {
+  static constexpr auto Kind = NodeKind::AdaptDecl.Define(NodeCategory::Decl);
+
+  AdaptIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyExprId adapted_type;
+};
+
 // Base class declaration
 // ----------------------
 
