@@ -112,6 +112,7 @@ cc_library(
         "//common:check",
         "//common:enum_base",
         "//common:error",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",
