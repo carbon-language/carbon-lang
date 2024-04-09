@@ -55,7 +55,7 @@ fn C(n: i32, m: i32) -> i32 = "int.add";
 // CHECK:STDOUT:     @A.%n: i32 = bind_name n, %n.loc15_6.1
 // CHECK:STDOUT:     %m.loc15_14.1: i32 = param m
 // CHECK:STDOUT:     @A.%m: i32 = bind_name m, %m.loc15_14.1
-// CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.loc17: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %n.loc17_6.1: i32 = param n
@@ -69,7 +69,7 @@ fn C(n: i32, m: i32) -> i32 = "int.add";
 // CHECK:STDOUT:     @B.%n: i32 = bind_name n, %n.loc25_6.1
 // CHECK:STDOUT:     %m.loc25_14.1: i32 = param m
 // CHECK:STDOUT:     @B.%m: i32 = bind_name m, %m.loc25_14.1
-// CHECK:STDOUT:     %return.var.loc25: ref i32 = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.loc27: <function> = fn_decl @C [template] {
 // CHECK:STDOUT:     %n.loc27_6.1: i32 = param n
@@ -83,7 +83,7 @@ fn C(n: i32, m: i32) -> i32 = "int.add";
 // CHECK:STDOUT:     @C.%n: i32 = bind_name n, %n.loc34_6.1
 // CHECK:STDOUT:     %m.loc34_14.1: i32 = param m
 // CHECK:STDOUT:     @C.%m: i32 = bind_name m, %m.loc34_14.1
-// CHECK:STDOUT:     %return.var.loc34: ref i32 = var <return slot>
+// CHECK:STDOUT:     @C.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,8 +15,8 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*} [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {.a: (i32, i32, i32)*, .b: (i32, i32, i32)*} [template]
 // CHECK:STDOUT: }
@@ -36,7 +36,7 @@ fn G() {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);
+// CHECK:STDOUT: fn @F() -> (i32, i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -44,7 +44,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_29.2: type = converted %.loc10_29.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_50.1: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_50.2: type = converted %.loc10_50.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_51: type = struct_type {.a: (i32, i32, i32), .b: (i32, i32, i32)} [template = constants.%.3]
 // CHECK:STDOUT:   %v.var: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = var v
 // CHECK:STDOUT:   %v: ref {.a: (i32, i32, i32), .b: (i32, i32, i32)} = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10_61: <function> = name_ref F, file.%F [template = file.%F]

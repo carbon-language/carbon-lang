@@ -67,27 +67,27 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %Derived.ref.loc21: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
 // CHECK:STDOUT:     %a.loc21_9.1: Derived = param a
 // CHECK:STDOUT:     @Call.%a: Derived = bind_name a, %a.loc21_9.1
-// CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallIndirect: <function> = fn_decl @CallIndirect [template] {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc25: type = ptr_type Derived [template = constants.%.8]
 // CHECK:STDOUT:     %p.loc25_17.1: Derived* = param p
 // CHECK:STDOUT:     @CallIndirect.%p: Derived* = bind_name p, %p.loc25_17.1
-// CHECK:STDOUT:     %return.var.loc25: ref i32 = var <return slot>
+// CHECK:STDOUT:     @CallIndirect.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBase: <function> = fn_decl @PassDerivedToBase [template] {
 // CHECK:STDOUT:     %Derived.ref.loc29: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
 // CHECK:STDOUT:     %a.loc29_22.1: Derived = param a
 // CHECK:STDOUT:     @PassDerivedToBase.%a: Derived = bind_name a, %a.loc29_22.1
-// CHECK:STDOUT:     %return.var.loc29: ref i32 = var <return slot>
+// CHECK:STDOUT:     @PassDerivedToBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PassDerivedToBaseIndirect: <function> = fn_decl @PassDerivedToBaseIndirect [template] {
 // CHECK:STDOUT:     %Derived.ref.loc33: type = name_ref Derived, %Derived.decl.loc7 [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc33: type = ptr_type Derived [template = constants.%.8]
 // CHECK:STDOUT:     %p.loc33_30.1: Derived* = param p
 // CHECK:STDOUT:     @PassDerivedToBaseIndirect.%p: Derived* = bind_name p, %p.loc33_30.1
-// CHECK:STDOUT:     %return.var.loc33: ref i32 = var <return slot>
+// CHECK:STDOUT:     @PassDerivedToBaseIndirect.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

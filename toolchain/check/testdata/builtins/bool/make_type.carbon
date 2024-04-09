@@ -27,7 +27,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bool: <function> = fn_decl @Bool [template] {
-// CHECK:STDOUT:     %return.var: ref type = var <return slot>
+// CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

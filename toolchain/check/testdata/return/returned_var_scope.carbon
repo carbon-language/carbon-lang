@@ -39,12 +39,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %UnrelatedScopes: <function> = fn_decl @UnrelatedScopes [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @UnrelatedScopes.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EnclosingButAfter: <function> = fn_decl @EnclosingButAfter [template] {
 // CHECK:STDOUT:     %b.loc17_22.1: bool = param b
 // CHECK:STDOUT:     @EnclosingButAfter.%b: bool = bind_name b, %b.loc17_22.1
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:     @EnclosingButAfter.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

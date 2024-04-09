@@ -123,9 +123,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BitAnd [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%Op) [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @BitAndAssign [template]
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
@@ -216,7 +216,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %C.ref.loc9_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.5]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op

@@ -28,7 +28,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
 // CHECK:STDOUT:     %.loc11: type = bind_value %x.ref
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

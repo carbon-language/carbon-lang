@@ -35,7 +35,7 @@ fn While() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Cond: <function> = fn_decl @Cond [template] {
-// CHECK:STDOUT:     %return.var: ref bool = var <return slot>
+// CHECK:STDOUT:     @Cond.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}

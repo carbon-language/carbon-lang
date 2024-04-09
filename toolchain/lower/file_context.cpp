@@ -101,7 +101,12 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
     return nullptr;
   }
 
-  const bool has_return_slot = function.return_slot_id.is_valid();
+  // Don't lower unused functions.
+  if (function.return_slot == SemIR::Function::ReturnSlot::NotComputed) {
+    return nullptr;
+  }
+
+  const bool has_return_slot = function.has_return_slot();
   auto implicit_param_refs =
       sem_ir().inst_blocks().Get(function.implicit_param_refs_id);
   auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
@@ -124,7 +129,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   param_inst_ids.reserve(max_llvm_params);
   if (has_return_slot) {
     param_types.push_back(GetType(function.return_type_id)->getPointerTo());
-    param_inst_ids.push_back(function.return_slot_id);
+    param_inst_ids.push_back(function.return_storage_id);
   }
   for (auto param_ref_id :
        llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
@@ -176,7 +181,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
   for (auto [inst_id, arg] :
        llvm::zip_equal(param_inst_ids, llvm_function->args())) {
     auto name_id = SemIR::NameId::Invalid;
-    if (inst_id == function.return_slot_id) {
+    if (inst_id == function.return_storage_id) {
       name_id = SemIR::NameId::ReturnSlot;
       arg.addAttr(llvm::Attribute::getWithStructRetType(
           llvm_context(), GetType(function.return_type_id)));
@@ -202,7 +207,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   llvm::Function* llvm_function = GetFunction(function_id);
   FunctionContext function_lowering(*this, llvm_function, vlog_stream_);
 
-  const bool has_return_slot = function.return_slot_id.is_valid();
+  const bool has_return_slot = function.has_return_slot();
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
@@ -213,7 +218,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   auto param_refs = sem_ir().inst_blocks().Get(function.param_refs_id);
   int param_index = 0;
   if (has_return_slot) {
-    function_lowering.SetLocal(function.return_slot_id,
+    function_lowering.SetLocal(function.return_storage_id,
                                llvm_function->getArg(param_index));
     ++param_index;
   }

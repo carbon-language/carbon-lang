@@ -42,10 +42,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %n.loc17_12.1: i32 = param n
 // CHECK:STDOUT:     @G.%n: i32 = bind_name n, %n.loc17_12.1
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {
-// CHECK:STDOUT:     %return.var.loc21: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Run.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

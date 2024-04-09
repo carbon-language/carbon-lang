@@ -23,7 +23,7 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

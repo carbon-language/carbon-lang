@@ -192,7 +192,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %C.ref.loc13_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc13_20.1: C = param b
 // CHECK:STDOUT:     @TestEqual.%b: C = bind_name b, %b.loc13_20.1
-// CHECK:STDOUT:     %return.var.loc13: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir3, inst+1, loc_68 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+15, unloaded
@@ -203,7 +203,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %C.ref.loc17_26: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc17_23.1: C = param b
 // CHECK:STDOUT:     @TestNotEqual.%b: C = bind_name b, %b.loc17_23.1
-// CHECK:STDOUT:     %return.var.loc17: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir3, inst+1, loc_88 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+30, unloaded
@@ -310,7 +310,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %D.ref.loc8_23: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc8_20.1: D = param b
 // CHECK:STDOUT:     @TestEqual.%b: D = bind_name b, %b.loc8_20.1
-// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_30 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
@@ -326,7 +326,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %D.ref.loc16_26: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc16_23.1: D = param b
 // CHECK:STDOUT:     @TestNotEqual.%b: D = bind_name b, %b.loc16_23.1
-// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: type = import_ref ir3, inst+1, loc_50 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir3, inst+30, unloaded
@@ -405,7 +405,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %D.ref.loc14: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc14_21.1: D = param b
 // CHECK:STDOUT:     @TestRhsBad.%b: D = bind_name b, %b.loc14_21.1
-// CHECK:STDOUT:     %return.var.loc14: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestRhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir3, inst+1, loc_73 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+15, unloaded
@@ -416,7 +416,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc25_21.1: C = param b
 // CHECK:STDOUT:     @TestLhsBad.%b: C = bind_name b, %b.loc25_21.1
-// CHECK:STDOUT:     %return.var.loc25: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestLhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir3, inst+1, loc_93 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+30, unloaded

@@ -33,7 +33,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     @F.%n: i32 = bind_name n, %n.loc7_15.1
 // CHECK:STDOUT:     %m.loc7_23.1: i32 = param m
 // CHECK:STDOUT:     @F.%m: i32 = bind_name m, %m.loc7_23.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

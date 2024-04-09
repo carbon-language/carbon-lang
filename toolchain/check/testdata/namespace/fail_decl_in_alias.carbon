@@ -34,7 +34,7 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
 // CHECK:STDOUT:   %.loc18: <function> = fn_decl @.1 [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @.1.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -27,7 +27,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
-// CHECK:STDOUT:     %return.var: ref f64 = var <return slot>
+// CHECK:STDOUT:     @Foo.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
 // CHECK:STDOUT: }

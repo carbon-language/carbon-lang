@@ -38,7 +38,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     @Or.%a: i32 = bind_name a, %a.loc2_7.1
 // CHECK:STDOUT:     %b.loc2_15.1: i32 = param b
 // CHECK:STDOUT:     @Or.%b: i32 = bind_name b, %b.loc2_15.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Or.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Or.ref: <function> = name_ref Or, %Or [template = %Or]
 // CHECK:STDOUT:   %.loc4_19: i32 = int_literal 12 [template = constants.%.1]
@@ -58,7 +58,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

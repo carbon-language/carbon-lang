@@ -101,17 +101,17 @@ fn K() -> bool { return false; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I: <function> = fn_decl @I [template] {}
 // CHECK:STDOUT:   %.loc45: <function> = fn_decl @.4 [template] {
-// CHECK:STDOUT:     %return.var.loc45: ref i32 = var <return slot>
+// CHECK:STDOUT:     @.4.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J: <function> = fn_decl @J [template] {
-// CHECK:STDOUT:     %return.var.loc47: ref i32 = var <return slot>
+// CHECK:STDOUT:     @J.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc55: <function> = fn_decl @.5 [template] {}
 // CHECK:STDOUT:   %K: <function> = fn_decl @K [template] {
-// CHECK:STDOUT:     %return.var.loc57: ref i32 = var <return slot>
+// CHECK:STDOUT:     @K.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc64: <function> = fn_decl @.6 [template] {
-// CHECK:STDOUT:     %return.var.loc64: ref bool = var <return slot>
+// CHECK:STDOUT:     @.6.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

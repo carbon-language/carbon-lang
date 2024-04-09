@@ -40,7 +40,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     @G.%p: const i32** = bind_name p, %p.loc11_6.1
 // CHECK:STDOUT:     %.loc11_36: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_37: type = ptr_type i32* [template = constants.%.5]
-// CHECK:STDOUT:     %return.var: ref i32** = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32** = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

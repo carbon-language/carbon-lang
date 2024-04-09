@@ -35,7 +35,7 @@ fn Constant() {
 // CHECK:STDOUT:   %Not: <function> = fn_decl @Not [template] {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc7_8.1
-// CHECK:STDOUT:     %return.var: ref bool = var <return slot>
+// CHECK:STDOUT:     @Not.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.2]

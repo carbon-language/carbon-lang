@@ -34,7 +34,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %p.loc8_6.1: const (const (const i32*)*) = param p
 // CHECK:STDOUT:     @F.%p: const (const (const i32*)*) = bind_name p, %p.loc8_6.1
 // CHECK:STDOUT:     %.loc8_41: type = const_type i32 [template = constants.%.1]
-// CHECK:STDOUT:     %return.var: ref const i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref const i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -58,7 +58,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:     @Eq.%a: i32 = bind_name a, %a.loc2_7.1
 // CHECK:STDOUT:     %b.loc2_15.1: i32 = param b
 // CHECK:STDOUT:     @Eq.%b: i32 = bind_name b, %b.loc2_15.1
-// CHECK:STDOUT:     %return.var.loc2: ref bool = var <return slot>
+// CHECK:STDOUT:     @Eq.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
@@ -75,7 +75,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc12_16.1
 // CHECK:STDOUT:     %b.loc12_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc12_24.1
-// CHECK:STDOUT:     %return.var.loc12: ref bool = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,7 +158,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:     @WrongResult.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @WrongResult.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @WrongResult.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

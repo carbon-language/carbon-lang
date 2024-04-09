@@ -82,7 +82,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     @LeftShift.%a: i32 = bind_name a, %a.loc2_14.1
 // CHECK:STDOUT:     %b.loc2_22.1: i32 = param b
 // CHECK:STDOUT:     @LeftShift.%b: i32 = bind_name b, %b.loc2_22.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @LeftShift.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %LeftShift.ref: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc4_26: i32 = int_literal 5 [template = constants.%.1]
@@ -102,7 +102,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,12 +144,12 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     @LeftShift.%a: i32 = bind_name a, %a.loc4_14.1
 // CHECK:STDOUT:     %b.loc4_22.1: i32 = param b
 // CHECK:STDOUT:     @LeftShift.%b: i32 = bind_name b, %b.loc4_22.1
-// CHECK:STDOUT:     %return.var.loc4: ref i32 = var <return slot>
+// CHECK:STDOUT:     @LeftShift.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %a.loc5_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc5_11.1
-// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %LeftShift.ref.loc8: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template = constants.%.1]

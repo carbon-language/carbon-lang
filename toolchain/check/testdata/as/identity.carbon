@@ -89,7 +89,7 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: X;
+// CHECK:STDOUT: fn @Make() -> X;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:

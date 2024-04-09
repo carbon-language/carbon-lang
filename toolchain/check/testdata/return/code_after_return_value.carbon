@@ -35,7 +35,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %b.loc7_6.1: bool = param b
 // CHECK:STDOUT:     @F.%b: bool = bind_name b, %b.loc7_6.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

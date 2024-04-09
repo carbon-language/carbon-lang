@@ -38,7 +38,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %.loc7_43.2: type = converted %.loc7_43.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_44: type = ptr_type {} [template = constants.%.4]
 // CHECK:STDOUT:     %.loc7_35: type = const_type {}* [template = constants.%.5]
-// CHECK:STDOUT:     %return.var: ref const ({}*) = var <return slot>
+// CHECK:STDOUT:     @ConstMismatch.%return: ref const ({}*) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

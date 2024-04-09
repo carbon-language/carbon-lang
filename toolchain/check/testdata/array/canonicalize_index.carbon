@@ -34,7 +34,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc7_8.1
 // CHECK:STDOUT:     %b.loc7_16.1: i32 = param b
 // CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc7_16.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.1]

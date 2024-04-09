@@ -48,7 +48,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl.loc7 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc19_6.1: C = param c
 // CHECK:STDOUT:     @F.3.%c: C = bind_name c, %c.loc19_6.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.3.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

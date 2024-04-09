@@ -33,7 +33,7 @@ fn Main() {
 // CHECK:STDOUT:     @Echo.%a: () = bind_name a, %a.loc7_9.1
 // CHECK:STDOUT:     %.loc7_20.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_20.2: type = converted %.loc7_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %return.var: ref () = var <return slot>
+// CHECK:STDOUT:     @Echo.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }

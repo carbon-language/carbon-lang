@@ -60,7 +60,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %Base.ref.loc18: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc18_21.1: Base = param self
 // CHECK:STDOUT:     @SelfBase.%self: Base = bind_name self, %self.loc18_21.1
-// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:     @SelfBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase: <function> = fn_decl @AddrSelfBase [template] {
 // CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, %Base.decl [template = constants.%Base]
@@ -74,7 +74,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %.loc26: type = ptr_type Derived [template = constants.%.8]
 // CHECK:STDOUT:     %p.loc26_9.1: Derived* = param p
 // CHECK:STDOUT:     @Call.%p: Derived* = bind_name p, %p.loc26_9.1
-// CHECK:STDOUT:     %return.var.loc26: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

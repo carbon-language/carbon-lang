@@ -51,7 +51,7 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
 // CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc2_16.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Sub.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sub.ref: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 3 [template = constants.%.1]
@@ -71,7 +71,7 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,7 +110,7 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
 // CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc4_16.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Sub.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sub.ref.loc6: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 0 [template = constants.%.1]

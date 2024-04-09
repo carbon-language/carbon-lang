@@ -51,7 +51,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float: <function> = fn_decl @Float [template] {
 // CHECK:STDOUT:     %size.loc4_10.1: i32 = param size
 // CHECK:STDOUT:     @Float.%size: i32 = bind_name size, %size.loc4_10.1
-// CHECK:STDOUT:     %return.var: ref type = var <return slot>
+// CHECK:STDOUT:     @Float.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,7 +83,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %GetFloat: <function> = fn_decl @GetFloat [template] {
 // CHECK:STDOUT:     %dyn_size.loc8_13.1: i32 = param dyn_size
 // CHECK:STDOUT:     @GetFloat.%dyn_size: i32 = bind_name dyn_size, %dyn_size.loc8_13.1
-// CHECK:STDOUT:     %return.var: ref type = var <return slot>
+// CHECK:STDOUT:     @GetFloat.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

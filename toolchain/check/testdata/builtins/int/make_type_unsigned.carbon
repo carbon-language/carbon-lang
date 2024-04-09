@@ -76,7 +76,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %UInt: <function> = fn_decl @UInt [template] {
 // CHECK:STDOUT:     %n.loc4_9.1: i32 = param n
 // CHECK:STDOUT:     @UInt.%n: i32 = bind_name n, %n.loc4_9.1
-// CHECK:STDOUT:     %return.var: ref type = var <return slot>
+// CHECK:STDOUT:     @UInt.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,7 +115,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc6_26.1: init type = call %UInt.ref.loc6_22(%.loc6_27) [template = constants.%.2]
 // CHECK:STDOUT:     %.loc6_29: type = value_of_initializer %.loc6_26.1 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc6_26.2: type = converted %.loc6_26.1, %.loc6_29 [template = constants.%.2]
-// CHECK:STDOUT:     %return.var.loc6: ref u64 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref u64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %UInt.ref.loc10_9: <function> = name_ref UInt, %import_ref [template = imports.%UInt]
@@ -130,7 +130,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc10_26.1: init type = call %UInt.ref.loc10_22(%.loc10_27) [template = constants.%.4]
 // CHECK:STDOUT:     %.loc10_29: type = value_of_initializer %.loc10_26.1 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, %.loc10_29 [template = constants.%.4]
-// CHECK:STDOUT:     %return.var.loc10: ref u13 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref u13 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic: <function> = fn_decl @Symbolic [template] {
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
@@ -147,7 +147,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_41.1: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_43: type = value_of_initializer %.loc14_41.1 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_41.2: type = converted %.loc14_41.1, %.loc14_43 [symbolic = constants.%.5]
-// CHECK:STDOUT:     %return.var.loc14: ref Core.UInt(N) = var <return slot>
+// CHECK:STDOUT:     @Symbolic.%return: ref Core.UInt(N) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,7 +215,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %n.loc6_11.1: i32 = param n
 // CHECK:STDOUT:     @Negate.%n: i32 = bind_name n, %n.loc6_11.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UInt.ref: <function> = name_ref UInt, %import_ref [template = imports.%UInt]
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, %Negate [template = %Negate]

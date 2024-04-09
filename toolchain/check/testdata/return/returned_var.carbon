@@ -46,7 +46,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     @F.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

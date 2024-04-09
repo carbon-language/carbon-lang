@@ -627,7 +627,9 @@ auto Context::FinalizeGlobalInit() -> void {
          .implicit_param_refs_id = SemIR::InstBlockId::Empty,
          .param_refs_id = SemIR::InstBlockId::Empty,
          .return_type_id = SemIR::TypeId::Invalid,
-         .return_slot_id = SemIR::InstId::Invalid,
+         .return_storage_id = SemIR::InstId::Invalid,
+         .is_extern = false,
+         .return_slot = SemIR::Function::ReturnSlot::Absent,
          .body_block_ids = {SemIR::InstBlockId::GlobalInit}});
   } else {
     inst_block_stack().PopGlobalInit();

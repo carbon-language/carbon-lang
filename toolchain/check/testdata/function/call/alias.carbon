@@ -27,7 +27,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
 // CHECK:STDOUT:   %B: <function> = bind_alias B, %A [template = %A]

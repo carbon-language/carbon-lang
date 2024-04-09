@@ -44,11 +44,11 @@ fn H() -> i32 {
 // CHECK:STDOUT:     @G.%return: ref (i32, i32) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {
-// CHECK:STDOUT:     %return.var.loc15: ref i32 = var <return slot>
+// CHECK:STDOUT:     @H.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: (i32, i32);
+// CHECK:STDOUT: fn @F() -> (i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: (i32, i32) {
 // CHECK:STDOUT: !entry:

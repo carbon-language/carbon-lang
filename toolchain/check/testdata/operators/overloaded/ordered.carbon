@@ -232,7 +232,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc15_22: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc15_19.1: C = param b
 // CHECK:STDOUT:     @TestLess.%b: C = bind_name b, %b.loc15_19.1
-// CHECK:STDOUT:     %return.var.loc15: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+1, loc_98 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir3, inst+15, unloaded
@@ -243,7 +243,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc19_27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc19_24.1: C = param b
 // CHECK:STDOUT:     @TestLessEqual.%b: C = bind_name b, %b.loc19_24.1
-// CHECK:STDOUT:     %return.var.loc19: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.13: type = import_ref ir3, inst+1, loc_118 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.14 = import_ref ir3, inst+30, unloaded
@@ -254,7 +254,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc23_25: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc23_22.1: C = param b
 // CHECK:STDOUT:     @TestGreater.%b: C = bind_name b, %b.loc23_22.1
-// CHECK:STDOUT:     %return.var.loc23: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.15: type = import_ref ir3, inst+1, loc_138 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.16 = import_ref ir3, inst+44, unloaded
@@ -265,7 +265,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc27_27.1: C = param b
 // CHECK:STDOUT:     @TestGreaterEqual.%b: C = bind_name b, %b.loc27_27.1
-// CHECK:STDOUT:     %return.var.loc27: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.17: type = import_ref ir3, inst+1, loc_158 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.18 = import_ref ir3, inst+58, unloaded
@@ -430,7 +430,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %D.ref.loc8_22: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc8_19.1: D = param b
 // CHECK:STDOUT:     @TestLess.%b: D = bind_name b, %b.loc8_19.1
-// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_30 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir3, inst+59, loc_90 [template = constants.%.9]
@@ -450,7 +450,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %D.ref.loc16_27: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc16_24.1: D = param b
 // CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc16_24.1
-// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.12: type = import_ref ir3, inst+1, loc_50 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.13 = import_ref ir3, inst+30, unloaded
@@ -461,7 +461,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %D.ref.loc24_25: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc24_22.1: D = param b
 // CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc24_22.1
-// CHECK:STDOUT:     %return.var.loc24: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.14: type = import_ref ir3, inst+1, loc_70 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir3, inst+44, unloaded
@@ -472,7 +472,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %D.ref.loc32_30: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc32_27.1: D = param b
 // CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc32_27.1
-// CHECK:STDOUT:     %return.var.loc32: ref bool = var <return slot>
+// CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.16: type = import_ref ir3, inst+1, loc_90 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.17 = import_ref ir3, inst+58, unloaded

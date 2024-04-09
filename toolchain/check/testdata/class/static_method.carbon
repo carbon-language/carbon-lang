@@ -31,7 +31,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Run.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -26,8 +26,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Inner, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.4: type = unbound_element_type Outer, Inner [template]
 // CHECK:STDOUT:   %.5: type = struct_type {.c: Inner, .d: Inner} [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.c: {.a: i32, .b: i32}*, .d: {.a: i32, .b: i32}*} [template]
@@ -78,7 +78,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   .d = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeInner() -> %return: Inner;
+// CHECK:STDOUT: fn @MakeInner() -> Inner;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeOuter() -> %return: Outer {
 // CHECK:STDOUT: !entry:

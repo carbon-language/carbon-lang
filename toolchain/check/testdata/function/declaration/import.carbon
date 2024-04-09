@@ -211,7 +211,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc5_6.1: i32 = param b
 // CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_6.1
-// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {
 // CHECK:STDOUT:     %.loc6_14.1: (type,) = tuple_literal (i32)
@@ -219,7 +219,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.loc6_6.1: (i32,) = param c
 // CHECK:STDOUT:     @C.%c: (i32,) = bind_name c, %c.loc6_6.1
 // CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: i32} [template = constants.%.3]
-// CHECK:STDOUT:     %return.var.loc6: ref {.c: i32} = var <return slot>
+// CHECK:STDOUT:     @C.%return: ref {.c: i32} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -260,7 +260,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %b.loc5_13.1: i32 = param b
 // CHECK:STDOUT:     @B.%b: i32 = bind_name b, %b.loc5_13.1
-// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {
 // CHECK:STDOUT:     %.loc6_21.1: (type,) = tuple_literal (i32)
@@ -268,7 +268,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.loc6_13.1: (i32,) = param c
 // CHECK:STDOUT:     @C.%c: (i32,) = bind_name c, %c.loc6_13.1
 // CHECK:STDOUT:     %.loc6_35: type = struct_type {.c: i32} [template = constants.%.3]
-// CHECK:STDOUT:     %return.var.loc6: ref {.c: i32} = var <return slot>
+// CHECK:STDOUT:     @C.%return: ref {.c: i32} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
@@ -870,7 +870,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc25: <function> = fn_decl @.1 [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @.1.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

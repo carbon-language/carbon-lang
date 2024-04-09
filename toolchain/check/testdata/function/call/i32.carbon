@@ -28,7 +28,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template] {
 // CHECK:STDOUT:     %a.loc7_9.1: i32 = param a
 // CHECK:STDOUT:     @Echo.%a: i32 = bind_name a, %a.loc7_9.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Echo.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
 // CHECK:STDOUT: }

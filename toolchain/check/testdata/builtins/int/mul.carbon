@@ -50,7 +50,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
 // CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc2_16.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Mul.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Mul.ref: <function> = name_ref Mul, %Mul [template = %Mul]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 3 [template = constants.%.1]
@@ -70,7 +70,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     @Mul.%a: i32 = bind_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
 // CHECK:STDOUT:     @Mul.%b: i32 = bind_name b, %b.loc4_16.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Mul.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Mul.ref.loc6: <function> = name_ref Mul, %Mul [template = %Mul]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 32767 [template = constants.%.1]

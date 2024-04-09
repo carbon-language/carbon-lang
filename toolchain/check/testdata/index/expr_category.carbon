@@ -66,7 +66,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: [i32; 3];
+// CHECK:STDOUT: fn @F() -> [i32; 3];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b: [i32; 3]) {
 // CHECK:STDOUT: !entry:

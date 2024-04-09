@@ -49,7 +49,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     @Neq.%a: i32 = bind_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
 // CHECK:STDOUT:     @Neq.%b: i32 = bind_name b, %b.loc2_16.1
-// CHECK:STDOUT:     %return.var.loc2: ref bool = var <return slot>
+// CHECK:STDOUT:     @Neq.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
@@ -66,7 +66,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc12_16.1
 // CHECK:STDOUT:     %b.loc12_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc12_24.1
-// CHECK:STDOUT:     %return.var.loc12: ref bool = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

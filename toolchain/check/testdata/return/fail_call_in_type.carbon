@@ -26,14 +26,14 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType [template] {
-// CHECK:STDOUT:     %return.var.loc9: ref type = var <return slot>
+// CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
 // CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType [template = %ReturnType]
 // CHECK:STDOUT:     %.loc13_23.1: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc13_24: type = value_of_initializer %.loc13_23.1
 // CHECK:STDOUT:     %.loc13_23.2: type = converted %.loc13_23.1, %.loc13_24
-// CHECK:STDOUT:     %return.var.loc13: ref <error> = var <return slot>
+// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

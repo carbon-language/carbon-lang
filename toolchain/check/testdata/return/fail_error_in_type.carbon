@@ -19,7 +19,7 @@ fn Six() -> x;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

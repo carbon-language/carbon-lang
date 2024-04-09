@@ -32,7 +32,7 @@ fn Run() {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc7_16.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:     %.loc7_16.2: type = converted %.loc7_16.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %return.var: ref (i32,) = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref (i32,) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
 // CHECK:STDOUT: }
