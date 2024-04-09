@@ -12,14 +12,16 @@
 auto main(int orig_argc, char** orig_argv) -> int {
   // Inject a flag to override the defaults for benchmarks. This can still be
   // disabled by user arguments.
+  llvm::MutableArrayRef<char*> orig_argv_ref(orig_argv, orig_argc);
   int argc = orig_argc + 1;
   llvm::OwningArrayRef<char*> injected_argv_storage(argc + 2);
   injected_argv_storage[0] = orig_argv[0];
   char injected_flag[] = "--benchmark_counters_tabular";
   injected_argv_storage[1] = injected_flag;
-for (auto [arg, orig_arg] : llvm::zip(injected_argv_storage.slice(2), llvm::ArrayRef(orig_argv).slice(1))) {
-  arg = orig_arg;
-}
+  for (auto [arg, orig_arg] :
+       llvm::zip(injected_argv_storage.slice(2), orig_argv_ref.slice(1))) {
+    arg = orig_arg;
+  }
   char** argv = injected_argv_storage.data();
 
   Carbon::InitLLVM init_llvm(argc, argv);
