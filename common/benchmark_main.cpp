@@ -17,11 +17,9 @@ auto main(int orig_argc, char** orig_argv) -> int {
   injected_argv_storage[0] = orig_argv[0];
   char injected_flag[] = "--benchmark_counters_tabular";
   injected_argv_storage[1] = injected_flag;
-  for (auto [index, v] : llvm::enumerate(injected_argv_storage.slice(2))) {
-    // Note that index for the injected array is one further than the original,
-    // but we sliced off the first two elements so this balances out.
-    v = orig_argv[index + 1];
-  }
+for (auto [arg, orig_arg] : llvm::zip(injected_argv_storage.slice(2), llvm::ArrayRef(orig_argv).slice(1))) {
+  arg = orig_arg;
+}
   char** argv = injected_argv_storage.data();
 
   Carbon::InitLLVM init_llvm(argc, argv);
