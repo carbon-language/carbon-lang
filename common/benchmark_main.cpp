@@ -10,6 +10,9 @@
 #include "llvm/ADT/StringRef.h"
 
 auto main(int orig_argc, char** orig_argv) -> int {
+  // Do LLVM's initialization first, this will also transform UTF-16 to UTF-8.
+  Carbon::InitLLVM init_llvm(orig_argc, orig_argv);
+
   // Inject a flag to override the defaults for benchmarks. This can still be
   // disabled by user arguments.
   llvm::SmallVector<char*> injected_argv_storage(orig_argv,
@@ -20,7 +23,6 @@ auto main(int orig_argc, char** orig_argv) -> int {
   char** argv = injected_argv_storage.data();
   int argc = injected_argv_storage.size() - 1;
 
-  Carbon::InitLLVM init_llvm(argc, argv);
   benchmark::Initialize(&argc, argv);
   absl::ParseCommandLine(argc, argv);
   benchmark::RunSpecifiedBenchmarks();
