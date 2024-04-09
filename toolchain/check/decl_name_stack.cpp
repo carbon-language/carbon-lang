@@ -4,6 +4,7 @@
 
 #include "toolchain/check/decl_name_stack.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -209,11 +210,9 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
                                         bool is_unqualified) -> void {
   // This will only be reached for resolved instructions. We update the target
   // scope based on the resolved type.
-  auto resolved_inst = context_->insts().Get(name_context.resolved_inst_id);
-  switch (resolved_inst.kind()) {
-    case SemIR::ClassDecl::Kind: {
-      const auto& class_info = context_->classes().Get(
-          resolved_inst.As<SemIR::ClassDecl>().class_id);
+  CARBON_KIND_SWITCH(context_->insts().Get(name_context.resolved_inst_id)) {
+    case CARBON_KIND(SemIR::ClassDecl resolved_inst): {
+      const auto& class_info = context_->classes().Get(resolved_inst.class_id);
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = class_info.scope_id;
@@ -226,9 +225,9 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       }
       break;
     }
-    case SemIR::InterfaceDecl::Kind: {
-      const auto& interface_info = context_->interfaces().Get(
-          resolved_inst.As<SemIR::InterfaceDecl>().interface_id);
+    case CARBON_KIND(SemIR::InterfaceDecl resolved_inst): {
+      const auto& interface_info =
+          context_->interfaces().Get(resolved_inst.interface_id);
       if (interface_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
         name_context.target_scope_id = interface_info.scope_id;
@@ -241,8 +240,8 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       }
       break;
     }
-    case SemIR::Namespace::Kind: {
-      auto scope_id = resolved_inst.As<SemIR::Namespace>().name_scope_id;
+    case CARBON_KIND(SemIR::Namespace resolved_inst): {
+      auto scope_id = resolved_inst.name_scope_id;
       name_context.state = NameContext::State::Resolved;
       name_context.target_scope_id = scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);

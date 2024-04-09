@@ -917,11 +917,12 @@ class Formatter {
   }
 
   auto FormatInstruction(InstId inst_id, Inst inst) -> void {
-    switch (inst.kind()) {
-#define CARBON_SEM_IR_INST_KIND(InstT)            \
-  case InstT::Kind:                               \
-    FormatInstruction(inst_id, inst.As<InstT>()); \
-    break;
+    CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND(InstT)      \
+  case CARBON_KIND(InstT typed_inst): {     \
+    FormatInstruction(inst_id, typed_inst); \
+    break;                                  \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
     }
   }

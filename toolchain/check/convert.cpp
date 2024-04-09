@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
@@ -23,32 +24,28 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
                                          SemIR::InstId init_id)
     -> SemIR::InstId {
   while (true) {
-    SemIR::Inst init = sem_ir.insts().Get(init_id);
-    switch (init.kind()) {
-      default:
-        CARBON_FATAL() << "Initialization from unexpected inst " << init;
-
-      case SemIR::Converted::Kind:
-        init_id = init.As<SemIR::Converted>().result_id;
+    SemIR::Inst init_untyped = sem_ir.insts().Get(init_id);
+    CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(SemIR::Converted init): {
+        init_id = init.result_id;
         continue;
-
-      case SemIR::ArrayInit::Kind:
-        return init.As<SemIR::ArrayInit>().dest_id;
-
-      case SemIR::ClassInit::Kind:
-        return init.As<SemIR::ClassInit>().dest_id;
-
-      case SemIR::StructInit::Kind:
-        return init.As<SemIR::StructInit>().dest_id;
-
-      case SemIR::TupleInit::Kind:
-        return init.As<SemIR::TupleInit>().dest_id;
-
-      case SemIR::InitializeFrom::Kind:
-        return init.As<SemIR::InitializeFrom>().dest_id;
-
-      case SemIR::Call::Kind: {
-        auto call = init.As<SemIR::Call>();
+      }
+      case CARBON_KIND(SemIR::ArrayInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(SemIR::ClassInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(SemIR::StructInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(SemIR::TupleInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(SemIR::InitializeFrom init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(SemIR::Call call): {
         if (!SemIR::GetInitRepr(sem_ir, call.type_id).has_return_slot()) {
           return SemIR::InstId::Invalid;
         }
@@ -58,6 +55,9 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
+      default:
+        CARBON_FATAL() << "Initialization from unexpected inst "
+                       << init_untyped;
     }
   }
 }
