@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/Sequence.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/import_ref.h"
@@ -733,34 +734,32 @@ class TypeCompleter {
   // Adds any types nested within `type_inst` that need to be complete for
   // `type_inst` to be complete to our work list.
   auto AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
-    switch (type_inst.kind()) {
-      case SemIR::ArrayType::Kind:
-        Push(type_inst.As<SemIR::ArrayType>().element_type_id);
+    CARBON_KIND_SWITCH(type_inst) {
+      case CARBON_KIND(SemIR::ArrayType inst): {
+        Push(inst.element_type_id);
         break;
-
-      case SemIR::StructType::Kind:
-        for (auto field_id : context_.inst_blocks().Get(
-                 type_inst.As<SemIR::StructType>().fields_id)) {
+      }
+      case CARBON_KIND(SemIR::StructType inst): {
+        for (auto field_id : context_.inst_blocks().Get(inst.fields_id)) {
           Push(context_.insts()
                    .GetAs<SemIR::StructTypeField>(field_id)
                    .field_type_id);
         }
         break;
-
-      case SemIR::TupleType::Kind:
-        for (auto element_type_id : context_.type_blocks().Get(
-                 type_inst.As<SemIR::TupleType>().elements_id)) {
+      }
+      case CARBON_KIND(SemIR::TupleType inst): {
+        for (auto element_type_id :
+             context_.type_blocks().Get(inst.elements_id)) {
           Push(element_type_id);
         }
         break;
-
-      case SemIR::ClassType::Kind: {
-        auto class_type = type_inst.As<SemIR::ClassType>();
-        auto& class_info = context_.classes().Get(class_type.class_id);
+      }
+      case CARBON_KIND(SemIR::ClassType inst): {
+        auto& class_info = context_.classes().Get(inst.class_id);
         if (!class_info.is_defined()) {
           if (diagnoser_) {
             auto builder = (*diagnoser_)();
-            context_.NoteIncompleteClass(class_type.class_id, builder);
+            context_.NoteIncompleteClass(inst.class_id, builder);
             builder.Emit();
           }
           return false;
@@ -768,11 +767,10 @@ class TypeCompleter {
         Push(class_info.object_repr_id);
         break;
       }
-
-      case SemIR::ConstType::Kind:
-        Push(type_inst.As<SemIR::ConstType>().inner_id);
+      case CARBON_KIND(SemIR::ConstType inst): {
+        Push(inst.inner_id);
         break;
-
+      }
       default:
         break;
     }
@@ -951,7 +949,7 @@ class TypeCompleter {
   // types, as found by AddNestedIncompleteTypes, are known to be complete.
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
-    switch (inst.kind()) {
+    CARBON_KIND_SWITCH(inst) {
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
@@ -1023,29 +1021,28 @@ class TypeCompleter {
         return BuildAnyImportRefValueRepr(type_id,
                                           inst.As<SemIR::AnyImportRef>());
 
-      case SemIR::StructType::Kind:
-        return BuildStructTypeValueRepr(type_id, inst.As<SemIR::StructType>());
-
-      case SemIR::TupleType::Kind:
-        return BuildTupleTypeValueRepr(type_id, inst.As<SemIR::TupleType>());
-
-      case SemIR::ClassType::Kind:
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        return BuildStructTypeValueRepr(type_id, struct_type);
+      }
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        return BuildTupleTypeValueRepr(type_id, tuple_type);
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
         // The value representation for a class is a pointer to the object
         // representation.
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
         return MakePointerValueRepr(
-            context_.classes()
-                .Get(inst.As<SemIR::ClassType>().class_id)
-                .object_repr_id,
+            context_.classes().Get(class_type.class_id).object_repr_id,
             SemIR::ValueRepr::ObjectAggregate);
-
-      case SemIR::InterfaceType::Kind:
+      }
+      case SemIR::InterfaceType::Kind: {
         // TODO: Should we model the value representation as a witness?
         return MakeEmptyValueRepr();
-
-      case SemIR::Builtin::Kind:
-        return BuildBuiltinValueRepr(type_id, inst.As<SemIR::Builtin>());
+      }
+      case CARBON_KIND(SemIR::Builtin builtin): {
+        return BuildBuiltinValueRepr(type_id, builtin);
+      }
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
@@ -1054,10 +1051,11 @@ class TypeCompleter {
       case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);
 
-      case SemIR::ConstType::Kind:
+      case CARBON_KIND(SemIR::ConstType const_type): {
         // The value representation of `const T` is the same as that of `T`.
         // Objects are not modifiable through their value representations.
-        return GetNestedValueRepr(inst.As<SemIR::ConstType>().inner_id);
+        return GetNestedValueRepr(const_type.inner_id);
+      }
     }
   }
 
