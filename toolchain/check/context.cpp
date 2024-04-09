@@ -952,6 +952,7 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     switch (inst.kind()) {
+      case SemIR::AdaptDecl::Kind:
       case SemIR::AddrOf::Kind:
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:

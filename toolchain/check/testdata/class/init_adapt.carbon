@@ -1,0 +1,295 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+// --- fail_todo_init_adapt.carbon
+
+library "fail_todo_init_adapt" api;
+
+class C {
+  var a: i32;
+  var b: i32;
+}
+
+class AdaptC {
+  adapt C;
+}
+
+let a: C = {.a = 1, .b = 2};
+
+// TODO: Allow these as explicit conversions.
+
+// CHECK:STDERR: fail_todo_init_adapt.carbon:[[@LINE+4]]:17: ERROR: Cannot convert from `C` to `AdaptC` with `as`.
+// CHECK:STDERR: let b: AdaptC = a as AdaptC;
+// CHECK:STDERR:                 ^~~~~~~~~~~
+// CHECK:STDERR:
+let b: AdaptC = a as AdaptC;
+
+// CHECK:STDERR: fail_todo_init_adapt.carbon:[[@LINE+4]]:12: ERROR: Cannot convert from `AdaptC` to `C` with `as`.
+// CHECK:STDERR: let c: C = b as C;
+// CHECK:STDERR:            ^~~~~~
+// CHECK:STDERR:
+let c: C = b as C;
+
+fn MakeC() -> C;
+
+fn MakeAdaptC() -> AdaptC;
+
+// CHECK:STDERR: fail_todo_init_adapt.carbon:[[@LINE+4]]:17: ERROR: Cannot convert from `C` to `AdaptC` with `as`.
+// CHECK:STDERR: var d: AdaptC = MakeC() as AdaptC;
+// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var d: AdaptC = MakeC() as AdaptC;
+
+// CHECK:STDERR: fail_todo_init_adapt.carbon:[[@LINE+4]]:12: ERROR: Cannot convert from `AdaptC` to `C` with `as`.
+// CHECK:STDERR: var e: C = MakeAdaptC() as C;
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var e: C = MakeAdaptC() as C;
+
+// --- fail_not_implicit.carbon
+
+library "fail_not_implicit" api;
+
+class C {
+  var a: i32;
+  var b: i32;
+}
+
+class AdaptC {
+  adapt C;
+}
+
+let a: C = {.a = 1, .b = 2};
+
+// Cannot implicitly convert between a type and an adapter for the type.
+
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Cannot implicitly convert from `C` to `AdaptC`.
+// CHECK:STDERR: let b: AdaptC = a;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+let b: AdaptC = a;
+
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Cannot implicitly convert from `AdaptC` to `C`.
+// CHECK:STDERR: let c: C = b;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+let c: C = b;
+
+fn MakeC() -> C;
+
+fn MakeAdaptC() -> AdaptC;
+
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:1: ERROR: Cannot implicitly convert from `C` to `AdaptC`.
+// CHECK:STDERR: var d: AdaptC = MakeC();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var d: AdaptC = MakeC();
+
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `AdaptC` to `C`.
+// CHECK:STDERR: var e: C = MakeAdaptC();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+var e: C = MakeAdaptC();
+
+// CHECK:STDOUT: --- fail_todo_init_adapt.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type C, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %.7: type = ptr_type C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .AdaptC = %AdaptC.decl
+// CHECK:STDOUT:     .MakeC = %MakeC
+// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:     .e = %e
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [template = constants.%AdaptC] {}
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_27.1: {.a: i32, .b: i32} = struct_literal (%.loc13_18, %.loc13_26)
+// CHECK:STDOUT:   %.loc13_27.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0
+// CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
+// CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
+// CHECK:STDOUT:   %.loc13_27.9: ref C = converted %.loc13_27.1, %.loc13_27.8
+// CHECK:STDOUT:   %.loc13_27.10: C = bind_value %.loc13_27.9
+// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_27.10
+// CHECK:STDOUT:   %AdaptC.ref.loc21_8: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %a.ref: C = name_ref a, %a
+// CHECK:STDOUT:   %AdaptC.ref.loc21_22: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %b: AdaptC = bind_name b, <error>
+// CHECK:STDOUT:   %C.ref.loc27_8: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %b.ref: AdaptC = name_ref b, %b
+// CHECK:STDOUT:   %C.ref.loc27_17: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %c: C = bind_name c, <error>
+// CHECK:STDOUT:   %MakeC: <function> = fn_decl @MakeC [template] {
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     @MakeC.%return: ref C = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeAdaptC: <function> = fn_decl @MakeAdaptC [template] {
+// CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     @MakeAdaptC.%return: ref AdaptC = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AdaptC.ref.loc37: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %d.var: ref AdaptC = var d
+// CHECK:STDOUT:   %d: ref AdaptC = bind_name d, %d.var
+// CHECK:STDOUT:   %C.ref.loc43: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %e.var: ref C = var e
+// CHECK:STDOUT:   %e: ref C = bind_name e, %e.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc5: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc6: <unbound element of class C> = field_decl b, element1 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .b = %.loc6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @AdaptC {
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   adapt_decl C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AdaptC
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeC() -> %return: C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeAdaptC() -> %return: AdaptC;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
+// CHECK:STDOUT:   %.loc37_22.1: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc37_22.2: init C = call %MakeC.ref() to %.loc37_22.1
+// CHECK:STDOUT:   %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   assign file.%d.var, <error>
+// CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
+// CHECK:STDOUT:   %.loc43_22.1: ref AdaptC = temporary_storage
+// CHECK:STDOUT:   %.loc43_22.2: init AdaptC = call %MakeAdaptC.ref() to %.loc43_22.1
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   assign file.%e.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_not_implicit.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type C, i32 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.6: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %.7: type = ptr_type C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .AdaptC = %AdaptC.decl
+// CHECK:STDOUT:     .MakeC = %MakeC
+// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:     .e = %e
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %AdaptC.decl: type = class_decl @AdaptC [template = constants.%AdaptC] {}
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc13_18: i32 = int_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_26: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_27.1: {.a: i32, .b: i32} = struct_literal (%.loc13_18, %.loc13_26)
+// CHECK:STDOUT:   %.loc13_27.2: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc13_27.3: ref i32 = class_element_access %.loc13_27.2, element0
+// CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
+// CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
+// CHECK:STDOUT:   %.loc13_27.9: ref C = converted %.loc13_27.1, %.loc13_27.8
+// CHECK:STDOUT:   %.loc13_27.10: C = bind_value %.loc13_27.9
+// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_27.10
+// CHECK:STDOUT:   %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %a.ref: C = name_ref a, %a
+// CHECK:STDOUT:   %b: AdaptC = bind_name b, <error>
+// CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %b.ref: AdaptC = name_ref b, %b
+// CHECK:STDOUT:   %c: C = bind_name c, <error>
+// CHECK:STDOUT:   %MakeC: <function> = fn_decl @MakeC [template] {
+// CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     @MakeC.%return: ref C = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeAdaptC: <function> = fn_decl @MakeAdaptC [template] {
+// CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:     @MakeAdaptC.%return: ref AdaptC = var <return slot>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %AdaptC.ref.loc37: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
+// CHECK:STDOUT:   %d.var: ref AdaptC = var d
+// CHECK:STDOUT:   %d: ref AdaptC = bind_name d, %d.var
+// CHECK:STDOUT:   %C.ref.loc42: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %e.var: ref C = var e
+// CHECK:STDOUT:   %e: ref C = bind_name e, %e.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc5: <unbound element of class C> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc6: <unbound element of class C> = field_decl b, element1 [template]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .b = %.loc6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @AdaptC {
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   adapt_decl C
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%AdaptC
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeC() -> %return: C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeAdaptC() -> %return: AdaptC;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
+// CHECK:STDOUT:   %.loc37_22.1: ref C = temporary_storage
+// CHECK:STDOUT:   %.loc37_22.2: init C = call %MakeC.ref() to %.loc37_22.1
+// CHECK:STDOUT:   assign file.%d.var, <error>
+// CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
+// CHECK:STDOUT:   %.loc42_22.1: ref AdaptC = temporary_storage
+// CHECK:STDOUT:   %.loc42_22.2: init AdaptC = call %MakeAdaptC.ref() to %.loc42_22.1
+// CHECK:STDOUT:   assign file.%e.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

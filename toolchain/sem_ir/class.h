@@ -56,6 +56,11 @@ struct Class : public Printable<Class> {
 
   // The following members are accumulated throughout the class definition.
 
+  // The adapted type declaration, if any. Invalid if the class is not an
+  // adapter. This is an AdaptDecl instruction.
+  // TODO: Consider sharing the storage for `adapt_id` and `base_id`. A class
+  // can't have both.
+  InstId adapt_id = InstId::Invalid;
   // The base class declaration. Invalid if the class has no base class. This is
   // a BaseDecl instruction.
   InstId base_id = InstId::Invalid;

@@ -220,6 +220,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case PointerType::Kind:
       return -2;
 
+    case AdaptDecl::Kind:
     case AddrOf::Kind:
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
@@ -485,6 +486,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
@@ -568,6 +570,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   while (true) {
     auto inst = ir->insts().Get(inst_id);
     switch (inst.kind()) {
+      case AdaptDecl::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
       case Branch::Kind:
