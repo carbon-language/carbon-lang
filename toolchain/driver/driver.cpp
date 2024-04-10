@@ -671,6 +671,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   // Prepare CompilationUnits before building scope exit handlers.
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  units.reserve(options.prelude_import + options.input_filenames.size());
 
   // Directly insert the core package into the compilation units.
   // TODO: Should expand this into a more rich system to search for the core
@@ -681,7 +682,6 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   }
 
   // Add the input source files.
-  units.reserve(units.size() + options.input_filenames.size());
   for (const auto& input_filename : options.input_filenames) {
     units.push_back(std::make_unique<CompilationUnit>(
         this, options, &stream_consumer, input_filename));
