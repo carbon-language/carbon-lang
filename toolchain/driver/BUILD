@@ -17,6 +17,7 @@ cc_library(
     name = "driver",
     srcs = ["driver.cpp"],
     hdrs = ["driver.h"],
+    data = ["//core"],
     textual_hdrs = ["flags.def"],
     deps = [
         "//common:command_line",

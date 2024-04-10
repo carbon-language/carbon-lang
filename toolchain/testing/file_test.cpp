@@ -52,11 +52,14 @@ class ToolchainFileTest : public FileTestBase {
     llvm::SmallVector<std::string> args = {"compile",
                                            "--phase=" + component_.str()};
 
+    // For `lex` and `parse`, we don't need to import the prelude. Suppress it
+    // to improve the dump output for the tests.
     if (component_ == "lex") {
-      args.insert(args.end(), {"--dump-tokens", "%s"});
+      args.insert(args.end(), {"--no-prelude-import", "--dump-tokens", "%s"});
       return args;
     } else if (component_ == "parse") {
-      args.insert(args.end(), {"--dump-parse-tree", "%s"});
+      args.insert(args.end(),
+                  {"--no-prelude-import", "--dump-parse-tree", "%s"});
       return args;
     }
 
@@ -69,8 +72,7 @@ class ToolchainFileTest : public FileTestBase {
                      << test_name();
     }
 
-    args.insert(args.end(), {"--exclude-dump-file-prefix=core/",
-                             "core/prelude.carbon", "%s"});
+    args.insert(args.end(), {"--exclude-dump-file-prefix=core/", "%s"});
     return args;
   }
 
