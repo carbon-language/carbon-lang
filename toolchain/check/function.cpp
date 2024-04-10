@@ -373,13 +373,11 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
     return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                    function.return_type_id);
   };
-  std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>
-      maybe_diagnose;
-  if (function.return_slot != SemIR::Function::ReturnSlot::Error) {
-    maybe_diagnose = diagnose_incomplete_return_type;
-  }
-
-  if (!context.TryToCompleteType(function.return_type_id, maybe_diagnose)) {
+  if (!context.TryToCompleteType(
+          function.return_type_id,
+          function.return_slot == SemIR::Function::ReturnSlot::Error
+              ? std::nullopt
+              : std::optional(diagnose_incomplete_return_type))) {
     function.return_slot = SemIR::Function::ReturnSlot::Error;
   } else if (SemIR::GetInitRepr(context.sem_ir(), function.return_type_id)
                  .has_return_slot()) {
