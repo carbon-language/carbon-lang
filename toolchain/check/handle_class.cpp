@@ -193,6 +193,18 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
   context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
 }
 
+// Returns the declaration of the immediately-enclosing class scope, or
+// diagonses if there isn't one.
+static auto GetEnclosingClassOrDiagnose(Context& context, SemIRLoc loc,
+                                        Lex::TokenKind tok)
+    -> std::optional<SemIR::ClassDecl> {
+  auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  if (!class_scope) {
+    DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
+  }
+  return class_scope;
+}
+
 // Diagnoses a class-specific declaration that is repeated within a class, but
 // is not permitted to be repeated.
 static auto DiagnoseClassSpecificDeclRepeated(Context& context,
@@ -229,10 +241,9 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   context.decl_state_stack().Pop(DeclState::Adapt);
 
-  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto enclosing_class_decl =
+      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
   if (!enclosing_class_decl) {
-    DiagnoseClassSpecificDeclOutsideClass(context, node_id,
-                                          Lex::TokenKind::Adapt);
     return true;
   }
 
@@ -366,10 +377,9 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Base);
 
-  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto enclosing_class_decl =
+      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
   if (!enclosing_class_decl) {
-    DiagnoseClassSpecificDeclOutsideClass(context, node_id,
-                                          Lex::TokenKind::Base);
     return true;
   }
 
