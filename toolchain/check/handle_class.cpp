@@ -183,6 +183,36 @@ auto HandleClassDefinitionStart(Context& context,
   return true;
 }
 
+// Diagnoses a class-specific declaration appearing outside a class.
+static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
+                                                  SemIRLoc loc,
+                                                  Lex::TokenKind tok) -> void {
+  CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
+                    "`{0}` declaration can only be used in a class.",
+                    Lex::TokenKind);
+  context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
+}
+
+// Diagnoses a class-specific declaration that is repeated within a class, but
+// is not permitted to be repeated.
+static auto DiagnoseClassSpecificDeclRepeated(Context& context,
+                                              SemIRLoc new_loc,
+                                              SemIRLoc prev_loc,
+                                              Lex::TokenKind tok) -> void {
+  CARBON_DIAGNOSTIC(ClassSpecificDeclRepeated, Error,
+                    "Multiple `{0}` declarations in class.{1}", Lex::TokenKind,
+                    std::string);
+  const llvm::StringRef extra = tok == Lex::TokenKind::Base
+                                    ? " Multiple inheritance is not permitted."
+                                    : "";
+  CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
+                    "Previous `{0}` declaration is here.", Lex::TokenKind);
+  context.emitter()
+      .Build(new_loc, ClassSpecificDeclRepeated, tok, extra.str())
+      .Note(prev_loc, ClassSpecificDeclPrevious, tok)
+      .Emit();
+}
+
 auto HandleAdaptIntroducer(Context& context,
                            Parse::AdaptIntroducerId /*node_id*/) -> bool {
   context.decl_state_stack().Push(DeclState::Adapt);
@@ -201,22 +231,15 @@ auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!enclosing_class_decl) {
-    CARBON_DIAGNOSTIC(AdaptOutsideClass, Error,
-                      "`adapt` declaration can only be used in a class.");
-    context.emitter().Emit(node_id, AdaptOutsideClass);
+    DiagnoseClassSpecificDeclOutsideClass(context, node_id,
+                                          Lex::TokenKind::Adapt);
     return true;
   }
 
   auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
   if (class_info.adapt_id.is_valid()) {
-    CARBON_DIAGNOSTIC(AdaptRepeated, Error,
-                      "Multiple `adapt` declarations in class.");
-    CARBON_DIAGNOSTIC(AdaptPrevious, Note,
-                      "Previous `adapt` declaration is here.");
-    context.emitter()
-        .Build(node_id, AdaptRepeated)
-        .Note(class_info.adapt_id, AdaptPrevious)
-        .Emit();
+    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
+                                      Lex::TokenKind::Adapt);
     return true;
   }
 
@@ -345,23 +368,15 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!enclosing_class_decl) {
-    CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
-                      "`base` declaration can only be used in a class.");
-    context.emitter().Emit(node_id, BaseOutsideClass);
+    DiagnoseClassSpecificDeclOutsideClass(context, node_id,
+                                          Lex::TokenKind::Base);
     return true;
   }
 
   auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
   if (class_info.base_id.is_valid()) {
-    CARBON_DIAGNOSTIC(BaseRepeated, Error,
-                      "Multiple `base` declarations in class. Multiple "
-                      "inheritance is not permitted.");
-    CARBON_DIAGNOSTIC(BasePrevious, Note,
-                      "Previous `base` declaration is here.");
-    context.emitter()
-        .Build(node_id, BaseRepeated)
-        .Note(class_info.base_id, BasePrevious)
-        .Emit();
+    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
+                                      Lex::TokenKind::Base);
     return true;
   }
 
