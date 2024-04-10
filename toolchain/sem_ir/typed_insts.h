@@ -44,6 +44,15 @@
 
 namespace Carbon::SemIR {
 
+// An adapted type declaration in a class, of the form `adapt T;`.
+struct AdaptDecl {
+  static constexpr auto Kind =
+      InstKind::AdaptDecl.Define<Parse::AdaptDeclId>("adapt_decl");
+
+  // No type_id; this is not a value.
+  TypeId adapted_type_id;
+};
+
 struct AddrOf {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
@@ -187,15 +196,6 @@ struct AssociatedEntityType {
   TypeId type_id;
   InterfaceId interface_id;
   TypeId entity_type_id;
-};
-
-// An adapted type declaration in a class, of the form `adapt T;`.
-struct AdaptDecl {
-  static constexpr auto Kind =
-      InstKind::AdaptDecl.Define<Parse::AdaptDeclId>("adapt_decl");
-
-  // No type_id; this is not a value.
-  TypeId adapted_type_id;
 };
 
 // A base in a class, of the form `base: base_type;`. A base class is an
