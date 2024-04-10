@@ -294,6 +294,28 @@ static auto CheckIsAllowedRedecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Returns the return slot usage for a function given the computed usage for two
+// different declarations of the function.
+static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
+                            SemIR::Function::ReturnSlot b)
+    -> SemIR::Function::ReturnSlot {
+  if (a == SemIR::Function::ReturnSlot::NotComputed) {
+    return b;
+  }
+  if (b == SemIR::Function::ReturnSlot::NotComputed) {
+    return a;
+  }
+  if (a == SemIR::Function::ReturnSlot::Error) {
+    return b;
+  }
+  if (b == SemIR::Function::ReturnSlot::Error) {
+    return a;
+  }
+  CARBON_CHECK(a == b)
+      << "Different return slot usage computed for the same function.";
+  return a;
+}
+
 auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
                          SemIR::Function& new_function, bool new_is_import,
                          bool new_is_definition,
@@ -317,6 +339,9 @@ auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
     prev_function.return_type_id = new_function.return_type_id;
     prev_function.return_storage_id = new_function.return_storage_id;
   }
+  // The new function might have return slot information if it was imported.
+  prev_function.return_slot =
+      MergeReturnSlot(prev_function.return_slot, new_function.return_slot);
   if ((prev_import_ir_inst_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
@@ -327,8 +352,8 @@ auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
   return true;
 }
 
-auto CheckFunctionReturnType(Context& context, SemIR::Function& function)
-    -> void {
+auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
+                             SemIR::Function& function) -> void {
   // If we have already checked the return type, we have nothing to do.
   if (function.return_slot != SemIR::Function::ReturnSlot::NotComputed) {
     return;
@@ -345,8 +370,7 @@ auto CheckFunctionReturnType(Context& context, SemIR::Function& function)
   auto diagnose_incomplete_return_type = [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                       "Function returns incomplete type `{0}`.", SemIR::TypeId);
-    return context.emitter().Build(function.return_storage_id,
-                                   IncompleteTypeInFunctionReturnType,
+    return context.emitter().Build(loc, IncompleteTypeInFunctionReturnType,
                                    function.return_type_id);
   };
   std::optional<llvm::function_ref<auto()->Context::DiagnosticBuilder>>

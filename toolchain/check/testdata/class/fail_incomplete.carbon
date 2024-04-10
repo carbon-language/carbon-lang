@@ -90,43 +90,44 @@ fn Let(p: Class*) {
 
 fn TakeIncomplete(c: Class);
 
-// TODO: We should allow this, and only reject calls to the function.
-//
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:23: ERROR: Function returns incomplete type `Class`.
-// CHECK:STDERR: fn ReturnIncomplete() -> Class;
-// CHECK:STDERR:                       ^~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-91]]:1: Class was forward declared here.
-// CHECK:STDERR: class Class;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
 fn ReturnIncomplete() -> Class;
 
 fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete(*p);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-101]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-92]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-20]]:1: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-11]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   TakeIncomplete(*p);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:3: ERROR: Forming value of incomplete type `Class`.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: ERROR: Forming value of incomplete type `Class`.
   // CHECK:STDERR:   TakeIncomplete({});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-113]]:1: Class was forward declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-104]]:1: Class was forward declared here.
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-32]]:1: Initializing parameter 1 of function declared here.
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-23]]:1: Initializing parameter 1 of function declared here.
   // CHECK:STDERR: fn TakeIncomplete(c: Class);
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   TakeIncomplete({});
 }
 
 fn CallReturnIncomplete() {
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+9]]:3: ERROR: Function returns incomplete type `Class`.
+  // CHECK:STDERR:   ReturnIncomplete();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-118]]:1: Class was forward declared here.
+  // CHECK:STDERR: class Class;
+  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-35]]:23: Return type declared here.
+  // CHECK:STDERR: fn ReturnIncomplete() -> Class;
+  // CHECK:STDERR:                       ^~~~~~~~
   ReturnIncomplete();
 }
 
@@ -200,14 +201,14 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     @TakeIncomplete.%c: Class = bind_name c, %c.loc91_19.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReturnIncomplete: <function> = fn_decl @ReturnIncomplete [template] {
-// CHECK:STDOUT:     %Class.ref.loc102: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc93: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ReturnIncomplete.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallTakeIncomplete: <function> = fn_decl @CallTakeIncomplete [template] {
-// CHECK:STDOUT:     %Class.ref.loc104: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc104: type = ptr_type Class [template = constants.%.2]
-// CHECK:STDOUT:     %p.loc104_23.1: Class* = param p
-// CHECK:STDOUT:     @CallTakeIncomplete.%p: Class* = bind_name p, %p.loc104_23.1
+// CHECK:STDOUT:     %Class.ref.loc95: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:     %.loc95: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:     %p.loc95_23.1: Class* = param p
+// CHECK:STDOUT:     @CallTakeIncomplete.%p: Class* = bind_name p, %p.loc95_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallReturnIncomplete: <function> = fn_decl @CallReturnIncomplete [template] {}
 // CHECK:STDOUT: }
@@ -268,20 +269,20 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc115: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc106: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
-// CHECK:STDOUT:   %.loc115_18: ref Class = deref %p.ref
-// CHECK:STDOUT:   %.loc115_17: init () = call %TakeIncomplete.ref.loc115(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc126: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
-// CHECK:STDOUT:   %.loc126_19: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc126_17: init () = call %TakeIncomplete.ref.loc126(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc106_18: ref Class = deref %p.ref
+// CHECK:STDOUT:   %.loc106_17: init () = call %TakeIncomplete.ref.loc106(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc118: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
+// CHECK:STDOUT:   %.loc118_19: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc118_17: init () = call %TakeIncomplete.ref.loc118(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_ref ReturnIncomplete, file.%ReturnIncomplete [template = file.%ReturnIncomplete]
-// CHECK:STDOUT:   %.loc130: init <error> = call %ReturnIncomplete.ref()
+// CHECK:STDOUT:   %.loc131: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

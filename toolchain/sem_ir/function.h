@@ -13,6 +13,20 @@ namespace Carbon::SemIR {
 
 // A function.
 struct Function : public Printable<Function> {
+  // A value that describes whether the function uses a return slot.
+  enum class ReturnSlot : int8_t {
+    // Not yet known: the function has not been called or defined.
+    NotComputed,
+    // The function is known to not use a return slot.
+    Absent,
+    // The function has a return slot, and a call to the function is expected to
+    // have an additional final argument corresponding to the return slot.
+    Present,
+    // Computing whether the function should have a return slot failed, for
+    // example because the return type was incomplete.
+    Error
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
         << ", param_refs: " << param_refs_id;
@@ -86,18 +100,6 @@ struct Function : public Printable<Function> {
   // point where the function is defined.
 
   // Whether the function uses a return slot.
-  enum class ReturnSlot : int8_t {
-    // Not yet known: the function has not been called or defined.
-    NotComputed,
-    // The function is known to not use a return slot.
-    Absent,
-    // The function has a return slot, and a call to the function is expected to
-    // have an additional final argument corresponding to the return slot.
-    Present,
-    // Computing whether the function should have a return slot failed, for
-    // example because the return type was incomplete.
-    Error
-  };
   ReturnSlot return_slot;
 
   // The following members are set at the end of a builtin function definition.

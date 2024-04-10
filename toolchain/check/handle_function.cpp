@@ -228,7 +228,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.AddCurrentCodeBlockToFunction();
 
   // Check the return type is complete.
-  CheckFunctionReturnType(context, function);
+  CheckFunctionReturnType(context, function.return_storage_id, function);
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<SemIR::InstId>(

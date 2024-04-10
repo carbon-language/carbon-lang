@@ -732,8 +732,7 @@ class ImportRefResolver {
          .return_type_id = new_return_type_id,
          .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
-         // There has been no call or definition in this file.
-         .return_slot = SemIR::Function::ReturnSlot::NotComputed,
+         .return_slot = function.return_slot,
          .builtin_kind = function.builtin_kind,
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id

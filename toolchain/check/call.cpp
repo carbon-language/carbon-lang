@@ -57,7 +57,15 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // If there is a return slot, build storage for the result.
   SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
-  CheckFunctionReturnType(context, callable);
+  {
+    DiagnosticAnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
+                            "Return type declared here.");
+          builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
+        });
+    CheckFunctionReturnType(context, callee_id, callable);
+  }
   switch (callable.return_slot) {
     case SemIR::Function::ReturnSlot::Present:
       // Tentatively put storage for a temporary in the function's return slot.

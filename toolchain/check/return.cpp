@@ -39,9 +39,8 @@ static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
                     "Return type of function is `{0}`.", SemIR::TypeId);
-  // TODO: This is using the location of the `fn` keyword. Find the location of
-  // the return type.
-  diag.Note(function.decl_id, ReturnTypeHereNote, function.return_type_id);
+  diag.Note(function.return_storage_id, ReturnTypeHereNote,
+            function.return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
