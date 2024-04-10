@@ -17,6 +17,7 @@
 
 // For each instruction kind declared here there is a matching definition in
 // `typed_insts.h`.
+CARBON_SEM_IR_INST_KIND(AdaptDecl)
 CARBON_SEM_IR_INST_KIND(AddrOf)
 CARBON_SEM_IR_INST_KIND(AddrPattern)
 CARBON_SEM_IR_INST_KIND(ArrayIndex)
