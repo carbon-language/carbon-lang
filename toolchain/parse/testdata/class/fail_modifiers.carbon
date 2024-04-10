@@ -4,32 +4,32 @@
 //
 // AUTOUPDATE
 
-// --- valid.carbon
+// --- fail_virtual_class.carbon
 
 virtual class B
-// CHECK:STDERR: valid.carbon:[[@LINE+4]]:1: ERROR: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_virtual_class.carbon:[[@LINE+4]]:1: ERROR: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR:
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 
-// --- impl_class.carbon
+// --- fail_impl_class.carbon
 
-// CHECK:STDERR: impl_class.carbon:[[@LINE+4]]:1: ERROR: `impl` introducer should be followed by a name.
+// CHECK:STDERR: fail_impl_class.carbon:[[@LINE+4]]:1: ERROR: `impl` introducer should be followed by a name.
 // CHECK:STDERR: impl class
 // CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 impl class
 
-// --- extend_adapt_base.carbon
+// --- fail_extend_adapt_base.carbon
 
 class C {
-  // CHECK:STDERR: extend_adapt_base.carbon:[[@LINE+3]]:16: ERROR: Expected expression.
+  // CHECK:STDERR: fail_extend_adapt_base.carbon:[[@LINE+3]]:16: ERROR: Expected expression.
   // CHECK:STDERR:   extend adapt base B;
   // CHECK:STDERR:                ^~~~
   extend adapt base B;
 }
 
-// CHECK:STDOUT: - filename: valid.carbon
+// CHECK:STDOUT: - filename: fail_virtual_class.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
@@ -38,7 +38,7 @@ class C {
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: 'B', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: impl_class.carbon
+// CHECK:STDOUT: - filename: fail_impl_class.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
@@ -47,7 +47,7 @@ class C {
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: 'class', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: extend_adapt_base.carbon
+// CHECK:STDOUT: - filename: fail_extend_adapt_base.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
