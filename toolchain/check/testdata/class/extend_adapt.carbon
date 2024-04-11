@@ -255,7 +255,7 @@ class StructAdapter {
 // CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, %SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.loc13_6.1: SomeClassAdapter = param a
 // CHECK:STDOUT:     @F.%a: SomeClassAdapter = bind_name a, %a.loc13_6.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
