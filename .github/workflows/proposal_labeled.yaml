@@ -19,10 +19,18 @@ on:
     types:
       - labeled
 
+permissions:
+  pull-requests: write # For gh to edit labels.
+
 jobs:
   proposal_labeled:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: draft
         if: |
           github.event.label.name == 'proposal draft'
