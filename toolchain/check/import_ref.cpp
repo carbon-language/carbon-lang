@@ -415,6 +415,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FunctionDecl inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::ImportRefUsed inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
       case CARBON_KIND(SemIR::InterfaceDecl inst): {
         return TryResolveTypedInst(inst, const_id);
       }
@@ -740,6 +743,27 @@ class ImportRefResolver {
     // Write the function ID into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(function_decl_id, function_decl);
     return {context_.constant_values().Get(function_decl_id)};
+  }
+
+  auto TryResolveTypedInst(SemIR::ImportRefUsed /*inst*/, SemIR::InstId inst_id)
+      -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    // Return the constant for the instruction of the imported constant.
+    auto constant_id = import_ir_.constant_values().Get(inst_id);
+    if (!constant_id.is_valid()) {
+      return {SemIR::ConstantId::Error};
+    }
+    if (!constant_id.is_constant()) {
+      context_.TODO(inst_id, "Non-constant ImportRefUsed (comes up with var)");
+      return {SemIR::ConstantId::Error};
+    }
+
+    auto new_constant_id = GetLocalConstantId(constant_id.inst_id());
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+
+    return {new_constant_id};
   }
 
   // Make a declaration of an interface. This is done as a separate step from
