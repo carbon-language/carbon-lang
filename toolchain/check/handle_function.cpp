@@ -79,26 +79,16 @@ static auto BuildFunctionDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   auto return_type_id = SemIR::TypeId::Invalid;
-  auto return_slot_id = SemIR::InstId::Invalid;
-  if (auto [return_node, return_storage_id] =
+  auto return_storage_id = SemIR::InstId::Invalid;
+  auto return_slot = SemIR::Function::ReturnSlot::NotComputed;
+  if (auto [return_node, maybe_return_storage_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      return_storage_id) {
-    return_type_id = context.insts().Get(*return_storage_id).type_id();
-
-    return_type_id = context.AsCompleteType(return_type_id, [&] {
-      CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
-                        "Function returns incomplete type `{0}`.",
-                        SemIR::TypeId);
-      return context.emitter().Build(
-          return_node, IncompleteTypeInFunctionReturnType, return_type_id);
-    });
-
-    if (!SemIR::GetInitRepr(context.sem_ir(), return_type_id)
-             .has_return_slot()) {
-      // The function only has a return slot if it uses in-place initialization.
-    } else {
-      return_slot_id = *return_storage_id;
-    }
+      maybe_return_storage_id) {
+    return_type_id = context.insts().Get(*maybe_return_storage_id).type_id();
+    return_storage_id = *maybe_return_storage_id;
+  } else {
+    // If there's no return type, there's no return slot.
+    return_slot = SemIR::Function::ReturnSlot::Absent;
   }
 
   SemIR::InstBlockId param_refs_id =
@@ -144,8 +134,9 @@ static auto BuildFunctionDecl(Context& context,
       .implicit_param_refs_id = implicit_param_refs_id,
       .param_refs_id = param_refs_id,
       .return_type_id = return_type_id,
-      .return_slot_id = return_slot_id,
-      .is_extern = is_extern};
+      .return_storage_id = return_storage_id,
+      .is_extern = is_extern,
+      .return_slot = return_slot};
   if (is_definition) {
     function_info.definition_id = function_info.decl_id;
   }
@@ -201,9 +192,9 @@ static auto BuildFunctionDecl(Context& context,
     // TODO: Update this once valid signatures for the entry point are decided.
     if (!context.inst_blocks().Get(implicit_param_refs_id).empty() ||
         !context.inst_blocks().Get(param_refs_id).empty() ||
-        (return_slot_id.is_valid() &&
+        (return_type_id.is_valid() &&
          return_type_id !=
-             context.GetBuiltinType(SemIR::BuiltinKind::BoolType) &&
+             context.GetBuiltinType(SemIR::BuiltinKind::IntType) &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
@@ -235,6 +226,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.inst_block_stack().Push();
   context.scope_stack().Push(decl_id);
   context.AddCurrentCodeBlockToFunction();
+
+  // Check the return type is complete.
+  CheckFunctionReturnType(context, function.return_storage_id, function);
 
   // Check the parameter types are complete.
   for (auto param_id : llvm::concat<SemIR::InstId>(

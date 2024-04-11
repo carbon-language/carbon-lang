@@ -74,7 +74,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     @ConvertUnrelated.%p: B2* = bind_name p, %p.loc24_21.1
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, %A1.decl [template = constants.%A1]
 // CHECK:STDOUT:     %.loc24_34: type = ptr_type A1 [template = constants.%.9]
-// CHECK:STDOUT:     %return.var.loc24: ref A1* = var <return slot>
+// CHECK:STDOUT:     @ConvertUnrelated.%return: ref A1* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %ConvertIncomplete: <function> = fn_decl @ConvertIncomplete [template] {
@@ -84,7 +84,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     @ConvertIncomplete.%p: Incomplete* = bind_name p, %p.loc31_22.1
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, %A2.decl [template = constants.%A2]
 // CHECK:STDOUT:     %.loc31_43: type = ptr_type A2 [template = constants.%.14]
-// CHECK:STDOUT:     %return.var.loc31: ref A2* = var <return slot>
+// CHECK:STDOUT:     @ConvertIncomplete.%return: ref A2* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

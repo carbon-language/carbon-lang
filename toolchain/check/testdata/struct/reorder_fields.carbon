@@ -31,10 +31,10 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %MakeI32: <function> = fn_decl @MakeI32 [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @MakeI32.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64: <function> = fn_decl @MakeF64 [template] {
-// CHECK:STDOUT:     %return.var.loc8: ref f64 = var <return slot>
+// CHECK:STDOUT:     @MakeF64.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %.loc10: type = struct_type {.a: i32, .b: f64} [template = constants.%.1]

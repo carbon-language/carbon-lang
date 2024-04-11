@@ -37,7 +37,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc11_6.1: Class = param c
 // CHECK:STDOUT:     @G.%c: Class = bind_name c, %c.loc11_6.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

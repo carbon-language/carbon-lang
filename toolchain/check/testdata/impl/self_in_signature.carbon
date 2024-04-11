@@ -41,9 +41,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.5: type = tuple_type () [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (@impl.1.%F) [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%F) [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %.7: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.8: C = struct_value () [template]
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (@impl.2.%F) [template]
 // CHECK:STDOUT:   %.10: D = struct_value () [template]
@@ -156,7 +156,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc16_26: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.7]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F

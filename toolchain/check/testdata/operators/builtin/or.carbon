@@ -42,13 +42,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Or: <function> = fn_decl @Or [template] {
-// CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
+// CHECK:STDOUT:     @Or.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant: <function> = fn_decl @Constant [template] {}
 // CHECK:STDOUT:   %PartialConstant: <function> = fn_decl @PartialConstant [template] {

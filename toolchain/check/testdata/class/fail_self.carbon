@@ -11,13 +11,6 @@ class Class {
   // CHECK:STDERR:
   fn F(self: Self);
 
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+7]]:10: ERROR: Function returns incomplete type `Class`.
-  // CHECK:STDERR:   fn G() -> Self;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_self.carbon:[[@LINE-10]]:1: Class is incomplete within its definition.
-  // CHECK:STDERR: class Class {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   fn G() -> Self;
 }
 
@@ -75,19 +68,19 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
-// CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc28_12.1: Class = param self
-// CHECK:STDOUT:     @F.1.%self: Class = bind_name self, %self.loc28_12.1
+// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %self.loc21_12.1: Class = param self
+// CHECK:STDOUT:     @F.1.%self: Class = bind_name self, %self.loc21_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc31: <function> = fn_decl @.1 [template] {
-// CHECK:STDOUT:     %Self.ref.loc31: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     @.1.%return: ref Class = var <return slot>
+// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:     %Self.ref.loc24: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     @G.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {}
 // CHECK:STDOUT:   %CallWrongSelf: <function> = fn_decl @CallWrongSelf [template] {
 // CHECK:STDOUT:     %WrongSelf.ref: type = name_ref WrongSelf, %WrongSelf.decl [template = constants.%WrongSelf]
-// CHECK:STDOUT:     %ws.loc48_18.1: WrongSelf = param ws
-// CHECK:STDOUT:     @CallWrongSelf.%ws: WrongSelf = bind_name ws, %ws.loc48_18.1
+// CHECK:STDOUT:     %ws.loc41_18.1: WrongSelf = param ws
+// CHECK:STDOUT:     @CallWrongSelf.%ws: WrongSelf = bind_name ws, %ws.loc41_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,7 +91,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.loc12_8.2: Class = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.var: ref Class = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -111,8 +104,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: class @WrongSelf {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %self.loc45_8.1: Class = param self
-// CHECK:STDOUT:     %self.loc45_8.2: Class = bind_name self, %self.loc45_8.1
+// CHECK:STDOUT:     %self.loc38_8.1: Class = param self
+// CHECK:STDOUT:     %self.loc38_8.2: Class = bind_name self, %self.loc38_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -125,26 +118,24 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> <error>;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() -> %return: Class {
+// CHECK:STDOUT: fn @G() -> %return: Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref Class = var self
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self
-// CHECK:STDOUT:   %.loc41: Class = bind_value %self.ref
+// CHECK:STDOUT:   %.loc34: Class = bind_value %self.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@WrongSelf.%self.loc45_8.2: Class]();
+// CHECK:STDOUT: fn @F.2[@WrongSelf.%self.loc38_8.2: Class]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallWrongSelf(%ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @WrongSelf.%F [template = @WrongSelf.%F]
-// CHECK:STDOUT:   %.loc55_5: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55_7: init () = call %.loc55_5(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc48_5: <bound method> = bound_method %ws.ref, %F.ref
+// CHECK:STDOUT:   %.loc48_7: init () = call %.loc48_5(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -32,7 +32,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %p.loc7_8.1: i32* = param p
 // CHECK:STDOUT:     @Ptr.%p: i32* = bind_name p, %p.loc7_8.1
 // CHECK:STDOUT:     %.loc7_23: type = ptr_type i32 [template = constants.%.1]
-// CHECK:STDOUT:     %return.var.loc7: ref i32* = var <return slot>
+// CHECK:STDOUT:     @Ptr.%return: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr: <function> = fn_decl @ConstPtr [template] {
 // CHECK:STDOUT:     %.loc11_16: type = const_type i32 [template = constants.%.2]
@@ -41,7 +41,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     @ConstPtr.%p: const i32* = bind_name p, %p.loc11_13.1
 // CHECK:STDOUT:     %.loc11_32: type = const_type i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_42: type = ptr_type const i32 [template = constants.%.3]
-// CHECK:STDOUT:     %return.var.loc11: ref const i32* = var <return slot>
+// CHECK:STDOUT:     @ConstPtr.%return: ref const i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

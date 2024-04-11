@@ -79,11 +79,11 @@ class InstNamer {
           *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
       CollectNamesInBlock(fn_scope, fn.implicit_param_refs_id);
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
-      if (fn.return_slot_id.is_valid()) {
-        insts[fn.return_slot_id.index] = {
-            fn_scope,
-            GetScopeInfo(fn_scope).insts.AllocateName(
-                *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
+      if (fn.return_storage_id.is_valid()) {
+        insts[fn.return_storage_id.index] = {
+            fn_scope, GetScopeInfo(fn_scope).insts.AllocateName(
+                          *this, sem_ir.insts().GetLocId(fn.return_storage_id),
+                          "return")};
       }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -792,8 +792,8 @@ class Formatter {
 
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
-      if (fn.return_slot_id.is_valid()) {
-        FormatInstName(fn.return_slot_id);
+      if (!fn.body_block_ids.empty() && fn.has_return_slot()) {
+        FormatInstName(fn.return_storage_id);
         out_ << ": ";
       }
       FormatType(fn.return_type_id);

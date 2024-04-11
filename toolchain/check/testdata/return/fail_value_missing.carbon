@@ -8,9 +8,9 @@ fn Main() -> i32 {
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:3: ERROR: Missing return value.
   // CHECK:STDERR:   return;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:1: Return type of function is `i32`.
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: Return type of function is `i32`.
   // CHECK:STDERR: fn Main() -> i32 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:           ^~~~~~
   return;
 }
 
@@ -23,7 +23,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Main.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

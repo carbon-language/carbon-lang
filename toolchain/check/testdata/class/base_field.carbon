@@ -55,7 +55,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %p.loc20_11.1: Derived* = param p
 // CHECK:STDOUT:     @Access.%p: Derived* = bind_name p, %p.loc20_11.1
 // CHECK:STDOUT:     %.loc20_30: type = ptr_type i32 [template = constants.%.8]
-// CHECK:STDOUT:     %return.var: ref i32* = var <return slot>
+// CHECK:STDOUT:     @Access.%return: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

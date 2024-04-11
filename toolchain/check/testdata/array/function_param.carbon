@@ -39,10 +39,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:     @F.%arr: [i32; 3] = bind_name arr, %arr.loc7_6.1
 // CHECK:STDOUT:     %i.loc7_21.1: i32 = param i
 // CHECK:STDOUT:     @F.%i: i32 = bind_name i, %i.loc7_21.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

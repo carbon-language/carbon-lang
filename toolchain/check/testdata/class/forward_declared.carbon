@@ -30,7 +30,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     @F.%p: Class* = bind_name p, %p.loc9_6.1
 // CHECK:STDOUT:     %Class.ref.loc9_20: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc9_25: type = ptr_type Class [template = constants.%.1]
-// CHECK:STDOUT:     %return.var: ref Class* = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref Class* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

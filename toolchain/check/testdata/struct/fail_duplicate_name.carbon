@@ -69,7 +69,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_35: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc23_36: {.a: i32} = struct_literal (%.loc23_35)

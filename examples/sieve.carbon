@@ -85,26 +85,40 @@ impl i32 as Core.Dec {
 
 // ---
 
-fn Run() -> i32 {
-  var is_prime: [bool; 1000];
+class Sieve {
+  fn Make() -> Sieve {
+    returned var s: Sieve;
 
-  // TODO: `for` loop.
-  var n: i32 = 0;
-  while (n < 1000) {
-    is_prime[n] = true;
-    ++n;
+    // TODO: `for` loop.
+    var n: i32 = 0;
+    while (n < 1000) {
+      s.is_prime[n] = true;
+      ++n;
+    }
+
+    return var;
   }
 
+  fn MarkMultiplesNotPrime[addr self: Self*](p: i32) {
+    var n: i32 = 2 * p;
+    while (n < 1000) {
+      self->is_prime[n] = false;
+      n += p;
+    }
+  }
+
+  var is_prime: [bool; 1000];
+}
+
+fn Run() -> i32 {
+  var s: Sieve = Sieve.Make();
+
   var number_of_primes: i32 = 0;
-  n = 2;
+  var n: i32 = 2;
   while (n < 1000) {
-    if (is_prime[n]) {
+    if (s.is_prime[n]) {
       ++number_of_primes;
-      var k: i32 = 2 * n;
-      while (k < 1000) {
-        is_prime[k] = false;
-        k += n;
-      }
+      s.MarkMultiplesNotPrime(n);
     }
     ++n;
   }

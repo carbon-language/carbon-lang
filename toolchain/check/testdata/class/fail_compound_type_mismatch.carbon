@@ -46,7 +46,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %a.loc15_15.1: A = param a
 // CHECK:STDOUT:     @AccessBInA.%a: A = bind_name a, %a.loc15_15.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @AccessBInA.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

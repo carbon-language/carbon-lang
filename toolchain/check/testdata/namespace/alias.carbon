@@ -38,16 +38,16 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %NS.ref.loc9: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
-// CHECK:STDOUT:     %return.var.loc11: ref i32 = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
-// CHECK:STDOUT:     %return.var.loc13: ref i32 = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, %A [template = %A]
 // CHECK:STDOUT:   %C: <function> = bind_alias C, %A [template = %A]
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:     @D.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

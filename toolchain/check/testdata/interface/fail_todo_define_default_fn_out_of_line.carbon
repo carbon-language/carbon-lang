@@ -57,7 +57,7 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT:     @.2.%a: i32 = bind_name a, %a.loc36_16.1
 // CHECK:STDOUT:     %b.loc36_24.1: i32 = param b
 // CHECK:STDOUT:     @.2.%b: i32 = bind_name b, %b.loc36_24.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @.2.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

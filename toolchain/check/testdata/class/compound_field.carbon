@@ -68,13 +68,13 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %Derived.ref.loc20: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc20_18.1: Derived = param d
 // CHECK:STDOUT:     @AccessDerived.%d: Derived = bind_name d, %d.loc20_18.1
-// CHECK:STDOUT:     %return.var.loc20: ref i32 = var <return slot>
+// CHECK:STDOUT:     @AccessDerived.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase: <function> = fn_decl @AccessBase [template] {
 // CHECK:STDOUT:     %Derived.ref.loc24: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc24_15.1: Derived = param d
 // CHECK:STDOUT:     @AccessBase.%d: Derived = bind_name d, %d.loc24_15.1
-// CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
+// CHECK:STDOUT:     @AccessBase.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect: <function> = fn_decl @AccessDerivedIndirect [template] {
 // CHECK:STDOUT:     %Derived.ref.loc28: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
@@ -82,7 +82,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %p.loc28_26.1: Derived* = param p
 // CHECK:STDOUT:     @AccessDerivedIndirect.%p: Derived* = bind_name p, %p.loc28_26.1
 // CHECK:STDOUT:     %.loc28_45: type = ptr_type i32 [template = constants.%.11]
-// CHECK:STDOUT:     %return.var.loc28: ref i32* = var <return slot>
+// CHECK:STDOUT:     @AccessDerivedIndirect.%return: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect: <function> = fn_decl @AccessBaseIndirect [template] {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
@@ -90,7 +90,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %p.loc32_23.1: Derived* = param p
 // CHECK:STDOUT:     @AccessBaseIndirect.%p: Derived* = bind_name p, %p.loc32_23.1
 // CHECK:STDOUT:     %.loc32_42: type = ptr_type i32 [template = constants.%.11]
-// CHECK:STDOUT:     %return.var.loc32: ref i32* = var <return slot>
+// CHECK:STDOUT:     @AccessBaseIndirect.%return: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

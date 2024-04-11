@@ -19,9 +19,9 @@ fn H() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.3: type = ptr_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.4: type = tuple_type ((type, type, type), (type, type, type)) [template]
-// CHECK:STDOUT:   %.5: type = tuple_type ((i32, i32, i32), (i32, i32, i32)) [template]
+// CHECK:STDOUT:   %.3: type = tuple_type ((type, type, type), (type, type, type)) [template]
+// CHECK:STDOUT:   %.4: type = tuple_type ((i32, i32, i32), (i32, i32, i32)) [template]
+// CHECK:STDOUT:   %.5: type = ptr_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.6: type = tuple_type ((i32, i32, i32)*, (i32, i32, i32)*) [template]
 // CHECK:STDOUT:   %.7: type = ptr_type ((i32, i32, i32)*, (i32, i32, i32)*) [template]
 // CHECK:STDOUT:   %.8: type = tuple_type (type, (type, type, type), type) [template]
@@ -49,7 +49,7 @@ fn H() {
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: (i32, i32, i32);
+// CHECK:STDOUT: fn @F() -> (i32, i32, i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -58,7 +58,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc10_43.1: ((type, type, type), (type, type, type)) = tuple_literal (%.loc10_25.1, %.loc10_42.1)
 // CHECK:STDOUT:   %.loc10_25.2: type = converted %.loc10_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_42.2: type = converted %.loc10_42.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_43.2: type = converted %.loc10_43.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_43.2: type = converted %.loc10_43.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:   %v.var: ref ((i32, i32, i32), (i32, i32, i32)) = var v
 // CHECK:STDOUT:   %v: ref ((i32, i32, i32), (i32, i32, i32)) = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc10_48: <function> = name_ref F, file.%F [template = file.%F]

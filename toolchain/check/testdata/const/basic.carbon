@@ -38,7 +38,7 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc7_25: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_34: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_35: type = ptr_type const i32* [template = constants.%.3]
-// CHECK:STDOUT:     %return.var.loc7: ref const i32** = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref const i32** = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
 // CHECK:STDOUT:     %.loc11_19: type = ptr_type i32 [template = constants.%.4]
@@ -47,7 +47,7 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     @B.%p: const (i32*) = bind_name p, %p.loc11_6.1
 // CHECK:STDOUT:     %.loc11_36: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc11_26: type = const_type i32* [template = constants.%.5]
-// CHECK:STDOUT:     %return.var.loc11: ref const (i32*) = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref const (i32*) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

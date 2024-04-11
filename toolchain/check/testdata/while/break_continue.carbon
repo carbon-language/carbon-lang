@@ -43,28 +43,28 @@ fn While() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
-// CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {
-// CHECK:STDOUT:     %return.var.loc9: ref bool = var <return slot>
+// CHECK:STDOUT:     @C.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D: <function> = fn_decl @D [template] {
-// CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
+// CHECK:STDOUT:     @D.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E: <function> = fn_decl @E [template] {
-// CHECK:STDOUT:     %return.var.loc11: ref bool = var <return slot>
+// CHECK:STDOUT:     @E.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var.loc12: ref bool = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc13: ref bool = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {
-// CHECK:STDOUT:     %return.var.loc14: ref bool = var <return slot>
+// CHECK:STDOUT:     @H.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %While: <function> = fn_decl @While [template] {}
 // CHECK:STDOUT: }

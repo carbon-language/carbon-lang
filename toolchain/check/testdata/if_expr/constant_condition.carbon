@@ -49,24 +49,24 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
-// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var.loc10: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc14: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant: <function> = fn_decl @Constant [template] {
-// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Constant.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant: <function> = fn_decl @PartiallyConstant [template] {
 // CHECK:STDOUT:     %t.loc24_22.1: type = param t
 // CHECK:STDOUT:     @PartiallyConstant.%t: type = bind_name t, %t.loc24_22.1
-// CHECK:STDOUT:     %return.var.loc24: ref i32 = var <return slot>
+// CHECK:STDOUT:     @PartiallyConstant.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

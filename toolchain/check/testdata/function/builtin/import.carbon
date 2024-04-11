@@ -29,7 +29,7 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:     @Add.%a: i32 = bind_name a, %a.loc6_8.1
 // CHECK:STDOUT:     %b.loc6_16.1: i32 = param b
 // CHECK:STDOUT:     @Add.%b: i32 = bind_name b, %b.loc6_16.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Add.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

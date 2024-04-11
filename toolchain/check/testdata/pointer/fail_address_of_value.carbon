@@ -134,11 +134,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {
 // CHECK:STDOUT:     %.loc9: type = struct_type {.a: i32} [template = constants.%.1]
-// CHECK:STDOUT:     %return.var.loc9: ref {.a: i32} = var <return slot>
+// CHECK:STDOUT:     @H.%return: ref {.a: i32} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddressOfLiteral: <function> = fn_decl @AddressOfLiteral [template] {}
 // CHECK:STDOUT:   %AddressOfOperator: <function> = fn_decl @AddressOfOperator [template] {}

@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -45,7 +46,7 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
     return diagnose_not_callable();
   }
   auto function_id = function_decl->function_id;
-  const auto& callable = context.functions().Get(function_id);
+  auto& callable = context.functions().Get(function_id);
 
   // For functions with an implicit return type, the return type is the empty
   // tuple type.
@@ -56,11 +57,30 @@ auto PerformCall(Context& context, Parse::NodeId node_id,
 
   // If there is a return slot, build storage for the result.
   SemIR::InstId return_storage_id = SemIR::InstId::Invalid;
-  if (callable.return_slot_id.is_valid()) {
-    // Tentatively put storage for a temporary in the function's return slot.
-    // This will be replaced if necessary when we perform initialization.
-    return_storage_id = context.AddInst(
-        {node_id, SemIR::TemporaryStorage{callable.return_type_id}});
+  {
+    DiagnosticAnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
+                            "Return type declared here.");
+          builder.Note(callable.return_storage_id, IncompleteReturnTypeHere);
+        });
+    CheckFunctionReturnType(context, callee_id, callable);
+  }
+  switch (callable.return_slot) {
+    case SemIR::Function::ReturnSlot::Present:
+      // Tentatively put storage for a temporary in the function's return slot.
+      // This will be replaced if necessary when we perform initialization.
+      return_storage_id = context.AddInst(
+          {node_id, SemIR::TemporaryStorage{callable.return_type_id}});
+      break;
+    case SemIR::Function::ReturnSlot::Absent:
+      break;
+    case SemIR::Function::ReturnSlot::Error:
+      // Don't form an initializing expression with an incomplete type.
+      type_id = SemIR::TypeId::Error;
+      break;
+    case SemIR::Function::ReturnSlot::NotComputed:
+      CARBON_FATAL() << "Missing return slot category in call to " << callable;
   }
 
   // Convert the arguments to match the parameters.

@@ -13,14 +13,43 @@ namespace Carbon::SemIR {
 
 // A function.
 struct Function : public Printable<Function> {
+  // A value that describes whether the function uses a return slot.
+  enum class ReturnSlot : int8_t {
+    // Not yet known: the function has not been called or defined.
+    NotComputed,
+    // The function is known to not use a return slot.
+    Absent,
+    // The function has a return slot, and a call to the function is expected to
+    // have an additional final argument corresponding to the return slot.
+    Present,
+    // Computing whether the function should have a return slot failed, for
+    // example because the return type was incomplete.
+    Error
+  };
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
         << ", param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
-    if (return_slot_id.is_valid()) {
-      out << ", return_slot: " << return_slot_id;
+    if (return_storage_id.is_valid()) {
+      out << ", return_storage: " << return_storage_id;
+      out << ", return_slot: ";
+      switch (return_slot) {
+        case ReturnSlot::NotComputed:
+          out << "unknown";
+          break;
+        case ReturnSlot::Absent:
+          out << "absent";
+          break;
+        case ReturnSlot::Present:
+          out << "present";
+          break;
+        case ReturnSlot::Error:
+          out << "error";
+          break;
+      }
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -35,6 +64,15 @@ struct Function : public Printable<Function> {
   // and its ID.
   static auto GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
       -> std::pair<InstId, Param>;
+
+  // Returns whether the function has a return slot. Can only be called for a
+  // function that has either been called or defined, otherwise this is not
+  // known.
+  auto has_return_slot() const -> bool {
+    CARBON_CHECK(return_slot != ReturnSlot::NotComputed);
+    // On error, we assume no return slot is used.
+    return return_slot == ReturnSlot::Present;
+  }
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
@@ -52,13 +90,17 @@ struct Function : public Printable<Function> {
   // The return type. This will be invalid if the return type wasn't specified.
   TypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. Will be invalid if the function
-  // doesn't have a return slot. If this is valid, a call to the function is
-  // expected to have an additional final argument corresponding to the return
-  // slot.
-  InstId return_slot_id;
+  // type is the return type of the function. This may or may not be used by the
+  // function, depending on whether the return type needs a return slot.
+  InstId return_storage_id;
   // Whether the declaration is extern.
   bool is_extern;
+
+  // The following member is set on the first call to the function, or at the
+  // point where the function is defined.
+
+  // Whether the function uses a return slot.
+  ReturnSlot return_slot;
 
   // The following members are set at the end of a builtin function definition.
 

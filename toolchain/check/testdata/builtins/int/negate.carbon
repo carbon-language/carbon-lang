@@ -134,7 +134,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %a.loc2_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc2_11.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.ref.loc4_16: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Negate.ref.loc4_23: <function> = name_ref Negate, %Negate [template = %Negate]
@@ -163,7 +163,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc9_16.1
 // CHECK:STDOUT:     %b.loc9_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc9_24.1
-// CHECK:STDOUT:     %return.var.loc9: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -203,24 +203,24 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %TooFew: <function> = fn_decl @TooFew [template] {
-// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:     @TooFew.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooMany: <function> = fn_decl @TooMany [template] {
 // CHECK:STDOUT:     %a.loc13_12.1: i32 = param a
 // CHECK:STDOUT:     @TooMany.%a: i32 = bind_name a, %a.loc13_12.1
 // CHECK:STDOUT:     %b.loc13_20.1: i32 = param b
 // CHECK:STDOUT:     @TooMany.%b: i32 = bind_name b, %b.loc13_20.1
-// CHECK:STDOUT:     %return.var.loc13: ref i32 = var <return slot>
+// CHECK:STDOUT:     @TooMany.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType: <function> = fn_decl @BadReturnType [template] {
 // CHECK:STDOUT:     %a.loc18_18.1: i32 = param a
 // CHECK:STDOUT:     @BadReturnType.%a: i32 = bind_name a, %a.loc18_18.1
-// CHECK:STDOUT:     %return.var.loc18: ref bool = var <return slot>
+// CHECK:STDOUT:     @BadReturnType.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %JustRight: <function> = fn_decl @JustRight [template] {
 // CHECK:STDOUT:     %a.loc19_14.1: i32 = param a
 // CHECK:STDOUT:     @JustRight.%a: i32 = bind_name a, %a.loc19_14.1
-// CHECK:STDOUT:     %return.var.loc19: ref i32 = var <return slot>
+// CHECK:STDOUT:     @JustRight.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooFew.ref: <function> = name_ref TooFew, %TooFew [template = %TooFew]
 // CHECK:STDOUT:   %.loc25: init i32 = call %TooFew.ref()
@@ -247,7 +247,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %RuntimeCallTooFew: <function> = fn_decl @RuntimeCallTooFew [template] {
 // CHECK:STDOUT:     %a.loc46_22.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCallTooFew.%a: i32 = bind_name a, %a.loc46_22.1
-// CHECK:STDOUT:     %return.var.loc46: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCallTooFew.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallTooMany: <function> = fn_decl @RuntimeCallTooMany [template] {
 // CHECK:STDOUT:     %a.loc57_23.1: i32 = param a
@@ -256,14 +256,14 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:     @RuntimeCallTooMany.%b: i32 = bind_name b, %b.loc57_31.1
 // CHECK:STDOUT:     %c.loc57_39.1: i32 = param c
 // CHECK:STDOUT:     @RuntimeCallTooMany.%c: i32 = bind_name c, %c.loc57_39.1
-// CHECK:STDOUT:     %return.var.loc57: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCallTooMany.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallBadReturnType: <function> = fn_decl @RuntimeCallBadReturnType [template] {
 // CHECK:STDOUT:     %a.loc68_29.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCallBadReturnType.%a: i32 = bind_name a, %a.loc68_29.1
 // CHECK:STDOUT:     %b.loc68_37.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCallBadReturnType.%b: i32 = bind_name b, %b.loc68_37.1
-// CHECK:STDOUT:     %return.var.loc68: ref bool = var <return slot>
+// CHECK:STDOUT:     @RuntimeCallBadReturnType.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,14 +327,14 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %a.loc4_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc4_11.1
-// CHECK:STDOUT:     %return.var.loc4: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sub: <function> = fn_decl @Sub [template] {
 // CHECK:STDOUT:     %a.loc5_8.1: i32 = param a
 // CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc5_8.1
 // CHECK:STDOUT:     %b.loc5_16.1: i32 = param b
 // CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc5_16.1
-// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Sub.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.ref.loc8_14: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Negate.ref.loc8_21: <function> = name_ref Negate, %Negate [template = %Negate]

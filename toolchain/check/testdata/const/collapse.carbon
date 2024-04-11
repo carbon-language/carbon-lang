@@ -36,7 +36,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc11_25: type = const_type const i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_42: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_43: type = ptr_type const i32* [template = constants.%.3]
-// CHECK:STDOUT:     %return.var: ref const i32** = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref const i32** = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

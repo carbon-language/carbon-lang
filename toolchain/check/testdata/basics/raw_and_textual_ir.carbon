@@ -17,18 +17,18 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs_size: 2
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+15}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
 // CHECK:STDOUT:   bind_names:
 // CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block3, return_type: type2, return_slot: inst+13, body: [block6]}
+// CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block3, return_type: type2, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:     type1:           {constant: template inst+1, value_rep: {kind: none, type: type1}}
-// CHECK:STDOUT:     type2:           {constant: template inst+8, value_rep: {kind: pointer, type: type3}}
-// CHECK:STDOUT:     type3:           {constant: template inst+14, value_rep: {kind: copy, type: type3}}
-// CHECK:STDOUT:     type4:           {constant: template instFunctionType, value_rep: {kind: copy, type: type4}}
+// CHECK:STDOUT:     type2:           {constant: template inst+8, value_rep: {kind: pointer, type: type4}}
+// CHECK:STDOUT:     type3:           {constant: template instFunctionType, value_rep: {kind: copy, type: type3}}
+// CHECK:STDOUT:     type4:           {constant: template inst+15, value_rep: {kind: copy, type: type4}}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     typeBlock0:      {}
 // CHECK:STDOUT:     typeBlock1:      {}
@@ -62,8 +62,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst+11:         {kind: Converted, arg0: inst+7, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     inst+12:         {kind: Converted, arg0: inst+9, arg1: inst+8, type: typeTypeType}
 // CHECK:STDOUT:     inst+13:         {kind: VarStorage, arg0: nameReturnSlot, type: type2}
-// CHECK:STDOUT:     inst+14:         {kind: PointerType, arg0: type2, type: typeTypeType}
-// CHECK:STDOUT:     inst+15:         {kind: FunctionDecl, arg0: function0, arg1: block5, type: type4}
+// CHECK:STDOUT:     inst+14:         {kind: FunctionDecl, arg0: function0, arg1: block5, type: type3}
+// CHECK:STDOUT:     inst+15:         {kind: PointerType, arg0: type2, type: typeTypeType}
 // CHECK:STDOUT:     inst+16:         {kind: NameRef, arg0: name1, arg1: inst+5, type: type1}
 // CHECK:STDOUT:     inst+17:         {kind: TupleLiteral, arg0: empty, type: type1}
 // CHECK:STDOUT:     inst+18:         {kind: TupleLiteral, arg0: block7, type: type2}
@@ -99,7 +99,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst+15
+// CHECK:STDOUT:       0:               inst+14
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
 // CHECK:STDOUT:       0:               inst+5
@@ -145,7 +145,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       1:               inst+21
 // CHECK:STDOUT:     block13:
 // CHECK:STDOUT:       0:               inst+0
-// CHECK:STDOUT:       1:               inst+15
+// CHECK:STDOUT:       1:               inst+14
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- raw_and_textual_ir.carbon

@@ -39,14 +39,14 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %Complement: <function> = fn_decl @Complement [template] {
 // CHECK:STDOUT:     %a.loc2_15.1: i32 = param a
 // CHECK:STDOUT:     @Complement.%a: i32 = bind_name a, %a.loc2_15.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Complement.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And: <function> = fn_decl @And [template] {
 // CHECK:STDOUT:     %a.loc3_8.1: i32 = param a
 // CHECK:STDOUT:     @And.%a: i32 = bind_name a, %a.loc3_8.1
 // CHECK:STDOUT:     %b.loc3_16.1: i32 = param b
 // CHECK:STDOUT:     @And.%b: i32 = bind_name b, %b.loc3_16.1
-// CHECK:STDOUT:     %return.var.loc3: ref i32 = var <return slot>
+// CHECK:STDOUT:     @And.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.ref: <function> = name_ref And, %And [template = %And]
 // CHECK:STDOUT:   %Complement.ref: <function> = name_ref Complement, %Complement [template = %Complement]
@@ -68,7 +68,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
 // CHECK:STDOUT:     %a.loc8_16.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc8_16.1
-// CHECK:STDOUT:     %return.var.loc8: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -76,7 +76,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     @Div.%a: i32 = bind_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %b.loc2_16.1: i32 = param b
 // CHECK:STDOUT:     @Div.%b: i32 = bind_name b, %b.loc2_16.1
-// CHECK:STDOUT:     %return.var.loc2: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Div.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Div.ref: <function> = name_ref Div, %Div [template = %Div]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 3 [template = constants.%.1]
@@ -96,7 +96,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc7_16.1
 // CHECK:STDOUT:     %b.loc7_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc7_24.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,19 +136,19 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     @Div.%a: i32 = bind_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
 // CHECK:STDOUT:     @Div.%b: i32 = bind_name b, %b.loc4_16.1
-// CHECK:STDOUT:     %return.var.loc4: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Div.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sub: <function> = fn_decl @Sub [template] {
 // CHECK:STDOUT:     %a.loc5_8.1: i32 = param a
 // CHECK:STDOUT:     @Sub.%a: i32 = bind_name a, %a.loc5_8.1
 // CHECK:STDOUT:     %b.loc5_16.1: i32 = param b
 // CHECK:STDOUT:     @Sub.%b: i32 = bind_name b, %b.loc5_16.1
-// CHECK:STDOUT:     %return.var.loc5: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Sub.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %a.loc6_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc6_11.1
-// CHECK:STDOUT:     %return.var.loc6: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Div.ref.loc9: <function> = name_ref Div, %Div [template = %Div]
 // CHECK:STDOUT:   %Negate.ref.loc9_18: <function> = name_ref Negate, %Negate [template = %Negate]
@@ -227,7 +227,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:     @Div.%a: i32 = bind_name a, %a.loc4_8.1
 // CHECK:STDOUT:     %b.loc4_16.1: i32 = param b
 // CHECK:STDOUT:     @Div.%b: i32 = bind_name b, %b.loc4_16.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Div.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Div.ref.loc10: <function> = name_ref Div, %Div [template = %Div]
 // CHECK:STDOUT:   %.loc10_18: i32 = int_literal 1 [template = constants.%.1]

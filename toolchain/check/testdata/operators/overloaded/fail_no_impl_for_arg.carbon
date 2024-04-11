@@ -135,13 +135,13 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Add [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%Op) [template]
-// CHECK:STDOUT:   %.6: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %.7: type = ptr_type C [template]
-// CHECK:STDOUT:   %.8: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (@impl.2.%Op) [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
+// CHECK:STDOUT:   %.4: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %.5: type = ptr_type C [template]
+// CHECK:STDOUT:   %.6: type = ptr_type Self [symbolic]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (@impl.2.%Op) [template]
+// CHECK:STDOUT:   %.8: type = tuple_type () [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.11: <associated <function> in Add> = assoc_entity element0, file.%import_ref.10 [template]
 // CHECK:STDOUT:   %.12: C = struct_value () [template]
@@ -170,15 +170,15 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %Add.decl: invalid = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+22, loc_46 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+22, loc_46 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir3, inst+40, loc_102 [template = constants.%.14]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+24, unloaded
 // CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir3, inst+38, loc_47 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.6] {}
-// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.6]
+// CHECK:STDOUT:     %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.4] {}
+// CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <function> = fn_decl @Test [template] {
 // CHECK:STDOUT:     %C.ref.loc16_12: type = name_ref C, %C.decl [template = constants.%C]
@@ -197,7 +197,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %b.loc27_15.1: D = param b
 // CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc27_15.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+22, loc_102 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+22, loc_102 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir3, inst+38, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,7 +226,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %C.ref.loc10_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.var: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.5]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -236,7 +236,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: impl @impl.2: C as AddAssign {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.3 [template] {
 // CHECK:STDOUT:     %C.ref.loc13_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc13_21: type = ptr_type C [template = constants.%.7]
+// CHECK:STDOUT:     %.loc13_21: type = ptr_type C [template = constants.%.5]
 // CHECK:STDOUT:     %self.loc13_14.1: C* = param self
 // CHECK:STDOUT:     %self.loc13_14.3: C* = bind_name self, %self.loc13_14.1
 // CHECK:STDOUT:     %.loc13_9: C* = addr_pattern %self.loc13_14.3
@@ -244,7 +244,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %other.loc13_24.1: C = param other
 // CHECK:STDOUT:     %other.loc13_24.2: C = bind_name other, %other.loc13_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.9]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -261,7 +261,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc10_9.2: C](@impl.1.%other.loc10_18.2: C) -> @impl.1.%return.var: C;
+// CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc10_9.2: C](@impl.1.%other.loc10_18.2: C) -> C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;
 // CHECK:STDOUT:

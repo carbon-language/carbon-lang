@@ -687,10 +687,6 @@ class ImportRefResolver {
     if (function.return_type_id.is_valid()) {
       return_type_const_id = GetLocalConstantId(function.return_type_id);
     }
-    auto return_slot_const_id = SemIR::ConstantId::Invalid;
-    if (function.return_slot_id.is_valid()) {
-      return_slot_const_id = GetLocalConstantId(function.return_slot_id);
-    }
     auto enclosing_scope_id = GetLocalNameScopeId(function.enclosing_scope_id);
     llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
         GetLocalParamConstantIds(function.implicit_param_refs_id);
@@ -716,13 +712,14 @@ class ImportRefResolver {
         return_type_const_id.is_valid()
             ? context_.GetTypeIdForTypeConstant(return_type_const_id)
             : SemIR::TypeId::Invalid;
-    auto new_return_slot = SemIR::InstId::Invalid;
-    if (function.return_slot_id.is_valid()) {
-      auto import_ir_inst_id = context_.import_ir_insts().Add(
-          {.ir_id = import_ir_id_, .inst_id = function.return_slot_id});
-      new_return_slot = context_.AddInstInNoBlock({SemIR::ImportRefLoaded{
-          context_.GetTypeIdForTypeConstant(return_slot_const_id),
-          import_ir_inst_id}});
+    auto new_return_storage = SemIR::InstId::Invalid;
+    if (function.return_storage_id.is_valid()) {
+      // Recreate the return slot from scratch.
+      // TODO: Once we import function definitions, we'll need to make sure we
+      // use the same return storage variable in the declaration and definition.
+      new_return_storage = context_.AddInstInNoBlock(
+          {AddImportIRInst(function.return_storage_id),
+           SemIR::VarStorage{new_return_type_id, SemIR::NameId::ReturnSlot}});
     }
     function_decl.function_id = context_.functions().Add(
         {.name_id = GetLocalNameId(function.name_id),
@@ -733,8 +730,9 @@ class ImportRefResolver {
          .param_refs_id =
              GetLocalParamRefsId(function.param_refs_id, param_const_ids),
          .return_type_id = new_return_type_id,
-         .return_slot_id = new_return_slot,
+         .return_storage_id = new_return_storage,
          .is_extern = function.is_extern,
+         .return_slot = function.return_slot,
          .builtin_kind = function.builtin_kind,
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id

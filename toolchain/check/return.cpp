@@ -39,9 +39,8 @@ static auto NoteReturnType(Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note,
                     "Return type of function is `{0}`.", SemIR::TypeId);
-  // TODO: This is using the location of the `fn` keyword. Find the location of
-  // the return type.
-  diag.Note(function.decl_id, ReturnTypeHereNote, function.return_type_id);
+  diag.Note(function.return_storage_id, ReturnTypeHereNote,
+            function.return_type_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -82,8 +81,8 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
 
   // The variable aliases the return slot if there is one. If not, it has its
   // own storage.
-  if (function.return_slot_id.is_valid()) {
-    return function.return_slot_id;
+  if (function.has_return_slot()) {
+    return function.return_storage_id;
   }
   return context.AddInst({name_node, SemIR::VarStorage{type_id, name_id}});
 }
@@ -136,8 +135,11 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::InstId::BuiltinError;
-  } else if (function.return_slot_id.is_valid()) {
-    expr_id = Initialize(context, node_id, function.return_slot_id, expr_id);
+  } else if (function.has_return_slot()) {
+    expr_id = Initialize(context, node_id, function.return_storage_id, expr_id);
+  } else if (function.return_slot == SemIR::Function::ReturnSlot::Error) {
+    // Don't produce a second error complaining the return type is incomplete.
+    expr_id = SemIR::InstId::BuiltinError;
   } else {
     expr_id = ConvertToValueOfType(context, node_id, expr_id,
                                    function.return_type_id);
@@ -158,7 +160,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     returned_var_id = SemIR::InstId::BuiltinError;
   }
 
-  if (!function.return_slot_id.is_valid()) {
+  if (!function.has_return_slot()) {
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
     returned_var_id = ConvertToValueExpr(context, returned_var_id);

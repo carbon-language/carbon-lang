@@ -40,7 +40,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc14_12.1: Class = param self
 // CHECK:STDOUT:     @F.%self: Class = bind_name self, %self.loc14_12.1
-// CHECK:STDOUT:     %return.var.loc14: ref i32 = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
@@ -48,7 +48,7 @@ fn Class.G[addr self: Self*]() -> i32 {
 // CHECK:STDOUT:     %self.loc18_17.1: Class* = param self
 // CHECK:STDOUT:     @G.%self: Class* = bind_name self, %self.loc18_17.1
 // CHECK:STDOUT:     @G.%.loc18: Class* = addr_pattern @G.%self
-// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

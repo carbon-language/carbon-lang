@@ -56,12 +56,12 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     @Greater.%a: i32 = bind_name a, %a.loc2_12.1
 // CHECK:STDOUT:     %b.loc2_20.1: i32 = param b
 // CHECK:STDOUT:     @Greater.%b: i32 = bind_name b, %b.loc2_20.1
-// CHECK:STDOUT:     %return.var.loc2: ref bool = var <return slot>
+// CHECK:STDOUT:     @Greater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %a.loc3_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc3_11.1
-// CHECK:STDOUT:     %return.var.loc3: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
@@ -78,7 +78,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc16_16.1
 // CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc16_24.1
-// CHECK:STDOUT:     %return.var.loc16: ref bool = var <return slot>
+// CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

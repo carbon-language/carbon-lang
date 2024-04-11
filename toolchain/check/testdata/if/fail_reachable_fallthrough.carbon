@@ -53,17 +53,17 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   %If1: <function> = fn_decl @If1 [template] {
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @If1.%b: bool = bind_name b, %b.loc7_8.1
-// CHECK:STDOUT:     %return.var.loc7: ref i32 = var <return slot>
+// CHECK:STDOUT:     @If1.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If2: <function> = fn_decl @If2 [template] {
 // CHECK:STDOUT:     %b.loc18_8.1: bool = param b
 // CHECK:STDOUT:     @If2.%b: bool = bind_name b, %b.loc18_8.1
-// CHECK:STDOUT:     %return.var.loc18: ref i32 = var <return slot>
+// CHECK:STDOUT:     @If2.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %If3: <function> = fn_decl @If3 [template] {
 // CHECK:STDOUT:     %b.loc29_8.1: bool = param b
 // CHECK:STDOUT:     @If3.%b: bool = bind_name b, %b.loc29_8.1
-// CHECK:STDOUT:     %return.var.loc29: ref i32 = var <return slot>
+// CHECK:STDOUT:     @If3.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

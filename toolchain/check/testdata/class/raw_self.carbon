@@ -25,10 +25,10 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.1: type = ptr_type Class [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.4: type = ptr_type (i32, i32) [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type Class, i32 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.n: i32} [template]
-// CHECK:STDOUT:   %.7: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.n: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
