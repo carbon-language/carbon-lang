@@ -44,6 +44,15 @@
 
 namespace Carbon::SemIR {
 
+// An adapted type declaration in a class, of the form `adapt T;`.
+struct AdaptDecl {
+  static constexpr auto Kind =
+      InstKind::AdaptDecl.Define<Parse::AdaptDeclId>("adapt_decl");
+
+  // No type_id; this is not a value.
+  TypeId adapted_type_id;
+};
+
 struct AddrOf {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =

@@ -9,6 +9,17 @@
 
 namespace Carbon::Check {
 
+// If `type_id` is a class type, get its corresponding `SemIR::Class` object.
+// Otherwise returns `nullptr`.
+static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
+    -> SemIR::Class* {
+  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
+  if (!class_type) {
+    return nullptr;
+  }
+  return &context.classes().Get(class_type->class_id);
+}
+
 auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
     -> bool {
   // Create an instruction block to hold the instructions created as part of the
@@ -172,15 +183,113 @@ auto HandleClassDefinitionStart(Context& context,
   return true;
 }
 
-auto HandleAdaptIntroducer(Context& /*context*/,
+// Diagnoses a class-specific declaration appearing outside a class.
+static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
+                                                  SemIRLoc loc,
+                                                  Lex::TokenKind tok) -> void {
+  CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
+                    "`{0}` declaration can only be used in a class.",
+                    Lex::TokenKind);
+  context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
+}
+
+// Returns the declaration of the immediately-enclosing class scope, or
+// diagonses if there isn't one.
+static auto GetEnclosingClassOrDiagnose(Context& context, SemIRLoc loc,
+                                        Lex::TokenKind tok)
+    -> std::optional<SemIR::ClassDecl> {
+  auto class_scope = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  if (!class_scope) {
+    DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
+  }
+  return class_scope;
+}
+
+// Diagnoses a class-specific declaration that is repeated within a class, but
+// is not permitted to be repeated.
+static auto DiagnoseClassSpecificDeclRepeated(Context& context,
+                                              SemIRLoc new_loc,
+                                              SemIRLoc prev_loc,
+                                              Lex::TokenKind tok) -> void {
+  CARBON_DIAGNOSTIC(ClassSpecificDeclRepeated, Error,
+                    "Multiple `{0}` declarations in class.{1}", Lex::TokenKind,
+                    std::string);
+  const llvm::StringRef extra = tok == Lex::TokenKind::Base
+                                    ? " Multiple inheritance is not permitted."
+                                    : "";
+  CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
+                    "Previous `{0}` declaration is here.", Lex::TokenKind);
+  context.emitter()
+      .Build(new_loc, ClassSpecificDeclRepeated, tok, extra.str())
+      .Note(prev_loc, ClassSpecificDeclPrevious, tok)
+      .Emit();
+}
+
+auto HandleAdaptIntroducer(Context& context,
                            Parse::AdaptIntroducerId /*node_id*/) -> bool {
+  context.decl_state_stack().Push(DeclState::Adapt);
   return true;
 }
 
-auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId /*node_id*/) -> bool {
-  auto adapted_expr_id = context.node_stack().PopExpr();
-  (void)adapted_expr_id;
-  // TODO: Process the `adapt` declaration.
+auto HandleAdaptDecl(Context& context, Parse::AdaptDeclId node_id) -> bool {
+  auto [adapted_type_node, adapted_type_expr_id] =
+      context.node_stack().PopExprWithNodeId();
+
+  // Process modifiers. `extend` is permitted, no others are allowed.
+  LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
+                       Lex::TokenKind::Adapt);
+  auto modifiers = context.decl_state_stack().innermost().modifier_set;
+  context.decl_state_stack().Pop(DeclState::Adapt);
+
+  auto enclosing_class_decl =
+      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Adapt);
+  if (!enclosing_class_decl) {
+    return true;
+  }
+
+  auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
+  if (class_info.adapt_id.is_valid()) {
+    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
+                                      Lex::TokenKind::Adapt);
+    return true;
+  }
+
+  auto adapted_type_id = ExprAsType(context, node_id, adapted_type_expr_id);
+  adapted_type_id = context.AsCompleteType(adapted_type_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
+                      "Adapted type `{0}` is an incomplete type.",
+                      SemIR::TypeId);
+    return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
+                                   adapted_type_id);
+  });
+
+  // Build a SemIR representation for the declaration.
+  class_info.adapt_id =
+      context.AddInst({node_id, SemIR::AdaptDecl{adapted_type_id}});
+
+  // Extend the class scope with the adapted type's scope if requested.
+  if (!!(modifiers & KeywordModifierSet::Extend)) {
+    auto extended_scope_id = SemIR::NameScopeId::Invalid;
+    if (adapted_type_id == SemIR::TypeId::Error) {
+      // Recover by not extending any scope. We instead set has_error to true
+      // below.
+    } else if (auto* adapted_class_info =
+                   TryGetAsClass(context, adapted_type_id)) {
+      extended_scope_id = adapted_class_info->scope_id;
+      CARBON_CHECK(adapted_class_info->scope_id.is_valid())
+          << "Complete class should have a scope";
+    } else {
+      // TODO: Accept any type that has a scope.
+      context.TODO(node_id, "extending non-class type");
+    }
+
+    auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+    if (extended_scope_id.is_valid()) {
+      class_scope.extended_scopes.push_back(extended_scope_id);
+    } else {
+      class_scope.has_error = true;
+    }
+  }
   return true;
 }
 
@@ -207,17 +316,6 @@ struct BaseInfo {
 constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
                                       .scope_id = SemIR::NameScopeId::Invalid};
 }  // namespace
-
-// If `type_id` is a class type, get its corresponding `SemIR::Class` object.
-// Otherwise returns `nullptr`.
-static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
-    -> SemIR::Class* {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return nullptr;
-  }
-  return &context.classes().Get(class_type->class_id);
-}
 
 // Diagnoses an attempt to derive from a final type.
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
@@ -268,7 +366,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   auto [base_type_node_id, base_type_expr_id] =
       context.node_stack().PopExprWithNodeId();
 
-  // Process modifiers. `extend` is required, none others are allowed.
+  // Process modifiers. `extend` is required, no others are allowed.
   LimitModifiersOnDecl(context, KeywordModifierSet::Extend,
                        Lex::TokenKind::Base);
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
@@ -279,25 +377,16 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
   context.decl_state_stack().Pop(DeclState::Base);
 
-  auto enclosing_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
+  auto enclosing_class_decl =
+      GetEnclosingClassOrDiagnose(context, node_id, Lex::TokenKind::Base);
   if (!enclosing_class_decl) {
-    CARBON_DIAGNOSTIC(BaseOutsideClass, Error,
-                      "`base` declaration can only be used in a class.");
-    context.emitter().Emit(node_id, BaseOutsideClass);
     return true;
   }
 
   auto& class_info = context.classes().Get(enclosing_class_decl->class_id);
   if (class_info.base_id.is_valid()) {
-    CARBON_DIAGNOSTIC(BaseRepeated, Error,
-                      "Multiple `base` declarations in class. Multiple "
-                      "inheritance is not permitted.");
-    CARBON_DIAGNOSTIC(BasePrevious, Note,
-                      "Previous `base` declaration is here.");
-    context.emitter()
-        .Build(node_id, BaseRepeated)
-        .Note(class_info.base_id, BasePrevious)
-        .Emit();
+    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
+                                      Lex::TokenKind::Base);
     return true;
   }
 
@@ -316,6 +405,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
+  // TODO: Should we diagnose if there are already any fields?
   context.args_type_info_stack().AddInstId(context.AddInstInNoBlock(
       {node_id,
        SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
@@ -345,9 +435,39 @@ auto HandleClassDefinition(Context& context,
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
   context.inst_block_stack().Pop();
 
-  // The class type is now fully defined.
+  // The class type is now fully defined. Compute its object representation.
   auto& class_info = context.classes().Get(class_id);
-  class_info.object_repr_id = context.GetStructType(fields_id);
+  if (class_info.adapt_id.is_valid()) {
+    class_info.object_repr_id = SemIR::TypeId::Error;
+    if (class_info.base_id.is_valid()) {
+      CARBON_DIAGNOSTIC(AdaptWithBase, Error,
+                        "Adapter cannot have a base class.");
+      CARBON_DIAGNOSTIC(AdaptBaseHere, Note, "`base` declaration is here.");
+      context.emitter()
+          .Build(class_info.adapt_id, AdaptWithBase)
+          .Note(class_info.base_id, AdaptBaseHere)
+          .Emit();
+    } else if (!context.inst_blocks().Get(fields_id).empty()) {
+      auto first_field_id = context.inst_blocks().Get(fields_id).front();
+      CARBON_DIAGNOSTIC(AdaptWithFields, Error, "Adapter cannot have fields.");
+      CARBON_DIAGNOSTIC(AdaptFieldHere, Note,
+                        "First field declaration is here.");
+      context.emitter()
+          .Build(class_info.adapt_id, AdaptWithFields)
+          .Note(first_field_id, AdaptFieldHere)
+          .Emit();
+    } else {
+      // The object representation of the adapter is the adapted type.
+      // TODO: If the adapted type is a class, should we use its object
+      // representation type instead?
+      class_info.object_repr_id =
+          context.insts()
+              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+              .adapted_type_id;
+    }
+  } else {
+    class_info.object_repr_id = context.GetStructType(fields_id);
+  }
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

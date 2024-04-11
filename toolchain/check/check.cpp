@@ -805,6 +805,16 @@ static auto GetImportKey(UnitInfo& unit_info, IdentifierId file_package_id,
 
 static constexpr llvm::StringLiteral ExplicitMainName = "Main";
 
+static auto RenderImportKey(ImportKey import_key) -> std::string {
+  if (import_key.first.empty()) {
+    import_key.first = ExplicitMainName;
+  }
+  if (import_key.second.empty()) {
+    return import_key.first.str();
+  }
+  return llvm::formatv("{0}//{1}", import_key.first, import_key.second).str();
+}
+
 // Marks an import as required on both the source and target file.
 //
 // The ID comparisons between the import and unit are okay because they both
@@ -930,11 +940,13 @@ static auto TrackImport(
     // The imported api is missing.
     package_imports_it->second.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
-                      "Corresponding API not found.");
-    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API not found.");
-    unit_info.emitter.Emit(import.node_id, explicit_import_map
-                                               ? ImportNotFound
-                                               : LibraryApiNotFound);
+                      "Corresponding API for '{0}' not found.", std::string);
+    CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API '{0}' not found.",
+                      std::string);
+    unit_info.emitter.Emit(
+        import.node_id,
+        explicit_import_map ? ImportNotFound : LibraryApiNotFound,
+        RenderImportKey(import_key));
   }
 }
 
