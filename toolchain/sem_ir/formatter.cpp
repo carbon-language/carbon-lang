@@ -414,10 +414,10 @@ class InstNamer {
 
       case Parse::NodeKind::WhileCondition:
         switch (branch.kind) {
-          case InstKind::BranchIf:
+          case BranchIf::Kind:
             name = "while.body";
             break;
-          case InstKind::Branch:
+          case Branch::Kind:
             name = "while.done";
             break;
           default:
