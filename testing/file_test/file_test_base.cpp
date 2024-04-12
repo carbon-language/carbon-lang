@@ -49,7 +49,7 @@ using ::testing::StrEq;
 
 // Reads a file to string.
 static auto ReadFile(std::string_view path) -> std::string {
-  std::ifstream proto_file(path);
+  std::ifstream proto_file{std::string(path)};
   std::stringstream buffer;
   buffer << proto_file.rdbuf();
   proto_file.close();
