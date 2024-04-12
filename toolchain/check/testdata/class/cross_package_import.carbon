@@ -18,8 +18,7 @@ class C {}
 
 package Other library "extern" api;
 
-// TODO: Mark extern
-class C;
+extern class C;
 
 // --- other_conflict.carbon
 
@@ -51,9 +50,9 @@ import Other library "extern";
 // CHECK:STDERR: fail_extern.carbon:[[@LINE-5]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:5:1: Class was forward declared here.
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: other_extern.carbon:4:1: Class was forward declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c: Other.C = {};
 
@@ -62,12 +61,18 @@ var c: Other.C = {};
 library "fail_merge_define_extern" api;
 
 import Other library "define";
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Semantics TODO: `Merging ClassType not yet supported.`.
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: other_extern.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import Other library "define";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_define.carbon:4:1: Previously declared here.
+// CHECK:STDERR: class C {}
+// CHECK:STDERR: ^~~~~~~~~
 import Other library "extern";
 
 // CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
@@ -266,10 +271,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc17_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_20: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc17_20
+// CHECK:STDOUT:   %.loc23_19.1: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc23_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
+// CHECK:STDOUT:   %.loc23_20: init C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc23_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

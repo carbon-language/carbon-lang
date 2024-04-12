@@ -74,7 +74,7 @@ abstract protected class WrongOrder;
 // CHECK:STDERR:
 abstract base class AbstractAndBase {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `extern` not allowed on `class` declaration.
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `extern` not allowed on `class` declaration that provides a definition.
 // CHECK:STDERR: extern class ExternDefined {}
 // CHECK:STDERR: ^~~~~~
 extern class ExternDefined {}

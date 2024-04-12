@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -33,7 +35,8 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   return true;
 }
 
-static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
+static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
+                           bool is_definition)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
     context.TODO(node_id, "generic class");
@@ -50,8 +53,11 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
                              name_context.target_scope_id);
   LimitModifiersOnDecl(context,
-                       KeywordModifierSet::Class | KeywordModifierSet::Access,
+                       KeywordModifierSet::Class | KeywordModifierSet::Access |
+                           KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
+  RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
+                               name_context.target_scope_id, is_definition);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {
@@ -59,6 +65,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
                      ModifierOrder::Access),
                  "access modifier");
   }
+
+  bool is_extern = !!(modifiers & KeywordModifierSet::Extern);
   auto inheritance_kind =
       !!(modifiers & KeywordModifierSet::Abstract) ? SemIR::Class::Abstract
       : !!(modifiers & KeywordModifierSet::Base)   ? SemIR::Class::Base
@@ -72,34 +80,35 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
                                      SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddPlaceholderInst({node_id, class_decl});
 
+  SemIR::Class class_info = {
+      .name_id = name_context.name_id_for_new_inst(),
+      .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      // `.self_type_id` depends on the ClassType, so is set below.
+      .self_type_id = SemIR::TypeId::Invalid,
+      .decl_id = class_decl_id,
+      .inheritance_kind = inheritance_kind};
+
   // Check whether this is a redeclaration.
-  auto existing_id =
+  auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
-  if (existing_id.is_valid()) {
-    if (auto existing_class_decl =
-            context.insts().Get(existing_id).TryAs<SemIR::ClassDecl>()) {
-      // This is a redeclaration of an existing class.
-      class_decl.class_id = existing_class_decl->class_id;
-      auto& class_info = context.classes().Get(class_decl.class_id);
+  if (prev_id.is_valid()) {
+    auto prev_inst_for_merge =
+        ResolvePrevInstForMerge(context, node_id, prev_id);
 
-      // The introducer kind must match the previous declaration.
-      // TODO: The rule here is not yet decided. See #3384.
-      if (class_info.inheritance_kind != inheritance_kind) {
-        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducer, Error,
-                          "Class redeclared with different inheritance kind.");
-        CARBON_DIAGNOSTIC(ClassRedeclarationDifferentIntroducerPrevious, Note,
-                          "Previously declared here.");
-        context.emitter()
-            .Build(node_id, ClassRedeclarationDifferentIntroducer)
-            .Note(existing_id, ClassRedeclarationDifferentIntroducerPrevious)
-            .Emit();
+    if (auto prev_class_decl =
+            context.insts().Get(prev_id).TryAs<SemIR::ClassDecl>()) {
+      // TODO: Fix prev_is_extern.
+      if (MergeClassRedecl(context, node_id, class_info,
+                           /*new_is_import=*/false, is_definition, is_extern,
+                           prev_class_decl->class_id,
+                           /*prev_is_extern=*/false,
+                           prev_inst_for_merge.import_ir_inst_id)) {
+        // When merging, use the existing entity rather than adding a new one.
+        class_decl.class_id = prev_class_decl->class_id;
       }
-
-      // TODO: Check that the generic parameter list agrees with the prior
-      // declaration.
     } else {
       // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(class_decl_id, existing_id);
+      context.DiagnoseDuplicateName(class_decl_id, prev_id);
     }
   }
 
@@ -109,13 +118,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_decl.class_id = context.classes().Add(
-        {.name_id = name_context.name_id_for_new_inst(),
-         .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
-         // `.self_type_id` depends on the ClassType, so is set below.
-         .self_type_id = SemIR::TypeId::Invalid,
-         .decl_id = class_decl_id,
-         .inheritance_kind = inheritance_kind});
+    class_decl.class_id = context.classes().Add(class_info);
   }
 
   // Write the class ID into the ClassDecl.
@@ -131,27 +134,19 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id)
 }
 
 auto HandleClassDecl(Context& context, Parse::ClassDeclId node_id) -> bool {
-  BuildClassDecl(context, node_id);
+  BuildClassDecl(context, node_id, /*is_definition=*/false);
   context.decl_name_stack().PopScope();
   return true;
 }
 
 auto HandleClassDefinitionStart(Context& context,
                                 Parse::ClassDefinitionStartId node_id) -> bool {
-  auto [class_id, class_decl_id] = BuildClassDecl(context, node_id);
+  auto [class_id, class_decl_id] =
+      BuildClassDecl(context, node_id, /*is_definition=*/true);
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
-  if (class_info.is_defined()) {
-    CARBON_DIAGNOSTIC(ClassRedefinition, Error, "Redefinition of class {0}.",
-                      SemIR::NameId);
-    CARBON_DIAGNOSTIC(ClassPreviousDefinition, Note,
-                      "Previous definition was here.");
-    context.emitter()
-        .Build(node_id, ClassRedefinition, class_info.name_id)
-        .Note(class_info.definition_id, ClassPreviousDefinition)
-        .Emit();
-  } else {
+  if (!class_info.is_defined()) {
     class_info.definition_id = class_decl_id;
     class_info.scope_id = context.name_scopes().Add(
         class_decl_id, SemIR::NameId::Invalid, class_info.enclosing_scope_id);
