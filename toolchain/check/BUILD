@@ -190,6 +190,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",

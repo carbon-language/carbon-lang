@@ -248,7 +248,7 @@ class ImportRefResolver {
           {AddImportIRInst(param_id), SemIR::Param{type_id, name_id}});
       if (bind_inst) {
         switch (bind_inst->kind) {
-          case SemIR::InstKind::BindName: {
+          case SemIR::BindName::Kind: {
             auto bind_name_id = context_.bind_names().Add(
                 {.name_id = name_id,
                  .enclosing_scope_id = SemIR::NameScopeId::Invalid});
@@ -257,7 +257,7 @@ class ImportRefResolver {
                  SemIR::BindName{type_id, bind_name_id, new_param_id}});
             break;
           }
-          case SemIR::InstKind::BindSymbolicName: {
+          case SemIR::BindSymbolicName::Kind: {
             // The symbolic name will be created on first reference, so might
             // already exist. Update the value in it to refer to the parameter.
             auto new_bind_inst =
