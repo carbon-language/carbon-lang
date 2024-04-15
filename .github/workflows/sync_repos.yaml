@@ -16,13 +16,22 @@ on:
       - '.github/workflows/sync_repos.yaml'
       - 'scripts/sync_repos.sh'
 
+# Note the sync script has its own token.
+permissions:
+  contents: read # For actions/checkout.
+
 jobs:
   sync-repos:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       # Checkout our main repository.
       - name: Checkout the main repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       # Run the sync script.
       - name: Sync to other repositories

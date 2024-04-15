@@ -6,10 +6,19 @@ name: Wiki Changed Discord Notification
 
 on: gollum
 
+permissions: none
+
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - uses: 'oznu/gh-wiki-edit-discord-notification@v1.0.0'
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses:
+          'oznu/gh-wiki-edit-discord-notification@1f5b688c27310fba606368b20469c81f5ffd9a2f
+          # v1.0.0'
         with:
           discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_WIKI_EDIT }}

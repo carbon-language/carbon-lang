@@ -7,12 +7,20 @@ on:
   pull_request_target:
     types: [opened, ready_for_review]
 
+permissions:
+  pull-requests: write # For gh to edit assignees.
+
 jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
           filters: |
             leads:
@@ -30,21 +38,21 @@ jobs:
 
       - id: assign-leads
         if: steps.filter.outputs.leads == 'true'
-        uses: hkusu/review-assign-action@v1.3.0
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
           reviewers: KateGregory, chandlerc, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-explorer
         if: steps.filter.outputs.explorer == 'true'
-        uses: hkusu/review-assign-action@v1.3.0
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
           reviewers: geoffromer, jonmeow, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-toolchain
         if: steps.filter.outputs.toolchain == 'true'
-        uses: hkusu/review-assign-action@v1.3.0
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
           reviewers: chandlerc, geoffromer, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1
@@ -54,7 +62,7 @@ jobs:
           steps.filter.outputs.leads != 'true' &&
           steps.filter.outputs.explorer != 'true' &&
           steps.filter.outputs.toolchain != 'true'
-        uses: hkusu/review-assign-action@v1.3.0
+        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
           reviewers: chandlerc, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1

@@ -10,6 +10,10 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
 # Cancel previous workflows on the PR when there are multiple fast commits.
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
 concurrency:
@@ -37,45 +41,48 @@ jobs:
       os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       # Ubuntu images start with 23GB available, and this adds 14GB more. For
       # comparison, MacOS images have >100GB free.
+      #
+      # Although we could delete more, if we run into a limit, not deleting
+      # everything provides a little flexibility to get space while trying
+      # to shrink the build.
       - name: Free up disk space (Ubuntu)
         if: env.os == 'ubuntu'
-        uses: jlumbroso/free-disk-space@v1.2.0
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           android: true
           dotnet: true
           haskell: true
-          # Although we could delete more, if we run into a limit, it provides a
-          # little flexibility to get space while trying to shrink the build.
-          # There's also support for docker images at head (1.2.0 is still
-          # the latest release).
-          large-packages: false
-          swap-storage: false
 
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       # Tests should only run on applicable paths, but we still need to have an
       # action run for the merge queue. We filter steps based on the paths here,
       # and condition steps on the output.
       - id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
           filters: |
             has_code:
               - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
 
       # Setup Python and related tools.
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         if: steps.filter.outputs.has_code == 'true'
         with:
           # Match the min version listed in docs/project/contribution_tools.md
@@ -89,7 +96,7 @@ jobs:
       - name: Cache Homebrew (macOS)
         if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         id: cache-homebrew-macos
-        uses: actions/cache@v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         env:
           cache-name: cache-homebrew
         with:
@@ -154,7 +161,7 @@ jobs:
       - name: Cache LLVM and Clang installation (Ubuntu)
         if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
         id: cache-llvm-ubuntu
-        uses: actions/cache@v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         env:
           cache-name: cache-llvm
         with:
