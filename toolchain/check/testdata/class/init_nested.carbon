@@ -90,7 +90,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
 // CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%.loc20_25, %.loc20_43)
 // CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%.loc20_25, %.loc20_43), %return
-// CHECK:STDOUT:   %.loc20_45.5: init Outer = converted %.loc20_45.3, %.loc20_45.4
-// CHECK:STDOUT:   return %.loc20_45.5
+// CHECK:STDOUT:   %.loc20_46: init Outer = converted %.loc20_45.3, %.loc20_45.4
+// CHECK:STDOUT:   return %.loc20_46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

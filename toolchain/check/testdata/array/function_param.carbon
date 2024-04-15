@@ -75,12 +75,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_20.10: ref i32 = array_index %.loc12_20.2, %.loc12_20.9
 // CHECK:STDOUT:   %.loc12_20.11: init i32 = initialize_from %.loc12_19 to %.loc12_20.10 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_20.12: init [i32; 3] = array_init (%.loc12_20.5, %.loc12_20.8, %.loc12_20.11) to %.loc12_20.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_20.13: init [i32; 3] = converted %.loc12_20.1, %.loc12_20.12 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_20.14: ref [i32; 3] = temporary %.loc12_20.2, %.loc12_20.13
-// CHECK:STDOUT:   %.loc12_20.15: [i32; 3] = bind_value %.loc12_20.14
-// CHECK:STDOUT:   %.loc12_11.1: init i32 = call %F.ref(%.loc12_20.15, %.loc12_23)
-// CHECK:STDOUT:   %.loc12_25: i32 = value_of_initializer %.loc12_11.1
-// CHECK:STDOUT:   %.loc12_11.2: i32 = converted %.loc12_11.1, %.loc12_25
-// CHECK:STDOUT:   return %.loc12_11.2
+// CHECK:STDOUT:   %.loc12_11.1: init [i32; 3] = converted %.loc12_20.1, %.loc12_20.12 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12_11.2: ref [i32; 3] = temporary %.loc12_20.2, %.loc12_11.1
+// CHECK:STDOUT:   %.loc12_11.3: [i32; 3] = bind_value %.loc12_11.2
+// CHECK:STDOUT:   %.loc12_11.4: init i32 = call %F.ref(%.loc12_11.3, %.loc12_23)
+// CHECK:STDOUT:   %.loc12_25.1: i32 = value_of_initializer %.loc12_11.4
+// CHECK:STDOUT:   %.loc12_25.2: i32 = converted %.loc12_11.4, %.loc12_25.1
+// CHECK:STDOUT:   return %.loc12_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

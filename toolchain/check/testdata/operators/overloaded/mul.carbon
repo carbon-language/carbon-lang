@@ -94,8 +94,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_20: MulAssign = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_20: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.2: type = ptr_type Self [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc8_24.3: type = ptr_type Self [symbolic = constants.%.5]
 // CHECK:STDOUT:     %self.loc8_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc8_14.3: Self* = bind_name self, %self.loc8_14.1
 // CHECK:STDOUT:     %.loc8_9: Self* = addr_pattern %self.loc8_14.3
@@ -250,8 +250,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_13.3: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc10_13.3
+// CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
+// CHECK:STDOUT:   return %.loc10_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;

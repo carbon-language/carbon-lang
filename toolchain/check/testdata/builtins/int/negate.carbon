@@ -139,11 +139,11 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %Negate.ref.loc4_16: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Negate.ref.loc4_23: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc4_30: i32 = int_literal 123 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc4_29.1: init i32 = call %Negate.ref.loc4_23(%.loc4_30) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_22.1: i32 = value_of_initializer %.loc4_29.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_29.2: i32 = converted %.loc4_29.1, %.loc4_22.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_22.2: init i32 = call %Negate.ref.loc4_16(%.loc4_29.2) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_22.2, i32 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_29: init i32 = call %Negate.ref.loc4_23(%.loc4_30) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_22.1: i32 = value_of_initializer %.loc4_29 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_22.2: i32 = converted %.loc4_29, %.loc4_22.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_22.3: init i32 = call %Negate.ref.loc4_16(%.loc4_22.2) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_22.3, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %arr.var: ref [i32; 123] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 123] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 123 [template = constants.%.1]
@@ -154,10 +154,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %arr_p: [i32; 123]* = bind_name arr_p, %.loc5_26
 // CHECK:STDOUT:   %Negate.ref.loc7: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc7_21: i32 = int_literal 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_20.1: init i32 = call %Negate.ref.loc7(%.loc7_21) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc7_23: i32 = value_of_initializer %.loc7_20.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc7_20.2: i32 = converted %.loc7_20.1, %.loc7_23 [template = constants.%.6]
-// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7_20.2
+// CHECK:STDOUT:   %.loc7_20: init i32 = call %Negate.ref.loc7(%.loc7_21) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_23.1: i32 = value_of_initializer %.loc7_20 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc7_23.2: i32 = converted %.loc7_20, %.loc7_23.1 [template = constants.%.6]
+// CHECK:STDOUT:   %n: i32 = bind_name n, %.loc7_23.2
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
 // CHECK:STDOUT:     %a.loc9_16.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc9_16.1
@@ -173,10 +173,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc10_16.1: init i32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc10_19: i32 = value_of_initializer %.loc10_16.1
-// CHECK:STDOUT:   %.loc10_16.2: i32 = converted %.loc10_16.1, %.loc10_19
-// CHECK:STDOUT:   return %.loc10_16.2
+// CHECK:STDOUT:   %.loc10_16: init i32 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc10_19.1: i32 = value_of_initializer %.loc10_16
+// CHECK:STDOUT:   %.loc10_19.2: i32 = converted %.loc10_16, %.loc10_19.1
+// CHECK:STDOUT:   return %.loc10_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon
@@ -279,10 +279,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: <function> = name_ref TooFew, file.%TooFew [template = file.%TooFew]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc54_16.1: init i32 = call %TooFew.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc54_19: i32 = value_of_initializer %.loc54_16.1 [template = <error>]
-// CHECK:STDOUT:   %.loc54_16.2: i32 = converted %.loc54_16.1, %.loc54_19 [template = <error>]
-// CHECK:STDOUT:   return %.loc54_16.2
+// CHECK:STDOUT:   %.loc54_16: init i32 = call %TooFew.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc54_19.1: i32 = value_of_initializer %.loc54_16 [template = <error>]
+// CHECK:STDOUT:   %.loc54_19.2: i32 = converted %.loc54_16, %.loc54_19.1 [template = <error>]
+// CHECK:STDOUT:   return %.loc54_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a: i32, %b: i32, %c: i32) -> i32 {
@@ -291,10 +291,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: i32 = name_ref c, %c
-// CHECK:STDOUT:   %.loc65_17.1: init i32 = call %TooMany.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc65_26: i32 = value_of_initializer %.loc65_17.1 [template = <error>]
-// CHECK:STDOUT:   %.loc65_17.2: i32 = converted %.loc65_17.1, %.loc65_26 [template = <error>]
-// CHECK:STDOUT:   return %.loc65_17.2
+// CHECK:STDOUT:   %.loc65_17: init i32 = call %TooMany.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc65_26.1: i32 = value_of_initializer %.loc65_17 [template = <error>]
+// CHECK:STDOUT:   %.loc65_26.2: i32 = converted %.loc65_17, %.loc65_26.1 [template = <error>]
+// CHECK:STDOUT:   return %.loc65_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: i32, %b: i32) -> bool {
@@ -302,10 +302,10 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %BadReturnType.ref: <function> = name_ref BadReturnType, file.%BadReturnType [template = file.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc76_23.1: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc76_29: bool = value_of_initializer %.loc76_23.1 [template = <error>]
-// CHECK:STDOUT:   %.loc76_23.2: bool = converted %.loc76_23.1, %.loc76_29 [template = <error>]
-// CHECK:STDOUT:   return %.loc76_23.2
+// CHECK:STDOUT:   %.loc76_23: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc76_29.1: bool = value_of_initializer %.loc76_23 [template = <error>]
+// CHECK:STDOUT:   %.loc76_29.2: bool = converted %.loc76_23, %.loc76_29.1 [template = <error>]
+// CHECK:STDOUT:   return %.loc76_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
@@ -339,28 +339,28 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %Negate.ref.loc8_14: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Negate.ref.loc8_21: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc8_28: i32 = int_literal 2147483647 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_27.1: init i32 = call %Negate.ref.loc8_21(%.loc8_28) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_20.1: i32 = value_of_initializer %.loc8_27.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_27.2: i32 = converted %.loc8_27.1, %.loc8_20.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_20.2: init i32 = call %Negate.ref.loc8_14(%.loc8_27.2) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_40: i32 = value_of_initializer %.loc8_20.2 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_20.3: i32 = converted %.loc8_20.2, %.loc8_40 [template = constants.%.1]
-// CHECK:STDOUT:   %a.loc8: i32 = bind_name a, %.loc8_20.3
+// CHECK:STDOUT:   %.loc8_27: init i32 = call %Negate.ref.loc8_21(%.loc8_28) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_20.1: i32 = value_of_initializer %.loc8_27 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_20.2: i32 = converted %.loc8_27, %.loc8_20.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_20.3: init i32 = call %Negate.ref.loc8_14(%.loc8_20.2) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_40.1: i32 = value_of_initializer %.loc8_20.3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_40.2: i32 = converted %.loc8_20.3, %.loc8_40.1 [template = constants.%.1]
+// CHECK:STDOUT:   %a.loc8: i32 = bind_name a, %.loc8_40.2
 // CHECK:STDOUT:   %Negate.ref.loc14_14: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %Sub.ref: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %Negate.ref.loc14_25: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc14_32: i32 = int_literal 2147483647 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_31.1: init i32 = call %Negate.ref.loc14_25(%.loc14_32) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_31: init i32 = call %Negate.ref.loc14_25(%.loc14_32) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc14_45: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc14_24.1: i32 = value_of_initializer %.loc14_31.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_31.2: i32 = converted %.loc14_31.1, %.loc14_24.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_24.2: init i32 = call %Sub.ref(%.loc14_31.2, %.loc14_45) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_20.1: i32 = value_of_initializer %.loc14_24.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_24.3: i32 = converted %.loc14_24.2, %.loc14_20.1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_20.2: init i32 = call %Negate.ref.loc14_14(%.loc14_24.3) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_48: i32 = value_of_initializer %.loc14_20.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_20.3: i32 = converted %.loc14_20.2, %.loc14_48 [template = constants.%.4]
-// CHECK:STDOUT:   %b.loc14: i32 = bind_name b, %.loc14_20.3
+// CHECK:STDOUT:   %.loc14_24.1: i32 = value_of_initializer %.loc14_31 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_24.2: i32 = converted %.loc14_31, %.loc14_24.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_24.3: init i32 = call %Sub.ref(%.loc14_24.2, %.loc14_45) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_20.1: i32 = value_of_initializer %.loc14_24.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_20.2: i32 = converted %.loc14_24.3, %.loc14_20.1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_20.3: init i32 = call %Negate.ref.loc14_14(%.loc14_20.2) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_48.1: i32 = value_of_initializer %.loc14_20.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14_48.2: i32 = converted %.loc14_20.3, %.loc14_48.1 [template = constants.%.4]
+// CHECK:STDOUT:   %b.loc14: i32 = bind_name b, %.loc14_48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";

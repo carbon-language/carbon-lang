@@ -31,12 +31,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc11_8.1: () = param n
 // CHECK:STDOUT:     @Foo.%n: () = bind_name n, %n.loc11_8.1
-// CHECK:STDOUT:     %.loc11_20.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_24.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_25.1: ((), ()) = tuple_literal (%.loc11_20.1, %.loc11_24.1)
-// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_24.2: type = converted %.loc11_24.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_25.2: type = converted %.loc11_25.1, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc11_20: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_24: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_25.1: ((), ()) = tuple_literal (%.loc11_20, %.loc11_24)
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %.loc11_20, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_25.3: type = converted %.loc11_24, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc11_25.4: type = converted %.loc11_25.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @Foo.%return: ref ((), ()) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -47,13 +47,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc12_15.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.1: ((), ()) = tuple_literal (%n.ref, %.loc12_15.1)
 // CHECK:STDOUT:   %.loc12_16.2: ref () = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc12_11.1: init () = tuple_init () to %.loc12_16.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_11.2: init () = converted %n.ref, %.loc12_11.1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_16.3: ref () = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc12_15.2: init () = tuple_init () to %.loc12_16.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_15.3: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_16.4: init ((), ()) = tuple_init (%.loc12_11.2, %.loc12_15.3) to %return [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_16.5: init ((), ()) = converted %.loc12_16.1, %.loc12_16.4 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc12_16.5
+// CHECK:STDOUT:   %.loc12_11: init () = tuple_init () to %.loc12_16.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.3: init () = converted %n.ref, %.loc12_11 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.4: ref () = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc12_15.2: init () = tuple_init () to %.loc12_16.4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.5: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_16.6: init ((), ()) = tuple_init (%.loc12_16.3, %.loc12_16.5) to %return [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_17: init ((), ()) = converted %.loc12_16.1, %.loc12_16.6 [template = constants.%.5]
+// CHECK:STDOUT:   return %.loc12_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

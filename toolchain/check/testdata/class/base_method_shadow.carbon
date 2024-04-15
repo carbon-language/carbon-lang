@@ -182,8 +182,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %.loc29_9.1: ref D = deref %.loc29_4.2
 // CHECK:STDOUT:   %.loc29_9.2: ref B = class_element_access %.loc29_9.1, element0
 // CHECK:STDOUT:   %.loc29_9.3: B* = addr_of %.loc29_9.2
-// CHECK:STDOUT:   %.loc29_4.3: B* = converted %.loc29_4.2, %.loc29_9.3
-// CHECK:STDOUT:   %.loc29_9.4: init () = call %.loc29_7(%.loc29_4.3)
+// CHECK:STDOUT:   %.loc29_9.4: B* = converted %.loc29_4.2, %.loc29_9.3
+// CHECK:STDOUT:   %.loc29_9.5: init () = call %.loc29_7(%.loc29_9.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

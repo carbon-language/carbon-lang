@@ -143,8 +143,8 @@ fn D() {}
 // CHECK:STDOUT:   %.loc6_48: i32 = tuple_index %c.ref, %.loc6_47
 // CHECK:STDOUT:   %.loc6_49.1: {.c: i32} = struct_literal (%.loc6_48)
 // CHECK:STDOUT:   %.loc6_49.2: {.c: i32} = struct_value (%.loc6_48)
-// CHECK:STDOUT:   %.loc6_49.3: {.c: i32} = converted %.loc6_49.1, %.loc6_49.2
-// CHECK:STDOUT:   return %.loc6_49.3
+// CHECK:STDOUT:   %.loc6_50: {.c: i32} = converted %.loc6_49.1, %.loc6_49.2
+// CHECK:STDOUT:   return %.loc6_50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
@@ -218,9 +218,9 @@ fn D() {}
 // CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_25.1: (i32,) = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %.loc8_25.2: (i32,) = tuple_value (%.loc8_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_25.3: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_21: init {.c: i32} = call %C.ref(%.loc8_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc8_21
+// CHECK:STDOUT:   %.loc8_21.1: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_21.2: init {.c: i32} = call %C.ref(%.loc8_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc8_21.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

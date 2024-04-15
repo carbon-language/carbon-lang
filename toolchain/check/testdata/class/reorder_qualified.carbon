@@ -145,8 +145,8 @@ class A {
 // CHECK:STDOUT:   %.loc25_25.2: ref i32 = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc25_25.3: init i32 = initialize_from %.loc25_24 to %.loc25_25.2 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc25_25.4: init A = class_init (%.loc25_25.3), %a.var [template = constants.%.11]
-// CHECK:STDOUT:   %.loc25_25.5: init A = converted %.loc25_25.1, %.loc25_25.4 [template = constants.%.11]
-// CHECK:STDOUT:   assign %a.var, %.loc25_25.5
+// CHECK:STDOUT:   %.loc25_26: init A = converted %.loc25_25.1, %.loc25_25.4 [template = constants.%.11]
+// CHECK:STDOUT:   assign %a.var, %.loc25_26
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref B = var b
 // CHECK:STDOUT:   %b: ref B = bind_name b, %b.var
@@ -155,8 +155,8 @@ class A {
 // CHECK:STDOUT:   %.loc26_25.2: ref i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc26_25.3: init i32 = initialize_from %.loc26_24 to %.loc26_25.2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc26_25.4: init B = class_init (%.loc26_25.3), %b.var [template = constants.%.14]
-// CHECK:STDOUT:   %.loc26_25.5: init B = converted %.loc26_25.1, %.loc26_25.4 [template = constants.%.14]
-// CHECK:STDOUT:   assign %b.var, %.loc26_25.5
+// CHECK:STDOUT:   %.loc26_26: init B = converted %.loc26_25.1, %.loc26_25.4 [template = constants.%.14]
+// CHECK:STDOUT:   assign %b.var, %.loc26_26
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
@@ -165,8 +165,8 @@ class A {
 // CHECK:STDOUT:   %.loc27_25.2: ref i32 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc27_25.3: init i32 = initialize_from %.loc27_24 to %.loc27_25.2 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc27_25.4: init C = class_init (%.loc27_25.3), %c.var [template = constants.%.17]
-// CHECK:STDOUT:   %.loc27_25.5: init C = converted %.loc27_25.1, %.loc27_25.4 [template = constants.%.17]
-// CHECK:STDOUT:   assign %c.var, %.loc27_25.5
+// CHECK:STDOUT:   %.loc27_26: init C = converted %.loc27_25.1, %.loc27_25.4 [template = constants.%.17]
+// CHECK:STDOUT:   assign %c.var, %.loc27_26
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref D = var d
 // CHECK:STDOUT:   %d: ref D = bind_name d, %d.var
@@ -175,8 +175,8 @@ class A {
 // CHECK:STDOUT:   %.loc28_25.2: ref i32 = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc28_25.3: init i32 = initialize_from %.loc28_24 to %.loc28_25.2 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc28_25.4: init D = class_init (%.loc28_25.3), %d.var [template = constants.%.20]
-// CHECK:STDOUT:   %.loc28_25.5: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%.20]
-// CHECK:STDOUT:   assign %d.var, %.loc28_25.5
+// CHECK:STDOUT:   %.loc28_26: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%.20]
+// CHECK:STDOUT:   assign %d.var, %.loc28_26
 // CHECK:STDOUT:   %AF.ref: <function> = name_ref AF, @A.%AF [template = @A.%AF]
 // CHECK:STDOUT:   %.loc31: init () = call %AF.ref()
 // CHECK:STDOUT:   %BF.ref: <function> = name_ref BF, @B.%BF [template = @B.%BF]

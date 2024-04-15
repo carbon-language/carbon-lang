@@ -138,8 +138,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.3 [template] {
 // CHECK:STDOUT:     %Self.ref.loc11_20: AddAssign = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc11_24.1: type = facet_type_access %Self.ref.loc11_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc11_20: type = converted %Self.ref.loc11_20, %.loc11_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc11_24.2: type = ptr_type Self [symbolic = constants.%.8]
+// CHECK:STDOUT:     %.loc11_24.2: type = converted %Self.ref.loc11_20, %.loc11_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc11_24.3: type = ptr_type Self [symbolic = constants.%.8]
 // CHECK:STDOUT:     %self.loc11_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc11_14.3: Self* = bind_name self, %self.loc11_14.1
 // CHECK:STDOUT:     %.loc11_9: Self* = addr_pattern %self.loc11_14.3
@@ -162,8 +162,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.4 [template] {
 // CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc14_24.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc14_20: type = converted %Self.ref, %.loc14_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc14_24.2: type = ptr_type Self [symbolic = constants.%.12]
+// CHECK:STDOUT:     %.loc14_24.2: type = converted %Self.ref, %.loc14_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc14_24.3: type = ptr_type Self [symbolic = constants.%.12]
 // CHECK:STDOUT:     %self.loc14_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc14_14.3: Self* = bind_name self, %self.loc14_14.1
 // CHECK:STDOUT:     %.loc14_9: Self* = addr_pattern %self.loc14_14.3
@@ -315,8 +315,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc25_15.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc25_15.2: init C = class_init (), %a.var [template = constants.%.10]
-// CHECK:STDOUT:   %.loc25_15.3: init C = converted %.loc25_15.1, %.loc25_15.2 [template = constants.%.10]
-// CHECK:STDOUT:   assign %a.var, %.loc25_15.3
+// CHECK:STDOUT:   %.loc25_16: init C = converted %.loc25_15.1, %.loc25_15.2 [template = constants.%.10]
+// CHECK:STDOUT:   assign %a.var, %.loc25_16
 // CHECK:STDOUT:   %a.ref.loc30: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
 // CHECK:STDOUT:   %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.11] {}

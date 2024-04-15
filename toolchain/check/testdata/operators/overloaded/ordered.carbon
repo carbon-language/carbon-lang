@@ -356,9 +356,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Less]
 // CHECK:STDOUT:   %.loc16_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc16_12.2: init bool = call %.loc16_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc16_15: bool = value_of_initializer %.loc16_12.2
-// CHECK:STDOUT:   %.loc16_12.3: bool = converted %.loc16_12.2, %.loc16_15
-// CHECK:STDOUT:   return %.loc16_12.3
+// CHECK:STDOUT:   %.loc16_15.1: bool = value_of_initializer %.loc16_12.2
+// CHECK:STDOUT:   %.loc16_15.2: bool = converted %.loc16_12.2, %.loc16_15.1
+// CHECK:STDOUT:   return %.loc16_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a: C, %b: C) -> bool {
@@ -368,9 +368,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element1 [template = @impl.%LessOrEquivalent]
 // CHECK:STDOUT:   %.loc20_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc20_12.2: init bool = call %.loc20_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_16: bool = value_of_initializer %.loc20_12.2
-// CHECK:STDOUT:   %.loc20_12.3: bool = converted %.loc20_12.2, %.loc20_16
-// CHECK:STDOUT:   return %.loc20_12.3
+// CHECK:STDOUT:   %.loc20_16.1: bool = value_of_initializer %.loc20_12.2
+// CHECK:STDOUT:   %.loc20_16.2: bool = converted %.loc20_12.2, %.loc20_16.1
+// CHECK:STDOUT:   return %.loc20_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a: C, %b: C) -> bool {
@@ -380,9 +380,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element2 [template = @impl.%Greater]
 // CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc24_12.2: init bool = call %.loc24_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc24_15: bool = value_of_initializer %.loc24_12.2
-// CHECK:STDOUT:   %.loc24_12.3: bool = converted %.loc24_12.2, %.loc24_15
-// CHECK:STDOUT:   return %.loc24_12.3
+// CHECK:STDOUT:   %.loc24_15.1: bool = value_of_initializer %.loc24_12.2
+// CHECK:STDOUT:   %.loc24_15.2: bool = converted %.loc24_12.2, %.loc24_15.1
+// CHECK:STDOUT:   return %.loc24_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a: C, %b: C) -> bool {
@@ -392,9 +392,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element3 [template = @impl.%GreaterOrEquivalent]
 // CHECK:STDOUT:   %.loc28_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc28_12.2: init bool = call %.loc28_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc28_16: bool = value_of_initializer %.loc28_12.2
-// CHECK:STDOUT:   %.loc28_12.3: bool = converted %.loc28_12.2, %.loc28_16
-// CHECK:STDOUT:   return %.loc28_12.3
+// CHECK:STDOUT:   %.loc28_16.1: bool = value_of_initializer %.loc28_12.2
+// CHECK:STDOUT:   %.loc28_16.2: bool = converted %.loc28_12.2, %.loc28_16.1
+// CHECK:STDOUT:   return %.loc28_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon

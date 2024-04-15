@@ -72,8 +72,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc13_43.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc13_43.5: init i32 = initialize_from %.loc13_42 to %.loc13_43.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_43.6: init C = class_init (%.loc13_43.3, %.loc13_43.5), %return [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_43.7: init C = converted %.loc13_43.1, %.loc13_43.6 [template = constants.%.6]
-// CHECK:STDOUT:   assign %return, %.loc13_43.7
+// CHECK:STDOUT:   %.loc13_44: init C = converted %.loc13_43.1, %.loc13_43.6 [template = constants.%.6]
+// CHECK:STDOUT:   assign %return, %.loc13_44
 // CHECK:STDOUT:   return %result
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

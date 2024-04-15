@@ -923,8 +923,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // Track that we performed a type conversion, if we did so.
   if (orig_expr_id != expr_id) {
     expr_id = context.AddInst(
-        {context.insts().GetLocId(orig_expr_id),
-         SemIR::Converted{target.type_id, orig_expr_id, expr_id}});
+        {loc_id, SemIR::Converted{target.type_id, orig_expr_id, expr_id}});
   }
 
   // For `as`, don't perform any value category conversions. In particular, an

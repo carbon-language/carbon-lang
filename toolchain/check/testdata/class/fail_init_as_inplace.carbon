@@ -17,7 +17,7 @@ fn F() {
   //
   // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+3]]:18: ERROR: Cannot copy value of type `Class`.
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~
   var c: Class = {.a = 1, .b = 2} as Class;
   G(&c);
 }
@@ -82,8 +82,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_33.6: init i32 = initialize_from %.loc21_32 to %.loc21_33.5 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc21_33.7: init Class = class_init (%.loc21_33.4, %.loc21_33.6), %.loc21_33.2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc21_33.8: ref Class = temporary %.loc21_33.2, %.loc21_33.7
-// CHECK:STDOUT:   %.loc21_33.9: ref Class = converted %.loc21_33.1, %.loc21_33.8
-// CHECK:STDOUT:   %.loc21_33.10: Class = bind_value %.loc21_33.9
+// CHECK:STDOUT:   %.loc21_35.1: ref Class = converted %.loc21_33.1, %.loc21_33.8
+// CHECK:STDOUT:   %.loc21_35.2: Class = bind_value %.loc21_35.1
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c

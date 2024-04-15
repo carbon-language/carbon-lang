@@ -52,8 +52,8 @@ fn TestOp() {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
 // CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_20: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.2: type = ptr_type Self [symbolic = constants.%.2]
+// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc5_24.3: type = ptr_type Self [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc5_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc5_14.3: Self* = bind_name self, %self.loc5_14.1
 // CHECK:STDOUT:     %.loc5_9: Self* = addr_pattern %self.loc5_14.3
@@ -145,8 +145,8 @@ fn TestOp() {
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc13_15.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc13_15.2: init C = class_init (), %c.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_15.3: init C = converted %.loc13_15.1, %.loc13_15.2 [template = constants.%.8]
-// CHECK:STDOUT:   assign %c.var, %.loc13_15.3
+// CHECK:STDOUT:   %.loc13_16: init C = converted %.loc13_15.1, %.loc13_15.2 [template = constants.%.8]
+// CHECK:STDOUT:   assign %c.var, %.loc13_16
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
 // CHECK:STDOUT:   %.loc14_3.1: <bound method> = bound_method %c.ref, %.1

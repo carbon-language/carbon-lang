@@ -131,9 +131,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
-// CHECK:STDOUT:   %.loc13_27.9: ref C = converted %.loc13_27.1, %.loc13_27.8
-// CHECK:STDOUT:   %.loc13_27.10: C = bind_value %.loc13_27.9
-// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_27.10
+// CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
+// CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1
+// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %AdaptC.ref.loc21_8: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %AdaptC.ref.loc21_22: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
@@ -233,9 +233,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
-// CHECK:STDOUT:   %.loc13_27.9: ref C = converted %.loc13_27.1, %.loc13_27.8
-// CHECK:STDOUT:   %.loc13_27.10: C = bind_value %.loc13_27.9
-// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_27.10
+// CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
+// CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1
+// CHECK:STDOUT:   %a: C = bind_name a, %.loc13_28.2
 // CHECK:STDOUT:   %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b: AdaptC = bind_name b, <error>

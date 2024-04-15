@@ -165,24 +165,24 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_47.4: ref i32 = class_element_access %.loc7_48.2, element1
 // CHECK:STDOUT:   %.loc7_47.5: init i32 = initialize_from %.loc7_46 to %.loc7_47.4 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_47.6: init Base = class_init (%.loc7_47.3, %.loc7_47.5), %.loc7_48.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc7_47.7: init Base = converted %.loc7_47.1, %.loc7_47.6 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc7_48.3: init Child = class_init (%.loc7_47.7), %a.var [template = constants.%.11]
-// CHECK:STDOUT:   %.loc7_48.4: init Child = converted %.loc7_48.1, %.loc7_48.3 [template = constants.%.11]
-// CHECK:STDOUT:   assign %a.var, %.loc7_48.4
+// CHECK:STDOUT:   %.loc7_48.3: init Base = converted %.loc7_47.1, %.loc7_47.6 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc7_48.4: init Child = class_init (%.loc7_48.3), %a.var [template = constants.%.11]
+// CHECK:STDOUT:   %.loc7_49: init Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%.11]
+// CHECK:STDOUT:   assign %a.var, %.loc7_49
 // CHECK:STDOUT:   %a.ref.loc8: ref Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: <unbound element of class Base> = name_ref x, file.%import_ref.5 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_4.1: ref Base = class_element_access %a.ref.loc8, element0
-// CHECK:STDOUT:   %.loc8_3: ref Base = converted %a.ref.loc8, %.loc8_4.1
-// CHECK:STDOUT:   %.loc8_4.2: ref i32 = class_element_access %.loc8_3, element0
+// CHECK:STDOUT:   %.loc8_4.2: ref Base = converted %a.ref.loc8, %.loc8_4.1
+// CHECK:STDOUT:   %.loc8_4.3: ref i32 = class_element_access %.loc8_4.2, element0
 // CHECK:STDOUT:   %.loc8_9: i32 = int_literal 2 [template = constants.%.13]
-// CHECK:STDOUT:   assign %.loc8_4.2, %.loc8_9
+// CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_9
 // CHECK:STDOUT:   %a.ref.loc9: ref Child = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.3 [template = imports.%F]
 // CHECK:STDOUT:   %.loc9_4: <bound method> = bound_method %a.ref.loc9, %F.ref
 // CHECK:STDOUT:   %.loc9_6.1: ref Base = class_element_access %a.ref.loc9, element0
-// CHECK:STDOUT:   %.loc9_3.1: ref Base = converted %a.ref.loc9, %.loc9_6.1
-// CHECK:STDOUT:   %.loc9_3.2: Base = bind_value %.loc9_3.1
-// CHECK:STDOUT:   %.loc9_6.2: init () = call %.loc9_4(%.loc9_3.2)
+// CHECK:STDOUT:   %.loc9_6.2: ref Base = converted %a.ref.loc9, %.loc9_6.1
+// CHECK:STDOUT:   %.loc9_6.3: Base = bind_value %.loc9_6.2
+// CHECK:STDOUT:   %.loc9_6.4: init () = call %.loc9_4(%.loc9_6.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

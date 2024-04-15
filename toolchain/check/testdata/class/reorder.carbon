@@ -49,10 +49,10 @@ class Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc9_19.1: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc9_21: i32 = value_of_initializer %.loc9_19.1
-// CHECK:STDOUT:   %.loc9_19.2: i32 = converted %.loc9_19.1, %.loc9_21
-// CHECK:STDOUT:   return %.loc9_19.2
+// CHECK:STDOUT:   %.loc9_19: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc9_21.1: i32 = value_of_initializer %.loc9_19
+// CHECK:STDOUT:   %.loc9_21.2: i32 = converted %.loc9_19, %.loc9_21.1
+// CHECK:STDOUT:   return %.loc9_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {

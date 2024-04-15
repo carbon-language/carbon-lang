@@ -39,8 +39,8 @@ var a: A = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc8_13.2: init A = class_init (), file.%a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_13.3: init A = converted %.loc8_13.1, %.loc8_13.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%a.var, %.loc8_13.3
+// CHECK:STDOUT:   %.loc8_14: init A = converted %.loc8_13.1, %.loc8_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%a.var, %.loc8_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

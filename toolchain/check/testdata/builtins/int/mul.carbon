@@ -81,10 +81,10 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref: <function> = name_ref Mul, file.%Mul [template = file.%Mul]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_13.1: init i32 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19: i32 = value_of_initializer %.loc8_13.1
-// CHECK:STDOUT:   %.loc8_13.2: i32 = converted %.loc8_13.1, %.loc8_19
-// CHECK:STDOUT:   return %.loc8_13.2
+// CHECK:STDOUT:   %.loc8_13: init i32 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %.loc8_13
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_13, %.loc8_19.1
+// CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
@@ -113,17 +113,17 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc6: <function> = name_ref Mul, %Mul [template = %Mul]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 32767 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_26: i32 = int_literal 65536 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc6_17.1: init i32 = call %Mul.ref.loc6(%.loc6_18, %.loc6_26) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc6_34: i32 = value_of_initializer %.loc6_17.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc6_17.2: i32 = converted %.loc6_17.1, %.loc6_34 [template = constants.%.3]
-// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_17.2
+// CHECK:STDOUT:   %.loc6_17: init i32 = call %Mul.ref.loc6(%.loc6_18, %.loc6_26) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_34.1: i32 = value_of_initializer %.loc6_17 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_34.2: i32 = converted %.loc6_17, %.loc6_34.1 [template = constants.%.3]
+// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_34.2
 // CHECK:STDOUT:   %Mul.ref.loc10: <function> = name_ref Mul, %Mul [template = %Mul]
 // CHECK:STDOUT:   %.loc10_18: i32 = int_literal 32768 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 65536 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_17.1: init i32 = call %Mul.ref.loc10(%.loc10_18, %.loc10_26) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_34: i32 = value_of_initializer %.loc10_17.1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc10_17.2: i32 = converted %.loc10_17.1, %.loc10_34 [template = constants.%.5]
-// CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_17.2
+// CHECK:STDOUT:   %.loc10_17: init i32 = call %Mul.ref.loc10(%.loc10_18, %.loc10_26) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_34.1: i32 = value_of_initializer %.loc10_17 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc10_34.2: i32 = converted %.loc10_17, %.loc10_34.1 [template = constants.%.5]
+// CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_34.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.mul";

@@ -80,8 +80,8 @@ class C {
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc15_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc15_19.2: init C = class_init (), %c.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_19.3: init C = converted %.loc15_19.1, %.loc15_19.2 [template = constants.%.8]
-// CHECK:STDOUT:   assign %c.var, %.loc15_19.3
+// CHECK:STDOUT:   %.loc15_20: init C = converted %.loc15_19.1, %.loc15_19.2 [template = constants.%.8]
+// CHECK:STDOUT:   assign %c.var, %.loc15_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

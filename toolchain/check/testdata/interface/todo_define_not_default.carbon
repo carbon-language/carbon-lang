@@ -52,10 +52,10 @@ interface I {
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <associated <function> in I> = assoc_entity element1, %G [template = constants.%.4]
-// CHECK:STDOUT:   %.loc14_27.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc14_27.2: type = converted %.loc14_27.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_27: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc14_28.1: type = converted %.loc14_27, constants.%.6 [template = constants.%.6]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc14_28: <associated type in I> = assoc_entity element2, %T [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_28.2: <associated type in I> = assoc_entity element2, %T [template = constants.%.8]
 // CHECK:STDOUT:   %.loc15_17: i32 = int_literal 42 [template = constants.%.9]
 // CHECK:STDOUT:   %N: i32 = assoc_const_decl N [template]
 // CHECK:STDOUT:   %.loc15_19: <associated i32 in I> = assoc_entity element3, %N [template = constants.%.11]
@@ -64,7 +64,7 @@ interface I {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc9
 // CHECK:STDOUT:   .G = %.loc10
-// CHECK:STDOUT:   .T = %.loc14_28
+// CHECK:STDOUT:   .T = %.loc14_28.2
 // CHECK:STDOUT:   .N = %.loc15_19
 // CHECK:STDOUT:   witness = (%F, %G, %T, %N)
 // CHECK:STDOUT: }

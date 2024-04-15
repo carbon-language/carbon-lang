@@ -139,10 +139,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_13.1: init i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19: i32 = value_of_initializer %.loc8_13.1
-// CHECK:STDOUT:   %.loc8_13.2: i32 = converted %.loc8_13.1, %.loc8_19
-// CHECK:STDOUT:   return %.loc8_13.2
+// CHECK:STDOUT:   %.loc8_13: init i32 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %.loc8_13
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_13, %.loc8_19.1
+// CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon
@@ -258,10 +258,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: <function> = name_ref TooFew, file.%TooFew [template = file.%TooFew]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc47_16.1: init i32 = call %TooFew.ref(%a.ref)
-// CHECK:STDOUT:   %.loc47_19: i32 = value_of_initializer %.loc47_16.1
-// CHECK:STDOUT:   %.loc47_16.2: i32 = converted %.loc47_16.1, %.loc47_19
-// CHECK:STDOUT:   return %.loc47_16.2
+// CHECK:STDOUT:   %.loc47_16: init i32 = call %TooFew.ref(%a.ref)
+// CHECK:STDOUT:   %.loc47_19.1: i32 = value_of_initializer %.loc47_16
+// CHECK:STDOUT:   %.loc47_19.2: i32 = converted %.loc47_16, %.loc47_19.1
+// CHECK:STDOUT:   return %.loc47_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a: i32, %b: i32, %c: i32) -> i32 {
@@ -270,10 +270,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: i32 = name_ref c, %c
-// CHECK:STDOUT:   %.loc51_17.1: init i32 = call %TooMany.ref(%a.ref, %b.ref, %c.ref)
-// CHECK:STDOUT:   %.loc51_26: i32 = value_of_initializer %.loc51_17.1
-// CHECK:STDOUT:   %.loc51_17.2: i32 = converted %.loc51_17.1, %.loc51_26
-// CHECK:STDOUT:   return %.loc51_17.2
+// CHECK:STDOUT:   %.loc51_17: init i32 = call %TooMany.ref(%a.ref, %b.ref, %c.ref)
+// CHECK:STDOUT:   %.loc51_26.1: i32 = value_of_initializer %.loc51_17
+// CHECK:STDOUT:   %.loc51_26.2: i32 = converted %.loc51_17, %.loc51_26.1
+// CHECK:STDOUT:   return %.loc51_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a: i32, %b: i32) -> bool {
@@ -281,10 +281,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %BadReturnType.ref: <function> = name_ref BadReturnType, file.%BadReturnType [template = file.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc55_23.1: init bool = call %BadReturnType.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc55_29: bool = value_of_initializer %.loc55_23.1
-// CHECK:STDOUT:   %.loc55_23.2: bool = converted %.loc55_23.1, %.loc55_29
-// CHECK:STDOUT:   return %.loc55_23.2
+// CHECK:STDOUT:   %.loc55_23: init bool = call %BadReturnType.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc55_29.1: bool = value_of_initializer %.loc55_23
+// CHECK:STDOUT:   %.loc55_29.2: bool = converted %.loc55_23, %.loc55_29.1
+// CHECK:STDOUT:   return %.loc55_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
@@ -312,17 +312,17 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref.loc6: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 2147483647 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_30: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc6_17.1: init i32 = call %Add.ref.loc6(%.loc6_18, %.loc6_30) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_32: i32 = value_of_initializer %.loc6_17.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_17.2: i32 = converted %.loc6_17.1, %.loc6_32 [template = constants.%.1]
-// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_17.2
+// CHECK:STDOUT:   %.loc6_17: init i32 = call %Add.ref.loc6(%.loc6_18, %.loc6_30) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_32.1: i32 = value_of_initializer %.loc6_17 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_32.2: i32 = converted %.loc6_17, %.loc6_32.1 [template = constants.%.1]
+// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_32.2
 // CHECK:STDOUT:   %Add.ref.loc10: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc10_18: i32 = int_literal 2147483647 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_30: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc10_17.1: init i32 = call %Add.ref.loc10(%.loc10_18, %.loc10_30) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_32: i32 = value_of_initializer %.loc10_17.1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_17.2: i32 = converted %.loc10_17.1, %.loc10_32 [template = constants.%.4]
-// CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_17.2
+// CHECK:STDOUT:   %.loc10_17: init i32 = call %Add.ref.loc10(%.loc10_18, %.loc10_30) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_32.1: i32 = value_of_initializer %.loc10_17 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_32.2: i32 = converted %.loc10_17, %.loc10_32.1 [template = constants.%.4]
+// CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";

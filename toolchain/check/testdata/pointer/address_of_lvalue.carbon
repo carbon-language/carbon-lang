@@ -54,8 +54,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_46.4: ref i32 = struct_access %s.var, element1
 // CHECK:STDOUT:   %.loc8_46.5: init i32 = initialize_from %.loc8_45 to %.loc8_46.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_46.6: init {.a: i32, .b: i32} = struct_init (%.loc8_46.3, %.loc8_46.5) to %s.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_46.7: init {.a: i32, .b: i32} = converted %.loc8_46.1, %.loc8_46.6 [template = constants.%.5]
-// CHECK:STDOUT:   assign %s.var, %.loc8_46.7
+// CHECK:STDOUT:   %.loc8_47: init {.a: i32, .b: i32} = converted %.loc8_46.1, %.loc8_46.6 [template = constants.%.5]
+// CHECK:STDOUT:   assign %s.var, %.loc8_47
 // CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_28: type = ptr_type {.a: i32, .b: i32} [template = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref {.a: i32, .b: i32}* = var p
@@ -89,8 +89,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_28.4: ref i32 = tuple_access %t.var, element1
 // CHECK:STDOUT:   %.loc14_28.5: init i32 = initialize_from %.loc14_27 to %.loc14_28.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc14_28.6: init (i32, i32) = tuple_init (%.loc14_28.3, %.loc14_28.5) to %t.var [template = constants.%.10]
-// CHECK:STDOUT:   %.loc14_28.7: init (i32, i32) = converted %.loc14_28.1, %.loc14_28.6 [template = constants.%.10]
-// CHECK:STDOUT:   assign %t.var, %.loc14_28.7
+// CHECK:STDOUT:   %.loc14_29: init (i32, i32) = converted %.loc14_28.1, %.loc14_28.6 [template = constants.%.10]
+// CHECK:STDOUT:   assign %t.var, %.loc14_29
 // CHECK:STDOUT:   %.loc15_14: type = ptr_type i32 [template = constants.%.6]
 // CHECK:STDOUT:   %t0.var: ref i32* = var t0
 // CHECK:STDOUT:   %t0: ref i32* = bind_name t0, %t0.var

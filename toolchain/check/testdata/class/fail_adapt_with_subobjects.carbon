@@ -182,8 +182,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc7: <unbound element of class AdaptWithBaseAndFields> = base_decl Base, element0 [template]
 // CHECK:STDOUT:   %.loc8: <unbound element of class AdaptWithBaseAndFields> = field_decl n, element1 [template]
-// CHECK:STDOUT:   %.loc15_10.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc15_10.2: type = converted %.loc15_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_10: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

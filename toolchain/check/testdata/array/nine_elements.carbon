@@ -77,8 +77,8 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %.loc7_45.27: ref i32 = array_index file.%a.var, %.loc7_45.26
 // CHECK:STDOUT:   %.loc7_45.28: init i32 = initialize_from %.loc7_44 to %.loc7_45.27 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_45.29: init [i32; 9] = array_init (%.loc7_45.4, %.loc7_45.7, %.loc7_45.10, %.loc7_45.13, %.loc7_45.16, %.loc7_45.19, %.loc7_45.22, %.loc7_45.25, %.loc7_45.28) to file.%a.var [template = constants.%.14]
-// CHECK:STDOUT:   %.loc7_45.30: init [i32; 9] = converted %.loc7_45.1, %.loc7_45.29 [template = constants.%.14]
-// CHECK:STDOUT:   assign file.%a.var, %.loc7_45.30
+// CHECK:STDOUT:   %.loc7_46: init [i32; 9] = converted %.loc7_45.1, %.loc7_45.29 [template = constants.%.14]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7_46
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -45,8 +45,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_46.4: ref i32 = struct_access file.%x.var, element1
 // CHECK:STDOUT:   %.loc7_46.5: init i32 = initialize_from %.loc7_45 to %.loc7_46.4 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_46.6: init {.a: f64, .b: i32} = struct_init (%.loc7_46.3, %.loc7_46.5) to file.%x.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_46.7: init {.a: f64, .b: i32} = converted %.loc7_46.1, %.loc7_46.6 [template = constants.%.5]
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_46.7
+// CHECK:STDOUT:   %.loc7_47: init {.a: f64, .b: i32} = converted %.loc7_46.1, %.loc7_46.6 [template = constants.%.5]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_47
 // CHECK:STDOUT:   %x.ref: ref {.a: f64, .b: i32} = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc8_15.2: i32 = bind_value %.loc8_15.1

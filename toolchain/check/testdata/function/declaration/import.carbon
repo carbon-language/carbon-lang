@@ -363,9 +363,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_25.1: (i32,) = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %.loc8_25.2: (i32,) = tuple_value (%.loc8_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_25.3: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_21: init {.c: i32} = call %C.ref(%.loc8_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc8_21
+// CHECK:STDOUT:   %.loc8_21.1: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_21.2: init {.c: i32} = call %C.ref(%.loc8_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc8_21.2
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %.loc9: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc9
@@ -469,9 +469,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc14_23: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25.1: (i32,) = tuple_literal (%.loc14_23)
 // CHECK:STDOUT:   %.loc14_25.2: (i32,) = tuple_value (%.loc14_23) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_25.3: (i32,) = converted %.loc14_25.1, %.loc14_25.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_21: init {.c: i32} = call %C.ref(%.loc14_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc14_21
+// CHECK:STDOUT:   %.loc14_21.1: (i32,) = converted %.loc14_25.1, %.loc14_25.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_21.2: init {.c: i32} = call %C.ref(%.loc14_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc14_21.2
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%D [template = file.%D]
 // CHECK:STDOUT:   %.loc15: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc15
@@ -575,9 +575,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc14_23: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_25.1: (i32,) = tuple_literal (%.loc14_23)
 // CHECK:STDOUT:   %.loc14_25.2: (i32,) = tuple_value (%.loc14_23) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_25.3: (i32,) = converted %.loc14_25.1, %.loc14_25.2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_21: init {.c: i32} = call %C.ref(%.loc14_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc14_21
+// CHECK:STDOUT:   %.loc14_21.1: (i32,) = converted %.loc14_25.1, %.loc14_25.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_21.2: init {.c: i32} = call %C.ref(%.loc14_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc14_21.2
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%D [template = file.%D]
 // CHECK:STDOUT:   %.loc15: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc15
@@ -679,9 +679,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc9_21
+// CHECK:STDOUT:   %.loc9_21.1: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_21.2: init {.c: i32} = call %C.ref(%.loc9_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc9_21.2
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10
@@ -783,9 +783,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_25.1: (i32,) = tuple_literal (%.loc9_23)
 // CHECK:STDOUT:   %.loc9_25.2: (i32,) = tuple_value (%.loc9_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_25.3: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_21: init {.c: i32} = call %C.ref(%.loc9_25.3)
-// CHECK:STDOUT:   assign file.%c.var, %.loc9_21
+// CHECK:STDOUT:   %.loc9_21.1: (i32,) = converted %.loc9_25.1, %.loc9_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_21.2: init {.c: i32} = call %C.ref(%.loc9_21.1)
+// CHECK:STDOUT:   assign file.%c.var, %.loc9_21.2
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
 // CHECK:STDOUT:   %.loc10: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %.loc10

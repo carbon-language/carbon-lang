@@ -78,8 +78,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
 // CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_20: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.2: type = ptr_type Self [symbolic = constants.%.2]
+// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc5_24.3: type = ptr_type Self [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc5_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc5_14.3: Self* = bind_name self, %self.loc5_14.1
 // CHECK:STDOUT:     %.loc5_9: Self* = addr_pattern %self.loc5_14.3
@@ -97,8 +97,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_20: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.2: type = ptr_type Self [symbolic = constants.%.6]
+// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc8_24.3: type = ptr_type Self [symbolic = constants.%.6]
 // CHECK:STDOUT:     %self.loc8_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc8_14.3: Self* = bind_name self, %self.loc8_14.1
 // CHECK:STDOUT:     %.loc8_9: Self* = addr_pattern %self.loc8_14.3

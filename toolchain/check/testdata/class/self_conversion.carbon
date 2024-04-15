@@ -141,18 +141,18 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc27_20.1: ref Derived = deref %.loc27_4.2
 // CHECK:STDOUT:   %.loc27_20.2: ref Base = class_element_access %.loc27_20.1, element0
 // CHECK:STDOUT:   %.loc27_20.3: Base* = addr_of %.loc27_20.2
-// CHECK:STDOUT:   %.loc27_4.3: Base* = converted %.loc27_4.2, %.loc27_20.3
-// CHECK:STDOUT:   %.loc27_20.4: init () = call %.loc27_7(%.loc27_4.3)
+// CHECK:STDOUT:   %.loc27_20.4: Base* = converted %.loc27_4.2, %.loc27_20.3
+// CHECK:STDOUT:   %.loc27_20.5: init () = call %.loc27_7(%.loc27_20.4)
 // CHECK:STDOUT:   %p.ref.loc28: Derived* = name_ref p, %p
-// CHECK:STDOUT:   %.loc28_11.1: ref Derived = deref %p.ref.loc28
+// CHECK:STDOUT:   %.loc28_11: ref Derived = deref %p.ref.loc28
 // CHECK:STDOUT:   %SelfBase.ref: <function> = name_ref SelfBase, @Derived.%SelfBase [template = @Derived.%SelfBase]
-// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11.1, %SelfBase.ref
-// CHECK:STDOUT:   %.loc28_23.1: ref Base = class_element_access %.loc28_11.1, element0
-// CHECK:STDOUT:   %.loc28_11.2: ref Base = converted %.loc28_11.1, %.loc28_23.1
-// CHECK:STDOUT:   %.loc28_11.3: Base = bind_value %.loc28_11.2
-// CHECK:STDOUT:   %.loc28_23.2: init i32 = call %.loc28_14(%.loc28_11.3)
-// CHECK:STDOUT:   %.loc28_25: i32 = value_of_initializer %.loc28_23.2
-// CHECK:STDOUT:   %.loc28_23.3: i32 = converted %.loc28_23.2, %.loc28_25
-// CHECK:STDOUT:   return %.loc28_23.3
+// CHECK:STDOUT:   %.loc28_14: <bound method> = bound_method %.loc28_11, %SelfBase.ref
+// CHECK:STDOUT:   %.loc28_23.1: ref Base = class_element_access %.loc28_11, element0
+// CHECK:STDOUT:   %.loc28_23.2: ref Base = converted %.loc28_11, %.loc28_23.1
+// CHECK:STDOUT:   %.loc28_23.3: Base = bind_value %.loc28_23.2
+// CHECK:STDOUT:   %.loc28_23.4: init i32 = call %.loc28_14(%.loc28_23.3)
+// CHECK:STDOUT:   %.loc28_25.1: i32 = value_of_initializer %.loc28_23.4
+// CHECK:STDOUT:   %.loc28_25.2: i32 = converted %.loc28_23.4, %.loc28_25.1
+// CHECK:STDOUT:   return %.loc28_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
