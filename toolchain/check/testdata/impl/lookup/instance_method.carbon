@@ -104,9 +104,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %F.ref: <associated <function> in I> = name_ref F, @I.%.loc10_28 [template = constants.%.3]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
 // CHECK:STDOUT:   %.loc20_11: <bound method> = bound_method %c.ref, %.1
-// CHECK:STDOUT:   %.loc20_13.1: init i32 = call %.loc20_11(%c.ref)
-// CHECK:STDOUT:   %.loc20_15: i32 = value_of_initializer %.loc20_13.1
-// CHECK:STDOUT:   %.loc20_13.2: i32 = converted %.loc20_13.1, %.loc20_15
-// CHECK:STDOUT:   return %.loc20_13.2
+// CHECK:STDOUT:   %.loc20_13: init i32 = call %.loc20_11(%c.ref)
+// CHECK:STDOUT:   %.loc20_15.1: i32 = value_of_initializer %.loc20_13
+// CHECK:STDOUT:   %.loc20_15.2: i32 = converted %.loc20_13, %.loc20_15.1
+// CHECK:STDOUT:   return %.loc20_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

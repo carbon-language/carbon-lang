@@ -81,8 +81,8 @@ class C {
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc12_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_19.2: init C = class_init (), %c.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_19.3: init C = converted %.loc12_19.1, %.loc12_19.2 [template = constants.%.8]
-// CHECK:STDOUT:   assign %c.var, %.loc12_19.3
+// CHECK:STDOUT:   %.loc12_20: init C = converted %.loc12_19.1, %.loc12_19.2 [template = constants.%.8]
+// CHECK:STDOUT:   assign %c.var, %.loc12_20
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in I> = name_ref F, @I.%.loc10 [template = constants.%.3]

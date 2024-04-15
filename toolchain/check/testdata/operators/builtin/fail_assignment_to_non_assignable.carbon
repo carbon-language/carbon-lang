@@ -108,8 +108,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc24_17.4: i32 = tuple_access %.loc24_8.1, element1
 // CHECK:STDOUT:   %.loc24_17.5: init i32 = initialize_from %.loc24_16 to %.loc24_17.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc24_17.6: init (i32, i32) = tuple_init (%.loc24_17.3, %.loc24_17.5) to %.loc24_8.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc24_17.7: init (i32, i32) = converted %.loc24_17.1, %.loc24_17.6 [template = constants.%.7]
-// CHECK:STDOUT:   assign %.loc24_8.1, %.loc24_17.7
+// CHECK:STDOUT:   %.loc24_10: init (i32, i32) = converted %.loc24_17.1, %.loc24_17.6 [template = constants.%.7]
+// CHECK:STDOUT:   assign %.loc24_8.1, %.loc24_10
 // CHECK:STDOUT:   %.loc24_8.2: (i32, i32) = tuple_value (%.loc24_4, %.loc24_7) [template = constants.%.8]
 // CHECK:STDOUT:   %.loc24_8.3: (i32, i32) = converted %.loc24_8.1, %.loc24_8.2 [template = constants.%.8]
 // CHECK:STDOUT:   %n.var: ref i32 = var n
@@ -127,8 +127,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc30_17.4: i32 = tuple_access %.loc30_8.1, element1
 // CHECK:STDOUT:   %.loc30_17.5: init i32 = initialize_from %.loc30_16 to %.loc30_17.4 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc30_17.6: init (i32, i32) = tuple_init (%.loc30_17.3, %.loc30_17.5) to %.loc30_8.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc30_17.7: init (i32, i32) = converted %.loc30_17.1, %.loc30_17.6 [template = constants.%.8]
-// CHECK:STDOUT:   assign %.loc30_8.1, %.loc30_17.7
+// CHECK:STDOUT:   %.loc30_10: init (i32, i32) = converted %.loc30_17.1, %.loc30_17.6 [template = constants.%.8]
+// CHECK:STDOUT:   assign %.loc30_8.1, %.loc30_10
 // CHECK:STDOUT:   %.loc30_4: i32 = bind_value %n.ref.loc30_4
 // CHECK:STDOUT:   %.loc30_7: i32 = bind_value %n.ref.loc30_7
 // CHECK:STDOUT:   %.loc30_8.2: (i32, i32) = tuple_value (%.loc30_4, %.loc30_7)
@@ -146,8 +146,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc40_37.4: i32 = struct_access %.loc40_18.1, element1
 // CHECK:STDOUT:   %.loc40_37.5: init i32 = initialize_from %.loc40_36 to %.loc40_37.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc40_37.6: init {.x: i32, .y: i32} = struct_init (%.loc40_37.3, %.loc40_37.5) to %.loc40_18.1 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc40_37.7: init {.x: i32, .y: i32} = converted %.loc40_37.1, %.loc40_37.6 [template = constants.%.13]
-// CHECK:STDOUT:   assign %.loc40_18.1, %.loc40_37.7
+// CHECK:STDOUT:   %.loc40_20: init {.x: i32, .y: i32} = converted %.loc40_37.1, %.loc40_37.6 [template = constants.%.13]
+// CHECK:STDOUT:   assign %.loc40_18.1, %.loc40_20
 // CHECK:STDOUT:   %.loc40_18.2: {.x: i32, .y: i32} = struct_value (%.loc40_9, %.loc40_17) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc40_18.3: {.x: i32, .y: i32} = converted %.loc40_18.1, %.loc40_18.2 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true [template = constants.%.15]

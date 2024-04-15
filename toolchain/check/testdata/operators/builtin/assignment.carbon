@@ -75,8 +75,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_28.4: ref i32 = tuple_access %b.var, element1
 // CHECK:STDOUT:   %.loc11_28.5: init i32 = initialize_from %.loc11_27 to %.loc11_28.4 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc11_28.6: init (i32, i32) = tuple_init (%.loc11_28.3, %.loc11_28.5) to %b.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_28.7: init (i32, i32) = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%.8]
-// CHECK:STDOUT:   assign %b.var, %.loc11_28.7
+// CHECK:STDOUT:   %.loc11_29: init (i32, i32) = converted %.loc11_28.1, %.loc11_28.6 [template = constants.%.8]
+// CHECK:STDOUT:   assign %b.var, %.loc11_29
 // CHECK:STDOUT:   %b.ref.loc12: ref (i32, i32) = name_ref b, %b
 // CHECK:STDOUT:   %.loc12_5: i32 = int_literal 0 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_6: ref i32 = tuple_index %b.ref.loc12, %.loc12_5
@@ -98,8 +98,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_46.4: ref i32 = struct_access %c.var, element1
 // CHECK:STDOUT:   %.loc15_46.5: init i32 = initialize_from %.loc15_45 to %.loc15_46.4 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc15_46.6: init {.a: i32, .b: i32} = struct_init (%.loc15_46.3, %.loc15_46.5) to %c.var [template = constants.%.14]
-// CHECK:STDOUT:   %.loc15_46.7: init {.a: i32, .b: i32} = converted %.loc15_46.1, %.loc15_46.6 [template = constants.%.14]
-// CHECK:STDOUT:   assign %c.var, %.loc15_46.7
+// CHECK:STDOUT:   %.loc15_47: init {.a: i32, .b: i32} = converted %.loc15_46.1, %.loc15_46.6 [template = constants.%.14]
+// CHECK:STDOUT:   assign %c.var, %.loc15_47
 // CHECK:STDOUT:   %c.ref.loc16: ref {.a: i32, .b: i32} = name_ref c, %c
 // CHECK:STDOUT:   %.loc16_4: ref i32 = struct_access %c.ref.loc16, element0
 // CHECK:STDOUT:   %.loc16_9: i32 = int_literal 3 [template = constants.%.10]

@@ -83,8 +83,8 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %.loc4_42.9: ref i32 = array_index file.%arr.var, %.loc4_42.8
 // CHECK:STDOUT:   %.loc4_42.10: init i32 = initialize_from %.loc4_41 to %.loc4_42.9 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc4_42.11: init [i32; 3] = array_init (%.loc4_42.4, %.loc4_42.7, %.loc4_42.10) to file.%arr.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc4_42.12: init [i32; 3] = converted %.loc4_42.1, %.loc4_42.11 [template = constants.%.8]
-// CHECK:STDOUT:   assign file.%arr.var, %.loc4_42.12
+// CHECK:STDOUT:   %.loc4_43: init [i32; 3] = converted %.loc4_42.1, %.loc4_42.11 [template = constants.%.8]
+// CHECK:STDOUT:   assign file.%arr.var, %.loc4_43
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,8 +69,8 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %.loc9_35.9: ref i32 = array_index file.%a.var, %.loc9_35.8
 // CHECK:STDOUT:   %.loc9_35.10: init i32 = initialize_from %.loc9_34 to %.loc9_35.9 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc9_35.11: init [i32; 3] = array_init (%.loc9_35.4, %.loc9_35.7, %.loc9_35.10) to file.%a.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_35.12: init [i32; 3] = converted %.loc9_35.1, %.loc9_35.11 [template = constants.%.8]
-// CHECK:STDOUT:   assign file.%a.var, %.loc9_35.12
+// CHECK:STDOUT:   %.loc9_36: init [i32; 3] = converted %.loc9_35.1, %.loc9_35.11 [template = constants.%.8]
+// CHECK:STDOUT:   assign file.%a.var, %.loc9_36
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

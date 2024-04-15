@@ -61,9 +61,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_26.6: init i32 = initialize_from %.loc13_25 to %.loc13_26.5 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_26.7: init Class = class_init (%.loc13_26.4, %.loc13_26.6), %.loc13_26.2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_26.8: ref Class = temporary %.loc13_26.2, %.loc13_26.7
-// CHECK:STDOUT:   %.loc13_26.9: ref Class = converted %.loc13_26.1, %.loc13_26.8
+// CHECK:STDOUT:   %.loc13_28: ref Class = converted %.loc13_26.1, %.loc13_26.8
 // CHECK:STDOUT:   %a.ref: <unbound element of class Class> = name_ref a, @Class.%.loc8 [template = @Class.%.loc8]
-// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_element_access %.loc13_26.9, element0
+// CHECK:STDOUT:   %.loc13_37.1: ref i32 = class_element_access %.loc13_28, element0
 // CHECK:STDOUT:   %.loc13_37.2: i32 = bind_value %.loc13_37.1
 // CHECK:STDOUT:   return %.loc13_37.2
 // CHECK:STDOUT: }

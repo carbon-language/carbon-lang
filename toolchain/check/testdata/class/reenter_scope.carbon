@@ -53,10 +53,10 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   %G.ref.loc13: <function> = name_ref G, @Class.%G [template = @Class.%G]
 // CHECK:STDOUT:   %.loc13: init i32 = call %G.ref.loc13()
 // CHECK:STDOUT:   %G.ref.loc14: <function> = name_ref G, @Class.%G [template = @Class.%G]
-// CHECK:STDOUT:   %.loc14_11.1: init i32 = call %G.ref.loc14()
-// CHECK:STDOUT:   %.loc14_13: i32 = value_of_initializer %.loc14_11.1
-// CHECK:STDOUT:   %.loc14_11.2: i32 = converted %.loc14_11.1, %.loc14_13
-// CHECK:STDOUT:   return %.loc14_11.2
+// CHECK:STDOUT:   %.loc14_11: init i32 = call %G.ref.loc14()
+// CHECK:STDOUT:   %.loc14_13.1: i32 = value_of_initializer %.loc14_11
+// CHECK:STDOUT:   %.loc14_13.2: i32 = converted %.loc14_11, %.loc14_13.1
+// CHECK:STDOUT:   return %.loc14_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;

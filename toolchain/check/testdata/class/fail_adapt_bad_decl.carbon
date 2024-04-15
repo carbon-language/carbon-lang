@@ -188,8 +188,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdapts {
-// CHECK:STDOUT:   %.loc5_10.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_10.2: type = converted %.loc5_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc5_10: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl ()
 // CHECK:STDOUT:   %.loc13: {} = struct_literal ()
 // CHECK:STDOUT:
@@ -198,8 +198,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdaptsSameType {
-// CHECK:STDOUT:   %.loc17_10.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_10.2: type = converted %.loc17_10.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_10: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl ()
 // CHECK:STDOUT:   %.loc25: () = tuple_literal ()
 // CHECK:STDOUT:

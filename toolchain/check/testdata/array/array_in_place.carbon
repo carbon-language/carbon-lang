@@ -63,8 +63,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_40: init (i32, i32, i32) = call %F.ref.loc10_39() to %.loc10_42.6
 // CHECK:STDOUT:   %.loc10_42.7: ((i32, i32, i32), (i32, i32, i32)) = tuple_literal (%.loc10_35, %.loc10_40)
 // CHECK:STDOUT:   %.loc10_42.8: init [(i32, i32, i32); 2] = array_init (%.loc10_35, %.loc10_40) to %v.var
-// CHECK:STDOUT:   %.loc10_42.9: init [(i32, i32, i32); 2] = converted %.loc10_42.7, %.loc10_42.8
-// CHECK:STDOUT:   assign %v.var, %.loc10_42.9
+// CHECK:STDOUT:   %.loc10_43: init [(i32, i32, i32); 2] = converted %.loc10_42.7, %.loc10_42.8
+// CHECK:STDOUT:   assign %v.var, %.loc10_43
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

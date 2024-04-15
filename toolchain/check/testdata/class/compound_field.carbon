@@ -136,10 +136,10 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b.ref: <unbound element of class Base> = name_ref b, @Base.%.loc9 [template = @Base.%.loc9]
 // CHECK:STDOUT:   %.loc25_11.1: ref Base = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc25_10: ref Base = converted %d.ref, %.loc25_11.1
-// CHECK:STDOUT:   %.loc25_11.2: ref i32 = class_element_access %.loc25_10, element1
-// CHECK:STDOUT:   %.loc25_11.3: i32 = bind_value %.loc25_11.2
-// CHECK:STDOUT:   return %.loc25_11.3
+// CHECK:STDOUT:   %.loc25_11.2: ref Base = converted %d.ref, %.loc25_11.1
+// CHECK:STDOUT:   %.loc25_11.3: ref i32 = class_element_access %.loc25_11.2, element1
+// CHECK:STDOUT:   %.loc25_11.4: i32 = bind_value %.loc25_11.3
+// CHECK:STDOUT:   return %.loc25_11.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerivedIndirect(%p: Derived*) -> i32* {

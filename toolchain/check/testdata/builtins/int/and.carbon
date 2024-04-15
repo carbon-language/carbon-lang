@@ -69,9 +69,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %And.ref: <function> = name_ref And, file.%And [template = file.%And]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_13.1: init i32 = call %And.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19: i32 = value_of_initializer %.loc8_13.1
-// CHECK:STDOUT:   %.loc8_13.2: i32 = converted %.loc8_13.1, %.loc8_19
-// CHECK:STDOUT:   return %.loc8_13.2
+// CHECK:STDOUT:   %.loc8_13: init i32 = call %And.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %.loc8_13
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_13, %.loc8_19.1
+// CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

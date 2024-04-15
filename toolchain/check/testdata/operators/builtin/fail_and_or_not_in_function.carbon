@@ -46,9 +46,9 @@ var or_: F(true or true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc38_17: bool = block_arg <unexpected instblockref block14> [template = constants.%.1]
-// CHECK:STDOUT:   %.loc38_11.1: init type = call <unexpected instref inst+28>(%.loc38_17)
-// CHECK:STDOUT:   %.loc38_24: type = value_of_initializer %.loc38_11.1
-// CHECK:STDOUT:   %.loc38_11.2: type = converted %.loc38_11.1, %.loc38_24
+// CHECK:STDOUT:   %.loc38_11: init type = call <unexpected instref inst+28>(%.loc38_17)
+// CHECK:STDOUT:   %.loc38_24.1: type = value_of_initializer %.loc38_11
+// CHECK:STDOUT:   %.loc38_24.2: type = converted %.loc38_11, %.loc38_24.1
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
 // CHECK:STDOUT:   %or_: ref <error> = bind_name or_, %or_.var
 // CHECK:STDOUT: }

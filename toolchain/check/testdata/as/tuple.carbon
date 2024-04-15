@@ -80,8 +80,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc15_32.3: ref X = temporary %.loc15_32.1, %.loc15_32.2
 // CHECK:STDOUT:   %.loc15_32.4: X = bind_value %.loc15_32.3
 // CHECK:STDOUT:   %.loc15_34.2: (X, X) = tuple_value (%.loc15_24.4, %.loc15_32.4)
-// CHECK:STDOUT:   %.loc15_34.3: (X, X) = converted %.loc15_34.1, %.loc15_34.2
-// CHECK:STDOUT:   %a: (X, X) = bind_name a, %.loc15_34.3
+// CHECK:STDOUT:   %.loc15_45: (X, X) = converted %.loc15_34.1, %.loc15_34.2
+// CHECK:STDOUT:   %a: (X, X) = bind_name a, %.loc15_45
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +105,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc20_44.1: (type, type) = tuple_literal (%X.ref.loc20_40, %X.ref.loc20_43)
 // CHECK:STDOUT:   %.loc20_44.2: type = converted %.loc20_44.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc20_34.4: init (X, X) = tuple_init (%.loc20_24, %.loc20_32) to %b.var
-// CHECK:STDOUT:   %.loc20_34.5: init (X, X) = converted %.loc20_34.3, %.loc20_34.4
-// CHECK:STDOUT:   assign %b.var, %.loc20_34.5
+// CHECK:STDOUT:   %.loc20_45: init (X, X) = converted %.loc20_34.3, %.loc20_34.4
+// CHECK:STDOUT:   assign %b.var, %.loc20_45
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

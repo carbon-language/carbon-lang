@@ -334,13 +334,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.13 [template] {
 // CHECK:STDOUT:     %Self.ref.loc184_12: SelfNested = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc184_16.1: type = facet_type_access %Self.ref.loc184_12 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc184_12: type = converted %Self.ref.loc184_12, %.loc184_16.1 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc184_16.2: type = ptr_type Self [symbolic = constants.%.9]
+// CHECK:STDOUT:     %.loc184_16.2: type = converted %Self.ref.loc184_12, %.loc184_16.1 [symbolic = %Self]
+// CHECK:STDOUT:     %.loc184_16.3: type = ptr_type Self [symbolic = constants.%.9]
 // CHECK:STDOUT:     %Self.ref.loc184_24: SelfNested = name_ref Self, %Self [symbolic = %Self]
 // CHECK:STDOUT:     %.loc184_24.1: type = facet_type_access %Self.ref.loc184_24 [symbolic = %Self]
 // CHECK:STDOUT:     %.loc184_24.2: type = converted %Self.ref.loc184_24, %.loc184_24.1 [symbolic = %Self]
 // CHECK:STDOUT:     %.loc184_37: type = struct_type {.x: Self, .y: i32} [symbolic = constants.%.10]
-// CHECK:STDOUT:     %.loc184_38.1: (type, type) = tuple_literal (%.loc184_16.2, %.loc184_37)
+// CHECK:STDOUT:     %.loc184_38.1: (type, type) = tuple_literal (%.loc184_16.3, %.loc184_37)
 // CHECK:STDOUT:     %.loc184_38.2: type = converted %.loc184_38.1, constants.%.12 [symbolic = constants.%.12]
 // CHECK:STDOUT:     %x.loc184_8.1: (Self*, {.x: Self, .y: i32}) = param x
 // CHECK:STDOUT:     %x.loc184_8.2: (Self*, {.x: Self, .y: i32}) = bind_name x, %x.loc184_8.1

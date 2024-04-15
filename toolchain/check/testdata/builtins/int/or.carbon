@@ -69,9 +69,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Or.ref: <function> = name_ref Or, file.%Or [template = file.%Or]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_12.1: init i32 = call %Or.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_18: i32 = value_of_initializer %.loc8_12.1
-// CHECK:STDOUT:   %.loc8_12.2: i32 = converted %.loc8_12.1, %.loc8_18
-// CHECK:STDOUT:   return %.loc8_12.2
+// CHECK:STDOUT:   %.loc8_12: init i32 = call %Or.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_18.1: i32 = value_of_initializer %.loc8_12
+// CHECK:STDOUT:   %.loc8_18.2: i32 = converted %.loc8_12, %.loc8_18.1
+// CHECK:STDOUT:   return %.loc8_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

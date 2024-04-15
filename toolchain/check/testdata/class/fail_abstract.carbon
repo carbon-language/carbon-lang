@@ -121,7 +121,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc26_24.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc26_24.5: init i32 = initialize_from %.loc26_22.2 to %.loc26_24.4
 // CHECK:STDOUT:   %.loc26_24.6: init (i32, i32) = tuple_init (%.loc26_24.3, %.loc26_24.5) to %return
-// CHECK:STDOUT:   %.loc26_24.7: init (i32, i32) = converted %.loc26_24.1, %.loc26_24.6
-// CHECK:STDOUT:   return %.loc26_24.7
+// CHECK:STDOUT:   %.loc26_25: init (i32, i32) = converted %.loc26_24.1, %.loc26_24.6
+// CHECK:STDOUT:   return %.loc26_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

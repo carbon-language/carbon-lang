@@ -148,12 +148,12 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Base.%F [template = @Base.%F]
 // CHECK:STDOUT:   %.loc22_11: <bound method> = bound_method %a.ref, %F.ref
 // CHECK:STDOUT:   %.loc22_20.1: ref Base = class_element_access %a.ref, element0
-// CHECK:STDOUT:   %.loc22_10.1: ref Base = converted %a.ref, %.loc22_20.1
-// CHECK:STDOUT:   %.loc22_10.2: Base = bind_value %.loc22_10.1
-// CHECK:STDOUT:   %.loc22_20.2: init i32 = call %.loc22_11(%.loc22_10.2)
-// CHECK:STDOUT:   %.loc22_22: i32 = value_of_initializer %.loc22_20.2
-// CHECK:STDOUT:   %.loc22_20.3: i32 = converted %.loc22_20.2, %.loc22_22
-// CHECK:STDOUT:   return %.loc22_20.3
+// CHECK:STDOUT:   %.loc22_20.2: ref Base = converted %a.ref, %.loc22_20.1
+// CHECK:STDOUT:   %.loc22_20.3: Base = bind_value %.loc22_20.2
+// CHECK:STDOUT:   %.loc22_20.4: init i32 = call %.loc22_11(%.loc22_20.3)
+// CHECK:STDOUT:   %.loc22_22.1: i32 = value_of_initializer %.loc22_20.4
+// CHECK:STDOUT:   %.loc22_22.2: i32 = converted %.loc22_20.4, %.loc22_22.1
+// CHECK:STDOUT:   return %.loc22_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallIndirect(%p: Derived*) -> i32 {
@@ -164,12 +164,12 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc26_11.1: ref Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc26_11.2: <bound method> = bound_method %.loc26_11.1, %F.ref
 // CHECK:STDOUT:   %.loc26_21.1: ref Base = class_element_access %.loc26_11.1, element0
-// CHECK:STDOUT:   %.loc26_11.3: ref Base = converted %.loc26_11.1, %.loc26_21.1
-// CHECK:STDOUT:   %.loc26_11.4: Base = bind_value %.loc26_11.3
-// CHECK:STDOUT:   %.loc26_21.2: init i32 = call %.loc26_11.2(%.loc26_11.4)
-// CHECK:STDOUT:   %.loc26_23: i32 = value_of_initializer %.loc26_21.2
-// CHECK:STDOUT:   %.loc26_21.3: i32 = converted %.loc26_21.2, %.loc26_23
-// CHECK:STDOUT:   return %.loc26_21.3
+// CHECK:STDOUT:   %.loc26_21.2: ref Base = converted %.loc26_11.1, %.loc26_21.1
+// CHECK:STDOUT:   %.loc26_21.3: Base = bind_value %.loc26_21.2
+// CHECK:STDOUT:   %.loc26_21.4: init i32 = call %.loc26_11.2(%.loc26_21.3)
+// CHECK:STDOUT:   %.loc26_23.1: i32 = value_of_initializer %.loc26_21.4
+// CHECK:STDOUT:   %.loc26_23.2: i32 = converted %.loc26_21.4, %.loc26_23.1
+// CHECK:STDOUT:   return %.loc26_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBase(%a: Derived) -> i32 {
@@ -178,10 +178,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Base.%G [template = @Base.%G]
 // CHECK:STDOUT:   %.loc30_11: <bound method> = bound_method %a.ref, %G.ref
-// CHECK:STDOUT:   %.loc30_20.1: init i32 = call %.loc30_11(%a.ref)
-// CHECK:STDOUT:   %.loc30_22: i32 = value_of_initializer %.loc30_20.1
-// CHECK:STDOUT:   %.loc30_20.2: i32 = converted %.loc30_20.1, %.loc30_22
-// CHECK:STDOUT:   return %.loc30_20.2
+// CHECK:STDOUT:   %.loc30_20: init i32 = call %.loc30_11(%a.ref)
+// CHECK:STDOUT:   %.loc30_22.1: i32 = value_of_initializer %.loc30_20
+// CHECK:STDOUT:   %.loc30_22.2: i32 = converted %.loc30_20, %.loc30_22.1
+// CHECK:STDOUT:   return %.loc30_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p: Derived*) -> i32 {
@@ -192,9 +192,9 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc34_11.1: ref Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc34_11.2: <bound method> = bound_method %.loc34_11.1, %G.ref
 // CHECK:STDOUT:   %.loc34_11.3: Derived = bind_value %.loc34_11.1
-// CHECK:STDOUT:   %.loc34_21.1: init i32 = call %.loc34_11.2(%.loc34_11.3)
-// CHECK:STDOUT:   %.loc34_23: i32 = value_of_initializer %.loc34_21.1
-// CHECK:STDOUT:   %.loc34_21.2: i32 = converted %.loc34_21.1, %.loc34_23
-// CHECK:STDOUT:   return %.loc34_21.2
+// CHECK:STDOUT:   %.loc34_21: init i32 = call %.loc34_11.2(%.loc34_11.3)
+// CHECK:STDOUT:   %.loc34_23.1: i32 = value_of_initializer %.loc34_21
+// CHECK:STDOUT:   %.loc34_23.2: i32 = converted %.loc34_21, %.loc34_23.1
+// CHECK:STDOUT:   return %.loc34_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

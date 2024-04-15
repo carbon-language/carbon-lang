@@ -123,8 +123,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc7_23.2: ref i32 = class_element_access file.%d_val.var, element0
 // CHECK:STDOUT:   %.loc7_23.3: init i32 = initialize_from %.loc7_22 to %.loc7_23.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_23.4: init C = class_init (%.loc7_23.3), file.%d_val.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_23.5: init C = converted %.loc7_23.1, %.loc7_23.4 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%d_val.var, %.loc7_23.5
+// CHECK:STDOUT:   %.loc7_24: init C = converted %.loc7_23.1, %.loc7_23.4 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%d_val.var, %.loc7_24
 // CHECK:STDOUT:   %d_val.ref: ref C = name_ref d_val, file.%d_val
 // CHECK:STDOUT:   %v.ref.loc8: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_27.1: ref i32 = class_element_access %d_val.ref, element0
@@ -133,8 +133,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc8_29.2: ref i32 = class_element_access file.%c_val.var, element0
 // CHECK:STDOUT:   %.loc8_29.3: init i32 = initialize_from %.loc8_27.2 to %.loc8_29.2
 // CHECK:STDOUT:   %.loc8_29.4: init C = class_init (%.loc8_29.3), file.%c_val.var
-// CHECK:STDOUT:   %.loc8_29.5: init C = converted %.loc8_29.1, %.loc8_29.4
-// CHECK:STDOUT:   assign file.%c_val.var, %.loc8_29.5
+// CHECK:STDOUT:   %.loc8_30: init C = converted %.loc8_29.1, %.loc8_29.4
+// CHECK:STDOUT:   assign file.%c_val.var, %.loc8_30
 // CHECK:STDOUT:   %c_val.ref: ref C = name_ref c_val, file.%c_val
 // CHECK:STDOUT:   %v.ref.loc9: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc9_27.1: ref i32 = class_element_access %c_val.ref, element0
@@ -143,8 +143,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc9_29.2: ref i32 = class_element_access file.%b_val.var, element0
 // CHECK:STDOUT:   %.loc9_29.3: init i32 = initialize_from %.loc9_27.2 to %.loc9_29.2
 // CHECK:STDOUT:   %.loc9_29.4: init C = class_init (%.loc9_29.3), file.%b_val.var
-// CHECK:STDOUT:   %.loc9_29.5: init C = converted %.loc9_29.1, %.loc9_29.4
-// CHECK:STDOUT:   assign file.%b_val.var, %.loc9_29.5
+// CHECK:STDOUT:   %.loc9_30: init C = converted %.loc9_29.1, %.loc9_29.4
+// CHECK:STDOUT:   assign file.%b_val.var, %.loc9_30
 // CHECK:STDOUT:   %b_val.ref: ref C = name_ref b_val, file.%b_val
 // CHECK:STDOUT:   %v.ref.loc10: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_27.1: ref i32 = class_element_access %b_val.ref, element0
@@ -153,8 +153,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc10_29.2: ref i32 = class_element_access file.%a_val.var, element0
 // CHECK:STDOUT:   %.loc10_29.3: init i32 = initialize_from %.loc10_27.2 to %.loc10_29.2
 // CHECK:STDOUT:   %.loc10_29.4: init C = class_init (%.loc10_29.3), file.%a_val.var
-// CHECK:STDOUT:   %.loc10_29.5: init C = converted %.loc10_29.1, %.loc10_29.4
-// CHECK:STDOUT:   assign file.%a_val.var, %.loc10_29.5
+// CHECK:STDOUT:   %.loc10_30: init C = converted %.loc10_29.1, %.loc10_29.4
+// CHECK:STDOUT:   assign file.%a_val.var, %.loc10_30
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

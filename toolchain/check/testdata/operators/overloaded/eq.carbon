@@ -264,9 +264,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
 // CHECK:STDOUT:   %.loc14_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc14_12.2: init bool = call %.loc14_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc14_16: bool = value_of_initializer %.loc14_12.2
-// CHECK:STDOUT:   %.loc14_12.3: bool = converted %.loc14_12.2, %.loc14_16
-// CHECK:STDOUT:   return %.loc14_12.3
+// CHECK:STDOUT:   %.loc14_16.1: bool = value_of_initializer %.loc14_12.2
+// CHECK:STDOUT:   %.loc14_16.2: bool = converted %.loc14_12.2, %.loc14_16.1
+// CHECK:STDOUT:   return %.loc14_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNotEqual(%a: C, %b: C) -> bool {
@@ -276,9 +276,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element1 [template = @impl.%NotEqual]
 // CHECK:STDOUT:   %.loc18_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc18_12.2: init bool = call %.loc18_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_16: bool = value_of_initializer %.loc18_12.2
-// CHECK:STDOUT:   %.loc18_12.3: bool = converted %.loc18_12.2, %.loc18_16
-// CHECK:STDOUT:   return %.loc18_12.3
+// CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %.loc18_12.2
+// CHECK:STDOUT:   %.loc18_16.2: bool = converted %.loc18_12.2, %.loc18_16.1
+// CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
@@ -482,9 +482,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Equal]
 // CHECK:STDOUT:   %.loc22_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc22_12.2: init bool = call %.loc22_12.1(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc22_16: bool = value_of_initializer %.loc22_12.2 [template = <error>]
-// CHECK:STDOUT:   %.loc22_12.3: bool = converted %.loc22_12.2, %.loc22_16 [template = <error>]
-// CHECK:STDOUT:   return %.loc22_12.3
+// CHECK:STDOUT:   %.loc22_16.1: bool = value_of_initializer %.loc22_12.2 [template = <error>]
+// CHECK:STDOUT:   %.loc22_16.2: bool = converted %.loc22_12.2, %.loc22_16.1 [template = <error>]
+// CHECK:STDOUT:   return %.loc22_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLhsBad(%a: D, %b: C) -> bool {

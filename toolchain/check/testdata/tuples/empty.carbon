@@ -35,12 +35,12 @@ var y: () = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_14.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_14.2: init () = tuple_init () to file.%x.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_14.3: init () = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.2]
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_14.3
+// CHECK:STDOUT:   %.loc7_15: init () = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_15
 // CHECK:STDOUT:   %x.ref: ref () = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc8_13.1: init () = tuple_init () to file.%y.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_13.2: init () = converted %x.ref, %.loc8_13.1 [template = constants.%.2]
-// CHECK:STDOUT:   assign file.%y.var, %.loc8_13.2
+// CHECK:STDOUT:   %.loc8_13: init () = tuple_init () to file.%y.var [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_14: init () = converted %x.ref, %.loc8_13 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%y.var, %.loc8_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

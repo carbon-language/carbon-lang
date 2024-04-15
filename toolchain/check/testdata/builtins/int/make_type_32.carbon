@@ -48,9 +48,9 @@ var i: Int() = 0;
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+3, loc_11 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
-// CHECK:STDOUT:   %.loc6_11.1: init type = call %Int.ref() [template = i32]
-// CHECK:STDOUT:   %.loc6_12: type = value_of_initializer %.loc6_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc6_11.2: type = converted %.loc6_11.1, %.loc6_12 [template = i32]
+// CHECK:STDOUT:   %.loc6_11: init type = call %Int.ref() [template = i32]
+// CHECK:STDOUT:   %.loc6_12.1: type = value_of_initializer %.loc6_11 [template = i32]
+// CHECK:STDOUT:   %.loc6_12.2: type = converted %.loc6_11, %.loc6_12.1 [template = i32]
 // CHECK:STDOUT:   %i.var: ref i32 = var i
 // CHECK:STDOUT:   %i: ref i32 = bind_name i, %i.var
 // CHECK:STDOUT: }

@@ -113,10 +113,10 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %LeftShift.ref: <function> = name_ref LeftShift, file.%LeftShift [template = file.%LeftShift]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_19.1: init i32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_25: i32 = value_of_initializer %.loc8_19.1
-// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_19.1, %.loc8_25
-// CHECK:STDOUT:   return %.loc8_19.2
+// CHECK:STDOUT:   %.loc8_19: init i32 = call %LeftShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_25.1: i32 = value_of_initializer %.loc8_19
+// CHECK:STDOUT:   %.loc8_25.2: i32 = converted %.loc8_19, %.loc8_25.1
+// CHECK:STDOUT:   return %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_shift.carbon
@@ -154,63 +154,63 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %LeftShift.ref.loc8: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc8_29: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_32: i32 = int_literal 31 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_28.1: init i32 = call %LeftShift.ref.loc8(%.loc8_29, %.loc8_32) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_35: i32 = value_of_initializer %.loc8_28.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_28.2: i32 = converted %.loc8_28.1, %.loc8_35 [template = constants.%.3]
-// CHECK:STDOUT:   %size_1: i32 = bind_name size_1, %.loc8_28.2
+// CHECK:STDOUT:   %.loc8_28: init i32 = call %LeftShift.ref.loc8(%.loc8_29, %.loc8_32) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_35.1: i32 = value_of_initializer %.loc8_28 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_35.2: i32 = converted %.loc8_28, %.loc8_35.1 [template = constants.%.3]
+// CHECK:STDOUT:   %size_1: i32 = bind_name size_1, %.loc8_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc13: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc13_29: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc13_32: i32 = int_literal 32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_28.1: init i32 = call %LeftShift.ref.loc13(%.loc13_29, %.loc13_32) [template = <error>]
-// CHECK:STDOUT:   %.loc13_35: i32 = value_of_initializer %.loc13_28.1 [template = <error>]
-// CHECK:STDOUT:   %.loc13_28.2: i32 = converted %.loc13_28.1, %.loc13_35 [template = <error>]
-// CHECK:STDOUT:   %size_2: i32 = bind_name size_2, %.loc13_28.2
+// CHECK:STDOUT:   %.loc13_28: init i32 = call %LeftShift.ref.loc13(%.loc13_29, %.loc13_32) [template = <error>]
+// CHECK:STDOUT:   %.loc13_35.1: i32 = value_of_initializer %.loc13_28 [template = <error>]
+// CHECK:STDOUT:   %.loc13_35.2: i32 = converted %.loc13_28, %.loc13_35.1 [template = <error>]
+// CHECK:STDOUT:   %size_2: i32 = bind_name size_2, %.loc13_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc18: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc18_29: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_32: i32 = int_literal 33 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_28.1: init i32 = call %LeftShift.ref.loc18(%.loc18_29, %.loc18_32) [template = <error>]
-// CHECK:STDOUT:   %.loc18_35: i32 = value_of_initializer %.loc18_28.1 [template = <error>]
-// CHECK:STDOUT:   %.loc18_28.2: i32 = converted %.loc18_28.1, %.loc18_35 [template = <error>]
-// CHECK:STDOUT:   %size_3: i32 = bind_name size_3, %.loc18_28.2
+// CHECK:STDOUT:   %.loc18_28: init i32 = call %LeftShift.ref.loc18(%.loc18_29, %.loc18_32) [template = <error>]
+// CHECK:STDOUT:   %.loc18_35.1: i32 = value_of_initializer %.loc18_28 [template = <error>]
+// CHECK:STDOUT:   %.loc18_35.2: i32 = converted %.loc18_28, %.loc18_35.1 [template = <error>]
+// CHECK:STDOUT:   %size_3: i32 = bind_name size_3, %.loc18_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc21: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc21_33: i32 = int_literal 1000 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc21_39: i32 = int_literal 31 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc21_32.1: init i32 = call %LeftShift.ref.loc21(%.loc21_33, %.loc21_39) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_42: i32 = value_of_initializer %.loc21_32.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc21_32.2: i32 = converted %.loc21_32.1, %.loc21_42 [template = constants.%.7]
-// CHECK:STDOUT:   %overflow_1: i32 = bind_name overflow_1, %.loc21_32.2
+// CHECK:STDOUT:   %.loc21_32: init i32 = call %LeftShift.ref.loc21(%.loc21_33, %.loc21_39) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21_42.1: i32 = value_of_initializer %.loc21_32 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21_42.2: i32 = converted %.loc21_32, %.loc21_42.1 [template = constants.%.7]
+// CHECK:STDOUT:   %overflow_1: i32 = bind_name overflow_1, %.loc21_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc26: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc26_33: i32 = int_literal 1000 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc26_39: i32 = int_literal 32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc26_32.1: init i32 = call %LeftShift.ref.loc26(%.loc26_33, %.loc26_39) [template = <error>]
-// CHECK:STDOUT:   %.loc26_42: i32 = value_of_initializer %.loc26_32.1 [template = <error>]
-// CHECK:STDOUT:   %.loc26_32.2: i32 = converted %.loc26_32.1, %.loc26_42 [template = <error>]
-// CHECK:STDOUT:   %overflow_2: i32 = bind_name overflow_2, %.loc26_32.2
+// CHECK:STDOUT:   %.loc26_32: init i32 = call %LeftShift.ref.loc26(%.loc26_33, %.loc26_39) [template = <error>]
+// CHECK:STDOUT:   %.loc26_42.1: i32 = value_of_initializer %.loc26_32 [template = <error>]
+// CHECK:STDOUT:   %.loc26_42.2: i32 = converted %.loc26_32, %.loc26_42.1 [template = <error>]
+// CHECK:STDOUT:   %overflow_2: i32 = bind_name overflow_2, %.loc26_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc29: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc29_36: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc29_39: i32 = int_literal 31 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc29_35.1: init i32 = call %LeftShift.ref.loc29(%.loc29_36, %.loc29_39) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc29_42: i32 = value_of_initializer %.loc29_35.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc29_35.2: i32 = converted %.loc29_35.1, %.loc29_42 [template = constants.%.7]
-// CHECK:STDOUT:   %no_overflow_1: i32 = bind_name no_overflow_1, %.loc29_35.2
+// CHECK:STDOUT:   %.loc29_35: init i32 = call %LeftShift.ref.loc29(%.loc29_36, %.loc29_39) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc29_42.1: i32 = value_of_initializer %.loc29_35 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc29_42.2: i32 = converted %.loc29_35, %.loc29_42.1 [template = constants.%.7]
+// CHECK:STDOUT:   %no_overflow_1: i32 = bind_name no_overflow_1, %.loc29_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc34: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc34_36: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc34_39: i32 = int_literal 32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc34_35.1: init i32 = call %LeftShift.ref.loc34(%.loc34_36, %.loc34_39) [template = <error>]
-// CHECK:STDOUT:   %.loc34_42: i32 = value_of_initializer %.loc34_35.1 [template = <error>]
-// CHECK:STDOUT:   %.loc34_35.2: i32 = converted %.loc34_35.1, %.loc34_42 [template = <error>]
-// CHECK:STDOUT:   %no_overflow_2: i32 = bind_name no_overflow_2, %.loc34_35.2
+// CHECK:STDOUT:   %.loc34_35: init i32 = call %LeftShift.ref.loc34(%.loc34_36, %.loc34_39) [template = <error>]
+// CHECK:STDOUT:   %.loc34_42.1: i32 = value_of_initializer %.loc34_35 [template = <error>]
+// CHECK:STDOUT:   %.loc34_42.2: i32 = converted %.loc34_35, %.loc34_42.1 [template = <error>]
+// CHECK:STDOUT:   %no_overflow_2: i32 = bind_name no_overflow_2, %.loc34_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc40: <function> = name_ref LeftShift, %LeftShift [template = %LeftShift]
 // CHECK:STDOUT:   %.loc40_31: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc40_41: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc40_40.1: init i32 = call %Negate.ref(%.loc40_41) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc40_30.1: i32 = value_of_initializer %.loc40_40.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc40_40.2: i32 = converted %.loc40_40.1, %.loc40_30.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc40_30.2: init i32 = call %LeftShift.ref.loc40(%.loc40_31, %.loc40_40.2) [template = <error>]
-// CHECK:STDOUT:   %.loc40_44: i32 = value_of_initializer %.loc40_30.2 [template = <error>]
-// CHECK:STDOUT:   %.loc40_30.3: i32 = converted %.loc40_30.2, %.loc40_44 [template = <error>]
-// CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc40_30.3
+// CHECK:STDOUT:   %.loc40_40: init i32 = call %Negate.ref(%.loc40_41) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc40_30.1: i32 = value_of_initializer %.loc40_40 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc40_30.2: i32 = converted %.loc40_40, %.loc40_30.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc40_30.3: init i32 = call %LeftShift.ref.loc40(%.loc40_31, %.loc40_30.2) [template = <error>]
+// CHECK:STDOUT:   %.loc40_44.1: i32 = value_of_initializer %.loc40_30.3 [template = <error>]
+// CHECK:STDOUT:   %.loc40_44.2: i32 = converted %.loc40_30.3, %.loc40_44.1 [template = <error>]
+// CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc40_44.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";

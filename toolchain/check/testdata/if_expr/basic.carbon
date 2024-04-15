@@ -49,8 +49,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc8_24.3: ref i32 = array_index %x.var, %.loc8_24.2
 // CHECK:STDOUT:   %.loc8_24.4: init i32 = initialize_from %.loc8_22 to %.loc8_24.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_24.5: init [i32; 1] = array_init (%.loc8_24.4) to %x.var [template = constants.%.6]
-// CHECK:STDOUT:   %.loc8_24.6: init [i32; 1] = converted %.loc8_24.1, %.loc8_24.5 [template = constants.%.6]
-// CHECK:STDOUT:   assign %x.var, %.loc8_24.6
+// CHECK:STDOUT:   %.loc8_25: init [i32; 1] = converted %.loc8_24.1, %.loc8_24.5 [template = constants.%.6]
+// CHECK:STDOUT:   assign %x.var, %.loc8_25
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

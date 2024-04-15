@@ -82,10 +82,10 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %Sub.ref: <function> = name_ref Sub, file.%Sub [template = file.%Sub]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_13.1: init i32 = call %Sub.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19: i32 = value_of_initializer %.loc8_13.1
-// CHECK:STDOUT:   %.loc8_13.2: i32 = converted %.loc8_13.1, %.loc8_19
-// CHECK:STDOUT:   return %.loc8_13.2
+// CHECK:STDOUT:   %.loc8_13: init i32 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %.loc8_13
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_13, %.loc8_19.1
+// CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon
@@ -115,34 +115,34 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %Sub.ref.loc6: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_21: i32 = int_literal 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc6_17.1: init i32 = call %Sub.ref.loc6(%.loc6_18, %.loc6_21) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc6_32: i32 = value_of_initializer %.loc6_17.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc6_17.2: i32 = converted %.loc6_17.1, %.loc6_32 [template = constants.%.3]
-// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_17.2
+// CHECK:STDOUT:   %.loc6_17: init i32 = call %Sub.ref.loc6(%.loc6_18, %.loc6_21) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_32.1: i32 = value_of_initializer %.loc6_17 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_32.2: i32 = converted %.loc6_17, %.loc6_32.1 [template = constants.%.3]
+// CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_32.2
 // CHECK:STDOUT:   %Sub.ref.loc7_14: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %Sub.ref.loc7_18: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %.loc7_22: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_25: i32 = int_literal 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_21.1: init i32 = call %Sub.ref.loc7_18(%.loc7_22, %.loc7_25) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_21: init i32 = call %Sub.ref.loc7_18(%.loc7_22, %.loc7_25) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_38: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_17.1: i32 = value_of_initializer %.loc7_21.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc7_21.2: i32 = converted %.loc7_21.1, %.loc7_17.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc7_17.2: init i32 = call %Sub.ref.loc7_14(%.loc7_21.2, %.loc7_38) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_40: i32 = value_of_initializer %.loc7_17.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_17.3: i32 = converted %.loc7_17.2, %.loc7_40 [template = constants.%.5]
-// CHECK:STDOUT:   %b.loc7: i32 = bind_name b, %.loc7_17.3
+// CHECK:STDOUT:   %.loc7_17.1: i32 = value_of_initializer %.loc7_21 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_17.2: i32 = converted %.loc7_21, %.loc7_17.1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_17.3: init i32 = call %Sub.ref.loc7_14(%.loc7_17.2, %.loc7_38) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_40.1: i32 = value_of_initializer %.loc7_17.3 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_40.2: i32 = converted %.loc7_17.3, %.loc7_40.1 [template = constants.%.5]
+// CHECK:STDOUT:   %b.loc7: i32 = bind_name b, %.loc7_40.2
 // CHECK:STDOUT:   %Sub.ref.loc11_14: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %Sub.ref.loc11_18: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %.loc11_22: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_25: i32 = int_literal 2147483647 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_21.1: init i32 = call %Sub.ref.loc11_18(%.loc11_22, %.loc11_25) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_21: init i32 = call %Sub.ref.loc11_18(%.loc11_22, %.loc11_25) [template = constants.%.3]
 // CHECK:STDOUT:   %.loc11_38: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc11_17.1: i32 = value_of_initializer %.loc11_21.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_21.2: i32 = converted %.loc11_21.1, %.loc11_17.1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc11_17.2: init i32 = call %Sub.ref.loc11_14(%.loc11_21.2, %.loc11_38) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_40: i32 = value_of_initializer %.loc11_17.2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_17.3: i32 = converted %.loc11_17.2, %.loc11_40 [template = constants.%.2]
-// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc11_17.3
+// CHECK:STDOUT:   %.loc11_17.1: i32 = value_of_initializer %.loc11_21 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_17.2: i32 = converted %.loc11_21, %.loc11_17.1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_17.3: init i32 = call %Sub.ref.loc11_14(%.loc11_17.2, %.loc11_38) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_40.1: i32 = value_of_initializer %.loc11_17.3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_40.2: i32 = converted %.loc11_17.3, %.loc11_40.1 [template = constants.%.2]
+// CHECK:STDOUT:   %c: i32 = bind_name c, %.loc11_40.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";

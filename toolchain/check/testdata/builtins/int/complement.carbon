@@ -51,12 +51,12 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %And.ref: <function> = name_ref And, %And [template = %And]
 // CHECK:STDOUT:   %Complement.ref: <function> = name_ref Complement, %Complement [template = %Complement]
 // CHECK:STDOUT:   %.loc5_31: i32 = int_literal 1193046 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc5_30.1: init i32 = call %Complement.ref(%.loc5_31) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_30: init i32 = call %Complement.ref(%.loc5_31) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc5_42: i32 = int_literal 16777215 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc5_19.1: i32 = value_of_initializer %.loc5_30.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc5_30.2: i32 = converted %.loc5_30.1, %.loc5_19.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc5_19.2: init i32 = call %And.ref(%.loc5_30.2, %.loc5_42) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc5_51: type = array_type %.loc5_19.2, i32 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc5_19.1: i32 = value_of_initializer %.loc5_30 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_19.2: i32 = converted %.loc5_30, %.loc5_19.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5_19.3: init i32 = call %And.ref(%.loc5_19.2, %.loc5_42) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_51: type = array_type %.loc5_19.3, i32 [template = constants.%.5]
 // CHECK:STDOUT:   %arr.var: ref [i32; 15584169] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 15584169] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 15584169 [template = constants.%.4]
@@ -80,9 +80,9 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Complement.ref: <function> = name_ref Complement, file.%Complement [template = file.%Complement]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc9_20.1: init i32 = call %Complement.ref(%a.ref)
-// CHECK:STDOUT:   %.loc9_23: i32 = value_of_initializer %.loc9_20.1
-// CHECK:STDOUT:   %.loc9_20.2: i32 = converted %.loc9_20.1, %.loc9_23
-// CHECK:STDOUT:   return %.loc9_20.2
+// CHECK:STDOUT:   %.loc9_20: init i32 = call %Complement.ref(%a.ref)
+// CHECK:STDOUT:   %.loc9_23.1: i32 = value_of_initializer %.loc9_20
+// CHECK:STDOUT:   %.loc9_23.2: i32 = converted %.loc9_20, %.loc9_23.1
+// CHECK:STDOUT:   return %.loc9_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

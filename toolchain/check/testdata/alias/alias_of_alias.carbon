@@ -45,9 +45,9 @@ let d: c = {.v = 0};
 // CHECK:STDOUT:   %.loc11_19.4: init i32 = initialize_from %.loc11_18 to %.loc11_19.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_19.5: init C = class_init (%.loc11_19.4), %.loc11_19.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_19.6: ref C = temporary %.loc11_19.2, %.loc11_19.5
-// CHECK:STDOUT:   %.loc11_19.7: ref C = converted %.loc11_19.1, %.loc11_19.6
-// CHECK:STDOUT:   %.loc11_19.8: C = bind_value %.loc11_19.7
-// CHECK:STDOUT:   %d: C = bind_name d, %.loc11_19.8
+// CHECK:STDOUT:   %.loc11_20.1: ref C = converted %.loc11_19.1, %.loc11_19.6
+// CHECK:STDOUT:   %.loc11_20.2: C = bind_value %.loc11_20.1
+// CHECK:STDOUT:   %d: C = bind_name d, %.loc11_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

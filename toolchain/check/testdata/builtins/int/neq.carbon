@@ -88,10 +88,10 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref.loc8: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %.loc8_21: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_24: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_20.1: init bool = call %Neq.ref.loc8(%.loc8_21, %.loc8_24) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %.loc8_20.1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_20.2: bool = converted %.loc8_20.1, %.loc8_14.1 [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc8_20.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
+// CHECK:STDOUT:   %.loc8_20: init bool = call %Neq.ref.loc8(%.loc8_21, %.loc8_24) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %.loc8_20 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_14.2: bool = converted %.loc8_20, %.loc8_14.1 [template = constants.%.5]
+// CHECK:STDOUT:   if %.loc8_14.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
 // CHECK:STDOUT:   %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
@@ -102,15 +102,15 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc8(%False.ref.loc8)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8:
-// CHECK:STDOUT:   %.loc8_14.2: type = block_arg !if.expr.result.loc8 [template = constants.%False]
+// CHECK:STDOUT:   %.loc8_14.3: type = block_arg !if.expr.result.loc8 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref: True = name_ref true_, %true_
 // CHECK:STDOUT:   %Neq.ref.loc9: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_19.1: init bool = call %Neq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %.loc9_19.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_19.2: bool = converted %.loc9_19.1, %.loc9_13.1 [template = constants.%.7]
-// CHECK:STDOUT:   if %.loc9_19.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
+// CHECK:STDOUT:   %.loc9_19: init bool = call %Neq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %.loc9_19 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %.loc9_19, %.loc9_13.1 [template = constants.%.7]
+// CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
 // CHECK:STDOUT:   %True.ref.loc9: type = name_ref True, file.%True.decl [template = constants.%True]
@@ -121,7 +121,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%False.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9_13.2: type = block_arg !if.expr.result.loc9 [template = constants.%True]
+// CHECK:STDOUT:   %.loc9_13.3: type = block_arg !if.expr.result.loc9 [template = constants.%True]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,9 +130,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc13_13.1: init bool = call %Neq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc13_19: bool = value_of_initializer %.loc13_13.1
-// CHECK:STDOUT:   %.loc13_13.2: bool = converted %.loc13_13.1, %.loc13_19
-// CHECK:STDOUT:   return %.loc13_13.2
+// CHECK:STDOUT:   %.loc13_13: init bool = call %Neq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc13_19.1: bool = value_of_initializer %.loc13_13
+// CHECK:STDOUT:   %.loc13_19.2: bool = converted %.loc13_13, %.loc13_19.1
+// CHECK:STDOUT:   return %.loc13_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

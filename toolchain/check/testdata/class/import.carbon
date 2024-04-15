@@ -197,8 +197,8 @@ fn Run() {
 // CHECK:STDOUT:   %a: ref Empty = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc7_19.2: init Empty = class_init (), %a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_19.3: init Empty = converted %.loc7_19.1, %.loc7_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign %a.var, %.loc7_19.3
+// CHECK:STDOUT:   %.loc7_20: init Empty = converted %.loc7_19.1, %.loc7_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign %a.var, %.loc7_20
 // CHECK:STDOUT:   %Field.decl: invalid = class_decl @Field [template = constants.%Field] {}
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, file.%import_ref.2 [template = constants.%Field]
 // CHECK:STDOUT:   %b.var: ref Field = var b
@@ -208,8 +208,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_25.2: ref i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.3: init i32 = initialize_from %.loc9_24 to %.loc9_25.2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc9_25.4: init Field = class_init (%.loc9_25.3), %b.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_25.5: init Field = converted %.loc9_25.1, %.loc9_25.4 [template = constants.%.8]
-// CHECK:STDOUT:   assign %b.var, %.loc9_25.5
+// CHECK:STDOUT:   %.loc9_26: init Field = converted %.loc9_25.1, %.loc9_25.4 [template = constants.%.8]
+// CHECK:STDOUT:   assign %b.var, %.loc9_26
 // CHECK:STDOUT:   %b.ref: ref Field = name_ref b, %b
 // CHECK:STDOUT:   %x.ref: <unbound element of class Field> = name_ref x, file.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref i32 = class_element_access %b.ref, element0
@@ -221,8 +221,8 @@ fn Run() {
 // CHECK:STDOUT:   %c: ref ForwardDeclared = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc12_29.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_29.2: init ForwardDeclared = class_init (), %c.var [template = constants.%.11]
-// CHECK:STDOUT:   %.loc12_29.3: init ForwardDeclared = converted %.loc12_29.1, %.loc12_29.2 [template = constants.%.11]
-// CHECK:STDOUT:   assign %c.var, %.loc12_29.3
+// CHECK:STDOUT:   %.loc12_30: init ForwardDeclared = converted %.loc12_29.1, %.loc12_29.2 [template = constants.%.11]
+// CHECK:STDOUT:   assign %c.var, %.loc12_30
 // CHECK:STDOUT:   %c.ref.loc13: ref ForwardDeclared = name_ref c, %c
 // CHECK:STDOUT:   %ForwardDeclared.decl.2: invalid = class_decl @ForwardDeclared.2 [template = constants.%ForwardDeclared.2] {}
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.10 [template = imports.%F]

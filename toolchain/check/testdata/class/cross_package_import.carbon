@@ -190,8 +190,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc6_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc6_19.3: init C = converted %.loc6_19.1, %.loc6_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_19.3
+// CHECK:STDOUT:   %.loc6_20: init C = converted %.loc6_19.1, %.loc6_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -268,8 +268,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc17_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_19.3: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc17_19.3
+// CHECK:STDOUT:   %.loc17_20: init C = converted %.loc17_19.1, %.loc17_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc17_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,8 +312,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_19.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc22_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22_19.3: init C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c.var, %.loc22_19.3
+// CHECK:STDOUT:   %.loc22_20: init C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c.var, %.loc22_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

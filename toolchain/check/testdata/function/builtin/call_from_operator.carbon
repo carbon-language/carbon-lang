@@ -165,8 +165,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_37.9: ref i32 = array_index file.%arr.var, %.loc10_37.8
 // CHECK:STDOUT:   %.loc10_37.10: init i32 = initialize_from %.loc10_34.2 to %.loc10_37.9 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc10_37.11: init [i32; 3] = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%.16]
-// CHECK:STDOUT:   %.loc10_37.12: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%.16]
-// CHECK:STDOUT:   assign file.%arr.var, %.loc10_37.12
+// CHECK:STDOUT:   %.loc10_38: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%.16]
+// CHECK:STDOUT:   assign file.%arr.var, %.loc10_38
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

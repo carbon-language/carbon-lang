@@ -54,8 +54,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = tuple_literal (%.loc10_20)
 // CHECK:STDOUT:   %.loc10_22.2: init (i32,) = tuple_init (%.loc10_20) to %x.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_22.3: init (i32,) = converted %.loc10_22.1, %.loc10_22.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign %x.var, %.loc10_22.3
+// CHECK:STDOUT:   %.loc10_23: init (i32,) = converted %.loc10_22.1, %.loc10_22.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign %x.var, %.loc10_23
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, %x
 // CHECK:STDOUT:   %.loc12_9: i32 = int_literal 0 [template = constants.%.5]

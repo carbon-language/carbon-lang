@@ -97,10 +97,10 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref.loc8: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %.loc8_19: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_22: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_18.1: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_22) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %.loc8_18.1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_18.2: bool = converted %.loc8_18.1, %.loc8_13.1 [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc8_18.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
+// CHECK:STDOUT:   %.loc8_18: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_22) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %.loc8_18 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_13.2: bool = converted %.loc8_18, %.loc8_13.1 [template = constants.%.5]
+// CHECK:STDOUT:   if %.loc8_13.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
 // CHECK:STDOUT:   %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
@@ -111,15 +111,15 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   br !if.expr.result.loc8(%False.ref.loc8)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8:
-// CHECK:STDOUT:   %.loc8_13.2: type = block_arg !if.expr.result.loc8 [template = constants.%True]
+// CHECK:STDOUT:   %.loc8_13.3: type = block_arg !if.expr.result.loc8 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref: False = name_ref false_, %false_
 // CHECK:STDOUT:   %Eq.ref.loc9: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_19.1: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %.loc9_19.1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_19.2: bool = converted %.loc9_19.1, %.loc9_14.1 [template = constants.%.7]
-// CHECK:STDOUT:   if %.loc9_19.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
+// CHECK:STDOUT:   %.loc9_19: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %.loc9_19 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %.loc9_19, %.loc9_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
 // CHECK:STDOUT:   %True.ref.loc9: type = name_ref True, file.%True.decl [template = constants.%True]
@@ -130,7 +130,7 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   br !if.expr.result.loc9(%False.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9_14.2: type = block_arg !if.expr.result.loc9 [template = constants.%False]
+// CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9 [template = constants.%False]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,10 +139,10 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc13_12.1: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc13_18: bool = value_of_initializer %.loc13_12.1
-// CHECK:STDOUT:   %.loc13_12.2: bool = converted %.loc13_12.1, %.loc13_18
-// CHECK:STDOUT:   return %.loc13_12.2
+// CHECK:STDOUT:   %.loc13_12: init bool = call %Eq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc13_18.1: bool = value_of_initializer %.loc13_12
+// CHECK:STDOUT:   %.loc13_18.2: bool = converted %.loc13_12, %.loc13_18.1
+// CHECK:STDOUT:   return %.loc13_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon

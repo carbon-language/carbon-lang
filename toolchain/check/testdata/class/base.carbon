@@ -101,12 +101,12 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0
 // CHECK:STDOUT:   %.loc18_26.3: init i32 = initialize_from %.loc18_25 to %.loc18_26.2 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18_26.4: init Base = class_init (%.loc18_26.3), %.loc18_35.2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc18_26.5: init Base = converted %.loc18_26.1, %.loc18_26.4 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc18_35.3: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc18_35.4: init i32 = initialize_from %.loc18_34 to %.loc18_35.3 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc18_35.5: init Derived = class_init (%.loc18_26.5, %.loc18_35.4), %return [template = constants.%.14]
-// CHECK:STDOUT:   %.loc18_35.6: init Derived = converted %.loc18_35.1, %.loc18_35.5 [template = constants.%.14]
-// CHECK:STDOUT:   return %.loc18_35.6
+// CHECK:STDOUT:   %.loc18_35.3: init Base = converted %.loc18_26.1, %.loc18_26.4 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc18_35.4: ref i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc18_35.5: init i32 = initialize_from %.loc18_34 to %.loc18_35.4 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc18_35.6: init Derived = class_init (%.loc18_35.3, %.loc18_35.5), %return [template = constants.%.14]
+// CHECK:STDOUT:   %.loc18_36: init Derived = converted %.loc18_35.1, %.loc18_35.6 [template = constants.%.14]
+// CHECK:STDOUT:   return %.loc18_36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: Derived) -> %return: (i32, i32) {
@@ -128,7 +128,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc22_24.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc22_24.5: init i32 = initialize_from %.loc22_22.2 to %.loc22_24.4
 // CHECK:STDOUT:   %.loc22_24.6: init (i32, i32) = tuple_init (%.loc22_24.3, %.loc22_24.5) to %return
-// CHECK:STDOUT:   %.loc22_24.7: init (i32, i32) = converted %.loc22_24.1, %.loc22_24.6
-// CHECK:STDOUT:   return %.loc22_24.7
+// CHECK:STDOUT:   %.loc22_25: init (i32, i32) = converted %.loc22_24.1, %.loc22_24.6
+// CHECK:STDOUT:   return %.loc22_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

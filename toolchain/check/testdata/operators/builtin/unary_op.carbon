@@ -63,9 +63,9 @@ fn Constant() {
 // CHECK:STDOUT:   br !if.expr.result.loc15(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
-// CHECK:STDOUT:   %.loc15_38.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_38.2: type = converted %.loc15_38.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_38.2)
+// CHECK:STDOUT:   %.loc15_38: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_32: type = converted %.loc15_38, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc15:
 // CHECK:STDOUT:   %.loc15_10: type = block_arg !if.expr.result.loc15 [template = constants.%.3]
@@ -73,8 +73,8 @@ fn Constant() {
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc15_43.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc15_43.2: init () = tuple_init () to %a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc15_43.3: init () = converted %.loc15_43.1, %.loc15_43.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign %a.var, %.loc15_43.3
+// CHECK:STDOUT:   %.loc15_44: init () = converted %.loc15_43.1, %.loc15_43.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign %a.var, %.loc15_44
 // CHECK:STDOUT:   %.loc16_17: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   %.loc16_13: bool = not %.loc16_17 [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc16_13 br !if.expr.then.loc16 else br !if.expr.else.loc16
@@ -83,9 +83,9 @@ fn Constant() {
 // CHECK:STDOUT:   br !if.expr.result.loc16(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
-// CHECK:STDOUT:   %.loc16_39.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_39.2: type = converted %.loc16_39.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_39.2)
+// CHECK:STDOUT:   %.loc16_39: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_33: type = converted %.loc16_39, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_33)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc16:
 // CHECK:STDOUT:   %.loc16_10: type = block_arg !if.expr.result.loc16 [template = bool]

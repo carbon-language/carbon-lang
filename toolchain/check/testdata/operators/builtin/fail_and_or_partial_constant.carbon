@@ -77,9 +77,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %.loc9_40.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_40.2: type = converted %.loc9_40.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_40.2)
+// CHECK:STDOUT:   %.loc9_40: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_34: type = converted %.loc9_40, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
@@ -102,9 +102,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc14(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
-// CHECK:STDOUT:   %.loc14_40.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_40.2: type = converted %.loc14_40.1, constants.%.3 [template = constants.%.3]
-// CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_40.2)
+// CHECK:STDOUT:   %.loc14_40: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_34: type = converted %.loc14_40, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
 // CHECK:STDOUT:   %.loc14_10: type = block_arg !if.expr.result.loc14
@@ -151,9 +151,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc11(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
-// CHECK:STDOUT:   %.loc11_41.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_41.2: type = converted %.loc11_41.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_41.2)
+// CHECK:STDOUT:   %.loc11_41: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_35: type = converted %.loc11_41, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_10: type = block_arg !if.expr.result.loc11
@@ -176,9 +176,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc15(bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
-// CHECK:STDOUT:   %.loc15_39.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_39.2: type = converted %.loc15_39.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_39.2)
+// CHECK:STDOUT:   %.loc15_39: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc15_33: type = converted %.loc15_39, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_33)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc15:
 // CHECK:STDOUT:   %.loc15_10: type = block_arg !if.expr.result.loc15

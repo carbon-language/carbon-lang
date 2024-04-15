@@ -75,10 +75,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
 // CHECK:STDOUT:   %.loc18_19: <bound method> = bound_method %.loc18_11.1, %F.ref
 // CHECK:STDOUT:   %.loc18_11.2: Class = bind_value %.loc18_11.1
-// CHECK:STDOUT:   %.loc18_21.1: init i32 = call %.loc18_19(%.loc18_11.2)
-// CHECK:STDOUT:   %.loc18_23: i32 = value_of_initializer %.loc18_21.1
-// CHECK:STDOUT:   %.loc18_21.2: i32 = converted %.loc18_21.1, %.loc18_23
-// CHECK:STDOUT:   return %.loc18_21.2
+// CHECK:STDOUT:   %.loc18_21: init i32 = call %.loc18_19(%.loc18_11.2)
+// CHECK:STDOUT:   %.loc18_23.1: i32 = value_of_initializer %.loc18_21
+// CHECK:STDOUT:   %.loc18_23.2: i32 = converted %.loc18_21, %.loc18_23.1
+// CHECK:STDOUT:   return %.loc18_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> @Class.%return.var.loc9: Class {
@@ -92,8 +92,8 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.loc11_17.2: ref Class* = class_element_access %s.ref.loc11_5, element0
 // CHECK:STDOUT:   %.loc11_17.3: init Class* = initialize_from %.loc11_15 to %.loc11_17.2
 // CHECK:STDOUT:   %.loc11_17.4: init Class = class_init (%.loc11_17.3), %s.ref.loc11_5
-// CHECK:STDOUT:   %.loc11_17.5: init Class = converted %.loc11_17.1, %.loc11_17.4
-// CHECK:STDOUT:   assign %s.ref.loc11_5, %.loc11_17.5
+// CHECK:STDOUT:   %.loc11_7: init Class = converted %.loc11_17.1, %.loc11_17.4
+// CHECK:STDOUT:   assign %s.ref.loc11_5, %.loc11_7
 // CHECK:STDOUT:   return %s
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

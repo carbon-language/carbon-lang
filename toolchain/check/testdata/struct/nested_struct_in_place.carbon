@@ -55,8 +55,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_72: init (i32, i32, i32) = call %F.ref.loc10_71() to %.loc10_74.2
 // CHECK:STDOUT:   %.loc10_74.3: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_literal (%.loc10_62, %.loc10_72)
 // CHECK:STDOUT:   %.loc10_74.4: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = struct_init (%.loc10_62, %.loc10_72) to %v.var
-// CHECK:STDOUT:   %.loc10_74.5: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = converted %.loc10_74.3, %.loc10_74.4
-// CHECK:STDOUT:   assign %v.var, %.loc10_74.5
+// CHECK:STDOUT:   %.loc10_75: init {.a: (i32, i32, i32), .b: (i32, i32, i32)} = converted %.loc10_74.3, %.loc10_74.4
+// CHECK:STDOUT:   assign %v.var, %.loc10_75
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

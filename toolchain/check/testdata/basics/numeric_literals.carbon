@@ -98,8 +98,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc17_3.18: ref i32 = array_index %ints.var, %.loc17_3.17
 // CHECK:STDOUT:   %.loc17_3.19: init i32 = initialize_from %.loc16 to %.loc17_3.18 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17_3.20: init [i32; 6] = array_init (%.loc17_3.4, %.loc17_3.7, %.loc17_3.10, %.loc17_3.13, %.loc17_3.16, %.loc17_3.19) to %ints.var [template = constants.%.14]
-// CHECK:STDOUT:   %.loc17_3.21: init [i32; 6] = converted %.loc17_3.1, %.loc17_3.20 [template = constants.%.14]
-// CHECK:STDOUT:   assign %ints.var, %.loc17_3.21
+// CHECK:STDOUT:   %.loc17_4: init [i32; 6] = converted %.loc17_3.1, %.loc17_3.20 [template = constants.%.14]
+// CHECK:STDOUT:   assign %ints.var, %.loc17_4
 // CHECK:STDOUT:   %.loc18_21: i32 = int_literal 7 [template = constants.%.15]
 // CHECK:STDOUT:   %.loc18_22: type = array_type %.loc18_21, f64 [template = constants.%.16]
 // CHECK:STDOUT:   %floats.var: ref [f64; 7] = var floats
@@ -134,8 +134,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_3.21: ref f64 = array_index %floats.var, %.loc26_3.20
 // CHECK:STDOUT:   %.loc26_3.22: init f64 = initialize_from %.loc25 to %.loc26_3.21 [template = constants.%.24]
 // CHECK:STDOUT:   %.loc26_3.23: init [f64; 7] = array_init (%.loc26_3.4, %.loc26_3.7, %.loc26_3.10, %.loc26_3.13, %.loc26_3.16, %.loc26_3.19, %.loc26_3.22) to %floats.var [template = constants.%.26]
-// CHECK:STDOUT:   %.loc26_3.24: init [f64; 7] = converted %.loc26_3.1, %.loc26_3.23 [template = constants.%.26]
-// CHECK:STDOUT:   assign %floats.var, %.loc26_3.24
+// CHECK:STDOUT:   %.loc26_4: init [f64; 7] = converted %.loc26_3.1, %.loc26_3.23 [template = constants.%.26]
+// CHECK:STDOUT:   assign %floats.var, %.loc26_4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

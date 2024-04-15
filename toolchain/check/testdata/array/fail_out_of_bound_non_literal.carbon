@@ -56,8 +56,8 @@ var b: i32 = a[{.index = 3}.index];
 // CHECK:STDOUT:   %.loc7_27.9: ref i32 = array_index file.%a.var, %.loc7_27.8
 // CHECK:STDOUT:   %.loc7_27.10: init i32 = initialize_from %.loc7_26 to %.loc7_27.9 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_27.11: init [i32; 3] = array_init (%.loc7_27.4, %.loc7_27.7, %.loc7_27.10) to file.%a.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc7_27.12: init [i32; 3] = converted %.loc7_27.1, %.loc7_27.11 [template = constants.%.8]
-// CHECK:STDOUT:   assign file.%a.var, %.loc7_27.12
+// CHECK:STDOUT:   %.loc7_28: init [i32; 3] = converted %.loc7_27.1, %.loc7_27.11 [template = constants.%.8]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7_28
 // CHECK:STDOUT:   %a.ref: ref [i32; 3] = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc11_26: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_27.1: {.index: i32} = struct_literal (%.loc11_26)

@@ -52,8 +52,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc7_34.6: ref i32 = tuple_access file.%a.var, element2
 // CHECK:STDOUT:   %.loc7_34.7: init i32 = initialize_from %.loc7_33 to %.loc7_34.6 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_34.8: init (i32, i32, i32) = tuple_init (%.loc7_34.3, %.loc7_34.5, %.loc7_34.7) to file.%a.var [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_34.9: init (i32, i32, i32) = converted %.loc7_34.1, %.loc7_34.8 [template = constants.%.7]
-// CHECK:STDOUT:   assign file.%a.var, %.loc7_34.9
+// CHECK:STDOUT:   %.loc7_35: init (i32, i32, i32) = converted %.loc7_34.1, %.loc7_34.8 [template = constants.%.7]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7_35
 // CHECK:STDOUT:   %a.ref: ref (i32, i32, i32) = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc8_19.1: ref i32 = tuple_access %a.ref, element0
 // CHECK:STDOUT:   %.loc8_19.2: i32 = bind_value %.loc8_19.1
@@ -71,8 +71,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %.loc8_19.14: ref i32 = array_index file.%b.var, %.loc8_19.13
 // CHECK:STDOUT:   %.loc8_19.15: init i32 = initialize_from %.loc8_19.12 to %.loc8_19.14
 // CHECK:STDOUT:   %.loc8_19.16: init [i32; 3] = array_init (%.loc8_19.5, %.loc8_19.10, %.loc8_19.15) to file.%b.var
-// CHECK:STDOUT:   %.loc8_19.17: init [i32; 3] = converted %a.ref, %.loc8_19.16
-// CHECK:STDOUT:   assign file.%b.var, %.loc8_19.17
+// CHECK:STDOUT:   %.loc8_20: init [i32; 3] = converted %a.ref, %.loc8_19.16
+// CHECK:STDOUT:   assign file.%b.var, %.loc8_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -49,9 +49,9 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc12_22.4: init i32 = initialize_from %.loc12_21 to %.loc12_22.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_22.5: init C = class_init (%.loc12_22.4), %.loc12_22.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_22.6: ref C = temporary %.loc12_22.2, %.loc12_22.5
-// CHECK:STDOUT:   %.loc12_22.7: ref C = converted %.loc12_22.1, %.loc12_22.6
-// CHECK:STDOUT:   %.loc12_22.8: C = bind_value %.loc12_22.7
-// CHECK:STDOUT:   %b: C = bind_name b, %.loc12_22.8
+// CHECK:STDOUT:   %.loc12_23.1: ref C = converted %.loc12_22.1, %.loc12_22.6
+// CHECK:STDOUT:   %.loc12_23.2: C = bind_value %.loc12_23.1
+// CHECK:STDOUT:   %b: C = bind_name b, %.loc12_23.2
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %NS.ref.loc14: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:     %a.ref.loc14: type = name_ref a, %a [template = constants.%C]
@@ -74,7 +74,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc15_17.2: ref i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc15_17.3: init i32 = initialize_from %.loc15_16 to %.loc15_17.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_17.4: init C = class_init (%.loc15_17.3), %return [template = constants.%.5]
-// CHECK:STDOUT:   %.loc15_17.5: init C = converted %.loc15_17.1, %.loc15_17.4 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc15_17.5
+// CHECK:STDOUT:   %.loc15_18: init C = converted %.loc15_17.1, %.loc15_17.4 [template = constants.%.5]
+// CHECK:STDOUT:   return %.loc15_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

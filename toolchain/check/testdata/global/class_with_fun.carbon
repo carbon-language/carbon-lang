@@ -48,16 +48,16 @@ var a: A = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_11.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc9_11.2: init A = class_init (), %return [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_11.3: init A = converted %.loc9_11.1, %.loc9_11.2 [template = constants.%.4]
-// CHECK:STDOUT:   return %.loc9_11.3
+// CHECK:STDOUT:   %.loc9_12: init A = converted %.loc9_11.1, %.loc9_11.2 [template = constants.%.4]
+// CHECK:STDOUT:   return %.loc9_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_13.2: init A = class_init (), file.%a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_13.3: init A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%a.var, %.loc12_13.3
+// CHECK:STDOUT:   %.loc12_14: init A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%a.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

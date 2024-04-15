@@ -98,8 +98,8 @@ var d2: D* = &c2;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc8_14.2: init C = class_init (), file.%c1.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_14.3: init C = converted %.loc8_14.1, %.loc8_14.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c1.var, %.loc8_14.3
+// CHECK:STDOUT:   %.loc8_15: init C = converted %.loc8_14.1, %.loc8_14.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c1.var, %.loc8_15
 // CHECK:STDOUT:   %c1.ref: ref C = name_ref c1, file.%c1
 // CHECK:STDOUT:   %.loc9: C* = addr_of %c1.ref
 // CHECK:STDOUT:   assign file.%d1.var, %.loc9
@@ -161,8 +161,8 @@ var d2: D* = &c2;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_14.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc7_14.2: init C = class_init (), file.%c2.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_14.3: init C = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.4]
-// CHECK:STDOUT:   assign file.%c2.var, %.loc7_14.3
+// CHECK:STDOUT:   %.loc7_15: init C = converted %.loc7_14.1, %.loc7_14.2 [template = constants.%.4]
+// CHECK:STDOUT:   assign file.%c2.var, %.loc7_15
 // CHECK:STDOUT:   %c2.ref: ref C = name_ref c2, file.%c2
 // CHECK:STDOUT:   %.loc11: C* = addr_of %c2.ref
 // CHECK:STDOUT:   assign file.%d2.var, <error>
