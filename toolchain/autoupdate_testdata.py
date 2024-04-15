@@ -23,8 +23,7 @@ def main() -> None:
             "bazel",
             "info",
             "workspace",
-            # Unlike below, we need stdout.
-            "--ui_event_filters=-info,-stderr,-finish",
+            "--ui_event_filters=stdout",
         ],
         encoding="utf-8",
     ).strip()
