@@ -65,7 +65,7 @@ import Other library "define";
 // CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Semantics TODO: `Merging not yet supported.`.
+// CHECK:STDERR: other_extern.carbon:5:1: ERROR: Semantics TODO: `Merging ClassType not yet supported.`.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 import Other library "extern";

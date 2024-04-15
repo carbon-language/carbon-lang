@@ -11,6 +11,29 @@
 
 namespace Carbon::Check {
 
+// Information on new and previous declarations for CheckIsAllowedRedecl.
+struct RedeclInfo {
+  // The associated diagnostic location.
+  SemIRLoc loc;
+  // True if a definition.
+  bool is_definition;
+  // True if an `extern` declaration.
+  bool is_extern;
+};
+
+// Checks if a redeclaration is allowed prior to merging. This may emit a
+// diagnostic, but diagnostics do not prevent merging.
+//
+// The kinds of things this verifies are:
+// - A declaration is not redundant.
+// - A definition doesn't redefine a prior definition.
+// - The use of `extern` is consistent within a library.
+// - Multiple libraries do not declare non-`extern`.
+auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
+                          SemIR::NameId name_id, RedeclInfo new_decl,
+                          RedeclInfo prev_decl,
+                          SemIR::ImportIRInstId prev_import_ir_inst_id) -> void;
+
 struct InstForMerge {
   // The resolved instruction.
   SemIR::Inst inst;

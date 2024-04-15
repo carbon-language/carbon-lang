@@ -12,6 +12,135 @@
 
 namespace Carbon::Check {
 
+CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "Previously declared here.");
+
+// Diagnoses a redundant redeclaration diagnostic.
+static auto DiagnoseRedeclRedundant(Context& context, Lex::TokenKind decl_kind,
+                                    SemIR::NameId name_id, SemIRLoc new_loc,
+                                    SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(RedeclRedundant, Error,
+                    "Redundant redeclaration of `{0} {1}`.", Lex::TokenKind,
+                    SemIR::NameId);
+  context.emitter()
+      .Build(new_loc, RedeclRedundant, decl_kind, name_id)
+      .Note(prev_loc, RedeclPrevDecl)
+      .Emit();
+}
+
+// Diagnoses a redefinition diagnostic.
+static auto DiagnoseRedeclRedef(Context& context, Lex::TokenKind decl_kind,
+                                SemIR::NameId name_id, SemIRLoc new_loc,
+                                SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(RedeclRedef, Error, "Redefinition of `{0} {1}`.",
+                    Lex::TokenKind, SemIR::NameId);
+  CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "Previously defined here.");
+  context.emitter()
+      .Build(new_loc, RedeclRedef, decl_kind, name_id)
+      .Note(prev_loc, RedeclPrevDef)
+      .Emit();
+}
+
+// Diagnoses when defining an `extern` as non-`extern`.
+static auto DiagnoseDefininingExtern(Context& context, Lex::TokenKind decl_kind,
+                                     SemIR::NameId name_id, SemIRLoc new_loc,
+                                     SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(RedeclDefiningExtern, Error,
+                    "Defining `extern {0} {1}` is disallowed.", Lex::TokenKind,
+                    SemIR::NameId);
+  CARBON_DIAGNOSTIC(RedeclPrevExternDecl, Note,
+                    "Previously declared `extern` here.");
+  context.emitter()
+      .Build(new_loc, RedeclDefiningExtern, decl_kind, name_id)
+      .Note(prev_loc, RedeclPrevExternDecl)
+      .Emit();
+}
+
+// Diagnoses an `extern` versus non-`extern` mismatch.
+static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
+                                   SemIR::NameId name_id, SemIRLoc new_loc,
+                                   SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
+                    "Redeclarations of `{0} {1}` in the same library must "
+                    "match use of `extern`.",
+                    Lex::TokenKind, SemIR::NameId);
+  context.emitter()
+      .Build(new_loc, RedeclExternMismatch, decl_kind, name_id)
+      .Note(prev_loc, RedeclPrevDecl)
+      .Emit();
+}
+
+// Diagnoses when multiple non-`extern` declarations are found.
+static auto DiagnoseNonExtern(Context& context, Lex::TokenKind decl_kind,
+                              SemIR::NameId name_id, SemIRLoc new_loc,
+                              SemIRLoc prev_loc) {
+  CARBON_DIAGNOSTIC(RedeclNonExtern, Error,
+                    "Only one library can declare `{0} {1}` without `extern`.",
+                    Lex::TokenKind, SemIR::NameId);
+  context.emitter()
+      .Build(new_loc, RedeclNonExtern, decl_kind, name_id)
+      .Note(prev_loc, RedeclPrevDecl)
+      .Emit();
+}
+
+// Checks to see if a structurally valid redeclaration is allowed in context.
+// These all still merge.
+auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
+                          SemIR::NameId name_id, RedeclInfo new_decl,
+                          RedeclInfo prev_decl,
+                          SemIR::ImportIRInstId prev_import_ir_inst_id)
+    -> void {
+  if (!prev_import_ir_inst_id.is_valid()) {
+    // Check for disallowed redeclarations in the same file.
+    if (!new_decl.is_definition) {
+      DiagnoseRedeclRedundant(context, decl_kind, name_id, new_decl.loc,
+                              prev_decl.loc);
+      return;
+    }
+    if (prev_decl.is_definition) {
+      DiagnoseRedeclRedef(context, decl_kind, name_id, new_decl.loc,
+                          prev_decl.loc);
+      return;
+    }
+    // `extern` definitions are prevented at creation; this is only
+    // checking for a non-`extern` definition after an `extern` declaration.
+    if (prev_decl.is_extern) {
+      DiagnoseDefininingExtern(context, decl_kind, name_id, new_decl.loc,
+                               prev_decl.loc);
+      return;
+    }
+    return;
+  }
+
+  auto import_ir_id =
+      context.import_ir_insts().Get(prev_import_ir_inst_id).ir_id;
+  if (import_ir_id == SemIR::ImportIRId::ApiForImpl) {
+    // Check for disallowed redeclarations in the same library. Note that a
+    // forward declaration in the impl is allowed.
+    if (prev_decl.is_definition) {
+      if (new_decl.is_definition) {
+        DiagnoseRedeclRedef(context, decl_kind, name_id, new_decl.loc,
+                            prev_decl.loc);
+      } else {
+        DiagnoseRedeclRedundant(context, decl_kind, name_id, new_decl.loc,
+                                prev_decl.loc);
+      }
+      return;
+    }
+    if (prev_decl.is_extern != new_decl.is_extern) {
+      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
+                             prev_decl.loc);
+      return;
+    }
+    return;
+  }
+
+  // Check for disallowed redeclarations cross-library.
+  if (!new_decl.is_extern && !prev_decl.is_extern) {
+    DiagnoseNonExtern(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+    return;
+  }
+}
+
 auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
                              SemIR::InstId prev_inst_id) -> InstForMerge {
   auto prev_inst = context.insts().Get(prev_inst_id);
@@ -51,6 +180,7 @@ static auto ResolveMergeableInst(Context& context, SemIR::InstId inst_id)
       LoadImportRef(context, inst_id, SemIR::LocId::Invalid);
       break;
 
+    case SemIR::ImportRefLoaded::Kind:
     case SemIR::ImportRefUsed::Kind:
       // Already loaded.
       break;
@@ -86,6 +216,8 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
   }
 }
 
+// TODO: On successful merges, this may need to "spoil" new_inst_id in order to
+// prevent it from being emitted in lowering.
 auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
                     SemIR::InstId prev_inst_id) -> void {
   auto new_inst = ResolveMergeableInst(context, new_inst_id);
@@ -105,20 +237,21 @@ auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
 
   CARBON_KIND_SWITCH(new_inst->inst) {
     case CARBON_KIND(SemIR::FunctionDecl new_decl): {
-      auto prev_decl = prev_inst->inst.As<SemIR::FunctionDecl>();
+      auto prev_decl = prev_inst->inst.TryAs<SemIR::FunctionDecl>();
+      if (!prev_decl) {
+        break;
+      }
 
       auto new_fn = context.functions().Get(new_decl.function_id);
-      // TODO: May need to "spoil" the new function to prevent it from being
-      // emitted, since it will already be added.
-      MergeFunctionRedecl(context, context.insts().GetLocId(new_inst_id),
-                          new_fn,
+      MergeFunctionRedecl(context, new_inst_id, new_fn,
                           /*new_is_import=*/true,
-                          /*new_is_definition=*/false, prev_decl.function_id,
+                          /*new_is_definition=*/false, prev_decl->function_id,
                           prev_inst->import_ir_inst_id);
       return;
     }
     default:
-      context.TODO(new_inst_id, "Merging not yet supported.");
+      context.TODO(new_inst_id, llvm::formatv("Merging {0} not yet supported.",
+                                              new_inst->inst.kind()));
       return;
   }
 }

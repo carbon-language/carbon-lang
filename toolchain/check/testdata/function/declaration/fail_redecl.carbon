@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn A();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of function A.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of `fn A`.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
@@ -15,7 +15,7 @@ fn A();
 fn A();
 
 fn B(x: i32);
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of function B.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of `fn B`.
 // CHECK:STDERR: fn B(x: i32);
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
@@ -35,7 +35,7 @@ fn C();
 fn C(x: i32);
 
 fn D() {}
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of function D.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redundant redeclaration of `fn D`.
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared here.
@@ -45,7 +45,7 @@ fn D() {}
 fn D();
 
 fn E() {}
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function E.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn E`.
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously defined here.

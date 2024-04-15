@@ -148,8 +148,18 @@ CARBON_DIAGNOSTIC_KIND(ImportSelf)
 CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
 CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
-CARBON_DIAGNOSTIC_KIND(RedeclOfUsedImport)
 CARBON_DIAGNOSTIC_KIND(UsedImportLoc)
+
+// Merge-related redeclaration checking.
+CARBON_DIAGNOSTIC_KIND(RedeclOfUsedImport)
+CARBON_DIAGNOSTIC_KIND(RedeclPrevDecl)
+CARBON_DIAGNOSTIC_KIND(RedeclRedundant)
+CARBON_DIAGNOSTIC_KIND(RedeclNonExtern)
+CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
+CARBON_DIAGNOSTIC_KIND(RedeclRedef)
+CARBON_DIAGNOSTIC_KIND(RedeclDefiningExtern)
+CARBON_DIAGNOSTIC_KIND(RedeclPrevExternDecl)
+CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
@@ -162,13 +172,6 @@ CARBON_DIAGNOSTIC_KIND(InCallToFunctionSelf)
 CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
 
 // Function declaration checking.
-CARBON_DIAGNOSTIC_KIND(FunctionPreviousDecl)
-CARBON_DIAGNOSTIC_KIND(FunctionRedecl)
-CARBON_DIAGNOSTIC_KIND(FunctionNonExternRedecl)
-CARBON_DIAGNOSTIC_KIND(FunctionPreviousDefinition)
-CARBON_DIAGNOSTIC_KIND(FunctionRedefinition)
-CARBON_DIAGNOSTIC_KIND(FunctionDefiningExtern)
-CARBON_DIAGNOSTIC_KIND(FunctionPreviousExternDecl)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountDiffers)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountPrevious)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamDiffers)
@@ -181,7 +184,6 @@ CARBON_DIAGNOSTIC_KIND(InvalidMainRunSignature)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
-CARBON_DIAGNOSTIC_KIND(FunctionExternMismatch)
 
 // Class checking.
 CARBON_DIAGNOSTIC_KIND(AdaptWithBase)

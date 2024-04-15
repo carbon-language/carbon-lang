@@ -43,7 +43,7 @@ library "def_ownership" api;
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare function A without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn A` without `extern`.
 // CHECK:STDERR: fn A() {};
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-5]]:1: In import.
@@ -54,7 +54,7 @@ import library "fns";
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare function B without `extern`.
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn B` without `extern`.
 // CHECK:STDERR: fn B(b: i32) -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_def_ownership.carbon:[[@LINE-16]]:1: In import.
@@ -82,7 +82,7 @@ library "mix_extern_decl" api;
 import library "fns";
 
 extern fn D();
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclaring `extern` function `D` as non-`extern`.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Defining `extern fn D` is disallowed.
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared `extern` here.

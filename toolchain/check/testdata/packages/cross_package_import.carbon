@@ -116,7 +116,7 @@ import library "other_ns";
 // CHECK:STDERR:
 import Other library "fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare function F without `extern`.
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `fn F` without `extern`.
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: In import.

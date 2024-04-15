@@ -26,7 +26,7 @@ extern fn A();
 
 library "extern_api" impl;
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations in the same library must match use of `extern`.
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: In import.
@@ -64,7 +64,7 @@ fn A() {}
 
 library "redecl_after_def" impl;
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redundant redeclaration of function A.
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redundant redeclaration of `fn A`.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: In import.
@@ -86,7 +86,7 @@ fn A() {}
 
 library "redef_after_def" impl;
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+9]]:1: ERROR: Redefinition of function A.
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+9]]:1: ERROR: Redefinition of `fn A`.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: In import.
