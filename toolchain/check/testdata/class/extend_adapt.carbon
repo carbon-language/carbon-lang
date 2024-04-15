@@ -94,8 +94,7 @@ class StructAdapter {
 // CHECK:STDOUT:   %.1: type = unbound_element_type SomeClass, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type SomeClass [template]
-// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -178,7 +177,6 @@ class StructAdapter {
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type SomeClass [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,7 +236,6 @@ class StructAdapter {
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type SomeClass [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

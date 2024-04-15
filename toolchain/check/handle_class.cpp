@@ -457,13 +457,22 @@ auto HandleClassDefinition(Context& context,
           .Note(first_field_id, AdaptFieldHere)
           .Emit();
     } else {
-      // The object representation of the adapter is the adapted type.
-      // TODO: If the adapted type is a class, should we use its object
-      // representation type instead?
-      class_info.object_repr_id =
-          context.insts()
-              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-              .adapted_type_id;
+      // The object representation of the adapter is the object representation
+      // of the adapted type.
+      auto adapted_type_id = context.insts()
+                                 .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
+                                 .adapted_type_id;
+      // If we adapt an adapter, directly track the non-adapter type we're
+      // adapting so that we have constant-time access to it.
+      if (auto adapted_class =
+              context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
+        auto& adapted_class_info =
+            context.classes().Get(adapted_class->class_id);
+        if (adapted_class_info.adapt_id.is_valid()) {
+          adapted_type_id = adapted_class_info.object_repr_id;
+        }
+      }
+      class_info.object_repr_id = adapted_type_id;
     }
   } else {
     class_info.object_repr_id = context.GetStructType(fields_id);

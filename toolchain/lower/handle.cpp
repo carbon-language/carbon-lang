@@ -60,6 +60,11 @@ auto HandleArrayInit(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.dest_id));
 }
 
+auto HandleAsCompatible(FunctionContext& context, SemIR::InstId inst_id,
+                        SemIR::AsCompatible inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.source_id));
+}
+
 auto HandleAssign(FunctionContext& context, SemIR::InstId /*inst_id*/,
                   SemIR::Assign inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
