@@ -20,7 +20,7 @@ def main() -> None:
         "-c",
         "opt",
         "--experimental_convenience_symlinks=ignore",
-        "--ui_event_filters=-info,-stdout,-stderr,-finish",
+        "--ui_event_filters=",
         "//toolchain/testing:file_test",
         "--",
         "--autoupdate",

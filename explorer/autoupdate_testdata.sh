@@ -5,6 +5,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 bazel run -c opt --experimental_convenience_symlinks=ignore \
-  --ui_event_filters=-info,-stdout,-stderr,-finish \
+  --ui_event_filters= \
   --test_sharding_strategy=disabled \
   //explorer:file_test -- --autoupdate
