@@ -282,10 +282,11 @@ class Context {
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
   // Emits a diagnostic for a declaration missing a semi.
-  auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
+  auto DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 
   // Emits a diagnostic for a declaration missing a semi or definition.
-  auto EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind) -> void;
+  auto DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
+      -> void;
 
   // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a

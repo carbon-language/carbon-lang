@@ -152,7 +152,7 @@ static auto HandleDirectiveContent(Context& context,
 
     context.AddNode(directive, *semi, state.subtree_start, state.has_error);
   } else {
-    context.EmitExpectedDeclSemi(context.tokens().GetKind(state.token));
+    context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
     on_parse_error();
   }
 }

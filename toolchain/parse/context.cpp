@@ -412,13 +412,13 @@ auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
           /*has_error=*/true);
 }
 
-auto Context::EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
+auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`.", Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
 }
 
-auto Context::EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
+auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
     -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "

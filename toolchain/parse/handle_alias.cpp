@@ -52,7 +52,7 @@ auto HandleAliasFinish(Context& context) -> void {
     context.AddNode(NodeKind::Alias, *semi, state.subtree_start,
                     state.has_error);
   } else {
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Alias);
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Alias);
     context.RecoverFromDeclError(state, NodeKind::Alias,
                                  /*skip_past_likely_end=*/true);
   }
