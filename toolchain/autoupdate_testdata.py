@@ -19,7 +19,14 @@ def main() -> None:
     # `bazel-bin`.
     build_mode = "fastbuild"
     workspace = subprocess.check_output(
-        ["bazel", "info", "workspace"], encoding="utf-8"
+        [
+            "bazel",
+            "info",
+            "workspace",
+            # Unlike below, we need stdout.
+            "--ui_event_filters=-info,-stderr,-finish",
+        ],
+        encoding="utf-8",
     ).strip()
     bazel_bin_path = Path(workspace).joinpath("bazel-bin")
     if bazel_bin_path.exists():
