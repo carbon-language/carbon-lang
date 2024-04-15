@@ -82,10 +82,10 @@ library "mix_extern_decl" api;
 import library "fns";
 
 extern fn D();
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Defining `extern fn D` is disallowed.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclarations of `fn D` in the same library must match use of `extern`.
 // CHECK:STDERR: fn D() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared `extern` here.
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 fn D() {}

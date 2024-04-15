@@ -14,12 +14,12 @@ namespace Carbon::Check {
 
 CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "Previously declared here.");
 
-// Diagnoses a redundant redeclaration diagnostic.
-static auto DiagnoseRedeclRedundant(Context& context, Lex::TokenKind decl_kind,
-                                    SemIR::NameId name_id, SemIRLoc new_loc,
-                                    SemIRLoc prev_loc) {
+// Diagnoses a redeclaration which is redundant.
+static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
+                              SemIR::NameId name_id, SemIRLoc new_loc,
+                              SemIRLoc prev_loc) {
   CARBON_DIAGNOSTIC(RedeclRedundant, Error,
-                    "Redundant redeclaration of `{0} {1}`.", Lex::TokenKind,
+                    "Redeclaration of `{0} {1}` is redundant.", Lex::TokenKind,
                     SemIR::NameId);
   context.emitter()
       .Build(new_loc, RedeclRedundant, decl_kind, name_id)
@@ -27,31 +27,16 @@ static auto DiagnoseRedeclRedundant(Context& context, Lex::TokenKind decl_kind,
       .Emit();
 }
 
-// Diagnoses a redefinition diagnostic.
-static auto DiagnoseRedeclRedef(Context& context, Lex::TokenKind decl_kind,
-                                SemIR::NameId name_id, SemIRLoc new_loc,
-                                SemIRLoc prev_loc) {
+// Diagnoses a redefinition.
+static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
+                          SemIR::NameId name_id, SemIRLoc new_loc,
+                          SemIRLoc prev_loc) {
   CARBON_DIAGNOSTIC(RedeclRedef, Error, "Redefinition of `{0} {1}`.",
                     Lex::TokenKind, SemIR::NameId);
   CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "Previously defined here.");
   context.emitter()
       .Build(new_loc, RedeclRedef, decl_kind, name_id)
       .Note(prev_loc, RedeclPrevDef)
-      .Emit();
-}
-
-// Diagnoses when defining an `extern` as non-`extern`.
-static auto DiagnoseDefininingExtern(Context& context, Lex::TokenKind decl_kind,
-                                     SemIR::NameId name_id, SemIRLoc new_loc,
-                                     SemIRLoc prev_loc) {
-  CARBON_DIAGNOSTIC(RedeclDefiningExtern, Error,
-                    "Defining `extern {0} {1}` is disallowed.", Lex::TokenKind,
-                    SemIR::NameId);
-  CARBON_DIAGNOSTIC(RedeclPrevExternDecl, Note,
-                    "Previously declared `extern` here.");
-  context.emitter()
-      .Build(new_loc, RedeclDefiningExtern, decl_kind, name_id)
-      .Note(prev_loc, RedeclPrevExternDecl)
       .Emit();
 }
 
@@ -92,20 +77,19 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   if (!prev_import_ir_inst_id.is_valid()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
-      DiagnoseRedeclRedundant(context, decl_kind, name_id, new_decl.loc,
-                              prev_decl.loc);
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
+                        prev_decl.loc);
       return;
     }
     if (prev_decl.is_definition) {
-      DiagnoseRedeclRedef(context, decl_kind, name_id, new_decl.loc,
-                          prev_decl.loc);
+      DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
       return;
     }
     // `extern` definitions are prevented at creation; this is only
     // checking for a non-`extern` definition after an `extern` declaration.
     if (prev_decl.is_extern) {
-      DiagnoseDefininingExtern(context, decl_kind, name_id, new_decl.loc,
-                               prev_decl.loc);
+      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
+                             prev_decl.loc);
       return;
     }
     return;
@@ -118,11 +102,10 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
     // forward declaration in the impl is allowed.
     if (prev_decl.is_definition) {
       if (new_decl.is_definition) {
-        DiagnoseRedeclRedef(context, decl_kind, name_id, new_decl.loc,
-                            prev_decl.loc);
+        DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
       } else {
-        DiagnoseRedeclRedundant(context, decl_kind, name_id, new_decl.loc,
-                                prev_decl.loc);
+        DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
+                          prev_decl.loc);
       }
       return;
     }

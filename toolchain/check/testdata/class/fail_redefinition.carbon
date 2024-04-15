@@ -19,7 +19,7 @@ class Class {
 // CHECK:STDERR:
 class Class {
   fn G();
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redundant redeclaration of `fn H`.
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redeclaration of `fn H` is redundant.
   // CHECK:STDERR:   fn H();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-16]]:3: Previously declared here.

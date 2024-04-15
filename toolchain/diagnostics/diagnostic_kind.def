@@ -157,8 +157,6 @@ CARBON_DIAGNOSTIC_KIND(RedeclRedundant)
 CARBON_DIAGNOSTIC_KIND(RedeclNonExtern)
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
 CARBON_DIAGNOSTIC_KIND(RedeclRedef)
-CARBON_DIAGNOSTIC_KIND(RedeclDefiningExtern)
-CARBON_DIAGNOSTIC_KIND(RedeclPrevExternDecl)
 CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
 
 // Function call checking.
