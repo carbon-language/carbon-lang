@@ -41,17 +41,17 @@ jobs:
       os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       # Ubuntu images start with 23GB available, and this adds 14GB more. For
       # comparison, MacOS images have >100GB free.
       #
       # Although we could delete more, if we run into a limit, not deleting
       # everything provides a little flexibility to get space while trying
       # to shrink the build.
-      - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
-        with:
-          egress-policy: audit
-
       - name: Free up disk space (Ubuntu)
         if: env.os == 'ubuntu'
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
