@@ -8,10 +8,10 @@
 
 namespace Carbon::Check {
 
-static auto ReportNotAllowed(Context& context, Parse::NodeId modifier_node,
-                             Lex::TokenKind decl_kind,
-                             llvm::StringRef context_string,
-                             SemIR::LocId context_loc_id) -> void {
+static auto DiagnoseNotAllowed(Context& context, Parse::NodeId modifier_node,
+                               Lex::TokenKind decl_kind,
+                               llvm::StringRef context_string,
+                               SemIR::LocId context_loc_id) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedOn, Error,
                     "`{0}` not allowed on `{1}` declaration{2}.",
                     Lex::TokenKind, Lex::TokenKind, std::string);
@@ -52,8 +52,8 @@ auto ForbidModifiersOnDecl(Context& context, KeywordModifierSet forbidden,
        order_index <= static_cast<int8_t>(ModifierOrder::Last); ++order_index) {
     auto order = static_cast<ModifierOrder>(order_index);
     if (!!(not_allowed & ModifierOrderAsSet(order))) {
-      ReportNotAllowed(context, s.modifier_node_id(order), decl_kind,
-                       context_string, context_loc_id);
+      DiagnoseNotAllowed(context, s.modifier_node_id(order), decl_kind,
+                         context_string, context_loc_id);
       s.set_modifier_node_id(order, Parse::NodeId::Invalid);
     }
   }

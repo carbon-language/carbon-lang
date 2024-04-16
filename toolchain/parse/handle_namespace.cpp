@@ -25,7 +25,7 @@ auto HandleNamespaceFinish(Context& context) -> void {
     context.AddNode(NodeKind::Namespace, *semi, state.subtree_start,
                     state.has_error);
   } else {
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Namespace);
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Namespace);
     context.RecoverFromDeclError(state, NodeKind::Namespace,
                                  /*skip_past_likely_end=*/true);
   }

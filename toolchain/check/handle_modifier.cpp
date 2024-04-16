@@ -11,8 +11,8 @@ namespace Carbon::Check {
 CARBON_DIAGNOSTIC(ModifierPrevious, Note, "`{0}` previously appeared here.",
                   Lex::TokenKind);
 
-static auto EmitRepeatedDiagnostic(Context& context, Parse::NodeId first_node,
-                                   Parse::NodeId second_node) -> void {
+static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
+                             Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierRepeated, Error, "`{0}` repeated on declaration.",
                     Lex::TokenKind);
   context.emitter()
@@ -21,9 +21,8 @@ static auto EmitRepeatedDiagnostic(Context& context, Parse::NodeId first_node,
       .Emit();
 }
 
-static auto EmitNotAllowedWithDiagnostic(Context& context,
-                                         Parse::NodeId first_node,
-                                         Parse::NodeId second_node) -> void {
+static auto DiagnoseNotAllowedWith(Context& context, Parse::NodeId first_node,
+                                   Parse::NodeId second_node) -> void {
   CARBON_DIAGNOSTIC(ModifierNotAllowedWith, Error,
                     "`{0}` not allowed on declaration with `{1}`.",
                     Lex::TokenKind, Lex::TokenKind);
@@ -53,9 +52,9 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
 
   auto current_modifier_node_id = s.modifier_node_id(order);
   if (!!(s.modifier_set & keyword)) {
-    EmitRepeatedDiagnostic(context, current_modifier_node_id, node_id);
+    DiagnoseRepeated(context, current_modifier_node_id, node_id);
   } else if (current_modifier_node_id.is_valid()) {
-    EmitNotAllowedWithDiagnostic(context, current_modifier_node_id, node_id);
+    DiagnoseNotAllowedWith(context, current_modifier_node_id, node_id);
   } else if (auto later_modifier_set = s.modifier_set & later_modifiers;
              !!later_modifier_set) {
     // At least one later modifier is present. Diagnose using the closest.
