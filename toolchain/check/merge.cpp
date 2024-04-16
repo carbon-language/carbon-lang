@@ -127,30 +127,44 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
 
 auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
                              SemIR::InstId prev_inst_id) -> InstForMerge {
-  auto prev_inst = context.insts().Get(prev_inst_id);
-  auto import_ref = prev_inst.TryAs<SemIR::AnyImportRef>();
-  // If not imported, use the instruction directly.
-  if (!import_ref) {
-    return {.inst = prev_inst,
-            .import_ir_inst_id = SemIR::ImportIRInstId::Invalid};
+  InstForMerge result = {.inst = context.insts().Get(prev_inst_id),
+                         .import_ir_inst_id = SemIR::ImportIRInstId::Invalid,
+                         .is_extern = false};
+
+  CARBON_KIND_SWITCH(result.inst) {
+    case CARBON_KIND(SemIR::ExternDecl extern_decl): {
+      result.is_extern = true;
+      result.inst = context.insts().Get(extern_decl.decl_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefUsed import_ref): {
+      CARBON_DIAGNOSTIC(
+          RedeclOfUsedImport, Error,
+          "Redeclaration of imported entity that was previously used.");
+      CARBON_DIAGNOSTIC(UsedImportLoc, Note, "Import used here.");
+      context.emitter()
+          .Build(node_id, RedeclOfUsedImport)
+          .Note(import_ref.used_id, UsedImportLoc)
+          .Emit();
+      [[fallthrough]];
+    }
+    case SemIR::ImportRefLoaded::Kind: {
+      // Follow the import ref.
+      auto import_ref = result.inst.As<SemIR::AnyImportRef>();
+      result.import_ir_inst_id = import_ref.import_ir_inst_id;
+      result.inst = context.insts().Get(
+          context.constant_values().Get(prev_inst_id).inst_id());
+      if (auto extern_type = result.inst.TryAs<SemIR::ExternType>()) {
+        result.inst =
+            context.types().GetAsInst(extern_type->non_extern_type_id);
+      }
+      break;
+    }
+    default:
+      break;
   }
 
-  // If the import ref was previously used, print a diagnostic.
-  if (auto import_ref_used = prev_inst.TryAs<SemIR::ImportRefUsed>()) {
-    CARBON_DIAGNOSTIC(
-        RedeclOfUsedImport, Error,
-        "Redeclaration of imported entity that was previously used.");
-    CARBON_DIAGNOSTIC(UsedImportLoc, Note, "Import used here.");
-    context.emitter()
-        .Build(node_id, RedeclOfUsedImport)
-        .Note(import_ref_used->used_id, UsedImportLoc)
-        .Emit();
-  }
-
-  // Follow the import ref.
-  return {.inst = context.insts().Get(
-              context.constant_values().Get(prev_inst_id).inst_id()),
-          .import_ir_inst_id = import_ref->import_ir_inst_id};
+  return result;
 }
 
 // Returns the instruction to consider when merging the given inst_id. Returns
@@ -185,9 +199,18 @@ static auto ResolveMergeableInst(Context& context, SemIR::InstId inst_id)
   if (!const_id.is_constant()) {
     return std::nullopt;
   }
-  return {
-      {.inst = context.insts().Get(const_id.inst_id()),
-       .import_ir_inst_id = inst.As<SemIR::AnyImportRef>().import_ir_inst_id}};
+
+  InstForMerge result = {
+      .inst = context.insts().Get(const_id.inst_id()),
+      .import_ir_inst_id = inst.As<SemIR::AnyImportRef>().import_ir_inst_id,
+      .is_extern = false};
+
+  if (auto extern_type = result.inst.TryAs<SemIR::ExternType>()) {
+    result.is_extern = true;
+    result.inst = context.types().GetAsInst(extern_type->non_extern_type_id);
+  }
+
+  return result;
 }
 
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
@@ -240,11 +263,10 @@ auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
       }
 
       auto new_class = context.classes().Get(new_type.class_id);
-      // TODO: Fix new_is_extern and prev_is_extern.
       MergeClassRedecl(context, new_inst_id, new_class,
                        /*new_is_import=*/true, new_class.is_defined(),
-                       /*new_is_extern=*/false, prev_type->class_id,
-                       /*prev_is_extern=*/false, prev_inst->import_ir_inst_id);
+                       new_inst->is_extern, prev_type->class_id,
+                       prev_inst->is_extern, prev_inst->import_ir_inst_id);
       return;
     }
     default:

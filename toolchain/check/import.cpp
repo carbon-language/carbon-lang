@@ -36,6 +36,11 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
       return {class_info.name_id, class_info.enclosing_scope_id};
     }
 
+    case CARBON_KIND(SemIR::ExternDecl extern_decl): {
+      return GetImportName(import_sem_ir,
+                           import_sem_ir.insts().Get(extern_decl.decl_id));
+    }
+
     case CARBON_KIND(SemIR::FunctionDecl function_decl): {
       const auto& function =
           import_sem_ir.functions().Get(function_decl.function_id);

@@ -40,6 +40,8 @@ struct InstForMerge {
   // The imported instruction, or invalid if not an import. This should
   // typically only be used for the ImportIRId, but we only load it if needed.
   SemIR::ImportIRInstId import_ir_inst_id;
+  // True if an `extern` declaration.
+  bool is_extern;
 };
 
 // Resolves prev_inst_id for merging (or name conflicts). This handles imports

@@ -12,6 +12,11 @@
 
 namespace Carbon::Lower {
 
+auto HandleExternDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                      SemIR::ExternDecl /*inst*/) -> void {
+  // No action to perform.
+}
+
 auto HandleClassDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                      SemIR::ClassDecl /*inst*/) -> void {
   // No action to perform.
