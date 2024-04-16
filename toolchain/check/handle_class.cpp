@@ -96,7 +96,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
         ResolvePrevInstForMerge(context, node_id, prev_id);
 
     if (auto prev_class_decl =
-            context.insts().Get(prev_id).TryAs<SemIR::ClassDecl>()) {
+            prev_inst_for_merge.inst.TryAs<SemIR::ClassDecl>()) {
       // TODO: Fix prev_is_extern.
       if (MergeClassRedecl(context, node_id, class_info,
                            /*new_is_import=*/false, is_definition, is_extern,
