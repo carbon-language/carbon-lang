@@ -86,30 +86,32 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
     }
 
     while (true) {
-      // If the parse node is valid, use it for the location.
-      if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-          loc_id.is_valid()) {
-        if (auto diag_loc = handle_loc(loc_id)) {
-          return *diag_loc;
-        }
-        continue;
-      }
-
-      // If the parse node was invalid, recurse through import references when
-      // possible.
-      if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
-              cursor_inst_id)) {
-        follow_import_ref(import_ref->import_ir_inst_id);
-        continue;
-      }
-
-      // If a namespace has an instruction for an import, switch to looking at
-      // it.
-      if (auto ns =
-              cursor_ir->insts().TryGetAs<SemIR::Namespace>(cursor_inst_id)) {
-        if (ns->import_id.is_valid()) {
-          cursor_inst_id = ns->import_id;
+      if (cursor_inst_id.is_valid()) {
+        // If the parse node is valid, use it for the location.
+        if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+            loc_id.is_valid()) {
+          if (auto diag_loc = handle_loc(loc_id)) {
+            return *diag_loc;
+          }
           continue;
+        }
+
+        // If the parse node was invalid, recurse through import references when
+        // possible.
+        if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
+                cursor_inst_id)) {
+          follow_import_ref(import_ref->import_ir_inst_id);
+          continue;
+        }
+
+        // If a namespace has an instruction for an import, switch to looking at
+        // it.
+        if (auto ns =
+                cursor_ir->insts().TryGetAs<SemIR::Namespace>(cursor_inst_id)) {
+          if (ns->import_id.is_valid()) {
+            cursor_inst_id = ns->import_id;
+            continue;
+          }
         }
       }
 
