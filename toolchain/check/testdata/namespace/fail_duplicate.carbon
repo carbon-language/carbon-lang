@@ -9,7 +9,7 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function Baz.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn Baz`.
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Previously defined here.
