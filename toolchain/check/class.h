@@ -15,8 +15,8 @@ namespace Carbon::Check {
 // definition even if one is upcoming, set is_definition to indicate the planned
 // result.
 //
-// If merging is successful, updates the ClassId on new_class and returns
-// true. Otherwise, returns false. Prints a diagnostic when appropriate.
+// If merging is successful, returns true and may update the previous class.
+// Otherwise, returns false. Prints a diagnostic when appropriate.
 auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                       SemIR::Class& new_class, bool new_is_import,
                       bool new_is_definition, bool new_is_extern,

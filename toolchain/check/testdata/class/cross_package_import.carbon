@@ -56,18 +56,18 @@ import Other library "extern";
 // CHECK:STDERR:
 var c: Other.C = {};
 
-// --- fail_merge_define_extern.carbon
+// --- fail_todo_merge_define_extern.carbon
 
-library "fail_merge_define_extern" api;
+library "merge_define_extern" api;
 
 import Other library "define";
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_extern.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: other_define.carbon:4:1: Previously declared here.
@@ -75,7 +75,7 @@ import Other library "define";
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "extern";
 
-// CHECK:STDERR: fail_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
+// CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+4]]:8: In name lookup for `C`.
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
@@ -232,7 +232,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_merge_define_extern.carbon
+// CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
