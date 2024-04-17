@@ -10,7 +10,7 @@ import Core library "prelude/operators/comparison";
 // TODO: Copied from core/prelude/types/i32.carbon.
 // Because we don't deduplicate interfaces, the implementations in that file are
 // treated as implementing a different interface from the one we import above.
-// Remove the following, once we deduplicaate interfaces.
+// Remove the following, once we deduplicate interfaces.
 
 impl i32 as Core.Add {
   fn Op[self: Self](other: Self) -> Self = "int.add";
