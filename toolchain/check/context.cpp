@@ -1055,6 +1055,7 @@ class TypeCompleter {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
+      case SemIR::FloatType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:

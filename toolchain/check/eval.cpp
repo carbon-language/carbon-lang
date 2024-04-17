@@ -366,6 +366,18 @@ static auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
   return false;
 }
 
+// Enforces that a float type has a valid bit width.
+auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
+    -> bool {
+  auto bit_width =
+      context.insts().TryGetAs<SemIR::IntLiteral>(result.bit_width_id);
+  if (!bit_width) {
+    // Symbolic bit width.
+    return true;
+  }
+  return ValidateFloatBitWidth(context, loc, result.bit_width_id);
+}
+
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIRLoc loc) -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "Division by zero.");
@@ -736,6 +748,14 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::PointerType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::PointerType::pointee_id);
+    case CARBON_KIND(SemIR::FloatType float_type): {
+      return RebuildAndValidateIfFieldsAreConstant(
+          context, inst,
+          [&](SemIR::FloatType result) {
+            return ValidateFloatType(context, float_type.bit_width_id, result);
+          },
+          &SemIR::FloatType::bit_width_id);
+    }
     case SemIR::StructType::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::StructType::fields_id);

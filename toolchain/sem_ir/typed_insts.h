@@ -444,6 +444,17 @@ struct FacetTypeAccess {
   InstId facet_id;
 };
 
+struct FloatType {
+  static constexpr auto Kind =
+      InstKind::FloatType.Define<Parse::NodeId>("float_type");
+
+  TypeId type_id;
+  FloatKind float_kind;
+  // TODO: Consider adding a more compact way of representing either a small
+  // float bit width or an inst_id.
+  InstId bit_width_id;
+};
+
 // A field in a class, of the form `var field: field_type;`. The type of the
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {

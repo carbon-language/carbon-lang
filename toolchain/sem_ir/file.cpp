@@ -207,6 +207,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Builtin::Kind:
     case ClassType::Kind:
     case FacetTypeAccess::Kind:
+    case FloatType::Kind:
     case ImportRefLoaded::Kind:
     case ImportRefUsed::Kind:
     case InterfaceType::Kind:
@@ -380,6 +381,21 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case CARBON_KIND(FacetTypeAccess inst): {
         // Print `T as type` as simply `T`.
         push_inst_id(inst.facet_id);
+        break;
+      }
+      case CARBON_KIND(FloatType inst): {
+        // TODO: Is this okay?
+        if (step.index == 1) {
+          out << ")";
+        } else if (auto width_value =
+                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+          out << "f";
+          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
+        } else {
+          out << "Float(";
+          steps.push_back(step.Next());
+          push_inst_id(inst.bit_width_id);
+        }
         break;
       }
       case ImportRefLoaded::Kind:
@@ -623,6 +639,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case ConstType::Kind:
       case FacetTypeAccess::Kind:
+      case FloatType::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:
