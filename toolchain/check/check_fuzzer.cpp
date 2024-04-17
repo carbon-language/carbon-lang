@@ -27,7 +27,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                        /*RequiresNullTerminator=*/false)));
 
   llvm::raw_null_ostream null_ostream;
-  Driver driver(fs, null_ostream, null_ostream);
+  Driver driver(fs, "", null_ostream, null_ostream);
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.

@@ -31,7 +31,7 @@ class ToolchainFileTest : public FileTestBase {
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
     CARBON_RETURN_IF_ERROR(AddFile(fs, "core/prelude.carbon"));
 
-    Driver driver(fs, stdout, stderr);
+    Driver driver(fs, "", stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
     RunResult result{
