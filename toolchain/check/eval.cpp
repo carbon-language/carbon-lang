@@ -642,6 +642,20 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
       return PerformBuiltinIntComparison(context, builtin_kind, arg_ids[0],
                                          arg_ids[1], call.type_id);
     }
+
+    // Binary float -> float operations.
+    case SemIR::BuiltinFunctionKind::FloatAdd: {
+      if (phase != Phase::Template) {
+        break;
+      }
+
+      // TODO: Perform float addition
+      //  Float literals currently use the Real class at the check level, which
+      //  has no support for arithmetic. Check in with the team on how constant
+      //  folding should be implemented for floats.
+      context.TODO(loc, "float addition");
+      break;
+    }
   }
 
   return SemIR::ConstantId::NotConstant;
