@@ -643,7 +643,7 @@ class Driver::CompilationUnit {
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
-  llvm::StringRef input_filename_;
+  std::string input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_;
@@ -713,7 +713,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     for (const auto& unit : units) {
       result.success &= unit->success();
       result.per_file_success.push_back(
-          {unit->input_filename(), unit->success()});
+          {unit->input_filename().str(), unit->success()});
     }
     return result;
   };

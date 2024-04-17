@@ -27,7 +27,7 @@ class Driver {
 
     // Per-file success results. May be empty if files aren't individually
     // processed.
-    llvm::SmallVector<std::pair<llvm::StringRef, bool>> per_file_success;
+    llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
   };
 
   // Constructs a driver with any error or informational output directed to a
@@ -69,7 +69,7 @@ class Driver {
   llvm::vfs::FileSystem& fs_;
 
   // The path within fs for data files.
-  llvm::StringRef data_dir_;
+  std::string data_dir_;
 
   // Standard output; stdout.
   llvm::raw_pwrite_stream& output_stream_;
