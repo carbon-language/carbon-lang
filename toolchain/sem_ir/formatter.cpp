@@ -1222,6 +1222,8 @@ class Formatter {
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
 
+  auto FormatArg(FloatKind k) -> void { k.Print(out_); }
+
   auto FormatArg(ImplId id) -> void { FormatImplName(id); }
 
   auto FormatArg(ImportIRId id) -> void { out_ << id; }

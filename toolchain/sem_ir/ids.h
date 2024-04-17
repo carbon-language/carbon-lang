@@ -332,6 +332,13 @@ struct IntKind : public IdBase, public Printable<IntKind> {
 constexpr IntKind IntKind::Unsigned = IntKind(0);
 constexpr IntKind IntKind::Signed = IntKind(1);
 
+// A float kind value
+struct FloatKind : public IdBase, public Printable<FloatKind> {
+  using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
+};
+
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
 struct NameId : public IdBase, public Printable<NameId> {

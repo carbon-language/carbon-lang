@@ -122,7 +122,7 @@ using IdKind = TypeEnum<
     // From sem_ir/id.h.
     InstId, ConstantId, BindNameId, FunctionId, ClassId, InterfaceId, ImplId,
     ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
-    InstBlockId, TypeId, TypeBlockId, ElementIndex>;
+    InstBlockId, TypeId, TypeBlockId, ElementIndex, FloatKind>;
 
 }  // namespace Carbon::SemIR
 
