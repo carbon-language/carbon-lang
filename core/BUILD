@@ -7,3 +7,17 @@ filegroup(
     data = glob(["**/*.carbon"]),
     visibility = ["//visibility:public"],
 )
+
+# The prelude itself. This is a dependency of compilations but not an input.
+filegroup(
+    name = "prelude",
+    srcs = ["prelude.carbon"],
+    visibility = ["//visibility:public"],
+)
+
+# The dependencies of the prelude.
+filegroup(
+    name = "prelude_deps",
+    srcs = glob(["prelude/**/*.carbon"]),
+    visibility = ["//visibility:public"],
+)
