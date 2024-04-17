@@ -69,7 +69,7 @@ struct Class : public Printable<Class> {
 
   // The object representation type to use for this class. This is valid once
   // the class is defined. For an adapter, this is the non-adapter type that
-  // this class directly or indirectly adapts.
+  // this class directly or transitively adapts.
   TypeId object_repr_id = TypeId::Invalid;
 };
 
