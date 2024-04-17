@@ -40,7 +40,7 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 
 class DriverTest : public testing::Test {
  protected:
-  DriverTest() : driver_(fs_, test_output_stream_, test_error_stream_) {
+  DriverTest() : driver_(fs_, "", test_output_stream_, test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;

@@ -32,9 +32,13 @@ class Driver {
 
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::vfs::FileSystem& fs, llvm::raw_pwrite_stream& output_stream,
+  Driver(llvm::vfs::FileSystem& fs, llvm::StringRef data_dir,
+         llvm::raw_pwrite_stream& output_stream,
          llvm::raw_pwrite_stream& error_stream)
-      : fs_(fs), output_stream_(output_stream), error_stream_(error_stream) {}
+      : fs_(fs),
+        data_dir_(data_dir),
+        output_stream_(output_stream),
+        error_stream_(error_stream) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -61,9 +65,18 @@ class Driver {
   // Implements the compile subcommand of the driver.
   auto Compile(const CompileOptions& options) -> RunResult;
 
+  // The filesystem for source code.
   llvm::vfs::FileSystem& fs_;
+
+  // The path within fs for data files.
+  llvm::StringRef data_dir_;
+
+  // Standard output; stdout.
   llvm::raw_pwrite_stream& output_stream_;
+  // Error output; stderr.
   llvm::raw_pwrite_stream& error_stream_;
+
+  // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_ = nullptr;
 };
 
