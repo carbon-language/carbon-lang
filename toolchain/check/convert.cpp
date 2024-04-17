@@ -14,6 +14,7 @@
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -26,6 +27,10 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
   while (true) {
     SemIR::Inst init_untyped = sem_ir.insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(SemIR::AsCompatible init): {
+        init_id = init.source_id;
+        continue;
+      }
       case CARBON_KIND(SemIR::Converted init): {
         init_id = init.result_id;
         continue;
@@ -651,6 +656,22 @@ static auto IsValidExprCategoryForConversionTarget(
   }
 }
 
+// Returns the non-adapter type that is compatible with the specified type.
+static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
+    -> SemIR::TypeId {
+  // If the type is an adapter, its object representation type is its compatible
+  // non-adapter type.
+  if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
+    auto& class_info = context.classes().Get(class_type->class_id);
+    if (class_info.adapt_id.is_valid()) {
+      return class_info.object_repr_id;
+    }
+  }
+
+  // Otherwise, the type itself is a non-adapter type.
+  return type_id;
+}
+
 static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                                      SemIR::InstId value_id,
                                      ConversionTarget target) -> SemIR::InstId {
@@ -714,6 +735,26 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  // T explicitly converts to U if T is compatible with U.
+  if (target.kind == ConversionTarget::Kind::ExplicitAs &&
+      target.type_id != value_type_id) {
+    auto target_base_id = GetCompatibleBaseType(context, target.type_id);
+    auto value_base_id = GetCompatibleBaseType(context, value_type_id);
+    if (target_base_id == value_base_id) {
+      // For a struct or tuple literal, perform a category conversion if
+      // necessary.
+      if (SemIR::GetExprCategory(context.sem_ir(), value_id) ==
+          SemIR::ExprCategory::Mixed) {
+        value_id = PerformBuiltinConversion(
+            context, loc_id, value_id,
+            ConversionTarget{.kind = ConversionTarget::Value,
+                             .type_id = value_type_id});
+      }
+      return context.AddInst(
+          {loc_id, SemIR::AsCompatible{target.type_id, value_id}});
+    }
+  }
+
   // A tuple (T1, T2, ..., Tn) converts to (U1, U2, ..., Un) if each Ti
   // converts to Ui.
   if (auto target_tuple_type = target_type_inst.TryAs<SemIR::TupleType>()) {
@@ -752,8 +793,12 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   if (auto target_class_type = target_type_inst.TryAs<SemIR::ClassType>()) {
     if (auto src_struct_type =
             sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
-      return ConvertStructToClass(context, *src_struct_type, *target_class_type,
-                                  value_id, target);
+      if (!context.classes()
+               .Get(target_class_type->class_id)
+               .adapt_id.is_valid()) {
+        return ConvertStructToClass(context, *src_struct_type,
+                                    *target_class_type, value_id, target);
+      }
     }
 
     // An expression of type T converts to U if T is a class derived from U.

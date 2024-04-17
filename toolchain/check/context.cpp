@@ -957,6 +957,7 @@ class TypeCompleter {
       case SemIR::AddrPattern::Kind:
       case SemIR::ArrayIndex::Kind:
       case SemIR::ArrayInit::Kind:
+      case SemIR::AsCompatible::Kind:
       case SemIR::Assign::Kind:
       case SemIR::AssociatedConstantDecl::Kind:
       case SemIR::AssociatedEntity::Kind:
@@ -1031,13 +1032,18 @@ class TypeCompleter {
         return BuildTupleTypeValueRepr(type_id, tuple_type);
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
-        // The value representation for a class is a pointer to the object
-        // representation.
+        auto& class_info = context_.classes().Get(class_type.class_id);
+        // The value representation of an adapter is the value representation of
+        // its adapted type.
+        if (class_info.adapt_id.is_valid()) {
+          return GetNestedValueRepr(class_info.object_repr_id);
+        }
+        // Otherwise, the value representation for a class is a pointer to the
+        // object representation.
         // TODO: Support customized value representations for classes.
         // TODO: Pick a better value representation when possible.
-        return MakePointerValueRepr(
-            context_.classes().Get(class_type.class_id).object_repr_id,
-            SemIR::ValueRepr::ObjectAggregate);
+        return MakePointerValueRepr(class_info.object_repr_id,
+                                    SemIR::ValueRepr::ObjectAggregate);
       }
       case SemIR::InterfaceType::Kind: {
         // TODO: Should we model the value representation as a witness?
