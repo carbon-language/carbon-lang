@@ -22,7 +22,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 package BadShift api;
 
 fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = LeftShift(1, 31);
@@ -215,5 +215,5 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LeftShift(%a: i32, %b: i32) -> i32 = "int.left_shift";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:

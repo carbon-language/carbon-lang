@@ -4,22 +4,22 @@
 //
 // AUTOUPDATE
 
-fn Negate(a: u64) -> u64 = "int.negate";
+fn Negate(a: u64) -> u64 = "int.unegate";
 fn TestNegate(a: u64) -> u64 { return Negate(a); }
 
-fn Add(a: u64, b: u64) -> u64 = "int.add";
+fn Add(a: u64, b: u64) -> u64 = "int.uadd";
 fn TestAdd(a: u64, b: u64) -> u64 { return Add(a, b); }
 
-fn Sub(a: u64, b: u64) -> u64 = "int.sub";
+fn Sub(a: u64, b: u64) -> u64 = "int.usub";
 fn TestSub(a: u64, b: u64) -> u64 { return Sub(a, b); }
 
-fn Mul(a: u64, b: u64) -> u64 = "int.mul";
+fn Mul(a: u64, b: u64) -> u64 = "int.umul";
 fn TestMul(a: u64, b: u64) -> u64 { return Mul(a, b); }
 
-fn Div(a: u64, b: u64) -> u64 = "int.div";
+fn Div(a: u64, b: u64) -> u64 = "int.udiv";
 fn TestDiv(a: u64, b: u64) -> u64 { return Div(a, b); }
 
-fn Mod(a: u64, b: u64) -> u64 = "int.mod";
+fn Mod(a: u64, b: u64) -> u64 = "int.umod";
 fn TestMod(a: u64, b: u64) -> u64 { return Mod(a, b); }
 
 fn Complement(a: u64) -> u64 = "int.complement";

@@ -19,7 +19,7 @@ import Core;
 // TODO: Move this into prelude.carbon when possible. For now, impl lookup only
 // looks in the current file.
 impl i32 as Core.Add {
-  fn Op[self: i32](other: i32) -> i32 = "int.add";
+  fn Op[self: i32](other: i32) -> i32 = "int.sadd";
 }
 
 fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {

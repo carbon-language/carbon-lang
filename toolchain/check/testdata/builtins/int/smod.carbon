@@ -6,7 +6,7 @@
 
 // --- int_div.carbon
 
-fn Mod(a: i32, b: i32) -> i32 = "int.mod";
+fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
 var arr: [i32; Mod(5, 3)];
 let arr_p: [i32; 2]* = &arr;
@@ -19,9 +19,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailOverflow api;
 
-fn Mod(a: i32, b: i32) -> i32 = "int.mod";
-fn Sub(a: i32, b: i32) -> i32 = "int.sub";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Mod(a: i32, b: i32) -> i32 = "int.smod";
+fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 // -0x7FFF_FFFF % -1 is OK.
 let a: i32 = Mod(Negate(0x7FFF_FFFF), Negate(1));
@@ -41,7 +41,7 @@ let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 package FailDivByZero api;
 
-fn Mod(a: i32, b: i32) -> i32 = "int.mod";
+fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
 // Remainder of division by zero is not defined.
 
@@ -103,7 +103,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.mod";
+// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -207,11 +207,11 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc20_57.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.mod";
+// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_div_by_zero.carbon
 // CHECK:STDOUT:
@@ -249,5 +249,5 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %b.loc17: i32 = bind_name b, %.loc17_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.mod";
+// CHECK:STDOUT: fn @Mod(%a: i32, %b: i32) -> i32 = "int.smod";
 // CHECK:STDOUT:

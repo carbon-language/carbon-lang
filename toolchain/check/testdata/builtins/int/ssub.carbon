@@ -6,7 +6,7 @@
 
 // --- int_sub.carbon
 
-fn Sub(a: i32, b: i32) -> i32 = "int.sub";
+fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
 var arr: [i32; Sub(3, 2)];
 let arr_p: [i32; 1]* = &arr;
@@ -19,7 +19,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailOverflow api;
 
-fn Sub(a: i32, b: i32) -> i32 = "int.sub";
+fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
 let a: i32 = Sub(0, 0x7FFFFFFF);
 let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
@@ -75,7 +75,7 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -145,5 +145,5 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc11_40.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:

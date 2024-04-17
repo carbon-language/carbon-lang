@@ -4,34 +4,34 @@
 //
 // AUTOUPDATE
 
-fn A(n: i32, m: i32) -> i32 = "int.add";
+fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of function A.
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
-// CHECK:STDERR: fn A(n: i32, m: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn A(n: i32, m: i32) -> i32 { return n; }
 
 fn B(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of function B.
-// CHECK:STDERR: fn B(n: i32, m: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn B(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn B(n: i32, m: i32) -> i32 = "int.add";
+fn B(n: i32, m: i32) -> i32 = "int.sadd";
 
-fn C(n: i32, m: i32) -> i32 = "int.add";
+fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function C.
-// CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
-// CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-fn C(n: i32, m: i32) -> i32 = "int.add";
+fn C(n: i32, m: i32) -> i32 = "int.sadd";
 
 // CHECK:STDOUT: --- fail_redefined.carbon
 // CHECK:STDOUT:
@@ -87,17 +87,17 @@ fn C(n: i32, m: i32) -> i32 = "int.add";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%n: i32, %m: i32) -> i32 = "int.add" {
+// CHECK:STDOUT: fn @A(%n: i32, %m: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%n: i32, %m: i32) -> i32 = "int.add" {
+// CHECK:STDOUT: fn @B(%n: i32, %m: i32) -> i32 = "int.sadd" {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: i32 = name_ref n, file.%n.loc17_6.2
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%n: i32, %m: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @C(%n: i32, %m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

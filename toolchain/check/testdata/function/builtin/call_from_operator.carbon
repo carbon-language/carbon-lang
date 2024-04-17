@@ -19,7 +19,7 @@ import Core;
 // TODO: This should be in `Core`, but currently impl lookup only looks in the
 // current file.
 impl i32 as Core.Add {
-  fn Op[self: Self](other: Self) -> Self = "int.add";
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 
 var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
@@ -141,7 +141,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;
 // CHECK:STDOUT:

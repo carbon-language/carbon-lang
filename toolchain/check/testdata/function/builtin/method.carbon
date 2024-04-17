@@ -9,7 +9,7 @@ interface I {
 }
 
 impl i32 as I {
-  fn F[self: i32](other: i32) -> i32 = "int.add";
+  fn F[self: i32](other: i32) -> i32 = "int.sadd";
 }
 
 var arr: [i32; 1.(I.F)(2)];
@@ -95,5 +95,5 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[@I.%self.loc8_8.2: Self](@I.%other.loc8_20.2: Self) -> Self;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[@impl.%self.loc12_8.2: i32](@impl.%other.loc12_19.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @F.2[@impl.%self.loc12_8.2: i32](@impl.%other.loc12_19.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
