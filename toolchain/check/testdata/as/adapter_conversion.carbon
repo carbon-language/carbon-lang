@@ -24,6 +24,7 @@ class B {
 var a_ref: A = {.x = 1, .y = 2};
 let a_val: A = a_ref;
 
+// An `as` conversion to an adapter type preserves the expression category.
 let b_val: B = a_val as B;
 let b_ptr: B* = &(a_ref as B);
 
@@ -129,21 +130,21 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %a_ref.ref.loc18: ref A = name_ref a_ref, %a_ref
 // CHECK:STDOUT:   %.loc18: A = bind_value %a_ref.ref.loc18
 // CHECK:STDOUT:   %a_val: A = bind_name a_val, %.loc18
-// CHECK:STDOUT:   %B.ref.loc20_12: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %a_val.ref: A = name_ref a_val, %a_val
-// CHECK:STDOUT:   %B.ref.loc20_25: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc20_22.1: B = as_compatible %a_val.ref
-// CHECK:STDOUT:   %.loc20_22.2: B = converted %a_val.ref, %.loc20_22.1
-// CHECK:STDOUT:   %b_val: B = bind_name b_val, %.loc20_22.2
 // CHECK:STDOUT:   %B.ref.loc21_12: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21_13: type = ptr_type B [template = constants.%.7]
-// CHECK:STDOUT:   %a_ref.ref.loc21: ref A = name_ref a_ref, %a_ref
-// CHECK:STDOUT:   %B.ref.loc21_28: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21_25.1: ref B = as_compatible %a_ref.ref.loc21
-// CHECK:STDOUT:   %.loc21_25.2: ref B = converted %a_ref.ref.loc21, %.loc21_25.1
-// CHECK:STDOUT:   %.loc21_17: B* = addr_of %.loc21_25.2
-// CHECK:STDOUT:   %b_ptr: B* = bind_name b_ptr, %.loc21_17
-// CHECK:STDOUT:   %B.ref.loc23: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:   %a_val.ref: A = name_ref a_val, %a_val
+// CHECK:STDOUT:   %B.ref.loc21_25: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:   %.loc21_22.1: B = as_compatible %a_val.ref
+// CHECK:STDOUT:   %.loc21_22.2: B = converted %a_val.ref, %.loc21_22.1
+// CHECK:STDOUT:   %b_val: B = bind_name b_val, %.loc21_22.2
+// CHECK:STDOUT:   %B.ref.loc22_12: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:   %.loc22_13: type = ptr_type B [template = constants.%.7]
+// CHECK:STDOUT:   %a_ref.ref.loc22: ref A = name_ref a_ref, %a_ref
+// CHECK:STDOUT:   %B.ref.loc22_28: type = name_ref B, %B.decl [template = constants.%B]
+// CHECK:STDOUT:   %.loc22_25.1: ref B = as_compatible %a_ref.ref.loc22
+// CHECK:STDOUT:   %.loc22_25.2: ref B = converted %a_ref.ref.loc22, %.loc22_25.1
+// CHECK:STDOUT:   %.loc22_17: B* = addr_of %.loc22_25.2
+// CHECK:STDOUT:   %b_ptr: B* = bind_name b_ptr, %.loc22_17
+// CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_factory.var: ref B = var b_factory
 // CHECK:STDOUT:   %b_factory: ref B = bind_name b_factory, %b_factory.var
 // CHECK:STDOUT: }
@@ -199,12 +200,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc17_32
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, @A.%Make [template = @A.%Make]
-// CHECK:STDOUT:   %.loc23_5: ref B = splice_block file.%b_factory.var {}
-// CHECK:STDOUT:   %.loc23_26: init A = call %Make.ref() to %.loc23_5
+// CHECK:STDOUT:   %.loc24_5: ref B = splice_block file.%b_factory.var {}
+// CHECK:STDOUT:   %.loc24_26: init A = call %Make.ref() to %.loc24_5
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc23_29.1: init B = as_compatible %.loc23_26
-// CHECK:STDOUT:   %.loc23_29.2: init B = converted %.loc23_26, %.loc23_29.1
-// CHECK:STDOUT:   assign file.%b_factory.var, %.loc23_29.2
+// CHECK:STDOUT:   %.loc24_29.1: init B = as_compatible %.loc24_26
+// CHECK:STDOUT:   %.loc24_29.2: init B = converted %.loc24_26, %.loc24_29.1
+// CHECK:STDOUT:   assign file.%b_factory.var, %.loc24_29.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
