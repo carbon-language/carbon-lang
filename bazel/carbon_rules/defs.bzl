@@ -4,8 +4,8 @@
 
 """Provides rules for building Carbon files using the toolchain."""
 
-load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def carbon_binary(name, srcs):
     """Compiles a Carbon binary.

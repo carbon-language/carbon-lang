@@ -710,8 +710,8 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   // Find the files comprising the prelude if we are importing it.
   // TODO: Replace this with a search for library api files in a
   // package-specific search path based on the library name.
-  bool want_prelude = options.prelude_import &&
-                      options.phase >= CompileOptions::Phase::Check;
+  bool want_prelude =
+      options.prelude_import && options.phase >= CompileOptions::Phase::Check;
   auto prelude = want_prelude ? FindPreludeFiles(data_dir_, error_stream_)
                               : llvm::SmallVector<std::string>{};
   if (want_prelude && prelude.empty()) {
