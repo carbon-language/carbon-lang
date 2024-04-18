@@ -16,7 +16,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.2: f64 = real_literal 56e-1 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 5.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,7 +35,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 3 [template = constants.%.1]
 // CHECK:STDOUT:   assign %a.var, %.loc8
 // CHECK:STDOUT:   %a.ref: ref i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: f64 = float_literal 5.6 [template = constants.%.2]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -61,7 +61,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 64 [template]
-// CHECK:STDOUT:   %.2: f64 = real_literal 0e-1 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -101,7 +101,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: f64 = real_literal 0e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6: f64 = float_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%f.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

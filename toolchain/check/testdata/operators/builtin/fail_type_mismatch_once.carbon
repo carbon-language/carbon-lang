@@ -29,7 +29,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 12 [template]
-// CHECK:STDOUT:   %.2: f64 = real_literal 34e-1 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 3.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,7 +46,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_10: i32 = int_literal 12 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc25_15: f64 = real_literal 34e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc25_15: f64 = float_literal 3.4 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc25_21: i32 = int_literal 12 [template = constants.%.1]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

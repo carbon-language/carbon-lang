@@ -49,7 +49,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- float_add.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = real_literal 12e-1 [template]
+// CHECK:STDOUT:   %.1: f64 = float_literal 1.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,7 +93,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: f64 = real_literal 12e-1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8: f64 = float_literal 1.2 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%x.var, %.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

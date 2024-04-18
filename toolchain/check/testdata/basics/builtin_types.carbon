@@ -13,7 +13,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.2: f64 = real_literal 1e-1 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 0.1 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type String [template]
 // CHECK:STDOUT:   %.4: String = string_literal "Test" [template]
 // CHECK:STDOUT: }
@@ -40,7 +40,7 @@ var test_type: type = i32;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%test_i32.var, %.loc7
-// CHECK:STDOUT:   %.loc8: f64 = real_literal 1e-1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8: f64 = float_literal 0.1 [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%test_f64.var, %.loc8
 // CHECK:STDOUT:   assign file.%test_type.var, i32
 // CHECK:STDOUT:   return
