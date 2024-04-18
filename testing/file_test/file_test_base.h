@@ -60,7 +60,7 @@ class FileTestBase : public testing::Test {
     bool success;
 
     // Per-file success results. May be empty.
-    llvm::SmallVector<std::pair<llvm::StringRef, bool>> per_file_success;
+    llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
   };
 
   explicit FileTestBase(llvm::StringRef test_name) : test_name_(test_name) {}

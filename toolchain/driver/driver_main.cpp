@@ -8,6 +8,7 @@
 #include "common/init_llvm.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Path.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
@@ -25,7 +26,16 @@ auto main(int argc, char** argv) -> int {
 
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
-  Carbon::Driver driver(*fs, llvm::outs(), llvm::errs());
+
+  // Construct the data directory relative to the executable location.
+  static int static_for_main_addr;
+  std::string exe =
+      llvm::sys::fs::getMainExecutable(argv[0], &static_for_main_addr);
+  llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe));
+  llvm::sys::path::append(data_dir, llvm::sys::path::Style::posix,
+                          "carbon.runfiles/_main/");
+
+  Carbon::Driver driver(*fs, data_dir, llvm::outs(), llvm::errs());
   bool success = driver.RunCommand(args).success;
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

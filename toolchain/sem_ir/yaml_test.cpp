@@ -35,7 +35,7 @@ TEST(SemIRTest, YAML) {
       "test.carbon", /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
   TestRawOstream print_stream;
-  Driver d(fs, print_stream, llvm::errs());
+  Driver d(fs, "", print_stream, llvm::errs());
   auto run_result =
       d.RunCommand({"compile", "--no-prelude-import", "--phase=check",
                     "--dump-raw-sem-ir", "test.carbon"});

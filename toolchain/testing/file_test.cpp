@@ -29,7 +29,9 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    auto prelude = Driver::FindPreludeFiles(stderr);
+    const llvm::StringRef data_dir = "";
+
+    auto prelude = Driver::FindPreludeFiles(data_dir, stderr);
     if (prelude.empty()) {
       return Error("Could not find prelude");
     }
@@ -37,7 +39,7 @@ class ToolchainFileTest : public FileTestBase {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }
 
-    Driver driver(fs, stdout, stderr);
+    Driver driver(fs, data_dir, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
     RunResult result{
