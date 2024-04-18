@@ -29,7 +29,13 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    CARBON_RETURN_IF_ERROR(AddFile(fs, "core/prelude.carbon"));
+    auto prelude = Driver::FindPreludeFiles(stderr);
+    if (prelude.empty()) {
+      return Error("Could not find prelude");
+    }
+    for (const auto& file : prelude) {
+      CARBON_RETURN_IF_ERROR(AddFile(fs, file));
+    }
 
     Driver driver(fs, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
@@ -37,13 +43,13 @@ class ToolchainFileTest : public FileTestBase {
     RunResult result{
         .success = driver_result.success,
         .per_file_success = std::move(driver_result.per_file_success)};
-    // Drop entries that don't look like a file. Note this can empty out the
-    // list.
+    // Drop entries that don't look like a file, and entries corresponding to
+    // the prelude. Note this can empty out the list.
     llvm::erase_if(result.per_file_success,
-                   [](std::pair<llvm::StringRef, bool> entry) {
+                   [&](std::pair<llvm::StringRef, bool> entry) {
                      return entry.first == "." || entry.first == "-" ||
                             entry.first.starts_with("not_file") ||
-                            entry.first.starts_with("core/");
+                            llvm::is_contained(prelude, entry.first);
                    });
     return result;
   }
@@ -52,18 +58,11 @@ class ToolchainFileTest : public FileTestBase {
     llvm::SmallVector<std::string> args = {"compile",
                                            "--phase=" + component_.str()};
 
-    // For `lex` and `parse`, we don't need to import the prelude. Suppress it
-    // to improve the dump output for the tests.
     if (component_ == "lex") {
-      args.insert(args.end(), {"--no-prelude-import", "--dump-tokens", "%s"});
-      return args;
+      args.push_back("--dump-tokens");
     } else if (component_ == "parse") {
-      args.insert(args.end(),
-                  {"--no-prelude-import", "--dump-parse-tree", "%s"});
-      return args;
-    }
-
-    if (component_ == "check") {
+      args.push_back("--dump-parse-tree");
+    } else if (component_ == "check") {
       args.push_back("--dump-sem-ir");
     } else if (component_ == "lower") {
       args.push_back("--dump-llvm-ir");

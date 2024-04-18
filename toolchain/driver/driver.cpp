@@ -30,6 +30,32 @@
 
 namespace Carbon {
 
+auto Driver::FindPreludeFiles(llvm::raw_ostream& error_stream)
+    -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> result;
+  result.push_back("core/prelude.carbon");
+
+  // Glob for core/prelude/**/*.carbon and add all the files we find.
+  std::error_code ec;
+  for (llvm::sys::fs::recursive_directory_iterator prelude_files_it(
+            "core/prelude", ec, /*follow_symlinks=*/false);
+        prelude_files_it != llvm::sys::fs::recursive_directory_iterator();
+        prelude_files_it.increment(ec)) {
+    if (ec) {
+      error_stream << "ERROR: Could not find prelude: " << ec.message() << "\n";
+      result.clear();
+      break;
+    }
+
+    auto prelude_file = prelude_files_it->path();
+    if (prelude_file.ends_with(".carbon")) {
+      result.push_back(prelude_file);
+    }
+  }
+
+  return result;
+}
+
 struct Driver::CompileOptions {
   static constexpr CommandLine::CommandInfo Info = {
       .name = "compile",
@@ -556,6 +582,12 @@ class Driver::CompilationUnit {
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
 
+  // Returns true if the file can be dumped.
+  auto IncludeInDumps() const -> bool {
+    return options_.exclude_dump_file_prefix.empty() ||
+           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
+  }
+
  private:
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool {
@@ -634,12 +666,6 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** " << label << " done ***\n";
   }
 
-  // Returns true if the file can be dumped.
-  auto IncludeInDumps() const -> bool {
-    return options_.exclude_dump_file_prefix.empty() ||
-           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
-  }
-
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
@@ -668,17 +694,26 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     return {.success = false};
   }
 
+  // Find the files comprising the prelude if we are importing it.
+  // TODO: Replace this with a search for library api files in a
+  // package-specific search path based on the library name.
+  bool want_prelude = options.prelude_import &&
+                      options.phase >= CompileOptions::Phase::Check;
+  auto prelude = want_prelude ? FindPreludeFiles(error_stream_)
+                              : llvm::SmallVector<std::string>{};
+  if (want_prelude && prelude.empty()) {
+    return {.success = false};
+  }
+
   // Prepare CompilationUnits before building scope exit handlers.
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  units.reserve(options.prelude_import + options.input_filenames.size());
+  units.reserve(prelude.size() + options.input_filenames.size());
 
-  // Directly insert the core package into the compilation units.
-  // TODO: Should expand this into a more rich system to search for the core
-  // package source code.
-  if (options.prelude_import) {
+  // Add the prelude files.
+  for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, "core/prelude.carbon"));
+        this, options, &stream_consumer, input_filename));
   }
 
   // Add the input source files.
@@ -691,7 +726,9 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     // Shared values will always be printed after per-file printing.
     if (options.dump_shared_values) {
       for (const auto& unit : units) {
-        unit->PrintSharedValues();
+        if (unit->IncludeInDumps()) {
+          unit->PrintSharedValues();
+        }
       }
     }
 
