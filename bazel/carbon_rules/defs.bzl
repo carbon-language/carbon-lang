@@ -5,7 +5,7 @@
 """Provides rules for building Carbon files using the toolchain."""
 
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_import")
 
 def carbon_binary(name, srcs):
     """Compiles a Carbon binary.
@@ -34,10 +34,14 @@ def carbon_binary(name, srcs):
             srcs = srcs,
             outs = [out],
         )
+    cc_import(
+        name = "%s.objs" % name,
+        objects = [src + ".compile" for src in srcs],
+    )
 
     # For now, we assume that the prelude doesn't produce any necessary object
     # code, and don't include the .o files for //core/prelude... in the final
     # linked binary.
     #
     # TODO: This will need to be revisited eventually.
-    cc_binary(name = name, srcs = [src + ".o" for src in srcs])
+    cc_binary(name = name, deps = ["%s.objs" % name])
