@@ -79,9 +79,9 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Empty = %import_ref.1
 // CHECK:STDOUT:     .Incomplete = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Empty = %Empty.decl.loc16
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%Empty]

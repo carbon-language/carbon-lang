@@ -119,12 +119,13 @@ class C {}
 library "fail_extern_decl_after_decl" api;
 
 class C;
-// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of `class C` is redundant.
+// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `class C` is redundant.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE-4]]:1: Previously declared here.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 extern class C;
 
 // --- import_extern_decl_then_decl.carbon
@@ -148,12 +149,24 @@ library "import_extern_decl_then_def" api;
 import library "extern_decl";
 import library "def";
 
-// --- todo_fail_import_ownership_conflict.carbon
+// --- fail_import_ownership_conflict.carbon
 
 library "fail_import_ownership_conflict" api;
 
 import library "extern_decl";
 import library "decl";
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "def";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: def.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: class C {}
+// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: class C;
+// CHECK:STDERR: ^~~~~~~~
 import library "def";
 
 // --- import_extern_decl_copy.carbon
@@ -345,7 +358,7 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
@@ -393,7 +406,7 @@ extern class C;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
@@ -420,8 +433,8 @@ extern class C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc11: type = extern_decl %C.decl.loc11 [template = constants.%.1]
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %.loc12: type = extern_decl %C.decl.loc12 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -436,7 +449,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+3, loaded [template = constants.%.1]
@@ -485,7 +498,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+3, loaded [template = constants.%.2]
@@ -506,7 +519,7 @@ extern class C;
 // CHECK:STDOUT:   .Self = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_import_ownership_conflict.carbon
+// CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
@@ -518,7 +531,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+3, loaded [template = constants.%.1]
@@ -531,12 +544,12 @@ extern class C;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT: class @C.1 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.4
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.3 {
 // CHECK:STDOUT: !members:
@@ -577,8 +590,8 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+3, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -599,8 +612,8 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -622,8 +635,8 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -649,8 +662,8 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}

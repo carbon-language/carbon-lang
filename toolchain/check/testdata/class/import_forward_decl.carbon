@@ -10,22 +10,10 @@ library "a" api;
 
 class ForwardDecl;
 
-// --- fail_b.carbon
+// --- a.impl.carbon
 
-library "b" api;
+library "a" impl;
 
-import library "a";
-
-// TODO: This should probably have a valid form.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+9]]:1: ERROR: Only one library can declare `class ForwardDecl` without `extern`.
-// CHECK:STDERR: class ForwardDecl {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-6]]:1: In import.
-// CHECK:STDERR: import library "a";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: Previously declared here.
-// CHECK:STDERR: class ForwardDecl;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 class ForwardDecl {
 }
 
@@ -46,7 +34,7 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardDecl: type = class_type @ForwardDecl [template]
@@ -55,12 +43,12 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardDecl = %import_ref
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+2, loaded [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loaded [template = constants.%ForwardDecl]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ForwardDecl.decl.loc16: type = class_decl @ForwardDecl [template = constants.%ForwardDecl] {
+// CHECK:STDOUT:   %ForwardDecl.decl.loc4: type = class_decl @ForwardDecl [template = constants.%ForwardDecl] {
 // CHECK:STDOUT:     %ForwardDecl.decl.1: invalid = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
