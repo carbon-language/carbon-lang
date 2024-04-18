@@ -842,6 +842,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
     case SemIR::BoolLiteral::Kind:
+    case SemIR::FloatLiteral::Kind:
     case SemIR::IntLiteral::Kind:
     case SemIR::RealLiteral::Kind:
     case SemIR::StringLiteral::Kind:

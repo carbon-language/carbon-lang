@@ -247,6 +247,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Converted::Kind:
     case Deref::Kind:
     case FieldDecl::Kind:
+    case FloatLiteral::Kind:
     case FunctionDecl::Kind:
     case ImplDecl::Kind:
     case ImportRefUnloaded::Kind:
@@ -521,6 +522,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
+      case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case ImportRefUnloaded::Kind:
@@ -639,6 +641,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case ConstType::Kind:
       case FacetTypeAccess::Kind:
+      case FloatLiteral::Kind:
       case FloatType::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:

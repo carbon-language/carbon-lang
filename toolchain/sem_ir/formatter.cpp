@@ -1161,6 +1161,14 @@ class Formatter {
         .print(out_, sem_ir_.types().IsSignedInt(inst.type_id));
   }
 
+  auto FormatInstructionRHS(FloatLiteral inst) -> void {
+    // Arbitrarily uses 5 digits of precision when formatting
+    // float literals.
+    llvm::SmallVector<char, 16> buffer;
+    sem_ir_.floats().Get(inst.float_id).toString(buffer, 5);
+    out_ << " " << buffer;
+  }
+
   auto FormatInstructionRHS(ImportRefUnloaded inst) -> void {
     FormatArgs(inst.import_ir_inst_id);
     out_ << ", unloaded";

@@ -444,6 +444,14 @@ struct FacetTypeAccess {
   InstId facet_id;
 };
 
+struct FloatLiteral {
+  static constexpr auto Kind =
+      InstKind::FloatLiteral.Define<Parse::RealLiteralId>("float_literal");
+
+  TypeId type_id;
+  FloatId float_id;
+};
+
 struct FloatType {
   static constexpr auto Kind =
       InstKind::FloatType.Define<Parse::NodeId>("float_type");
