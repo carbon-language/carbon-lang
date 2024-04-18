@@ -345,6 +345,18 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[1]), "fadd"));
       return;
     }
+    case SemIR::BuiltinFunctionKind::FloatSub: {
+      context.SetLocal(inst_id, context.builder().CreateFSub(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fsub"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatMul: {
+      context.SetLocal(inst_id, context.builder().CreateFMul(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fmul"));
+      return;
+    }
   }
 
   CARBON_FATAL() << "Unsupported builtin call.";

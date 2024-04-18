@@ -4,35 +4,35 @@
 //
 // AUTOUPDATE
 
-// --- float_add.carbon
+// --- mul_sub.carbon
 
-fn Add(a: f64, b: f64) -> f64 = "float.add";
+fn Mul(a: f64, b: f64) -> f64 = "float.mul";
 
 fn RuntimeCall(a: f64, b: f64) -> f64 {
-  return Add(a, b);
+  return Mul(a, b);
 }
 
-var x: f64 = Add(2.2, 2.3);
+var x: f64 = Mul(2.0, 0.5);
 
 // --- fail_bad_decl.carbon
 
 package FailBadDecl api;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.add".
-// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.add";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.mul".
+// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.mul";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooFew(a: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.add".
-// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
+fn TooFew(a: f64) -> f64 = "float.mul";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.mul".
+// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.mul";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for builtin function "float.add".
-// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
+fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.mul";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for builtin function "float.mul".
+// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.mul";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
-fn JustRight(a: f64, b: f64) -> f64 = "float.add";
+fn BadReturnType(a: f64, b: f64) -> bool = "float.mul";
+fn JustRight(a: f64, b: f64) -> f64 = "float.mul";
 
 fn RuntimeCallTooFew(a: f64) -> f64 {
   return TooFew(a);
@@ -46,28 +46,28 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
-// CHECK:STDOUT: --- float_add.carbon
+// CHECK:STDOUT: --- mul_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = float_literal 2.2 [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 2.3 [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 4.5 [template]
+// CHECK:STDOUT:   %.1: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 0.5 [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Add = %Add
+// CHECK:STDOUT:     .Mul = %Mul
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Add: <function> = fn_decl @Add [template] {
+// CHECK:STDOUT:   %Mul: <function> = fn_decl @Mul [template] {
 // CHECK:STDOUT:     %a.loc2_8.1: f64 = param a
-// CHECK:STDOUT:     @Add.%a: f64 = bind_name a, %a.loc2_8.1
+// CHECK:STDOUT:     @Mul.%a: f64 = bind_name a, %a.loc2_8.1
 // CHECK:STDOUT:     %b.loc2_16.1: f64 = param b
-// CHECK:STDOUT:     @Add.%b: f64 = bind_name b, %b.loc2_16.1
-// CHECK:STDOUT:     @Add.%return: ref f64 = var <return slot>
+// CHECK:STDOUT:     @Mul.%b: f64 = bind_name b, %b.loc2_16.1
+// CHECK:STDOUT:     @Mul.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
 // CHECK:STDOUT:     %a.loc4_16.1: f64 = param a
@@ -80,14 +80,14 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: f64, %b: f64) -> f64 = "float.add";
+// CHECK:STDOUT: fn @Mul(%a: f64, %b: f64) -> f64 = "float.mul";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: f64, %b: f64) -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
+// CHECK:STDOUT:   %Mul.ref: <function> = name_ref Mul, file.%Mul [template = file.%Mul]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %.loc5_13: init f64 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc5_13: init f64 = call %Mul.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc5_19.1: f64 = value_of_initializer %.loc5_13
 // CHECK:STDOUT:   %.loc5_19.2: f64 = converted %.loc5_13, %.loc5_19.1
 // CHECK:STDOUT:   return %.loc5_19.2
@@ -95,10 +95,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
-// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2.2 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 2.3 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_17: init f64 = call %Add.ref(%.loc8_18, %.loc8_23) [template = constants.%.3]
+// CHECK:STDOUT:   %Mul.ref: <function> = name_ref Mul, file.%Mul [template = file.%Mul]
+// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 0.5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_17: init f64 = call %Mul.ref(%.loc8_18, %.loc8_23) [template = constants.%.3]
 // CHECK:STDOUT:   assign file.%x.var, %.loc8_17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a: f64, %b: f64) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%a: f64, %b: f64) -> f64 = "float.add";
+// CHECK:STDOUT: fn @JustRight(%a: f64, %b: f64) -> f64 = "float.mul";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a: f64) -> f64 {
 // CHECK:STDOUT: !entry:

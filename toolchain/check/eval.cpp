@@ -565,6 +565,38 @@ static auto PerformBuiltinIntComparison(Context& context,
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+// Performs a builtin binary float -> float operation.
+static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc /*loc*/,
+                                        SemIR::BuiltinFunctionKind builtin_kind,
+                                        SemIR::InstId lhs_id,
+                                        SemIR::InstId rhs_id)
+    -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  auto lhs_val = context.floats().Get(lhs.float_id);
+  auto rhs_val = context.floats().Get(rhs.float_id);
+
+  llvm::APFloat result_val(0.0);
+
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+      result_val = lhs_val + rhs_val;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatSub:
+      result_val = lhs_val - rhs_val;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatMul:
+      result_val = lhs_val * rhs_val;
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected operation kind.";
+  }
+
+  FloatId result_id = context.floats().Add(result_val);
+  return MakeConstantResult(
+      context, SemIR::FloatLiteral{lhs.type_id, result_id}, Phase::Template);
+}
+
 static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
                                SemIR::BuiltinFunctionKind builtin_kind,
                                llvm::ArrayRef<SemIR::InstId> arg_ids,
@@ -644,17 +676,14 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     }
 
     // Binary float -> float operations.
-    case SemIR::BuiltinFunctionKind::FloatAdd: {
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+    case SemIR::BuiltinFunctionKind::FloatSub:
+    case SemIR::BuiltinFunctionKind::FloatMul: {
       if (phase != Phase::Template) {
         break;
       }
-
-      // TODO: Perform float addition
-      //  Float literals currently use the Real class at the check level, which
-      //  has no support for arithmetic. Check in with the team on how constant
-      //  folding should be implemented for floats.
-      context.TODO(loc, "float addition");
-      break;
+      return PerformBuiltinBinaryFloatOp(context, loc, builtin_kind, arg_ids[0],
+                                         arg_ids[1]);
     }
   }
 
