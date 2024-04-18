@@ -339,6 +339,15 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                            context.GetValue(arg_ids[1]), "cmp"));
       return;
     }
+    case SemIR::BuiltinFunctionKind::FloatNegate: {
+      // Lower `-x` as `0 - x`
+      auto* operand = context.GetValue(arg_ids[0]);
+      context.SetLocal(inst_id,
+                       context.builder().CreateFSub(
+                           llvm::ConstantInt::getNullValue(operand->getType()),
+                           operand, "fneg"));
+      return;
+    }
     case SemIR::BuiltinFunctionKind::FloatAdd: {
       context.SetLocal(inst_id, context.builder().CreateFAdd(
                                     context.GetValue(arg_ids[0]),
@@ -355,6 +364,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.builder().CreateFMul(
                                     context.GetValue(arg_ids[0]),
                                     context.GetValue(arg_ids[1]), "fmul"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatDiv: {
+      context.SetLocal(inst_id, context.builder().CreateFDiv(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fdiv"));
       return;
     }
   }

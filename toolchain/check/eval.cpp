@@ -91,6 +91,14 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
                             Phase::Template);
 }
 
+// Converts an APFloat value into a ConstantId.
+static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
+                            llvm::APFloat value) -> SemIR::ConstantId {
+  auto result = context.floats().Add(std::move(value));
+  return MakeConstantResult(context, SemIR::FloatLiteral{type_id, result},
+                            Phase::Template);
+}
+
 // `GetConstantValue` checks to see whether the provided ID describes a value
 // with constant phase, and if so, returns the corresponding constant value.
 // Overloads are provided for different kinds of ID.
@@ -565,8 +573,27 @@ static auto PerformBuiltinIntComparison(Context& context,
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+// Performs a builtin unary float -> float operation.
+static auto PerformBuiltinUnaryFloatOp(Context& context,
+                                       SemIR::BuiltinFunctionKind builtin_kind,
+                                       SemIR::InstId arg_id)
+    -> SemIR::ConstantId {
+  auto op = context.insts().GetAs<SemIR::FloatLiteral>(arg_id);
+  auto op_val = context.floats().Get(op.float_id);
+
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatNegate:
+      op_val = llvm::APFloat(0.0) - op_val;
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected builtin kind";
+  }
+
+  return MakeFloatResult(context, op.type_id, std::move(op_val));
+}
+
 // Performs a builtin binary float -> float operation.
-static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc /*loc*/,
+static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc loc,
                                         SemIR::BuiltinFunctionKind builtin_kind,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
@@ -588,13 +615,18 @@ static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc /*loc*/,
     case SemIR::BuiltinFunctionKind::FloatMul:
       result_val = lhs_val * rhs_val;
       break;
+    case SemIR::BuiltinFunctionKind::FloatDiv:
+      if (rhs_val.isZero()) {
+        DiagnoseDivisionByZero(context, loc);
+        return SemIR::ConstantId::Error;
+      }
+      result_val = lhs_val / rhs_val;
+      break;
     default:
       CARBON_FATAL() << "Unexpected operation kind.";
   }
 
-  FloatId result_id = context.floats().Add(result_val);
-  return MakeConstantResult(
-      context, SemIR::FloatLiteral{lhs.type_id, result_id}, Phase::Template);
+  return MakeFloatResult(context, lhs.type_id, std::move(result_val));
 }
 
 static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
@@ -675,10 +707,20 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
                                          arg_ids[1], call.type_id);
     }
 
+    // Unary float -> float operations.
+    case SemIR::BuiltinFunctionKind::FloatNegate: {
+      if (phase != Phase::Template) {
+        break;
+      }
+
+      return PerformBuiltinUnaryFloatOp(context, builtin_kind, arg_ids[0]);
+    }
+
     // Binary float -> float operations.
     case SemIR::BuiltinFunctionKind::FloatAdd:
     case SemIR::BuiltinFunctionKind::FloatSub:
-    case SemIR::BuiltinFunctionKind::FloatMul: {
+    case SemIR::BuiltinFunctionKind::FloatMul:
+    case SemIR::BuiltinFunctionKind::FloatDiv: {
       if (phase != Phase::Template) {
         break;
       }

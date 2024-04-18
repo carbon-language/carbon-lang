@@ -251,6 +251,10 @@ constexpr BuiltinInfo IntGreater = {"int.greater",
 constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntT)->Bool>};
 
+// "float.negate": float negation.
+constexpr BuiltinInfo FloatNegate = {"float.negate",
+                                     ValidateSignature<auto(FloatT)->FloatT>};
+
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
     "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
@@ -262,6 +266,10 @@ constexpr BuiltinInfo FloatSub = {
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
     "float.mul", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+
+// "float.div": float division.
+constexpr BuiltinInfo FloatDiv = {
+    "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 }  // namespace BuiltinFunctionInfo
 
