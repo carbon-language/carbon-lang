@@ -117,7 +117,7 @@ class FunctionContext {
 
     // The instruction namer.
     const SemIR::InstNamer* namer_;
-  
+
     // The current instruction ID.
     SemIR::InstId inst_id_ = SemIR::InstId::Invalid;
   };

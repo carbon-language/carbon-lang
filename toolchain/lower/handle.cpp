@@ -231,99 +231,99 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntNegate: {
       // Lower `-x` as `0 - x`.
       auto* operand = context.GetValue(arg_ids[0]);
-      context.SetLocal(inst_id,
-                       context.builder().CreateSub(
-                           llvm::ConstantInt::getNullValue(operand->getType()),
-                           operand, "",
-                           /*HasNUW=*/false,
-                           /*HasNSW=*/SignedOverflowIsUB));
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateSub(
+              llvm::ConstantInt::getNullValue(operand->getType()), operand, "",
+              /*HasNUW=*/false,
+              /*HasNSW=*/SignedOverflowIsUB));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntComplement: {
       // Lower `^x` as `-1 ^ x`.
       auto* operand = context.GetValue(arg_ids[0]);
-      context.SetLocal(inst_id,
-                       context.builder().CreateXor(
-                           llvm::ConstantInt::getSigned(operand->getType(), -1),
-                           operand));
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateXor(
+              llvm::ConstantInt::getSigned(operand->getType(), -1), operand));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntAdd: {
-      context.SetLocal(inst_id, context.builder().CreateAdd(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "",
-                                    /*HasNUW=*/false,
-                                    /*HasNSW=*/SignedOverflowIsUB));
+      context.SetLocal(
+          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1]), "",
+                                               /*HasNUW=*/false,
+                                               /*HasNSW=*/SignedOverflowIsUB));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntSub: {
-      context.SetLocal(inst_id, context.builder().CreateSub(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "",
-                                    /*HasNUW=*/false,
-                                    /*HasNSW=*/SignedOverflowIsUB));
+      context.SetLocal(
+          inst_id, context.builder().CreateSub(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1]), "",
+                                               /*HasNUW=*/false,
+                                               /*HasNSW=*/SignedOverflowIsUB));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntMul: {
-      context.SetLocal(inst_id, context.builder().CreateMul(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "",
-                                    /*HasNUW=*/false,
-                                    /*HasNSW=*/SignedOverflowIsUB));
+      context.SetLocal(
+          inst_id, context.builder().CreateMul(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1]), "",
+                                               /*HasNUW=*/false,
+                                               /*HasNSW=*/SignedOverflowIsUB));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntDiv: {
-      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
-                                    ? context.builder().CreateSDiv(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1]))
-                                    : context.builder().CreateUDiv(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id,
+          IsSignedInt(context, inst_id)
+              ? context.builder().CreateSDiv(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1]))
+              : context.builder().CreateUDiv(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntMod: {
-      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
-                                    ? context.builder().CreateSRem(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1]))
-                                    : context.builder().CreateURem(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id,
+          IsSignedInt(context, inst_id)
+              ? context.builder().CreateSRem(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1]))
+              : context.builder().CreateURem(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntAnd: {
-      context.SetLocal(inst_id, context.builder().CreateAnd(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateAnd(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntOr: {
-      context.SetLocal(inst_id, context.builder().CreateOr(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateOr(context.GetValue(arg_ids[0]),
+                                              context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntXor: {
-      context.SetLocal(inst_id, context.builder().CreateXor(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateXor(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntLeftShift: {
-      context.SetLocal(inst_id, context.builder().CreateShl(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateShl(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      context.SetLocal(inst_id, IsSignedInt(context, inst_id)
-                                    ? context.builder().CreateAShr(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1]))
-                                    : context.builder().CreateLShr(
-                                          context.GetValue(arg_ids[0]),
-                                          context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id,
+          IsSignedInt(context, inst_id)
+              ? context.builder().CreateAShr(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1]))
+              : context.builder().CreateLShr(context.GetValue(arg_ids[0]),
+                                             context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -332,12 +332,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
     case SemIR::BuiltinFunctionKind::IntGreaterEq: {
-      context.SetLocal(inst_id,
-                       context.builder().CreateICmp(
-                           GetBuiltinICmpPredicate(
-                               builtin_kind, IsSignedInt(context, arg_ids[0])),
-                           context.GetValue(arg_ids[0]),
-                           context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateICmp(
+              GetBuiltinICmpPredicate(builtin_kind,
+                                      IsSignedInt(context, arg_ids[0])),
+              context.GetValue(arg_ids[0]), context.GetValue(arg_ids[1])));
       return;
     }
   }

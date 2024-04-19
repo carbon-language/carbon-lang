@@ -128,7 +128,8 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   return inst_name ? inst_name.str() : "";
 }
 
-auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const -> std::string {
+auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
+    -> std::string {
   if (!inst_id.is_valid()) {
     return "invalid";
   }
@@ -155,7 +156,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const -> std::strin
   return (GetScopeName(inst_scope) + ".%" + inst_name.str()).str();
 }
 
-auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const -> llvm::StringRef {
+auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
+    -> llvm::StringRef {
   if (!block_id.is_valid()) {
     return "";
   }
@@ -164,8 +166,8 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const -> llvm::StringR
 }
 
 // Returns the IR name to use for a label, when referenced from a given scope.
-auto InstNamer::GetLabelFor(ScopeId scope_id,
-                            InstBlockId block_id) const -> std::string {
+auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
+    -> std::string {
   if (!block_id.is_valid()) {
     return "!invalid";
   }
@@ -194,8 +196,8 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
 }
 
 auto InstNamer::Namespace::AllocateName(const InstNamer& namer,
-                                        SemIR::LocId loc_id,
-                                        std::string name) -> Name {
+                                        SemIR::LocId loc_id, std::string name)
+    -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
@@ -342,8 +344,8 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
   AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
 }
 
-auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
-                                    InstBlockId block_id) -> void {
+auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
+    -> void {
   if (block_id.is_valid()) {
     CollectNamesInBlock(scope_id, sem_ir_.inst_blocks().Get(block_id));
   }

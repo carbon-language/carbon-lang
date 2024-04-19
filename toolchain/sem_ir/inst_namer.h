@@ -148,13 +148,13 @@ class InstNamer {
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
-                     AnyBranch branch) -> void;
+  auto AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id, AnyBranch branch)
+      -> void;
 
   auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
 
-  auto CollectNamesInBlock(ScopeId scope_id,
-                           llvm::ArrayRef<InstId> block) -> void;
+  auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
+      -> void;
 
   const Lex::TokenizedBuffer& tokenized_buffer_;
   const Parse::Tree& parse_tree_;
