@@ -583,23 +583,22 @@ class Driver::CompilationUnit {
     LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
   }
 
-  // Flushes output.
-  auto Flush() -> void { consumer_->Flush(); }
+  // Runs post-compile logic. This is always called, and called after all other
+  // actions on the CompilationUnit.
+  auto PostCompile() const -> void {
+    if (options_.dump_shared_values && IncludeInDumps()) {
+      Yaml::Print(driver_->output_stream_,
+                  value_stores_.OutputYaml(input_filename_));
+    }
 
-  auto PrintSharedValues() const -> void {
-    Yaml::Print(driver_->output_stream_,
-                value_stores_.OutputYaml(input_filename_));
+    // The diagnostics consumer must be flushed before compilation artifacts are
+    // destructed, because diagnostics can refer to their state.
+    consumer_->Flush();
   }
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
-
-  // Returns true if the file can be dumped.
-  auto IncludeInDumps() const -> bool {
-    return options_.exclude_dump_file_prefix.empty() ||
-           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
-  }
 
  private:
   // Do codegen. Returns true on success.
@@ -679,6 +678,12 @@ class Driver::CompilationUnit {
     CARBON_VLOG() << "*** " << label << " done ***\n";
   }
 
+  // Returns true if the file can be dumped.
+  auto IncludeInDumps() const -> bool {
+    return options_.exclude_dump_file_prefix.empty() ||
+           !input_filename_.starts_with(options_.exclude_dump_file_prefix);
+  }
+
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
@@ -736,21 +741,12 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
-    // Shared values will always be printed after per-file printing.
-    if (options.dump_shared_values) {
-      for (const auto& unit : units) {
-        if (unit->IncludeInDumps()) {
-          unit->PrintSharedValues();
-        }
-      }
+    // Finish compilation units. This flushes their diagnostics in the order in
+    // which they were specified on the command line.
+    for (auto& unit : units) {
+      unit->PostCompile();
     }
 
-    // The diagnostics consumer must be flushed before compilation artifacts are
-    // destructed, because diagnostics can refer to their state. This ensures
-    // they're flushed in order of arguments, rather than order of destruction.
-    for (auto& unit : units) {
-      unit->Flush();
-    }
     stream_consumer.Flush();
   });
 
