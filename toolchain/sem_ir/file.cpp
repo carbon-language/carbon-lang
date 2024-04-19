@@ -393,7 +393,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
           out << "f";
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
-          out << "Float(";
+          out << "Core.Float(";
           steps.push_back(step.Next());
           push_inst_id(inst.bit_width_id);
         }
