@@ -457,7 +457,6 @@ struct FloatType {
       InstKind::FloatType.Define<Parse::NodeId>("float_type");
 
   TypeId type_id;
-  FloatKind float_kind;
   // TODO: Consider adding a more compact way of representing either a small
   // float bit width or an inst_id.
   InstId bit_width_id;
