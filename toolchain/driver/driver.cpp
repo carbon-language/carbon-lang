@@ -56,10 +56,9 @@ auto Driver::FindPreludeFiles(llvm::StringRef data_dir,
     if (ec) {
       error_stream << "ERROR: Could not find prelude: " << ec.message() << "\n";
       result.clear();
-      break;
+      return result;
     }
 
-    // TODO: Should we ignore case?
     auto prelude_file = prelude_files_it->path();
     if (llvm::sys::path::extension(prelude_file) == ".carbon") {
       result.push_back(prelude_file);
