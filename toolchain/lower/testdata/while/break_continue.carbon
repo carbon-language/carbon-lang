@@ -25,33 +25,33 @@ fn While() {
 // CHECK:STDOUT: declare i1 @C()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() {
-// CHECK:STDOUT: entry1:
-// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: entry:                                            ; preds = %entry1, %1, %if.then.loc13
+// CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc14, %if.then.loc13
 // CHECK:STDOUT:   %A = call i1 @A()
-// CHECK:STDOUT:   br i1 %A, label %while.body, label %2
+// CHECK:STDOUT:   br i1 %A, label %while.body, label %while.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.body:                                       ; preds = %entry
+// CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %B = call i1 @B()
-// CHECK:STDOUT:   br i1 %B, label %if.then.loc13, label %0
+// CHECK:STDOUT:   br i1 %B, label %if.then.loc13, label %if.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc13:                                    ; preds = %while.body
-// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %while.body
+// CHECK:STDOUT: if.else.loc13:                                    ; preds = %while.body
 // CHECK:STDOUT:   %C = call i1 @C()
-// CHECK:STDOUT:   br i1 %C, label %if.then.loc14, label %1
+// CHECK:STDOUT:   br i1 %C, label %if.then.loc14, label %if.else.loc14
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc14:                                    ; preds = %0
-// CHECK:STDOUT:   br label %2
+// CHECK:STDOUT: if.then.loc14:                                    ; preds = %if.else.loc13
+// CHECK:STDOUT:   br label %while.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
-// CHECK:STDOUT:   br label %entry
+// CHECK:STDOUT: if.else.loc14:                                    ; preds = %if.else.loc13
+// CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %if.then.loc14, %entry
+// CHECK:STDOUT: while.done:                                       ; preds = %if.then.loc14, %while.cond
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %entry, { 1, 2, 0 }
+// CHECK:STDOUT:   uselistorder label %while.cond, { 1, 2, 0 }
 // CHECK:STDOUT: }

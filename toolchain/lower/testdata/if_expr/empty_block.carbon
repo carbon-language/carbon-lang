@@ -13,35 +13,35 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Select(i1 %b, i1 %c, i1 %d) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc8_10, label %2
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc8_10, label %if.expr.else.loc8_10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then.loc8_10:                             ; preds = %entry
-// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc8_20, label %0
+// CHECK:STDOUT:   br i1 %c, label %if.expr.then.loc8_20, label %if.expr.else.loc8_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then.loc8_20:                             ; preds = %if.expr.then.loc8_10
 // CHECK:STDOUT:   br label %if.expr.result.loc8_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %if.expr.then.loc8_10
+// CHECK:STDOUT: if.expr.else.loc8_20:                             ; preds = %if.expr.then.loc8_10
 // CHECK:STDOUT:   br label %if.expr.result.loc8_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result.loc8_20:                           ; preds = %0, %if.expr.then.loc8_20
-// CHECK:STDOUT:   %1 = phi i32 [ 1, %if.expr.then.loc8_20 ], [ 2, %0 ]
+// CHECK:STDOUT: if.expr.result.loc8_20:                           ; preds = %if.expr.else.loc8_20, %if.expr.then.loc8_20
+// CHECK:STDOUT:   %0 = phi i32 [ 1, %if.expr.then.loc8_20 ], [ 2, %if.expr.else.loc8_20 ]
 // CHECK:STDOUT:   br label %if.expr.result.loc8_10
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %entry
-// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc8_44, label %3
+// CHECK:STDOUT: if.expr.else.loc8_10:                             ; preds = %entry
+// CHECK:STDOUT:   br i1 %d, label %if.expr.then.loc8_44, label %if.expr.else.loc8_44
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.then.loc8_44:                             ; preds = %2
+// CHECK:STDOUT: if.expr.then.loc8_44:                             ; preds = %if.expr.else.loc8_10
 // CHECK:STDOUT:   br label %if.expr.result.loc8_44
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %2
+// CHECK:STDOUT: if.expr.else.loc8_44:                             ; preds = %if.expr.else.loc8_10
 // CHECK:STDOUT:   br label %if.expr.result.loc8_44
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result.loc8_44:                           ; preds = %3, %if.expr.then.loc8_44
-// CHECK:STDOUT:   %4 = phi i32 [ 3, %if.expr.then.loc8_44 ], [ 4, %3 ]
+// CHECK:STDOUT: if.expr.result.loc8_44:                           ; preds = %if.expr.else.loc8_44, %if.expr.then.loc8_44
+// CHECK:STDOUT:   %1 = phi i32 [ 3, %if.expr.then.loc8_44 ], [ 4, %if.expr.else.loc8_44 ]
 // CHECK:STDOUT:   br label %if.expr.result.loc8_10
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.result.loc8_10:                           ; preds = %if.expr.result.loc8_44, %if.expr.result.loc8_20
-// CHECK:STDOUT:   %5 = phi i32 [ %1, %if.expr.result.loc8_20 ], [ %4, %if.expr.result.loc8_44 ]
-// CHECK:STDOUT:   ret i32 %5
+// CHECK:STDOUT:   %2 = phi i32 [ %0, %if.expr.result.loc8_20 ], [ %1, %if.expr.result.loc8_44 ]
+// CHECK:STDOUT:   ret i32 %2
 // CHECK:STDOUT: }

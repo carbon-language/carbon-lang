@@ -29,13 +29,13 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @If(i1 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.then, label %0
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:   br label %if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %if.then, %entry
+// CHECK:STDOUT: if.else:                                          ; preds = %if.then, %entry
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -39,6 +39,9 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
   if (block == synthetic_block_) {
     synthetic_block_ = nullptr;
   }
+  if (const auto* inst_namer = file_context_->inst_namer()) {
+    block->setName(inst_namer->GetUnscopedLabelFor(block_id));
+  }
   return true;
 }
 

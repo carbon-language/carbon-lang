@@ -37,17 +37,17 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @If(i1 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.then, label %0
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   call void @F()
 // CHECK:STDOUT:   br label %if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %entry
+// CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   br label %if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.done:                                          ; preds = %0, %if.then
+// CHECK:STDOUT: if.done:                                          ; preds = %if.else, %if.then
 // CHECK:STDOUT:   call void @H()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

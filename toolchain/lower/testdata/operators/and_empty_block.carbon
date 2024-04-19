@@ -15,12 +15,12 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @And(i1 %b, i1 %c) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %and.rhs, label %0
+// CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs:                                          ; preds = %entry
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:   br label %and.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %and.rhs, %entry
-// CHECK:STDOUT:   %1 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
-// CHECK:STDOUT:   ret i1 %1
+// CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
+// CHECK:STDOUT:   ret i1 %0
 // CHECK:STDOUT: }

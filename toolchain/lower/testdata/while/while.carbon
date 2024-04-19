@@ -36,13 +36,13 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
 // CHECK:STDOUT:   %Cond = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond, label %while.body, label %0
+// CHECK:STDOUT:   br i1 %Cond, label %while.body, label %while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %while.cond
+// CHECK:STDOUT: while.done:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @H()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

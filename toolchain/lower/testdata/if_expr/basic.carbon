@@ -26,17 +26,17 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Select(i1 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %0
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.expr.then:                                     ; preds = %entry
 // CHECK:STDOUT:   %F = call i32 @F()
 // CHECK:STDOUT:   br label %if.expr.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %entry
+// CHECK:STDOUT: if.expr.else:                                     ; preds = %entry
 // CHECK:STDOUT:   %G = call i32 @G()
 // CHECK:STDOUT:   br label %if.expr.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.expr.result:                                   ; preds = %0, %if.expr.then
-// CHECK:STDOUT:   %1 = phi i32 [ %F, %if.expr.then ], [ %G, %0 ]
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT: if.expr.result:                                   ; preds = %if.expr.else, %if.expr.then
+// CHECK:STDOUT:   %0 = phi i32 [ %F, %if.expr.then ], [ %G, %if.expr.else ]
+// CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
