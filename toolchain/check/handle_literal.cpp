@@ -61,6 +61,10 @@ auto HandleRealLiteral(Context& context, Parse::RealLiteralId node_id) -> bool {
   // Convert the real literal to an llvm::APFloat and add it to the floats
   // ValueStore. In the future this would use an arbitrary precision Rational
   // type.
+  //
+  // TODO: Implement Carbon's actual implicit conversion rules for
+  // floating-point constants, as per the design
+  // docs/design/expressions/implicit_conversions.md
   auto real_id =
       context.tokens().GetRealLiteral(context.parse_tree().node_token(node_id));
   auto real_value = context.sem_ir().reals().Get(real_id);
