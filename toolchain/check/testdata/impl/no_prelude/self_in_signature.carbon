@@ -21,15 +21,15 @@ impl D as UseSelf {
 }
 
 interface SelfNested {
-  fn F(x: (Self*, {.x: Self, .y: i32}));
+  fn F(x: (Self*, {.x: Self, .y: ()}));
 }
 
 impl C as SelfNested {
-  fn F(x: (C*, {.x: C, .y: i32}));
+  fn F(x: (C*, {.x: C, .y: ()}));
 }
 
 impl D as SelfNested {
-  fn F(x: (Self*, {.x: Self, .y: i32}));
+  fn F(x: (Self*, {.x: Self, .y: ()}));
 }
 
 // CHECK:STDOUT: --- self_in_signature.carbon
@@ -51,30 +51,28 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.11: type = interface_type @SelfNested [template]
 // CHECK:STDOUT:   %Self.2: SelfNested = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.12: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %.13: type = struct_type {.x: Self, .y: i32} [symbolic]
+// CHECK:STDOUT:   %.13: type = struct_type {.x: Self, .y: ()} [symbolic]
 // CHECK:STDOUT:   %.14: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.15: type = tuple_type (Self*, {.x: Self, .y: i32}) [symbolic]
+// CHECK:STDOUT:   %.15: type = tuple_type (Self*, {.x: Self, .y: ()}) [symbolic]
 // CHECK:STDOUT:   %.16: type = assoc_entity_type @SelfNested, <function> [template]
 // CHECK:STDOUT:   %.17: <associated <function> in SelfNested> = assoc_entity element0, @SelfNested.%F [template]
 // CHECK:STDOUT:   %.18: type = ptr_type C [template]
-// CHECK:STDOUT:   %.19: type = struct_type {.x: C, .y: i32} [template]
-// CHECK:STDOUT:   %.20: type = tuple_type (C*, {.x: C, .y: i32}) [template]
+// CHECK:STDOUT:   %.19: type = struct_type {.x: C, .y: ()} [template]
+// CHECK:STDOUT:   %.20: type = tuple_type (C*, {.x: C, .y: ()}) [template]
 // CHECK:STDOUT:   %.21: <witness> = interface_witness (@impl.3.%F) [template]
 // CHECK:STDOUT:   %.22: type = ptr_type D [template]
-// CHECK:STDOUT:   %.23: type = struct_type {.x: D, .y: i32} [template]
-// CHECK:STDOUT:   %.24: type = tuple_type (D*, {.x: D, .y: i32}) [template]
+// CHECK:STDOUT:   %.23: type = struct_type {.x: D, .y: ()} [template]
+// CHECK:STDOUT:   %.24: type = tuple_type (D*, {.x: D, .y: ()}) [template]
 // CHECK:STDOUT:   %.25: <witness> = interface_witness (@impl.4.%F) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .UseSelf = %UseSelf.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .SelfNested = %SelfNested.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %UseSelf.decl: type = interface_decl @UseSelf [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
@@ -133,17 +131,19 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc24_24: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc24_24.1: type = facet_type_access %Self.ref.loc24_24 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc24_24.2: type = converted %Self.ref.loc24_24, %.loc24_24.1 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:     %.loc24_37: type = struct_type {.x: Self, .y: i32} [symbolic = constants.%.13]
-// CHECK:STDOUT:     %.loc24_38.1: (type, type) = tuple_literal (%.loc24_16.3, %.loc24_37)
-// CHECK:STDOUT:     %.loc24_38.2: type = converted %.loc24_38.1, constants.%.15 [symbolic = constants.%.15]
-// CHECK:STDOUT:     %x.loc24_8.1: (Self*, {.x: Self, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc24_8.2: (Self*, {.x: Self, .y: i32}) = bind_name x, %x.loc24_8.1
+// CHECK:STDOUT:     %.loc24_35.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc24_35.2: type = converted %.loc24_35.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc24_36: type = struct_type {.x: Self, .y: ()} [symbolic = constants.%.13]
+// CHECK:STDOUT:     %.loc24_37.1: (type, type) = tuple_literal (%.loc24_16.3, %.loc24_36)
+// CHECK:STDOUT:     %.loc24_37.2: type = converted %.loc24_37.1, constants.%.15 [symbolic = constants.%.15]
+// CHECK:STDOUT:     %x.loc24_8.1: (Self*, {.x: Self, .y: ()}) = param x
+// CHECK:STDOUT:     %x.loc24_8.2: (Self*, {.x: Self, .y: ()}) = bind_name x, %x.loc24_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24_40: <associated <function> in SelfNested> = assoc_entity element0, %F [template = constants.%.17]
+// CHECK:STDOUT:   %.loc24_39: <associated <function> in SelfNested> = assoc_entity element0, %F [template = constants.%.17]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc24_40
+// CHECK:STDOUT:   .F = %.loc24_39
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -188,11 +188,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref.loc28_12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc28_13: type = ptr_type C [template = constants.%.18]
 // CHECK:STDOUT:     %C.ref.loc28_21: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc28_31: type = struct_type {.x: C, .y: i32} [template = constants.%.19]
-// CHECK:STDOUT:     %.loc28_32.1: (type, type) = tuple_literal (%.loc28_13, %.loc28_31)
-// CHECK:STDOUT:     %.loc28_32.2: type = converted %.loc28_32.1, constants.%.20 [template = constants.%.20]
-// CHECK:STDOUT:     %x.loc28_8.1: (C*, {.x: C, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc28_8.2: (C*, {.x: C, .y: i32}) = bind_name x, %x.loc28_8.1
+// CHECK:STDOUT:     %.loc28_29.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc28_29.2: type = converted %.loc28_29.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc28_30: type = struct_type {.x: C, .y: ()} [template = constants.%.19]
+// CHECK:STDOUT:     %.loc28_31.1: (type, type) = tuple_literal (%.loc28_13, %.loc28_30)
+// CHECK:STDOUT:     %.loc28_31.2: type = converted %.loc28_31.1, constants.%.20 [template = constants.%.20]
+// CHECK:STDOUT:     %x.loc28_8.1: (C*, {.x: C, .y: ()}) = param x
+// CHECK:STDOUT:     %x.loc28_8.2: (C*, {.x: C, .y: ()}) = bind_name x, %x.loc28_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.21]
 // CHECK:STDOUT:
@@ -206,11 +208,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %Self.ref.loc32_12: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %.loc32_16: type = ptr_type D [template = constants.%.22]
 // CHECK:STDOUT:     %Self.ref.loc32_24: type = name_ref Self, constants.%D [template = constants.%D]
-// CHECK:STDOUT:     %.loc32_37: type = struct_type {.x: D, .y: i32} [template = constants.%.23]
-// CHECK:STDOUT:     %.loc32_38.1: (type, type) = tuple_literal (%.loc32_16, %.loc32_37)
-// CHECK:STDOUT:     %.loc32_38.2: type = converted %.loc32_38.1, constants.%.24 [template = constants.%.24]
-// CHECK:STDOUT:     %x.loc32_8.1: (D*, {.x: D, .y: i32}) = param x
-// CHECK:STDOUT:     %x.loc32_8.2: (D*, {.x: D, .y: i32}) = bind_name x, %x.loc32_8.1
+// CHECK:STDOUT:     %.loc32_35.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc32_35.2: type = converted %.loc32_35.1, constants.%.6 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc32_36: type = struct_type {.x: D, .y: ()} [template = constants.%.23]
+// CHECK:STDOUT:     %.loc32_37.1: (type, type) = tuple_literal (%.loc32_16, %.loc32_36)
+// CHECK:STDOUT:     %.loc32_37.2: type = converted %.loc32_37.1, constants.%.24 [template = constants.%.24]
+// CHECK:STDOUT:     %x.loc32_8.1: (D*, {.x: D, .y: ()}) = param x
+// CHECK:STDOUT:     %x.loc32_8.2: (D*, {.x: D, .y: ()}) = bind_name x, %x.loc32_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.25]
 // CHECK:STDOUT:
@@ -247,9 +251,9 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc20_48 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc24_8.2: (Self*, {.x: Self, .y: i32}));
+// CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc24_8.2: (Self*, {.x: Self, .y: ()}));
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.5(@impl.3.%x.loc28_8.2: (C*, {.x: C, .y: i32}));
+// CHECK:STDOUT: fn @F.5(@impl.3.%x.loc28_8.2: (C*, {.x: C, .y: ()}));
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.6(@impl.4.%x.loc32_8.2: (D*, {.x: D, .y: i32}));
+// CHECK:STDOUT: fn @F.6(@impl.4.%x.loc32_8.2: (D*, {.x: D, .y: ()}));
 // CHECK:STDOUT:

@@ -302,7 +302,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
                                    SemIR::NameId name_id,
                                    const SemIR::NameScope& scope,
-                                   bool mark_imports_used) -> SemIR::InstId {
+                                   bool mark_imports_used) -> void {
   auto identifier_id = name_id.AsIdentifierId();
   llvm::StringRef identifier;
   if (identifier_id.is_valid()) {
@@ -316,7 +316,6 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
         builder.Note(loc, InNameLookup, name_id);
       });
 
-  auto result_id = SemIR::InstId::Invalid;
   for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
     auto& import_ir = context.import_irs().Get(import_ir_id);
 
@@ -342,29 +341,26 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     }
     auto import_inst_id =
         context.AddImportRef({.ir_id = import_ir_id, .inst_id = it->second});
-    if (result_id.is_valid()) {
-      MergeImportRef(context, import_inst_id, result_id);
-    } else {
-      LoadImportRef(context, import_inst_id,
-                    mark_imports_used ? loc : SemIR::LocId::Invalid);
-      result_id = import_inst_id;
-    }
+    LoadImportRef(context, import_inst_id,
+                  mark_imports_used ? loc : SemIR::LocId::Invalid);
   }
-
-  return result_id;
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      const SemIR::NameScope& scope,
                                      bool mark_imports_used) -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
-    LoadImportRef(*this, it->second,
+    // Store the instruction because LoadImportRef can invalidate the iterator.
+    auto inst_id = it->second;
+    LoadImportRef(*this, inst_id,
                   mark_imports_used ? loc : SemIR::LocId::Invalid);
-    return it->second;
+    return inst_id;
   }
   if (!scope.import_ir_scopes.empty()) {
-    return LookupInImportIRScopes(*this, loc, name_id, scope,
-                                  mark_imports_used);
+    LookupInImportIRScopes(*this, loc, name_id, scope, mark_imports_used);
+    if (auto it = scope.names.find(name_id); it != scope.names.end()) {
+      return it->second;
+    }
   }
   return SemIR::InstId::Invalid;
 }

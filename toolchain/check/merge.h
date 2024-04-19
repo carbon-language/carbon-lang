@@ -48,7 +48,7 @@ struct InstForMerge {
 // to return the instruction relevant for a merge. If an import is found and was
 // previously used, it notes it, although an invalid redeclaration may diagnose
 // for other reasons too.
-auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
+auto ResolvePrevInstForMerge(Context& context, SemIRLoc loc,
                              SemIR::InstId prev_inst_id) -> InstForMerge;
 
 // When the prior name lookup result is an import and we are successfully
@@ -57,11 +57,6 @@ auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void;
-
-// Merges an import ref at new_inst_id another at prev_inst_id. May print a
-// diagnostic if merging is invalid.
-auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
-                    SemIR::InstId prev_inst_id) -> void;
 
 }  // namespace Carbon::Check
 

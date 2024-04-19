@@ -102,9 +102,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .c_alias = %import_ref.2
 // CHECK:STDOUT:     .a = %import_ref.3
+// CHECK:STDOUT:     .C = %import_ref.4
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
@@ -112,7 +112,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+5, loc_12 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+10, unloaded
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias.ref.loc8: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
@@ -123,7 +124,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.4
+// CHECK:STDOUT:   .Self = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class3.carbon
@@ -138,12 +139,14 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .c_alias_alias = %import_ref.1
 // CHECK:STDOUT:     .b = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+9, loc_11 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+10, loc_11 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+15, unloaded
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+4, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+8, unloaded
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc6: type = ptr_type C [template = constants.%.2]
 // CHECK:STDOUT:   %c.var: ref C* = var c
@@ -152,7 +155,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Self = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var1.carbon

@@ -147,14 +147,14 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     .D = %import_ref.2
-// CHECK:STDOUT:     .ReturnCUnused = %import_ref.3
-// CHECK:STDOUT:     .ReturnCUsed = %import_ref.4
-// CHECK:STDOUT:     .ReturnDUnused = %import_ref.5
-// CHECK:STDOUT:     .ReturnDUsed = %import_ref.6
 // CHECK:STDOUT:     .Call = %import_ref.7
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete
+// CHECK:STDOUT:     .C = %import_ref.8
+// CHECK:STDOUT:     .ReturnCUnused = %import_ref.9
+// CHECK:STDOUT:     .ReturnCUsed = %import_ref.10
+// CHECK:STDOUT:     .D = %import_ref.11
+// CHECK:STDOUT:     .ReturnDUnused = %import_ref.13
+// CHECK:STDOUT:     .ReturnDUsed = %import_ref.14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
@@ -164,14 +164,20 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+16, loc_26 [template = imports.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+17, unloaded
 // CHECK:STDOUT:   %CallFAndGIncomplete: <function> = fn_decl @CallFAndGIncomplete [template] {}
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.8: type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+7, loaded [template = imports.%ReturnCUnused]
+// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+10, loaded [template = imports.%ReturnCUsed]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+3, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.13: <function> = import_ref ir2, inst+13, loaded [template = imports.%ReturnDUnused]
+// CHECK:STDOUT:   %import_ref.14: <function> = import_ref ir2, inst+16, loaded [template = imports.%ReturnDUsed]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.8
+// CHECK:STDOUT:   .Self = file.%import_ref.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {

@@ -120,7 +120,7 @@ static auto BuildFunctionDecl(Context& context,
       SemIR::FunctionId::Invalid, decl_block_id};
   // TODO: Should Function replace is_extern with ExternDecl, similar to
   // ClassDecl?
-  auto function_info = SemIR::Function{
+  SemIR::Function function_info = {
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst({node_id, function_decl}),
@@ -152,34 +152,8 @@ static auto BuildFunctionDecl(Context& context,
   // Check whether this is a redeclaration.
   auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
-  if (prev_id.is_valid()) {
-    auto prev_inst_for_merge =
-        ResolvePrevInstForMerge(context, node_id, prev_id);
-
-    if (auto prev_function_decl =
-            prev_inst_for_merge.inst.TryAs<SemIR::FunctionDecl>()) {
-      if (MergeFunctionRedecl(context, node_id, function_info,
-                              /*new_is_import=*/false, is_definition,
-                              prev_function_decl->function_id,
-                              prev_inst_for_merge.import_ir_inst_id)) {
-        // When merging, use the existing function rather than adding a new one.
-        function_decl.function_id = prev_function_decl->function_id;
-      }
-    } else {
-      // This is a redeclaration of something other than a function. This
-      // includes the case where an associated function redeclares another
-      // associated function.
-      context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
-    }
-  }
-
-  // Create a new function if this isn't a valid redeclaration.
-  if (!function_decl.function_id.is_valid()) {
-    function_decl.function_id = context.functions().Add(function_info);
-  }
-
-  // Write the function ID into the FunctionDecl.
-  context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
+  FinishFunctionDecl(context, node_id, function_decl, function_info,
+                     /*new_is_import=*/false, is_definition, prev_id);
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.

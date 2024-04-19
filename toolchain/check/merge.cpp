@@ -125,7 +125,7 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 }
 
-auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
+auto ResolvePrevInstForMerge(Context& context, SemIRLoc loc,
                              SemIR::InstId prev_inst_id) -> InstForMerge {
   InstForMerge result = {.inst = context.insts().Get(prev_inst_id),
                          .import_ir_inst_id = SemIR::ImportIRInstId::Invalid,
@@ -143,7 +143,7 @@ auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
           "Redeclaration of imported entity that was previously used.");
       CARBON_DIAGNOSTIC(UsedImportLoc, Note, "Import used here.");
       context.emitter()
-          .Build(node_id, RedeclOfUsedImport)
+          .Build(loc, RedeclOfUsedImport)
           .Note(import_ref.used_id, UsedImportLoc)
           .Emit();
       [[fallthrough]];
@@ -167,52 +167,6 @@ auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
   return result;
 }
 
-// Returns the instruction to consider when merging the given inst_id. Returns
-// nullopt if merging is infeasible and no diagnostic should be printed.
-static auto ResolveMergeableInst(Context& context, SemIR::InstId inst_id)
-    -> std::optional<InstForMerge> {
-  auto inst = context.insts().Get(inst_id);
-  switch (inst.kind()) {
-    case SemIR::ImportRefUnloaded::Kind:
-      // Load before merging.
-      LoadImportRef(context, inst_id, SemIR::LocId::Invalid);
-      break;
-
-    case SemIR::ImportRefLoaded::Kind:
-    case SemIR::ImportRefUsed::Kind:
-      // Already loaded.
-      break;
-
-    case SemIR::Namespace::Kind:
-      // Return back the namespace directly.
-      return {
-          {.inst = inst, .import_ir_inst_id = SemIR::ImportIRInstId::Invalid}};
-
-    default:
-      CARBON_FATAL() << "Unexpected inst kind passed to ResolveMergeableInst: "
-                     << inst;
-  }
-
-  auto const_id = context.constant_values().Get(inst_id);
-  // TODO: Function and type declarations are constant, but `var` declarations
-  // are non-constant and should still merge.
-  if (!const_id.is_constant()) {
-    return std::nullopt;
-  }
-
-  InstForMerge result = {
-      .inst = context.insts().Get(const_id.inst_id()),
-      .import_ir_inst_id = inst.As<SemIR::AnyImportRef>().import_ir_inst_id,
-      .is_extern = false};
-
-  if (auto extern_type = result.inst.TryAs<SemIR::ExternType>()) {
-    result.is_extern = true;
-    result.inst = context.types().GetAsInst(extern_type->non_extern_type_id);
-  }
-
-  return result;
-}
-
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
@@ -220,59 +174,6 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
   auto it = names.find(name_id);
   if (it != names.end()) {
     it->second = new_inst_id;
-  }
-}
-
-// TODO: On successful merges, this may need to "spoil" new_inst_id in order to
-// prevent it from being emitted in lowering.
-auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
-                    SemIR::InstId prev_inst_id) -> void {
-  auto new_inst = ResolveMergeableInst(context, new_inst_id);
-  auto prev_inst = ResolveMergeableInst(context, prev_inst_id);
-  if (!new_inst || !prev_inst) {
-    // TODO: Once `var` declarations get an associated instruction for handling,
-    // it might be more appropriate to return without diagnosing here, to handle
-    // invalid declarations.
-    context.DiagnoseDuplicateName(new_inst_id, prev_inst_id);
-    return;
-  }
-
-  if (new_inst->inst.kind() != prev_inst->inst.kind()) {
-    context.DiagnoseDuplicateName(new_inst_id, prev_inst_id);
-    return;
-  }
-
-  CARBON_KIND_SWITCH(new_inst->inst) {
-    case CARBON_KIND(SemIR::FunctionDecl new_decl): {
-      auto prev_decl = prev_inst->inst.TryAs<SemIR::FunctionDecl>();
-      if (!prev_decl) {
-        break;
-      }
-
-      auto new_fn = context.functions().Get(new_decl.function_id);
-      MergeFunctionRedecl(context, new_inst_id, new_fn,
-                          /*new_is_import=*/true,
-                          /*new_is_definition=*/false, prev_decl->function_id,
-                          prev_inst->import_ir_inst_id);
-      return;
-    }
-    case CARBON_KIND(SemIR::ClassType new_type): {
-      auto prev_type = prev_inst->inst.TryAs<SemIR::ClassType>();
-      if (!prev_type) {
-        break;
-      }
-
-      auto new_class = context.classes().Get(new_type.class_id);
-      MergeClassRedecl(context, new_inst_id, new_class,
-                       /*new_is_import=*/true, new_class.is_defined(),
-                       new_inst->is_extern, prev_type->class_id,
-                       prev_inst->is_extern, prev_inst->import_ir_inst_id);
-      return;
-    }
-    default:
-      context.TODO(new_inst_id, llvm::formatv("Merging {0} not yet supported.",
-                                              new_inst->inst.kind()));
-      return;
   }
 }
 

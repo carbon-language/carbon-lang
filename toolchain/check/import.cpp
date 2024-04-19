@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
@@ -264,7 +265,10 @@ auto ImportLibraryFromCurrentPackage(Context& context,
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});
       if (!success) {
-        MergeImportRef(context, target_id, it->second);
+        // Ensure the previous instruction is loaded prior to resolving the new
+        // instruction.
+        LoadImportRef(context, it->second, SemIR::LocId::Invalid);
+        LoadImportRef(context, target_id, SemIR::LocId::Invalid);
       }
     }
   }

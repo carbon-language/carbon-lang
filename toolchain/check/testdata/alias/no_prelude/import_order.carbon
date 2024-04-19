@@ -78,11 +78,11 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .a = %import_ref.2
 // CHECK:STDOUT:     .b = %import_ref.3
 // CHECK:STDOUT:     .c = %import_ref.4
 // CHECK:STDOUT:     .d = %import_ref.5
+// CHECK:STDOUT:     .C = %import_ref.6
 // CHECK:STDOUT:     .d_val = %d_val
 // CHECK:STDOUT:     .c_val = %c_val
 // CHECK:STDOUT:     .b_val = %b_val
@@ -94,8 +94,9 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+16, loc_24 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+18, loc_11 [template = constants.%C]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir2, inst+7, loc_32 [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: <unbound element of class C> = import_ref ir2, inst+7, loc_32 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]
 // CHECK:STDOUT:   %d_val.var: ref C = var d_val
 // CHECK:STDOUT:   %d_val: ref C = bind_name d_val, %d_val.var
@@ -112,8 +113,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .v = file.%import_ref.6
-// CHECK:STDOUT:   .Self = file.%import_ref.7
+// CHECK:STDOUT:   .v = file.%import_ref.7
+// CHECK:STDOUT:   .Self = file.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -127,7 +128,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc7_25: init C = converted %.loc7_24.1, %.loc7_24.4 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%d_val.var, %.loc7_25
 // CHECK:STDOUT:   %d_val.ref: ref C = name_ref d_val, file.%d_val
-// CHECK:STDOUT:   %v.ref.loc8: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc8: <unbound element of class C> = name_ref v, file.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_27.1: ref () = class_element_access %d_val.ref, element0
 // CHECK:STDOUT:   %.loc8_29.1: {.v: ()} = struct_literal (%.loc8_27.1)
 // CHECK:STDOUT:   %.loc8_29.2: ref () = class_element_access file.%c_val.var, element0
@@ -137,7 +138,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc8_30: init C = converted %.loc8_29.1, %.loc8_29.4 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_30
 // CHECK:STDOUT:   %c_val.ref: ref C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %v.ref.loc9: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc9: <unbound element of class C> = name_ref v, file.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc9_27.1: ref () = class_element_access %c_val.ref, element0
 // CHECK:STDOUT:   %.loc9_29.1: {.v: ()} = struct_literal (%.loc9_27.1)
 // CHECK:STDOUT:   %.loc9_29.2: ref () = class_element_access file.%b_val.var, element0
@@ -147,7 +148,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc9_30: init C = converted %.loc9_29.1, %.loc9_29.4 [template = constants.%.5]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc9_30
 // CHECK:STDOUT:   %b_val.ref: ref C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %v.ref.loc10: <unbound element of class C> = name_ref v, file.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %v.ref.loc10: <unbound element of class C> = name_ref v, file.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_27.1: ref () = class_element_access %b_val.ref, element0
 // CHECK:STDOUT:   %.loc10_29.1: {.v: ()} = struct_literal (%.loc10_27.1)
 // CHECK:STDOUT:   %.loc10_29.2: ref () = class_element_access file.%a_val.var, element0

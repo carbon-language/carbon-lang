@@ -259,6 +259,40 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   return true;
 }
 
+auto FinishFunctionDecl(Context& context, SemIRLoc new_loc,
+                        SemIR::FunctionDecl& new_function_decl,
+                        SemIR::Function& new_function, bool new_is_import,
+                        bool new_is_definition, SemIR::InstId prev_id) -> void {
+  if (prev_id.is_valid()) {
+    auto prev_inst_for_merge =
+        ResolvePrevInstForMerge(context, new_loc, prev_id);
+
+    if (auto prev_function_decl =
+            prev_inst_for_merge.inst.TryAs<SemIR::FunctionDecl>()) {
+      if (MergeFunctionRedecl(context, new_loc, new_function, new_is_import,
+                              new_is_definition,
+                              prev_function_decl->function_id,
+                              prev_inst_for_merge.import_ir_inst_id)) {
+        // When merging, use the existing function rather than adding a new one.
+        new_function_decl.function_id = prev_function_decl->function_id;
+      }
+    } else {
+      // This is a redeclaration of something other than a function. This
+      // includes the case where an associated function redeclares another
+      // associated function.
+      context.DiagnoseDuplicateName(new_function.decl_id, prev_id);
+    }
+  }
+
+  // Create a new function if this isn't a valid redeclaration.
+  if (!new_function_decl.function_id.is_valid()) {
+    new_function_decl.function_id = context.functions().Add(new_function);
+  }
+
+  // Write the function ID into the FunctionDecl.
+  context.ReplaceInstBeforeConstantUse(new_function.decl_id, new_function_decl);
+}
+
 auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
                              SemIR::Function& function) -> void {
   // If we have already checked the return type, we have nothing to do.

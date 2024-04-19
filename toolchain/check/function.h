@@ -48,6 +48,14 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                          SemIR::FunctionId prev_function_id,
                          SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool;
 
+// Finishes a function declaration. It should already be added to name lookup
+// with prev_id provided if there was a name collision (invalid otherwise).
+// Merges if appropriate, and replaces the FunctionDecl placeholder.
+auto FinishFunctionDecl(Context& context, SemIRLoc new_loc,
+                        SemIR::FunctionDecl& new_function_decl,
+                        SemIR::Function& new_function, bool new_is_import,
+                        bool new_is_definition, SemIR::InstId prev_id) -> void;
+
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if
 // necessary.
