@@ -131,9 +131,9 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnCUsed.ref: <function> = name_ref ReturnCUsed, file.%ReturnCUsed [template = file.%ReturnCUsed]
-// CHECK:STDOUT:   %.loc23: init <error> = call %ReturnCUsed.ref()
+// CHECK:STDOUT:   %ReturnCUsed: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUsed.ref: <function> = name_ref ReturnDUsed, file.%ReturnDUsed [template = file.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc34: init <error> = call %ReturnDUsed.ref()
+// CHECK:STDOUT:   %ReturnDUsed: init <error> = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,16 +182,16 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: invalid = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %ReturnCUnused.ref: <function> = name_ref ReturnCUnused, file.%import_ref.3 [template = imports.%ReturnCUnused]
-// CHECK:STDOUT:   %.loc22: init <error> = call %ReturnCUnused.ref()
+// CHECK:STDOUT:   %ReturnCUnused: init <error> = call %ReturnCUnused.ref()
 // CHECK:STDOUT:   %ReturnCUsed.ref: <function> = name_ref ReturnCUsed, file.%import_ref.4 [template = imports.%ReturnCUsed]
-// CHECK:STDOUT:   %.loc23: init <error> = call %ReturnCUsed.ref()
+// CHECK:STDOUT:   %ReturnCUsed: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %D.decl: invalid = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %ReturnDUnused.ref: <function> = name_ref ReturnDUnused, file.%import_ref.5 [template = imports.%ReturnDUnused]
 // CHECK:STDOUT:   %.loc24_16.1: ref D = temporary_storage
-// CHECK:STDOUT:   %.loc24_16.2: init D = call %ReturnDUnused.ref() to %.loc24_16.1
-// CHECK:STDOUT:   %.loc24_16.3: ref D = temporary %.loc24_16.1, %.loc24_16.2
+// CHECK:STDOUT:   %ReturnDUnused: init D = call %ReturnDUnused.ref() to %.loc24_16.1
+// CHECK:STDOUT:   %.loc24_16.2: ref D = temporary %.loc24_16.1, %ReturnDUnused
 // CHECK:STDOUT:   %ReturnDUsed.ref: <function> = name_ref ReturnDUsed, file.%import_ref.6 [template = imports.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc25: init <error> = call %ReturnDUsed.ref()
+// CHECK:STDOUT:   %ReturnDUsed: init <error> = call %ReturnDUsed.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

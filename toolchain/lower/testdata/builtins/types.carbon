@@ -18,11 +18,12 @@ fn F() {
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
-// CHECK:STDOUT:   %i = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %i, align 4
-// CHECK:STDOUT:   %f = alloca double, align 8
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %f, align 8
-// CHECK:STDOUT:   %b = alloca i1, align 1
-// CHECK:STDOUT:   store i1 false, ptr %b, align 1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %i.var = alloca i32, align 4
+// CHECK:STDOUT:   store i32 0, ptr %i.var, align 4
+// CHECK:STDOUT:   %f.var = alloca double, align 8
+// CHECK:STDOUT:   store double 0.000000e+00, ptr %f.var, align 8
+// CHECK:STDOUT:   %b.var = alloca i1, align 1
+// CHECK:STDOUT:   store i1 false, ptr %b.var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

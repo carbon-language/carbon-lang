@@ -39,8 +39,8 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc9_18: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_21: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_17: init i32 = call %Add.ref(%.loc9_18, %.loc9_21) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_23: type = array_type %.loc9_17, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.add: init i32 = call %Add.ref(%.loc9_18, %.loc9_21) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_23: type = array_type %int.add, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a
 // CHECK:STDOUT:   %a.loc9: ref [i32; 3] = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 3 [template = constants.%.3]

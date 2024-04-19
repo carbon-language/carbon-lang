@@ -144,7 +144,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%import_ref.7 [template = constants.%.2]
 // CHECK:STDOUT:   %F.ref: <associated <function> in HasF> = name_ref F, file.%import_ref.2 [template = constants.%.6]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access file.%import_ref.5, element0 [template = <unexpected instref inst+32>]
-// CHECK:STDOUT:   %.loc5: init () = call %.1()
+// CHECK:STDOUT:   %F: init () = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -18,10 +18,11 @@ namespace Carbon::Lower {
 
 FileContext::FileContext(llvm::LLVMContext& llvm_context,
                          llvm::StringRef module_name, const SemIR::File& sem_ir,
+                         const SemIR::InstNamer* namer,
                          llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      sem_ir_(&sem_ir),
+      sem_ir_(&sem_ir), namer_(namer),
       vlog_stream_(vlog_stream) {
   CARBON_CHECK(!sem_ir.has_errors())
       << "Generating LLVM IR from invalid SemIR::File is unsupported.";

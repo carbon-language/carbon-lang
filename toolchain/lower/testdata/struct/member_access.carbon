@@ -15,17 +15,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { double, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
-// CHECK:STDOUT:   %b = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   store i32 1, ptr %b, align 4
-// CHECK:STDOUT:   %y = alloca i32, align 4
-// CHECK:STDOUT:   %b1 = getelementptr inbounds { double, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load i32, ptr %b1, align 4
-// CHECK:STDOUT:   store i32 %1, ptr %y, align 4
-// CHECK:STDOUT:   %z = alloca i32, align 4
-// CHECK:STDOUT:   %2 = load i32, ptr %y, align 4
-// CHECK:STDOUT:   store i32 %2, ptr %z, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8
+// CHECK:STDOUT:   %.loc8_48.2.a = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   store double 0.000000e+00, ptr %.loc8_48.2.a, align 8
+// CHECK:STDOUT:   %.loc8_48.4.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   store i32 1, ptr %.loc8_48.4.b, align 4
+// CHECK:STDOUT:   %y.var = alloca i32, align 4
+// CHECK:STDOUT:   %.loc9_17.1.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc9_17.2 = load i32, ptr %.loc9_17.1.b, align 4
+// CHECK:STDOUT:   store i32 %.loc9_17.2, ptr %y.var, align 4
+// CHECK:STDOUT:   %z.var = alloca i32, align 4
+// CHECK:STDOUT:   %.loc10 = load i32, ptr %y.var, align 4
+// CHECK:STDOUT:   store i32 %.loc10, ptr %z.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

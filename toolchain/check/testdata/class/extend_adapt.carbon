@@ -156,7 +156,7 @@ class StructAdapter {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %StaticMemberFunction.ref: <function> = name_ref StaticMemberFunction, @SomeClass.%StaticMemberFunction [template = @SomeClass.%StaticMemberFunction]
-// CHECK:STDOUT:   %.loc20: init () = call %StaticMemberFunction.ref()
+// CHECK:STDOUT:   %StaticMemberFunction: init () = call %StaticMemberFunction.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

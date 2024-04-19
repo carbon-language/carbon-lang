@@ -88,9 +88,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref.loc8: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %.loc8_21: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_24: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_20: init bool = call %Neq.ref.loc8(%.loc8_21, %.loc8_24) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %.loc8_20 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_14.2: bool = converted %.loc8_20, %.loc8_14.1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.neq.loc8: init bool = call %Neq.ref.loc8(%.loc8_21, %.loc8_24) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %int.neq.loc8 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_14.2: bool = converted %int.neq.loc8, %.loc8_14.1 [template = constants.%.5]
 // CHECK:STDOUT:   if %.loc8_14.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
@@ -107,9 +107,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref.loc9: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_19: init bool = call %Neq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %.loc9_19 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_13.2: bool = converted %.loc9_19, %.loc9_13.1 [template = constants.%.7]
+// CHECK:STDOUT:   %int.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.neq.loc9 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.neq.loc9, %.loc9_13.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -130,9 +130,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref: <function> = name_ref Neq, file.%Neq [template = file.%Neq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc13_13: init bool = call %Neq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc13_19.1: bool = value_of_initializer %.loc13_13
-// CHECK:STDOUT:   %.loc13_19.2: bool = converted %.loc13_13, %.loc13_19.1
+// CHECK:STDOUT:   %int.neq: init bool = call %Neq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc13_19.1: bool = value_of_initializer %int.neq
+// CHECK:STDOUT:   %.loc13_19.2: bool = converted %int.neq, %.loc13_19.1
 // CHECK:STDOUT:   return %.loc13_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

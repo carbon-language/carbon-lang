@@ -15,10 +15,12 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "params_two_comma.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
 // CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
 // CHECK:STDOUT:   ret void

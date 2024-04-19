@@ -94,9 +94,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc14_7: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   assign %.loc14_3, %.loc14_7
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc19_4: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc19_9: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   assign %.loc19_4, %.loc19_9
+// CHECK:STDOUT:   %F: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign %F, %.loc19
 // CHECK:STDOUT:   %.loc24_4: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc24_7: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc24_8.1: (i32, i32) = tuple_literal (%.loc24_4, %.loc24_7)

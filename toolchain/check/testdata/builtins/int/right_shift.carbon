@@ -88,8 +88,8 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift.ref: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %.loc4_27: i32 = int_literal 22 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_31: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_26: init i32 = call %RightShift.ref(%.loc4_27, %.loc4_31) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_33: type = array_type %.loc4_26, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.right_shift: init i32 = call %RightShift.ref(%.loc4_27, %.loc4_31) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_33: type = array_type %int.right_shift, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 5] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 5] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 5 [template = constants.%.3]
@@ -114,9 +114,9 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift.ref: <function> = name_ref RightShift, file.%RightShift [template = file.%RightShift]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_20: init i32 = call %RightShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_26.1: i32 = value_of_initializer %.loc8_20
-// CHECK:STDOUT:   %.loc8_26.2: i32 = converted %.loc8_20, %.loc8_26.1
+// CHECK:STDOUT:   %int.right_shift: init i32 = call %RightShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_26.1: i32 = value_of_initializer %int.right_shift
+// CHECK:STDOUT:   %.loc8_26.2: i32 = converted %int.right_shift, %.loc8_26.1
 // CHECK:STDOUT:   return %.loc8_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,15 +161,15 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift.ref.loc10: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %Negate.ref.loc10_35: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc10_42: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_41: init i32 = call %Negate.ref.loc10_35(%.loc10_42) [template = constants.%.2]
+// CHECK:STDOUT:   %int.negate.loc10_41: init i32 = call %Negate.ref.loc10_35(%.loc10_42) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc10_46: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_34.1: i32 = value_of_initializer %.loc10_41 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_34.2: i32 = converted %.loc10_41, %.loc10_34.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_34.3: init i32 = call %RightShift.ref.loc10(%.loc10_34.2, %.loc10_46) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_23.1: i32 = value_of_initializer %.loc10_34.3 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_23.2: i32 = converted %.loc10_34.3, %.loc10_23.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_23.3: init i32 = call %Negate.ref.loc10_17(%.loc10_23.2) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_49: type = array_type %.loc10_23.3, i32 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc10_34.1: i32 = value_of_initializer %int.negate.loc10_41 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_34.2: i32 = converted %int.negate.loc10_41, %.loc10_34.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.right_shift.loc10: init i32 = call %RightShift.ref.loc10(%.loc10_34.2, %.loc10_46) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_23.1: i32 = value_of_initializer %int.right_shift.loc10 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_23.2: i32 = converted %int.right_shift.loc10, %.loc10_23.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.negate.loc10_23: init i32 = call %Negate.ref.loc10_17(%.loc10_23.2) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc10_49: type = array_type %int.negate.loc10_23, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %arr1.var: ref [i32; 1] = var arr1
 // CHECK:STDOUT:   %arr1: ref [i32; 1] = bind_name arr1, %arr1.var
 // CHECK:STDOUT:   %.loc11_19: i32 = int_literal 1 [template = constants.%.1]
@@ -182,15 +182,15 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift.ref.loc14: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %Negate.ref.loc14_35: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc14_42: i32 = int_literal 10 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc14_41: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.6]
+// CHECK:STDOUT:   %int.negate.loc14_41: init i32 = call %Negate.ref.loc14_35(%.loc14_42) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc14_47: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc14_34.1: i32 = value_of_initializer %.loc14_41 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_34.2: i32 = converted %.loc14_41, %.loc14_34.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc14_34.3: init i32 = call %RightShift.ref.loc14(%.loc14_34.2, %.loc14_47) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_23.1: i32 = value_of_initializer %.loc14_34.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_23.2: i32 = converted %.loc14_34.3, %.loc14_23.1 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc14_23.3: init i32 = call %Negate.ref.loc14_17(%.loc14_23.2) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc14_50: type = array_type %.loc14_23.3, i32 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc14_34.1: i32 = value_of_initializer %int.negate.loc14_41 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc14_34.2: i32 = converted %int.negate.loc14_41, %.loc14_34.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.right_shift.loc14: init i32 = call %RightShift.ref.loc14(%.loc14_34.2, %.loc14_47) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_23.1: i32 = value_of_initializer %int.right_shift.loc14 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc14_23.2: i32 = converted %int.right_shift.loc14, %.loc14_23.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.negate.loc14_23: init i32 = call %Negate.ref.loc14_17(%.loc14_23.2) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc14_50: type = array_type %int.negate.loc14_23, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr2.var: ref [i32; 3] = var arr2
 // CHECK:STDOUT:   %arr2: ref [i32; 3] = bind_name arr2, %arr2.var
 // CHECK:STDOUT:   %.loc15_19: i32 = int_literal 3 [template = constants.%.9]
@@ -238,34 +238,34 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:   %RightShift.ref.loc8: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_33: i32 = int_literal 31 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_29: init i32 = call %RightShift.ref.loc8(%.loc8_30, %.loc8_33) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_36.1: i32 = value_of_initializer %.loc8_29 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_36.2: i32 = converted %.loc8_29, %.loc8_36.1 [template = constants.%.3]
+// CHECK:STDOUT:   %int.right_shift.loc8: init i32 = call %RightShift.ref.loc8(%.loc8_30, %.loc8_33) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_36.1: i32 = value_of_initializer %int.right_shift.loc8 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_36.2: i32 = converted %int.right_shift.loc8, %.loc8_36.1 [template = constants.%.3]
 // CHECK:STDOUT:   %size_1: i32 = bind_name size_1, %.loc8_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc13: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %.loc13_30: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc13_33: i32 = int_literal 32 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_29: init i32 = call %RightShift.ref.loc13(%.loc13_30, %.loc13_33) [template = <error>]
-// CHECK:STDOUT:   %.loc13_36.1: i32 = value_of_initializer %.loc13_29 [template = <error>]
-// CHECK:STDOUT:   %.loc13_36.2: i32 = converted %.loc13_29, %.loc13_36.1 [template = <error>]
+// CHECK:STDOUT:   %int.right_shift.loc13: init i32 = call %RightShift.ref.loc13(%.loc13_30, %.loc13_33) [template = <error>]
+// CHECK:STDOUT:   %.loc13_36.1: i32 = value_of_initializer %int.right_shift.loc13 [template = <error>]
+// CHECK:STDOUT:   %.loc13_36.2: i32 = converted %int.right_shift.loc13, %.loc13_36.1 [template = <error>]
 // CHECK:STDOUT:   %size_2: i32 = bind_name size_2, %.loc13_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc18: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %.loc18_30: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_33: i32 = int_literal 33 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_29: init i32 = call %RightShift.ref.loc18(%.loc18_30, %.loc18_33) [template = <error>]
-// CHECK:STDOUT:   %.loc18_36.1: i32 = value_of_initializer %.loc18_29 [template = <error>]
-// CHECK:STDOUT:   %.loc18_36.2: i32 = converted %.loc18_29, %.loc18_36.1 [template = <error>]
+// CHECK:STDOUT:   %int.right_shift.loc18: init i32 = call %RightShift.ref.loc18(%.loc18_30, %.loc18_33) [template = <error>]
+// CHECK:STDOUT:   %.loc18_36.1: i32 = value_of_initializer %int.right_shift.loc18 [template = <error>]
+// CHECK:STDOUT:   %.loc18_36.2: i32 = converted %int.right_shift.loc18, %.loc18_36.1 [template = <error>]
 // CHECK:STDOUT:   %size_3: i32 = bind_name size_3, %.loc18_36.2
 // CHECK:STDOUT:   %RightShift.ref.loc24: <function> = name_ref RightShift, %RightShift [template = %RightShift]
 // CHECK:STDOUT:   %.loc24_32: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc24_42: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc24_41: init i32 = call %Negate.ref(%.loc24_42) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc24_31.1: i32 = value_of_initializer %.loc24_41 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc24_31.2: i32 = converted %.loc24_41, %.loc24_31.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc24_31.3: init i32 = call %RightShift.ref.loc24(%.loc24_32, %.loc24_31.2) [template = <error>]
-// CHECK:STDOUT:   %.loc24_45.1: i32 = value_of_initializer %.loc24_31.3 [template = <error>]
-// CHECK:STDOUT:   %.loc24_45.2: i32 = converted %.loc24_31.3, %.loc24_45.1 [template = <error>]
+// CHECK:STDOUT:   %int.negate: init i32 = call %Negate.ref(%.loc24_42) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc24_31.1: i32 = value_of_initializer %int.negate [template = constants.%.6]
+// CHECK:STDOUT:   %.loc24_31.2: i32 = converted %int.negate, %.loc24_31.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.right_shift.loc24: init i32 = call %RightShift.ref.loc24(%.loc24_32, %.loc24_31.2) [template = <error>]
+// CHECK:STDOUT:   %.loc24_45.1: i32 = value_of_initializer %int.right_shift.loc24 [template = <error>]
+// CHECK:STDOUT:   %.loc24_45.2: i32 = converted %int.right_shift.loc24, %.loc24_45.1 [template = <error>]
 // CHECK:STDOUT:   %negative: i32 = bind_name negative, %.loc24_45.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

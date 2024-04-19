@@ -42,7 +42,7 @@ class Formatter {
 
     FormatConstants();
 
-    out_ << "file ";
+    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
 
     // TODO: Handle the case where there are multiple top-level instruction
@@ -125,7 +125,7 @@ class Formatter {
     }
 
     llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
-    out_ << "constants ";
+    out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
     OpenBrace();
     FormatCodeBlock(sem_ir_.constants().GetAsVector());
     CloseBrace();

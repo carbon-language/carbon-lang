@@ -259,12 +259,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc50_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc50_14.2: init Class = call %Make.ref() to %.loc50_14.1
-// CHECK:STDOUT:   %.loc50_14.3: ref Class = temporary %.loc50_14.1, %.loc50_14.2
+// CHECK:STDOUT:   %Make: init Class = call %Make.ref() to %.loc50_14.1
+// CHECK:STDOUT:   %.loc50_14.2: ref Class = temporary %.loc50_14.1, %Make
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc50_16: <bound method> = bound_method %.loc50_14.3, %F.ref
-// CHECK:STDOUT:   %.loc50_14.4: Class = bind_value %.loc50_14.3
-// CHECK:STDOUT:   %.loc50_18: init i32 = call %.loc50_16(%.loc50_14.4)
+// CHECK:STDOUT:   %.loc50_16: <bound method> = bound_method %.loc50_14.2, %F.ref
+// CHECK:STDOUT:   %.loc50_14.3: Class = bind_value %.loc50_14.2
+// CHECK:STDOUT:   %.loc50_18: init i32 = call %.loc50_16(%.loc50_14.3)
 // CHECK:STDOUT:   %.loc50_20.1: i32 = value_of_initializer %.loc50_18
 // CHECK:STDOUT:   %.loc50_20.2: i32 = converted %.loc50_18, %.loc50_20.1
 // CHECK:STDOUT:   return %.loc50_20.2
@@ -274,12 +274,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc54_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %.loc54_14.2: init Class = call %Make.ref() to %.loc54_14.1
-// CHECK:STDOUT:   %.loc54_14.3: ref Class = temporary %.loc54_14.1, %.loc54_14.2
+// CHECK:STDOUT:   %Make: init Class = call %Make.ref() to %.loc54_14.1
+// CHECK:STDOUT:   %.loc54_14.2: ref Class = temporary %.loc54_14.1, %Make
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G [template = @Class.%G]
-// CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_14.3, %G.ref
-// CHECK:STDOUT:   %.loc54_14.4: Class* = addr_of %.loc54_14.3
-// CHECK:STDOUT:   %.loc54_18: init i32 = call %.loc54_16(%.loc54_14.4)
+// CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_14.2, %G.ref
+// CHECK:STDOUT:   %.loc54_14.3: Class* = addr_of %.loc54_14.2
+// CHECK:STDOUT:   %.loc54_18: init i32 = call %.loc54_16(%.loc54_14.3)
 // CHECK:STDOUT:   %.loc54_20.1: i32 = value_of_initializer %.loc54_18
 // CHECK:STDOUT:   %.loc54_20.2: i32 = converted %.loc54_18, %.loc54_20.1
 // CHECK:STDOUT:   return %.loc54_20.2

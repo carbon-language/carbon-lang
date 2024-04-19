@@ -89,16 +89,16 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc11_24.1: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc11_24.2: i32 = value_of_initializer %.loc11_24.1
-// CHECK:STDOUT:   %.loc11_24.3: i32 = converted %.loc11_24.1, %.loc11_24.2
-// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.3)
+// CHECK:STDOUT:   %A: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %A
+// CHECK:STDOUT:   %.loc11_24.2: i32 = converted %A, %.loc11_24.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc11_33: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_27.1: i32 = value_of_initializer %.loc11_33
-// CHECK:STDOUT:   %.loc11_27.2: i32 = converted %.loc11_33, %.loc11_27.1
+// CHECK:STDOUT:   %B: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_27.1: i32 = value_of_initializer %B
+// CHECK:STDOUT:   %.loc11_27.2: i32 = converted %B, %.loc11_27.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_27.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
@@ -113,16 +113,16 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc15_25.1: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc15_25.2: i32 = value_of_initializer %.loc15_25.1
-// CHECK:STDOUT:   %.loc15_25.3: i32 = converted %.loc15_25.1, %.loc15_25.2
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_25.3)
+// CHECK:STDOUT:   %A: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc15_25.1: i32 = value_of_initializer %A
+// CHECK:STDOUT:   %.loc15_25.2: i32 = converted %A, %.loc15_25.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %.loc15_34: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc15_28.1: i32 = value_of_initializer %.loc15_34
-// CHECK:STDOUT:   %.loc15_28.2: i32 = converted %.loc15_34, %.loc15_28.1
+// CHECK:STDOUT:   %B: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc15_28.1: i32 = value_of_initializer %B
+// CHECK:STDOUT:   %.loc15_28.2: i32 = converted %B, %.loc15_28.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:

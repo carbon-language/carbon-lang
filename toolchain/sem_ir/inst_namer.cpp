@@ -26,19 +26,10 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
 
   // Build the constants scope.
-  GetScopeInfo(ScopeId::Constants).name = globals.AddNameUnchecked("constants");
   CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().GetAsVector());
 
   // Build the file scope.
-  GetScopeInfo(ScopeId::File).name = globals.AddNameUnchecked("file");
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());
-
-  // Build the imports scope, used only by import-related instructions without
-  // a block.
-  // TODO: Consider other approaches for ImportRef constant formatting, as the
-  // actual source of these remains unclear even though they're referenced in
-  // constants.
-  GetScopeInfo(ScopeId::ImportRef).name = globals.AddNameUnchecked("imports");
 
   // Build each function scope.
   for (auto [i, fn] : llvm::enumerate(sem_ir.functions().array_ref())) {
@@ -110,15 +101,34 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   }
 }
 
-auto InstNamer::GetUnscopedNameFor(InstId inst_id) -> llvm::StringRef {
+auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
+  switch (scope) {
+    case ScopeId::None:
+      return "<invalid scope>";
+
+    // These are treated as SemIR keywords.
+    case ScopeId::File:
+      return "file";
+    case ScopeId::ImportRef:
+      return "imports";
+    case ScopeId::Constants:
+      return "constants";
+
+    // For everything else, use an @ prefix.
+    default:
+      return ("@" + GetScopeInfo(scope).name.str()).str();
+  }
+}
+
+auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (!inst_id.is_valid()) {
     return "";
   }
-
-  return insts[inst_id.index].second.str();
+  const auto& inst_name = insts[inst_id.index].second;
+  return inst_name ? inst_name.str() : "";
 }
 
-auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) -> std::string {
+auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const -> std::string {
   if (!inst_id.is_valid()) {
     return "invalid";
   }
@@ -132,7 +142,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) -> std::string {
     return "package";
   }
 
-  auto& [inst_scope, inst_name] = insts[inst_id.index];
+  const auto& [inst_scope, inst_name] = insts[inst_id.index];
   if (!inst_name) {
     // This should not happen in valid IR.
     std::string str;
@@ -140,27 +150,27 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) -> std::string {
     return str;
   }
   if (inst_scope == scope_id) {
-    return inst_name.str().str();
+    return ("%" + inst_name.str()).str();
   }
-  return (GetScopeInfo(inst_scope).name.str() + "." + inst_name.str()).str();
+  return (GetScopeName(inst_scope) + ".%" + inst_name.str()).str();
 }
 
-auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) -> llvm::StringRef {
+auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const -> llvm::StringRef {
   if (!block_id.is_valid()) {
     return "";
   }
-
-  return labels[block_id.index].second.str();
+  const auto& label_name = labels[block_id.index].second;
+  return label_name ? label_name.str() : "";
 }
 
 // Returns the IR name to use for a label, when referenced from a given scope.
 auto InstNamer::GetLabelFor(ScopeId scope_id,
-                            InstBlockId block_id) -> std::string {
+                            InstBlockId block_id) const -> std::string {
   if (!block_id.is_valid()) {
     return "!invalid";
   }
 
-  auto& [label_scope, label_name] = labels[block_id.index];
+  const auto& [label_scope, label_name] = labels[block_id.index];
   if (!label_name) {
     // This should not happen in valid IR.
     std::string str;
@@ -169,9 +179,9 @@ auto InstNamer::GetLabelFor(ScopeId scope_id,
     return str;
   }
   if (label_scope == scope_id) {
-    return label_name.str().str();
+    return ("!" + label_name.str()).str();
   }
-  return (GetScopeInfo(label_scope).name.str() + "." + label_name.str()).str();
+  return (GetScopeName(label_scope) + ".!" + label_name.str()).str();
 }
 
 auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
@@ -214,11 +224,8 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& namer,
     return added;
   };
 
-  // All names start with the prefix.
-  name.insert(0, prefix);
-
-  // Use the given name if it's available and not just the prefix.
-  if (name.size() > prefix.size()) {
+  // Use the given name if it's available.
+  if (!name.empty()) {
     add_name();
   }
 
@@ -386,6 +393,29 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         auto inst = untyped_inst.As<AnyBindName>();
         add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
         continue;
+      }
+      case CARBON_KIND(Call inst): {
+        // Name the call's result the same as the callee.
+        // TODO: Is this a helpful name?
+        if (auto builtin_kind =
+                SemIR::BuiltinFunctionKind::ForCallee(sem_ir_, inst.callee_id);
+            builtin_kind != SemIR::BuiltinFunctionKind::None) {
+          // For a builtin, use the builtin name. Otherwise, we'd typically pick
+          // the name `Op` below, which is probably not very useful.
+          add_inst_name(builtin_kind.name().str());
+          continue;
+        } else if (auto const_callee_id =
+                       sem_ir_.constant_values().Get(inst.callee_id);
+                   const_callee_id.is_constant()) {
+          // For a direct function call, use the leaf function name.
+          if (auto callee_fn = sem_ir_.insts().TryGetAs<SemIR::FunctionDecl>(
+                  const_callee_id.inst_id())) {
+            add_inst_name_id(
+                sem_ir_.functions().Get(callee_fn->function_id).name_id);
+            continue;
+          }
+        }
+        break;
       }
       case CARBON_KIND(ClassDecl inst): {
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".decl");

@@ -61,18 +61,18 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns [template = file.%NS]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc13_28: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc13_30.1: i32 = value_of_initializer %.loc13_28
-// CHECK:STDOUT:   %.loc13_30.2: i32 = converted %.loc13_28, %.loc13_30.1
+// CHECK:STDOUT:   %A: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc13_30.1: i32 = value_of_initializer %A
+// CHECK:STDOUT:   %.loc13_30.2: i32 = converted %A, %.loc13_30.1
 // CHECK:STDOUT:   return %.loc13_30.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%A]
-// CHECK:STDOUT:   %.loc17_25: init i32 = call %C.ref()
-// CHECK:STDOUT:   %.loc17_27.1: i32 = value_of_initializer %.loc17_25
-// CHECK:STDOUT:   %.loc17_27.2: i32 = converted %.loc17_25, %.loc17_27.1
+// CHECK:STDOUT:   %A: init i32 = call %C.ref()
+// CHECK:STDOUT:   %.loc17_27.1: i32 = value_of_initializer %A
+// CHECK:STDOUT:   %.loc17_27.2: i32 = converted %A, %.loc17_27.1
 // CHECK:STDOUT:   return %.loc17_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

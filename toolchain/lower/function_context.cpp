@@ -14,14 +14,19 @@ FunctionContext::FunctionContext(FileContext& file_context,
                                  llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
-      builder_(file_context.llvm_context()),
+      builder_(file_context.llvm_context(), llvm::ConstantFolder(),
+               Inserter(file_context.namer())),
       vlog_stream_(vlog_stream) {}
 
 auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
     -> llvm::BasicBlock* {
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
-    entry = llvm::BasicBlock::Create(llvm_context(), "", function_);
+    llvm::StringRef label_name;
+    if (const auto* namer = file_context_->namer()) {
+      label_name = namer->GetUnscopedLabelFor(block_id);
+    }
+    entry = llvm::BasicBlock::Create(llvm_context(), label_name, function_);
   }
   return entry;
 }
@@ -41,6 +46,7 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (const auto& inst_id : sem_ir().inst_blocks().Get(block_id)) {
     auto inst = sem_ir().insts().Get(inst_id);
     CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
+    builder_.getInserter().SetCurrentInstId(inst_id);
     switch (inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
@@ -49,6 +55,7 @@ auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
     }
   }
+  builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
 }
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
@@ -114,6 +121,19 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
     case SemIR::ValueRepr::Custom:
       CARBON_FATAL() << "TODO: Add support for CopyValue with custom value rep";
   }
+}
+
+auto FunctionContext::Inserter::InsertHelper(
+    llvm::Instruction* inst, const llvm::Twine& name, llvm::BasicBlock* block,
+    llvm::BasicBlock::iterator insert_pt) const -> void {
+  llvm::StringRef base_name = (namer_ && !inst->getType()->isVoidTy())
+                                  ? namer_->GetUnscopedNameFor(inst_id_)
+                                  : "";
+  IRBuilderDefaultInserter::InsertHelper(
+      inst,
+      (!base_name.empty() && !name.isTriviallyEmpty()) ? base_name + "." + name
+                                                       : base_name + name,
+      block, insert_pt);
 }
 
 }  // namespace Carbon::Lower

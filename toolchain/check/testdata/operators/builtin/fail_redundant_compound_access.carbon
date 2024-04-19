@@ -59,8 +59,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref.loc19_3: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc19: init i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
+// CHECK:STDOUT:   %F: init i32 = call %F.ref()
+// CHECK:STDOUT:   assign %a.ref.loc19_3, %F
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

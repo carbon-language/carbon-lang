@@ -92,23 +92,23 @@ fn F(c: Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc15: Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc15: <function> = name_ref NoSelf, @Class.%NoSelf [template = @Class.%NoSelf]
-// CHECK:STDOUT:   %.loc15: init () = call %NoSelf.ref.loc15()
+// CHECK:STDOUT:   %NoSelf.loc15: init () = call %NoSelf.ref.loc15()
 // CHECK:STDOUT:   %c.ref.loc16: Class = name_ref c, %c
 // CHECK:STDOUT:   %WithSelf.ref.loc16: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %.loc16_4: <bound method> = bound_method %c.ref.loc16, %WithSelf.ref.loc16
 // CHECK:STDOUT:   %.loc16_13: init () = call %.loc16_4(%c.ref.loc16)
 // CHECK:STDOUT:   %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %NoSelf.ref.loc18: <function> = name_ref NoSelf, @Class.%NoSelf [template = @Class.%NoSelf]
-// CHECK:STDOUT:   %.loc18: init () = call %NoSelf.ref.loc18()
+// CHECK:STDOUT:   %NoSelf.loc18: init () = call %NoSelf.ref.loc18()
 // CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc26: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc26: init () = call %WithSelf.ref.loc26(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %WithSelf.loc26: init () = call %WithSelf.ref.loc26(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Class.ref.loc34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %WithSelf.ref.loc34: <function> = name_ref WithSelf, @Class.%WithSelf [template = @Class.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc34: Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc34: init () = call %WithSelf.ref.loc34(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %WithSelf.loc34: init () = call %WithSelf.ref.loc34(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = @Class.%WithSelf]
-// CHECK:STDOUT:   %.loc42: init () = call %A.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %WithSelf.loc42: init () = call %A.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

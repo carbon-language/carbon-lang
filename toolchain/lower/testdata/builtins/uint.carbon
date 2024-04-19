@@ -62,91 +62,109 @@ fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: source_filename = "uint.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestNegate(i64 %a) {
-// CHECK:STDOUT:   %neg = sub i64 0, %a
-// CHECK:STDOUT:   ret i64 %neg
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.negate = sub i64 0, %a
+// CHECK:STDOUT:   ret i64 %int.negate
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestAdd(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %add = add i64 %a, %b
-// CHECK:STDOUT:   ret i64 %add
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.add = add i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.add
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestSub(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %sub = sub i64 %a, %b
-// CHECK:STDOUT:   ret i64 %sub
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.sub = sub i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.sub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestMul(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %mul = mul i64 %a, %b
-// CHECK:STDOUT:   ret i64 %mul
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.mul = mul i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.mul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestDiv(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %div = udiv i64 %a, %b
-// CHECK:STDOUT:   ret i64 %div
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.div = udiv i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.div
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestMod(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %rem = urem i64 %a, %b
-// CHECK:STDOUT:   ret i64 %rem
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.mod = urem i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.mod
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestComplement(i64 %a) {
-// CHECK:STDOUT:   %cmpl = xor i64 -1, %a
-// CHECK:STDOUT:   ret i64 %cmpl
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.complement = xor i64 -1, %a
+// CHECK:STDOUT:   ret i64 %int.complement
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestAnd(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %and = and i64 %a, %b
-// CHECK:STDOUT:   ret i64 %and
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.and = and i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.and
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestOr(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %or = or i64 %a, %b
-// CHECK:STDOUT:   ret i64 %or
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.or = or i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.or
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestXor(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %xor = xor i64 %a, %b
-// CHECK:STDOUT:   ret i64 %xor
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.xor = xor i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.xor
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestLeftShift(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %shl = shl i64 %a, %b
-// CHECK:STDOUT:   ret i64 %shl
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift = shl i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.left_shift
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestRightShift(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %shr = lshr i64 %a, %b
-// CHECK:STDOUT:   ret i64 %shr
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift = lshr i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.right_shift
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestEq(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp eq i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq = icmp eq i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.eq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestNeq(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp ne i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.neq = icmp ne i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.neq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestLess(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp ult i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less = icmp ult i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.less
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestLessEq(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp ule i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less_eq = icmp ule i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.less_eq
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestGreater(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp ugt i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.greater = icmp ugt i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.greater
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestGreaterEq(i64 %a, i64 %b) {
-// CHECK:STDOUT:   %cmp = icmp uge i64 %a, %b
-// CHECK:STDOUT:   ret i1 %cmp
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.greater_eq = icmp uge i64 %a, %b
+// CHECK:STDOUT:   ret i1 %int.greater_eq
 // CHECK:STDOUT: }

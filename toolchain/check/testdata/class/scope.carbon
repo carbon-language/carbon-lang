@@ -70,9 +70,9 @@ fn Run() {
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc13_13: init i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %.loc13_13
-// CHECK:STDOUT:   %.loc13_15.2: i32 = converted %.loc13_13, %.loc13_15.1
+// CHECK:STDOUT:   %F: init i32 = call %F.ref()
+// CHECK:STDOUT:   %.loc13_15.1: i32 = value_of_initializer %F
+// CHECK:STDOUT:   %.loc13_15.2: i32 = converted %F, %.loc13_15.1
 // CHECK:STDOUT:   return %.loc13_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,14 +87,14 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref.loc22: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc22: init i32 = call %F.ref.loc22()
-// CHECK:STDOUT:   assign %a.var, %.loc22
+// CHECK:STDOUT:   %F.loc22: init i32 = call %F.ref.loc22()
+// CHECK:STDOUT:   assign %a.var, %F.loc22
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref.loc23: <function> = name_ref F, @Class.%F [template = @Class.%F]
-// CHECK:STDOUT:   %.loc23: init i32 = call %F.ref.loc23()
-// CHECK:STDOUT:   assign %b.var, %.loc23
+// CHECK:STDOUT:   %F.loc23: init i32 = call %F.ref.loc23()
+// CHECK:STDOUT:   assign %b.var, %F.loc23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

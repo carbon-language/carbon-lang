@@ -36,7 +36,7 @@ class InstNamer {
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
   template <typename IdT>
-  auto GetScopeFor(IdT id) -> ScopeId {
+  auto GetScopeFor(IdT id) const -> ScopeId {
     auto index = static_cast<int32_t>(ScopeId::FirstFunction);
 
     if constexpr (!std::same_as<FunctionId, IdT>) {
@@ -59,29 +59,32 @@ class InstNamer {
     return static_cast<ScopeId>(index);
   }
 
+  // Returns the IR name for the specified scope.
+  auto GetScopeName(ScopeId scope) const -> std::string;
+
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
-  auto GetNameFor(IdT id) -> llvm::StringRef {
+  auto GetNameFor(IdT id) const -> std::string {
     if (!id.is_valid()) {
       return "invalid";
     }
-    return GetScopeInfo(GetScopeFor(id)).name.str();
+    return GetScopeName(GetScopeFor(id));
   }
 
   // Returns the IR name to use for an instruction within its own scope, without
   // any prefix. Returns an empty string if there isn't a good name.
-  auto GetUnscopedNameFor(InstId inst_id) -> llvm::StringRef;
+  auto GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef;
 
   // Returns the IR name to use for an instruction, when referenced from a given
   // scope.
-  auto GetNameFor(ScopeId scope_id, InstId inst_id) -> std::string;
+  auto GetNameFor(ScopeId scope_id, InstId inst_id) const -> std::string;
 
   // Returns the IR name to use for a label within its own scope, without any
   // prefix. Returns an empty string if there isn't a good name.
-  auto GetUnscopedLabelFor(InstBlockId block_id) -> llvm::StringRef;
+  auto GetUnscopedLabelFor(InstBlockId block_id) const -> llvm::StringRef;
 
   // Returns the IR name to use for a label, when referenced from a given scope.
-  auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) -> std::string;
+  auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
  private:
   // A space in which unique names can be allocated.
@@ -113,7 +116,6 @@ class InstNamer {
       Name fallback = Name();
     };
 
-    llvm::StringRef prefix;
     llvm::StringMap<NameResult> allocated = {};
     int unnamed_count = 0;
 
@@ -128,11 +130,15 @@ class InstNamer {
   // A named scope that contains named entities.
   struct Scope {
     Namespace::Name name;
-    Namespace insts = {.prefix = "%"};
-    Namespace labels = {.prefix = "!"};
+    Namespace insts;
+    Namespace labels;
   };
 
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
+    return scopes[static_cast<int>(scope_id)];
+  }
+
+  auto GetScopeInfo(ScopeId scope_id) const -> const Scope& {
     return scopes[static_cast<int>(scope_id)];
   }
 
@@ -154,7 +160,7 @@ class InstNamer {
   const Parse::Tree& parse_tree_;
   const File& sem_ir_;
 
-  Namespace globals = {.prefix = "@"};
+  Namespace globals;
   std::vector<std::pair<ScopeId, Namespace::Name>> insts;
   std::vector<std::pair<ScopeId, Namespace::Name>> labels;
   std::vector<Scope> scopes;

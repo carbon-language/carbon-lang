@@ -34,35 +34,35 @@ fn While() {
 // CHECK:STDOUT: declare void @G()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT: entry1:
+// CHECK:STDOUT:   br label %entry
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %entry, %1
-// CHECK:STDOUT:   %Cond = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond, label %1, label %2
+// CHECK:STDOUT: entry:                                            ; preds = %entry1, %while.body.loc16
+// CHECK:STDOUT:   %Cond.loc16 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.loc16, label %while.body.loc16, label %0
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
+// CHECK:STDOUT: while.body.loc16:                                 ; preds = %entry
 // CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:   br label %entry
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %0
-// CHECK:STDOUT:   %Cond1 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond1, label %3, label %6
+// CHECK:STDOUT: 0:                                                ; preds = %entry
+// CHECK:STDOUT:   %Cond.loc20 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.loc20, label %if.then, label %2
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %4, %2
-// CHECK:STDOUT:   %Cond2 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond2, label %4, label %5
+// CHECK:STDOUT: if.then:                                          ; preds = %while.body.loc21, %0
+// CHECK:STDOUT:   %Cond.loc21 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.loc21, label %while.body.loc21, label %1
 // CHECK:STDOUT:
-// CHECK:STDOUT: 4:                                                ; preds = %3
+// CHECK:STDOUT: while.body.loc21:                                 ; preds = %if.then
 // CHECK:STDOUT:   call void @G()
-// CHECK:STDOUT:   br label %3
+// CHECK:STDOUT:   br label %if.then
 // CHECK:STDOUT:
-// CHECK:STDOUT: 5:                                                ; preds = %3
-// CHECK:STDOUT:   br label %6
+// CHECK:STDOUT: 1:                                                ; preds = %if.then
+// CHECK:STDOUT:   br label %2
 // CHECK:STDOUT:
-// CHECK:STDOUT: 6:                                                ; preds = %5, %2
+// CHECK:STDOUT: 2:                                                ; preds = %1, %0
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %0, { 1, 0 }
+// CHECK:STDOUT:   uselistorder label %entry, { 1, 0 }
 // CHECK:STDOUT: }

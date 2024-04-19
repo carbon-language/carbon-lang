@@ -208,19 +208,19 @@ fn D() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
-// CHECK:STDOUT:   %.loc6: init () = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %.loc6
+// CHECK:STDOUT:   %A: init () = call %A.ref()
+// CHECK:STDOUT:   assign file.%a.var, %A
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
-// CHECK:STDOUT:   %.loc7_16: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_15: init i32 = call %B.ref(%.loc7_16)
-// CHECK:STDOUT:   assign file.%b.var, %.loc7_15
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %B: init i32 = call %B.ref(%.loc7)
+// CHECK:STDOUT:   assign file.%b.var, %B
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
 // CHECK:STDOUT:   %.loc8_23: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_25.1: (i32,) = tuple_literal (%.loc8_23)
 // CHECK:STDOUT:   %.loc8_25.2: (i32,) = tuple_value (%.loc8_23) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_21.1: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_21.2: init {.c: i32} = call %C.ref(%.loc8_21.1)
-// CHECK:STDOUT:   assign file.%c.var, %.loc8_21.2
+// CHECK:STDOUT:   %.loc8_21: (i32,) = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%.5]
+// CHECK:STDOUT:   %C: init {.c: i32} = call %C.ref(%.loc8_21)
+// CHECK:STDOUT:   assign file.%c.var, %C
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
