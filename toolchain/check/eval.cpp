@@ -583,7 +583,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
 
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::FloatNegate:
-      op_val = llvm::APFloat(0.0) - op_val;
+      op_val.changeSign();
       break;
     default:
       CARBON_FATAL() << "Unexpected builtin kind";
@@ -603,7 +603,7 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
   auto lhs_val = context.floats().Get(lhs.float_id);
   auto rhs_val = context.floats().Get(rhs.float_id);
 
-  llvm::APFloat result_val(0.0);
+  llvm::APFloat result_val(lhs_val.getSemantics());
 
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::FloatAdd:
