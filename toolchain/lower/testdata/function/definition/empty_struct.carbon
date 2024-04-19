@@ -11,5 +11,6 @@ fn Echo(a: {}) {
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Echo() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

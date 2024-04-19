@@ -138,10 +138,10 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc23_6.3: i32 = bind_value %.loc23_6.2
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc24_4.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %.loc24_4.2: init [i32; 3] = call %F.ref() to %.loc24_4.1
+// CHECK:STDOUT:   %F.call: init [i32; 3] = call %F.ref() to %.loc24_4.1
 // CHECK:STDOUT:   %.loc24_7: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc24_4.3: ref [i32; 3] = temporary %.loc24_4.1, %.loc24_4.2
-// CHECK:STDOUT:   %.loc24_8.1: ref i32 = array_index %.loc24_4.3, %.loc24_7
+// CHECK:STDOUT:   %.loc24_4.2: ref [i32; 3] = temporary %.loc24_4.1, %F.call
+// CHECK:STDOUT:   %.loc24_8.1: ref i32 = array_index %.loc24_4.2, %.loc24_7
 // CHECK:STDOUT:   %.loc24_8.2: i32 = bind_value %.loc24_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

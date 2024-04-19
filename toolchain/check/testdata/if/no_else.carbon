@@ -53,12 +53,12 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc12: init () = call %F.ref()
+// CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc14: init () = call %G.ref()
+// CHECK:STDOUT:   %G.call: init () = call %G.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

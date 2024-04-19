@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 // CHECK:STDOUT: --- definition.carbon
 // CHECK:STDOUT:
@@ -23,5 +23,5 @@ fn Add(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

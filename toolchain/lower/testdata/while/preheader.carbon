@@ -35,34 +35,34 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:   br label %while.cond.loc16
 // CHECK:STDOUT:
-// CHECK:STDOUT: 0:                                                ; preds = %entry, %1
-// CHECK:STDOUT:   %Cond = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond, label %1, label %2
+// CHECK:STDOUT: while.cond.loc16:                                 ; preds = %entry, %while.body.loc16
+// CHECK:STDOUT:   %Cond.call.loc16 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc16, label %while.body.loc16, label %while.done.loc16
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
+// CHECK:STDOUT: while.body.loc16:                                 ; preds = %while.cond.loc16
 // CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %0
+// CHECK:STDOUT:   br label %while.cond.loc16
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %0
-// CHECK:STDOUT:   %Cond1 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond1, label %3, label %6
+// CHECK:STDOUT: while.done.loc16:                                 ; preds = %while.cond.loc16
+// CHECK:STDOUT:   %Cond.call.loc20 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc20, label %while.cond.loc21, label %if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %4, %2
-// CHECK:STDOUT:   %Cond2 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond2, label %4, label %5
+// CHECK:STDOUT: while.cond.loc21:                                 ; preds = %while.body.loc21, %while.done.loc16
+// CHECK:STDOUT:   %Cond.call.loc21 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc21, label %while.body.loc21, label %while.done.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: 4:                                                ; preds = %3
+// CHECK:STDOUT: while.body.loc21:                                 ; preds = %while.cond.loc21
 // CHECK:STDOUT:   call void @G()
-// CHECK:STDOUT:   br label %3
+// CHECK:STDOUT:   br label %while.cond.loc21
 // CHECK:STDOUT:
-// CHECK:STDOUT: 5:                                                ; preds = %3
-// CHECK:STDOUT:   br label %6
+// CHECK:STDOUT: while.done.loc21:                                 ; preds = %while.cond.loc21
+// CHECK:STDOUT:   br label %if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 6:                                                ; preds = %5, %2
+// CHECK:STDOUT: if.else:                                          ; preds = %while.done.loc21, %while.done.loc16
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %0, { 1, 0 }
+// CHECK:STDOUT:   uselistorder label %while.cond.loc16, { 1, 0 }
 // CHECK:STDOUT: }

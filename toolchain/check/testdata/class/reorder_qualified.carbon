@@ -178,13 +178,13 @@ class A {
 // CHECK:STDOUT:   %.loc28_26: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%.20]
 // CHECK:STDOUT:   assign %d.var, %.loc28_26
 // CHECK:STDOUT:   %AF.ref: <function> = name_ref AF, @A.%AF [template = @A.%AF]
-// CHECK:STDOUT:   %.loc31: init () = call %AF.ref()
+// CHECK:STDOUT:   %AF.call: init () = call %AF.ref()
 // CHECK:STDOUT:   %BF.ref: <function> = name_ref BF, @B.%BF [template = @B.%BF]
-// CHECK:STDOUT:   %.loc32: init () = call %BF.ref()
+// CHECK:STDOUT:   %BF.call: init () = call %BF.ref()
 // CHECK:STDOUT:   %CF.ref: <function> = name_ref CF, @C.%CF [template = @C.%CF]
-// CHECK:STDOUT:   %.loc33: init () = call %CF.ref()
+// CHECK:STDOUT:   %CF.call: init () = call %CF.ref()
 // CHECK:STDOUT:   %DF.ref: <function> = name_ref DF, @D.%DF [template = @D.%DF]
-// CHECK:STDOUT:   %.loc34: init () = call %DF.ref()
+// CHECK:STDOUT:   %DF.call: init () = call %DF.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

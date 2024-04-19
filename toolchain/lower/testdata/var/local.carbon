@@ -13,8 +13,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca i32, align 4
-// CHECK:STDOUT:   store i32 1, ptr %x, align 4
-// CHECK:STDOUT:   %1 = load i32, ptr %x, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.var = alloca i32, align 4
+// CHECK:STDOUT:   store i32 1, ptr %x.var, align 4
+// CHECK:STDOUT:   %.loc9 = load i32, ptr %x.var, align 4
+// CHECK:STDOUT:   ret i32 %.loc9
 // CHECK:STDOUT: }

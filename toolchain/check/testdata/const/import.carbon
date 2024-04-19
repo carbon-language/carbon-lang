@@ -55,8 +55,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc6: init const i32 = call %F.ref()
-// CHECK:STDOUT:   assign file.%a_ref.var, %.loc6
+// CHECK:STDOUT:   %F.call: init const i32 = call %F.ref()
+// CHECK:STDOUT:   assign file.%a_ref.var, %F.call
 // CHECK:STDOUT:   %a_ref.ref: ref const i32 = name_ref a_ref, file.%a_ref
 // CHECK:STDOUT:   %.loc7: const i32* = addr_of %a_ref.ref
 // CHECK:STDOUT:   assign file.%a_ptr_ref.var, %.loc7

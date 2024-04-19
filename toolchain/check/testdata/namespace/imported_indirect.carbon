@@ -151,8 +151,8 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, file.%B [template = file.%B]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, file.%C [template = file.%C]
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
-// CHECK:STDOUT:   %.loc5: init () = call %D.ref()
-// CHECK:STDOUT:   assign file.%e.var, %.loc5
+// CHECK:STDOUT:   %D.call: init () = call %D.ref()
+// CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

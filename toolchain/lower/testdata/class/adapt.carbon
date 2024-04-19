@@ -51,33 +51,38 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: source_filename = "adapt_class.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) {
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %.loc9_27.2.a, align 4
+// CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %.loc9_27.4.b, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make.1(ptr sret({ i32, i32 }) %return) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Make(ptr %return)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @GetB(ptr %self) {
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %self, i32 0, i32 1
-// CHECK:STDOUT:   %1 = load i32, ptr %b, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds { i32, i32 }, ptr %self, i32 0, i32 1
+// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4
+// CHECK:STDOUT:   ret i32 %.loc22_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Use() {
-// CHECK:STDOUT:   %pa = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   call void @Make.1(ptr %pa)
-// CHECK:STDOUT:   %GetB = call i32 @GetB(ptr %pa)
-// CHECK:STDOUT:   ret i32 %GetB
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   call void @Make.1(ptr %pa.var)
+// CHECK:STDOUT:   %.loc28_17 = call i32 @GetB(ptr %pa.var)
+// CHECK:STDOUT:   ret i32 %.loc28_17
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @DoStuff(i32 %a) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %a
 // CHECK:STDOUT: }

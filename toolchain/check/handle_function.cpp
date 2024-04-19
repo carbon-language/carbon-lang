@@ -47,22 +47,13 @@ static auto DiagnoseModifiers(Context& context, bool is_definition,
     -> KeywordModifierSet {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
   CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
-  if (is_definition) {
-    ForbidExternModifierOnDefinition(context, decl_kind);
-  }
-  if (target_scope_id.is_valid()) {
-    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
-    if (target_id.is_valid() &&
-        !context.insts().Is<SemIR::Namespace>(target_id)) {
-      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
-                            " that is a member");
-    }
-  }
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
+  RestrictExternModifierOnDecl(context, decl_kind, target_scope_id,
+                               is_definition);
   CheckMethodModifiersOnFunction(context, target_scope_id);
   RequireDefaultFinalOnlyInInterfaces(context, decl_kind, target_scope_id);
 
@@ -163,14 +154,14 @@ static auto BuildFunctionDecl(Context& context,
     auto prev_inst_for_merge =
         ResolvePrevInstForMerge(context, node_id, prev_id);
 
-    if (auto existing_function_decl =
+    if (auto prev_function_decl =
             prev_inst_for_merge.inst.TryAs<SemIR::FunctionDecl>()) {
       if (MergeFunctionRedecl(context, node_id, function_info,
                               /*new_is_import=*/false, is_definition,
-                              existing_function_decl->function_id,
+                              prev_function_decl->function_id,
                               prev_inst_for_merge.import_ir_inst_id)) {
         // When merging, use the existing function rather than adding a new one.
-        function_decl.function_id = existing_function_decl->function_id;
+        function_decl.function_id = prev_function_decl->function_id;
       }
     } else {
       // This is a redeclaration of something other than a function. This

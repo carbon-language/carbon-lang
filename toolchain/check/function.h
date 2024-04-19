@@ -40,8 +40,8 @@ auto CheckFunctionTypeMatches(Context& context,
 // have a definition even if one is upcoming, set is_definition to indicate the
 // planned result.
 //
-// If merging is successful, updates the FunctionId on new_function and returns
-// true. Otherwise, returns false. Prints a diagnostic when appropriate.
+// If merging is successful, returns true and may update the previous function.
+// Otherwise, returns false. Prints a diagnostic when appropriate.
 auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                          SemIR::Function& new_function, bool new_is_import,
                          bool new_is_definition,

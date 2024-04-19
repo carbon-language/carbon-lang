@@ -571,6 +571,8 @@ class ImportRefResolver {
                           SemIR::Class& new_class,
                           SemIR::ConstantId object_repr_const_id,
                           SemIR::ConstantId base_const_id) -> void {
+    new_class.definition_id = new_class.decl_id;
+
     new_class.object_repr_id =
         context_.GetTypeIdForTypeConstant(object_repr_const_id);
 

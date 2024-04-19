@@ -15,8 +15,9 @@ fn F(T:! type) {
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(%type %T) {
-// CHECK:STDOUT:   %p = alloca ptr, align 8
-// CHECK:STDOUT:   %1 = load ptr, ptr %p, align 8
-// CHECK:STDOUT:   %2 = load {}, ptr %1, align 1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %p.var = alloca ptr, align 8
+// CHECK:STDOUT:   %.loc9_15 = load ptr, ptr %p.var, align 8
+// CHECK:STDOUT:   %.loc9_14.2 = load {}, ptr %.loc9_15, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

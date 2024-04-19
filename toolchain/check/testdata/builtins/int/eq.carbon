@@ -97,9 +97,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref.loc8: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %.loc8_19: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc8_22: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_18: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_22) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %.loc8_18 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_13.2: bool = converted %.loc8_18, %.loc8_13.1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_22) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %int.eq.loc8 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_13.2: bool = converted %int.eq.loc8, %.loc8_13.1 [template = constants.%.5]
 // CHECK:STDOUT:   if %.loc8_13.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
@@ -116,9 +116,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref.loc9: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_19: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %.loc9_19 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %.loc9_19, %.loc9_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   %int.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_23) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %int.eq.loc9 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %int.eq.loc9, %.loc9_14.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -139,9 +139,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %Eq.ref: <function> = name_ref Eq, file.%Eq [template = file.%Eq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc13_12: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc13_18.1: bool = value_of_initializer %.loc13_12
-// CHECK:STDOUT:   %.loc13_18.2: bool = converted %.loc13_12, %.loc13_18.1
+// CHECK:STDOUT:   %int.eq: init bool = call %Eq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc13_18.1: bool = value_of_initializer %int.eq
+// CHECK:STDOUT:   %.loc13_18.2: bool = converted %int.eq, %.loc13_18.1
 // CHECK:STDOUT:   return %.loc13_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

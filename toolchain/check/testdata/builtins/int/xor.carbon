@@ -43,8 +43,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Xor.ref: <function> = name_ref Xor, %Xor [template = %Xor]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 12 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_24: i32 = int_literal 10 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_19: init i32 = call %Xor.ref(%.loc4_20, %.loc4_24) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_27: type = array_type %.loc4_19, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.xor: init i32 = call %Xor.ref(%.loc4_20, %.loc4_24) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_27: type = array_type %int.xor, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 6] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 6] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 6 [template = constants.%.3]
@@ -69,9 +69,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Xor.ref: <function> = name_ref Xor, file.%Xor [template = file.%Xor]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_13: init i32 = call %Xor.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %.loc8_13
-// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %.loc8_13, %.loc8_19.1
+// CHECK:STDOUT:   %int.xor: init i32 = call %Xor.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.xor
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.xor, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

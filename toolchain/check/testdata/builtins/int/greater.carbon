@@ -7,7 +7,7 @@
 // --- int_greater.carbon
 
 fn Greater(a: i32, b: i32) -> bool = "int.greater";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 class True {}
 class False {}
@@ -94,7 +94,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Greater(%a: i32, %b: i32) -> bool = "int.greater";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%true_: True, %false_: False) {
 // CHECK:STDOUT: !entry:
@@ -102,9 +102,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Greater.ref.loc9: <function> = name_ref Greater, file.%Greater [template = file.%Greater]
 // CHECK:STDOUT:   %.loc9_25: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_28: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_24: init bool = call %Greater.ref.loc9(%.loc9_25, %.loc9_28) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %.loc9_24 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %.loc9_24, %.loc9_14.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.greater.loc9: init bool = call %Greater.ref.loc9(%.loc9_25, %.loc9_28) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %int.greater.loc9 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %int.greater.loc9, %.loc9_14.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -121,9 +121,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Greater.ref.loc10: <function> = name_ref Greater, file.%Greater [template = file.%Greater]
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_24: init bool = call %Greater.ref.loc10(%.loc10_25, %.loc10_28) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %.loc10_24 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_14.2: bool = converted %.loc10_24, %.loc10_14.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.greater.loc10: init bool = call %Greater.ref.loc10(%.loc10_25, %.loc10_28) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %int.greater.loc10 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_14.2: bool = converted %int.greater.loc10, %.loc10_14.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc10_14.2 br !if.expr.then.loc10 else br !if.expr.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc10:
@@ -140,9 +140,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Greater.ref.loc11: <function> = name_ref Greater, file.%Greater [template = file.%Greater]
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_23: init bool = call %Greater.ref.loc11(%.loc11_24, %.loc11_27) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_13.1: bool = value_of_initializer %.loc11_23 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_13.2: bool = converted %.loc11_23, %.loc11_13.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.greater.loc11: init bool = call %Greater.ref.loc11(%.loc11_24, %.loc11_27) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_13.1: bool = value_of_initializer %int.greater.loc11 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_13.2: bool = converted %int.greater.loc11, %.loc11_13.1 [template = constants.%.8]
 // CHECK:STDOUT:   if %.loc11_13.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
@@ -159,13 +159,13 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Greater.ref.loc12: <function> = name_ref Greater, file.%Greater [template = file.%Greater]
 // CHECK:STDOUT:   %Negate.ref.loc12: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc12_32: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_31: init i32 = call %Negate.ref.loc12(%.loc12_32) [template = constants.%.9]
+// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_32) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_36: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_24.1: i32 = value_of_initializer %.loc12_31 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_24.2: i32 = converted %.loc12_31, %.loc12_24.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_24.3: init bool = call %Greater.ref.loc12(%.loc12_24.2, %.loc12_36) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_14.1: bool = value_of_initializer %.loc12_24.3 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_14.2: bool = converted %.loc12_24.3, %.loc12_14.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_24.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc12_24.2: i32 = converted %int.snegate.loc12, %.loc12_24.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.greater.loc12: init bool = call %Greater.ref.loc12(%.loc12_24.2, %.loc12_36) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_14.1: bool = value_of_initializer %int.greater.loc12 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_14.2: bool = converted %int.greater.loc12, %.loc12_14.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc12_14.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12:
@@ -183,12 +183,12 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.loc13_24: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %Negate.ref.loc13: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_33: init i32 = call %Negate.ref.loc13(%.loc13_34) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.1: i32 = value_of_initializer %.loc13_33 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.2: i32 = converted %.loc13_33, %.loc13_23.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.3: init bool = call %Greater.ref.loc13(%.loc13_24, %.loc13_23.2) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_13.1: bool = value_of_initializer %.loc13_23.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_13.2: bool = converted %.loc13_23.3, %.loc13_13.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.snegate.loc13: init i32 = call %Negate.ref.loc13(%.loc13_34) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_23.1: i32 = value_of_initializer %int.snegate.loc13 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_23.2: i32 = converted %int.snegate.loc13, %.loc13_23.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.greater.loc13: init bool = call %Greater.ref.loc13(%.loc13_24, %.loc13_23.2) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_13.1: bool = value_of_initializer %int.greater.loc13 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_13.2: bool = converted %int.greater.loc13, %.loc13_13.1 [template = constants.%.8]
 // CHECK:STDOUT:   if %.loc13_13.2 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
@@ -209,9 +209,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Greater.ref: <function> = name_ref Greater, file.%Greater [template = file.%Greater]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_17: init bool = call %Greater.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc17_23.1: bool = value_of_initializer %.loc17_17
-// CHECK:STDOUT:   %.loc17_23.2: bool = converted %.loc17_17, %.loc17_23.1
+// CHECK:STDOUT:   %int.greater: init bool = call %Greater.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc17_23.1: bool = value_of_initializer %int.greater
+// CHECK:STDOUT:   %.loc17_23.2: bool = converted %int.greater, %.loc17_23.1
 // CHECK:STDOUT:   return %.loc17_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

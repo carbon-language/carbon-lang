@@ -10,7 +10,7 @@ package Core api;
 
 import library "prelude";
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 // --- use.carbon
 
@@ -33,7 +33,7 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use.carbon
 // CHECK:STDOUT:
@@ -59,13 +59,13 @@ var arr: [i32; Core.Add(1, 2)] = (1, 2, 3);
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %import_ref [template = imports.%Add]
 // CHECK:STDOUT:   %.loc4_25: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_28: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_24: init i32 = call %Add.ref(%.loc4_25, %.loc4_28) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_30: type = array_type %.loc4_24, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc4_25, %.loc4_28) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_30: type = array_type %int.sadd, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

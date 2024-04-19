@@ -10,40 +10,30 @@ class Class {
   fn I() {}
 }
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: ERROR: Redefinition of class Class.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `class Class`.
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: Previous definition was here.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:1: Previously defined here.
 // CHECK:STDERR: class Class {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 class Class {
   fn G();
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redeclaration of `fn H` is redundant.
-  // CHECK:STDERR:   fn H();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-16]]:3: Previously declared here.
-  // CHECK:STDERR:   fn H();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   fn H();
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redefinition of `fn I`.
-  // CHECK:STDERR:   fn I() {}
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-23]]:3: Previously defined here.
-  // CHECK:STDERR:   fn I() {}
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   fn I() {}
 }
 
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+4]]:10: ERROR: Out-of-line declaration requires a declaration in scoped entity.
+// CHECK:STDERR: fn Class.F() {}
+// CHECK:STDERR:          ^
+// CHECK:STDERR:
 fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn I`.
 // CHECK:STDERR: fn Class.I() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:3: Previously defined here.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-13]]:3: Previously defined here.
 // CHECK:STDERR:   fn I() {}
 // CHECK:STDERR:   ^~~~~~~~
 fn Class.I() {}
@@ -63,47 +53,53 @@ fn Class.I() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.decl.loc20: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
-// CHECK:STDOUT:   %I: <function> = fn_decl @I [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H.2 [template] {}
+// CHECK:STDOUT:   %I: <function> = fn_decl @I.2 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
-// CHECK:STDOUT:   %I: <function> = fn_decl @I [template] {}
+// CHECK:STDOUT:   %H: <function> = fn_decl @H.2 [template] {}
+// CHECK:STDOUT:   %I: <function> = fn_decl @I.2 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = <unexpected instref inst+4>
-// CHECK:STDOUT:   .H = <unexpected instref inst+5>
-// CHECK:STDOUT:   .I = <unexpected instref inst+6>
 // CHECK:STDOUT:   .G = %G
+// CHECK:STDOUT:   .H = %H
+// CHECK:STDOUT:   .I = %I
+// CHECK:STDOUT:   .F = file.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @I.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @I() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.loc37:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.loc49:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @I.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc39:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
