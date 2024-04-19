@@ -72,7 +72,6 @@ cc_fuzz_test(
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],
-    data = ["//core:prelude"],
     env = cc_env(),
     deps = [
         ":driver",
