@@ -12,5 +12,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: source_filename = "zero.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Main() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

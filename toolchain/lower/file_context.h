@@ -9,6 +9,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
 
@@ -17,6 +18,7 @@ class FileContext {
  public:
   explicit FileContext(llvm::LLVMContext& llvm_context,
                        llvm::StringRef module_name, const SemIR::File& sem_ir,
+                       const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
@@ -50,6 +52,7 @@ class FileContext {
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
+  auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
 
  private:
   // Builds the declaration for the given function, which should then be cached
@@ -79,6 +82,9 @@ class FileContext {
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
+
+  // The instruction namer, if given.
+  const SemIR::InstNamer* const inst_namer_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

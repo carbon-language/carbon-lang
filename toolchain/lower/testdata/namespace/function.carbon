@@ -21,14 +21,17 @@ fn Bar() {
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Baz.1() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Baz.1()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

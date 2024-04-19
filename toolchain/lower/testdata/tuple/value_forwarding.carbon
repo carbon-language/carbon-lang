@@ -16,11 +16,12 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: declare void @G(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr %a, ptr %b) {
-// CHECK:STDOUT:   %tuple = alloca { ptr, ptr }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { ptr, ptr }, ptr %tuple, i32 0, i32 0
-// CHECK:STDOUT:   store ptr %a, ptr %1, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds { ptr, ptr }, ptr %tuple, i32 0, i32 1
-// CHECK:STDOUT:   store ptr %b, ptr %2, align 8
-// CHECK:STDOUT:   call void @G(ptr %tuple)
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc10_10.2.tuple = alloca { ptr, ptr }, align 8
+// CHECK:STDOUT:   %.loc10_10.2 = getelementptr inbounds { ptr, ptr }, ptr %.loc10_10.2.tuple, i32 0, i32 0
+// CHECK:STDOUT:   store ptr %a, ptr %.loc10_10.2, align 8
+// CHECK:STDOUT:   %.loc10_10.21 = getelementptr inbounds { ptr, ptr }, ptr %.loc10_10.2.tuple, i32 0, i32 1
+// CHECK:STDOUT:   store ptr %b, ptr %.loc10_10.21, align 8
+// CHECK:STDOUT:   call void @G(ptr %.loc10_10.2.tuple)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

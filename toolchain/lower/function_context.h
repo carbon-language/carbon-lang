@@ -96,10 +96,33 @@ class FunctionContext {
     return file_context_->llvm_context();
   }
   auto llvm_module() -> llvm::Module& { return file_context_->llvm_module(); }
-  auto builder() -> llvm::IRBuilder<>& { return builder_; }
+  auto builder() -> llvm::IRBuilderBase& { return builder_; }
   auto sem_ir() -> const SemIR::File& { return file_context_->sem_ir(); }
 
  private:
+  // Custom instruction inserter for our IR builder. Automatically names
+  // instructions.
+  class Inserter : public llvm::IRBuilderDefaultInserter {
+   public:
+    explicit Inserter(const SemIR::InstNamer* inst_namer)
+        : inst_namer_(inst_namer) {}
+
+    // Sets the instruction we are currently emitting.
+    void SetCurrentInstId(SemIR::InstId inst_id) { inst_id_ = inst_id; }
+
+   private:
+    auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,
+                      llvm::BasicBlock* block,
+                      llvm::BasicBlock::iterator insert_pt) const
+        -> void override;
+
+    // The instruction namer.
+    const SemIR::InstNamer* inst_namer_;
+
+    // The current instruction ID.
+    SemIR::InstId inst_id_ = SemIR::InstId::Invalid;
+  };
+
   // Emits a value copy for type `type_id` from `source_id` to `dest_id`.
   // `source_id` must produce a value representation for `type_id`, and
   // `dest_id` must be a pointer to a `type_id` object.
@@ -112,7 +135,7 @@ class FunctionContext {
   // The IR function we're generating.
   llvm::Function* function_;
 
-  llvm::IRBuilder<> builder_;
+  llvm::IRBuilder<llvm::ConstantFolder, Inserter> builder_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

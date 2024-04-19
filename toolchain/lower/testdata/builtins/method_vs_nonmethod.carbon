@@ -4,8 +4,8 @@
 //
 // AUTOUPDATE
 
-fn AddNonmethod(a: i32, b: i32) -> i32 = "int.add";
-fn AddMethod[self: i32](b: i32) -> i32 = "int.add";
+fn AddNonmethod(a: i32, b: i32) -> i32 = "int.sadd";
+fn AddMethod[self: i32](b: i32) -> i32 = "int.sadd";
 
 fn TestAddNonmethod(a: i32, b: i32) -> i32 { return AddNonmethod(a, b); }
 fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
@@ -14,11 +14,13 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAddNonmethod(i32 %a, i32 %b) {
-// CHECK:STDOUT:   %add = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %add
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) {
-// CHECK:STDOUT:   %add = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %add
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }

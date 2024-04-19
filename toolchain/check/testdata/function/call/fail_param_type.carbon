@@ -45,8 +45,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc16_5: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc16: f64 = float_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %G.call: init () = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

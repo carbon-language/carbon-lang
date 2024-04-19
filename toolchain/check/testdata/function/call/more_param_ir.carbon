@@ -62,7 +62,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_10.1: ref i32 = tuple_index %x.ref, %.loc12_9
 // CHECK:STDOUT:   %.loc12_13: i32 = int_literal 6 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_10.2: i32 = bind_value %.loc12_10.1
-// CHECK:STDOUT:   %.loc12_6: init () = call %Foo.ref(%.loc12_10.2, %.loc12_13)
+// CHECK:STDOUT:   %Foo.call: init () = call %Foo.ref(%.loc12_10.2, %.loc12_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

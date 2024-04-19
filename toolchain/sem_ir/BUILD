@@ -122,6 +122,23 @@ cc_library(
 )
 
 cc_library(
+    name = "inst_namer",
+    srcs = ["inst_namer.cpp"],
+    hdrs = ["inst_namer.h"],
+    deps = [
+        ":file",
+        ":ids",
+        ":inst_kind",
+        "//common:ostream",
+        "//toolchain/base:kind_switch",
+        "//toolchain/base:value_store",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "formatter",
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
@@ -129,6 +146,7 @@ cc_library(
         ":file",
         ":ids",
         ":inst_kind",
+        ":inst_namer",
         "//common:ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:value_store",

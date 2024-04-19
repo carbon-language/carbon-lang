@@ -258,10 +258,10 @@ fn Other.G() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
-// CHECK:STDOUT:   %.loc8: init () = call %F.ref()
+// CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F2.ref: <function> = name_ref F2, file.%import_ref.2 [template = imports.%F2]
-// CHECK:STDOUT:   %.loc9: init () = call %F2.ref()
+// CHECK:STDOUT:   %F2.call: init () = call %F2.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -292,7 +292,7 @@ fn Other.G() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc8: init () = call %F.ref()
+// CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,7 +334,7 @@ fn Other.G() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
-// CHECK:STDOUT:   %.loc24: init () = call %F.ref()
+// CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,9 +95,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc8_21: f64 = float_literal 1.5 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_20: init f64 = call %Negate.ref(%.loc8_21) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_25.1: f64 = value_of_initializer %.loc8_20 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_25.2: f64 = converted %.loc8_20, %.loc8_25.1 [template = constants.%.2]
+// CHECK:STDOUT:   %float.negate: init f64 = call %Negate.ref(%.loc8_21) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_25.1: f64 = value_of_initializer %float.negate [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_25.2: f64 = converted %float.negate, %.loc8_25.1 [template = constants.%.2]
 // CHECK:STDOUT:   %a.loc8: f64 = bind_name a, %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,9 +107,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %.loc5_16: init f64 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc5_19.1: f64 = value_of_initializer %.loc5_16
-// CHECK:STDOUT:   %.loc5_19.2: f64 = converted %.loc5_16, %.loc5_19.1
+// CHECK:STDOUT:   %float.negate: init f64 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc5_19.1: f64 = value_of_initializer %float.negate
+// CHECK:STDOUT:   %.loc5_19.2: f64 = converted %float.negate, %.loc5_19.1
 // CHECK:STDOUT:   return %.loc5_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,9 +182,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: <function> = name_ref TooFew, file.%TooFew [template = file.%TooFew]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %.loc29_16: init f64 = call %TooFew.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc29_19.1: f64 = value_of_initializer %.loc29_16 [template = <error>]
-// CHECK:STDOUT:   %.loc29_19.2: f64 = converted %.loc29_16, %.loc29_19.1 [template = <error>]
+// CHECK:STDOUT:   %TooFew.call: init f64 = call %TooFew.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc29_19.1: f64 = value_of_initializer %TooFew.call [template = <error>]
+// CHECK:STDOUT:   %.loc29_19.2: f64 = converted %TooFew.call, %.loc29_19.1 [template = <error>]
 // CHECK:STDOUT:   return %.loc29_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,9 +194,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: f64 = name_ref c, %c
-// CHECK:STDOUT:   %.loc40_17: init f64 = call %TooMany.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc40_26.1: f64 = value_of_initializer %.loc40_17 [template = <error>]
-// CHECK:STDOUT:   %.loc40_26.2: f64 = converted %.loc40_17, %.loc40_26.1 [template = <error>]
+// CHECK:STDOUT:   %TooMany.call: init f64 = call %TooMany.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc40_26.1: f64 = value_of_initializer %TooMany.call [template = <error>]
+// CHECK:STDOUT:   %.loc40_26.2: f64 = converted %TooMany.call, %.loc40_26.1 [template = <error>]
 // CHECK:STDOUT:   return %.loc40_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,9 +205,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %BadReturnType.ref: <function> = name_ref BadReturnType, file.%BadReturnType [template = file.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %.loc50_23: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc50_29.1: bool = value_of_initializer %.loc50_23 [template = <error>]
-// CHECK:STDOUT:   %.loc50_29.2: bool = converted %.loc50_23, %.loc50_29.1 [template = <error>]
+// CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc50_29.1: bool = value_of_initializer %BadReturnType.call [template = <error>]
+// CHECK:STDOUT:   %.loc50_29.2: bool = converted %BadReturnType.call, %.loc50_29.1 [template = <error>]
 // CHECK:STDOUT:   return %.loc50_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

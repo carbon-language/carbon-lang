@@ -8,12 +8,14 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
 
 // Lowers SemIR to LLVM IR.
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream)
+                 const SemIR::File& sem_ir, const SemIR::InstNamer* inst_namer,
+                 llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module>;
 
 }  // namespace Carbon::Lower

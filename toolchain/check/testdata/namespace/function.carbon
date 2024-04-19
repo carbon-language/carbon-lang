@@ -53,7 +53,7 @@ fn Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %Baz.ref: <function> = name_ref Baz, file.%Baz.loc13 [template = file.%Baz.loc13]
-// CHECK:STDOUT:   %.loc17: init () = call %Baz.ref()
+// CHECK:STDOUT:   %Baz.call: init () = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -75,9 +75,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref: <function> = name_ref Float, %import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_13: init type = call %Float.ref(%.loc6_14) [template = f64]
-// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %.loc6_13 [template = f64]
-// CHECK:STDOUT:   %.loc6_16.2: type = converted %.loc6_13, %.loc6_16.1 [template = f64]
+// CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc6_14) [template = f64]
+// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1 [template = f64]
 // CHECK:STDOUT:   %f.var: ref f64 = var f
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat: <function> = fn_decl @GetFloat [template] {
@@ -93,9 +93,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float.ref: <function> = name_ref Float, file.%import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: i32 = name_ref dyn_size, %dyn_size
-// CHECK:STDOUT:   %.loc9_15: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %.loc9_15
-// CHECK:STDOUT:   %.loc9_25.2: type = converted %.loc9_15, %.loc9_25.1
+// CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
+// CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %float.make_type
+// CHECK:STDOUT:   %.loc9_25.2: type = converted %float.make_type, %.loc9_25.1
 // CHECK:STDOUT:   return %.loc9_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,9 +125,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref.loc10: <function> = name_ref Float, %import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 32 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_25: init type = call %Float.ref.loc10(%.loc10_26) [template = <error>]
-// CHECK:STDOUT:   %.loc10_28.1: type = value_of_initializer %.loc10_25 [template = <error>]
-// CHECK:STDOUT:   %.loc10_28.2: type = converted %.loc10_25, %.loc10_28.1 [template = <error>]
+// CHECK:STDOUT:   %float.make_type.loc10: init type = call %Float.ref.loc10(%.loc10_26) [template = <error>]
+// CHECK:STDOUT:   %.loc10_28.1: type = value_of_initializer %float.make_type.loc10 [template = <error>]
+// CHECK:STDOUT:   %.loc10_28.2: type = converted %float.make_type.loc10, %.loc10_28.1 [template = <error>]
 // CHECK:STDOUT:   %invalid_float.var: ref <error> = var invalid_float
 // CHECK:STDOUT:   %invalid_float: ref <error> = bind_name invalid_float, %invalid_float.var
 // CHECK:STDOUT:   %dyn_size.var: ref i32 = var dyn_size
@@ -135,9 +135,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.ref.loc16: <function> = name_ref Float, %import_ref [template = imports.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: ref i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %.loc16_16: i32 = bind_value %dyn_size.ref
-// CHECK:STDOUT:   %.loc16_15: init type = call %Float.ref.loc16(%.loc16_16)
-// CHECK:STDOUT:   %.loc16_24.1: type = value_of_initializer %.loc16_15
-// CHECK:STDOUT:   %.loc16_24.2: type = converted %.loc16_15, %.loc16_24.1
+// CHECK:STDOUT:   %float.make_type.loc16: init type = call %Float.ref.loc16(%.loc16_16)
+// CHECK:STDOUT:   %.loc16_24.1: type = value_of_initializer %float.make_type.loc16
+// CHECK:STDOUT:   %.loc16_24.2: type = converted %float.make_type.loc16, %.loc16_24.1
 // CHECK:STDOUT:   %dyn.var: ref <error> = var dyn
 // CHECK:STDOUT:   %dyn: ref <error> = bind_name dyn, %dyn.var
 // CHECK:STDOUT: }

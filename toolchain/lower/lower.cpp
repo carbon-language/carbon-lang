@@ -9,9 +9,11 @@
 namespace Carbon::Lower {
 
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream)
+                 const SemIR::File& sem_ir, const SemIR::InstNamer* inst_namer,
+                 llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module> {
-  FileContext context(llvm_context, module_name, sem_ir, vlog_stream);
+  FileContext context(llvm_context, module_name, sem_ir, inst_namer,
+                      vlog_stream);
   return context.Run();
 }
 

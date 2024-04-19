@@ -7,7 +7,7 @@
 interface I {
   // TODO: A definition without `default` in an interface should be rejected.
   fn F() {}
-  fn G(a: i32, b: i32) -> i32 = "int.add";
+  fn G(a: i32, b: i32) -> i32 = "int.sadd";
 
   // TODO: An associated constant with an initializer without `default` in an
   // interface should be rejected.
@@ -74,5 +74,5 @@ interface I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@I.%a.loc10_8.2: i32, @I.%b.loc10_16.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @G(@I.%a.loc10_8.2: i32, @I.%b.loc10_16.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

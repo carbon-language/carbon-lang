@@ -15,23 +15,26 @@ fn Or() -> bool {
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @G() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @Or() {
-// CHECK:STDOUT:   %F = call i1 @F()
-// CHECK:STDOUT:   %1 = xor i1 %F, true
-// CHECK:STDOUT:   br i1 %1, label %2, label %3
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call i1 @F()
+// CHECK:STDOUT:   %.loc11_14.3 = xor i1 %F.call, true
+// CHECK:STDOUT:   br i1 %.loc11_14.3, label %or.rhs, label %or.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %0
-// CHECK:STDOUT:   %G = call i1 @G()
-// CHECK:STDOUT:   br label %3
+// CHECK:STDOUT: or.rhs:                                           ; preds = %entry
+// CHECK:STDOUT:   %G.call = call i1 @G()
+// CHECK:STDOUT:   br label %or.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %2, %0
-// CHECK:STDOUT:   %4 = phi i1 [ true, %0 ], [ %G, %2 ]
-// CHECK:STDOUT:   ret i1 %4
+// CHECK:STDOUT: or.result:                                        ; preds = %or.rhs, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ true, %entry ], [ %G.call, %or.rhs ]
+// CHECK:STDOUT:   ret i1 %0
 // CHECK:STDOUT: }

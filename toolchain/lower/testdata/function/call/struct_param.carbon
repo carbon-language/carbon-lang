@@ -14,16 +14,18 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "struct_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F({ i32 } %b, ptr %c) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %struct = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 0
-// CHECK:STDOUT:   store i32 2, ptr %1, align 4
-// CHECK:STDOUT:   %2 = getelementptr inbounds { i32, i32 }, ptr %struct, i32 0, i32 1
-// CHECK:STDOUT:   store i32 3, ptr %2, align 4
-// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr %struct)
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc10_34.2.struct = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %.loc10_34.2 = getelementptr inbounds { i32, i32 }, ptr %.loc10_34.2.struct, i32 0, i32 0
+// CHECK:STDOUT:   store i32 2, ptr %.loc10_34.2, align 4
+// CHECK:STDOUT:   %.loc10_34.21 = getelementptr inbounds { i32, i32 }, ptr %.loc10_34.2.struct, i32 0, i32 1
+// CHECK:STDOUT:   store i32 3, ptr %.loc10_34.21, align 4
+// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr %.loc10_34.2.struct)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

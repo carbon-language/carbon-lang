@@ -48,9 +48,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+3, loc_11 [template = imports.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bool.ref: <function> = name_ref Bool, %import_ref [template = imports.%Bool]
-// CHECK:STDOUT:   %.loc6_12: init type = call %Bool.ref() [template = bool]
-// CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %.loc6_12 [template = bool]
-// CHECK:STDOUT:   %.loc6_13.2: type = converted %.loc6_12, %.loc6_13.1 [template = bool]
+// CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
+// CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]
 // CHECK:STDOUT:   %b.var: ref bool = var b
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
 // CHECK:STDOUT: }

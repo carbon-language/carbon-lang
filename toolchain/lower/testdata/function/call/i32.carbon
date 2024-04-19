@@ -16,12 +16,14 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "i32.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Echo(i32 %a) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %b = alloca i32, align 4
-// CHECK:STDOUT:   %Echo = call i32 @Echo(i32 1)
-// CHECK:STDOUT:   store i32 %Echo, ptr %b, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %b.var = alloca i32, align 4
+// CHECK:STDOUT:   %Echo.call = call i32 @Echo(i32 1)
+// CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

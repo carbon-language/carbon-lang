@@ -32,6 +32,7 @@ cc_library(
         "//toolchain/parse",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
+        "//toolchain/sem_ir:inst_namer",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",

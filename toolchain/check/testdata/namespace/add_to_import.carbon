@@ -63,8 +63,8 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %.loc6: init i32 = call %A.ref()
-// CHECK:STDOUT:   assign file.%a.var, %.loc6
+// CHECK:STDOUT:   %A.call: init i32 = call %A.ref()
+// CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

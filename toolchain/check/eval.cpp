@@ -401,7 +401,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
   auto op_val = context.ints().Get(op.int_id);
 
   switch (builtin_kind) {
-    case SemIR::BuiltinFunctionKind::IntNegate:
+    case SemIR::BuiltinFunctionKind::IntSNegate:
       if (context.types().IsSignedInt(op.type_id) &&
           op_val.isMinSignedValue()) {
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
@@ -409,6 +409,9 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
                                TypedInt{op.type_id, op_val});
       }
+      op_val.negate();
+      break;
+    case SemIR::BuiltinFunctionKind::IntUNegate:
       op_val.negate();
       break;
     case SemIR::BuiltinFunctionKind::IntComplement:
@@ -432,45 +435,67 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   const auto& lhs_val = context.ints().Get(lhs.int_id);
   const auto& rhs_val = context.ints().Get(rhs.int_id);
 
-  bool is_signed = context.types().IsSignedInt(lhs.type_id);
+  // Check for division by zero.
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntSDiv:
+    case SemIR::BuiltinFunctionKind::IntSMod:
+    case SemIR::BuiltinFunctionKind::IntUDiv:
+    case SemIR::BuiltinFunctionKind::IntUMod:
+      if (rhs_val.isZero()) {
+        DiagnoseDivisionByZero(context, loc);
+        return SemIR::ConstantId::Error;
+      }
+      break;
+    default:
+      break;
+  }
+
   bool overflow = false;
   llvm::APInt result_val;
   llvm::StringLiteral op_str = "<error>";
   switch (builtin_kind) {
     // Arithmetic.
-    case SemIR::BuiltinFunctionKind::IntAdd:
-      result_val =
-          is_signed ? lhs_val.sadd_ov(rhs_val, overflow) : lhs_val + rhs_val;
+    case SemIR::BuiltinFunctionKind::IntSAdd:
+      result_val = lhs_val.sadd_ov(rhs_val, overflow);
       op_str = "+";
       break;
-    case SemIR::BuiltinFunctionKind::IntSub:
-      result_val =
-          is_signed ? lhs_val.ssub_ov(rhs_val, overflow) : lhs_val - rhs_val;
+    case SemIR::BuiltinFunctionKind::IntSSub:
+      result_val = lhs_val.ssub_ov(rhs_val, overflow);
       op_str = "-";
       break;
-    case SemIR::BuiltinFunctionKind::IntMul:
-      result_val =
-          is_signed ? lhs_val.smul_ov(rhs_val, overflow) : lhs_val * rhs_val;
+    case SemIR::BuiltinFunctionKind::IntSMul:
+      result_val = lhs_val.smul_ov(rhs_val, overflow);
       op_str = "*";
       break;
-    case SemIR::BuiltinFunctionKind::IntDiv:
-      if (rhs_val.isZero()) {
-        DiagnoseDivisionByZero(context, loc);
-        return SemIR::ConstantId::Error;
-      }
-      result_val = is_signed ? lhs_val.sdiv_ov(rhs_val, overflow)
-                             : lhs_val.udiv(rhs_val);
+    case SemIR::BuiltinFunctionKind::IntSDiv:
+      result_val = lhs_val.sdiv_ov(rhs_val, overflow);
       op_str = "/";
       break;
-    case SemIR::BuiltinFunctionKind::IntMod:
-      if (rhs_val.isZero()) {
-        DiagnoseDivisionByZero(context, loc);
-        return SemIR::ConstantId::Error;
-      }
-      result_val = is_signed ? lhs_val.srem(rhs_val) : lhs_val.urem(rhs_val);
+    case SemIR::BuiltinFunctionKind::IntSMod:
+      result_val = lhs_val.srem(rhs_val);
       // LLVM weirdly lacks `srem_ov`, so we work it out for ourselves:
       // <signed min> % -1 overflows because <signed min> / -1 overflows.
-      overflow = is_signed && lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
+      overflow = lhs_val.isMinSignedValue() && rhs_val.isAllOnes();
+      op_str = "%";
+      break;
+    case SemIR::BuiltinFunctionKind::IntUAdd:
+      result_val = lhs_val + rhs_val;
+      op_str = "+";
+      break;
+    case SemIR::BuiltinFunctionKind::IntUSub:
+      result_val = lhs_val - rhs_val;
+      op_str = "-";
+      break;
+    case SemIR::BuiltinFunctionKind::IntUMul:
+      result_val = lhs_val * rhs_val;
+      op_str = "*";
+      break;
+    case SemIR::BuiltinFunctionKind::IntUDiv:
+      result_val = lhs_val.udiv(rhs_val);
+      op_str = "/";
+      break;
+    case SemIR::BuiltinFunctionKind::IntUMod:
+      result_val = lhs_val.urem(rhs_val);
       op_str = "%";
       break;
 
@@ -510,7 +535,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
       if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
         result_val = lhs_val.shl(rhs_val);
-      } else if (is_signed) {
+      } else if (context.types().IsSignedInt(lhs.type_id)) {
         result_val = lhs_val.ashr(rhs_val);
       } else {
         result_val = lhs_val.lshr(rhs_val);
@@ -663,7 +688,8 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     }
 
     // Unary integer -> integer operations.
-    case SemIR::BuiltinFunctionKind::IntNegate:
+    case SemIR::BuiltinFunctionKind::IntSNegate:
+    case SemIR::BuiltinFunctionKind::IntUNegate:
     case SemIR::BuiltinFunctionKind::IntComplement: {
       if (phase != Phase::Template) {
         break;
@@ -672,11 +698,16 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
     }
 
     // Binary integer -> integer operations.
-    case SemIR::BuiltinFunctionKind::IntAdd:
-    case SemIR::BuiltinFunctionKind::IntSub:
-    case SemIR::BuiltinFunctionKind::IntMul:
-    case SemIR::BuiltinFunctionKind::IntDiv:
-    case SemIR::BuiltinFunctionKind::IntMod:
+    case SemIR::BuiltinFunctionKind::IntSAdd:
+    case SemIR::BuiltinFunctionKind::IntSSub:
+    case SemIR::BuiltinFunctionKind::IntSMul:
+    case SemIR::BuiltinFunctionKind::IntSDiv:
+    case SemIR::BuiltinFunctionKind::IntSMod:
+    case SemIR::BuiltinFunctionKind::IntUAdd:
+    case SemIR::BuiltinFunctionKind::IntUSub:
+    case SemIR::BuiltinFunctionKind::IntUMul:
+    case SemIR::BuiltinFunctionKind::IntUDiv:
+    case SemIR::BuiltinFunctionKind::IntUMod:
     case SemIR::BuiltinFunctionKind::IntAnd:
     case SemIR::BuiltinFunctionKind::IntOr:
     case SemIR::BuiltinFunctionKind::IntXor:

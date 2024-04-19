@@ -189,10 +189,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc49_10.2: bool = block_arg !and.result [template = constants.%.16]
 // CHECK:STDOUT:   %.loc49_3: bool* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H [template = file.%H]
-// CHECK:STDOUT:   %.loc54_5.1: init {.a: i32} = call %H.ref()
-// CHECK:STDOUT:   %.loc54_5.2: ref {.a: i32} = temporary_storage
-// CHECK:STDOUT:   %.loc54_5.3: ref {.a: i32} = temporary %.loc54_5.2, %.loc54_5.1
-// CHECK:STDOUT:   %.loc54_7: ref i32 = struct_access %.loc54_5.3, element0
+// CHECK:STDOUT:   %H.call: init {.a: i32} = call %H.ref()
+// CHECK:STDOUT:   %.loc54_5.1: ref {.a: i32} = temporary_storage
+// CHECK:STDOUT:   %.loc54_5.2: ref {.a: i32} = temporary %.loc54_5.1, %H.call
+// CHECK:STDOUT:   %.loc54_7: ref i32 = struct_access %.loc54_5.2, element0
 // CHECK:STDOUT:   %.loc54_3: i32* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %.loc59_9: bool = bool_literal true [template = constants.%.4]
 // CHECK:STDOUT:   %.loc59_5: bool = not %.loc59_9 [template = constants.%.16]
@@ -203,8 +203,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc67_5: init i32 = call %G.ref()
-// CHECK:STDOUT:   %.loc67_3: i32* = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %G.call: init i32 = call %G.ref()
+// CHECK:STDOUT:   %.loc67: i32* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

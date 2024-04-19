@@ -23,26 +23,31 @@ fn TestDiv(a: f64, b: f64) -> f64 { return Div(a, b); }
 // CHECK:STDOUT: source_filename = "float.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestNegate(double %a) {
-// CHECK:STDOUT:   %fneg = fneg double %a
-// CHECK:STDOUT:   ret double %fneg
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %float.negate.fneg = fneg double %a
+// CHECK:STDOUT:   ret double %float.negate.fneg
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestAdd(double %a, double %b) {
-// CHECK:STDOUT:   %fadd = fadd double %a, %b
-// CHECK:STDOUT:   ret double %fadd
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %float.add.fadd = fadd double %a, %b
+// CHECK:STDOUT:   ret double %float.add.fadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestSub(double %a, double %b) {
-// CHECK:STDOUT:   %fsub = fsub double %a, %b
-// CHECK:STDOUT:   ret double %fsub
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %float.sub.fsub = fsub double %a, %b
+// CHECK:STDOUT:   ret double %float.sub.fsub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestMul(double %a, double %b) {
-// CHECK:STDOUT:   %fmul = fmul double %a, %b
-// CHECK:STDOUT:   ret double %fmul
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %float.mul.fmul = fmul double %a, %b
+// CHECK:STDOUT:   ret double %float.mul.fmul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestDiv(double %a, double %b) {
-// CHECK:STDOUT:   %fdiv = fdiv double %a, %b
-// CHECK:STDOUT:   ret double %fdiv
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %float.div.fdiv = fdiv double %a, %b
+// CHECK:STDOUT:   ret double %float.div.fdiv
 // CHECK:STDOUT: }
