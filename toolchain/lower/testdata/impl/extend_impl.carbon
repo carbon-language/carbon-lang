@@ -34,12 +34,12 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TypeAccess() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F = call i32 @F()
-// CHECK:STDOUT:   ret i32 %F
+// CHECK:STDOUT:   %F.call = call i32 @F()
+// CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @InstanceAccess(ptr %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F = call i32 @F()
-// CHECK:STDOUT:   ret i32 %F
+// CHECK:STDOUT:   %F.call = call i32 @F()
+// CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }

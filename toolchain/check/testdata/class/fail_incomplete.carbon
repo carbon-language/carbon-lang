@@ -272,17 +272,17 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc106: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc106: ref Class = deref %p.ref
-// CHECK:STDOUT:   %TakeIncomplete.loc106: init () = call %TakeIncomplete.ref.loc106(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc106: init () = call %TakeIncomplete.ref.loc106(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc118: <function> = name_ref TakeIncomplete, file.%TakeIncomplete [template = file.%TakeIncomplete]
 // CHECK:STDOUT:   %.loc118: {} = struct_literal ()
-// CHECK:STDOUT:   %TakeIncomplete.loc118: init () = call %TakeIncomplete.ref.loc118(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %TakeIncomplete.call.loc118: init () = call %TakeIncomplete.ref.loc118(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnIncomplete.ref: <function> = name_ref ReturnIncomplete, file.%ReturnIncomplete [template = file.%ReturnIncomplete]
-// CHECK:STDOUT:   %ReturnIncomplete: init <error> = call %ReturnIncomplete.ref()
+// CHECK:STDOUT:   %ReturnIncomplete.call: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

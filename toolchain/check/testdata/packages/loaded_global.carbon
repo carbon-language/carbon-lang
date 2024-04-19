@@ -77,12 +77,12 @@ var package_b: () = package.B();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, file.%import_ref [template = imports.%A]
-// CHECK:STDOUT:   %A.loc4: init () = call %A.ref.loc4()
-// CHECK:STDOUT:   assign file.%a.var, %A.loc4
+// CHECK:STDOUT:   %A.call.loc4: init () = call %A.ref.loc4()
+// CHECK:STDOUT:   assign file.%a.var, %A.call.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %A.ref.loc6: <function> = name_ref A, file.%import_ref [template = imports.%A]
-// CHECK:STDOUT:   %A.loc6: init () = call %A.ref.loc6()
-// CHECK:STDOUT:   assign file.%package_a.var, %A.loc6
+// CHECK:STDOUT:   %A.call.loc6: init () = call %A.ref.loc6()
+// CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,12 +129,12 @@ var package_b: () = package.B();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %B.ref.loc6: <function> = name_ref B, file.%import_ref [template = imports.%B]
-// CHECK:STDOUT:   %B.loc6: init () = call %B.ref.loc6()
-// CHECK:STDOUT:   assign file.%b.var, %B.loc6
+// CHECK:STDOUT:   %B.call.loc6: init () = call %B.ref.loc6()
+// CHECK:STDOUT:   assign file.%b.var, %B.call.loc6
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, file.%import_ref [template = imports.%B]
-// CHECK:STDOUT:   %B.loc8: init () = call %B.ref.loc8()
-// CHECK:STDOUT:   assign file.%package_b.var, %B.loc8
+// CHECK:STDOUT:   %B.call.loc8: init () = call %B.ref.loc8()
+// CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

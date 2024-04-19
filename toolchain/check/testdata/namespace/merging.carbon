@@ -125,16 +125,16 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.2 [template = imports.%A]
-// CHECK:STDOUT:   %A: init () = call %A.ref()
+// CHECK:STDOUT:   %A.call: init () = call %A.ref()
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%import_ref.3 [template = imports.%B1]
-// CHECK:STDOUT:   %B1: init () = call %B1.ref()
+// CHECK:STDOUT:   %B1.call: init () = call %B1.ref()
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%import_ref.4 [template = imports.%B2]
-// CHECK:STDOUT:   %B2: init () = call %B2.ref()
+// CHECK:STDOUT:   %B2.call: init () = call %B2.ref()
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %C: init () = call %C.ref()
+// CHECK:STDOUT:   %C.call: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

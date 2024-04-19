@@ -39,6 +39,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store i32 1, ptr %.loc18_4.a, align 4
 // CHECK:STDOUT:   %.loc19_4.b = getelementptr inbounds { i32, ptr }, ptr %c.var, i32 0, i32 1
 // CHECK:STDOUT:   store ptr %c.var, ptr %.loc19_4.b, align 8
-// CHECK:STDOUT:   %F = call i32 @F(ptr %c.var)
-// CHECK:STDOUT:   ret i32 %F
+// CHECK:STDOUT:   %F.call = call i32 @F(ptr %c.var)
+// CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }

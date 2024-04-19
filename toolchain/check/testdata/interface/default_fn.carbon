@@ -87,7 +87,7 @@ class C {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in I> = name_ref F, @I.%.loc10 [template = constants.%.3]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %F: init () = call %.1()
+// CHECK:STDOUT:   %F.call: init () = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

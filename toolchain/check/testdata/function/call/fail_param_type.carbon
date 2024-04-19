@@ -46,7 +46,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %.loc16: f64 = real_literal 10e-1 [template = constants.%.1]
-// CHECK:STDOUT:   %G: init () = call %G.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %G.call: init () = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

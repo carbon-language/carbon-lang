@@ -88,7 +88,7 @@ fn F() {
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %c.ref: ref Class = name_ref c, %c
 // CHECK:STDOUT:   %.loc22: Class* = addr_of %c.ref
-// CHECK:STDOUT:   %G: init () = call %G.ref(%.loc22)
+// CHECK:STDOUT:   %G.call: init () = call %G.ref(%.loc22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -201,10 +201,10 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, @A.%Make [template = @A.%Make]
 // CHECK:STDOUT:   %.loc24_5: ref B = splice_block file.%b_factory.var {}
-// CHECK:STDOUT:   %Make: init A = call %Make.ref() to %.loc24_5
+// CHECK:STDOUT:   %Make.call: init A = call %Make.ref() to %.loc24_5
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc24_29.1: init B = as_compatible %Make
-// CHECK:STDOUT:   %.loc24_29.2: init B = converted %Make, %.loc24_29.1
+// CHECK:STDOUT:   %.loc24_29.1: init B = as_compatible %Make.call
+// CHECK:STDOUT:   %.loc24_29.2: init B = converted %Make.call, %.loc24_29.1
 // CHECK:STDOUT:   assign file.%b_factory.var, %.loc24_29.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

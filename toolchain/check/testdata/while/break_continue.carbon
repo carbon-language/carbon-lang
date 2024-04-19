@@ -91,16 +91,16 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc17:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %A: init bool = call %A.ref()
-// CHECK:STDOUT:   %.loc17_13.1: bool = value_of_initializer %A
-// CHECK:STDOUT:   %.loc17_13.2: bool = converted %A, %.loc17_13.1
+// CHECK:STDOUT:   %A.call: init bool = call %A.ref()
+// CHECK:STDOUT:   %.loc17_13.1: bool = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc17_13.2: bool = converted %A.call, %.loc17_13.1
 // CHECK:STDOUT:   if %.loc17_13.2 br !while.body.loc17 else br !while.done.loc17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc17:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %B: init bool = call %B.ref()
-// CHECK:STDOUT:   %.loc18_12.1: bool = value_of_initializer %B
-// CHECK:STDOUT:   %.loc18_12.2: bool = converted %B, %.loc18_12.1
+// CHECK:STDOUT:   %B.call: init bool = call %B.ref()
+// CHECK:STDOUT:   %.loc18_12.1: bool = value_of_initializer %B.call
+// CHECK:STDOUT:   %.loc18_12.2: bool = converted %B.call, %.loc18_12.1
 // CHECK:STDOUT:   if %.loc18_12.2 br !if.then.loc18 else br !if.else.loc18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc18:
@@ -108,9 +108,9 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc18:
 // CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %C: init bool = call %C.ref()
-// CHECK:STDOUT:   %.loc19_12.1: bool = value_of_initializer %C
-// CHECK:STDOUT:   %.loc19_12.2: bool = converted %C, %.loc19_12.1
+// CHECK:STDOUT:   %C.call: init bool = call %C.ref()
+// CHECK:STDOUT:   %.loc19_12.1: bool = value_of_initializer %C.call
+// CHECK:STDOUT:   %.loc19_12.2: bool = converted %C.call, %.loc19_12.1
 // CHECK:STDOUT:   if %.loc19_12.2 br !if.then.loc19 else br !if.else.loc19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc19:
@@ -121,16 +121,16 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond.loc20:
 // CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%D [template = file.%D]
-// CHECK:STDOUT:   %D: init bool = call %D.ref()
-// CHECK:STDOUT:   %.loc20_15.1: bool = value_of_initializer %D
-// CHECK:STDOUT:   %.loc20_15.2: bool = converted %D, %.loc20_15.1
+// CHECK:STDOUT:   %D.call: init bool = call %D.ref()
+// CHECK:STDOUT:   %.loc20_15.1: bool = value_of_initializer %D.call
+// CHECK:STDOUT:   %.loc20_15.2: bool = converted %D.call, %.loc20_15.1
 // CHECK:STDOUT:   if %.loc20_15.2 br !while.body.loc20 else br !while.done.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body.loc20:
 // CHECK:STDOUT:   %E.ref: <function> = name_ref E, file.%E [template = file.%E]
-// CHECK:STDOUT:   %E: init bool = call %E.ref()
-// CHECK:STDOUT:   %.loc21_14.1: bool = value_of_initializer %E
-// CHECK:STDOUT:   %.loc21_14.2: bool = converted %E, %.loc21_14.1
+// CHECK:STDOUT:   %E.call: init bool = call %E.ref()
+// CHECK:STDOUT:   %.loc21_14.1: bool = value_of_initializer %E.call
+// CHECK:STDOUT:   %.loc21_14.2: bool = converted %E.call, %.loc21_14.1
 // CHECK:STDOUT:   if %.loc21_14.2 br !if.then.loc21 else br !if.else.loc21
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc21:
@@ -138,9 +138,9 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc21:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %F: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc22_14.1: bool = value_of_initializer %F
-// CHECK:STDOUT:   %.loc22_14.2: bool = converted %F, %.loc22_14.1
+// CHECK:STDOUT:   %F.call: init bool = call %F.ref()
+// CHECK:STDOUT:   %.loc22_14.1: bool = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc22_14.2: bool = converted %F.call, %.loc22_14.1
 // CHECK:STDOUT:   if %.loc22_14.2 br !if.then.loc22 else br !if.else.loc22
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc22:
@@ -151,9 +151,9 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.done.loc20:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %G: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc24_12.1: bool = value_of_initializer %G
-// CHECK:STDOUT:   %.loc24_12.2: bool = converted %G, %.loc24_12.1
+// CHECK:STDOUT:   %G.call: init bool = call %G.ref()
+// CHECK:STDOUT:   %.loc24_12.1: bool = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc24_12.2: bool = converted %G.call, %.loc24_12.1
 // CHECK:STDOUT:   if %.loc24_12.2 br !if.then.loc24 else br !if.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc24:
@@ -161,9 +161,9 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc24:
 // CHECK:STDOUT:   %H.ref: <function> = name_ref H, file.%H [template = file.%H]
-// CHECK:STDOUT:   %H: init bool = call %H.ref()
-// CHECK:STDOUT:   %.loc25_12.1: bool = value_of_initializer %H
-// CHECK:STDOUT:   %.loc25_12.2: bool = converted %H, %.loc25_12.1
+// CHECK:STDOUT:   %H.call: init bool = call %H.ref()
+// CHECK:STDOUT:   %.loc25_12.1: bool = value_of_initializer %H.call
+// CHECK:STDOUT:   %.loc25_12.2: bool = converted %H.call, %.loc25_12.1
 // CHECK:STDOUT:   if %.loc25_12.2 br !if.then.loc25 else br !if.else.loc25
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc25:

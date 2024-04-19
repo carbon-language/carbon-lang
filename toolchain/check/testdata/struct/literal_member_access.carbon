@@ -45,10 +45,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
-// CHECK:STDOUT:   %G: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
+// CHECK:STDOUT:   %G.call: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
 // CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_35.1: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_literal (%.loc10_16, %G, %.loc10_34)
-// CHECK:STDOUT:   %.loc10_25.2: ref {.x: i32, .y: i32, .z: i32} = temporary %.loc10_25.1, %G
+// CHECK:STDOUT:   %.loc10_35.1: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_literal (%.loc10_16, %G.call, %.loc10_34)
+// CHECK:STDOUT:   %.loc10_25.2: ref {.x: i32, .y: i32, .z: i32} = temporary %.loc10_25.1, %G.call
 // CHECK:STDOUT:   %.loc10_25.3: ref i32 = struct_access %.loc10_25.2, element0
 // CHECK:STDOUT:   %.loc10_25.4: i32 = bind_value %.loc10_25.3
 // CHECK:STDOUT:   %.loc10_25.5: ref i32 = struct_access %.loc10_25.2, element1
@@ -56,7 +56,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_25.7: ref i32 = struct_access %.loc10_25.2, element2
 // CHECK:STDOUT:   %.loc10_25.8: i32 = bind_value %.loc10_25.7
 // CHECK:STDOUT:   %.loc10_25.9: {.x: i32, .y: i32, .z: i32} = struct_value (%.loc10_25.4, %.loc10_25.6, %.loc10_25.8)
-// CHECK:STDOUT:   %.loc10_35.2: {.x: i32, .y: i32, .z: i32} = converted %G, %.loc10_25.9
+// CHECK:STDOUT:   %.loc10_35.2: {.x: i32, .y: i32, .z: i32} = converted %G.call, %.loc10_25.9
 // CHECK:STDOUT:   %.loc10_35.3: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_value (%.loc10_16, %.loc10_35.2, %.loc10_34)
 // CHECK:STDOUT:   %.loc10_35.4: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = converted %.loc10_35.1, %.loc10_35.3
 // CHECK:STDOUT:   %.loc10_36: {.x: i32, .y: i32, .z: i32} = struct_access %.loc10_35.4, element1

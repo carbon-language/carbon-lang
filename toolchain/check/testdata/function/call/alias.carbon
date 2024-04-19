@@ -45,8 +45,8 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%A]
-// CHECK:STDOUT:   %A: init i32 = call %B.ref()
-// CHECK:STDOUT:   assign %b.var, %A
+// CHECK:STDOUT:   %A.call: init i32 = call %B.ref()
+// CHECK:STDOUT:   assign %b.var, %A.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

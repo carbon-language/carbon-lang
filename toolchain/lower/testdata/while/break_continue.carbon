@@ -29,19 +29,19 @@ fn While() {
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %entry, %if.else.loc14, %if.then.loc13
-// CHECK:STDOUT:   %A = call i1 @A()
-// CHECK:STDOUT:   br i1 %A, label %while.body, label %while.done
+// CHECK:STDOUT:   %A.call = call i1 @A()
+// CHECK:STDOUT:   br i1 %A.call, label %while.body, label %while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %B = call i1 @B()
-// CHECK:STDOUT:   br i1 %B, label %if.then.loc13, label %if.else.loc13
+// CHECK:STDOUT:   %B.call = call i1 @B()
+// CHECK:STDOUT:   br i1 %B.call, label %if.then.loc13, label %if.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc13:                                    ; preds = %while.body
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc13:                                    ; preds = %while.body
-// CHECK:STDOUT:   %C = call i1 @C()
-// CHECK:STDOUT:   br i1 %C, label %if.then.loc14, label %if.else.loc14
+// CHECK:STDOUT:   %C.call = call i1 @C()
+// CHECK:STDOUT:   br i1 %C.call, label %if.then.loc14, label %if.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc14:                                    ; preds = %if.else.loc13
 // CHECK:STDOUT:   br label %while.done

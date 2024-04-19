@@ -124,7 +124,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   %F.ref: <associated <function> in Simple> = name_ref F, @Simple.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %F: init () = call %.1()
+// CHECK:STDOUT:   %F.call: init () = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,7 +146,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.ref: <associated <function> in Simple> = name_ref F, @Simple.%.loc8 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc26: ref i32 = deref %p.ref
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %F: init () = call %.1()
+// CHECK:STDOUT:   %F.call: init () = call %.1()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -38,20 +38,20 @@ fn While() {
 // CHECK:STDOUT:   br label %while.cond.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond.loc16:                                 ; preds = %entry, %while.body.loc16
-// CHECK:STDOUT:   %Cond.loc16 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond.loc16, label %while.body.loc16, label %while.done.loc16
+// CHECK:STDOUT:   %Cond.call.loc16 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc16, label %while.body.loc16, label %while.done.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body.loc16:                                 ; preds = %while.cond.loc16
 // CHECK:STDOUT:   call void @F()
 // CHECK:STDOUT:   br label %while.cond.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done.loc16:                                 ; preds = %while.cond.loc16
-// CHECK:STDOUT:   %Cond.loc20 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond.loc20, label %while.cond.loc21, label %if.else
+// CHECK:STDOUT:   %Cond.call.loc20 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc20, label %while.cond.loc21, label %if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond.loc21:                                 ; preds = %while.body.loc21, %while.done.loc16
-// CHECK:STDOUT:   %Cond.loc21 = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond.loc21, label %while.body.loc21, label %while.done.loc21
+// CHECK:STDOUT:   %Cond.call.loc21 = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call.loc21, label %while.body.loc21, label %while.done.loc21
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body.loc21:                                 ; preds = %while.cond.loc21
 // CHECK:STDOUT:   call void @G()

@@ -97,11 +97,11 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc20: <associated <function> in HasF> = name_ref G, @C.%G [template = constants.%.3]
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %F.loc20: init () = call %.1()
+// CHECK:STDOUT:   %F.call.loc20: init () = call %.1()
 // CHECK:STDOUT:   %c.ref: C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc21: <associated <function> in HasF> = name_ref G, @C.%G [template = constants.%.3]
 // CHECK:STDOUT:   %.2: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %F.loc21: init () = call %.2()
+// CHECK:STDOUT:   %F.call.loc21: init () = call %.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

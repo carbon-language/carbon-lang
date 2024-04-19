@@ -84,12 +84,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc20_16: <function> = name_ref MakeInner, file.%MakeInner [template = file.%MakeInner]
 // CHECK:STDOUT:   %.loc20_45.1: ref Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %MakeInner.loc20_25: init Inner = call %MakeInner.ref.loc20_16() to %.loc20_45.1
+// CHECK:STDOUT:   %MakeInner.call.loc20_25: init Inner = call %MakeInner.ref.loc20_16() to %.loc20_45.1
 // CHECK:STDOUT:   %MakeInner.ref.loc20_34: <function> = name_ref MakeInner, file.%MakeInner [template = file.%MakeInner]
 // CHECK:STDOUT:   %.loc20_45.2: ref Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %MakeInner.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
-// CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%MakeInner.loc20_25, %MakeInner.loc20_43)
-// CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%MakeInner.loc20_25, %MakeInner.loc20_43), %return
+// CHECK:STDOUT:   %MakeInner.call.loc20_43: init Inner = call %MakeInner.ref.loc20_34() to %.loc20_45.2
+// CHECK:STDOUT:   %.loc20_45.3: {.c: Inner, .d: Inner} = struct_literal (%MakeInner.call.loc20_25, %MakeInner.call.loc20_43)
+// CHECK:STDOUT:   %.loc20_45.4: init Outer = class_init (%MakeInner.call.loc20_25, %MakeInner.call.loc20_43), %return
 // CHECK:STDOUT:   %.loc20_46: init Outer = converted %.loc20_45.3, %.loc20_45.4
 // CHECK:STDOUT:   return %.loc20_46
 // CHECK:STDOUT: }

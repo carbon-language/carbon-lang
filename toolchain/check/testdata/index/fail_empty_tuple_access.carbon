@@ -39,10 +39,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %F: init () = call %F.ref()
+// CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_4.1: ref () = temporary_storage
-// CHECK:STDOUT:   %.loc13_4.2: ref () = temporary %.loc13_4.1, %F
+// CHECK:STDOUT:   %.loc13_4.2: ref () = temporary %.loc13_4.1, %F.call
 // CHECK:STDOUT:   %.loc13_8: ref <error> = tuple_index %.loc13_4.2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

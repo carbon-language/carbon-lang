@@ -51,7 +51,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_9.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: {} = struct_value () [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_7: {} = converted %.loc12_9.1, %.loc12_9.2 [template = constants.%.3]
-// CHECK:STDOUT:   %Echo: init {} = call %Echo.ref(%.loc12_7)
+// CHECK:STDOUT:   %Echo.call: init {} = call %Echo.ref(%.loc12_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

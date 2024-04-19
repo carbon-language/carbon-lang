@@ -89,18 +89,18 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %pf: ref i32* = bind_name pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc28: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc28_20.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %F.loc28: init [i32; 3] = call %F.ref.loc28() to %.loc28_20.1
+// CHECK:STDOUT:   %F.call.loc28: init [i32; 3] = call %F.ref.loc28() to %.loc28_20.1
 // CHECK:STDOUT:   %.loc28_23: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc28_20.2: ref [i32; 3] = temporary %.loc28_20.1, %F.loc28
+// CHECK:STDOUT:   %.loc28_20.2: ref [i32; 3] = temporary %.loc28_20.1, %F.call.loc28
 // CHECK:STDOUT:   %.loc28_24.1: ref i32 = array_index %.loc28_20.2, %.loc28_23
 // CHECK:STDOUT:   %.loc28_24.2: i32 = bind_value %.loc28_24.1
 // CHECK:STDOUT:   %.loc28_18: i32* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pf.var, %.loc28_18
 // CHECK:STDOUT:   %F.ref.loc32: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc32_4.1: ref [i32; 3] = temporary_storage
-// CHECK:STDOUT:   %F.loc32: init [i32; 3] = call %F.ref.loc32() to %.loc32_4.1
+// CHECK:STDOUT:   %F.call.loc32: init [i32; 3] = call %F.ref.loc32() to %.loc32_4.1
 // CHECK:STDOUT:   %.loc32_7: i32 = int_literal 0 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc32_4.2: ref [i32; 3] = temporary %.loc32_4.1, %F.loc32
+// CHECK:STDOUT:   %.loc32_4.2: ref [i32; 3] = temporary %.loc32_4.1, %F.call.loc32
 // CHECK:STDOUT:   %.loc32_8.1: ref i32 = array_index %.loc32_4.2, %.loc32_7
 // CHECK:STDOUT:   %.loc32_8.2: i32 = bind_value %.loc32_8.1
 // CHECK:STDOUT:   %.loc32_12: i32 = int_literal 4 [template = constants.%.6]

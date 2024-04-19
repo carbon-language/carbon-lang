@@ -41,10 +41,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref.loc10: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %Foo.loc10: init () = call %Foo.ref.loc10(%.loc10)
+// CHECK:STDOUT:   %Foo.call.loc10: init () = call %Foo.ref.loc10(%.loc10)
 // CHECK:STDOUT:   %Foo.ref.loc11: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %Foo.loc11: init () = call %Foo.ref.loc11(%.loc11)
+// CHECK:STDOUT:   %Foo.call.loc11: init () = call %Foo.ref.loc11(%.loc11)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

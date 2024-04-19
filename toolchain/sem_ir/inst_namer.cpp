@@ -397,8 +397,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(Call inst): {
-        // Name the call's result the same as the callee.
-        // TODO: Is this a helpful name?
+        // Name the call's result based on the callee.
         if (auto builtin_kind =
                 SemIR::BuiltinFunctionKind::ForCallee(sem_ir_, inst.callee_id);
             builtin_kind != SemIR::BuiltinFunctionKind::None) {
@@ -413,7 +412,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           if (auto callee_fn = sem_ir_.insts().TryGetAs<SemIR::FunctionDecl>(
                   const_callee_id.inst_id())) {
             add_inst_name_id(
-                sem_ir_.functions().Get(callee_fn->function_id).name_id);
+                sem_ir_.functions().Get(callee_fn->function_id).name_id,
+                ".call");
             continue;
           }
         }

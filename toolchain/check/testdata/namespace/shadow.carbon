@@ -59,16 +59,16 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A.loc10 [template = file.%A.loc10]
-// CHECK:STDOUT:   %A.loc16: init () = call %A.ref.loc16()
+// CHECK:STDOUT:   %A.call: init () = call %A.ref.loc16()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %A.var: ref i32 = var A
-// CHECK:STDOUT:   %A.loc18: ref i32 = bind_name A, %A.var
+// CHECK:STDOUT:   %A: ref i32 = bind_name A, %A.var
 // CHECK:STDOUT:   %.loc18: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   assign %A.var, %.loc18
-// CHECK:STDOUT:   %A.ref.loc21: ref i32 = name_ref A, %A.loc18
+// CHECK:STDOUT:   %A.ref.loc21: ref i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc21: i32 = bind_value %A.ref.loc21
 // CHECK:STDOUT:   return %.loc21
 // CHECK:STDOUT:

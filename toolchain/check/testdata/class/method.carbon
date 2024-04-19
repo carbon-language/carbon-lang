@@ -259,8 +259,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc50_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %Make: init Class = call %Make.ref() to %.loc50_14.1
-// CHECK:STDOUT:   %.loc50_14.2: ref Class = temporary %.loc50_14.1, %Make
+// CHECK:STDOUT:   %Make.call: init Class = call %Make.ref() to %.loc50_14.1
+// CHECK:STDOUT:   %.loc50_14.2: ref Class = temporary %.loc50_14.1, %Make.call
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]
 // CHECK:STDOUT:   %.loc50_16: <bound method> = bound_method %.loc50_14.2, %F.ref
 // CHECK:STDOUT:   %.loc50_14.3: Class = bind_value %.loc50_14.2
@@ -274,8 +274,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
 // CHECK:STDOUT:   %.loc54_14.1: ref Class = temporary_storage
-// CHECK:STDOUT:   %Make: init Class = call %Make.ref() to %.loc54_14.1
-// CHECK:STDOUT:   %.loc54_14.2: ref Class = temporary %.loc54_14.1, %Make
+// CHECK:STDOUT:   %Make.call: init Class = call %Make.ref() to %.loc54_14.1
+// CHECK:STDOUT:   %.loc54_14.2: ref Class = temporary %.loc54_14.1, %Make.call
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, @Class.%G [template = @Class.%G]
 // CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_14.2, %G.ref
 // CHECK:STDOUT:   %.loc54_14.3: Class* = addr_of %.loc54_14.2

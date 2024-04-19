@@ -40,7 +40,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %Foo: init () = call %Foo.ref(%.loc10)
+// CHECK:STDOUT:   %Foo.call: init () = call %Foo.ref(%.loc10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

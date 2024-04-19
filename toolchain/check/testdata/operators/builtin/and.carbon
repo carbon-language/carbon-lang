@@ -72,17 +72,17 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %F: init bool = call %F.ref()
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %F
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %F, %.loc11_14.1
+// CHECK:STDOUT:   %F.call: init bool = call %F.ref()
+// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %F.call, %.loc11_14.1
 // CHECK:STDOUT:   %.loc11_14.3: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc11_14.2 br !and.rhs else br !and.result(%.loc11_14.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %G: init bool = call %G.ref()
-// CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %G
-// CHECK:STDOUT:   %.loc11_14.5: bool = converted %G, %.loc11_14.4
+// CHECK:STDOUT:   %G.call: init bool = call %G.ref()
+// CHECK:STDOUT:   %.loc11_14.4: bool = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc11_14.5: bool = converted %G.call, %.loc11_14.4
 // CHECK:STDOUT:   br !and.result(%.loc11_14.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:

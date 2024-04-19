@@ -21,18 +21,18 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .ReturnType = %ReturnType.loc9
+// CHECK:STDOUT:     .ReturnType = %ReturnType
 // CHECK:STDOUT:     .Six = %Six
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ReturnType.loc9: <function> = fn_decl @ReturnType [template] {
+// CHECK:STDOUT:   %ReturnType: <function> = fn_decl @ReturnType [template] {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
-// CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType.loc9 [template = %ReturnType.loc9]
-// CHECK:STDOUT:     %ReturnType.loc13: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.loc13
-// CHECK:STDOUT:     %.loc13_24.2: type = converted %ReturnType.loc13, %.loc13_24.1
+// CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType [template = %ReturnType]
+// CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
+// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc13_24.2: type = converted %ReturnType.call, %.loc13_24.1
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -26,6 +26,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4
-// CHECK:STDOUT:   %G = call i32 @G(ptr %n.var)
-// CHECK:STDOUT:   ret i32 %G
+// CHECK:STDOUT:   %G.call = call i32 @G(ptr %n.var)
+// CHECK:STDOUT:   ret i32 %G.call
 // CHECK:STDOUT: }

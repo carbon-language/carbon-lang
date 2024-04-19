@@ -58,16 +58,16 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%A [template = file.%A]
-// CHECK:STDOUT:   %A: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc11_21.1: i32 = value_of_initializer %A
-// CHECK:STDOUT:   %.loc11_21.2: i32 = converted %A, %.loc11_21.1
+// CHECK:STDOUT:   %A.call: init i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc11_21.1: i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc11_21.2: i32 = converted %A.call, %.loc11_21.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_21.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%B [template = file.%B]
-// CHECK:STDOUT:   %B: init i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %B
-// CHECK:STDOUT:   %.loc11_24.2: i32 = converted %B, %.loc11_24.1
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref()
+// CHECK:STDOUT:   %.loc11_24.1: i32 = value_of_initializer %B.call
+// CHECK:STDOUT:   %.loc11_24.2: i32 = converted %B.call, %.loc11_24.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc11_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:

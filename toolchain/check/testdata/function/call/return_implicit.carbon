@@ -40,8 +40,8 @@ fn Main() {
 // CHECK:STDOUT:   %b.var: ref () = var b
 // CHECK:STDOUT:   %b: ref () = bind_name b, %b.var
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: <function> = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple [template = file.%MakeImplicitEmptyTuple]
-// CHECK:STDOUT:   %MakeImplicitEmptyTuple: init () = call %MakeImplicitEmptyTuple.ref()
-// CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init () = call %MakeImplicitEmptyTuple.ref()
+// CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

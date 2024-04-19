@@ -83,7 +83,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc11_5: {.a: i32, .b: i32} = block_arg !if.expr.result
-// CHECK:STDOUT:   %G: init () = call %G.ref(%.loc11_5)
+// CHECK:STDOUT:   %G.call: init () = call %G.ref(%.loc11_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

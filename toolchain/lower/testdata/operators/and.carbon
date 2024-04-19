@@ -26,14 +26,14 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @And() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F = call i1 @F()
-// CHECK:STDOUT:   br i1 %F, label %and.rhs, label %and.result
+// CHECK:STDOUT:   %F.call = call i1 @F()
+// CHECK:STDOUT:   br i1 %F.call, label %and.rhs, label %and.result
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs:                                          ; preds = %entry
-// CHECK:STDOUT:   %G = call i1 @G()
+// CHECK:STDOUT:   %G.call = call i1 @G()
 // CHECK:STDOUT:   br label %and.result
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %G, %and.rhs ]
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %G.call, %and.rhs ]
 // CHECK:STDOUT:   ret i1 %0
 // CHECK:STDOUT: }

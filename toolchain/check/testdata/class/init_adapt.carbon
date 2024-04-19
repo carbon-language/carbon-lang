@@ -169,17 +169,17 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
 // CHECK:STDOUT:   %.loc23_5: ref AdaptC = splice_block file.%d.var {}
-// CHECK:STDOUT:   %MakeC: init C = call %MakeC.ref() to %.loc23_5
+// CHECK:STDOUT:   %MakeC.call: init C = call %MakeC.ref() to %.loc23_5
 // CHECK:STDOUT:   %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [template = constants.%AdaptC]
-// CHECK:STDOUT:   %.loc23_25.1: init AdaptC = as_compatible %MakeC
-// CHECK:STDOUT:   %.loc23_25.2: init AdaptC = converted %MakeC, %.loc23_25.1
+// CHECK:STDOUT:   %.loc23_25.1: init AdaptC = as_compatible %MakeC.call
+// CHECK:STDOUT:   %.loc23_25.2: init AdaptC = converted %MakeC.call, %.loc23_25.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc23_25.2
 // CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc25_5: ref C = splice_block file.%e.var {}
-// CHECK:STDOUT:   %MakeAdaptC: init AdaptC = call %MakeAdaptC.ref() to %.loc25_5
+// CHECK:STDOUT:   %MakeAdaptC.call: init AdaptC = call %MakeAdaptC.ref() to %.loc25_5
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc25_25.1: init C = as_compatible %MakeAdaptC
-// CHECK:STDOUT:   %.loc25_25.2: init C = converted %MakeAdaptC, %.loc25_25.1
+// CHECK:STDOUT:   %.loc25_25.1: init C = as_compatible %MakeAdaptC.call
+// CHECK:STDOUT:   %.loc25_25.2: init C = converted %MakeAdaptC.call, %.loc25_25.1
 // CHECK:STDOUT:   assign file.%e.var, %.loc25_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -272,11 +272,11 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
 // CHECK:STDOUT:   %.loc37: ref C = temporary_storage
-// CHECK:STDOUT:   %MakeC: init C = call %MakeC.ref() to %.loc37
+// CHECK:STDOUT:   %MakeC.call: init C = call %MakeC.ref() to %.loc37
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
 // CHECK:STDOUT:   %.loc42: ref AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC: init AdaptC = call %MakeAdaptC.ref() to %.loc42
+// CHECK:STDOUT:   %MakeAdaptC.call: init AdaptC = call %MakeAdaptC.ref() to %.loc42
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

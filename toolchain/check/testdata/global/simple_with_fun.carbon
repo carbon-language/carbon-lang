@@ -39,8 +39,8 @@ var a: i32 = test_a();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %test_a.ref: <function> = name_ref test_a, file.%test_a [template = file.%test_a]
-// CHECK:STDOUT:   %test_a: init i32 = call %test_a.ref()
-// CHECK:STDOUT:   assign file.%a.var, %test_a
+// CHECK:STDOUT:   %test_a.call: init i32 = call %test_a.ref()
+// CHECK:STDOUT:   assign file.%a.var, %test_a.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
