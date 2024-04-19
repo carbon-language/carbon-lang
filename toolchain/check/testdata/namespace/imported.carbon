@@ -100,24 +100,24 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc4: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %A.ref.loc4: <function> = name_ref A, file.%import_ref.3 [template = imports.%A]
-// CHECK:STDOUT:   %.loc4: init () = call %A.ref.loc4()
-// CHECK:STDOUT:   assign file.%a.var, %.loc4
+// CHECK:STDOUT:   %A.call.loc4: init () = call %A.ref.loc4()
+// CHECK:STDOUT:   assign file.%a.var, %A.call.loc4
 // CHECK:STDOUT:   %NS.ref.loc5: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %ChildNS.ref.loc5: <namespace> = name_ref ChildNS, file.%ChildNS [template = file.%ChildNS]
 // CHECK:STDOUT:   %B.ref.loc5: <function> = name_ref B, file.%import_ref.4 [template = imports.%B]
-// CHECK:STDOUT:   %.loc5: init () = call %B.ref.loc5()
-// CHECK:STDOUT:   assign file.%b.var, %.loc5
+// CHECK:STDOUT:   %B.call.loc5: init () = call %B.ref.loc5()
+// CHECK:STDOUT:   assign file.%b.var, %B.call.loc5
 // CHECK:STDOUT:   %package.ref.loc7: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref.loc7: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %A.ref.loc7: <function> = name_ref A, file.%import_ref.3 [template = imports.%A]
-// CHECK:STDOUT:   %.loc7: init () = call %A.ref.loc7()
-// CHECK:STDOUT:   assign file.%package_a.var, %.loc7
+// CHECK:STDOUT:   %A.call.loc7: init () = call %A.ref.loc7()
+// CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc7
 // CHECK:STDOUT:   %package.ref.loc8: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref.loc8: <namespace> = name_ref NS, file.%NS [template = file.%NS]
 // CHECK:STDOUT:   %ChildNS.ref.loc8: <namespace> = name_ref ChildNS, file.%ChildNS [template = file.%ChildNS]
 // CHECK:STDOUT:   %B.ref.loc8: <function> = name_ref B, file.%import_ref.4 [template = imports.%B]
-// CHECK:STDOUT:   %.loc8: init () = call %B.ref.loc8()
-// CHECK:STDOUT:   assign file.%package_b.var, %.loc8
+// CHECK:STDOUT:   %B.call.loc8: init () = call %B.ref.loc8()
+// CHECK:STDOUT:   assign file.%package_b.var, %B.call.loc8
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

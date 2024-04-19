@@ -105,31 +105,31 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Int.ref.loc6_9: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %.loc6_13: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc6_12: init type = call %Int.ref.loc6_9(%.loc6_13) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_15.1: type = value_of_initializer %.loc6_12 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_15.2: type = converted %.loc6_12, %.loc6_15.1 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc6_12: init type = call %Int.ref.loc6_9(%.loc6_13) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_15.1: type = value_of_initializer %int.make_type_signed.loc6_12 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_15.2: type = converted %int.make_type_signed.loc6_12, %.loc6_15.1 [template = constants.%.2]
 // CHECK:STDOUT:     %n.loc6_6.1: i64 = param n
 // CHECK:STDOUT:     @F.%n: i64 = bind_name n, %n.loc6_6.1
 // CHECK:STDOUT:     %Int.ref.loc6_21: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %.loc6_25: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc6_24: init type = call %Int.ref.loc6_21(%.loc6_25) [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_27.1: type = value_of_initializer %.loc6_24 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc6_27.2: type = converted %.loc6_24, %.loc6_27.1 [template = constants.%.2]
+// CHECK:STDOUT:     %int.make_type_signed.loc6_24: init type = call %Int.ref.loc6_21(%.loc6_25) [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_27.1: type = value_of_initializer %int.make_type_signed.loc6_24 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6_27.2: type = converted %int.make_type_signed.loc6_24, %.loc6_27.1 [template = constants.%.2]
 // CHECK:STDOUT:     @F.%return: ref i64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Int.ref.loc10_9: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %.loc10_13: i32 = int_literal 13 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10_12: init type = call %Int.ref.loc10_9(%.loc10_13) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc10_15.1: type = value_of_initializer %.loc10_12 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc10_15.2: type = converted %.loc10_12, %.loc10_15.1 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_12: init type = call %Int.ref.loc10_9(%.loc10_13) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_15.1: type = value_of_initializer %int.make_type_signed.loc10_12 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_15.2: type = converted %int.make_type_signed.loc10_12, %.loc10_15.1 [template = constants.%.4]
 // CHECK:STDOUT:     %n.loc10_6.1: i13 = param n
 // CHECK:STDOUT:     @G.%n: i13 = bind_name n, %n.loc10_6.1
 // CHECK:STDOUT:     %Int.ref.loc10_21: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %.loc10_25: i32 = int_literal 13 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc10_24: init type = call %Int.ref.loc10_21(%.loc10_25) [template = constants.%.4]
-// CHECK:STDOUT:     %.loc10_27.1: type = value_of_initializer %.loc10_24 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc10_27.2: type = converted %.loc10_24, %.loc10_27.1 [template = constants.%.4]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_24: init type = call %Int.ref.loc10_21(%.loc10_25) [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_27.1: type = value_of_initializer %int.make_type_signed.loc10_24 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc10_27.2: type = converted %int.make_type_signed.loc10_24, %.loc10_27.1 [template = constants.%.4]
 // CHECK:STDOUT:     @G.%return: ref i13 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic: <function> = fn_decl @Symbolic [template] {
@@ -137,16 +137,16 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N, %N.loc14_13.1 [symbolic]
 // CHECK:STDOUT:     %Int.ref.loc14_25: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %N.ref.loc14_29: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N]
-// CHECK:STDOUT:     %.loc14_28: init type = call %Int.ref.loc14_25(%N.ref.loc14_29) [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc14_30.1: type = value_of_initializer %.loc14_28 [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc14_30.2: type = converted %.loc14_28, %.loc14_30.1 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_28: init type = call %Int.ref.loc14_25(%N.ref.loc14_29) [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc14_30.1: type = value_of_initializer %int.make_type_signed.loc14_28 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc14_30.2: type = converted %int.make_type_signed.loc14_28, %.loc14_30.1 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %x.loc14_22.1: Core.Int(N) = param x
 // CHECK:STDOUT:     @Symbolic.%x: Core.Int(N) = bind_name x, %x.loc14_22.1
 // CHECK:STDOUT:     %Int.ref.loc14_36: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %N.ref.loc14_40: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N]
-// CHECK:STDOUT:     %.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %.loc14_39 [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc14_41.2: type = converted %.loc14_39, %.loc14_41.1 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_39: init type = call %Int.ref.loc14_36(%N.ref.loc14_40) [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int.make_type_signed.loc14_39 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc14_41.2: type = converted %int.make_type_signed.loc14_39, %.loc14_41.1 [symbolic = constants.%.5]
 // CHECK:STDOUT:     @Symbolic.%return: ref Core.Int(N) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -187,9 +187,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_11: init type = call %Int.ref(%.loc10_12) [template = <error>]
-// CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %.loc10_11 [template = <error>]
-// CHECK:STDOUT:   %.loc10_13.2: type = converted %.loc10_11, %.loc10_13.1 [template = <error>]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc10_12) [template = <error>]
+// CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:   %.loc10_13.2: type = converted %int.make_type_signed, %.loc10_13.1 [template = <error>]
 // CHECK:STDOUT:   %n.var: ref <error> = var n
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -220,12 +220,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %Negate.ref: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc12_19: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_18: init i32 = call %Negate.ref(%.loc12_19) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_11.1: i32 = value_of_initializer %.loc12_18 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_11.2: i32 = converted %.loc12_18, %.loc12_11.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_11.3: init type = call %Int.ref(%.loc12_11.2) [template = <error>]
-// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %.loc12_11.3 [template = <error>]
-// CHECK:STDOUT:   %.loc12_21.2: type = converted %.loc12_11.3, %.loc12_21.1 [template = <error>]
+// CHECK:STDOUT:   %int.snegate: init i32 = call %Negate.ref(%.loc12_19) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_11.1: i32 = value_of_initializer %int.snegate [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_11.2: i32 = converted %int.snegate, %.loc12_11.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_11.2) [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_signed, %.loc12_21.1 [template = <error>]
 // CHECK:STDOUT:   %n.var: ref <error> = var n
 // CHECK:STDOUT:   %n.loc12: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -250,9 +250,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc9_12: i32 = int_literal 1000000000 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_11: init type = call %Int.ref(%.loc9_12) [template = <error>]
-// CHECK:STDOUT:   %.loc9_22.1: type = value_of_initializer %.loc9_11 [template = <error>]
-// CHECK:STDOUT:   %.loc9_22.2: type = converted %.loc9_11, %.loc9_22.1 [template = <error>]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc9_12) [template = <error>]
+// CHECK:STDOUT:   %.loc9_22.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:   %.loc9_22.2: type = converted %int.make_type_signed, %.loc9_22.1 [template = <error>]
 // CHECK:STDOUT:   %m.var: ref <error> = var m
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }

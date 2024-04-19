@@ -19,6 +19,7 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
@@ -45,6 +46,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],

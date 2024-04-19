@@ -15,15 +15,16 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: source_filename = "pointer_to_pointer.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %p) {
-// CHECK:STDOUT:   %a = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %p, ptr %a, align 8
-// CHECK:STDOUT:   %b = alloca ptr, align 8
-// CHECK:STDOUT:   %1 = load ptr, ptr %p, align 8
-// CHECK:STDOUT:   store ptr %1, ptr %b, align 8
-// CHECK:STDOUT:   %c = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %b, ptr %c, align 8
-// CHECK:STDOUT:   %2 = load ptr, ptr %c, align 8
-// CHECK:STDOUT:   %3 = load ptr, ptr %2, align 8
-// CHECK:STDOUT:   %4 = load i32, ptr %3, align 4
-// CHECK:STDOUT:   ret i32 %4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %a.var = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8
+// CHECK:STDOUT:   %b.var = alloca ptr, align 8
+// CHECK:STDOUT:   %.loc9_17.2 = load ptr, ptr %p, align 8
+// CHECK:STDOUT:   store ptr %.loc9_17.2, ptr %b.var, align 8
+// CHECK:STDOUT:   %c.var = alloca ptr, align 8
+// CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8
+// CHECK:STDOUT:   %.loc11_12 = load ptr, ptr %c.var, align 8
+// CHECK:STDOUT:   %.loc11_11.2 = load ptr, ptr %.loc11_12, align 8
+// CHECK:STDOUT:   %.loc11_10.2 = load i32, ptr %.loc11_11.2, align 4
+// CHECK:STDOUT:   ret i32 %.loc11_10.2
 // CHECK:STDOUT: }

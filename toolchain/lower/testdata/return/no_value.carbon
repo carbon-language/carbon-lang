@@ -12,5 +12,6 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

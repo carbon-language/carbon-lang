@@ -10,5 +10,6 @@ fn Foo(a: i32) {}
 // CHECK:STDOUT: source_filename = "params_one.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo(i32 %a) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

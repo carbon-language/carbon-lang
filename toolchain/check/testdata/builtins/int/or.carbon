@@ -43,8 +43,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Or.ref: <function> = name_ref Or, %Or [template = %Or]
 // CHECK:STDOUT:   %.loc4_19: i32 = int_literal 12 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_23: i32 = int_literal 10 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_18: init i32 = call %Or.ref(%.loc4_19, %.loc4_23) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_26: type = array_type %.loc4_18, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.or: init i32 = call %Or.ref(%.loc4_19, %.loc4_23) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_26: type = array_type %int.or, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 14] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 14] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 14 [template = constants.%.3]
@@ -69,9 +69,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Or.ref: <function> = name_ref Or, file.%Or [template = file.%Or]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc8_12: init i32 = call %Or.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_18.1: i32 = value_of_initializer %.loc8_12
-// CHECK:STDOUT:   %.loc8_18.2: i32 = converted %.loc8_12, %.loc8_18.1
+// CHECK:STDOUT:   %int.or: init i32 = call %Or.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_18.1: i32 = value_of_initializer %int.or
+// CHECK:STDOUT:   %.loc8_18.2: i32 = converted %int.or, %.loc8_18.1
 // CHECK:STDOUT:   return %.loc8_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

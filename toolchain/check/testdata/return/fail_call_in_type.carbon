@@ -30,9 +30,9 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
 // CHECK:STDOUT:     %ReturnType.ref: <function> = name_ref ReturnType, %ReturnType [template = %ReturnType]
-// CHECK:STDOUT:     %.loc13_23: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %.loc13_23
-// CHECK:STDOUT:     %.loc13_24.2: type = converted %.loc13_23, %.loc13_24.1
+// CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
+// CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc13_24.2: type = converted %ReturnType.call, %.loc13_24.1
 // CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

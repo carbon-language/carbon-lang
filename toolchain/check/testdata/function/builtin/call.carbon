@@ -35,8 +35,8 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc9_20: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_19: init i32 = call %Add.ref(%.loc9_20, %.loc9_23) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc9_25: type = array_type %.loc9_19, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc9_20, %.loc9_23) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_25: type = array_type %int.sadd, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT: }

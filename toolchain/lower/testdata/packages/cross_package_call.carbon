@@ -20,12 +20,14 @@ fn G() { A.F(); }
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @F()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

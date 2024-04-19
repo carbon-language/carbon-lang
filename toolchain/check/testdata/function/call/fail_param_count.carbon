@@ -109,23 +109,23 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc19: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
-// CHECK:STDOUT:   %.loc19_8: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc19_7: init () = call %Run0.ref.loc19(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %Run0.call.loc19: init () = call %Run0.ref.loc19(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run0.ref.loc27: <function> = name_ref Run0, file.%Run0 [template = file.%Run0]
 // CHECK:STDOUT:   %.loc27_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc27_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc27_7: init () = call %Run0.ref.loc27(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run0.call.loc27: init () = call %Run0.ref.loc27(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc36: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
-// CHECK:STDOUT:   %.loc36: init () = call %Run1.ref.loc36(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run1.call.loc36: init () = call %Run1.ref.loc36(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run1.ref.loc44: <function> = name_ref Run1, file.%Run1 [template = file.%Run1]
 // CHECK:STDOUT:   %.loc44_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc44_11: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc44_7: init () = call %Run1.ref.loc44(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run1.call.loc44: init () = call %Run1.ref.loc44(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc53: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc53: init () = call %Run2.ref.loc53(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %Run2.call.loc53: init () = call %Run2.ref.loc53(<invalid>) [template = <error>]
 // CHECK:STDOUT:   %Run2.ref.loc60: <function> = name_ref Run2, file.%Run2 [template = file.%Run2]
-// CHECK:STDOUT:   %.loc60_8: i32 = int_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc60_7: init () = call %Run2.ref.loc60(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc60: i32 = int_literal 0 [template = constants.%.3]
+// CHECK:STDOUT:   %Run2.call.loc60: init () = call %Run2.ref.loc60(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

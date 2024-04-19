@@ -46,8 +46,8 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
 // CHECK:STDOUT:   %.loc15_17: <bound method> = bound_method %.loc15_16, %.1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc15_24: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc15_23: init i32 = call %.loc15_17(%.loc15_16, %.loc15_24) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_26: type = array_type %.loc15_23, i32 [template = constants.%.9]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc15_17(%.loc15_16, %.loc15_24) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc15_26: type = array_type %int.sadd, i32 [template = constants.%.9]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT: }

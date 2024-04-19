@@ -59,7 +59,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A.loc10 [template = file.%A.loc10]
-// CHECK:STDOUT:   %.loc16: init () = call %A.ref.loc16()
+// CHECK:STDOUT:   %A.call: init () = call %A.ref.loc16()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:

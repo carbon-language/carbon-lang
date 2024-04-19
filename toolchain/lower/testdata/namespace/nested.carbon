@@ -18,10 +18,12 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Wiz() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @Wiz()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

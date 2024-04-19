@@ -102,9 +102,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %LessEq.ref.loc9: <function> = name_ref LessEq, file.%LessEq [template = file.%LessEq]
 // CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_26: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_22: init bool = call %LessEq.ref.loc9(%.loc9_23, %.loc9_26) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %.loc9_22 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_13.2: bool = converted %.loc9_22, %.loc9_13.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.less_eq.loc9: init bool = call %LessEq.ref.loc9(%.loc9_23, %.loc9_26) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.less_eq.loc9 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.less_eq.loc9, %.loc9_13.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -121,9 +121,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %LessEq.ref.loc10: <function> = name_ref LessEq, file.%LessEq [template = file.%LessEq]
 // CHECK:STDOUT:   %.loc10_23: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_22: init bool = call %LessEq.ref.loc10(%.loc10_23, %.loc10_26) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_13.1: bool = value_of_initializer %.loc10_22 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_13.2: bool = converted %.loc10_22, %.loc10_13.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.less_eq.loc10: init bool = call %LessEq.ref.loc10(%.loc10_23, %.loc10_26) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.1: bool = value_of_initializer %int.less_eq.loc10 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.2: bool = converted %int.less_eq.loc10, %.loc10_13.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc10_13.2 br !if.expr.then.loc10 else br !if.expr.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc10:
@@ -140,9 +140,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %LessEq.ref.loc11: <function> = name_ref LessEq, file.%LessEq [template = file.%LessEq]
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_23: init bool = call %LessEq.ref.loc11(%.loc11_24, %.loc11_27) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_23 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_23, %.loc11_14.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.less_eq.loc11: init bool = call %LessEq.ref.loc11(%.loc11_24, %.loc11_27) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %int.less_eq.loc11 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %int.less_eq.loc11, %.loc11_14.1 [template = constants.%.8]
 // CHECK:STDOUT:   if %.loc11_14.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
@@ -159,13 +159,13 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %LessEq.ref.loc12: <function> = name_ref LessEq, file.%LessEq [template = file.%LessEq]
 // CHECK:STDOUT:   %Negate.ref.loc12: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc12_30: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_29: init i32 = call %Negate.ref.loc12(%.loc12_30) [template = constants.%.9]
+// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_30) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_34: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc12_22.1: i32 = value_of_initializer %.loc12_29 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_22.2: i32 = converted %.loc12_29, %.loc12_22.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_22.3: init bool = call %LessEq.ref.loc12(%.loc12_22.2, %.loc12_34) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %.loc12_22.3 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_13.2: bool = converted %.loc12_22.3, %.loc12_13.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_22.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc12_22.2: i32 = converted %int.snegate.loc12, %.loc12_22.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.less_eq.loc12: init bool = call %LessEq.ref.loc12(%.loc12_22.2, %.loc12_34) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %int.less_eq.loc12 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_13.2: bool = converted %int.less_eq.loc12, %.loc12_13.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc12_13.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12:
@@ -183,12 +183,12 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.loc13_24: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %Negate.ref.loc13: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_33: init i32 = call %Negate.ref.loc13(%.loc13_34) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.1: i32 = value_of_initializer %.loc13_33 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.2: i32 = converted %.loc13_33, %.loc13_23.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_23.3: init bool = call %LessEq.ref.loc13(%.loc13_24, %.loc13_23.2) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %.loc13_23.3 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_14.2: bool = converted %.loc13_23.3, %.loc13_14.1 [template = constants.%.8]
+// CHECK:STDOUT:   %int.snegate.loc13: init i32 = call %Negate.ref.loc13(%.loc13_34) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_23.1: i32 = value_of_initializer %int.snegate.loc13 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_23.2: i32 = converted %int.snegate.loc13, %.loc13_23.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.less_eq.loc13: init bool = call %LessEq.ref.loc13(%.loc13_24, %.loc13_23.2) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %int.less_eq.loc13 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_14.2: bool = converted %int.less_eq.loc13, %.loc13_14.1 [template = constants.%.8]
 // CHECK:STDOUT:   if %.loc13_14.2 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
@@ -209,9 +209,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %LessEq.ref: <function> = name_ref LessEq, file.%LessEq [template = file.%LessEq]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_16: init bool = call %LessEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc17_22.1: bool = value_of_initializer %.loc17_16
-// CHECK:STDOUT:   %.loc17_22.2: bool = converted %.loc17_16, %.loc17_22.1
+// CHECK:STDOUT:   %int.less_eq: init bool = call %LessEq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc17_22.1: bool = value_of_initializer %int.less_eq
+// CHECK:STDOUT:   %.loc17_22.2: bool = converted %int.less_eq, %.loc17_22.1
 // CHECK:STDOUT:   return %.loc17_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

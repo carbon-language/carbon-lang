@@ -97,10 +97,10 @@ fn Initializing() {
 // CHECK:STDOUT:   %x.var: ref X = var x
 // CHECK:STDOUT:   %x: ref X = bind_name x, %x.var
 // CHECK:STDOUT:   %Make.ref: <function> = name_ref Make, file.%Make [template = file.%Make]
-// CHECK:STDOUT:   %.loc24_7: ref X = splice_block %x.var {}
-// CHECK:STDOUT:   %.loc24_19: init X = call %Make.ref() to %.loc24_7
+// CHECK:STDOUT:   %.loc24: ref X = splice_block %x.var {}
+// CHECK:STDOUT:   %Make.call: init X = call %Make.ref() to %.loc24
 // CHECK:STDOUT:   %X.ref.loc24_25: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   assign %x.var, %.loc24_19
+// CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

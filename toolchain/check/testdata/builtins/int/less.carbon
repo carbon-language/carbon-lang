@@ -102,9 +102,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Less.ref.loc9: <function> = name_ref Less, file.%Less [template = file.%Less]
 // CHECK:STDOUT:   %.loc9_21: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_24: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_20: init bool = call %Less.ref.loc9(%.loc9_21, %.loc9_24) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %.loc9_20 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_13.2: bool = converted %.loc9_20, %.loc9_13.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.less.loc9: init bool = call %Less.ref.loc9(%.loc9_21, %.loc9_24) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.less.loc9 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.less.loc9, %.loc9_13.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -121,9 +121,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Less.ref.loc10: <function> = name_ref Less, file.%Less [template = file.%Less]
 // CHECK:STDOUT:   %.loc10_22: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_21: init bool = call %Less.ref.loc10(%.loc10_22, %.loc10_25) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %.loc10_21 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc10_14.2: bool = converted %.loc10_21, %.loc10_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   %int.less.loc10: init bool = call %Less.ref.loc10(%.loc10_22, %.loc10_25) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %int.less.loc10 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_14.2: bool = converted %int.less.loc10, %.loc10_14.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc10_14.2 br !if.expr.then.loc10 else br !if.expr.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc10:
@@ -140,9 +140,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Less.ref.loc11: <function> = name_ref Less, file.%Less [template = file.%Less]
 // CHECK:STDOUT:   %.loc11_22: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_25: i32 = int_literal 0 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc11_21: init bool = call %Less.ref.loc11(%.loc11_22, %.loc11_25) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %.loc11_21 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %.loc11_21, %.loc11_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   %int.less.loc11: init bool = call %Less.ref.loc11(%.loc11_22, %.loc11_25) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %int.less.loc11 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %int.less.loc11, %.loc11_14.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc11_14.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
@@ -159,13 +159,13 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Less.ref.loc12: <function> = name_ref Less, file.%Less [template = file.%Less]
 // CHECK:STDOUT:   %Negate.ref.loc12: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc12_28: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_27: init i32 = call %Negate.ref.loc12(%.loc12_28) [template = constants.%.9]
+// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_28) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_32: i32 = int_literal 0 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_20.1: i32 = value_of_initializer %.loc12_27 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_20.2: i32 = converted %.loc12_27, %.loc12_20.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc12_20.3: init bool = call %Less.ref.loc12(%.loc12_20.2, %.loc12_32) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %.loc12_20.3 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_13.2: bool = converted %.loc12_20.3, %.loc12_13.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_20.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc12_20.2: i32 = converted %int.snegate.loc12, %.loc12_20.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.less.loc12: init bool = call %Less.ref.loc12(%.loc12_20.2, %.loc12_32) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %int.less.loc12 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_13.2: bool = converted %int.less.loc12, %.loc12_13.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc12_13.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12:
@@ -183,12 +183,12 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.loc13_22: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %Negate.ref.loc13: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
 // CHECK:STDOUT:   %.loc13_32: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_31: init i32 = call %Negate.ref.loc13(%.loc13_32) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_21.1: i32 = value_of_initializer %.loc13_31 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_21.2: i32 = converted %.loc13_31, %.loc13_21.1 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc13_21.3: init bool = call %Less.ref.loc13(%.loc13_22, %.loc13_21.2) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %.loc13_21.3 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_14.2: bool = converted %.loc13_21.3, %.loc13_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   %int.snegate.loc13: init i32 = call %Negate.ref.loc13(%.loc13_32) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_21.1: i32 = value_of_initializer %int.snegate.loc13 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc13_21.2: i32 = converted %int.snegate.loc13, %.loc13_21.1 [template = constants.%.9]
+// CHECK:STDOUT:   %int.less.loc13: init bool = call %Less.ref.loc13(%.loc13_22, %.loc13_21.2) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %int.less.loc13 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13_14.2: bool = converted %int.less.loc13, %.loc13_14.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc13_14.2 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
@@ -209,9 +209,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Less.ref: <function> = name_ref Less, file.%Less [template = file.%Less]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_14: init bool = call %Less.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc17_20.1: bool = value_of_initializer %.loc17_14
-// CHECK:STDOUT:   %.loc17_20.2: bool = converted %.loc17_14, %.loc17_20.1
+// CHECK:STDOUT:   %int.less: init bool = call %Less.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc17_20.1: bool = value_of_initializer %int.less
+// CHECK:STDOUT:   %.loc17_20.2: bool = converted %int.less, %.loc17_20.1
 // CHECK:STDOUT:   return %.loc17_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
