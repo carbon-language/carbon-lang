@@ -27,10 +27,9 @@ fn TooFew(a: f64) -> f64 = "float.div";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.div";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.div".
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: ERROR: Invalid signature for builtin function "float.div".
 // CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 fn JustRight(a: f64, b: f64) -> f64 = "float.div";
 
@@ -52,15 +51,8 @@ package FailDivByZero api;
 
 fn Div(a: f64, b: f64) -> f64 = "float.div";
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: ERROR: Division by zero.
-// CHECK:STDERR: let a: f64 = Div(1.0, 0.0);
-// CHECK:STDERR:              ^~~~
-// CHECK:STDERR:
 let a: f64 = Div(1.0, 0.0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+3]]:14: ERROR: Division by zero.
-// CHECK:STDERR: let b: f64 = Div(0.0, 0.0);
-// CHECK:STDERR:              ^~~~
 let b: f64 = Div(0.0, 0.0);
 
 // CHECK:STDOUT: --- float_div.carbon
@@ -231,8 +223,10 @@ let b: f64 = Div(0.0, 0.0);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.2: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal +Inf [template]
 // CHECK:STDOUT:   %.4: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.5: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.6: f64 = float_literal NaN [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -248,20 +242,20 @@ let b: f64 = Div(0.0, 0.0);
 // CHECK:STDOUT:     @Div.%b: f64 = bind_name b, %b.loc4_16.1
 // CHECK:STDOUT:     @Div.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Div.ref.loc10: <function> = name_ref Div, %Div [template = %Div]
-// CHECK:STDOUT:   %.loc10_18: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_23: f64 = float_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_17: init f64 = call %Div.ref.loc10(%.loc10_18, %.loc10_23) [template = <error>]
-// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %.loc10_17 [template = <error>]
-// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %.loc10_17, %.loc10_27.1 [template = <error>]
-// CHECK:STDOUT:   %a.loc10: f64 = bind_name a, %.loc10_27.2
-// CHECK:STDOUT:   %Div.ref.loc15: <function> = name_ref Div, %Div [template = %Div]
-// CHECK:STDOUT:   %.loc15_18: f64 = float_literal 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15_23: f64 = float_literal 0 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc15_17: init f64 = call %Div.ref.loc15(%.loc15_18, %.loc15_23) [template = <error>]
-// CHECK:STDOUT:   %.loc15_27.1: f64 = value_of_initializer %.loc15_17 [template = <error>]
-// CHECK:STDOUT:   %.loc15_27.2: f64 = converted %.loc15_17, %.loc15_27.1 [template = <error>]
-// CHECK:STDOUT:   %b.loc15: f64 = bind_name b, %.loc15_27.2
+// CHECK:STDOUT:   %Div.ref.loc6: <function> = name_ref Div, %Div [template = %Div]
+// CHECK:STDOUT:   %.loc6_18: f64 = float_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_23: f64 = float_literal 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6_17: init f64 = call %Div.ref.loc6(%.loc6_18, %.loc6_23) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_27.1: f64 = value_of_initializer %.loc6_17 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6_27.2: f64 = converted %.loc6_17, %.loc6_27.1 [template = constants.%.3]
+// CHECK:STDOUT:   %a.loc6: f64 = bind_name a, %.loc6_27.2
+// CHECK:STDOUT:   %Div.ref.loc8: <function> = name_ref Div, %Div [template = %Div]
+// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 0 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_17: init f64 = call %Div.ref.loc8(%.loc8_18, %.loc8_23) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8_27.1: f64 = value_of_initializer %.loc8_17 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc8_27.2: f64 = converted %.loc8_17, %.loc8_27.1 [template = constants.%.6]
+// CHECK:STDOUT:   %b.loc8: f64 = bind_name b, %.loc8_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Div(%a: f64, %b: f64) -> f64 = "float.div";

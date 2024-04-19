@@ -593,7 +593,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
 }
 
 // Performs a builtin binary float -> float operation.
-static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc loc,
+static auto PerformBuiltinBinaryFloatOp(Context& context,
                                         SemIR::BuiltinFunctionKind builtin_kind,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
@@ -616,10 +616,6 @@ static auto PerformBuiltinBinaryFloatOp(Context& context, SemIRLoc loc,
       result_val = lhs_val * rhs_val;
       break;
     case SemIR::BuiltinFunctionKind::FloatDiv:
-      if (rhs_val.isZero()) {
-        DiagnoseDivisionByZero(context, loc);
-        return SemIR::ConstantId::Error;
-      }
       result_val = lhs_val / rhs_val;
       break;
     default:
@@ -724,7 +720,7 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
       if (phase != Phase::Template) {
         break;
       }
-      return PerformBuiltinBinaryFloatOp(context, loc, builtin_kind, arg_ids[0],
+      return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
                                          arg_ids[1]);
     }
   }
