@@ -1162,10 +1162,8 @@ class Formatter {
   }
 
   auto FormatInstructionRHS(FloatLiteral inst) -> void {
-    // Arbitrarily uses 5 digits of precision when formatting
-    // float literals.
     llvm::SmallVector<char, 16> buffer;
-    sem_ir_.floats().Get(inst.float_id).toString(buffer, 5);
+    sem_ir_.floats().Get(inst.float_id).toString(buffer);
     out_ << " " << buffer;
   }
 

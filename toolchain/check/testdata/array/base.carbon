@@ -20,8 +20,8 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.8: type = array_type %.7, f64 [template]
 // CHECK:STDOUT:   %.9: type = ptr_type [f64; 2] [template]
-// CHECK:STDOUT:   %.10: f64 = float_literal 11.1 [template]
-// CHECK:STDOUT:   %.11: f64 = float_literal 2.2 [template]
+// CHECK:STDOUT:   %.10: f64 = float_literal 11.100000000000001 [template]
+// CHECK:STDOUT:   %.11: f64 = float_literal 2.2000000000000002 [template]
 // CHECK:STDOUT:   %.12: type = tuple_type (f64, f64) [template]
 // CHECK:STDOUT:   %.13: [f64; 2] = tuple_value (%.10, %.11) [template]
 // CHECK:STDOUT:   %.14: type = tuple_type () [template]
@@ -69,8 +69,8 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc7_22.5: init [i32; 1] = array_init (%.loc7_22.4) to file.%a.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_23: init [i32; 1] = converted %.loc7_22.1, %.loc7_22.5 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_23
-// CHECK:STDOUT:   %.loc8_20: f64 = float_literal 11.1 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc8_26: f64 = float_literal 2.2 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc8_20: f64 = float_literal 11.100000000000001 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc8_26: f64 = float_literal 2.2000000000000002 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc8_30.1: (f64, f64) = tuple_literal (%.loc8_20, %.loc8_26)
 // CHECK:STDOUT:   %.loc8_30.2: i32 = int_literal 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8_30.3: ref f64 = array_index file.%b.var, %.loc8_30.2

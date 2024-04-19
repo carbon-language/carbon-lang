@@ -19,7 +19,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 6 [template]
 // CHECK:STDOUT:   %.6: (i32, i32) = tuple_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %.7: f64 = float_literal 2.6 [template]
+// CHECK:STDOUT:   %.7: f64 = float_literal 2.6000000000000001 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,7 +50,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_28: init (i32, i32) = converted %.loc7_27.1, %.loc7_27.6 [template = constants.%.6]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_28
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc11_16: f64 = float_literal 2.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc11_16: f64 = float_literal 2.6000000000000001 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc11_19: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return

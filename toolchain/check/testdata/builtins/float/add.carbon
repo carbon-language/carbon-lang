@@ -49,8 +49,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- float_add.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = float_literal 2.2 [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 2.3 [template]
+// CHECK:STDOUT:   %.1: f64 = float_literal 2.2000000000000002 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 2.3000000000000003 [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 4.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,8 +96,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
-// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2.2 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 2.3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2.2000000000000002 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 2.3000000000000003 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc8_17: init f64 = call %Add.ref(%.loc8_18, %.loc8_23) [template = constants.%.3]
 // CHECK:STDOUT:   assign file.%x.var, %.loc8_17
 // CHECK:STDOUT:   return

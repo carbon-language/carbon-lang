@@ -44,7 +44,7 @@ fn F() {
 // CHECK:STDOUT:   %.14: [i32; 6] = tuple_value (%.4, %.5, %.4, %.4, %.6, %.6) [template]
 // CHECK:STDOUT:   %.15: type = array_type %.1, f64 [template]
 // CHECK:STDOUT:   %.16: type = ptr_type [f64; 6] [template]
-// CHECK:STDOUT:   %.17: f64 = float_literal 0.9 [template]
+// CHECK:STDOUT:   %.17: f64 = float_literal 0.90000000000000002 [template]
 // CHECK:STDOUT:   %.18: f64 = float_literal 8 [template]
 // CHECK:STDOUT:   %.19: f64 = float_literal 80 [template]
 // CHECK:STDOUT:   %.20: f64 = float_literal 1.0E+7 [template]
@@ -101,7 +101,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_22: type = array_type %.loc18_21, f64 [template = constants.%.15]
 // CHECK:STDOUT:   %floats.var: ref [f64; 6] = var floats
 // CHECK:STDOUT:   %floats: ref [f64; 6] = bind_name floats, %floats.var
-// CHECK:STDOUT:   %.loc19: f64 = float_literal 0.9 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc19: f64 = float_literal 0.90000000000000002 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc20: f64 = float_literal 8 [template = constants.%.18]
 // CHECK:STDOUT:   %.loc21: f64 = float_literal 80 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc22: f64 = float_literal 1.0E+7 [template = constants.%.20]
