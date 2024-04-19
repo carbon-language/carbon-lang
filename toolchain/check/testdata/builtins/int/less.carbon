@@ -7,7 +7,7 @@
 // --- int_less.carbon
 
 fn Less(a: i32, b: i32) -> bool = "int.less";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 class True {}
 class False {}
@@ -94,7 +94,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Less(%a: i32, %b: i32) -> bool = "int.less";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%true_: True, %false_: False) {
 // CHECK:STDOUT: !entry:

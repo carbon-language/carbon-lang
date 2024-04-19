@@ -6,7 +6,7 @@
 
 // --- int_div.carbon
 
-fn Div(a: i32, b: i32) -> i32 = "int.div";
+fn Div(a: i32, b: i32) -> i32 = "int.sdiv";
 
 var arr: [i32; Div(3, 2)];
 let arr_p: [i32; 1]* = &arr;
@@ -19,9 +19,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailOverflow api;
 
-fn Div(a: i32, b: i32) -> i32 = "int.div";
-fn Sub(a: i32, b: i32) -> i32 = "int.sub";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Div(a: i32, b: i32) -> i32 = "int.sdiv";
+fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 // -0x7FFF_FFFF / -1 is OK.
 let a: i32 = Div(Negate(0x7FFF_FFFF), Negate(1));
@@ -40,7 +40,7 @@ let c: i32 = Div(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 package FailDivByZero api;
 
-fn Div(a: i32, b: i32) -> i32 = "int.div";
+fn Div(a: i32, b: i32) -> i32 = "int.sdiv";
 
 // CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: ERROR: Division by zero.
 // CHECK:STDERR: let a: i32 = Div(1, 0);
@@ -100,7 +100,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.div";
+// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -203,11 +203,11 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc19_57.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.div";
+// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_div_by_zero.carbon
 // CHECK:STDOUT:
@@ -245,5 +245,5 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %b.loc15: i32 = bind_name b, %.loc15_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.div";
+// CHECK:STDOUT: fn @Div(%a: i32, %b: i32) -> i32 = "int.sdiv";
 // CHECK:STDOUT:

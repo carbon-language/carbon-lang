@@ -6,7 +6,7 @@
 
 // --- int_negate.carbon
 
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 var arr: [i32; Negate(Negate(123))];
 let arr_p: [i32; 123]* = &arr;
@@ -21,22 +21,22 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl api;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.negate".
-// CHECK:STDERR: fn TooFew() -> i32 = "int.negate";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.snegate".
+// CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooFew() -> i32 = "int.negate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.negate".
-// CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.negate";
+fn TooFew() -> i32 = "int.snegate";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.snegate".
+// CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooMany(a: i32, b: i32) -> i32 = "int.negate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.negate".
-// CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.negate";
+fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.snegate".
+// CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn BadReturnType(a: i32) -> bool = "int.negate";
-fn JustRight(a: i32) -> i32 = "int.negate";
+fn BadReturnType(a: i32) -> bool = "int.snegate";
+fn JustRight(a: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: ERROR: Array bound is not a constant.
 // CHECK:STDERR: var too_few: [i32; TooFew()];
@@ -58,7 +58,7 @@ var bad_return_type: [i32; BadReturnType(1)];
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
 // CHECK:STDERR:                     ^~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: Calling function declared here.
-// CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.negate";
+// CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2)];
@@ -68,7 +68,7 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: Calling function declared here.
-  // CHECK:STDERR: fn TooFew() -> i32 = "int.negate";
+  // CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return TooFew(a);
@@ -79,7 +79,7 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: Calling function declared here.
-  // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.negate";
+  // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return TooMany(a, b, c);
@@ -90,7 +90,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: Calling function declared here.
-  // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.negate";
+  // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   return BadReturnType(a, b);
@@ -100,8 +100,8 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 package FailOverflow api;
 
-fn Negate(a: i32) -> i32 = "int.negate";
-fn Sub(a: i32, b: i32) -> i32 = "int.sub";
+fn Negate(a: i32) -> i32 = "int.snegate";
+fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
 // -(-INT_MAX) is INT_MAX.
 let a: i32 = Negate(Negate(0x7FFFFFFF));
@@ -167,7 +167,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -273,7 +273,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a: i32) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @JustRight(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -363,7 +363,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %b.loc14: i32 = bind_name b, %.loc14_48.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.sub";
+// CHECK:STDOUT: fn @Sub(%a: i32, %b: i32) -> i32 = "int.ssub";
 // CHECK:STDOUT:

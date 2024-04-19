@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn Negate(n: i32) -> i32 = "int.negate";
+fn Negate(n: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR: fail_bound_negative.carbon:[[@LINE+3]]:14: ERROR: Array bound of -1 is negative.
 // CHECK:STDERR: var a: [i32; Negate(1)];
@@ -38,5 +38,5 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 var arr: [i32; Add(1, 2)];
 
@@ -41,5 +41,5 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
