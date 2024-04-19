@@ -104,7 +104,7 @@ class FunctionContext {
   // instructions.
   class Inserter : public llvm::IRBuilderDefaultInserter {
    public:
-    explicit Inserter(const SemIR::InstNamer* namer) : namer_(namer) {}
+    explicit Inserter(const SemIR::InstNamer* inst_namer) : inst_namer_(inst_namer) {}
 
     // Sets the instruction we are currently emitting.
     void SetCurrentInstId(SemIR::InstId inst_id) { inst_id_ = inst_id; }
@@ -116,7 +116,7 @@ class FunctionContext {
         -> void override;
 
     // The instruction namer.
-    const SemIR::InstNamer* namer_;
+    const SemIR::InstNamer* inst_namer_;
 
     // The current instruction ID.
     SemIR::InstId inst_id_ = SemIR::InstId::Invalid;

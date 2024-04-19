@@ -15,7 +15,7 @@ FunctionContext::FunctionContext(FileContext& file_context,
     : file_context_(&file_context),
       function_(function),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
-               Inserter(file_context.namer())),
+               Inserter(file_context.inst_namer())),
       vlog_stream_(vlog_stream) {}
 
 auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
@@ -23,8 +23,8 @@ auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
     llvm::StringRef label_name;
-    if (const auto* namer = file_context_->namer()) {
-      label_name = namer->GetUnscopedLabelFor(block_id);
+    if (const auto* inst_namer = file_context_->inst_namer()) {
+      label_name = inst_namer->GetUnscopedLabelFor(block_id);
     }
     entry = llvm::BasicBlock::Create(llvm_context(), label_name, function_);
   }
@@ -126,8 +126,8 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
 auto FunctionContext::Inserter::InsertHelper(
     llvm::Instruction* inst, const llvm::Twine& name, llvm::BasicBlock* block,
     llvm::BasicBlock::iterator insert_pt) const -> void {
-  llvm::StringRef base_name = (namer_ && !inst->getType()->isVoidTy())
-                                  ? namer_->GetUnscopedNameFor(inst_id_)
+  llvm::StringRef base_name = (inst_namer_ && !inst->getType()->isVoidTy())
+                                  ? inst_namer_->GetUnscopedNameFor(inst_id_)
                                   : "";
   IRBuilderDefaultInserter::InsertHelper(
       inst,

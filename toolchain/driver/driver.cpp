@@ -527,9 +527,9 @@ class Driver::CompilationUnit {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
-      SemIR::InstNamer namer(*tokens_, *parse_tree_, *sem_ir_);
+      SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
       module_ = Lower::LowerToLLVM(*llvm_context_, input_filename_, *sem_ir_,
-                                   &namer, vlog_stream_);
+                                   &inst_namer, vlog_stream_);
     });
     if (vlog_stream_) {
       CARBON_VLOG() << "*** llvm::Module ***\n";

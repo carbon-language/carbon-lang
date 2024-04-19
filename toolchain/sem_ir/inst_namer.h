@@ -123,7 +123,7 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& namer, SemIR::LocId loc_id,
+    auto AllocateName(const InstNamer& inst_namer, SemIR::LocId loc_id,
                       std::string name) -> Name;
   };
 

@@ -195,7 +195,7 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   return value->first();
 }
 
-auto InstNamer::Namespace::AllocateName(const InstNamer& namer,
+auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
                                         SemIR::LocId loc_id, std::string name)
     -> Name {
   // The best (shortest) name for this instruction so far, and the current
@@ -234,13 +234,13 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& namer,
   // Append location information to try to disambiguate.
   // TODO: Consider handling inst_id cases.
   if (loc_id.is_node_id()) {
-    auto token = namer.parse_tree_.node_token(loc_id.node_id());
+    auto token = inst_namer.parse_tree_.node_token(loc_id.node_id());
     llvm::raw_string_ostream(name)
-        << ".loc" << namer.tokenized_buffer_.GetLineNumber(token);
+        << ".loc" << inst_namer.tokenized_buffer_.GetLineNumber(token);
     add_name();
 
     llvm::raw_string_ostream(name)
-        << "_" << namer.tokenized_buffer_.GetColumnNumber(token);
+        << "_" << inst_namer.tokenized_buffer_.GetColumnNumber(token);
     add_name();
   }
 
