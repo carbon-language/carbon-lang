@@ -136,10 +136,21 @@ auto CheckMethodModifiersOnFunction(Context& context,
                         " outside of a class");
 }
 
-auto ForbidExternModifierOnDefinition(Context& context,
-                                      Lex::TokenKind decl_kind) -> void {
-  ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
-                        " that provides a definition");
+auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
+                                  SemIR::NameScopeId target_scope_id,
+                                  bool is_definition) -> void {
+  if (is_definition) {
+    ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                          " that provides a definition");
+  }
+  if (target_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
+    if (target_id.is_valid() &&
+        !context.insts().Is<SemIR::Namespace>(target_id)) {
+      ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
+                            " that is a member");
+    }
+  }
 }
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,

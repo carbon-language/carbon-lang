@@ -5,6 +5,7 @@
 #include "toolchain/check/merge.h"
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/sem_ir/ids.h"
@@ -230,6 +231,20 @@ auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
                           /*new_is_import=*/true,
                           /*new_is_definition=*/false, prev_decl->function_id,
                           prev_inst->import_ir_inst_id);
+      return;
+    }
+    case CARBON_KIND(SemIR::ClassType new_type): {
+      auto prev_type = prev_inst->inst.TryAs<SemIR::ClassType>();
+      if (!prev_type) {
+        break;
+      }
+
+      auto new_class = context.classes().Get(new_type.class_id);
+      // TODO: Fix new_is_extern and prev_is_extern.
+      MergeClassRedecl(context, new_inst_id, new_class,
+                       /*new_is_import=*/true, new_class.is_defined(),
+                       /*new_is_extern=*/false, prev_type->class_id,
+                       /*prev_is_extern=*/false, prev_inst->import_ir_inst_id);
       return;
     }
     default:

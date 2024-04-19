@@ -50,6 +50,7 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "class.cpp",
         "context.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
@@ -63,6 +64,7 @@ cc_library(
         "subst.cpp",
     ],
     hdrs = [
+        "class.h",
         "context.h",
         "convert.h",
         "decl_name_stack.h",
