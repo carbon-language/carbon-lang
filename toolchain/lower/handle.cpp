@@ -200,6 +200,28 @@ static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
   }
 }
 
+// Get the predicate to use for an `fcmp` instruction generated for the
+// specified builtin.
+static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
+    -> llvm::CmpInst::Predicate {
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatEq:
+      return llvm::CmpInst::FCMP_OEQ;
+    case SemIR::BuiltinFunctionKind::FloatNeq:
+      return llvm::CmpInst::FCMP_ONE;
+    case SemIR::BuiltinFunctionKind::FloatLess:
+      return llvm::CmpInst::FCMP_OLT;
+    case SemIR::BuiltinFunctionKind::FloatLessEq:
+      return llvm::CmpInst::FCMP_OLE;
+    case SemIR::BuiltinFunctionKind::FloatGreater:
+      return llvm::CmpInst::FCMP_OGT;
+    case SemIR::BuiltinFunctionKind::FloatGreaterEq:
+      return llvm::CmpInst::FCMP_OGE;
+    default:
+      CARBON_FATAL() << "Unexpected builtin kind " << builtin_kind;
+  }
+}
+
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
@@ -398,6 +420,18 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.builder().CreateFDiv(
                                     context.GetValue(arg_ids[0]),
                                     context.GetValue(arg_ids[1]), "fdiv"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatEq:
+    case SemIR::BuiltinFunctionKind::FloatNeq:
+    case SemIR::BuiltinFunctionKind::FloatLess:
+    case SemIR::BuiltinFunctionKind::FloatLessEq:
+    case SemIR::BuiltinFunctionKind::FloatGreater:
+    case SemIR::BuiltinFunctionKind::FloatGreaterEq: {
+      context.SetLocal(inst_id, context.builder().CreateFCmp(
+                                    GetBuiltinFCmpPredicate(builtin_kind),
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1])));
       return;
     }
   }
