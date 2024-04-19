@@ -48,6 +48,13 @@ class Driver {
   // error stream (stderr by default).
   auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult;
 
+  // Finds the source files that define the prelude and returns a list of their
+  // filenames. On error, writes a message to `error_stream` and returns an
+  // empty list.
+  static auto FindPreludeFiles(llvm::StringRef data_dir,
+                               llvm::raw_ostream& error_stream)
+      -> llvm::SmallVector<std::string>;
+
  private:
   struct Options;
   struct CompileOptions;

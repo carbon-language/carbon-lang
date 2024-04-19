@@ -16,15 +16,6 @@ var str1: String = "abc";
 var str2: String = "ab'\"c";
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        'core/prelude.carbon'
-// CHECK:STDOUT: shared_values:
-// CHECK:STDOUT:   ints:            {}
-// CHECK:STDOUT:   reals:           {}
-// CHECK:STDOUT:   strings:
-// CHECK:STDOUT:     str0:            Core
-// CHECK:STDOUT:     str1:            prelude
-// CHECK:STDOUT: ...
-// CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        dump_shared_values.carbon
 // CHECK:STDOUT: shared_values:
 // CHECK:STDOUT:   ints:

@@ -31,6 +31,44 @@
 
 namespace Carbon {
 
+auto Driver::FindPreludeFiles(llvm::StringRef data_dir,
+                              llvm::raw_ostream& error_stream)
+    -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> result;
+
+  // Include <data>/core/prelude.carbon, which is the entry point into the
+  // prelude.
+  {
+    llvm::SmallString<256> prelude_file(data_dir);
+    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
+                            "core/prelude.carbon");
+    result.push_back(prelude_file.str().str());
+  }
+
+  // Glob for <data>/core/prelude/**/*.carbon and add all the files we find.
+  llvm::SmallString<256> prelude_dir(data_dir);
+  llvm::sys::path::append(prelude_dir, llvm::sys::path::Style::posix,
+                          "core/prelude");
+  std::error_code ec;
+  for (llvm::sys::fs::recursive_directory_iterator prelude_files_it(
+           prelude_dir, ec, /*follow_symlinks=*/false);
+       prelude_files_it != llvm::sys::fs::recursive_directory_iterator();
+       prelude_files_it.increment(ec)) {
+    if (ec) {
+      error_stream << "ERROR: Could not find prelude: " << ec.message() << "\n";
+      result.clear();
+      return result;
+    }
+
+    auto prelude_file = prelude_files_it->path();
+    if (llvm::sys::path::extension(prelude_file) == ".carbon") {
+      result.push_back(prelude_file);
+    }
+  }
+
+  return result;
+}
+
 struct Driver::CompileOptions {
   static constexpr CommandLine::CommandInfo Info = {
       .name = "compile",
@@ -548,12 +586,17 @@ class Driver::CompilationUnit {
     LogCall("CodeGen", [&] { success_ = RunCodeGenHelper(); });
   }
 
-  // Flushes output.
-  auto Flush() -> void { consumer_->Flush(); }
+  // Runs post-compile logic. This is always called, and called after all other
+  // actions on the CompilationUnit.
+  auto PostCompile() const -> void {
+    if (options_.dump_shared_values && IncludeInDumps()) {
+      Yaml::Print(driver_->output_stream_,
+                  value_stores_.OutputYaml(input_filename_));
+    }
 
-  auto PrintSharedValues() const -> void {
-    Yaml::Print(driver_->output_stream_,
-                value_stores_.OutputYaml(input_filename_));
+    // The diagnostics consumer must be flushed before compilation artifacts are
+    // destructed, because diagnostics can refer to their state.
+    consumer_->Flush();
   }
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
@@ -672,20 +715,26 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     return {.success = false};
   }
 
+  // Find the files comprising the prelude if we are importing it.
+  // TODO: Replace this with a search for library api files in a
+  // package-specific search path based on the library name.
+  bool want_prelude =
+      options.prelude_import && options.phase >= CompileOptions::Phase::Check;
+  auto prelude = want_prelude ? FindPreludeFiles(data_dir_, error_stream_)
+                              : llvm::SmallVector<std::string>{};
+  if (want_prelude && prelude.empty()) {
+    return {.success = false};
+  }
+
   // Prepare CompilationUnits before building scope exit handlers.
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  units.reserve(options.prelude_import + options.input_filenames.size());
+  units.reserve(prelude.size() + options.input_filenames.size());
 
-  // Directly insert the core package into the compilation units.
-  // TODO: Should expand this into a more rich system to search for the core
-  // package source code.
-  if (options.prelude_import) {
-    llvm::SmallString<256> prelude_file(data_dir_);
-    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
-                            "core/prelude.carbon");
+  // Add the prelude files.
+  for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, prelude_file));
+        this, options, &stream_consumer, input_filename));
   }
 
   // Add the input source files.
@@ -695,19 +744,12 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
-    // Shared values will always be printed after per-file printing.
-    if (options.dump_shared_values) {
-      for (const auto& unit : units) {
-        unit->PrintSharedValues();
-      }
+    // Finish compilation units. This flushes their diagnostics in the order in
+    // which they were specified on the command line.
+    for (auto& unit : units) {
+      unit->PostCompile();
     }
 
-    // The diagnostics consumer must be flushed before compilation artifacts are
-    // destructed, because diagnostics can refer to their state. This ensures
-    // they're flushed in order of arguments, rather than order of destruction.
-    for (auto& unit : units) {
-      unit->Flush();
-    }
     stream_consumer.Flush();
   });
 

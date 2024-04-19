@@ -2,9 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# The prelude, and all of its dependencies.
-filegroup(
-    name = "prelude",
-    data = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
-    visibility = ["//visibility:public"],
+load("//bazel/carbon_rules:defs.bzl", "carbon_binary")
+
+carbon_binary(
+    name = "sieve",
+    srcs = ["sieve.carbon"],
 )

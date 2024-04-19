@@ -8,11 +8,12 @@ import Core library "prelude/operators/arithmetic";
 import Core library "prelude/operators/comparison";
 
 // TODO: Copied from core/prelude/types/i32.carbon.
-// Remove the following, once we do cross-file impl lookup.
-// import Core library "prelude/types/i32";
+// Because we don't deduplicate interfaces, the implementations in that file are
+// treated as implementing a different interface from the one we import above.
+// Remove the following, once we deduplicate interfaces.
 
 impl i32 as Core.Add {
-  fn Op[self: Self](other: Self) -> Self = "int.add";
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 impl i32 as Core.AddAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -26,7 +27,7 @@ impl i32 as Core.Inc {
 }
 
 impl i32 as Core.Div {
-  fn Op[self: Self](other: Self) -> Self = "int.div";
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
 }
 impl i32 as Core.DivAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -40,7 +41,7 @@ impl i32 as Core.Eq {
 }
 
 impl i32 as Core.Mod {
-  fn Op[self: Self](other: Self) -> Self = "int.mod";
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 impl i32 as Core.ModAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -49,7 +50,7 @@ impl i32 as Core.ModAssign {
 }
 
 impl i32 as Core.Mul {
-  fn Op[self: Self](other: Self) -> Self = "int.mul";
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
 }
 impl i32 as Core.MulAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -58,7 +59,7 @@ impl i32 as Core.MulAssign {
 }
 
 impl i32 as Core.Negate {
-  fn Op[self: Self]() -> Self = "int.negate";
+  fn Op[self: Self]() -> Self = "int.snegate";
 }
 
 impl i32 as Core.Ordered {
@@ -70,7 +71,7 @@ impl i32 as Core.Ordered {
 }
 
 impl i32 as Core.Sub {
-  fn Op[self: Self](other: Self) -> Self = "int.sub";
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
 impl i32 as Core.SubAssign {
   fn Op[addr self: Self*](other: Self) {
