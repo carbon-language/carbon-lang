@@ -12,9 +12,9 @@ interface Interface {
   default fn F() {}
 
   // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: ERROR: Semantics TODO: `interface modifier`.
-  // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32 = "int.add";
+  // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
   // CHECK:STDERR:   ^~~~~~~
-  default fn G(a: i32, b: i32) -> i32 = "int.add";
+  default fn G(a: i32, b: i32) -> i32 = "int.sadd";
 }
 
 // CHECK:STDOUT: --- fail_todo_define_default_fn_inline.carbon
@@ -60,5 +60,5 @@ interface Interface {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@Interface.%a.loc17_16.2: i32, @Interface.%b.loc17_24.2: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @G(@Interface.%a.loc17_16.2: i32, @Interface.%b.loc17_24.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

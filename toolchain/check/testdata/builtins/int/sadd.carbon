@@ -6,7 +6,7 @@
 
 // --- int_add.carbon
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 var arr: [i32; Add(1, 2)];
 let arr_p: [i32; 3]* = &arr;
@@ -19,22 +19,22 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailBadDecl api;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.add".
-// CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.add";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooFew(a: i32) -> i32 = "int.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.add".
-// CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.add";
+fn TooFew(a: i32) -> i32 = "int.sadd";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.add".
-// CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.add";
+fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
+// CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn BadReturnType(a: i32, b: i32) -> bool = "int.add";
-fn JustRight(a: i32, b: i32) -> i32 = "int.add";
+fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
+fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: ERROR: Array bound is not a constant.
 // CHECK:STDERR: var too_few: [i32; TooFew(1)];
@@ -56,7 +56,7 @@ var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: Calling function declared here.
-// CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2, 3)];
@@ -77,7 +77,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 package FailOverflow api;
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 let a: i32 = Add(0x7FFFFFFF, 0);
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: ERROR: Integer overflow in calculation 2147483647 + 1.
@@ -132,7 +132,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -252,7 +252,7 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a: i32, %b: i32) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @JustRight(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -325,5 +325,5 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:

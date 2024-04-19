@@ -6,7 +6,7 @@
 
 // --- int_mul.carbon
 
-fn Mul(a: i32, b: i32) -> i32 = "int.mul";
+fn Mul(a: i32, b: i32) -> i32 = "int.smul";
 
 var arr: [i32; Mul(3, 2)];
 let arr_p: [i32; 6]* = &arr;
@@ -19,7 +19,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 package FailOverflow api;
 
-fn Mul(a: i32, b: i32) -> i32 = "int.mul";
+fn Mul(a: i32, b: i32) -> i32 = "int.smul";
 
 let a: i32 = Mul(0x7FFF, 0x10000);
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:14: ERROR: Integer overflow in calculation 32768 * 65536.
@@ -74,7 +74,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.mul";
+// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.smul";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -126,5 +126,5 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_34.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.mul";
+// CHECK:STDOUT: fn @Mul(%a: i32, %b: i32) -> i32 = "int.smul";
 // CHECK:STDOUT:

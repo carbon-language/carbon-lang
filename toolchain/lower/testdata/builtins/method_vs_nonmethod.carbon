@@ -4,8 +4,8 @@
 //
 // AUTOUPDATE
 
-fn AddNonmethod(a: i32, b: i32) -> i32 = "int.add";
-fn AddMethod[self: i32](b: i32) -> i32 = "int.add";
+fn AddNonmethod(a: i32, b: i32) -> i32 = "int.sadd";
+fn AddMethod[self: i32](b: i32) -> i32 = "int.sadd";
 
 fn TestAddNonmethod(a: i32, b: i32) -> i32 { return AddNonmethod(a, b); }
 fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-fn Add(a: i32, b: i32) -> i32 = "int.add";
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 var a: [i32; Add(1, 2)] = (1, 2, 3);
 let b: [i32; 3]* = &a;
@@ -51,7 +51,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDOUT:   %b.loc10: [i32; 3]* = bind_name b, %.loc10_20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @Add(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

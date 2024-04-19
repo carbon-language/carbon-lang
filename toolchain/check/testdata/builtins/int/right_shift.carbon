@@ -24,7 +24,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 package ArithShift api;
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 // -1 >> 1 is -1.
 var arr1: [i32; Negate(RightShift(Negate(1), 1))];
@@ -39,7 +39,7 @@ let arr2_p: [i32; 3]* = &arr2;
 package BadShift api;
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
-fn Negate(a: i32) -> i32 = "int.negate";
+fn Negate(a: i32) -> i32 = "int.snegate";
 
 // Shift greater than size is disallowed.
 let size_1: i32 = RightShift(1, 31);
@@ -203,7 +203,7 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_shift.carbon
 // CHECK:STDOUT:
@@ -271,5 +271,5 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RightShift(%a: i32, %b: i32) -> i32 = "int.right_shift";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:

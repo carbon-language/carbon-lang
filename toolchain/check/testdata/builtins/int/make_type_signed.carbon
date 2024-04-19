@@ -46,7 +46,7 @@ library "fail_negative_size" api;
 
 import library "types";
 
-fn Negate(n: i32) -> i32 = "int.negate";
+fn Negate(n: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: ERROR: Integer type width of -1 is not positive.
 // CHECK:STDERR: var n: Int(Negate(1));
@@ -230,7 +230,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %n.loc12: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.negate";
+// CHECK:STDOUT: fn @Negate(%n: i32) -> i32 = "int.snegate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n: i32) -> type = "int.make_type_signed";
 // CHECK:STDOUT:

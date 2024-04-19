@@ -164,29 +164,53 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
 
-// "int.negate": integer negation.
-constexpr BuiltinInfo IntNegate = {"int.negate",
-                                   ValidateSignature<auto(IntT)->IntT>};
+// "int.snegate": integer negation.
+constexpr BuiltinInfo IntSNegate = {"int.snegate",
+                                    ValidateSignature<auto(IntT)->IntT>};
 
-// "int.add": integer addition.
-constexpr BuiltinInfo IntAdd = {"int.add",
-                                ValidateSignature<auto(IntT, IntT)->IntT>};
+// "int.sadd": integer addition.
+constexpr BuiltinInfo IntSAdd = {"int.sadd",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
-// "int.sub": integer subtraction.
-constexpr BuiltinInfo IntSub = {"int.sub",
-                                ValidateSignature<auto(IntT, IntT)->IntT>};
+// "int.ssub": integer subtraction.
+constexpr BuiltinInfo IntSSub = {"int.ssub",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
-// "int.mul": integer multiplication.
-constexpr BuiltinInfo IntMul = {"int.mul",
-                                ValidateSignature<auto(IntT, IntT)->IntT>};
+// "int.smul": integer multiplication.
+constexpr BuiltinInfo IntSMul = {"int.smul",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
-// "int.div": integer division.
-constexpr BuiltinInfo IntDiv = {"int.div",
-                                ValidateSignature<auto(IntT, IntT)->IntT>};
+// "int.sdiv": integer division.
+constexpr BuiltinInfo IntSDiv = {"int.sdiv",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.smod": integer modulo.
+constexpr BuiltinInfo IntSMod = {"int.smod",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.unegate": unsigned integer negation.
+constexpr BuiltinInfo IntUNegate = {"int.unegate",
+                                    ValidateSignature<auto(IntT)->IntT>};
+
+// "int.uadd": unsigned integer addition.
+constexpr BuiltinInfo IntUAdd = {"int.uadd",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.usub": unsigned integer subtraction.
+constexpr BuiltinInfo IntUSub = {"int.usub",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.umul": unsigned integer multiplication.
+constexpr BuiltinInfo IntUMul = {"int.umul",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+
+// "int.udiv": unsigned integer division.
+constexpr BuiltinInfo IntUDiv = {"int.udiv",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.mod": integer modulo.
-constexpr BuiltinInfo IntMod = {"int.mod",
-                                ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUMod = {"int.umod",
+                                 ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.complement": integer bitwise complement.
 constexpr BuiltinInfo IntComplement = {"int.complement",

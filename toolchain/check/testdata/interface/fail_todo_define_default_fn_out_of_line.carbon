@@ -28,12 +28,12 @@ interface Interface {
 fn Interface.F() {}
 
 // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE+6]]:1: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
+// CHECK:STDERR: fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_define_default_fn_out_of_line.carbon:[[@LINE-15]]:3: Name is previously declared here.
 // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
+fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 
 // CHECK:STDOUT: --- fail_todo_define_default_fn_out_of_line.carbon
 // CHECK:STDOUT:
@@ -90,5 +90,5 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.add";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.2(%a: i32, %b: i32) -> i32 = "int.add";
+// CHECK:STDOUT: fn @.2(%a: i32, %b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
