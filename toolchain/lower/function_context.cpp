@@ -129,14 +129,17 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
 auto FunctionContext::Inserter::InsertHelper(
     llvm::Instruction* inst, const llvm::Twine& name, llvm::BasicBlock* block,
     llvm::BasicBlock::iterator insert_pt) const -> void {
-  llvm::StringRef base_name = (inst_namer_ && !inst->getType()->isVoidTy())
-                                  ? inst_namer_->GetUnscopedNameFor(inst_id_)
-                                  : "";
-  IRBuilderDefaultInserter::InsertHelper(
-      inst,
-      (!base_name.empty() && !name.isTriviallyEmpty()) ? base_name + "." + name
-                                                       : base_name + name,
-      block, insert_pt);
+  llvm::StringRef base_name;
+  llvm::StringRef separator;
+  if (inst_namer_ && !inst->getType()->isVoidTy()) {
+    base_name = inst_namer_->GetUnscopedNameFor(inst_id_);
+  }
+  if (!base_name.empty() && !name.isTriviallyEmpty()) {
+    separator = ".";
+  }
+
+  IRBuilderDefaultInserter::InsertHelper(inst, base_name + separator + name,
+                                         block, insert_pt);
 }
 
 }  // namespace Carbon::Lower

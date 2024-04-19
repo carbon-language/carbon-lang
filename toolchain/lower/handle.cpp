@@ -282,45 +282,45 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::IntSDiv: {
-      context.SetLocal(inst_id, context.builder().CreateSDiv(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateSDiv(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntSMod: {
-      context.SetLocal(inst_id, context.builder().CreateSRem(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateSRem(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntUAdd: {
-      context.SetLocal(inst_id, context.builder().CreateAdd(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntUSub: {
-      context.SetLocal(inst_id, context.builder().CreateSub(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateSub(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntUMul: {
-      context.SetLocal(inst_id, context.builder().CreateMul(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateMul(context.GetValue(arg_ids[0]),
+                                               context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntUDiv: {
-      context.SetLocal(inst_id, context.builder().CreateUDiv(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateUDiv(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntUMod: {
-      context.SetLocal(inst_id, context.builder().CreateURem(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1])));
+      context.SetLocal(
+          inst_id, context.builder().CreateURem(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntAnd: {
