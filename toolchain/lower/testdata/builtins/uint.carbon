@@ -63,38 +63,38 @@ fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestNegate(i64 %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.negate = sub i64 0, %a
-// CHECK:STDOUT:   ret i64 %int.negate
+// CHECK:STDOUT:   %int.unegate = sub i64 0, %a
+// CHECK:STDOUT:   ret i64 %int.unegate
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestAdd(i64 %a, i64 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.add = add i64 %a, %b
-// CHECK:STDOUT:   ret i64 %int.add
+// CHECK:STDOUT:   %int.uadd = add i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.uadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestSub(i64 %a, i64 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sub = sub i64 %a, %b
-// CHECK:STDOUT:   ret i64 %int.sub
+// CHECK:STDOUT:   %int.usub = sub i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.usub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestMul(i64 %a, i64 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.mul = mul i64 %a, %b
-// CHECK:STDOUT:   ret i64 %int.mul
+// CHECK:STDOUT:   %int.umul = mul i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.umul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestDiv(i64 %a, i64 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.div = udiv i64 %a, %b
-// CHECK:STDOUT:   ret i64 %int.div
+// CHECK:STDOUT:   %int.udiv = udiv i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.udiv
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestMod(i64 %a, i64 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.mod = urem i64 %a, %b
-// CHECK:STDOUT:   ret i64 %int.mod
+// CHECK:STDOUT:   %int.umod = urem i64 %a, %b
+// CHECK:STDOUT:   ret i64 %int.umod
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @TestComplement(i64 %a) {

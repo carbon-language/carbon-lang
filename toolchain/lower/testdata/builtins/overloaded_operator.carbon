@@ -33,10 +33,10 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @AddThreeIntegers(i32 %a, i32 %b, i32 %c) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.add.loc11_12 = add i32 %a, %b
+// CHECK:STDOUT:   %int.sadd.loc11_12 = add i32 %a, %b
 // CHECK:STDOUT:   %.loc11_12.2.temp = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %int.add.loc11_12, ptr %.loc11_12.2.temp, align 4
+// CHECK:STDOUT:   store i32 %int.sadd.loc11_12, ptr %.loc11_12.2.temp, align 4
 // CHECK:STDOUT:   %.loc11_12.4 = load i32, ptr %.loc11_12.2.temp, align 4
-// CHECK:STDOUT:   %int.add.loc11_16 = add i32 %.loc11_12.4, %c
-// CHECK:STDOUT:   ret i32 %int.add.loc11_16
+// CHECK:STDOUT:   %int.sadd.loc11_16 = add i32 %.loc11_12.4, %c
+// CHECK:STDOUT:   ret i32 %int.sadd.loc11_16
 // CHECK:STDOUT: }

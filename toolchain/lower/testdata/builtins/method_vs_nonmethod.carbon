@@ -15,12 +15,12 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAddNonmethod(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.add = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.add
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAddMethod(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.add = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.add
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }

@@ -63,38 +63,38 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestNegate(i32 %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.negate = sub i32 0, %a
-// CHECK:STDOUT:   ret i32 %int.negate
+// CHECK:STDOUT:   %int.snegate = sub i32 0, %a
+// CHECK:STDOUT:   ret i32 %int.snegate
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestAdd(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.add = add i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.add
+// CHECK:STDOUT:   %int.sadd = add i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sadd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestSub(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sub = sub i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.sub
+// CHECK:STDOUT:   %int.ssub = sub i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.ssub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestMul(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.mul = mul i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.mul
+// CHECK:STDOUT:   %int.smul = mul i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.smul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestDiv(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.div = sdiv i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.div
+// CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.sdiv
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestMod(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.mod = srem i32 %a, %b
-// CHECK:STDOUT:   ret i32 %int.mod
+// CHECK:STDOUT:   %int.smod = srem i32 %a, %b
+// CHECK:STDOUT:   ret i32 %int.smod
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @TestComplement(i32 %a) {

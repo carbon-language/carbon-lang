@@ -84,8 +84,8 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %Mod.ref: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 5 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_23: i32 = int_literal 3 [template = constants.%.2]
-// CHECK:STDOUT:   %int.mod: init i32 = call %Mod.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %int.mod, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.smod: init i32 = call %Mod.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_25: type = array_type %int.smod, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 2] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 2] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 2 [template = constants.%.3]
@@ -110,9 +110,9 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %Mod.ref: <function> = name_ref Mod, file.%Mod [template = file.%Mod]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.mod: init i32 = call %Mod.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.mod
-// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.mod, %.loc8_19.1
+// CHECK:STDOUT:   %int.smod: init i32 = call %Mod.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.smod
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.smod, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -157,53 +157,53 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %Mod.ref.loc9: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %Negate.ref.loc9_18: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc9_25: i32 = int_literal 2147483647 [template = constants.%.1]
-// CHECK:STDOUT:   %int.negate.loc9_24: init i32 = call %Negate.ref.loc9_18(%.loc9_25) [template = constants.%.2]
+// CHECK:STDOUT:   %int.snegate.loc9_24: init i32 = call %Negate.ref.loc9_18(%.loc9_25) [template = constants.%.2]
 // CHECK:STDOUT:   %Negate.ref.loc9_39: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc9_46: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.negate.loc9_45: init i32 = call %Negate.ref.loc9_39(%.loc9_46) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_17.1: i32 = value_of_initializer %int.negate.loc9_24 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_17.2: i32 = converted %int.negate.loc9_24, %.loc9_17.1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc9_17.3: i32 = value_of_initializer %int.negate.loc9_45 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_17.4: i32 = converted %int.negate.loc9_45, %.loc9_17.3 [template = constants.%.4]
-// CHECK:STDOUT:   %int.mod.loc9: init i32 = call %Mod.ref.loc9(%.loc9_17.2, %.loc9_17.4) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.mod.loc9 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.mod.loc9, %.loc9_49.1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.snegate.loc9_45: init i32 = call %Negate.ref.loc9_39(%.loc9_46) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_17.1: i32 = value_of_initializer %int.snegate.loc9_24 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_17.2: i32 = converted %int.snegate.loc9_24, %.loc9_17.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_17.3: i32 = value_of_initializer %int.snegate.loc9_45 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_17.4: i32 = converted %int.snegate.loc9_45, %.loc9_17.3 [template = constants.%.4]
+// CHECK:STDOUT:   %int.smod.loc9: init i32 = call %Mod.ref.loc9(%.loc9_17.2, %.loc9_17.4) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_49.1: i32 = value_of_initializer %int.smod.loc9 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_49.2: i32 = converted %int.smod.loc9, %.loc9_49.1 [template = constants.%.5]
 // CHECK:STDOUT:   %a.loc9: i32 = bind_name a, %.loc9_49.2
 // CHECK:STDOUT:   %Mod.ref.loc12: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %Sub.ref.loc12: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %Negate.ref.loc12: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc12_29: i32 = int_literal 2147483647 [template = constants.%.1]
-// CHECK:STDOUT:   %int.negate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_29) [template = constants.%.2]
+// CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_29) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc12_43: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_21.1: i32 = value_of_initializer %int.negate.loc12 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_21.2: i32 = converted %int.negate.loc12, %.loc12_21.1 [template = constants.%.2]
-// CHECK:STDOUT:   %int.sub.loc12: init i32 = call %Sub.ref.loc12(%.loc12_21.2, %.loc12_43) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_21.1: i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_21.2: i32 = converted %int.snegate.loc12, %.loc12_21.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.ssub.loc12: init i32 = call %Sub.ref.loc12(%.loc12_21.2, %.loc12_43) [template = constants.%.6]
 // CHECK:STDOUT:   %.loc12_47: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc12_17.1: i32 = value_of_initializer %int.sub.loc12 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_17.2: i32 = converted %int.sub.loc12, %.loc12_17.1 [template = constants.%.6]
-// CHECK:STDOUT:   %int.mod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_17.2, %.loc12_47) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.mod.loc12 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.mod.loc12, %.loc12_49.1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_17.1: i32 = value_of_initializer %int.ssub.loc12 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_17.2: i32 = converted %int.ssub.loc12, %.loc12_17.1 [template = constants.%.6]
+// CHECK:STDOUT:   %int.smod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_17.2, %.loc12_47) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_49.1: i32 = value_of_initializer %int.smod.loc12 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_49.2: i32 = converted %int.smod.loc12, %.loc12_49.1 [template = constants.%.5]
 // CHECK:STDOUT:   %b.loc12: i32 = bind_name b, %.loc12_49.2
 // CHECK:STDOUT:   %Mod.ref.loc20: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %Sub.ref.loc20: <function> = name_ref Sub, %Sub [template = %Sub]
 // CHECK:STDOUT:   %Negate.ref.loc20_22: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc20_29: i32 = int_literal 2147483647 [template = constants.%.1]
-// CHECK:STDOUT:   %int.negate.loc20_28: init i32 = call %Negate.ref.loc20_22(%.loc20_29) [template = constants.%.2]
+// CHECK:STDOUT:   %int.snegate.loc20_28: init i32 = call %Negate.ref.loc20_22(%.loc20_29) [template = constants.%.2]
 // CHECK:STDOUT:   %.loc20_43: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc20_21.1: i32 = value_of_initializer %int.negate.loc20_28 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_21.2: i32 = converted %int.negate.loc20_28, %.loc20_21.1 [template = constants.%.2]
-// CHECK:STDOUT:   %int.sub.loc20: init i32 = call %Sub.ref.loc20(%.loc20_21.2, %.loc20_43) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc20_21.1: i32 = value_of_initializer %int.snegate.loc20_28 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc20_21.2: i32 = converted %int.snegate.loc20_28, %.loc20_21.1 [template = constants.%.2]
+// CHECK:STDOUT:   %int.ssub.loc20: init i32 = call %Sub.ref.loc20(%.loc20_21.2, %.loc20_43) [template = constants.%.6]
 // CHECK:STDOUT:   %Negate.ref.loc20_47: <function> = name_ref Negate, %Negate [template = %Negate]
 // CHECK:STDOUT:   %.loc20_54: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.negate.loc20_53: init i32 = call %Negate.ref.loc20_47(%.loc20_54) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_17.1: i32 = value_of_initializer %int.sub.loc20 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc20_17.2: i32 = converted %int.sub.loc20, %.loc20_17.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc20_17.3: i32 = value_of_initializer %int.negate.loc20_53 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc20_17.4: i32 = converted %int.negate.loc20_53, %.loc20_17.3 [template = constants.%.4]
-// CHECK:STDOUT:   %int.mod.loc20: init i32 = call %Mod.ref.loc20(%.loc20_17.2, %.loc20_17.4) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc20_57.1: i32 = value_of_initializer %int.mod.loc20 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc20_57.2: i32 = converted %int.mod.loc20, %.loc20_57.1 [template = constants.%.5]
+// CHECK:STDOUT:   %int.snegate.loc20_53: init i32 = call %Negate.ref.loc20_47(%.loc20_54) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc20_17.1: i32 = value_of_initializer %int.ssub.loc20 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc20_17.2: i32 = converted %int.ssub.loc20, %.loc20_17.1 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc20_17.3: i32 = value_of_initializer %int.snegate.loc20_53 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc20_17.4: i32 = converted %int.snegate.loc20_53, %.loc20_17.3 [template = constants.%.4]
+// CHECK:STDOUT:   %int.smod.loc20: init i32 = call %Mod.ref.loc20(%.loc20_17.2, %.loc20_17.4) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc20_57.1: i32 = value_of_initializer %int.smod.loc20 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc20_57.2: i32 = converted %int.smod.loc20, %.loc20_57.1 [template = constants.%.5]
 // CHECK:STDOUT:   %c: i32 = bind_name c, %.loc20_57.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -236,16 +236,16 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %Mod.ref.loc12: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %.loc12_18: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12_21: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %int.mod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_18, %.loc12_21) [template = <error>]
-// CHECK:STDOUT:   %.loc12_23.1: i32 = value_of_initializer %int.mod.loc12 [template = <error>]
-// CHECK:STDOUT:   %.loc12_23.2: i32 = converted %int.mod.loc12, %.loc12_23.1 [template = <error>]
+// CHECK:STDOUT:   %int.smod.loc12: init i32 = call %Mod.ref.loc12(%.loc12_18, %.loc12_21) [template = <error>]
+// CHECK:STDOUT:   %.loc12_23.1: i32 = value_of_initializer %int.smod.loc12 [template = <error>]
+// CHECK:STDOUT:   %.loc12_23.2: i32 = converted %int.smod.loc12, %.loc12_23.1 [template = <error>]
 // CHECK:STDOUT:   %a.loc12: i32 = bind_name a, %.loc12_23.2
 // CHECK:STDOUT:   %Mod.ref.loc17: <function> = name_ref Mod, %Mod [template = %Mod]
 // CHECK:STDOUT:   %.loc17_18: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_21: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %int.mod.loc17: init i32 = call %Mod.ref.loc17(%.loc17_18, %.loc17_21) [template = <error>]
-// CHECK:STDOUT:   %.loc17_23.1: i32 = value_of_initializer %int.mod.loc17 [template = <error>]
-// CHECK:STDOUT:   %.loc17_23.2: i32 = converted %int.mod.loc17, %.loc17_23.1 [template = <error>]
+// CHECK:STDOUT:   %int.smod.loc17: init i32 = call %Mod.ref.loc17(%.loc17_18, %.loc17_21) [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.1: i32 = value_of_initializer %int.smod.loc17 [template = <error>]
+// CHECK:STDOUT:   %.loc17_23.2: i32 = converted %int.smod.loc17, %.loc17_23.1 [template = <error>]
 // CHECK:STDOUT:   %b.loc17: i32 = bind_name b, %.loc17_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

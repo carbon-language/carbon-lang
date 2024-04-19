@@ -113,8 +113,8 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc4_20: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc4_23: i32 = int_literal 2 [template = constants.%.2]
-// CHECK:STDOUT:   %int.add: init i32 = call %Add.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %int.add, i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%.loc4_20, %.loc4_23) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc4_25: type = array_type %int.sadd, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_18: i32 = int_literal 3 [template = constants.%.3]
@@ -139,9 +139,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref: <function> = name_ref Add, file.%Add [template = file.%Add]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.add: init i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.add
-// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.add, %.loc8_19.1
+// CHECK:STDOUT:   %int.sadd: init i32 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: i32 = value_of_initializer %int.sadd
+// CHECK:STDOUT:   %.loc8_19.2: i32 = converted %int.sadd, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,8 +219,8 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %.loc44_31: i32 = int_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc44_34: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc44_37: i32 = int_literal 3 [template = constants.%.3]
-// CHECK:STDOUT:   %int.add: init i32 = call %JustRight.ref(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %.loc44_39: type = array_type %int.add, i32 [template = <error>]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %JustRight.ref(<invalid>) [template = <error>]
+// CHECK:STDOUT:   %.loc44_39: type = array_type %int.sadd, i32 [template = <error>]
 // CHECK:STDOUT:   %bad_call.var: ref <error> = var bad_call
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
 // CHECK:STDOUT:   %RuntimeCallTooFew: <function> = fn_decl @RuntimeCallTooFew [template] {
@@ -312,16 +312,16 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref.loc6: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc6_18: i32 = int_literal 2147483647 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_30: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %int.add.loc6: init i32 = call %Add.ref.loc6(%.loc6_18, %.loc6_30) [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_32.1: i32 = value_of_initializer %int.add.loc6 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc6_32.2: i32 = converted %int.add.loc6, %.loc6_32.1 [template = constants.%.1]
+// CHECK:STDOUT:   %int.sadd.loc6: init i32 = call %Add.ref.loc6(%.loc6_18, %.loc6_30) [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_32.1: i32 = value_of_initializer %int.sadd.loc6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_32.2: i32 = converted %int.sadd.loc6, %.loc6_32.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.loc6: i32 = bind_name a, %.loc6_32.2
 // CHECK:STDOUT:   %Add.ref.loc10: <function> = name_ref Add, %Add [template = %Add]
 // CHECK:STDOUT:   %.loc10_18: i32 = int_literal 2147483647 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc10_30: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %int.add.loc10: init i32 = call %Add.ref.loc10(%.loc10_18, %.loc10_30) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_32.1: i32 = value_of_initializer %int.add.loc10 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10_32.2: i32 = converted %int.add.loc10, %.loc10_32.1 [template = constants.%.4]
+// CHECK:STDOUT:   %int.sadd.loc10: init i32 = call %Add.ref.loc10(%.loc10_18, %.loc10_30) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_32.1: i32 = value_of_initializer %int.sadd.loc10 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc10_32.2: i32 = converted %int.sadd.loc10, %.loc10_32.1 [template = constants.%.4]
 // CHECK:STDOUT:   %b.loc10: i32 = bind_name b, %.loc10_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
