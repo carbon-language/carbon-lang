@@ -295,6 +295,30 @@ constexpr BuiltinInfo FloatMul = {
 constexpr BuiltinInfo FloatDiv = {
     "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
+// "float.eq": float equality comparison.
+constexpr BuiltinInfo FloatEq = {"float.eq",
+                                 ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
+// "float.neq": float non-equality comparison.
+constexpr BuiltinInfo FloatNeq = {
+    "float.neq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
+// "float.less": float less than comparison.
+constexpr BuiltinInfo FloatLess = {
+    "float.less", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
+// "float.less_eq": float less than or equal comparison.
+constexpr BuiltinInfo FloatLessEq = {
+    "float.less_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
+// "float.greater": float greater than comparison.
+constexpr BuiltinInfo FloatGreater = {
+    "float.greater", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
+// "float.greater_eq": float greater than or equal comparison.
+constexpr BuiltinInfo FloatGreaterEq = {
+    "float.greater_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {

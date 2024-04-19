@@ -650,6 +650,43 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
   return MakeFloatResult(context, lhs.type_id, std::move(result_val));
 }
 
+// Performs a builtin float comparison.
+static auto PerformBuiltinFloatComparison(
+    Context& context, SemIR::BuiltinFunctionKind builtin_kind,
+    SemIR::InstId lhs_id, SemIR::InstId rhs_id, SemIR::TypeId bool_type_id)
+    -> SemIR::ConstantId {
+  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  const auto& lhs_val = context.floats().Get(lhs.float_id);
+  const auto& rhs_val = context.floats().Get(rhs.float_id);
+
+  bool result;
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatEq:
+      result = (lhs_val == rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::FloatNeq:
+      result = (lhs_val != rhs_val);
+      break;
+    case SemIR::BuiltinFunctionKind::FloatLess:
+      result = lhs_val < rhs_val;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatLessEq:
+      result = lhs_val <= rhs_val;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatGreater:
+      result = lhs_val > rhs_val;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatGreaterEq:
+      result = lhs_val >= rhs_val;
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected operation kind.";
+  }
+
+  return MakeBoolResult(context, bool_type_id, result);
+}
+
 static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
                                SemIR::BuiltinFunctionKind builtin_kind,
                                llvm::ArrayRef<SemIR::InstId> arg_ids,
@@ -753,6 +790,20 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
       }
       return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
                                          arg_ids[1]);
+    }
+
+    // Float comparisons.
+    case SemIR::BuiltinFunctionKind::FloatEq:
+    case SemIR::BuiltinFunctionKind::FloatNeq:
+    case SemIR::BuiltinFunctionKind::FloatLess:
+    case SemIR::BuiltinFunctionKind::FloatLessEq:
+    case SemIR::BuiltinFunctionKind::FloatGreater:
+    case SemIR::BuiltinFunctionKind::FloatGreaterEq: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      return PerformBuiltinFloatComparison(context, builtin_kind, arg_ids[0],
+                                           arg_ids[1], call.type_id);
     }
   }
 
