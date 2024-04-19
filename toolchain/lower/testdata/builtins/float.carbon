@@ -23,7 +23,7 @@ fn TestDiv(a: f64, b: f64) -> f64 { return Div(a, b); }
 // CHECK:STDOUT: source_filename = "float.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestNegate(double %a) {
-// CHECK:STDOUT:   %fneg = fsub double 0.000000e+00, %a
+// CHECK:STDOUT:   %fneg = fneg double %a
 // CHECK:STDOUT:   ret double %fneg
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

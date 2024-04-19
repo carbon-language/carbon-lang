@@ -340,12 +340,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatNegate: {
-      // Lower `-x` as `0 - x`
-      auto* operand = context.GetValue(arg_ids[0]);
-      context.SetLocal(inst_id,
-                       context.builder().CreateFSub(
-                           llvm::ConstantInt::getNullValue(operand->getType()),
-                           operand, "fneg"));
+      context.SetLocal(inst_id, context.builder().CreateFNeg(
+                                    context.GetValue(arg_ids[0]), "fneg"));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatAdd: {
