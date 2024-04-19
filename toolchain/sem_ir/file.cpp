@@ -226,6 +226,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case AddrPattern::Kind:
     case ArrayIndex::Kind:
     case ArrayInit::Kind:
+    case AsCompatible::Kind:
     case Assign::Kind:
     case AssociatedConstantDecl::Kind:
     case AssociatedEntity::Kind:
@@ -483,6 +484,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case AddrPattern::Kind:
       case ArrayIndex::Kind:
       case ArrayInit::Kind:
+      case AsCompatible::Kind:
       case Assign::Kind:
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
@@ -584,6 +586,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
             untyped_inst.As<AnyImportRef>().import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
+        continue;
+      }
+
+      case CARBON_KIND(AsCompatible inst): {
+        inst_id = inst.source_id;
         continue;
       }
 

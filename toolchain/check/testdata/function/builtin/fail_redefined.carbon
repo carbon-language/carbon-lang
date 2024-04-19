@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn A(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of function A.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `fn A`.
 // CHECK:STDERR: fn A(n: i32, m: i32) -> i32 { return n; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
@@ -15,7 +15,7 @@ fn A(n: i32, m: i32) -> i32 = "int.sadd";
 fn A(n: i32, m: i32) -> i32 { return n; }
 
 fn B(n: i32, m: i32) -> i32 { return n; }
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of function B.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: ERROR: Redefinition of `fn B`.
 // CHECK:STDERR: fn B(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.
@@ -25,7 +25,7 @@ fn B(n: i32, m: i32) -> i32 { return n; }
 fn B(n: i32, m: i32) -> i32 = "int.sadd";
 
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function C.
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn C`.
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: Previously defined here.

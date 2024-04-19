@@ -10,8 +10,6 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC(FunctionPreviousDecl, Note, "Previously declared here.");
-
 // Returns true if there was an error in declaring the function, which will have
 // previously been diagnosed.
 static auto FunctionDeclHasError(Context& context, const SemIR::Function& fn)
@@ -195,105 +193,6 @@ auto CheckFunctionTypeMatches(Context& context,
                      context.functions().Get(prev_function_id), substitutions);
 }
 
-// Emits a redundant redeclaration diagnostic.
-static auto EmitRedundantRedecl(Context& context, SemIR::LocId loc_id,
-                                const SemIR::Function& prev_function) {
-  CARBON_DIAGNOSTIC(FunctionRedecl, Error,
-                    "Redundant redeclaration of function {0}.", SemIR::NameId);
-  context.emitter()
-      .Build(loc_id, FunctionRedecl, prev_function.name_id)
-      .Note(prev_function.decl_id, FunctionPreviousDecl)
-      .Emit();
-}
-
-// Emits a redefinition diagnostic.
-static auto EmitRedefinition(Context& context, SemIR::LocId loc_id,
-                             const SemIR::Function& prev_function) {
-  CARBON_DIAGNOSTIC(FunctionRedefinition, Error,
-                    "Redefinition of function {0}.", SemIR::NameId);
-  CARBON_DIAGNOSTIC(FunctionPreviousDefinition, Note,
-                    "Previously defined here.");
-  context.emitter()
-      .Build(loc_id, FunctionRedefinition, prev_function.name_id)
-      .Note(prev_function.definition_id, FunctionPreviousDefinition)
-      .Emit();
-}
-
-// Checks to see if a structurally valid redeclaration is allowed in context.
-// These all still merge.
-static auto CheckIsAllowedRedecl(Context& context, SemIR::LocId loc_id,
-                                 const SemIR::Function& new_function,
-                                 bool new_is_definition,
-                                 const SemIR::Function& prev_function,
-                                 SemIR::ImportIRInstId prev_import_ir_inst_id)
-    -> void {
-  if (!prev_import_ir_inst_id.is_valid()) {
-    // Check for disallowed redeclarations in the same file.
-    if (!new_is_definition) {
-      EmitRedundantRedecl(context, loc_id, prev_function);
-      return;
-    }
-    if (prev_function.definition_id.is_valid()) {
-      EmitRedefinition(context, loc_id, prev_function);
-      return;
-    }
-    // `extern` definitions are prevented in handle_function.cpp; this is only
-    // checking for a non-`extern` definition after an `extern` declaration.
-    if (prev_function.is_extern) {
-      CARBON_DIAGNOSTIC(FunctionDefiningExtern, Error,
-                        "Redeclaring `extern` function `{0}` as non-`extern`.",
-                        SemIR::NameId);
-      CARBON_DIAGNOSTIC(FunctionPreviousExternDecl, Note,
-                        "Previously declared `extern` here.");
-      context.emitter()
-          .Build(loc_id, FunctionDefiningExtern, prev_function.name_id)
-          .Note(prev_function.decl_id, FunctionPreviousExternDecl)
-          .Emit();
-      return;
-    }
-    return;
-  }
-
-  auto import_ir_id =
-      context.import_ir_insts().Get(prev_import_ir_inst_id).ir_id;
-  if (import_ir_id == SemIR::ImportIRId::ApiForImpl) {
-    // Check for disallowed redeclarations in the same library. Note that a
-    // forward declaration in the impl is allowed.
-    if (prev_function.definition_id.is_valid()) {
-      if (new_function.definition_id.is_valid()) {
-        EmitRedefinition(context, loc_id, prev_function);
-      } else {
-        EmitRedundantRedecl(context, loc_id, prev_function);
-      }
-      return;
-    }
-    if (prev_function.is_extern != new_function.is_extern) {
-      CARBON_DIAGNOSTIC(
-          FunctionExternMismatch, Error,
-          "Redeclarations in the same library must match use of `extern`.");
-      context.emitter()
-          .Build(loc_id, FunctionExternMismatch)
-          .Note(prev_function.decl_id, FunctionPreviousDecl)
-          .Emit();
-      return;
-    }
-    return;
-  }
-
-  // Check for disallowed redeclarations cross-library.
-  if (!new_function.is_extern && !prev_function.is_extern) {
-    CARBON_DIAGNOSTIC(
-        FunctionNonExternRedecl, Error,
-        "Only one library can declare function {0} without `extern`.",
-        SemIR::NameId);
-    context.emitter()
-        .Build(loc_id, FunctionNonExternRedecl, prev_function.name_id)
-        .Note(prev_function.decl_id, FunctionPreviousDecl)
-        .Emit();
-    return;
-  }
-}
-
 // Returns the return slot usage for a function given the computed usage for two
 // different declarations of the function.
 static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
@@ -316,7 +215,7 @@ static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
   return a;
 }
 
-auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
+auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                          SemIR::Function& new_function, bool new_is_import,
                          bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
@@ -327,8 +226,16 @@ auto MergeFunctionRedecl(Context& context, SemIR::LocId loc_id,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, loc_id, new_function, new_is_definition,
-                       prev_function, prev_import_ir_inst_id);
+  CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
+                       {.loc = new_loc,
+                        .is_definition = new_is_definition,
+                        .is_extern = new_function.is_extern},
+                       {.loc = prev_function.definition_id.is_valid()
+                                   ? prev_function.definition_id
+                                   : prev_function.decl_id,
+                        .is_definition = prev_function.definition_id.is_valid(),
+                        .is_extern = prev_function.is_extern},
+                       prev_import_ir_inst_id);
 
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body

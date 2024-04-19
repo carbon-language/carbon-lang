@@ -150,6 +150,15 @@ struct ArrayType {
   TypeId element_type_id;
 };
 
+// Perform a no-op conversion to a compatible type.
+struct AsCompatible {
+  static constexpr auto Kind =
+      InstKind::AsCompatible.Define<Parse::NodeId>("as_compatible");
+
+  TypeId type_id;
+  InstId source_id;
+};
+
 // Performs a source-level initialization or assignment of `lhs_id` from
 // `rhs_id`. This finishes initialization of `lhs_id` in the same way as
 // `InitializeFrom`.

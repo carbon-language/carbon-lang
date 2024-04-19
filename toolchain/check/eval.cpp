@@ -879,6 +879,9 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return SemIR::ConstantId::ForSymbolicConstant(inst_id);
 
     // These semantic wrappers don't change the constant value.
+    case CARBON_KIND(SemIR::AsCompatible inst): {
+      return context.constant_values().Get(inst.source_id);
+    }
     case CARBON_KIND(SemIR::BindAlias typed_inst): {
       return context.constant_values().Get(typed_inst.value_id);
     }

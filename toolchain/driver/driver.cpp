@@ -643,7 +643,7 @@ class Driver::CompilationUnit {
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
-  llvm::StringRef input_filename_;
+  std::string input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream_;
@@ -677,8 +677,11 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   // TODO: Should expand this into a more rich system to search for the core
   // package source code.
   if (options.prelude_import) {
+    llvm::SmallString<256> prelude_file(data_dir_);
+    llvm::sys::path::append(prelude_file, llvm::sys::path::Style::posix,
+                            "core/prelude.carbon");
     units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, "core/prelude.carbon"));
+        this, options, &stream_consumer, prelude_file));
   }
 
   // Add the input source files.
@@ -710,7 +713,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     for (const auto& unit : units) {
       result.success &= unit->success();
       result.per_file_success.push_back(
-          {unit->input_filename(), unit->success()});
+          {unit->input_filename().str(), unit->success()});
     }
     return result;
   };

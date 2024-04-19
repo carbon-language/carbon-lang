@@ -19,7 +19,7 @@ class Class {
 // CHECK:STDERR:
 class Class {
   fn G();
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redundant redeclaration of function H.
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redeclaration of `fn H` is redundant.
   // CHECK:STDERR:   fn H();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-16]]:3: Previously declared here.
@@ -27,7 +27,7 @@ class Class {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   fn H();
-  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redefinition of function I.
+  // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:3: ERROR: Redefinition of `fn I`.
   // CHECK:STDERR:   fn I() {}
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-23]]:3: Previously defined here.
@@ -40,7 +40,7 @@ class Class {
 fn Class.F() {}
 fn Class.G() {}
 fn Class.H() {}
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of function I.
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: ERROR: Redefinition of `fn I`.
 // CHECK:STDERR: fn Class.I() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-9]]:3: Previously defined here.
