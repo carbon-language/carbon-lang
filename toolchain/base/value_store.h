@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Sequence.h"
@@ -58,6 +59,18 @@ struct IntId : public IdBase, public Printable<IntId> {
   }
 };
 constexpr IntId IntId::Invalid(IntId::InvalidIndex);
+
+// Corresponds to a float value represented by an APFloat.
+struct FloatId : public IdBase, public Printable<FloatId> {
+  using ValueType = const llvm::APFloat;
+  static const FloatId Invalid;
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "float";
+    IdBase::Print(out);
+  }
+};
+constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase, public Printable<RealId> {
@@ -274,6 +287,8 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto ints() const -> const ValueStore<IntId>& { return ints_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
+  auto floats() -> ValueStore<FloatId>& { return floats_; }
+  auto floats() const -> const ValueStore<FloatId>& { return floats_; }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return string_literal_values_;
   }
@@ -300,6 +315,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  private:
   ValueStore<IntId> ints_;
   ValueStore<RealId> reals_;
+  ValueStore<FloatId> floats_;
 
   ValueStore<StringId> strings_;
   StringStoreWrapper<IdentifierId> identifiers_;

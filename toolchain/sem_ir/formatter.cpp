@@ -614,6 +614,12 @@ class Formatter {
         .print(out_, sem_ir_.types().IsSignedInt(inst.type_id));
   }
 
+  auto FormatInstructionRHS(FloatLiteral inst) -> void {
+    llvm::SmallVector<char, 16> buffer;
+    sem_ir_.floats().Get(inst.float_id).toString(buffer);
+    out_ << " " << buffer;
+  }
+
   auto FormatInstructionRHS(ImportRefUnloaded inst) -> void {
     FormatArgs(inst.import_ir_inst_id);
     out_ << ", unloaded";
@@ -674,6 +680,8 @@ class Formatter {
   auto FormatArg(InterfaceId id) -> void { FormatInterfaceName(id); }
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
+
+  auto FormatArg(FloatKind k) -> void { k.Print(out_); }
 
   auto FormatArg(ImplId id) -> void { FormatImplName(id); }
 

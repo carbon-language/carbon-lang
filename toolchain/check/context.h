@@ -327,6 +327,7 @@ class Context {
   }
   auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
+  auto floats() -> ValueStore<FloatId>& { return sem_ir().floats(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }

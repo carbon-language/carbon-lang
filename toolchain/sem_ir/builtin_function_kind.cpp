@@ -75,6 +75,17 @@ struct AnyInt {
   }
 };
 
+// Constraint that requires the type to be a float type.
+struct AnyFloat {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    if (BuiltinType<InstId::BuiltinFloatType>::Check(sem_ir, state, type_id)) {
+      return true;
+    }
+    return sem_ir.types().Is<FloatType>(type_id);
+  }
+};
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<InstId::BuiltinTypeType>;
 
@@ -138,6 +149,10 @@ using IntT = TypeParam<0, AnyInt>;
 // Convenience name used in the builtin type signatures below for a second
 // generic type parameter that is constrained to be an integer type.
 using IntU = TypeParam<1, AnyInt>;
+
+// Convenience name used in the builtin type signatures below for a first
+// generic type parameter that is constrained to be an float type.
+using FloatT = TypeParam<0, AnyFloat>;
 
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
@@ -259,6 +274,26 @@ constexpr BuiltinInfo IntGreater = {"int.greater",
 // "int.greater_eq": integer greater than or equal comparison.
 constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntT)->Bool>};
+
+// "float.negate": float negation.
+constexpr BuiltinInfo FloatNegate = {"float.negate",
+                                     ValidateSignature<auto(FloatT)->FloatT>};
+
+// "float.add": float addition.
+constexpr BuiltinInfo FloatAdd = {
+    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+
+// "float.sub": float subtraction.
+constexpr BuiltinInfo FloatSub = {
+    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+
+// "float.mul": float multiplication.
+constexpr BuiltinInfo FloatMul = {
+    "float.mul", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+
+// "float.div": float division.
+constexpr BuiltinInfo FloatDiv = {
+    "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 }  // namespace BuiltinFunctionInfo
 

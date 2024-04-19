@@ -19,7 +19,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = real_literal 10e-1 [template]
+// CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,7 +45,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc16: f64 = real_literal 10e-1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc16: f64 = float_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %G.call: init () = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

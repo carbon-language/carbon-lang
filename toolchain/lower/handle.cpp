@@ -371,6 +371,35 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
               context.GetValue(arg_ids[0]), context.GetValue(arg_ids[1])));
       return;
     }
+    case SemIR::BuiltinFunctionKind::FloatNegate: {
+      context.SetLocal(inst_id, context.builder().CreateFNeg(
+                                    context.GetValue(arg_ids[0]), "fneg"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatAdd: {
+      context.SetLocal(inst_id, context.builder().CreateFAdd(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fadd"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatSub: {
+      context.SetLocal(inst_id, context.builder().CreateFSub(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fsub"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatMul: {
+      context.SetLocal(inst_id, context.builder().CreateFMul(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fmul"));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatDiv: {
+      context.SetLocal(inst_id, context.builder().CreateFDiv(
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1]), "fdiv"));
+      return;
+    }
   }
 
   CARBON_FATAL() << "Unsupported builtin call.";
@@ -419,6 +448,13 @@ auto HandleConverted(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
                  SemIR::Deref inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
+}
+
+auto HandleFloatLiteral(FunctionContext& context, SemIR::InstId inst_id,
+                        SemIR::FloatLiteral inst) -> void {
+  const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
+  context.SetLocal(
+      inst_id, llvm::ConstantFP::get(context.builder().getDoubleTy(), value));
 }
 
 auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,

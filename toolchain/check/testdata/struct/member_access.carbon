@@ -13,7 +13,7 @@ var z: i32 = y;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {.a: f64, .b: i32} [template]
 // CHECK:STDOUT:   %.2: type = ptr_type {.a: f64, .b: i32} [template]
-// CHECK:STDOUT:   %.3: f64 = real_literal 0e-1 [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: {.a: f64, .b: i32} = struct_value (%.3, %.4) [template]
 // CHECK:STDOUT: }
@@ -37,7 +37,7 @@ var z: i32 = y;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7_35: f64 = float_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7_46.1: {.a: f64, .b: i32} = struct_literal (%.loc7_35, %.loc7_45)
 // CHECK:STDOUT:   %.loc7_46.2: ref f64 = struct_access file.%x.var, element0

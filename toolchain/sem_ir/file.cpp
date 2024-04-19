@@ -207,6 +207,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Builtin::Kind:
     case ClassType::Kind:
     case FacetTypeAccess::Kind:
+    case FloatType::Kind:
     case ImportRefLoaded::Kind:
     case ImportRefUsed::Kind:
     case InterfaceType::Kind:
@@ -246,6 +247,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Converted::Kind:
     case Deref::Kind:
     case FieldDecl::Kind:
+    case FloatLiteral::Kind:
     case FunctionDecl::Kind:
     case ImplDecl::Kind:
     case ImportRefUnloaded::Kind:
@@ -382,6 +384,21 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         push_inst_id(inst.facet_id);
         break;
       }
+      case CARBON_KIND(FloatType inst): {
+        // TODO: Is this okay?
+        if (step.index == 1) {
+          out << ")";
+        } else if (auto width_value =
+                       sem_ir.insts().TryGetAs<IntLiteral>(inst.bit_width_id)) {
+          out << "f";
+          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
+        } else {
+          out << "Core.Float(";
+          steps.push_back(step.Next());
+          push_inst_id(inst.bit_width_id);
+        }
+        break;
+      }
       case ImportRefLoaded::Kind:
       case ImportRefUsed::Kind: {
         auto import_ir_inst = sem_ir.import_ir_insts().Get(
@@ -505,6 +522,7 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case Converted::Kind:
       case Deref::Kind:
       case FieldDecl::Kind:
+      case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case ImportRefUnloaded::Kind:
@@ -623,6 +641,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case ConstType::Kind:
       case FacetTypeAccess::Kind:
+      case FloatLiteral::Kind:
+      case FloatType::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:

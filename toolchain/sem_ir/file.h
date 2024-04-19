@@ -115,6 +115,10 @@ class File : public Printable<File> {
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
+  auto floats() -> ValueStore<FloatId>& { return value_stores_->floats(); }
+  auto floats() const -> const ValueStore<FloatId>& {
+    return value_stores_->floats();
+  }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return value_stores_->string_literal_values();
   }

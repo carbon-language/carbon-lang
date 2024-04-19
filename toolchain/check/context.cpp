@@ -978,6 +978,7 @@ class TypeCompleter {
       case SemIR::Converted::Kind:
       case SemIR::Deref::Kind:
       case SemIR::FacetTypeAccess::Kind:
+      case SemIR::FloatLiteral::Kind:
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
@@ -1055,6 +1056,7 @@ class TypeCompleter {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
+      case SemIR::FloatType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
       case SemIR::UnboundElementType::Kind:
