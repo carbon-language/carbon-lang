@@ -12,7 +12,7 @@ import library "prelude/operators/bitwise";
 import library "prelude/operators/comparison";
 
 impl i32 as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.add";
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 impl i32 as AddAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -63,7 +63,7 @@ impl i32 as BitXorAssign {
 }
 
 impl i32 as Div {
-  fn Op[self: Self](other: Self) -> Self = "int.div";
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
 }
 impl i32 as DivAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -88,7 +88,7 @@ impl i32 as LeftShiftAssign {
 }
 
 impl i32 as Mod {
-  fn Op[self: Self](other: Self) -> Self = "int.mod";
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 impl i32 as ModAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -98,7 +98,7 @@ impl i32 as ModAssign {
 }
 
 impl i32 as Mul {
-  fn Op[self: Self](other: Self) -> Self = "int.mul";
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
 }
 impl i32 as MulAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -108,7 +108,7 @@ impl i32 as MulAssign {
 }
 
 impl i32 as Negate {
-  fn Op[self: Self]() -> Self = "int.negate";
+  fn Op[self: Self]() -> Self = "int.snegate";
 }
 
 impl i32 as Ordered {
@@ -130,7 +130,7 @@ impl i32 as RightShiftAssign {
 }
 
 impl i32 as Sub {
-  fn Op[self: Self](other: Self) -> Self = "int.sub";
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
 impl i32 as SubAssign {
   fn Op[addr self: Self*](other: Self) {
