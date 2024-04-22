@@ -394,32 +394,32 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatNegate: {
-      context.SetLocal(inst_id, context.builder().CreateFNeg(
-                                    context.GetValue(arg_ids[0]), "fneg"));
+      context.SetLocal(
+          inst_id, context.builder().CreateFNeg(context.GetValue(arg_ids[0])));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatAdd: {
-      context.SetLocal(inst_id, context.builder().CreateFAdd(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "fadd"));
+      context.SetLocal(
+          inst_id, context.builder().CreateFAdd(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatSub: {
-      context.SetLocal(inst_id, context.builder().CreateFSub(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "fsub"));
+      context.SetLocal(
+          inst_id, context.builder().CreateFSub(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatMul: {
-      context.SetLocal(inst_id, context.builder().CreateFMul(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "fmul"));
+      context.SetLocal(
+          inst_id, context.builder().CreateFMul(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatDiv: {
-      context.SetLocal(inst_id, context.builder().CreateFDiv(
-                                    context.GetValue(arg_ids[0]),
-                                    context.GetValue(arg_ids[1]), "fdiv"));
+      context.SetLocal(
+          inst_id, context.builder().CreateFDiv(context.GetValue(arg_ids[0]),
+                                                context.GetValue(arg_ids[1])));
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatEq:

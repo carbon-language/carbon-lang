@@ -42,32 +42,32 @@ fn TestGreaterEq(a: f64, b: f64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestNegate(double %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.negate.fneg = fneg double %a
-// CHECK:STDOUT:   ret double %float.negate.fneg
+// CHECK:STDOUT:   %float.negate = fneg double %a
+// CHECK:STDOUT:   ret double %float.negate
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestAdd(double %a, double %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.add.fadd = fadd double %a, %b
-// CHECK:STDOUT:   ret double %float.add.fadd
+// CHECK:STDOUT:   %float.add = fadd double %a, %b
+// CHECK:STDOUT:   ret double %float.add
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestSub(double %a, double %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.sub.fsub = fsub double %a, %b
-// CHECK:STDOUT:   ret double %float.sub.fsub
+// CHECK:STDOUT:   %float.sub = fsub double %a, %b
+// CHECK:STDOUT:   ret double %float.sub
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestMul(double %a, double %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.mul.fmul = fmul double %a, %b
-// CHECK:STDOUT:   ret double %float.mul.fmul
+// CHECK:STDOUT:   %float.mul = fmul double %a, %b
+// CHECK:STDOUT:   ret double %float.mul
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @TestDiv(double %a, double %b) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.div.fdiv = fdiv double %a, %b
-// CHECK:STDOUT:   ret double %float.div.fdiv
+// CHECK:STDOUT:   %float.div = fdiv double %a, %b
+// CHECK:STDOUT:   ret double %float.div
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @TestEq(double %a, double %b) {
