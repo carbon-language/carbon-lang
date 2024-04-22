@@ -99,7 +99,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc22_26: {.a: i32} = struct_literal (%.loc22_25)
 // CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc22_35: {.base: {.a: i32}, .d: i32} = struct_literal (%.loc22_26, %.loc22_34)
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: Derived) -> %return: (i32, i32) {
@@ -122,6 +122,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc26_24.5: init i32 = initialize_from %.loc26_22.2 to %.loc26_24.4
 // CHECK:STDOUT:   %.loc26_24.6: init (i32, i32) = tuple_init (%.loc26_24.3, %.loc26_24.5) to %return
 // CHECK:STDOUT:   %.loc26_25: init (i32, i32) = converted %.loc26_24.1, %.loc26_24.6
-// CHECK:STDOUT:   return %.loc26_25
+// CHECK:STDOUT:   return %.loc26_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

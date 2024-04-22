@@ -277,7 +277,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc24_12.2: ref C = temporary_storage
 // CHECK:STDOUT:   %.loc24_12.3: init C = call %.loc24_12.1(<invalid>) [template = <error>]
-// CHECK:STDOUT:   return %.loc24_12.3
+// CHECK:STDOUT:   return %.loc24_12.3 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b: D) {

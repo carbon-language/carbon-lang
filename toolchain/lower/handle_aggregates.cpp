@@ -226,7 +226,14 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
         llvm::SmallVector<llvm::Constant*> elements;
         elements.reserve(refs.size());
         for (auto ref : refs) {
-          elements.push_back(llvm::cast<llvm::Constant>(context.GetValue(ref)));
+          auto ref_value_rep = SemIR::GetValueRepr(
+              context.sem_ir(), context.sem_ir().insts().Get(ref).type_id());
+          auto* inner_value = llvm::cast<llvm::Constant>(context.GetValue(ref));
+          if (ref_value_rep.kind == SemIR::ValueRepr::Pointer) {
+            inner_value =
+                llvm::cast<llvm::GlobalVariable>(inner_value)->getInitializer();
+          }
+          elements.push_back(inner_value);
         }
         llvm::Constant* value;
         if (auto* struct_type = llvm::dyn_cast<llvm::StructType>(llvm_value_rep_type)) {

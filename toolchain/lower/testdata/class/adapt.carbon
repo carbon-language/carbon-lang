@@ -50,10 +50,13 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; ModuleID = 'adapt_class.carbon'
 // CHECK:STDOUT: source_filename = "adapt_class.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @struct = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -77,6 +80,14 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   %.loc28_17 = call i32 @GetB(ptr %pa.var)
 // CHECK:STDOUT:   ret i32 %.loc28_17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 3, 2 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:

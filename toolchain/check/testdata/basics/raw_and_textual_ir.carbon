@@ -77,7 +77,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst+26:         {kind: TupleInit, arg0: block10, arg1: inst+13, type: type2}
 // CHECK:STDOUT:     inst+27:         {kind: TupleValue, arg0: block12, type: type2}
 // CHECK:STDOUT:     inst+28:         {kind: Converted, arg0: inst+18, arg1: inst+26, type: type2}
-// CHECK:STDOUT:     inst+29:         {kind: ReturnExpr, arg0: inst+28}
+// CHECK:STDOUT:     inst+29:         {kind: ReturnExpr, arg0: inst+28, arg1: inst+13}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1
@@ -190,6 +190,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc12_16.5: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_16.6: init ((), ()) = tuple_init (%.loc12_16.3, %.loc12_16.5) to %return [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_17: init ((), ()) = converted %.loc12_16.1, %.loc12_16.6 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc12_17
+// CHECK:STDOUT:   return %.loc12_17 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

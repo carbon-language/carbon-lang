@@ -125,7 +125,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %self: ref Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref Class = name_ref self, %self
 // CHECK:STDOUT:   %.loc34: Class = bind_value %self.ref
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[@WrongSelf.%self.loc38_8.2: Class]();

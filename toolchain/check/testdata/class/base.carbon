@@ -106,7 +106,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_35.5: init i32 = initialize_from %.loc18_34 to %.loc18_35.4 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc18_35.6: init Derived = class_init (%.loc18_35.3, %.loc18_35.5), %return [template = constants.%.14]
 // CHECK:STDOUT:   %.loc18_36: init Derived = converted %.loc18_35.1, %.loc18_35.6 [template = constants.%.14]
-// CHECK:STDOUT:   return %.loc18_36
+// CHECK:STDOUT:   return %.loc18_36 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: Derived) -> %return: (i32, i32) {
@@ -129,6 +129,6 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc22_24.5: init i32 = initialize_from %.loc22_22.2 to %.loc22_24.4
 // CHECK:STDOUT:   %.loc22_24.6: init (i32, i32) = tuple_init (%.loc22_24.3, %.loc22_24.5) to %return
 // CHECK:STDOUT:   %.loc22_25: init (i32, i32) = converted %.loc22_24.1, %.loc22_24.6
-// CHECK:STDOUT:   return %.loc22_25
+// CHECK:STDOUT:   return %.loc22_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

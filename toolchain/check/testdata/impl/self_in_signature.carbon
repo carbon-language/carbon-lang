@@ -234,7 +234,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.loc16_38.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc16_38.2: init C = class_init (), @impl.1.%return.var [template = constants.%.8]
 // CHECK:STDOUT:   %.loc16_39: init C = converted %.loc16_38.1, %.loc16_38.2 [template = constants.%.8]
-// CHECK:STDOUT:   return %.loc16_39
+// CHECK:STDOUT:   return %.loc16_39 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3[@impl.2.%self.loc20_8.2: D](@impl.2.%x.loc20_20.2: D) -> @impl.2.%return.var: D {
@@ -242,7 +242,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.loc20_47.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc20_47.2: init D = class_init (), @impl.2.%return.var [template = constants.%.10]
 // CHECK:STDOUT:   %.loc20_48: init D = converted %.loc20_47.1, %.loc20_47.2 [template = constants.%.10]
-// CHECK:STDOUT:   return %.loc20_48
+// CHECK:STDOUT:   return %.loc20_48 to @impl.2.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4(@SelfNested.%x.loc24_8.2: (Self*, {.x: Self, .y: i32}));

@@ -577,6 +577,13 @@ class Formatter {
     FormatReturnSlot(inst.dest_id);
   }
 
+  auto FormatInstructionRHS(ReturnExpr ret) -> void {
+    FormatArgs(ret.expr_id);
+    if (ret.dest_id.is_valid()) {
+      FormatReturnSlot(ret.dest_id);
+    }
+  }
+
   auto FormatInstructionRHS(StructInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);
