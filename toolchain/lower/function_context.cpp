@@ -140,8 +140,8 @@ auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
-  builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id),
-                          align, layout.getTypeAllocSize(type));
+  builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
+                         layout.getTypeAllocSize(type));
 }
 
 auto FunctionContext::Inserter::InsertHelper(

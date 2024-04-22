@@ -214,11 +214,11 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
         // pointer to it as the value representation of the struct or tuple.
         auto* alloca =
             context.builder().CreateAlloca(llvm_value_rep_type,
-                                          /*ArraySize=*/nullptr, name);
+                                           /*ArraySize=*/nullptr, name);
         for (auto [i, ref] : llvm::enumerate(refs)) {
-          context.builder().CreateStore(
-              context.GetValue(ref),
-              context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
+          context.builder().CreateStore(context.GetValue(ref),
+                                        context.builder().CreateStructGEP(
+                                            llvm_value_rep_type, alloca, i));
         }
         return alloca;
       } else {
@@ -236,9 +236,11 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
           elements.push_back(inner_value);
         }
         llvm::Constant* value;
-        if (auto* struct_type = llvm::dyn_cast<llvm::StructType>(llvm_value_rep_type)) {
+        if (auto* struct_type =
+                llvm::dyn_cast<llvm::StructType>(llvm_value_rep_type)) {
           value = llvm::ConstantStruct::get(struct_type, elements);
-        } else if (auto* array_type = llvm::dyn_cast<llvm::ArrayType>(llvm_value_rep_type)) {
+        } else if (auto* array_type =
+                       llvm::dyn_cast<llvm::ArrayType>(llvm_value_rep_type)) {
           value = llvm::ConstantArray::get(array_type, elements);
         } else {
           CARBON_FATAL() << "Unknown aggregate value representation";
