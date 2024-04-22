@@ -37,11 +37,9 @@ private interface Private {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Modifiers = %Modifiers.decl
 // CHECK:STDOUT:     .Private = %Private.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Modifiers.decl: type = interface_decl @Modifiers [template = constants.%.1] {}
 // CHECK:STDOUT:   %Private.decl: type = interface_decl @Private [template = constants.%.5] {}
 // CHECK:STDOUT: }

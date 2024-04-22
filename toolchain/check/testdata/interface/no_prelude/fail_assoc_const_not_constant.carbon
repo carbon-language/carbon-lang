@@ -26,12 +26,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .UseA = %UseA
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]

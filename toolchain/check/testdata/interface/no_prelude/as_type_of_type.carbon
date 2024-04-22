@@ -6,28 +6,29 @@
 
 interface Empty {}
 
-fn F(e: Empty) {}
+fn F(T:! Empty) {
+  var x: T;
+}
 
-// CHECK:STDOUT: --- as_type.carbon
+// CHECK:STDOUT: --- as_type_of_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
 // CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %T: Empty = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, %Empty.decl [template = constants.%.1]
-// CHECK:STDOUT:     %e.loc9_6.1: Empty = param e
-// CHECK:STDOUT:     @F.%e: Empty = bind_name e, %e.loc9_6.1
+// CHECK:STDOUT:     %T.loc9_6.1: Empty = param T
+// CHECK:STDOUT:     @F.%T: Empty = bind_symbolic_name T 0, %T.loc9_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,8 +40,13 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%e: Empty) {
+// CHECK:STDOUT: fn @F(%T: Empty) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %T.ref: Empty = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc10_10.1: type = facet_type_access %T.ref [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc10_10.2: type = converted %T.ref, %.loc10_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:   %x.var: ref T = var x
+// CHECK:STDOUT:   %x: ref T = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

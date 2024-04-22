@@ -40,11 +40,9 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .Outer = %Outer.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %Outer.decl: type = interface_decl @Outer [template = constants.%.2] {}

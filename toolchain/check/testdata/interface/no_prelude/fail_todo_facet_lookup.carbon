@@ -34,12 +34,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Interface = %Interface.decl
 // CHECK:STDOUT:     .CallStatic = %CallStatic
 // CHECK:STDOUT:     .CallFacet = %CallFacet
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic [template] {
 // CHECK:STDOUT:     %Interface.ref.loc9: type = name_ref Interface, %Interface.decl [template = constants.%.1]
