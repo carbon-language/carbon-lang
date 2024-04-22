@@ -105,9 +105,9 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl: invalid = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+10, unloaded
-// CHECK:STDOUT:   %HasF.decl: invalid = interface_decl @HasF [template = constants.%.2] {}
+// CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.2] {}
 // CHECK:STDOUT:   %import_ref.2: <associated <function> in HasF> = import_ref ir2, inst+7, loc_20 [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+5, unloaded

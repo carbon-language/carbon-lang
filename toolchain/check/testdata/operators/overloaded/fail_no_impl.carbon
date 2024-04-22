@@ -296,7 +296,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestUnary(%a: C) -> %return: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
-// CHECK:STDOUT:   %Negate.decl: invalid = interface_decl @Negate [template = constants.%.4] {}
+// CHECK:STDOUT:   %Negate.decl: type = interface_decl @Negate [template = constants.%.4] {}
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,7 +304,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %Add.decl: invalid = interface_decl @Add [template = constants.%.7] {}
+// CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [template = constants.%.7] {}
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,9 +319,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   assign %a.var, %.loc25_16
 // CHECK:STDOUT:   %a.ref.loc30: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %AddAssign.decl: invalid = interface_decl @AddAssign [template = constants.%.11] {}
+// CHECK:STDOUT:   %AddAssign.decl: type = interface_decl @AddAssign [template = constants.%.11] {}
 // CHECK:STDOUT:   %a.ref.loc34: ref C = name_ref a, %a
-// CHECK:STDOUT:   %Inc.decl: invalid = interface_decl @Inc [template = constants.%.14] {}
+// CHECK:STDOUT:   %Inc.decl: type = interface_decl @Inc [template = constants.%.14] {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

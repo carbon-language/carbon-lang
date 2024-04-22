@@ -542,7 +542,7 @@ class ImportRefResolver {
   auto MakeIncompleteClass(const SemIR::Class& import_class)
       -> SemIR::ConstantId {
     auto class_decl =
-        SemIR::ClassDecl{SemIR::TypeId::Invalid, SemIR::ClassId::Invalid,
+        SemIR::ClassDecl{SemIR::TypeId::TypeType, SemIR::ClassId::Invalid,
                          SemIR::InstBlockId::Empty};
     auto class_decl_id =
         context_.AddPlaceholderInst(SemIR::LocIdAndInst::Untyped(
@@ -788,7 +788,7 @@ class ImportRefResolver {
   // importing the interface definition in order to resolve cycles.
   auto MakeInterfaceDecl(const SemIR::Interface& import_interface)
       -> SemIR::ConstantId {
-    auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::Invalid,
+    auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::TypeType,
                                                SemIR::InterfaceId::Invalid,
                                                SemIR::InstBlockId::Empty};
     auto interface_decl_id =
