@@ -73,6 +73,14 @@ class ToolchainFileTest : public FileTestBase {
                      << test_name();
     }
 
+    // For `lex` and `parse`, we don't need to import the prelude; exclude it to
+    // focus errors. In other phases we only do this for explicit "no_prelude"
+    // tests.
+    if (component_ == "lex" || component_ == "parse" ||
+        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
+      args.push_back("--no-prelude-import");
+    }
+
     args.insert(args.end(), {"--exclude-dump-file-prefix=core/", "%s"});
     return args;
   }
