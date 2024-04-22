@@ -153,7 +153,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Div.decl: invalid = interface_decl @Div [template = constants.%.2] {}
+// CHECK:STDOUT:     %Div.decl: type = interface_decl @Div [template = constants.%.2] {}
 // CHECK:STDOUT:     %Div.ref: type = name_ref Div, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+22, loc_46 [template = constants.%.7]
@@ -163,7 +163,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %DivAssign.decl: invalid = interface_decl @DivAssign [template = constants.%.7] {}
+// CHECK:STDOUT:     %DivAssign.decl: type = interface_decl @DivAssign [template = constants.%.7] {}
 // CHECK:STDOUT:     %DivAssign.ref: type = name_ref DivAssign, %import_ref.5 [template = constants.%.7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {

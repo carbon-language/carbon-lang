@@ -182,7 +182,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
+// CHECK:STDOUT:     %Eq.decl: type = interface_decl @Eq [template = constants.%.2] {}
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestEqual: <function> = fn_decl @TestEqual [template] {
@@ -349,7 +349,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %Eq.decl: invalid = interface_decl @Eq [template = constants.%.4] {}
+// CHECK:STDOUT:   %Eq.decl: type = interface_decl @Eq [template = constants.%.4] {}
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,7 +395,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Eq.decl: invalid = interface_decl @Eq [template = constants.%.2] {}
+// CHECK:STDOUT:     %Eq.decl: type = interface_decl @Eq [template = constants.%.2] {}
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRhsBad: <function> = fn_decl @TestRhsBad [template] {

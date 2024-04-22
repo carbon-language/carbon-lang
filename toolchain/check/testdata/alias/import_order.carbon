@@ -93,7 +93,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+14, loc_23 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+16, loc_11 [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl: invalid = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir2, inst+5, loc_31 [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]

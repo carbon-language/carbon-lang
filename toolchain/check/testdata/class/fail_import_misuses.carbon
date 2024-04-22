@@ -89,9 +89,9 @@ var a: Incomplete;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %Empty.decl.loc16: type = class_decl @Empty [template = constants.%Empty] {
-// CHECK:STDOUT:     %Empty.decl.1: invalid = class_decl @Empty [template = constants.%Empty] {}
+// CHECK:STDOUT:     %Empty.decl.1: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Incomplete.decl: invalid = class_decl @Incomplete [template = constants.%Incomplete] {}
+// CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, %import_ref.2 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var

@@ -222,7 +222,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Ordered.decl: invalid = interface_decl @Ordered [template = constants.%.2] {}
+// CHECK:STDOUT:     %Ordered.decl: type = interface_decl @Ordered [template = constants.%.2] {}
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestLess: <function> = fn_decl @TestLess [template] {
@@ -497,7 +497,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
-// CHECK:STDOUT:   %Ordered.decl: invalid = interface_decl @Ordered [template = constants.%.4] {}
+// CHECK:STDOUT:   %Ordered.decl: type = interface_decl @Ordered [template = constants.%.4] {}
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

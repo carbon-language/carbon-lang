@@ -76,7 +76,7 @@ var d2: D* = &c2;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_12 [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl: invalid = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %import_ref.1 [template = constants.%C]
@@ -134,12 +134,12 @@ var d2: D* = &c2;
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir3, inst+23, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl.1: invalid = class_decl @C.1 [template = constants.%C.1] {}
+// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C.1]
 // CHECK:STDOUT:   %c2.var: ref C = var c2
 // CHECK:STDOUT:   %c2: ref C = bind_name c2, %c2.var
-// CHECK:STDOUT:   %C.decl.2: invalid = class_decl @C.2 [template = constants.%C.2] {}
+// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+6, unloaded
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %import_ref.2 [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc11: type = ptr_type C [template = constants.%.5]
