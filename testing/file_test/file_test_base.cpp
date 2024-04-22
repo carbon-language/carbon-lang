@@ -218,6 +218,7 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
 
 auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
   TestContext context;
+  context.capture_output = false;
   std::string banner(79, '=');
   banner.append("\n");
   llvm::errs() << banner << "= " << test_name_ << "\n";
@@ -227,9 +228,7 @@ auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
     return ErrorBuilder() << "Error updating " << test_name_ << ": "
                           << run_result.error();
   }
-  llvm::errs() << banner << "= stderr\n"
-               << banner << context.stderr << banner << "= stdout\n"
-               << banner << context.stdout << banner << "= Exit with success: "
+  llvm::errs() << banner << context.stdout << banner << "= Exit with success: "
                << (context.run_result.success ? "true" : "false") << "\n"
                << banner;
   return Success();
@@ -287,11 +286,16 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   llvm::PrettyStackTraceProgram stack_trace_entry(
       test_argv_for_stack_trace.size() - 1, test_argv_for_stack_trace.data());
 
-  // Capture trace streaming, but only when in debug mode.
+  // Prepare string streams to capture output. In order to address casting
+  // constraints, we split calls to Run as a ternary based on whether we want to
+  // capture output.
   llvm::raw_svector_ostream stdout(context.stdout);
   llvm::raw_svector_ostream stderr(context.stderr);
-  CARBON_ASSIGN_OR_RETURN(context.run_result,
-                          Run(test_args_ref, fs, stdout, stderr));
+  CARBON_ASSIGN_OR_RETURN(
+      context.run_result,
+      context.capture_output
+          ? Run(test_args_ref, fs, stdout, stderr)
+          : Run(test_args_ref, fs, llvm::outs(), llvm::errs()));
   return Success();
 }
 

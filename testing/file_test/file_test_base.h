@@ -145,6 +145,10 @@ class FileTestBase : public testing::Test {
     // Whether checks are a subset, generated from SET-CHECK-SUBSET.
     bool check_subset = false;
 
+    // Output is typically captured for tests and autoupdate, but not when
+    // dumping to console.
+    bool capture_output = true;
+
     // stdout and stderr based on CHECK lines in the file.
     llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
     llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
