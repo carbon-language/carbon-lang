@@ -9,7 +9,7 @@
 namespace Carbon::Check {
 
 auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
-                      SemIR::Class& new_class, bool /*new_is_import*/,
+                      SemIR::Class& new_class, bool new_is_import,
                       bool new_is_definition, bool new_is_extern,
                       SemIR::ClassId prev_class_id, bool prev_is_extern,
                       SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool {
@@ -51,6 +51,13 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.object_repr_id = new_class.object_repr_id;
   }
 
+  if ((prev_import_ir_inst_id.is_valid() && !new_is_import) ||
+      (prev_is_extern && !new_is_extern)) {
+    prev_class.decl_id = new_class.decl_id;
+    ReplacePrevInstForMerge(
+        context, prev_class.enclosing_scope_id, prev_class.name_id,
+        new_is_import ? new_loc.inst_id : new_class.decl_id);
+  }
   return true;
 }
 

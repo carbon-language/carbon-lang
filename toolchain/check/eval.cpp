@@ -897,6 +897,15 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case CARBON_KIND(SemIR::ExternDecl extern_decl): {
+      // Return an extern form of the declaration's constant value.
+      auto non_extern_type_id = context.GetTypeIdForTypeConstant(
+          context.constant_values().Get(extern_decl.decl_id));
+      return MakeConstantResult(
+          context,
+          SemIR::ExternType{SemIR::TypeId::TypeType, non_extern_type_id},
+          Phase::Template);
+    }
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -975,6 +984,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     }
 
     case SemIR::ClassType::Kind:
+    case SemIR::ExternType::Kind:
     case SemIR::InterfaceType::Kind:
       CARBON_FATAL() << inst.kind()
                      << " is only created during corresponding Decl handling.";

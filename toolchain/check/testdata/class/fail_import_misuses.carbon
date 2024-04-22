@@ -19,13 +19,13 @@ library "b" api;
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_b.carbon:[[@LINE+10]]:1: ERROR: Only one library can declare `class Empty` without `extern`.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: In import.
 // CHECK:STDERR: import library "a";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: a.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: a.carbon:4:1: Previously declared here.
 // CHECK:STDERR: class Empty {
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -74,23 +74,22 @@ var a: Incomplete;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = class_type @.1 [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Empty = %import_ref.1
 // CHECK:STDOUT:     .Incomplete = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Empty = %Empty.decl.loc16
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+5, loc_15 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %Empty.decl: invalid = class_decl @Empty [template = constants.%Empty] {}
+// CHECK:STDOUT:   %Empty.decl.loc16: type = class_decl @Empty [template = constants.%Empty] {
+// CHECK:STDOUT:     %Empty.decl.1: invalid = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: invalid = class_decl @Incomplete [template = constants.%Incomplete] {}
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, %import_ref.2 [template = constants.%Incomplete]
@@ -100,12 +99,7 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.2
+// CHECK:STDOUT:   .Self = constants.%Empty
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

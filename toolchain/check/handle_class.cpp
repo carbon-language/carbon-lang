@@ -2,11 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -33,6 +36,51 @@ auto HandleClassIntroducer(Context& context, Parse::ClassIntroducerId node_id)
   context.decl_state_stack().Push(DeclState::Class);
   context.decl_name_stack().PushScopeAndStartName();
   return true;
+}
+
+// Adds the name to name lookup. If there's a conflict, tries to merge. May
+// update class_decl and class_info when merging.
+static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
+                           const DeclNameStack::NameContext& name_context,
+                           SemIR::InstId class_decl_id,
+                           SemIR::ClassDecl& class_decl,
+                           SemIR::Class& class_info, bool is_definition,
+                           bool is_extern) -> void {
+  auto prev_id =
+      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
+  if (prev_id.is_valid()) {
+    auto prev_inst_for_merge =
+        ResolvePrevInstForMerge(context, node_id, prev_id);
+
+    auto prev_class_id = SemIR::ClassId::Invalid;
+    CARBON_KIND_SWITCH(prev_inst_for_merge.inst) {
+      case CARBON_KIND(SemIR::ClassDecl class_decl): {
+        prev_class_id = class_decl.class_id;
+        break;
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        prev_class_id = class_type.class_id;
+        break;
+      }
+      default:
+        // This is a redeclaration of something other than a class.
+        context.DiagnoseDuplicateName(class_decl_id, prev_id);
+        break;
+    }
+
+    if (prev_class_id.is_valid()) {
+      if (MergeClassRedecl(context, node_id, class_info,
+                           /*new_is_import=*/false, is_definition, is_extern,
+                           prev_class_id, prev_inst_for_merge.is_extern,
+                           prev_inst_for_merge.import_ir_inst_id)) {
+        // When merging, use the existing entity rather than adding a new one.
+        class_decl.class_id = prev_class_id;
+      }
+    } else {
+      // This is a redeclaration of something other than a class.
+      context.DiagnoseDuplicateName(class_decl_id, prev_id);
+    }
+  }
 }
 
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
@@ -88,29 +136,15 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .decl_id = class_decl_id,
       .inheritance_kind = inheritance_kind};
 
-  // Check whether this is a redeclaration.
-  auto prev_id =
-      context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
-  if (prev_id.is_valid()) {
-    auto prev_inst_for_merge =
-        ResolvePrevInstForMerge(context, node_id, prev_id);
-
-    if (auto prev_class_decl =
-            prev_inst_for_merge.inst.TryAs<SemIR::ClassDecl>()) {
-      // TODO: Fix prev_is_extern.
-      if (MergeClassRedecl(context, node_id, class_info,
-                           /*new_is_import=*/false, is_definition, is_extern,
-                           prev_class_decl->class_id,
-                           /*prev_is_extern=*/false,
-                           prev_inst_for_merge.import_ir_inst_id)) {
-        // When merging, use the existing entity rather than adding a new one.
-        class_decl.class_id = prev_class_decl->class_id;
-      }
-    } else {
-      // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(class_decl_id, prev_id);
-    }
+  auto extern_decl_id = SemIR::InstId::Invalid;
+  if (is_extern) {
+    extern_decl_id = context.AddPlaceholderInst(
+        {node_id, SemIR::ExternDecl{SemIR::TypeId::TypeType, class_decl_id}});
   }
+
+  MergeOrAddName(context, node_id, name_context,
+                 extern_decl_id.is_valid() ? extern_decl_id : class_decl_id,
+                 class_decl, class_info, is_definition, is_extern);
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.is_valid();
@@ -128,6 +162,12 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // Build the `Self` type using the resulting type constant.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
+  }
+
+  if (is_extern) {
+    context.ReplaceInstBeforeConstantUse(
+        extern_decl_id,
+        SemIR::ExternDecl{SemIR::TypeId::TypeType, class_decl_id});
   }
 
   return {class_decl.class_id, class_decl_id};
