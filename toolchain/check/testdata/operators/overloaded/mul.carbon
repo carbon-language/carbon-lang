@@ -46,9 +46,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Mul [template]
+// CHECK:STDOUT:   %Self.1: Mul = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Mul, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Mul> = assoc_entity element0, @Mul.%Op [template]
 // CHECK:STDOUT:   %.4: type = interface_type @MulAssign [template]
+// CHECK:STDOUT:   %Self.2: MulAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @MulAssign, <function> [template]
 // CHECK:STDOUT:   %.7: <associated <function> in MulAssign> = assoc_entity element0, @MulAssign.%Op [template]
@@ -64,21 +66,21 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Mul {
-// CHECK:STDOUT:   %Self: Mul = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Mul = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
-// CHECK:STDOUT:     %Self.ref.loc5_15: Mul = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_15: Mul = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %self.loc5_9.1: Self = param self
 // CHECK:STDOUT:     %self.loc5_9.2: Self = bind_name self, %self.loc5_9.1
-// CHECK:STDOUT:     %Self.ref.loc5_28: Mul = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_28: Mul = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %other.loc5_21.1: Self = param other
 // CHECK:STDOUT:     %other.loc5_21.2: Self = bind_name other, %other.loc5_21.1
-// CHECK:STDOUT:     %Self.ref.loc5_37: Mul = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_37: Mul = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_41: <associated <function> in Mul> = assoc_entity element0, %Op [template = constants.%.3]
@@ -90,18 +92,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @MulAssign {
-// CHECK:STDOUT:   %Self: MulAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: MulAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
-// CHECK:STDOUT:     %Self.ref.loc8_20: MulAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_20: MulAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.3: type = ptr_type Self [symbolic = constants.%.5]
 // CHECK:STDOUT:     %self.loc8_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc8_14.3: Self* = bind_name self, %self.loc8_14.1
 // CHECK:STDOUT:     %.loc8_9: Self* = addr_pattern %self.loc8_14.3
-// CHECK:STDOUT:     %Self.ref.loc8_34: MulAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_34: MulAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %other.loc8_27.1: Self = param other
 // CHECK:STDOUT:     %other.loc8_27.2: Self = bind_name other, %other.loc8_27.1
 // CHECK:STDOUT:   }
@@ -123,11 +125,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Mul [template]
+// CHECK:STDOUT:   %Self.1: Mul = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @MulAssign [template]
+// CHECK:STDOUT:   %Self.2: MulAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]
@@ -147,19 +151,19 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Mul> = import_ref ir2, inst+20, loc_82 [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Mul> = import_ref ir2, inst+21, loc_82 [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+18, loc_19 [template = imports.%Op.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+19, loc_19 [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Mul.decl: type = interface_decl @Mul [template = constants.%.2] {}
 // CHECK:STDOUT:     %Mul.ref: type = name_ref Mul, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+22, loc_46 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in MulAssign> = import_ref ir2, inst+40, loc_101 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+38, loc_47 [template = imports.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in MulAssign> = import_ref ir2, inst+42, loc_101 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+40, loc_47 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
@@ -177,7 +181,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loc_82 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
 // CHECK:STDOUT:     %C.ref.loc21_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %.loc21: type = ptr_type C [template = constants.%.8]
@@ -187,8 +191,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %b.loc21_22.1: C = param b
 // CHECK:STDOUT:     @TestAssign.%b: C = bind_name b, %b.loc21_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+22, loc_101 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+38, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+23, loc_101 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+40, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Mul {
@@ -251,7 +255,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc10_14
+// CHECK:STDOUT:   return %.loc10_14 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;
@@ -271,7 +275,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.loc18_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc17: ref C = splice_block %return {}
 // CHECK:STDOUT:   %.loc18_12.2: init C = call %.loc18_12.1(%a.ref, %b.ref) to %.loc17
-// CHECK:STDOUT:   return %.loc18_12.2
+// CHECK:STDOUT:   return %.loc18_12.2 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a: C*, %b: C) {

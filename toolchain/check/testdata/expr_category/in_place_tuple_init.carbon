@@ -68,7 +68,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %F.ref.loc12: <function> = name_ref F, file.%F [template = file.%F]
 // CHECK:STDOUT:   %.loc9: ref (i32, i32) = splice_block %return {}
 // CHECK:STDOUT:   %F.call.loc12: init (i32, i32) = call %F.ref.loc12() to %.loc9
-// CHECK:STDOUT:   return %F.call.loc12
+// CHECK:STDOUT:   return %F.call.loc12 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> i32 {

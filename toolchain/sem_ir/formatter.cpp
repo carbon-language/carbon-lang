@@ -577,6 +577,13 @@ class Formatter {
     FormatReturnSlot(inst.dest_id);
   }
 
+  auto FormatInstructionRHS(ReturnExpr ret) -> void {
+    FormatArgs(ret.expr_id);
+    if (ret.dest_id.is_valid()) {
+      FormatReturnSlot(ret.dest_id);
+    }
+  }
+
   auto FormatInstructionRHS(StructInit init) -> void {
     FormatArgs(init.elements_id);
     FormatReturnSlot(init.dest_id);
@@ -670,7 +677,11 @@ class Formatter {
   auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
 
   auto FormatArg(BindNameId id) -> void {
-    FormatName(sem_ir_.bind_names().Get(id).name_id);
+    const auto& info = sem_ir_.bind_names().Get(id);
+    FormatName(info.name_id);
+    if (info.bind_index.is_valid()) {
+      out_ << " " << info.bind_index.index;
+    }
   }
 
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }

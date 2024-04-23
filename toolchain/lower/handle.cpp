@@ -595,13 +595,14 @@ auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleReturnExpr(FunctionContext& context, SemIR::InstId /*inst_id*/,
                       SemIR::ReturnExpr inst) -> void {
-  switch (
-      SemIR::GetInitRepr(context.sem_ir(),
-                         context.sem_ir().insts().Get(inst.expr_id).type_id())
-          .kind) {
+  auto result_type_id = context.sem_ir().insts().Get(inst.expr_id).type_id();
+  switch (SemIR::GetInitRepr(context.sem_ir(), result_type_id).kind) {
     case SemIR::InitRepr::None:
-    case SemIR::InitRepr::InPlace:
       // Nothing to return.
+      context.builder().CreateRetVoid();
+      return;
+    case SemIR::InitRepr::InPlace:
+      context.FinishInit(result_type_id, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::ByCopy:

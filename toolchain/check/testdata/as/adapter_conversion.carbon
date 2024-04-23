@@ -183,7 +183,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc9_27.5: init i32 = initialize_from %.loc9_26 to %.loc9_27.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_27.6: init A = class_init (%.loc9_27.3, %.loc9_27.5), @A.%return.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_28: init A = converted %.loc9_27.1, %.loc9_27.6 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc9_28
+// CHECK:STDOUT:   return %.loc9_28 to @A.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

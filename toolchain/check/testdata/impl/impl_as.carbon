@@ -21,6 +21,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Simple, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Simple> = assoc_entity element0, @Simple.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -43,7 +44,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in Simple> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:

@@ -15,6 +15,9 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 1 [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U 2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

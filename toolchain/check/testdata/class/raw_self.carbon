@@ -113,6 +113,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_25.5: init i32 = initialize_from %self.ref.loc18_19 to %.loc18_25.4
 // CHECK:STDOUT:   %.loc18_25.6: init (i32, i32) = tuple_init (%.loc18_25.3, %.loc18_25.5) to %return
 // CHECK:STDOUT:   %.loc18_26: init (i32, i32) = converted %.loc18_25.1, %.loc18_25.6
-// CHECK:STDOUT:   return %.loc18_26
+// CHECK:STDOUT:   return %.loc18_26 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -20,6 +20,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type @I, type [template]
@@ -39,7 +40,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %.loc12_35: (type, type) = tuple_literal (i32, i32)
 // CHECK:STDOUT:   %.loc12_36.1: type = converted %.loc12_35, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]

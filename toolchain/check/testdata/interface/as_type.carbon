@@ -12,6 +12,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
+// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -31,7 +32,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

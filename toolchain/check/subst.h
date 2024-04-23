@@ -12,8 +12,8 @@ namespace Carbon::Check {
 
 // A substitution that is being performed.
 struct Substitution {
-  // The ID of a `BindSymbolicName` instruction that is being replaced.
-  SemIR::InstId bind_id;
+  // The index of a `BindSymbolicName` instruction that is being replaced.
+  SemIR::CompileTimeBindIndex bind_id;
   // The replacement constant value to substitute.
   SemIR::ConstantId replacement_id;
 };

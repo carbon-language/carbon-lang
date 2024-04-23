@@ -19,7 +19,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+14}}
 // CHECK:STDOUT:   bind_names:
-// CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>}
+// CHECK:STDOUT:     bindName0:       {name: name1, enclosing_scope: name_scope<invalid>, index: compTimeBind<invalid>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, enclosing_scope: name_scope0, param_refs: block3, return_type: type2, return_storage: inst+13, return_slot: present, body: [block6]}
 // CHECK:STDOUT:   classes:         {}
@@ -77,7 +77,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst+26:         {kind: TupleInit, arg0: block10, arg1: inst+13, type: type2}
 // CHECK:STDOUT:     inst+27:         {kind: TupleValue, arg0: block12, type: type2}
 // CHECK:STDOUT:     inst+28:         {kind: Converted, arg0: inst+18, arg1: inst+26, type: type2}
-// CHECK:STDOUT:     inst+29:         {kind: ReturnExpr, arg0: inst+28}
+// CHECK:STDOUT:     inst+29:         {kind: ReturnExpr, arg0: inst+28, arg1: inst+13}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     inst+0:          template inst+0
 // CHECK:STDOUT:     inst+1:          template inst+1

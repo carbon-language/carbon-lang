@@ -57,9 +57,11 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Self.1: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Add> = assoc_entity element0, @Add.%Op [template]
 // CHECK:STDOUT:   %.4: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @AddAssign, <function> [template]
 // CHECK:STDOUT:   %.7: <associated <function> in AddAssign> = assoc_entity element0, @AddAssign.%Op [template]
@@ -75,21 +77,21 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
-// CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %self.loc5_9.1: Self = param self
 // CHECK:STDOUT:     %self.loc5_9.2: Self = bind_name self, %self.loc5_9.1
-// CHECK:STDOUT:     %Self.ref.loc5_28: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_28: Add = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %other.loc5_21.1: Self = param other
 // CHECK:STDOUT:     %other.loc5_21.2: Self = bind_name other, %other.loc5_21.1
-// CHECK:STDOUT:     %Self.ref.loc5_37: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_37: Add = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_41: <associated <function> in Add> = assoc_entity element0, %Op [template = constants.%.3]
@@ -101,18 +103,18 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
-// CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.3: type = ptr_type Self [symbolic = constants.%.5]
 // CHECK:STDOUT:     %self.loc8_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc8_14.3: Self* = bind_name self, %self.loc8_14.1
 // CHECK:STDOUT:     %.loc8_9: Self* = addr_pattern %self.loc8_14.3
-// CHECK:STDOUT:     %Self.ref.loc8_34: AddAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_34: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %other.loc8_27.1: Self = param other
 // CHECK:STDOUT:     %other.loc8_27.2: Self = bind_name other, %other.loc8_27.1
 // CHECK:STDOUT:   }
@@ -135,8 +137,10 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Self.1: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.4: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type C [template]
 // CHECK:STDOUT:   %.6: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (@impl.2.%Op) [template]
@@ -161,19 +165,19 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_23 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir2, inst+20, loc_81 [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir2, inst+21, loc_81 [template = constants.%.11]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+18, loc_24 [template = imports.%Op.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+19, loc_24 [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc9: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Add.decl: type = interface_decl @Add [template = constants.%.2] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+22, loc_46 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir2, inst+40, loc_102 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+38, loc_47 [template = imports.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir2, inst+42, loc_102 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+40, loc_47 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, %Core [template = %Core]
@@ -191,14 +195,14 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     @Test.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loc_81 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
 // CHECK:STDOUT:     %D.ref.loc27: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %b.loc27_15.1: D = param b
 // CHECK:STDOUT:     @TestAssign.%b: D = bind_name b, %b.loc27_15.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+22, loc_102 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+38, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+23, loc_102 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+40, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
@@ -277,7 +281,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc24_12.2: ref C = temporary_storage
 // CHECK:STDOUT:   %.loc24_12.3: init C = call %.loc24_12.1(<invalid>) [template = <error>]
-// CHECK:STDOUT:   return %.loc24_12.3
+// CHECK:STDOUT:   return %.loc24_12.3 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b: D) {

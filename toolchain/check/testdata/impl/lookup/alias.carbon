@@ -25,6 +25,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @HasF [template]
+// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @HasF, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in HasF> = assoc_entity element0, @HasF.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -56,7 +57,7 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
-// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: HasF = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in HasF> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:

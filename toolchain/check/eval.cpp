@@ -1035,11 +1035,12 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::ValueAsRef::Kind:
       break;
 
-    case SemIR::BindSymbolicName::Kind:
-      // TODO: Consider forming a constant value here using a de Bruijn index or
-      // similar, so that corresponding symbolic parameters in redeclarations
-      // are treated as the same value.
-      return SemIR::ConstantId::ForSymbolicConstant(inst_id);
+    case CARBON_KIND(SemIR::BindSymbolicName bind): {
+      // The constant form of a symbolic binding is an idealized form of the
+      // original, with no equivalent value.
+      bind.value_id = SemIR::InstId::Invalid;
+      return MakeConstantResult(context, bind, Phase::Symbolic);
+    }
 
     // These semantic wrappers don't change the constant value.
     case CARBON_KIND(SemIR::AsCompatible inst): {

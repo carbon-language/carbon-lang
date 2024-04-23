@@ -77,6 +77,6 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc13_10.6: init f64 = initialize_from %.loc13_10.4 to %.loc13_10.5
 // CHECK:STDOUT:   %.loc13_10.7: init {.a: i32, .b: f64} = struct_init (%.loc13_10.3, %.loc13_10.6) to %return
 // CHECK:STDOUT:   %.loc13_11: init {.a: i32, .b: f64} = converted %y.ref, %.loc13_10.7
-// CHECK:STDOUT:   return %.loc13_11
+// CHECK:STDOUT:   return %.loc13_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

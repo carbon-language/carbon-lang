@@ -50,6 +50,6 @@ fn Make() -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_16: i32 = int_literal 123 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc15_19: {.a: i32} = struct_literal (%.loc15_16)
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

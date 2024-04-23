@@ -18,6 +18,7 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in I> = assoc_entity element0, @I.%F [template]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
@@ -53,21 +54,21 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
-// CHECK:STDOUT:     %Self.ref.loc8_14: I = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref.loc8_14, %.loc8_14.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_14: I = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref.loc8_14, %.loc8_14.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc8_8.1: Self = param self
 // CHECK:STDOUT:     %self.loc8_8.2: Self = bind_name self, %self.loc8_8.1
-// CHECK:STDOUT:     %Self.ref.loc8_27: I = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_27.1: type = facet_type_access %Self.ref.loc8_27 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_27.2: type = converted %Self.ref.loc8_27, %.loc8_27.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_27: I = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_27.1: type = facet_type_access %Self.ref.loc8_27 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_27.2: type = converted %Self.ref.loc8_27, %.loc8_27.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc8_20.1: Self = param other
 // CHECK:STDOUT:     %other.loc8_20.2: Self = bind_name other, %other.loc8_20.1
-// CHECK:STDOUT:     %Self.ref.loc8_36: I = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_36.1: type = facet_type_access %Self.ref.loc8_36 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_36.2: type = converted %Self.ref.loc8_36, %.loc8_36.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_36: I = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_36.1: type = facet_type_access %Self.ref.loc8_36 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_36.2: type = converted %Self.ref.loc8_36, %.loc8_36.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_40: <associated <function> in I> = assoc_entity element0, %F [template = constants.%.3]

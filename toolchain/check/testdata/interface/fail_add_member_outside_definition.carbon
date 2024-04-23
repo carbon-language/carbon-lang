@@ -31,8 +31,11 @@ interface Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %Self.1: Interface = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @Outer [template]
+// CHECK:STDOUT:   %Self.2: Outer = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = interface_type @Inner [template]
+// CHECK:STDOUT:   %Self.3: Inner = bind_symbolic_name Self 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,7 +51,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -57,7 +60,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
-// CHECK:STDOUT:   %Self: Outer = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Outer = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Inner.decl: type = interface_decl @Inner [template = constants.%.3] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
 // CHECK:STDOUT:
@@ -68,7 +71,7 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inner {
-// CHECK:STDOUT:   %Self: Inner = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Inner = bind_symbolic_name Self 1 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %.loc22: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

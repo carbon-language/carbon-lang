@@ -185,6 +185,25 @@ struct BindNameId : public IdBase, public Printable<BindNameId> {
 
 constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
 
+// The index of a compile-time binding. This is the de Bruijn level for the
+// binding -- that is, this is the number of other compile time bindings whose
+// scope encloses this binding.
+struct CompileTimeBindIndex : public IndexBase,
+                              public Printable<CompileTimeBindIndex> {
+  // An explicitly invalid index.
+  static const CompileTimeBindIndex Invalid;
+
+  using IndexBase::IndexBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "compTimeBind";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
+    CompileTimeBindIndex(InvalidIndex);
+
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
   using ValueType = Function;

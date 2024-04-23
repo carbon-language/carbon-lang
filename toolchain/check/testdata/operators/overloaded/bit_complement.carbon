@@ -36,6 +36,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @BitComplement [template]
+// CHECK:STDOUT:   %Self: BitComplement = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @BitComplement, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in BitComplement> = assoc_entity element0, @BitComplement.%Op [template]
 // CHECK:STDOUT: }
@@ -48,16 +49,16 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitComplement {
-// CHECK:STDOUT:   %Self: BitComplement = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: BitComplement = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
-// CHECK:STDOUT:     %Self.ref.loc5_15: BitComplement = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_15: BitComplement = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc5_9.1: Self = param self
 // CHECK:STDOUT:     %self.loc5_9.2: Self = bind_name self, %self.loc5_9.1
-// CHECK:STDOUT:     %Self.ref.loc5_26: BitComplement = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_26.1: type = facet_type_access %Self.ref.loc5_26 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_26.2: type = converted %Self.ref.loc5_26, %.loc5_26.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_26: BitComplement = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_26.1: type = facet_type_access %Self.ref.loc5_26 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_26.2: type = converted %Self.ref.loc5_26, %.loc5_26.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_30: <associated <function> in BitComplement> = assoc_entity element0, %Op [template = constants.%.3]
@@ -76,6 +77,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BitComplement [template]
+// CHECK:STDOUT:   %Self: BitComplement = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
@@ -93,9 +95,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in BitComplement> = import_ref ir2, inst+15, loc_50 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in BitComplement> = import_ref ir2, inst+16, loc_50 [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+13, loc_19 [template = imports.%Op]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+14, loc_19 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -110,7 +112,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loc_50 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitComplement {
@@ -145,7 +147,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc10_14
+// CHECK:STDOUT:   return %.loc10_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self]() -> Self;
@@ -157,6 +159,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.loc15_10.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc14: ref C = splice_block %return {}
 // CHECK:STDOUT:   %.loc15_10.2: init C = call %.loc15_10.1(%a.ref) to %.loc14
-// CHECK:STDOUT:   return %.loc15_10.2
+// CHECK:STDOUT:   return %.loc15_10.2 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

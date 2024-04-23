@@ -208,18 +208,47 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
       auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
       auto* llvm_value_rep_type = context.GetType(pointee_type_id);
 
-      // Write the value representation to a local alloca so we can produce a
-      // pointer to it as the value representation of the struct or tuple.
-      auto* alloca =
-          context.builder().CreateAlloca(llvm_value_rep_type,
-                                         /*ArraySize=*/nullptr, name);
-      for (auto [i, ref] :
-           llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
-        context.builder().CreateStore(
-            context.GetValue(ref),
-            context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
+      auto refs = context.sem_ir().inst_blocks().Get(refs_id);
+      if (context.builder().GetInsertBlock()) {
+        // Write the value representation to a local alloca so we can produce a
+        // pointer to it as the value representation of the struct or tuple.
+        auto* alloca =
+            context.builder().CreateAlloca(llvm_value_rep_type,
+                                           /*ArraySize=*/nullptr, name);
+        for (auto [i, ref] : llvm::enumerate(refs)) {
+          context.builder().CreateStore(context.GetValue(ref),
+                                        context.builder().CreateStructGEP(
+                                            llvm_value_rep_type, alloca, i));
+        }
+        return alloca;
+      } else {
+        // TODO: Move this out to a separate constant lowering file.
+        llvm::SmallVector<llvm::Constant*> elements;
+        elements.reserve(refs.size());
+        for (auto ref : refs) {
+          auto ref_value_rep = SemIR::GetValueRepr(
+              context.sem_ir(), context.sem_ir().insts().Get(ref).type_id());
+          auto* inner_value = llvm::cast<llvm::Constant>(context.GetValue(ref));
+          if (ref_value_rep.kind == SemIR::ValueRepr::Pointer) {
+            inner_value =
+                llvm::cast<llvm::GlobalVariable>(inner_value)->getInitializer();
+          }
+          elements.push_back(inner_value);
+        }
+        llvm::Constant* value;
+        if (auto* struct_type =
+                llvm::dyn_cast<llvm::StructType>(llvm_value_rep_type)) {
+          value = llvm::ConstantStruct::get(struct_type, elements);
+        } else if (auto* array_type =
+                       llvm::dyn_cast<llvm::ArrayType>(llvm_value_rep_type)) {
+          value = llvm::ConstantArray::get(array_type, elements);
+        } else {
+          CARBON_FATAL() << "Unknown aggregate value representation";
+        }
+        return new llvm::GlobalVariable(
+            context.llvm_module(), llvm_value_rep_type, /*isConstant=*/true,
+            llvm::GlobalVariable::InternalLinkage, value, name);
       }
-      return alloca;
     }
 
     case SemIR::ValueRepr::Custom:

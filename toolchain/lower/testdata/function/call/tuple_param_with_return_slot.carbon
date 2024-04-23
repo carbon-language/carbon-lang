@@ -15,6 +15,8 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param_with_return_slot.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param_with_return_slot.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @tuple = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8_14.tuple.index = extractvalue { i32 } %b, 0
@@ -34,14 +36,9 @@ fn Main() {
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_4.1.temp = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_20.2.tuple = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc12_20.2 = getelementptr inbounds { i32, i32 }, ptr %.loc12_20.2.tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 2, ptr %.loc12_20.2, align 4
-// CHECK:STDOUT:   %.loc12_20.21 = getelementptr inbounds { i32, i32 }, ptr %.loc12_20.2.tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 3, ptr %.loc12_20.21, align 4
-// CHECK:STDOUT:   call void @F(ptr %.loc12_4.1.temp, { i32 } { i32 1 }, ptr %.loc12_20.2.tuple)
+// CHECK:STDOUT:   call void @F(ptr %.loc12_4.1.temp, { i32 } { i32 1 }, ptr @tuple)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 2, 0, 1, 3, 4, 5 }
+// CHECK:STDOUT: uselistorder i32 2, { 1, 0 }
