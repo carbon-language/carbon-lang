@@ -81,8 +81,10 @@ static auto BuildInterfaceWitness(
   table.reserve(assoc_entities.size());
 
   // Substitute `Self` with the impl's self type when associated functions.
+  auto self_bind =
+      context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
   Substitution substitutions[1] = {
-      {.bind_id = interface.self_param_id,
+      {.bind_id = context.bind_names().Get(self_bind.bind_name_id).bind_index,
        .replacement_id = context.types().GetConstantId(impl.self_id)}};
 
   for (auto decl_id : assoc_entities) {

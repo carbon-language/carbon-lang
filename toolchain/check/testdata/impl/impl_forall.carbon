@@ -16,8 +16,10 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Simple, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Simple> = assoc_entity element0, @Simple.%F [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,14 +32,14 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %T.loc11_14.1: type = param T
-// CHECK:STDOUT:     %T.loc11_14.2: type = bind_symbolic_name T, %T.loc11_14.1 [symbolic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_14.2 [symbolic = %T.loc11_14.2]
+// CHECK:STDOUT:     %T.loc11_14.2: type = bind_symbolic_name T 0, %T.loc11_14.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_14.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in Simple> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:

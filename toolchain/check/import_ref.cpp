@@ -251,7 +251,8 @@ class ImportRefResolver {
           case SemIR::BindName::Kind: {
             auto bind_name_id = context_.bind_names().Add(
                 {.name_id = name_id,
-                 .enclosing_scope_id = SemIR::NameScopeId::Invalid});
+                 .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+                 .bind_index = SemIR::CompileTimeBindIndex::Invalid});
             new_param_id = context_.AddInstInNoBlock(
                 {AddImportIRInst(bind_id),
                  SemIR::BindName{type_id, bind_name_id, new_param_id}});
@@ -524,11 +525,13 @@ class ImportRefResolver {
       return ResolveResult::Retry();
     }
 
-    auto name_id =
-        GetLocalNameId(import_ir_.bind_names().Get(inst.bind_name_id).name_id);
+    const auto& import_bind_info =
+        import_ir_.bind_names().Get(inst.bind_name_id);
+    auto name_id = GetLocalNameId(import_bind_info.name_id);
     auto bind_name_id = context_.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = SemIR::NameScopeId::Invalid});
+         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+         .bind_index = import_bind_info.bind_index});
     auto new_bind_id = context_.AddInstInNoBlock(
         {AddImportIRInst(import_inst_id),
          SemIR::BindSymbolicName{context_.GetTypeIdForTypeConstant(type_id),

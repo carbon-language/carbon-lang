@@ -42,9 +42,11 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %Self.1: Interface = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.3: type = interface_type @.2 [template]
+// CHECK:STDOUT:   %Self.2: <invalid> = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,7 +77,7 @@ interface Class { }
 // CHECK:STDOUT: interface @.1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
-// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: <invalid> = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

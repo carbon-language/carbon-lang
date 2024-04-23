@@ -19,6 +19,10 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
       {.index = next_scope_index_,
        .scope_inst_id = scope_inst_id,
        .scope_id = scope_id,
+       .next_compile_time_bind_index =
+           scope_stack_.empty()
+               ? SemIR::CompileTimeBindIndex(0)
+               : scope_stack_.back().next_compile_time_bind_index,
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
   if (scope_id.is_valid()) {

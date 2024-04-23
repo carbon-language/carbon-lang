@@ -96,6 +96,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Eq [template]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Eq, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Eq> = assoc_entity element0, @Eq.%Equal [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Eq> = assoc_entity element1, @Eq.%NotEqual [template]
@@ -109,30 +110,30 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Equal: <function> = fn_decl @Equal [template] {
-// CHECK:STDOUT:     %Self.ref.loc7_18: Eq = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc7_18.1: type = facet_type_access %Self.ref.loc7_18 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc7_18.2: type = converted %Self.ref.loc7_18, %.loc7_18.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc7_18: Eq = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc7_18.1: type = facet_type_access %Self.ref.loc7_18 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc7_18.2: type = converted %Self.ref.loc7_18, %.loc7_18.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc7_12.1: Self = param self
 // CHECK:STDOUT:     %self.loc7_12.2: Self = bind_name self, %self.loc7_12.1
-// CHECK:STDOUT:     %Self.ref.loc7_31: Eq = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc7_31.1: type = facet_type_access %Self.ref.loc7_31 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc7_31.2: type = converted %Self.ref.loc7_31, %.loc7_31.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc7_31: Eq = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc7_31.1: type = facet_type_access %Self.ref.loc7_31 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc7_31.2: type = converted %Self.ref.loc7_31, %.loc7_31.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc7_24.1: Self = param other
 // CHECK:STDOUT:     %other.loc7_24.2: Self = bind_name other, %other.loc7_24.1
 // CHECK:STDOUT:     %return.var.loc7: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_44: <associated <function> in Eq> = assoc_entity element0, %Equal [template = constants.%.3]
 // CHECK:STDOUT:   %NotEqual: <function> = fn_decl @NotEqual [template] {
-// CHECK:STDOUT:     %Self.ref.loc8_21: Eq = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_21.1: type = facet_type_access %Self.ref.loc8_21 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_21.2: type = converted %Self.ref.loc8_21, %.loc8_21.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_21: Eq = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_21.1: type = facet_type_access %Self.ref.loc8_21 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_21.2: type = converted %Self.ref.loc8_21, %.loc8_21.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc8_15.1: Self = param self
 // CHECK:STDOUT:     %self.loc8_15.2: Self = bind_name self, %self.loc8_15.1
-// CHECK:STDOUT:     %Self.ref.loc8_34: Eq = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_34: Eq = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc8_27.1: Self = param other
 // CHECK:STDOUT:     %other.loc8_27.2: Self = bind_name other, %other.loc8_27.1
 // CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
@@ -156,6 +157,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Eq [template]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Equal, @impl.%NotEqual) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
@@ -175,10 +177,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_18 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+17, loc_68 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+31, loc_88 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir3, inst+15, loc_19 [template = imports.%Equal]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir3, inst+30, loc_19 [template = imports.%NotEqual]
+// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+18, loc_68 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+32, loc_88 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir3, inst+16, loc_19 [template = imports.%Equal]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir3, inst+31, loc_19 [template = imports.%NotEqual]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -195,7 +197,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir3, inst+1, loc_68 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+16, unloaded
 // CHECK:STDOUT:   %TestNotEqual: <function> = fn_decl @TestNotEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc17_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc17_17.1: C = param a
@@ -206,7 +208,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir3, inst+1, loc_88 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
@@ -289,6 +291,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Eq [template]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Eq, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Eq> = assoc_entity element0, file.%import_ref.7 [template]
 // CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element1, file.%import_ref.9 [template]
@@ -314,11 +317,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_30 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+17, loc_30 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+31, loc_50 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir3, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+18, loc_30 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+32, loc_50 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir3, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+16, unloaded
 // CHECK:STDOUT:   %TestNotEqual: <function> = fn_decl @TestNotEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc16_20: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc16_17.1: D = param a
@@ -329,7 +332,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: type = import_ref ir3, inst+1, loc_50 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir3, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir3, inst+31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
@@ -367,6 +370,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Eq [template]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Equal, @impl.%NotEqual) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
@@ -388,10 +392,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_23 [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+17, loc_73 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+31, loc_93 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir3, inst+15, loc_24 [template = imports.%Equal]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir3, inst+30, loc_24 [template = imports.%NotEqual]
+// CHECK:STDOUT:   %import_ref.3: <associated <function> in Eq> = import_ref ir3, inst+18, loc_73 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Eq> = import_ref ir3, inst+32, loc_93 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir3, inst+16, loc_24 [template = imports.%Equal]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir3, inst+31, loc_24 [template = imports.%NotEqual]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -408,7 +412,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestRhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.7: type = import_ref ir3, inst+1, loc_73 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+16, unloaded
 // CHECK:STDOUT:   %TestLhsBad: <function> = fn_decl @TestLhsBad [template] {
 // CHECK:STDOUT:     %D.ref.loc25: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc25_15.1: D = param a
@@ -419,7 +423,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestLhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir3, inst+1, loc_93 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {

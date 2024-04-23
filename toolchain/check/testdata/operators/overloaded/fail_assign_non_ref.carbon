@@ -55,10 +55,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Inc, <function> [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Inc> = assoc_entity element0, @Inc.%Op [template]
 // CHECK:STDOUT:   %.5: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @AddAssign, <function> [template]
 // CHECK:STDOUT:   %.8: <associated <function> in AddAssign> = assoc_entity element0, @AddAssign.%Op [template]
@@ -74,11 +76,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
-// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
-// CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = constants.%Self.1]
+// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc5_24.3: type = ptr_type Self [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc5_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc5_14.3: Self* = bind_name self, %self.loc5_14.1
@@ -93,18 +95,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
-// CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref.loc8_20, %.loc8_24.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.3: type = ptr_type Self [symbolic = constants.%.6]
 // CHECK:STDOUT:     %self.loc8_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc8_14.3: Self* = bind_name self, %self.loc8_14.1
 // CHECK:STDOUT:     %.loc8_9: Self* = addr_pattern %self.loc8_14.3
-// CHECK:STDOUT:     %Self.ref.loc8_34: AddAssign = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc8_34: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.1: type = facet_type_access %Self.ref.loc8_34 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:     %.loc8_34.2: type = converted %Self.ref.loc8_34, %.loc8_34.1 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %other.loc8_27.1: Self = param other
 // CHECK:STDOUT:     %other.loc8_27.2: Self = bind_name other, %other.loc8_27.1
 // CHECK:STDOUT:   }
@@ -126,10 +128,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type C [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.6: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.7: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (@impl.2.%Op) [template]
 // CHECK:STDOUT:   %.9: type = tuple_type () [template]
@@ -150,19 +154,19 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Inc> = import_ref ir3, inst+14, loc_65 [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Inc> = import_ref ir3, inst+15, loc_65 [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+12, loc_19 [template = imports.%Op.1]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+13, loc_19 [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Inc.decl: type = interface_decl @Inc [template = constants.%.2] {}
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+16, loc_38 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir3, inst+34, loc_82 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+18, unloaded
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir3, inst+32, loc_39 [template = imports.%Op.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+17, loc_38 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir3, inst+36, loc_82 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir3, inst+34, loc_39 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, %Core [template = %Core]
@@ -175,7 +179,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     @TestIncNonRef.%a: C = bind_name a, %a.loc15_18.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.9: type = import_ref ir3, inst+1, loc_65 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+13, unloaded
 // CHECK:STDOUT:   %TestAddAssignNonRef: <function> = fn_decl @TestAddAssignNonRef [template] {
 // CHECK:STDOUT:     %C.ref.loc26_27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc26_24.1: C = param a
@@ -184,8 +188,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.loc26_30.1: C = param b
 // CHECK:STDOUT:     @TestAddAssignNonRef.%b: C = bind_name b, %b.loc26_30.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+16, loc_82 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir3, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+17, loc_82 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir3, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {

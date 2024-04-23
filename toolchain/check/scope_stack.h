@@ -115,6 +115,13 @@ class ScopeStack {
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
       -> SemIR::InstId;
 
+  // Adds a compile-time binding in the current scope, and returns its index.
+  auto AddCompileTimeBinding() -> SemIR::CompileTimeBindIndex {
+    auto index = scope_stack_.back().next_compile_time_bind_index;
+    ++scope_stack_.back().next_compile_time_bind_index.index;
+    return index;
+  }
+
   // Temporarily removes the top of the stack and its lexical lookup results.
   auto Suspend() -> SuspendedScope;
 
@@ -149,6 +156,9 @@ class ScopeStack {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
+    // The next compile-time binding index to allocate in this scope.
+    SemIR::CompileTimeBindIndex next_compile_time_bind_index;
+
     // Whether lexical_lookup_ has load errors from this scope or an enclosing
     // scope.
     bool lexical_lookup_has_load_error;
@@ -159,7 +169,7 @@ class ScopeStack {
 
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names;
+    llvm::DenseSet<SemIR::NameId> names = {};
 
     // TODO: This likely needs to track things which need to be destructed.
   };

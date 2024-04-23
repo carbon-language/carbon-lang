@@ -39,6 +39,7 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Interface, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Interface> = assoc_entity element0, @Interface.%F [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Interface> = assoc_entity element1, @Interface.%G [template]
@@ -62,7 +63,7 @@ fn Interface.G(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc12: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
