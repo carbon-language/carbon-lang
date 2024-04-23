@@ -8,7 +8,9 @@ interface Simple {
   fn F();
 }
 
-impl i32 as Simple {
+class C {}
+
+impl C as Simple {
   fn F() {}
 }
 
@@ -19,17 +21,20 @@ impl i32 as Simple {
 // CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Simple, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Simple> = assoc_entity element0, @Simple.%F [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%F) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Simple = %Simple.decl
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -45,13 +50,18 @@ impl i32 as Simple {
 // CHECK:STDOUT:   witness = (%F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: i32 as Simple {
+// CHECK:STDOUT: impl @impl: C as Simple {
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.4]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   witness = %.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
