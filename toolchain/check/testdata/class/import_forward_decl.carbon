@@ -46,7 +46,7 @@ class ForwardDecl {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loaded [template = constants.%ForwardDecl]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loaded [template = constants.%ForwardDecl]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %ForwardDecl.decl.loc4: type = class_decl @ForwardDecl [template = constants.%ForwardDecl] {
 // CHECK:STDOUT:     %ForwardDecl.decl.1: type = class_decl @ForwardDecl [template = constants.%ForwardDecl] {}

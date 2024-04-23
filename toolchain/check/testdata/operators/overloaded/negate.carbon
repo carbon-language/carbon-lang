@@ -92,10 +92,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir3, inst+15, loc_50 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+13, loc_19 [template = imports.%Op]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir2, inst+15, loc_50 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+13, loc_19 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -109,8 +109,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc14_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+1, loc_50 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loc_50 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {

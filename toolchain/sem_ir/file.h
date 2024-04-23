@@ -44,12 +44,8 @@ class File;
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  // Produces a file for the builtins.
-  explicit File(SharedValueStores& value_stores);
-
-  // Starts a new file for Check::CheckParseTree. Builtins are required.
-  explicit File(SharedValueStores& value_stores, std::string filename,
-                const File* builtins);
+  // Starts a new file for Check::CheckParseTree.
+  explicit File(SharedValueStores& value_stores, std::string filename);
 
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;
@@ -192,10 +188,6 @@ class File : public Printable<File> {
   auto filename() const -> llvm::StringRef { return filename_; }
 
  private:
-  // Common File initialization.
-  explicit File(SharedValueStores& value_stores, std::string filename,
-                const File* builtins, llvm::function_ref<void()> init_builtins);
-
   bool has_errors_ = false;
 
   // Shared, compile-scoped values.
@@ -237,8 +229,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be ImportRefs to builtins,
-  // at indices matching BuiltinKind ordering.
+  // All instructions. The first entries will always be Builtin insts, at
+  // indices matching BuiltinKind ordering.
   InstStore insts_;
 
   // Constant values for instructions.

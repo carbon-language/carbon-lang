@@ -41,7 +41,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+2, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir0, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }

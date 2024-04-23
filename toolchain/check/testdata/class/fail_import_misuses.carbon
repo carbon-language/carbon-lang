@@ -84,10 +84,10 @@ var a: Incomplete;
 // CHECK:STDOUT:     .Empty = %Empty.decl.loc16
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+5, loc_15 [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loc_15 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %Empty.decl.loc16: type = class_decl @Empty [template = constants.%Empty] {
 // CHECK:STDOUT:     %Empty.decl.1: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   }

@@ -209,16 +209,16 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir3, inst+59, loc_158 [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir3, inst+45, loc_138 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir3, inst+17, loc_98 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir3, inst+31, loc_118 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir3, inst+15, loc_19 [template = imports.%Less]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir3, inst+30, loc_19 [template = imports.%LessOrEquivalent]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir3, inst+44, loc_19 [template = imports.%Greater]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir3, inst+58, loc_19 [template = imports.%GreaterOrEquivalent]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir2, inst+59, loc_158 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir2, inst+45, loc_138 [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir2, inst+17, loc_98 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir2, inst+31, loc_118 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+15, loc_19 [template = imports.%Less]
+// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+30, loc_19 [template = imports.%LessOrEquivalent]
+// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+44, loc_19 [template = imports.%Greater]
+// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+58, loc_19 [template = imports.%GreaterOrEquivalent]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -234,8 +234,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: C = bind_name b, %b.loc15_19.1
 // CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+1, loc_98 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir3, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+1, loc_98 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+15, unloaded
 // CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc19_21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc19_18.1: C = param a
@@ -245,8 +245,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: C = bind_name b, %b.loc19_24.1
 // CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.13: type = import_ref ir3, inst+1, loc_118 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir3, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref ir2, inst+1, loc_118 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+30, unloaded
 // CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
 // CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_16.1: C = param a
@@ -256,8 +256,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: C = bind_name b, %b.loc23_22.1
 // CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.15: type = import_ref ir3, inst+1, loc_138 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.16 = import_ref ir3, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.15: type = import_ref ir2, inst+1, loc_138 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.16 = import_ref ir2, inst+44, unloaded
 // CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
 // CHECK:STDOUT:     %C.ref.loc27_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc27_21.1: C = param a
@@ -267,8 +267,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: C = bind_name b, %b.loc27_27.1
 // CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.17: type = import_ref ir3, inst+1, loc_158 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.18 = import_ref ir3, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref ir2, inst+1, loc_158 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+58, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
@@ -432,17 +432,17 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: D = bind_name b, %b.loc8_19.1
 // CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_30 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir3, inst+59, loc_90 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir3, inst+45, loc_70 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir3, inst+17, loc_30 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir3, inst+31, loc_50 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir3, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir3, inst+44, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir3, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_30 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir2, inst+59, loc_90 [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir2, inst+45, loc_70 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir2, inst+17, loc_30 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir2, inst+31, loc_50 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+15, unloaded
 // CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc16_21: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc16_18.1: D = param a
@@ -452,8 +452,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc16_24.1
 // CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.12: type = import_ref ir3, inst+1, loc_50 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir3, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.12: type = import_ref ir2, inst+1, loc_50 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+30, unloaded
 // CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
 // CHECK:STDOUT:     %D.ref.loc24_19: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc24_16.1: D = param a
@@ -463,8 +463,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc24_22.1
 // CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.14: type = import_ref ir3, inst+1, loc_70 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.15 = import_ref ir3, inst+44, unloaded
+// CHECK:STDOUT:   %import_ref.14: type = import_ref ir2, inst+1, loc_70 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+44, unloaded
 // CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
 // CHECK:STDOUT:     %D.ref.loc32_24: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc32_21.1: D = param a
@@ -474,8 +474,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc32_27.1
 // CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir3, inst+1, loc_90 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.17 = import_ref ir3, inst+58, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+1, loc_90 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.17 = import_ref ir2, inst+58, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {

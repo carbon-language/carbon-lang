@@ -787,7 +787,6 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
 
   // Check.
   SharedValueStores builtin_value_stores;
-  auto builtins = Check::MakeBuiltins(builtin_value_stores);
   llvm::SmallVector<Check::Unit> check_units;
   for (auto& unit : units) {
     if (unit->has_source()) {
@@ -795,7 +794,7 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     }
   }
   CARBON_VLOG() << "*** Check::CheckParseTrees ***\n";
-  Check::CheckParseTrees(builtins, llvm::MutableArrayRef(check_units),
+  Check::CheckParseTrees(llvm::MutableArrayRef(check_units),
                          options.prelude_import, vlog_stream_);
   CARBON_VLOG() << "*** Check::CheckParseTrees done ***\n";
   for (auto& unit : units) {

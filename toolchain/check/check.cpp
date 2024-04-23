@@ -736,11 +736,10 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 static auto CheckParseTree(
     llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*>*
         node_converters,
-    const SemIR::File& builtin_ir, UnitInfo& unit_info,
-    llvm::raw_ostream* vlog_stream) -> void {
+    UnitInfo& unit_info, llvm::raw_ostream* vlog_stream) -> void {
   unit_info.unit->sem_ir->emplace(
       *unit_info.unit->value_stores,
-      unit_info.unit->tokens->source().filename().str(), &builtin_ir);
+      unit_info.unit->tokens->source().filename().str());
 
   // For ease-of-access.
   SemIR::File& sem_ir = **unit_info.unit->sem_ir;
@@ -1041,8 +1040,7 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(const SemIR::File& builtin_ir,
-                     llvm::MutableArrayRef<Unit> units, bool prelude_import,
+auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::raw_ostream* vlog_stream) -> void {
   // Prepare diagnostic emitters in case we run into issues during package
   // checking.
@@ -1103,7 +1101,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(&node_converters, builtin_ir, *unit_info, vlog_stream);
+    CheckParseTree(&node_converters, *unit_info, vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -1153,7 +1151,7 @@ auto CheckParseTrees(const SemIR::File& builtin_ir,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(&node_converters, builtin_ir, unit_info, vlog_stream);
+        CheckParseTree(&node_converters, unit_info, vlog_stream);
       }
     }
   }

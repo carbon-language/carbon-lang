@@ -64,11 +64,11 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_16 [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_16 [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {

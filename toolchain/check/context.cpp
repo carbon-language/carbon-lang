@@ -845,19 +845,6 @@ class TypeCompleter {
     llvm_unreachable("All builtin kinds were handled above");
   }
 
-  auto BuildAnyImportRefValueRepr(SemIR::TypeId type_id,
-                                  SemIR::AnyImportRef import_ref) const
-      -> SemIR::ValueRepr {
-    auto import_ir_inst =
-        context_.import_ir_insts().Get(import_ref.import_ir_inst_id);
-    const auto& import_ir =
-        context_.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-    auto import_inst = import_ir->insts().Get(import_ir_inst.inst_id);
-    CARBON_CHECK(!import_inst.Is<SemIR::AnyImportRef>())
-        << "If ImportRef can point at another, this would be recursive.";
-    return BuildValueRepr(type_id, import_inst);
-  }
-
   auto BuildStructOrTupleValueRepr(std::size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
                                    bool same_as_object_rep) const
@@ -983,7 +970,9 @@ class TypeCompleter {
       case SemIR::FieldDecl::Kind:
       case SemIR::FunctionDecl::Kind:
       case SemIR::ImplDecl::Kind:
+      case SemIR::ImportRefLoaded::Kind:
       case SemIR::ImportRefUnloaded::Kind:
+      case SemIR::ImportRefUsed::Kind:
       case SemIR::InitializeFrom::Kind:
       case SemIR::InterfaceDecl::Kind:
       case SemIR::InterfaceWitness::Kind:
@@ -1021,11 +1010,6 @@ class TypeCompleter {
         // indexing.
         return MakePointerValueRepr(type_id, SemIR::ValueRepr::ObjectAggregate);
       }
-
-      case SemIR::ImportRefLoaded::Kind:
-      case SemIR::ImportRefUsed::Kind:
-        return BuildAnyImportRefValueRepr(type_id,
-                                          inst.As<SemIR::AnyImportRef>());
 
       case CARBON_KIND(SemIR::StructType struct_type): {
         return BuildStructTypeValueRepr(type_id, struct_type);

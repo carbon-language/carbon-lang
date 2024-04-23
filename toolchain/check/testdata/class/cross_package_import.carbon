@@ -158,9 +158,9 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+2, loc_14 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_14 [template = constants.%C]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
@@ -197,7 +197,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref: type = import_ref ir3, inst+3, loc_14 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir2, inst+3, loc_14 [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref [template = constants.%.1]
 // CHECK:STDOUT:   %c.var: ref extern C = var c
@@ -234,10 +234,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+2, loc_19 [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_19 [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir4, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir3, inst+3, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C.1]
 // CHECK:STDOUT:   %c.var: ref C = var c
@@ -279,10 +279,10 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_19 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_19 [template = constants.%C]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C.2 [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir3, inst+2, loaded [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, loaded [template = imports.%C]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var

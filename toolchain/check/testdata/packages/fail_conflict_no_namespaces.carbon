@@ -67,8 +67,8 @@ import library "var";
 // CHECK:STDOUT:     .Foo = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loaded [template = imports.%Foo]
-// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir3, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loaded [template = imports.%Foo]
+// CHECK:STDOUT:   %import_ref.2: ref i32 = import_ref ir2, inst+3, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

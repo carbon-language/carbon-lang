@@ -34,7 +34,7 @@ package Implicit impl;
 // CHECK:STDOUT:     .A = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref ir0, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

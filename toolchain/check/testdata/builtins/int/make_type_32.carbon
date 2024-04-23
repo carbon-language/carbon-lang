@@ -45,7 +45,7 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+3, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+3, loc_11 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %int.make_type_32: init type = call %Int.ref() [template = i32]

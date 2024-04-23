@@ -41,7 +41,7 @@ let a: T = 0;
 // CHECK:STDOUT:     .T = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loc_7 [symbolic = <unexpected instref inst+3>]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loc_7 [symbolic = <unexpected instref inst+3>]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+3>]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]

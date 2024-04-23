@@ -106,21 +106,21 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.2] {}
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in HasF> = import_ref ir2, inst+7, loc_20 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir2, inst+16, loc_22 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+9, loc_10 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in HasF> = import_ref ir1, inst+7, loc_20 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+16, loc_22 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+9, loc_10 [template = constants.%C]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: C = param c
 // CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+2, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+2, loc_18 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {

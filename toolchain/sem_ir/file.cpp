@@ -62,39 +62,19 @@ auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
 }
 
-File::File(SharedValueStores& value_stores, std::string filename,
-           const File* builtins, llvm::function_ref<void()> init_builtins)
+File::File(SharedValueStores& value_stores, std::string filename)
     : value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
-  CARBON_CHECK(builtins != nullptr);
-  auto builtins_id =
-      import_irs_.Add({.node_id = Parse::NodeId::Invalid, .sem_ir = builtins});
-  CARBON_CHECK(builtins_id == ImportIRId::Builtins)
-      << "Builtins must be the first IR";
-
   auto api_placeholder_id =
       import_irs_.Add({.node_id = Parse::NodeId::Invalid, .sem_ir = nullptr});
   CARBON_CHECK(api_placeholder_id == ImportIRId::ApiForImpl)
       << "ApiForImpl must be the second IR";
 
   insts_.Reserve(BuiltinKind::ValidCount);
-  init_builtins();
-  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
-      << "Builtins should produce " << BuiltinKind::ValidCount
-      << " insts, actual: " << insts_.size();
-  for (auto i : llvm::seq(BuiltinKind::ValidCount)) {
-    auto builtin_id = SemIR::InstId(i);
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
-  }
-}
-
-File::File(SharedValueStores& value_stores)
-    : File(value_stores, "<builtins>", this, [&]() {
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
@@ -104,21 +84,15 @@ File::File(SharedValueStores& value_stores)
                                                        : TypeId::TypeType, \
                BuiltinKind::Name}});
 #include "toolchain/sem_ir/builtin_kind.def"
-      }) {
+  CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
+      << "Builtins should produce " << BuiltinKind::ValidCount
+      << " insts, actual: " << insts_.size();
+  for (auto i : llvm::seq(BuiltinKind::ValidCount)) {
+    auto builtin_id = SemIR::InstId(i);
+    constant_values_.Set(builtin_id,
+                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
+  }
 }
-
-File::File(SharedValueStores& value_stores, std::string filename,
-           const File* builtins)
-    : File(value_stores, filename, builtins, [&]() {
-        for (auto [i, inst] : llvm::enumerate(builtins->insts_.array_ref())) {
-          // We can reuse the type_id from the builtin IR's inst because they're
-          // special-cased values.
-          auto import_ir_inst_id = import_ir_insts_.Add(
-              {.ir_id = ImportIRId::Builtins, .inst_id = SemIR::InstId(i)});
-          insts_.AddInNoBlock(
-              ImportRefLoaded{inst.type_id(), import_ir_inst_id});
-        }
-      }) {}
 
 auto File::Verify() const -> ErrorOr<Success> {
   // Invariants don't necessarily hold for invalid IR.
@@ -209,8 +183,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ExternType::Kind:
     case FacetTypeAccess::Kind:
     case FloatType::Kind:
-    case ImportRefLoaded::Kind:
-    case ImportRefUsed::Kind:
     case InterfaceType::Kind:
     case IntType::Kind:
     case NameRef::Kind:
@@ -252,7 +224,9 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case FloatLiteral::Kind:
     case FunctionDecl::Kind:
     case ImplDecl::Kind:
+    case ImportRefLoaded::Kind:
     case ImportRefUnloaded::Kind:
+    case ImportRefUsed::Kind:
     case InitializeFrom::Kind:
     case InterfaceDecl::Kind:
     case InterfaceWitness::Kind:
@@ -406,15 +380,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
-      case ImportRefLoaded::Kind:
-      case ImportRefUsed::Kind: {
-        auto import_ir_inst = sem_ir.import_ir_insts().Get(
-            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
-        steps.push_back(
-            {.sem_ir = *sem_ir.import_irs().Get(import_ir_inst.ir_id).sem_ir,
-             .inst_id = import_ir_inst.inst_id});
-        break;
-      }
       case CARBON_KIND(InterfaceType inst): {
         auto interface_name_id =
             sem_ir.interfaces().Get(inst.interface_id).name_id;
@@ -533,7 +498,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
+      case ImportRefUsed::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:

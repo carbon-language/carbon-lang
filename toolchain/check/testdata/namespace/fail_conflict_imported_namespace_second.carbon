@@ -56,7 +56,7 @@ fn NS.Foo();
 // CHECK:STDOUT:     .NS = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+2, loaded [template = imports.%NS]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+2, loaded [template = imports.%NS]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc16: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc24: <function> = fn_decl @.1 [template] {}

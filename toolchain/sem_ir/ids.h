@@ -256,9 +256,6 @@ struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   // An explicitly invalid ID.
   static const ImportIRId Invalid;
 
-  // The builtin IR's import location.
-  static const ImportIRId Builtins;
-
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
   // instructions.
@@ -272,8 +269,7 @@ struct ImportIRId : public IdBase, public Printable<ImportIRId> {
 };
 
 constexpr ImportIRId ImportIRId::Invalid = ImportIRId(InvalidIndex);
-constexpr ImportIRId ImportIRId::Builtins = ImportIRId(0);
-constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(1);
+constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
 
 // A boolean value.
 struct BoolValue : public IdBase, public Printable<BoolValue> {
