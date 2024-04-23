@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/inst_profile.h"
 
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::SemIR {
@@ -65,6 +66,17 @@ static auto RealProfileArgFunction(llvm::FoldingSetNodeID& id,
   id.AddBoolean(real.is_decimal);
 }
 
+// Profiling for BindNameInfo.
+static auto BindNameIdProfileArgFunction(llvm::FoldingSetNodeID& id,
+                                         const File& sem_ir, int32_t arg)
+    -> void {
+  const auto& [name_id, enclosing_scope_id, bind_index] =
+      sem_ir.bind_names().Get(BindNameId(arg));
+  id.AddInteger(name_id.index);
+  id.AddInteger(enclosing_scope_id.index);
+  id.AddInteger(bind_index.index);
+}
+
 // Profiles the given instruction argument, which is of the specified kind.
 static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
                        IdKind arg_kind, int32_t arg) -> void {
@@ -77,6 +89,7 @@ static auto ProfileArg(llvm::FoldingSetNodeID& id, const File& sem_ir,
         array[IdKind::For<TypeBlockId>.ToIndex()] = TypeBlockProfileArgFunction;
         array[IdKind::For<IntId>.ToIndex()] = IntProfileArgFunction;
         array[IdKind::For<RealId>.ToIndex()] = RealProfileArgFunction;
+        array[IdKind::For<BindNameId>.ToIndex()] = BindNameIdProfileArgFunction;
         return array;
       }();
   ProfileFunctions[arg_kind.ToIndex()](id, sem_ir, arg);

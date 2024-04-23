@@ -23,6 +23,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Simple [template]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Simple, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Simple> = assoc_entity element0, @Simple.%G [template]
 // CHECK:STDOUT: }
@@ -45,11 +46,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
-// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Simple = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G.1 [template] {
-// CHECK:STDOUT:     %Self.ref: Simple = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref, %.loc8_14.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref: Simple = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref, %.loc8_14.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc8_8.1: Self = param self
 // CHECK:STDOUT:     %self.loc8_8.2: Self = bind_name self, %self.loc8_8.1
 // CHECK:STDOUT:   }

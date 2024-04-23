@@ -28,6 +28,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Add> = assoc_entity element0, @Add.%Op [template]
 // CHECK:STDOUT: }
@@ -40,21 +41,21 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
-// CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %self.loc5_9.1: Self = param self
 // CHECK:STDOUT:     %self.loc5_9.2: Self = bind_name self, %self.loc5_9.1
-// CHECK:STDOUT:     %Self.ref.loc5_28: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_28: Add = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_28.1: type = facet_type_access %Self.ref.loc5_28 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_28.2: type = converted %Self.ref.loc5_28, %.loc5_28.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %other.loc5_21.1: Self = param other
 // CHECK:STDOUT:     %other.loc5_21.2: Self = bind_name other, %other.loc5_21.1
-// CHECK:STDOUT:     %Self.ref.loc5_37: Add = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref.loc5_37: Add = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_37.1: type = facet_type_access %Self.ref.loc5_37 [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc5_41: <associated <function> in Add> = assoc_entity element0, %Op [template = constants.%.3]
@@ -71,6 +72,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
@@ -95,9 +97,9 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_9 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir3, inst+20, loc_36 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir3, inst+21, loc_36 [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+18, loc_10 [template = imports.%Op]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+19, loc_10 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Add.decl: type = interface_decl @Add [template = constants.%.1] {}
@@ -106,7 +108,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+1, loc_36 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+19, unloaded
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
 // CHECK:STDOUT:   %.loc10_18: <bound method> = bound_method %.loc10_16, %.1 [template = constants.%.7]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18(%.loc10_16, %.loc10_20) [template = constants.%.8]

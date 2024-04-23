@@ -15,6 +15,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: --- fail_type_param_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -26,19 +28,19 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %T.loc7_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %U.loc7_16.1: type = param U
-// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U, %U.loc7_16.1 [symbolic]
+// CHECK:STDOUT:     @F.%U: type = bind_symbolic_name U, %U.loc7_16.1 [symbolic = constants.%U]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type, %U: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
-// CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = %U]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, %U [symbolic = constants.%U]
 // CHECK:STDOUT:   %p.ref: ref T* = name_ref p, %p
 // CHECK:STDOUT:   %.loc12_15: T* = bind_value %p.ref
 // CHECK:STDOUT:   %.loc12_14: ref T = deref %.loc12_15

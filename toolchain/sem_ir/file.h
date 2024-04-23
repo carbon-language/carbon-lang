@@ -30,13 +30,15 @@ namespace Carbon::SemIR {
 struct BindNameInfo : public Printable<BindNameInfo> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << "}";
+        << ", index: " << bind_index << "}";
   }
 
   // The name.
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
+  // The index for a compile-time binding. Invalid for a runtime binding.
+  CompileTimeBindIndex bind_index;
 };
 
 class File;

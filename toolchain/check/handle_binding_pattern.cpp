@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/return.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -25,7 +26,12 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // scopes, but right now we don't support qualified names here.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = name_id,
-         .enclosing_scope_id = context.scope_stack().PeekNameScopeId()});
+         .enclosing_scope_id = context.scope_stack().PeekNameScopeId(),
+         // TODO: Don't allocate a compile-time binding index for an associated
+         // constant declaration.
+         .bind_index = is_generic
+                           ? context.scope_stack().AddCompileTimeBinding()
+                           : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
       // TODO: Create a `BindTemplateName` instead inside a `template` pattern.
       return {name_node,

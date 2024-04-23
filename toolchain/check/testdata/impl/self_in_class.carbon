@@ -20,6 +20,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @DefaultConstructible [template]
+// CHECK:STDOUT:   %Self: DefaultConstructible = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @DefaultConstructible, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in DefaultConstructible> = assoc_entity element0, @DefaultConstructible.%Make [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
@@ -40,11 +41,11 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @DefaultConstructible {
-// CHECK:STDOUT:   %Self: DefaultConstructible = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: DefaultConstructible = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make: <function> = fn_decl @Make.1 [template] {
-// CHECK:STDOUT:     %Self.ref: DefaultConstructible = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_16.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc8_16.2: type = converted %Self.ref, %.loc8_16.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref: DefaultConstructible = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_16.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc8_16.2: type = converted %Self.ref, %.loc8_16.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_20: <associated <function> in DefaultConstructible> = assoc_entity element0, %Make [template = constants.%.3]

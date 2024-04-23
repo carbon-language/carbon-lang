@@ -14,6 +14,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: --- symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT:   %.2: type = const_type T [symbolic]
 // CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
@@ -34,25 +35,25 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %T.loc8_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc8_6.1 [symbolic]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc8_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc9_11: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc9_11: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc9_12: type = ptr_type T [symbolic = constants.%.1]
-// CHECK:STDOUT:   %T.ref.loc9_21: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc9_21: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc9_15: type = const_type T [symbolic = constants.%.2]
 // CHECK:STDOUT:   %.loc9_22.1: (type, type) = tuple_literal (%.loc9_12, %.loc9_15)
 // CHECK:STDOUT:   %.loc9_22.2: type = converted %.loc9_22.1, constants.%.4 [symbolic = constants.%.4]
 // CHECK:STDOUT:   %u.var: ref (T*, const T) = var u
 // CHECK:STDOUT:   %u: ref (T*, const T) = bind_name u, %u.var
-// CHECK:STDOUT:   %T.ref.loc10: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc10: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc10: type = struct_type {.a: T} [symbolic = constants.%.7]
 // CHECK:STDOUT:   %v.var: ref {.a: T} = var v
 // CHECK:STDOUT:   %v: ref {.a: T} = bind_name v, %v.var
-// CHECK:STDOUT:   %T.ref.loc11: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc11: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc11_14: i32 = int_literal 5 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc11_15: type = array_type %.loc11_14, T [symbolic = constants.%.9]
 // CHECK:STDOUT:   %w.var: ref [T; 5] = var w

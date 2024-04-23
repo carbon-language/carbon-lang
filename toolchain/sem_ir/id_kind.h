@@ -120,9 +120,10 @@ using IdKind = TypeEnum<
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
     // From sem_ir/id.h.
-    InstId, ConstantId, BindNameId, FunctionId, ClassId, InterfaceId, ImplId,
-    ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
-    InstBlockId, TypeId, TypeBlockId, ElementIndex, FloatKind>;
+    InstId, ConstantId, BindNameId, CompileTimeBindIndex, FunctionId, ClassId,
+    InterfaceId, ImplId, ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind,
+    NameId, NameScopeId, InstBlockId, TypeId, TypeBlockId, ElementIndex,
+    FloatKind>;
 
 }  // namespace Carbon::SemIR
 

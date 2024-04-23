@@ -35,6 +35,7 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Inc, <function> [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Inc> = assoc_entity element0, @Inc.%Op [template]
@@ -48,11 +49,11 @@ fn TestOp() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
-// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
-// CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = %Self]
-// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = %Self]
+// CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
+// CHECK:STDOUT:     %.loc5_24.2: type = converted %Self.ref, %.loc5_24.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_24.3: type = ptr_type Self [symbolic = constants.%.2]
 // CHECK:STDOUT:     %self.loc5_14.1: Self* = param self
 // CHECK:STDOUT:     %self.loc5_14.3: Self* = bind_name self, %self.loc5_14.1
@@ -74,6 +75,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type C [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Op) [template]
@@ -93,9 +95,9 @@ fn TestOp() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Inc> = import_ref ir3, inst+14, loc_47 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Inc> = import_ref ir3, inst+15, loc_47 [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+12, loc_19 [template = imports.%Op]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir3, inst+13, loc_19 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -104,7 +106,7 @@ fn TestOp() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {}
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir3, inst+1, loc_47 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir3, inst+13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {

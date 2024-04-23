@@ -28,6 +28,7 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in I> = assoc_entity element0, @I.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -54,7 +55,7 @@ fn F(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
 // CHECK:STDOUT:   %.loc8: <associated <function> in I> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:

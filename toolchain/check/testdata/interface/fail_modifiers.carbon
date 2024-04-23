@@ -33,8 +33,10 @@ protected interface Protected;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Abstract [template]
+// CHECK:STDOUT:   %Self.1: Abstract = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @Default [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Virtual [template]
+// CHECK:STDOUT:   %Self.2: Virtual = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_type @Protected [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,7 +56,7 @@ protected interface Protected;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Abstract {
-// CHECK:STDOUT:   %Self: Abstract = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Abstract = bind_symbolic_name Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -64,7 +66,7 @@ protected interface Protected;
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Virtual {
-// CHECK:STDOUT:   %Self: Virtual = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Virtual = bind_symbolic_name Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

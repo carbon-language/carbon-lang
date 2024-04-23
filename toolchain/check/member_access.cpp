@@ -188,8 +188,11 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
   }
 
   // Substitute into the type declared in the interface.
+  auto self_param =
+      context.insts().GetAs<SemIR::BindSymbolicName>(interface.self_param_id);
   Substitution substitutions[1] = {
-      {.bind_id = interface.self_param_id, .replacement_id = type_const_id}};
+      {.bind_id = context.bind_names().Get(self_param.bind_name_id).bind_index,
+       .replacement_id = type_const_id}};
   auto subst_type_id =
       SubstType(context, assoc_type.entity_type_id, substitutions);
 

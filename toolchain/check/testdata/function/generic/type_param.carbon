@@ -12,6 +12,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: --- type_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -23,17 +24,17 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %T.loc7_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%T: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.1]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
-// CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T [symbolic = %T]
+// CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %p.ref: ref T* = name_ref p, %p
 // CHECK:STDOUT:   %.loc9_15: T* = bind_value %p.ref
 // CHECK:STDOUT:   %.loc9_14.1: ref T = deref %.loc9_15

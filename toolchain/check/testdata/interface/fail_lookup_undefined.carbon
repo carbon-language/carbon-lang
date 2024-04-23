@@ -50,6 +50,7 @@ interface BeingDefined {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Undefined [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BeingDefined [template]
+// CHECK:STDOUT:   %Self: BeingDefined = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @BeingDefined, <function> [template]
 // CHECK:STDOUT:   %.4: <associated <function> in BeingDefined> = assoc_entity element0, @BeingDefined.%H [template]
 // CHECK:STDOUT: }
@@ -71,7 +72,7 @@ interface BeingDefined {
 // CHECK:STDOUT: interface @Undefined;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
-// CHECK:STDOUT:   %Self: BeingDefined = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: BeingDefined = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [template = constants.%.2]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]

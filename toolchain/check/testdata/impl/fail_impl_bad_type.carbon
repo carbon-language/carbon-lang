@@ -15,6 +15,7 @@ impl true as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
@@ -33,7 +34,7 @@ impl true as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

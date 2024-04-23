@@ -89,7 +89,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 13 [template]
 // CHECK:STDOUT:   %.4: type = int_type unsigned, %.3 [template]
-// CHECK:STDOUT:   %.5: type = int_type unsigned, @Symbolic.%N [symbolic]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N [symbolic]
+// CHECK:STDOUT:   %.5: type = int_type unsigned, %N [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -134,16 +135,16 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic: <function> = fn_decl @Symbolic [template] {
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N, %N.loc14_13.1 [symbolic]
+// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N, %N.loc14_13.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %UInt.ref.loc14_25: <function> = name_ref UInt, %import_ref [template = imports.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N]
+// CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_31.1: type = value_of_initializer %int.make_type_unsigned.loc14_29 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_31.2: type = converted %int.make_type_unsigned.loc14_29, %.loc14_31.1 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %x.loc14_22.1: Core.UInt(N) = param x
 // CHECK:STDOUT:     @Symbolic.%x: Core.UInt(N) = bind_name x, %x.loc14_22.1
 // CHECK:STDOUT:     %UInt.ref.loc14_37: <function> = name_ref UInt, %import_ref [template = imports.%UInt]
-// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N [symbolic = @Symbolic.%N]
+// CHECK:STDOUT:     %N.ref.loc14_42: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_41: init type = call %UInt.ref.loc14_37(%N.ref.loc14_42) [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_unsigned.loc14_41 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_unsigned.loc14_41, %.loc14_43.1 [symbolic = constants.%.5]

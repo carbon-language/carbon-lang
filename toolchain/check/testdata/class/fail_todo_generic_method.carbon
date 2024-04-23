@@ -28,6 +28,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: --- fail_todo_generic_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Class, T [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: T} [symbolic]
@@ -41,22 +42,22 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T, %T.loc11_13.1 [symbolic]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc26: <function> = fn_decl @.1 [template] {
 // CHECK:STDOUT:     %T.loc26_10.1: type = param T
-// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T, %T.loc26_10.1 [symbolic]
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T, %T.loc26_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2]
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Class> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc13_8.2: Class = bind_name self, %self.loc13_8.1
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = file.%T.loc11_13.2]
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc13_20.1: T = param n
 // CHECK:STDOUT:     %n.loc13_20.2: T = bind_name n, %n.loc13_20.1
 // CHECK:STDOUT:   }
