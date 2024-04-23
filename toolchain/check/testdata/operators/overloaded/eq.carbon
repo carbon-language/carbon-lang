@@ -96,7 +96,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Eq, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Eq> = assoc_entity element0, @Eq.%Equal [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Eq> = assoc_entity element1, @Eq.%NotEqual [template]
@@ -110,7 +110,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eq {
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Equal: <function> = fn_decl @Equal [template] {
 // CHECK:STDOUT:     %Self.ref.loc7_18: Eq = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc7_18.1: type = facet_type_access %Self.ref.loc7_18 [symbolic = constants.%Self]
@@ -157,7 +157,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Equal, @impl.%NotEqual) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
@@ -291,7 +291,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Eq, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Eq> = assoc_entity element0, file.%import_ref.7 [template]
 // CHECK:STDOUT:   %.7: <associated <function> in Eq> = assoc_entity element1, file.%import_ref.9 [template]
@@ -370,7 +370,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Eq [template]
-// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Eq = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Equal, @impl.%NotEqual) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]

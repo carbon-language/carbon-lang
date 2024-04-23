@@ -89,7 +89,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %.2: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 13 [template]
 // CHECK:STDOUT:   %.4: type = int_type signed, %.3 [template]
-// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N [symbolic]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,7 +135,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic: <function> = fn_decl @Symbolic [template] {
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N, %N.loc14_13.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %Int.ref.loc14_25: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:     %N.ref.loc14_29: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_signed.loc14_28: init type = call %Int.ref.loc14_25(%N.ref.loc14_29) [symbolic = constants.%.5]

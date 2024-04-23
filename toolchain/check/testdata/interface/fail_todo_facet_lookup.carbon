@@ -25,10 +25,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
-// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Interface, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Interface> = assoc_entity element0, @Interface.%F [template]
-// CHECK:STDOUT:   %T: Interface = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T: Interface = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,12 +44,12 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %CallStatic: <function> = fn_decl @CallStatic [template] {
 // CHECK:STDOUT:     %Interface.ref.loc9: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc9_15.1: Interface = param T
-// CHECK:STDOUT:     @CallStatic.%T: Interface = bind_symbolic_name T, %T.loc9_15.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @CallStatic.%T: Interface = bind_symbolic_name T 0, %T.loc9_15.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFacet: <function> = fn_decl @CallFacet [template] {
 // CHECK:STDOUT:     %Interface.ref.loc17: type = name_ref Interface, %Interface.decl [template = constants.%.1]
 // CHECK:STDOUT:     %T.loc17_14.1: Interface = param T
-// CHECK:STDOUT:     @CallFacet.%T: Interface = bind_symbolic_name T, %T.loc17_14.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @CallFacet.%T: Interface = bind_symbolic_name T 0, %T.loc17_14.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref: Interface = name_ref T, @CallFacet.%T [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc17_32.1: type = facet_type_access %T.ref [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc17_32.2: type = converted %T.ref, %.loc17_32.1 [symbolic = constants.%T]
@@ -59,7 +59,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc7: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:

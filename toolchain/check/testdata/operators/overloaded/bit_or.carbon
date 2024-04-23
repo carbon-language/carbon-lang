@@ -46,11 +46,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @BitOr [template]
-// CHECK:STDOUT:   %Self.1: BitOr = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: BitOr = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @BitOr, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in BitOr> = assoc_entity element0, @BitOr.%Op [template]
 // CHECK:STDOUT:   %.4: type = interface_type @BitOrAssign [template]
-// CHECK:STDOUT:   %Self.2: BitOrAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: BitOrAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @BitOrAssign, <function> [template]
 // CHECK:STDOUT:   %.7: <associated <function> in BitOrAssign> = assoc_entity element0, @BitOrAssign.%Op [template]
@@ -66,7 +66,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitOr {
-// CHECK:STDOUT:   %Self: BitOr = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: BitOr = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
 // CHECK:STDOUT:     %Self.ref.loc5_15: BitOr = name_ref Self, %Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self.1]
@@ -92,7 +92,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BitOrAssign {
-// CHECK:STDOUT:   %Self: BitOrAssign = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: BitOrAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_20: BitOrAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
@@ -125,13 +125,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @BitOr [template]
-// CHECK:STDOUT:   %Self.1: BitOr = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: BitOr = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @BitOrAssign [template]
-// CHECK:STDOUT:   %Self.2: BitOrAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: BitOrAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]

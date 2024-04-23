@@ -670,7 +670,11 @@ class Formatter {
   auto FormatArg(BuiltinKind kind) -> void { out_ << kind.label(); }
 
   auto FormatArg(BindNameId id) -> void {
-    FormatName(sem_ir_.bind_names().Get(id).name_id);
+    const auto& info = sem_ir_.bind_names().Get(id);
+    FormatName(info.name_id);
+    if (info.bind_index.is_valid()) {
+      out_ << " " << info.bind_index.index;
+    }
   }
 
   auto FormatArg(FunctionId id) -> void { FormatFunctionName(id); }

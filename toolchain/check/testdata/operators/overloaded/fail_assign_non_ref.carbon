@@ -55,12 +55,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Inc, <function> [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Inc> = assoc_entity element0, @Inc.%Op [template]
 // CHECK:STDOUT:   %.5: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @AddAssign, <function> [template]
 // CHECK:STDOUT:   %.8: <associated <function> in AddAssign> = assoc_entity element0, @AddAssign.%Op [template]
@@ -76,7 +76,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
-// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
 // CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = constants.%Self.1]
@@ -95,7 +95,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_20: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
@@ -128,12 +128,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type C [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.6: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.7: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (@impl.2.%Op) [template]
 // CHECK:STDOUT:   %.9: type = tuple_type () [template]

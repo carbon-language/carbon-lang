@@ -62,20 +62,20 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self.1: Negate = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Negate = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Negate, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Negate> = assoc_entity element0, @Negate.%Op [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Add> = assoc_entity element0, @Add.%Op [template]
 // CHECK:STDOUT:   %.7: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.9: type = assoc_entity_type @AddAssign, <function> [template]
 // CHECK:STDOUT:   %.10: <associated <function> in AddAssign> = assoc_entity element0, @AddAssign.%Op [template]
 // CHECK:STDOUT:   %.11: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.12: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.13: type = assoc_entity_type @Inc, <function> [template]
 // CHECK:STDOUT:   %.14: <associated <function> in Inc> = assoc_entity element0, @Inc.%Op [template]
@@ -95,7 +95,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {
-// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
 // CHECK:STDOUT:     %Self.ref: Negate = name_ref Self, %Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref [symbolic = constants.%Self.1]
@@ -112,7 +112,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_15: Add = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_15.1: type = facet_type_access %Self.ref.loc8_15 [symbolic = constants.%Self.2]
@@ -138,7 +138,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @AddAssign {
-// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %Self: AddAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.3 [template] {
 // CHECK:STDOUT:     %Self.ref.loc11_20: AddAssign = name_ref Self, %Self [symbolic = constants.%Self.3]
 // CHECK:STDOUT:     %.loc11_24.1: type = facet_type_access %Self.ref.loc11_20 [symbolic = constants.%Self.3]
@@ -162,7 +162,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {
-// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self [symbolic = constants.%Self.4]
+// CHECK:STDOUT:   %Self: Inc = bind_symbolic_name Self 0 [symbolic = constants.%Self.4]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.4 [template] {
 // CHECK:STDOUT:     %Self.ref: Inc = name_ref Self, %Self [symbolic = constants.%Self.4]
 // CHECK:STDOUT:     %.loc14_24.1: type = facet_type_access %Self.ref [symbolic = constants.%Self.4]
@@ -196,20 +196,20 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self.1: Negate = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Negate = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Negate, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Negate> = assoc_entity element0, file.%import_ref.5 [template]
 // CHECK:STDOUT:   %.7: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.9: <associated <function> in Add> = assoc_entity element0, file.%import_ref.10 [template]
 // CHECK:STDOUT:   %.10: C = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = interface_type @AddAssign [template]
-// CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, <function> [template]
 // CHECK:STDOUT:   %.13: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.15 [template]
 // CHECK:STDOUT:   %.14: type = interface_type @Inc [template]
-// CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.15: type = assoc_entity_type @Inc, <function> [template]
 // CHECK:STDOUT:   %.16: <associated <function> in Inc> = assoc_entity element0, file.%import_ref.20 [template]
 // CHECK:STDOUT: }

@@ -25,7 +25,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in I> = assoc_entity element0, @I.%F [template]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
@@ -54,7 +54,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Self.ref: I = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc10_14.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]

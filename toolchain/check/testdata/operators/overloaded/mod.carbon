@@ -46,11 +46,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Mod [template]
-// CHECK:STDOUT:   %Self.1: Mod = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Mod = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Mod, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Mod> = assoc_entity element0, @Mod.%Op [template]
 // CHECK:STDOUT:   %.4: type = interface_type @ModAssign [template]
-// CHECK:STDOUT:   %Self.2: ModAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: ModAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @ModAssign, <function> [template]
 // CHECK:STDOUT:   %.7: <associated <function> in ModAssign> = assoc_entity element0, @ModAssign.%Op [template]
@@ -66,7 +66,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Mod {
-// CHECK:STDOUT:   %Self: Mod = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: Mod = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
 // CHECK:STDOUT:     %Self.ref.loc5_15: Mod = name_ref Self, %Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self.1]
@@ -92,7 +92,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ModAssign {
-// CHECK:STDOUT:   %Self: ModAssign = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: ModAssign = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.2 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_20: ModAssign = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref.loc8_20 [symbolic = constants.%Self.2]
@@ -125,13 +125,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Mod [template]
-// CHECK:STDOUT:   %Self.1: Mod = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Mod = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.6: C = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = interface_type @ModAssign [template]
-// CHECK:STDOUT:   %Self.2: ModAssign = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: ModAssign = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = ptr_type C [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]

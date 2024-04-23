@@ -12,7 +12,7 @@ interface UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @UseSelf [template]
-// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @UseSelf, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in UseSelf> = assoc_entity element0, @UseSelf.%F [template]
 // CHECK:STDOUT: }
@@ -27,7 +27,7 @@ interface UseSelf {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
-// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_14: UseSelf = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = constants.%Self]

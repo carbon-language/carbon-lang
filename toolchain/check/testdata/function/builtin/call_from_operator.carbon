@@ -28,7 +28,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Add> = assoc_entity element0, @Add.%Op [template]
 // CHECK:STDOUT: }
@@ -41,7 +41,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
 // CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self]
@@ -72,7 +72,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
-// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]

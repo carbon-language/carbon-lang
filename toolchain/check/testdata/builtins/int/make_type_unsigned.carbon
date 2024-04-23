@@ -89,7 +89,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %.2: type = int_type unsigned, %.1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 13 [template]
 // CHECK:STDOUT:   %.4: type = int_type unsigned, %.3 [template]
-// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N [symbolic]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = int_type unsigned, %N [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,7 +135,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Symbolic: <function> = fn_decl @Symbolic [template] {
 // CHECK:STDOUT:     %N.loc14_13.1: i32 = param N
-// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N, %N.loc14_13.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     @Symbolic.%N: i32 = bind_symbolic_name N 0, %N.loc14_13.1 [symbolic = constants.%N]
 // CHECK:STDOUT:     %UInt.ref.loc14_25: <function> = name_ref UInt, %import_ref [template = imports.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_30: i32 = name_ref N, @Symbolic.%N [symbolic = constants.%N]
 // CHECK:STDOUT:     %int.make_type_unsigned.loc14_29: init type = call %UInt.ref.loc14_25(%N.ref.loc14_30) [symbolic = constants.%.5]

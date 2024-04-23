@@ -12,7 +12,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: --- type_param_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -23,7 +23,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %T.loc7_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc7_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc7_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc7_19: type = name_ref T, @F.%T [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc7_16.1: T = param n
 // CHECK:STDOUT:     @F.%n: T = bind_name n, %n.loc7_16.1

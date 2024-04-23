@@ -36,7 +36,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Negate, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Negate> = assoc_entity element0, @Negate.%Op [template]
 // CHECK:STDOUT: }
@@ -49,7 +49,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {
-// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
 // CHECK:STDOUT:     %Self.ref.loc5_15: Negate = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self]
@@ -77,7 +77,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Negate [template]
-// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]

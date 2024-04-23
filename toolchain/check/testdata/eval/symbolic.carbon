@@ -14,7 +14,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: --- symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
 // CHECK:STDOUT:   %.2: type = const_type T [symbolic]
 // CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
@@ -35,7 +35,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %T.loc8_6.1: type = param T
-// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T, %T.loc8_6.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc8_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

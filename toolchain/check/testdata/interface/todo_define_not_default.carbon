@@ -19,7 +19,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in I> = assoc_entity element0, @I.%F [template]
 // CHECK:STDOUT:   %.4: <associated <function> in I> = assoc_entity element1, @I.%G [template]
@@ -42,7 +42,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
 // CHECK:STDOUT:   %.loc9: <associated <function> in I> = assoc_entity element0, %F [template = constants.%.3]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {

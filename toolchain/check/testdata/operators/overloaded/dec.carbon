@@ -35,7 +35,7 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Dec [template]
-// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Dec, <function> [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Dec> = assoc_entity element0, @Dec.%Op [template]
@@ -49,7 +49,7 @@ fn TestOp() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Dec {
-// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
 // CHECK:STDOUT:     %Self.ref: Dec = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_24.1: type = facet_type_access %Self.ref [symbolic = constants.%Self]
@@ -75,7 +75,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Dec [template]
-// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Dec = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = ptr_type C [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Op) [template]

@@ -47,15 +47,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
-// CHECK:STDOUT:   %Self.1: Empty = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Empty = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @Basic [template]
-// CHECK:STDOUT:   %Self.2: Basic = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: Basic = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type @Basic, type [template]
 // CHECK:STDOUT:   %.4: <associated type in Basic> = assoc_entity element0, @Basic.%T [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Basic, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Basic> = assoc_entity element1, @Basic.%F [template]
 // CHECK:STDOUT:   %.7: type = interface_type @ForwardDeclared [template]
-// CHECK:STDOUT:   %Self.3: ForwardDeclared = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.3: ForwardDeclared = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @ForwardDeclared, type [template]
 // CHECK:STDOUT:   %.9: <associated type in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%T [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @ForwardDeclared, <function> [template]
@@ -85,7 +85,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
-// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: Empty = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -93,7 +93,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
-// CHECK:STDOUT:   %Self: Basic = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: Basic = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc8: <associated type in Basic> = assoc_entity element0, %T [template = constants.%.4]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
@@ -107,7 +107,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
-// CHECK:STDOUT:   %Self: ForwardDeclared = bind_symbolic_name Self [symbolic = constants.%Self.3]
+// CHECK:STDOUT:   %Self: ForwardDeclared = bind_symbolic_name Self 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %.loc15: <associated type in ForwardDeclared> = assoc_entity element0, %T [template = constants.%.9]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
@@ -128,12 +128,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Empty [template]
-// CHECK:STDOUT:   %Self.1: Empty = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: Empty = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = interface_type @Basic [template]
-// CHECK:STDOUT:   %Self.2: Basic = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: Basic = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_type @ForwardDeclared [template]
-// CHECK:STDOUT:   %Self.3: ForwardDeclared = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.3: ForwardDeclared = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Basic, type [template]
 // CHECK:STDOUT:   %.6: <associated type in Basic> = assoc_entity element0, file.%import_ref.16 [template]
 // CHECK:STDOUT:   %.7: type = assoc_entity_type @Basic, <function> [template]

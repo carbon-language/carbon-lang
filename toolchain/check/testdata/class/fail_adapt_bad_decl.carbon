@@ -212,10 +212,10 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @I.1 [template]
-// CHECK:STDOUT:   %Self.1: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.3: type = interface_type @I.2 [template]
-// CHECK:STDOUT:   %Self.2: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -231,7 +231,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %.loc15: {} = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -240,7 +240,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.2 {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %.loc23: {} = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

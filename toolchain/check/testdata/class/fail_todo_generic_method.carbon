@@ -28,7 +28,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: --- fail_todo_generic_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Class, T [symbolic]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: T} [symbolic]
@@ -42,11 +42,11 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
-// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T, %T.loc11_13.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc26: <function> = fn_decl @.1 [template] {
 // CHECK:STDOUT:     %T.loc26_10.1: type = param T
-// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T, %T.loc26_10.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc26_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

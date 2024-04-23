@@ -15,7 +15,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT: --- fail_symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N [symbolic]
+// CHECK:STDOUT:   %N: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,7 +26,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
 // CHECK:STDOUT:     %N.loc8_6.1: i32 = param N
-// CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N, %N.loc8_6.1 [symbolic = constants.%N]
+// CHECK:STDOUT:     @G.%N: i32 = bind_symbolic_name N 0, %N.loc8_6.1 [symbolic = constants.%N]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

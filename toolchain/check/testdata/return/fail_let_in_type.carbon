@@ -30,7 +30,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
-// CHECK:STDOUT:   %y: type = bind_symbolic_name y [symbolic]
+// CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

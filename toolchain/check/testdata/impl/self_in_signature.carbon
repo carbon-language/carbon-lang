@@ -36,7 +36,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @UseSelf [template]
-// CHECK:STDOUT:   %Self.1: UseSelf = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.1: UseSelf = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @UseSelf, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in UseSelf> = assoc_entity element0, @UseSelf.%F [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
@@ -49,7 +49,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.9: <witness> = interface_witness (@impl.2.%F) [template]
 // CHECK:STDOUT:   %.10: D = struct_value () [template]
 // CHECK:STDOUT:   %.11: type = interface_type @SelfNested [template]
-// CHECK:STDOUT:   %Self.2: SelfNested = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self.2: SelfNested = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.12: type = ptr_type Self [symbolic]
 // CHECK:STDOUT:   %.13: type = struct_type {.x: Self, .y: i32} [symbolic]
 // CHECK:STDOUT:   %.14: type = tuple_type (type, type) [template]
@@ -98,7 +98,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
-// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: UseSelf = bind_symbolic_name Self 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_14: UseSelf = name_ref Self, %Self [symbolic = constants.%Self.1]
 // CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = constants.%Self.1]
@@ -124,7 +124,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
-// CHECK:STDOUT:   %Self: SelfNested = bind_symbolic_name Self [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: SelfNested = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F: <function> = fn_decl @F.4 [template] {
 // CHECK:STDOUT:     %Self.ref.loc24_12: SelfNested = name_ref Self, %Self [symbolic = constants.%Self.2]
 // CHECK:STDOUT:     %.loc24_16.1: type = facet_type_access %Self.ref.loc24_12 [symbolic = constants.%Self.2]

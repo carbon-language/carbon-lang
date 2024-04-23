@@ -92,7 +92,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Ordered [template]
-// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @Ordered, <function> [template]
 // CHECK:STDOUT:   %.3: <associated <function> in Ordered> = assoc_entity element0, @Ordered.%Less [template]
 // CHECK:STDOUT:   %.4: <associated <function> in Ordered> = assoc_entity element1, @Ordered.%LessOrEquivalent [template]
@@ -108,7 +108,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
-// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Less: <function> = fn_decl @Less [template] {
 // CHECK:STDOUT:     %Self.ref.loc8_17: Ordered = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_17.1: type = facet_type_access %Self.ref.loc8_17 [symbolic = constants.%Self]
@@ -189,7 +189,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Ordered [template]
-// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Less, @impl.%LessOrEquivalent, @impl.%Greater, @impl.%GreaterOrEquivalent) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
@@ -407,7 +407,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Ordered [template]
-// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type @Ordered, <function> [template]
 // CHECK:STDOUT:   %.6: <associated <function> in Ordered> = assoc_entity element0, file.%import_ref.11 [template]
 // CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element1, file.%import_ref.13 [template]
