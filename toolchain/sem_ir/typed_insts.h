@@ -438,22 +438,6 @@ struct Deref {
   InstId pointer_id;
 };
 
-struct ExternDecl {
-  static constexpr auto Kind =
-      InstKind::ExternDecl.Define<Parse::NodeId>("extern_decl");
-
-  TypeId type_id;
-  InstId decl_id;
-};
-
-struct ExternType {
-  static constexpr auto Kind = InstKind::ExternType.Define<Parse::NodeId>(
-      "extern_type", InstConstantKind::Always);
-
-  TypeId type_id;
-  TypeId non_extern_type_id;
-};
-
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetTypeAccess {

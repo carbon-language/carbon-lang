@@ -41,12 +41,12 @@ class C {}
 library "fail_decl_fn_in_extern" api;
 
 extern class C;
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:6: ERROR: Name qualifiers are only allowed for entities that provide a scope.
-// CHECK:STDERR: fn C.F();
-// CHECK:STDERR:      ^
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+4]]:4: Non-scope entity referenced here.
+// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: ERROR: Cannot declare a member of incomplete class `C`.
 // CHECK:STDERR: fn C.F();
 // CHECK:STDERR:    ^
+// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: Class was forward declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn C.F();
 
@@ -100,18 +100,11 @@ class C {
   extern class D;
 }
 
-// --- fail_def_after_extern_decl.carbon
+// --- todo_fail_def_after_extern_decl.carbon
 
 library "fail_def_after_extern_decl" api;
 
 extern class C;
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `class C` in the same library must match use of `extern`.
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE-4]]:1: Previously declared here.
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 class C {}
 
 // --- fail_extern_decl_after_decl.carbon
@@ -128,25 +121,64 @@ class C;
 // CHECK:STDERR:
 extern class C;
 
-// --- import_extern_decl_then_decl.carbon
+// --- fail_todo_import_extern_decl_then_decl.carbon
 
 library "import_extern_decl_then_decl" api;
 
 import library "extern_decl";
+// CHECK:STDERR: fail_todo_import_extern_decl_then_decl.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: class C;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_todo_import_extern_decl_then_decl.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "decl";
 
-// --- import_decl_then_extern_decl.carbon
+// --- fail_todo_import_decl_then_extern_decl.carbon
 
 library "import_decl_then_extern_decl" api;
 
 import library "decl";
+// CHECK:STDERR: fail_todo_import_decl_then_extern_decl.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_import_decl_then_extern_decl.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: class C;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 import library "extern_decl";
 
-// --- import_extern_decl_then_def.carbon
+// --- fail_todo_import_extern_decl_then_def.carbon
 
 library "import_extern_decl_then_def" api;
 
 import library "extern_decl";
+// CHECK:STDERR: fail_todo_import_extern_decl_then_def.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "def";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: def.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: class C {}
+// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_todo_import_extern_decl_then_def.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "def";
 
 // --- fail_import_ownership_conflict.carbon
@@ -154,26 +186,52 @@ import library "def";
 library "fail_import_ownership_conflict" api;
 
 import library "extern_decl";
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: class C;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "decl";
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "def";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: def.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-7]]:1: In import.
-// CHECK:STDERR: import library "decl";
+// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-21]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: decl.carbon:4:1: Previously declared here.
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "def";
 
-// --- import_extern_decl_copy.carbon
+// --- fail_todo_import_extern_decl_copy.carbon
 
 library "import_extern_decl_copy" api;
 
 import library "extern_decl";
+// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "extern_decl_copy";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl_copy.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "extern_decl";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern class C;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
 import library "extern_decl_copy";
 
 // --- extern_decl_after_import_extern_decl.carbon
@@ -229,17 +287,15 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -248,17 +304,15 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -288,17 +342,15 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl [template = constants.%.1]
 // CHECK:STDOUT:   %.loc12: <function> = fn_decl @.1 [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -331,19 +383,16 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %.loc4
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl.loc4 [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc12: type = extern_decl %C.decl.loc12 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -352,17 +401,15 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl.loc4 [template = constants.%.1]
 // CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,23 +442,21 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_after_extern_decl.carbon
+// CHECK:STDOUT: --- todo_fail_def_after_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc4: type = extern_decl %C.decl.loc4 [template = constants.%.1]
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl.loc5: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -423,7 +468,6 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -434,25 +478,23 @@ extern class C;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %.loc12: type = extern_decl %C.decl.loc12 [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_extern_decl_then_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_extern_decl_then_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
@@ -463,11 +505,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_decl_then_extern_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_decl_then_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,7 +518,7 @@ extern class C;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+3, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -487,21 +528,20 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_extern_decl_then_def.carbon
+// CHECK:STDOUT: --- fail_todo_import_extern_decl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT:   %.2: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
@@ -524,17 +564,16 @@ extern class C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C.3 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
@@ -544,25 +583,23 @@ extern class C;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1 {
+// CHECK:STDOUT: class @C.1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C.2 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.4
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.3 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_extern_decl_copy.carbon
+// CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT:   %.2: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -570,8 +607,8 @@ extern class C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+3, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+3, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
 // CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -585,29 +622,6 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C.decl.loc6
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+3, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: type = extern_decl %C.decl.loc6 [template = constants.%.1]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_after_import_extern_decl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -620,7 +634,26 @@ extern class C;
 // CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: type = extern_decl %C.decl.loc6 [template = constants.%.1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- decl_after_import_extern_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .C = %C.decl.loc6
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+2, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
+// CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -630,7 +663,6 @@ extern class C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -644,7 +676,6 @@ extern class C;
 // CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: type = extern_decl %C.decl.loc6 [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -657,7 +688,6 @@ extern class C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = extern_type C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -671,7 +701,6 @@ extern class C;
 // CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %C.decl.1: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: type = extern_decl %C.decl.loc6 [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

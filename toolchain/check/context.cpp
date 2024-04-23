@@ -992,7 +992,6 @@ class TypeCompleter {
         // For symbolic types, we arbitrarily pick a copy representation.
         return MakeCopyValueRepr(type_id);
 
-      case SemIR::ExternType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:

@@ -179,7 +179,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
-    case ExternType::Kind:
     case FloatType::Kind:
     case InterfaceType::Kind:
     case InterfaceWitnessAccess::Kind:
@@ -294,11 +293,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         } else if (step.index == 1) {
           out << ")";
         }
-        break;
-      }
-      case CARBON_KIND(ExternType inst): {
-        out << "extern ";
-        push_inst_id(sem_ir.types().GetInstId(inst.non_extern_type_id));
         break;
       }
       case CARBON_KIND(FacetTypeAccess inst): {
@@ -434,7 +428,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ClassInit::Kind:
       case Converted::Kind:
       case Deref::Kind:
-      case ExternDecl::Kind:
       case FieldDecl::Kind:
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
@@ -556,8 +549,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassDecl::Kind:
       case ClassType::Kind:
       case ConstType::Kind:
-      case ExternDecl::Kind:
-      case ExternType::Kind:
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:

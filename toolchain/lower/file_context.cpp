@@ -339,8 +339,6 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
     case SemIR::ConstType::Kind:
       return GetType(inst.As<SemIR::ConstType>().inner_id);
-    case SemIR::ExternType::Kind:
-      CARBON_FATAL() << "Lowering extern types not supported.";
     case SemIR::FloatType::Kind:
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
