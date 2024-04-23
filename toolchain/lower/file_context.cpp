@@ -70,6 +70,7 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     return GetTypeAsValue();
   }
 
+  // TODO: Add a FunctionValue that FunctionDecl evaluates to, and remove this.
   auto target = sem_ir().insts().Get(inst_id);
   if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
     return GetFunction(function_decl->function_id);
@@ -82,6 +83,23 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
 
   if (target.type_id() == SemIR::TypeId::TypeType) {
     return GetTypeAsValue();
+  }
+
+  auto constant_id = sem_ir().constant_values().Get(inst_id);
+  if (constant_id.is_constant()) {
+    if (auto function_decl = sem_ir().insts().TryGetAs<SemIR::FunctionDecl>(
+            constant_id.inst_id())) {
+      return GetFunction(function_decl->function_id);
+    }
+    auto* value = globals_.lookup(constant_id.inst_id());
+    if (!value) {
+      // TODO: Less-hacky constant lowering.
+      FunctionContext ctx(*this, nullptr, vlog_stream_);
+      ctx.LowerInst(constant_id.inst_id());
+      value = ctx.GetValue(constant_id.inst_id());
+      globals_.insert({constant_id.inst_id(), value});
+    }
+    return value;
   }
 
   CARBON_FATAL() << "Missing value: " << inst_id << " " << target;

@@ -690,6 +690,8 @@ struct ReturnExpr {
 
   // This is a statement, so has no type.
   InstId expr_id;
+  // The return slot, if any. Invalid if we're not returning through memory.
+  InstId dest_id;
 };
 
 struct SpliceBlock {

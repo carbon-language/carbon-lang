@@ -49,7 +49,7 @@ var a: A = {};
 // CHECK:STDOUT:   %.loc9_11.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc9_11.2: init A = class_init (), %return [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_12: init A = converted %.loc9_11.1, %.loc9_11.2 [template = constants.%.4]
-// CHECK:STDOUT:   return %.loc9_12
+// CHECK:STDOUT:   return %.loc9_12 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

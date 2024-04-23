@@ -147,7 +147,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.6]
 // CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc10_14
+// CHECK:STDOUT:   return %.loc10_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self]() -> Self;
@@ -159,6 +159,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.loc15_10.1: <bound method> = bound_method %a.ref, %.1
 // CHECK:STDOUT:   %.loc14: ref C = splice_block %return {}
 // CHECK:STDOUT:   %.loc15_10.2: init C = call %.loc15_10.1(%a.ref) to %.loc14
-// CHECK:STDOUT:   return %.loc15_10.2
+// CHECK:STDOUT:   return %.loc15_10.2 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

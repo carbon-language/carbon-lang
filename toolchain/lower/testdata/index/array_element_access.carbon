@@ -17,21 +17,22 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'array_element_access.carbon'
 // CHECK:STDOUT: source_filename = "array_element_access.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @tuple = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.1 = internal constant [2 x i32] [i32 1, i32 2]
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @A(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_36.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %.loc6_36.2.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc6_36.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %.loc6_36.4.tuple.elem, align 4
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @B(ptr sret([2 x i32]) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8_34.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_34.3.array.index, align 4
 // CHECK:STDOUT:   %.loc8_34.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %.loc8_34.6.array.index, align 4
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.1, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,3 +68,12 @@ fn Run() {
 // CHECK:STDOUT:   store i32 %.loc14_21.2, ptr %d.var, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11 }
+// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

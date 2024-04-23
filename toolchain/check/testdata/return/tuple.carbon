@@ -44,6 +44,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_17.5: init i32 = initialize_from %.loc9_15 to %.loc9_17.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_17.6: init (i32, i32) = tuple_init (%.loc9_17.3, %.loc9_17.5) to %return [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_18: init (i32, i32) = converted %.loc9_17.1, %.loc9_17.6 [template = constants.%.6]
-// CHECK:STDOUT:   return %.loc9_18
+// CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

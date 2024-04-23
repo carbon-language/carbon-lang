@@ -74,7 +74,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc13_43.6: init C = class_init (%.loc13_43.3, %.loc13_43.5), %return [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_44: init C = converted %.loc13_43.1, %.loc13_43.6 [template = constants.%.6]
 // CHECK:STDOUT:   assign %return, %.loc13_44
-// CHECK:STDOUT:   return %result
+// CHECK:STDOUT:   return %result to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {

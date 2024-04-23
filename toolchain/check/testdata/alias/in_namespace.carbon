@@ -75,6 +75,6 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc15_17.3: init i32 = initialize_from %.loc15_16 to %.loc15_17.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_17.4: init C = class_init (%.loc15_17.3), %return [template = constants.%.5]
 // CHECK:STDOUT:   %.loc15_18: init C = converted %.loc15_17.1, %.loc15_17.4 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc15_18
+// CHECK:STDOUT:   return %.loc15_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

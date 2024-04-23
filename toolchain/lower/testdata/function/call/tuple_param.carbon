@@ -13,6 +13,8 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @tuple = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @F({ i32 } %b, ptr %c) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
@@ -20,14 +22,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_20.2.tuple = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc10_20.2 = getelementptr inbounds { i32, i32 }, ptr %.loc10_20.2.tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 2, ptr %.loc10_20.2, align 4
-// CHECK:STDOUT:   %.loc10_20.21 = getelementptr inbounds { i32, i32 }, ptr %.loc10_20.2.tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 3, ptr %.loc10_20.21, align 4
-// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr %.loc10_20.2.tuple)
+// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr @tuple)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 2, 0, 1 }

@@ -54,6 +54,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc12_16.5: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc12_16.6: init ((), ()) = tuple_init (%.loc12_16.3, %.loc12_16.5) to %return [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_17: init ((), ()) = converted %.loc12_16.1, %.loc12_16.6 [template = constants.%.5]
-// CHECK:STDOUT:   return %.loc12_17
+// CHECK:STDOUT:   return %.loc12_17 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

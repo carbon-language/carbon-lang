@@ -14,13 +14,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @struct = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8
 // CHECK:STDOUT:   %.loc8_48.2.a = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 0
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %.loc8_48.2.a, align 8
 // CHECK:STDOUT:   %.loc8_48.4.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_48.4.b, align 4
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct, i64 16, i1 false)
 // CHECK:STDOUT:   %y.var = alloca i32, align 4
 // CHECK:STDOUT:   %.loc9_17.1.b = getelementptr inbounds { double, i32 }, ptr %x.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc9_17.2 = load i32, ptr %.loc9_17.1.b, align 4
@@ -30,3 +31,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store i32 %.loc10, ptr %z.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 2, 4, 5, 3 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
