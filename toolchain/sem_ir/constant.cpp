@@ -10,14 +10,21 @@ namespace Carbon::SemIR {
 
 auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
   // Check that we're allowed to form this kind of constant.
-  CARBON_CHECK(inst.kind().constant_kind() != InstConstantKind::Never)
-      << "Should not form a constant from instruction " << inst;
-  CARBON_CHECK(inst.kind().constant_kind() != InstConstantKind::SymbolicOnly ||
-               is_symbolic)
-      << "Should only form a symbolic constant from instruction " << inst;
-  CARBON_CHECK(inst.kind().constant_kind() != InstConstantKind::Always ||
-               !is_symbolic)
-      << "Should only form a template constant from instruction " << inst;
+  switch (inst.kind().constant_kind()) {
+    case InstConstantKind::Never:
+      CARBON_FATAL() << "Should not form a constant from instruction " << inst;
+      break;
+    case InstConstantKind::SymbolicOnly:
+      CARBON_CHECK(is_symbolic)
+          << "Should only form a symbolic constant from instruction " << inst;
+      break;
+    case InstConstantKind::Conditional:
+      break;
+    case InstConstantKind::Always:
+      CARBON_CHECK(!is_symbolic)
+          << "Should only form a template constant from instruction " << inst;
+      break;
+  }
 
   // Compute the instruction's profile.
   ConstantNode node = {.inst = inst, .constant_id = ConstantId::NotConstant};
