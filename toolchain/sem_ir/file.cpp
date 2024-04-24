@@ -72,7 +72,7 @@ File::File(SharedValueStores& value_stores, std::string filename)
   auto api_placeholder_id =
       import_irs_.Add({.node_id = Parse::NodeId::Invalid, .sem_ir = nullptr});
   CARBON_CHECK(api_placeholder_id == ImportIRId::ApiForImpl)
-      << "ApiForImpl must be the second IR";
+      << "ApiForImpl must be the first IR";
 
   insts_.Reserve(BuiltinKind::ValidCount);
 // Error uses a self-referential type so that it's not accidentally treated as
