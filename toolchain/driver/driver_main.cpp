@@ -39,10 +39,7 @@ auto main(int argc, char** argv) -> int {
   auto fs = llvm::vfs::getRealFileSystem();
 
   // Construct the data directory relative to the executable location.
-  static int static_for_main_addr;
-  std::string exe =
-      llvm::sys::fs::getMainExecutable(argv[0], &static_for_main_addr);
-  llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe));
+  llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe_path));
   llvm::sys::path::append(data_dir, llvm::sys::path::Style::posix,
                           "carbon.runfiles/_main/");
 
