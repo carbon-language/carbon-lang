@@ -9,6 +9,23 @@
 namespace Carbon::SemIR {
 
 auto ConstantStore::GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId {
+  // Check that we're allowed to form this kind of constant.
+  switch (inst.kind().constant_kind()) {
+    case InstConstantKind::Never:
+      CARBON_FATAL() << "Should not form a constant from instruction " << inst;
+      break;
+    case InstConstantKind::SymbolicOnly:
+      CARBON_CHECK(is_symbolic)
+          << "Should only form a symbolic constant from instruction " << inst;
+      break;
+    case InstConstantKind::Conditional:
+      break;
+    case InstConstantKind::Always:
+      CARBON_CHECK(!is_symbolic)
+          << "Should only form a template constant from instruction " << inst;
+      break;
+  }
+
   // Compute the instruction's profile.
   ConstantNode node = {.inst = inst, .constant_id = ConstantId::NotConstant};
   llvm::FoldingSetNodeID id;

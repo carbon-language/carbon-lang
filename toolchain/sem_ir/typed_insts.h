@@ -55,8 +55,8 @@ struct AdaptDecl {
 
 struct AddrOf {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::AddrOf.Define<Parse::NodeId>("addr_of");
+  static constexpr auto Kind = InstKind::AddrOf.Define<Parse::NodeId>(
+      "addr_of", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstId lvalue_id;
@@ -73,8 +73,8 @@ struct AddrPattern {
 
 struct ArrayIndex {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::ArrayIndex.Define<Parse::NodeId>("array_index");
+  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
+      "array_index", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstId array_id;
@@ -142,8 +142,8 @@ struct ArrayInit {
 };
 
 struct ArrayType {
-  static constexpr auto Kind =
-      InstKind::ArrayType.Define<Parse::ArrayExprId>("array_type");
+  static constexpr auto Kind = InstKind::ArrayType.Define<Parse::ArrayExprId>(
+      "array_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstId bound_id;
@@ -186,8 +186,8 @@ struct AssociatedConstantDecl {
 // This represents the entity before impl lookup is performed, and identifies
 // the slot within a witness where the constant value will be found.
 struct AssociatedEntity {
-  static constexpr auto Kind =
-      InstKind::AssociatedEntity.Define<Parse::NodeId>("assoc_entity");
+  static constexpr auto Kind = InstKind::AssociatedEntity.Define<Parse::NodeId>(
+      "assoc_entity", InstConstantKind::Always);
 
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
@@ -200,7 +200,7 @@ struct AssociatedEntity {
 struct AssociatedEntityType {
   static constexpr auto Kind =
       InstKind::AssociatedEntityType.Define<Parse::InvalidNodeId>(
-          "assoc_entity_type");
+          "assoc_entity_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   InterfaceId interface_id;
@@ -211,8 +211,8 @@ struct AssociatedEntityType {
 // element of the derived class, and the type of the `BaseDecl` instruction is
 // an `UnboundElementType`.
 struct BaseDecl {
-  static constexpr auto Kind =
-      InstKind::BaseDecl.Define<Parse::BaseDeclId>("base_decl");
+  static constexpr auto Kind = InstKind::BaseDecl.Define<Parse::BaseDeclId>(
+      "base_decl", InstConstantKind::Always);
 
   TypeId type_id;
   TypeId base_type_id;
@@ -253,8 +253,8 @@ struct BindName {
 };
 
 struct BindSymbolicName {
-  static constexpr auto Kind =
-      InstKind::BindSymbolicName.Define<Parse::NodeId>("bind_symbolic_name");
+  static constexpr auto Kind = InstKind::BindSymbolicName.Define<Parse::NodeId>(
+      "bind_symbolic_name", InstConstantKind::SymbolicOnly);
 
   TypeId type_id;
   BindNameId bind_name_id;
@@ -280,8 +280,8 @@ struct BlockArg {
 };
 
 struct BoolLiteral {
-  static constexpr auto Kind =
-      InstKind::BoolLiteral.Define<Parse::NodeId>("bool_literal");
+  static constexpr auto Kind = InstKind::BoolLiteral.Define<Parse::NodeId>(
+      "bool_literal", InstConstantKind::Always);
 
   TypeId type_id;
   BoolValue value;
@@ -290,8 +290,8 @@ struct BoolLiteral {
 // A bound method, that combines a function with the value to use for its
 // `self` parameter, such as `object.MethodName`.
 struct BoundMethod {
-  static constexpr auto Kind =
-      InstKind::BoundMethod.Define<Parse::NodeId>("bound_method");
+  static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeId>(
+      "bound_method", InstConstantKind::Conditional);
 
   TypeId type_id;
   // The object argument in the bound method, which will be used to initialize
@@ -344,8 +344,8 @@ struct BranchWithArg {
 
 struct Builtin {
   // Builtins don't have a parse node associated with them.
-  static constexpr auto Kind =
-      InstKind::Builtin.Define<Parse::InvalidNodeId>("builtin");
+  static constexpr auto Kind = InstKind::Builtin.Define<Parse::InvalidNodeId>(
+      "builtin", InstConstantKind::Always);
 
   TypeId type_id;
   BuiltinKind builtin_kind;
@@ -355,7 +355,8 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>("call");
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
+      "call", InstConstantKind::SymbolicOnly);
 
   TypeId type_id;
   InstId callee_id;
@@ -368,7 +369,8 @@ struct Call {
 
 struct ClassDecl {
   static constexpr auto Kind =
-      InstKind::ClassDecl.Define<Parse::AnyClassDeclId>("class_decl");
+      InstKind::ClassDecl.Define<Parse::AnyClassDeclId>(
+          "class_decl", InstConstantKind::Always);
 
   TypeId type_id;
   // TODO: For a generic class declaration, the name of the class declaration
@@ -402,7 +404,8 @@ struct ClassInit {
 
 struct ClassType {
   static constexpr auto Kind =
-      InstKind::ClassType.Define<Parse::AnyClassDeclId>("class_type");
+      InstKind::ClassType.Define<Parse::AnyClassDeclId>(
+          "class_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   ClassId class_id;
@@ -411,7 +414,8 @@ struct ClassType {
 
 struct ConstType {
   static constexpr auto Kind =
-      InstKind::ConstType.Define<Parse::PrefixOperatorConstId>("const_type");
+      InstKind::ConstType.Define<Parse::PrefixOperatorConstId>(
+          "const_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   TypeId inner_id;
@@ -443,8 +447,8 @@ struct ExternDecl {
 };
 
 struct ExternType {
-  static constexpr auto Kind =
-      InstKind::ExternType.Define<Parse::NodeId>("extern_type");
+  static constexpr auto Kind = InstKind::ExternType.Define<Parse::NodeId>(
+      "extern_type", InstConstantKind::Always);
 
   TypeId type_id;
   TypeId non_extern_type_id;
@@ -462,15 +466,16 @@ struct FacetTypeAccess {
 
 struct FloatLiteral {
   static constexpr auto Kind =
-      InstKind::FloatLiteral.Define<Parse::RealLiteralId>("float_literal");
+      InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
+          "float_literal", InstConstantKind::Always);
 
   TypeId type_id;
   FloatId float_id;
 };
 
 struct FloatType {
-  static constexpr auto Kind =
-      InstKind::FloatType.Define<Parse::NodeId>("float_type");
+  static constexpr auto Kind = InstKind::FloatType.Define<Parse::NodeId>(
+      "float_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   // TODO: Consider adding a more compact way of representing either a small
@@ -482,7 +487,8 @@ struct FloatType {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::BindingPatternId>("field_decl");
+      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
+          "field_decl", InstConstantKind::Always);
 
   TypeId type_id;
   NameId name_id;
@@ -491,7 +497,8 @@ struct FieldDecl {
 
 struct FunctionDecl {
   static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>("fn_decl");
+      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
+          "fn_decl", InstConstantKind::Always);
 
   TypeId type_id;
   FunctionId function_id;
@@ -580,8 +587,8 @@ struct InterfaceDecl {
 };
 
 struct InterfaceType {
-  static constexpr auto Kind =
-      InstKind::InterfaceType.Define<Parse::NodeId>("interface_type");
+  static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
+      "interface_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   InterfaceId interface_id;
@@ -593,7 +600,7 @@ struct InterfaceType {
 struct InterfaceWitness {
   static constexpr auto Kind =
       InstKind::InterfaceWitness.Define<Parse::InvalidNodeId>(
-          "interface_witness");
+          "interface_witness", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -612,16 +619,16 @@ struct InterfaceWitnessAccess {
 
 struct IntLiteral {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::IntLiteral.Define<Parse::NodeId>("int_literal");
+  static constexpr auto Kind = InstKind::IntLiteral.Define<Parse::NodeId>(
+      "int_literal", InstConstantKind::Always);
 
   TypeId type_id;
   IntId int_id;
 };
 
 struct IntType {
-  static constexpr auto Kind =
-      InstKind::IntType.Define<Parse::NodeId>("int_type");
+  static constexpr auto Kind = InstKind::IntType.Define<Parse::NodeId>(
+      "int_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   IntKind int_kind;
@@ -642,7 +649,8 @@ struct NameRef {
 
 struct Namespace {
   static constexpr auto Kind =
-      InstKind::Namespace.Define<Parse::AnyNamespaceId>("namespace");
+      InstKind::Namespace.Define<Parse::AnyNamespaceId>(
+          "namespace", InstConstantKind::Always);
 
   TypeId type_id;
   NameScopeId name_scope_id;
@@ -659,8 +667,8 @@ struct Param {
 
 struct PointerType {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::PointerType.Define<Parse::NodeId>("ptr_type");
+  static constexpr auto Kind = InstKind::PointerType.Define<Parse::NodeId>(
+      "ptr_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   TypeId pointee_id;
@@ -668,7 +676,8 @@ struct PointerType {
 
 struct RealLiteral {
   static constexpr auto Kind =
-      InstKind::RealLiteral.Define<Parse::RealLiteralId>("real_literal");
+      InstKind::RealLiteral.Define<Parse::RealLiteralId>(
+          "real_literal", InstConstantKind::Always);
 
   TypeId type_id;
   RealId real_id;
@@ -706,7 +715,8 @@ struct SpliceBlock {
 
 struct StringLiteral {
   static constexpr auto Kind =
-      InstKind::StringLiteral.Define<Parse::StringLiteralId>("string_literal");
+      InstKind::StringLiteral.Define<Parse::StringLiteralId>(
+          "string_literal", InstConstantKind::Always);
 
   TypeId type_id;
   StringLiteralValueId string_literal_id;
@@ -743,8 +753,8 @@ struct StructLiteral {
 struct StructType {
   // TODO: Make this more specific. It can be one of: ClassDefinitionId,
   // StructLiteralId, StructTypeLiteralId
-  static constexpr auto Kind =
-      InstKind::StructType.Define<Parse::NodeId>("struct_type");
+  static constexpr auto Kind = InstKind::StructType.Define<Parse::NodeId>(
+      "struct_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstBlockId fields_id;
@@ -752,8 +762,8 @@ struct StructType {
 
 struct StructTypeField {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::StructTypeField.Define<Parse::NodeId>("struct_type_field");
+  static constexpr auto Kind = InstKind::StructTypeField.Define<Parse::NodeId>(
+      "struct_type_field", InstConstantKind::Conditional);
 
   // This instruction is an implementation detail of `StructType`, and doesn't
   // produce a value, so has no type, even though it declares a field with a
@@ -764,8 +774,8 @@ struct StructTypeField {
 
 struct StructValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::StructValue.Define<Parse::NodeId>("struct_value");
+  static constexpr auto Kind = InstKind::StructValue.Define<Parse::NodeId>(
+      "struct_value", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -828,8 +838,8 @@ struct TupleLiteral {
 
 struct TupleType {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::TupleType.Define<Parse::NodeId>("tuple_type");
+  static constexpr auto Kind = InstKind::TupleType.Define<Parse::NodeId>(
+      "tuple_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   TypeBlockId elements_id;
@@ -837,8 +847,8 @@ struct TupleType {
 
 struct TupleValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::TupleValue.Define<Parse::NodeId>("tuple_value");
+  static constexpr auto Kind = InstKind::TupleValue.Define<Parse::NodeId>(
+      "tuple_value", InstConstantKind::Conditional);
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -859,7 +869,7 @@ struct UnaryOperatorNot {
 struct UnboundElementType {
   static constexpr auto Kind = InstKind::UnboundElementType.Define<
       Parse::NodeIdOneOf<Parse::BaseDeclId, Parse::BindingPatternId>>(
-      "unbound_element_type");
+      "unbound_element_type", InstConstantKind::Conditional);
 
   TypeId type_id;
   // The class that a value of this type is an element of.
