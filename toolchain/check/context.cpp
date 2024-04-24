@@ -939,70 +939,10 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     CARBON_KIND_SWITCH(inst) {
-      case SemIR::AdaptDecl::Kind:
-      case SemIR::AddrOf::Kind:
-      case SemIR::AddrPattern::Kind:
-      case SemIR::ArrayIndex::Kind:
-      case SemIR::ArrayInit::Kind:
-      case SemIR::AsCompatible::Kind:
-      case SemIR::Assign::Kind:
-      case SemIR::AssociatedConstantDecl::Kind:
-      case SemIR::AssociatedEntity::Kind:
-      case SemIR::BaseDecl::Kind:
-      case SemIR::BindAlias::Kind:
-      case SemIR::BindName::Kind:
-      case SemIR::BindValue::Kind:
-      case SemIR::BlockArg::Kind:
-      case SemIR::BoolLiteral::Kind:
-      case SemIR::BoundMethod::Kind:
-      case SemIR::Branch::Kind:
-      case SemIR::BranchIf::Kind:
-      case SemIR::BranchWithArg::Kind:
-      case SemIR::Call::Kind:
-      case SemIR::ClassDecl::Kind:
-      case SemIR::ClassElementAccess::Kind:
-      case SemIR::ClassInit::Kind:
-      case SemIR::Converted::Kind:
-      case SemIR::Deref::Kind:
-      case SemIR::ExternDecl::Kind:
-      case SemIR::FacetTypeAccess::Kind:
-      case SemIR::FloatLiteral::Kind:
-      case SemIR::FieldDecl::Kind:
-      case SemIR::FunctionDecl::Kind:
-      case SemIR::ImplDecl::Kind:
-      case SemIR::ImportRefLoaded::Kind:
-      case SemIR::ImportRefUnloaded::Kind:
-      case SemIR::ImportRefUsed::Kind:
-      case SemIR::InitializeFrom::Kind:
-      case SemIR::InterfaceDecl::Kind:
-      case SemIR::InterfaceWitness::Kind:
-      case SemIR::InterfaceWitnessAccess::Kind:
-      case SemIR::IntLiteral::Kind:
-      case SemIR::NameRef::Kind:
-      case SemIR::Namespace::Kind:
-      case SemIR::Param::Kind:
-      case SemIR::RealLiteral::Kind:
-      case SemIR::Return::Kind:
-      case SemIR::ReturnExpr::Kind:
-      case SemIR::SpliceBlock::Kind:
-      case SemIR::StringLiteral::Kind:
-      case SemIR::StructAccess::Kind:
-      case SemIR::StructTypeField::Kind:
-      case SemIR::StructLiteral::Kind:
-      case SemIR::StructInit::Kind:
-      case SemIR::StructValue::Kind:
-      case SemIR::Temporary::Kind:
-      case SemIR::TemporaryStorage::Kind:
-      case SemIR::TupleAccess::Kind:
-      case SemIR::TupleIndex::Kind:
-      case SemIR::TupleLiteral::Kind:
-      case SemIR::TupleInit::Kind:
-      case SemIR::TupleValue::Kind:
-      case SemIR::UnaryOperatorNot::Kind:
-      case SemIR::ValueAsRef::Kind:
-      case SemIR::ValueOfInitializer::Kind:
-      case SemIR::VarStorage::Kind:
-        CARBON_FATAL() << "Type refers to non-type inst " << inst;
+#define CARBON_SEM_IR_INST_KIND_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+#include "toolchain/sem_ir/inst_kind.def"
+      CARBON_FATAL() << "Type refers to non-type inst " << inst;
 
       case SemIR::ArrayType::Kind: {
         // For arrays, it's convenient to always use a pointer representation,
@@ -1031,21 +971,31 @@ class TypeCompleter {
         return MakePointerValueRepr(class_info.object_repr_id,
                                     SemIR::ValueRepr::ObjectAggregate);
       }
-      case SemIR::InterfaceType::Kind: {
-        // TODO: Should we model the value representation as a witness?
+      case SemIR::AssociatedEntityType::Kind:
+      case SemIR::InterfaceType::Kind:
+      case SemIR::UnboundElementType::Kind: {
+        // These types have no runtime operations, so we use an empty value
+        // representation.
+        //
+        // TODO: There is information we could model here:
+        // - For an interface, we could use a witness.
+        // - For an associated entity, we could use an index into the witness.
+        // - For an unbound element, we could use an index or offset.
         return MakeEmptyValueRepr();
       }
       case CARBON_KIND(SemIR::Builtin builtin): {
         return BuildBuiltinValueRepr(type_id, builtin);
       }
 
-      case SemIR::AssociatedEntityType::Kind:
       case SemIR::BindSymbolicName::Kind:
+      case SemIR::InterfaceWitnessAccess::Kind:
+        // For symbolic types, we arbitrarily pick a copy representation.
+        return MakeCopyValueRepr(type_id);
+
       case SemIR::ExternType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
-      case SemIR::UnboundElementType::Kind:
         return MakeCopyValueRepr(type_id);
 
       case CARBON_KIND(SemIR::ConstType const_type): {

@@ -176,16 +176,14 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   switch (kind) {
     case ArrayType::Kind:
     case AssociatedEntityType::Kind:
-    case BindAlias::Kind:
     case BindSymbolicName::Kind:
     case Builtin::Kind:
     case ClassType::Kind:
     case ExternType::Kind:
-    case FacetTypeAccess::Kind:
     case FloatType::Kind:
     case InterfaceType::Kind:
+    case InterfaceWitnessAccess::Kind:
     case IntType::Kind:
-    case NameRef::Kind:
     case StructType::Kind:
     case TupleType::Kind:
     case UnboundElementType::Kind:
@@ -195,66 +193,9 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case PointerType::Kind:
       return -2;
 
-    case AdaptDecl::Kind:
-    case AddrOf::Kind:
-    case AddrPattern::Kind:
-    case ArrayIndex::Kind:
-    case ArrayInit::Kind:
-    case AsCompatible::Kind:
-    case Assign::Kind:
-    case AssociatedConstantDecl::Kind:
-    case AssociatedEntity::Kind:
-    case BaseDecl::Kind:
-    case BindName::Kind:
-    case BindValue::Kind:
-    case BlockArg::Kind:
-    case BoolLiteral::Kind:
-    case BoundMethod::Kind:
-    case Branch::Kind:
-    case BranchIf::Kind:
-    case BranchWithArg::Kind:
-    case Call::Kind:
-    case ClassDecl::Kind:
-    case ClassElementAccess::Kind:
-    case ClassInit::Kind:
-    case Converted::Kind:
-    case Deref::Kind:
-    case ExternDecl::Kind:
-    case FieldDecl::Kind:
-    case FloatLiteral::Kind:
-    case FunctionDecl::Kind:
-    case ImplDecl::Kind:
-    case ImportRefLoaded::Kind:
-    case ImportRefUnloaded::Kind:
-    case ImportRefUsed::Kind:
-    case InitializeFrom::Kind:
-    case InterfaceDecl::Kind:
-    case InterfaceWitness::Kind:
-    case InterfaceWitnessAccess::Kind:
-    case IntLiteral::Kind:
-    case Namespace::Kind:
-    case Param::Kind:
-    case RealLiteral::Kind:
-    case Return::Kind:
-    case ReturnExpr::Kind:
-    case SpliceBlock::Kind:
-    case StringLiteral::Kind:
-    case StructAccess::Kind:
-    case StructTypeField::Kind:
-    case StructLiteral::Kind:
-    case StructInit::Kind:
-    case StructValue::Kind:
-    case Temporary::Kind:
-    case TemporaryStorage::Kind:
-    case TupleAccess::Kind:
-    case TupleIndex::Kind:
-    case TupleLiteral::Kind:
-    case TupleInit::Kind:
-    case TupleValue::Kind:
-    case UnaryOperatorNot::Kind:
-    case ValueAsRef::Kind:
-    case ValueOfInitializer::Kind:
-    case VarStorage::Kind:
+#define CARBON_SEM_IR_INST_KIND_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+#include "toolchain/sem_ir/inst_kind.def"
       CARBON_FATAL() << "GetTypePrecedence for non-type inst kind " << kind;
   }
 }
