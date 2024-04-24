@@ -155,8 +155,9 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
 
 auto Context::AddImportRef(SemIR::ImportIRInst import_ir_inst)
     -> SemIR::InstId {
+  auto import_ir_inst_id = import_ir_insts().Add(import_ir_inst);
   auto import_ref_id = AddPlaceholderInstInNoBlock(
-      SemIR::ImportRefUnloaded{import_ir_insts().Add(import_ir_inst)});
+      {import_ir_inst_id, SemIR::ImportRefUnloaded{import_ir_inst_id}});
 
   // We can't insert this instruction into whatever block we happen to be in,
   // because this function is typically called by name lookup in the middle of

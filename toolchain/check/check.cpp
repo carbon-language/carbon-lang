@@ -96,14 +96,6 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
           continue;
         }
 
-        // If the parse node was invalid, recurse through import references when
-        // possible.
-        if (auto import_ref = cursor_ir->insts().TryGetAs<SemIR::AnyImportRef>(
-                cursor_inst_id)) {
-          follow_import_ref(import_ref->import_ir_inst_id);
-          continue;
-        }
-
         // If a namespace has an instruction for an import, switch to looking at
         // it.
         if (auto ns =
