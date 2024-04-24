@@ -47,7 +47,8 @@ class File;
 class File : public Printable<File> {
  public:
   // Starts a new file for Check::CheckParseTree.
-  explicit File(SharedValueStores& value_stores, std::string filename);
+  explicit File(CheckIRId check_ir_id, SharedValueStores& value_stores,
+                std::string filename);
 
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;
@@ -97,6 +98,8 @@ class File : public Printable<File> {
   // Same as `StringifyType`, but starting with an instruction representing a
   // type expression rather than a canonical type.
   auto StringifyTypeExpr(InstId outer_inst_id) const -> std::string;
+
+  auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
@@ -191,6 +194,8 @@ class File : public Printable<File> {
 
  private:
   bool has_errors_ = false;
+
+  CheckIRId check_ir_id_;
 
   // Shared, compile-scoped values.
   SharedValueStores* value_stores_;

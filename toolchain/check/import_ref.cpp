@@ -17,6 +17,55 @@
 
 namespace Carbon::Check {
 
+// Adds the ImportIR, excluding the update to the check_ir_map.
+static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
+    -> SemIR::ImportIRId {
+  context.import_ir_constant_values().push_back(
+      SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
+  return context.import_irs().Add(import_ir);
+}
+
+auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
+  auto ir_id = SemIR::ImportIRId::Invalid;
+  if (import_ir.sem_ir != nullptr) {
+    ir_id = AddImportIR(context, import_ir);
+  } else {
+    // We don't have a check_ir_id, so add without touching check_ir_map.
+    ir_id = InternalAddImportIR(context, import_ir);
+  }
+  CARBON_CHECK(ir_id == SemIR::ImportIRId::ApiForImpl)
+      << "ApiForImpl must be the first IR";
+}
+
+auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
+    -> SemIR::ImportIRId {
+  auto& ir_id = context.check_ir_map()[import_ir.sem_ir->check_ir_id().index];
+  if (ir_id.is_valid()) {
+    return ir_id;
+  }
+  // Note this updates check_ir_map.
+  ir_id = InternalAddImportIR(context, import_ir);
+  return ir_id;
+}
+
+auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
+    -> SemIR::InstId {
+  auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
+  auto import_ref_id = context.AddPlaceholderInstInNoBlock(
+      {import_ir_inst_id, SemIR::ImportRefUnloaded{import_ir_inst_id}});
+
+  // We can't insert this instruction into whatever block we happen to be in,
+  // because this function is typically called by name lookup in the middle of
+  // an otherwise unknown checking step. But we need to add the instruction
+  // somewhere, because it's referenced by other instructions and needs to be
+  // visible in textual IR. Adding it to the file block is arbitrary but is the
+  // best place we have right now.
+  //
+  // TODO: Consider adding a dedicated block for import_refs.
+  context.inst_block_stack().AddInstIdToFileBlock(import_ref_id);
+  return import_ref_id;
+}
+
 // Resolves an instruction from an imported IR into a constant referring to the
 // current IR.
 //
@@ -338,8 +387,8 @@ class ImportRefResolver {
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
                               SemIR::NameScope& new_scope) -> void {
     for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
-      auto ref_id = context_.AddImportRef(
-          {.ir_id = import_ir_id_, .inst_id = entry_inst_id});
+      auto ref_id = AddImportRef(
+          context_, {.ir_id = import_ir_id_, .inst_id = entry_inst_id});
       CARBON_CHECK(
           new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
               .second);
@@ -359,7 +408,7 @@ class ImportRefResolver {
     new_associated_entities.reserve(associated_entities.size());
     for (auto inst_id : associated_entities) {
       new_associated_entities.push_back(
-          context_.AddImportRef({.ir_id = import_ir_id_, .inst_id = inst_id}));
+          AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id}));
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
@@ -456,8 +505,8 @@ class ImportRefResolver {
     }
 
     // Add a lazy reference to the target declaration.
-    auto decl_id = context_.AddImportRef(
-        {.ir_id = import_ir_id_, .inst_id = inst.decl_id});
+    auto decl_id = AddImportRef(
+        context_, {.ir_id = import_ir_id_, .inst_id = inst.decl_id});
 
     auto inst_id = context_.AddInstInNoBlock(
         {AddImportIRInst(inst.decl_id),
@@ -1062,8 +1111,8 @@ static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
     // TODO: Consider importing the definition_id.
 
     auto& impl = context.impls().Get(impl_id);
-    impl.witness_id = context.AddImportRef(
-        {.ir_id = import_ir_id, .inst_id = import_impl.witness_id});
+    impl.witness_id = AddImportRef(
+        context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id});
   }
 }
 
