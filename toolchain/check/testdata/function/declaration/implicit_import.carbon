@@ -79,7 +79,7 @@ extern fn A();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+2, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir0, inst+2, loaded [template = imports.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }
@@ -106,7 +106,7 @@ extern fn A();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+2, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir0, inst+2, loaded [template = imports.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }
@@ -133,7 +133,7 @@ extern fn A();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+2, loaded [template = imports.%A]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir0, inst+2, loaded [template = imports.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
 // CHECK:STDOUT: }

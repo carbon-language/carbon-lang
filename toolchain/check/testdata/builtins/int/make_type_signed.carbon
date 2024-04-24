@@ -101,7 +101,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .G = %G
 // CHECK:STDOUT:     .Symbolic = %Symbolic
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_13 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+5, loc_13 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
 // CHECK:STDOUT:     %Int.ref.loc6_9: <function> = name_ref Int, %import_ref [template = imports.%Int]
@@ -184,7 +184,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+5, loc_11 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc10_12: i32 = int_literal 0 [template = constants.%.1]
@@ -211,7 +211,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .Negate = %Negate
 // CHECK:STDOUT:     .n = %n.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_23 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+5, loc_23 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
 // CHECK:STDOUT:     %n.loc6_11.1: i32 = param n
@@ -247,7 +247,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir2, inst+5, loc_11 [template = imports.%Int]
+// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+5, loc_11 [template = imports.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: <function> = name_ref Int, %import_ref [template = imports.%Int]
 // CHECK:STDOUT:   %.loc9_12: i32 = int_literal 1000000000 [template = constants.%.1]

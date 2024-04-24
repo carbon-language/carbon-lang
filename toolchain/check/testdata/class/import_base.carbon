@@ -119,17 +119,17 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+20, loc_16 [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+20, loc_16 [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+7, loc_44 [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir2, inst+13, loc_38 [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+11, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+25, unloaded
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+7, loc_44 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+13, loc_38 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+25, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {

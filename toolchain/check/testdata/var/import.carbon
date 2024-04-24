@@ -47,7 +47,7 @@ var a: i32 = a_ref;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: ref i32 = import_ref ir1, inst+3, loc_10
+// CHECK:STDOUT:   %import_ref: ref i32 = import_ref ir0, inst+3, loc_10
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var

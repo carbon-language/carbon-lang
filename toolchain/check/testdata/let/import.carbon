@@ -44,7 +44,7 @@ let b:! bool = a;
 // CHECK:STDOUT:     .a = %import_ref
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: bool = import_ref ir1, inst+2, loc_10 [symbolic = constants.%a]
+// CHECK:STDOUT:   %import_ref: bool = import_ref ir0, inst+2, loc_10 [symbolic = constants.%a]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %import_ref [symbolic = constants.%a]
 // CHECK:STDOUT:   %b: bool = bind_symbolic_name b 0, %a.ref [symbolic = constants.%b]

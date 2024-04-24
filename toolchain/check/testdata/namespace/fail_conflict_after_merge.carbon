@@ -59,7 +59,7 @@ fn NS();
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir2, inst+2, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref ir1, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}

@@ -231,11 +231,11 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc8_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir3, inst+1, loc_25 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir3, inst+12, loc_25 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir3, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir3, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_25 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir2, inst+12, loc_25 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+10, unloaded
 // CHECK:STDOUT:   %TestBinary: <function> = fn_decl @TestBinary [template] {
 // CHECK:STDOUT:     %C.ref.loc16_18: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc16_15.1: C = param a
@@ -246,26 +246,26 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc16_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir3, inst+14, loc_45 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.7: <associated <function> in Add> = import_ref ir3, inst+34, loc_45 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir3, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir3, inst+32, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir3, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+14, loc_45 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7: <associated <function> in Add> = import_ref ir2, inst+34, loc_45 [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+32, unloaded
 // CHECK:STDOUT:   %TestRef: <function> = fn_decl @TestRef [template] {
 // CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc24_12.1: C = param b
 // CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc24_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir3, inst+36, loc_66 [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.12: <associated <function> in AddAssign> = import_ref ir3, inst+55, loc_66 [template = constants.%.13]
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir3, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir3, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref ir3, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir3, inst+57, loc_69 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.17: <associated <function> in Inc> = import_ref ir3, inst+71, loc_69 [template = constants.%.16]
-// CHECK:STDOUT:   %import_ref.18 = import_ref ir3, inst+59, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref ir3, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref ir3, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+36, loc_66 [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.12: <associated <function> in AddAssign> = import_ref ir2, inst+55, loc_66 [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+38, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+57, loc_69 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.17: <associated <function> in Inc> = import_ref ir2, inst+71, loc_69 [template = constants.%.16]
+// CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref ir2, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref ir2, inst+69, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {

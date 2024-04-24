@@ -159,16 +159,16 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .CallFAndGIncomplete = %CallFAndGIncomplete
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+8, loc_14 [template = imports.%ReturnCUnused]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+11, loc_18 [template = imports.%ReturnCUsed]
-// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir2, inst+14, loc_22 [template = imports.%ReturnDUnused]
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir2, inst+17, loc_26 [template = imports.%ReturnDUsed]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+8, loc_14 [template = imports.%ReturnCUnused]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+11, loc_18 [template = imports.%ReturnCUsed]
+// CHECK:STDOUT:   %import_ref.5: <function> = import_ref ir1, inst+14, loc_22 [template = imports.%ReturnDUnused]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+17, loc_26 [template = imports.%ReturnDUsed]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+18, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %CallFAndGIncomplete: <function> = fn_decl @CallFAndGIncomplete [template] {}
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;

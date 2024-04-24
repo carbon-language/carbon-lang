@@ -9,7 +9,7 @@
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        builtin_insts.carbon
 // CHECK:STDOUT: sem_ir:
-// CHECK:STDOUT:   import_irs_size: 2
+// CHECK:STDOUT:   import_irs_size: 1
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst+0, enclosing_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   bind_names:      {}
@@ -19,16 +19,16 @@
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instTypeType:    {kind: ImportRefLoaded, arg0: 0, type: typeTypeType}
-// CHECK:STDOUT:     instError:       {kind: ImportRefLoaded, arg0: 1, type: typeError}
-// CHECK:STDOUT:     instBoolType:    {kind: ImportRefLoaded, arg0: 2, type: typeTypeType}
-// CHECK:STDOUT:     instIntType:     {kind: ImportRefLoaded, arg0: 3, type: typeTypeType}
-// CHECK:STDOUT:     instFloatType:   {kind: ImportRefLoaded, arg0: 4, type: typeTypeType}
-// CHECK:STDOUT:     instStringType:  {kind: ImportRefLoaded, arg0: 5, type: typeTypeType}
-// CHECK:STDOUT:     instFunctionType: {kind: ImportRefLoaded, arg0: 6, type: typeTypeType}
-// CHECK:STDOUT:     instBoundMethodType: {kind: ImportRefLoaded, arg0: 7, type: typeTypeType}
-// CHECK:STDOUT:     instNamespaceType: {kind: ImportRefLoaded, arg0: 8, type: typeTypeType}
-// CHECK:STDOUT:     instWitnessType: {kind: ImportRefLoaded, arg0: 9, type: typeTypeType}
+// CHECK:STDOUT:     instTypeType:    {kind: Builtin, arg0: TypeType, type: typeTypeType}
+// CHECK:STDOUT:     instError:       {kind: Builtin, arg0: Error, type: typeError}
+// CHECK:STDOUT:     instBoolType:    {kind: Builtin, arg0: BoolType, type: typeTypeType}
+// CHECK:STDOUT:     instIntType:     {kind: Builtin, arg0: IntType, type: typeTypeType}
+// CHECK:STDOUT:     instFloatType:   {kind: Builtin, arg0: FloatType, type: typeTypeType}
+// CHECK:STDOUT:     instStringType:  {kind: Builtin, arg0: StringType, type: typeTypeType}
+// CHECK:STDOUT:     instFunctionType: {kind: Builtin, arg0: FunctionType, type: typeTypeType}
+// CHECK:STDOUT:     instBoundMethodType: {kind: Builtin, arg0: BoundMethodType, type: typeTypeType}
+// CHECK:STDOUT:     instNamespaceType: {kind: Builtin, arg0: NamespaceType, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: Builtin, arg0: WitnessType, type: typeTypeType}
 // CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType

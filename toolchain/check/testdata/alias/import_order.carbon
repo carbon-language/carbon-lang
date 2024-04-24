@@ -87,15 +87,15 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+10, loc_51 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir2, inst+12, loc_37 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+14, loc_23 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+16, loc_11 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+10, loc_51 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loc_37 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+14, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+16, loc_11 [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir2, inst+5, loc_31 [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6: <unbound element of class C> = import_ref ir1, inst+5, loc_31 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %d.ref: type = name_ref d, %import_ref.5 [template = constants.%C]
 // CHECK:STDOUT:   %d_val.var: ref C = var d_val
 // CHECK:STDOUT:   %d_val: ref C = bind_name d_val, %d_val.var
