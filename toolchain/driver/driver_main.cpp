@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 #include "toolchain/driver/driver.h"
 
 auto main(int argc, char** argv) -> int {
@@ -16,6 +17,16 @@ auto main(int argc, char** argv) -> int {
 
   if (argc < 1) {
     return EXIT_FAILURE;
+  }
+
+  // Find the executable without resolving symlinks. Do a PATH lookup if argv[0]
+  // isn't a valid path.
+  llvm::SmallString<128> exe_path(argv[0]);
+  if (!llvm::sys::fs::exists(exe_path)) {
+    if (llvm::ErrorOr<std::string> path =
+            llvm::sys::findProgramByName(exe_path)) {
+      exe_path = *path;
+    }
   }
 
   Carbon::SetWorkingDirForBazel();
@@ -28,10 +39,7 @@ auto main(int argc, char** argv) -> int {
   auto fs = llvm::vfs::getRealFileSystem();
 
   // Construct the data directory relative to the executable location.
-  static int static_for_main_addr;
-  std::string exe =
-      llvm::sys::fs::getMainExecutable(argv[0], &static_for_main_addr);
-  llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe));
+  llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe_path));
   llvm::sys::path::append(data_dir, llvm::sys::path::Style::posix,
                           "carbon.runfiles/_main/");
 
