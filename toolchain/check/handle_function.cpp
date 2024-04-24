@@ -118,8 +118,6 @@ static auto BuildFunctionDecl(Context& context,
   auto function_decl = SemIR::FunctionDecl{
       context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
       SemIR::FunctionId::Invalid, decl_block_id};
-  // TODO: Should Function replace is_extern with ExternDecl, similar to
-  // ClassDecl?
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),

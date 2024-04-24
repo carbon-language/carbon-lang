@@ -410,9 +410,6 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ConstType inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::ExternDecl inst): {
-        return TryResolveTypedInst(inst);
-      }
       case CARBON_KIND(SemIR::FieldDecl inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
@@ -673,19 +670,6 @@ class ImportRefResolver {
     return {
         TryEvalInst(context_, SemIR::InstId::Invalid,
                     SemIR::ConstType{SemIR::TypeId::TypeType, inner_type_id})};
-  }
-
-  auto TryResolveTypedInst(SemIR::ExternDecl inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
-    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
-    auto decl_const_id = GetLocalConstantId(inst.decl_id);
-    if (HasNewWork(initial_work)) {
-      return ResolveResult::Retry();
-    }
-    auto extern_id = context_.AddInstInNoBlock(SemIR::LocIdAndInst::Untyped(
-        AddImportIRInst(inst.decl_id),
-        SemIR::ExternDecl{SemIR::TypeId::TypeType, decl_const_id.inst_id()}));
-    return {context_.constant_values().Get(extern_id)};
   }
 
   auto TryResolveTypedInst(SemIR::FieldDecl inst, SemIR::InstId import_inst_id)

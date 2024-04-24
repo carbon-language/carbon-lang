@@ -69,9 +69,10 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     }
 
     if (prev_class_id.is_valid()) {
+      // TODO: Fix prev_is_extern logic.
       if (MergeClassRedecl(context, node_id, class_info,
                            /*new_is_import=*/false, is_definition, is_extern,
-                           prev_class_id, prev_inst_for_merge.is_extern,
+                           prev_class_id, /*prev_is_extern=*/false,
                            prev_inst_for_merge.import_ir_inst_id)) {
         // When merging, use the existing entity rather than adding a new one.
         class_decl.class_id = prev_class_id;
@@ -128,6 +129,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                                      SemIR::ClassId::Invalid, decl_block_id};
   auto class_decl_id = context.AddPlaceholderInst({node_id, class_decl});
 
+  // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
@@ -136,15 +138,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       .decl_id = class_decl_id,
       .inheritance_kind = inheritance_kind};
 
-  auto extern_decl_id = SemIR::InstId::Invalid;
-  if (is_extern) {
-    extern_decl_id = context.AddPlaceholderInst(
-        {node_id, SemIR::ExternDecl{SemIR::TypeId::TypeType, class_decl_id}});
-  }
-
-  MergeOrAddName(context, node_id, name_context,
-                 extern_decl_id.is_valid() ? extern_decl_id : class_decl_id,
-                 class_decl, class_info, is_definition, is_extern);
+  MergeOrAddName(context, node_id, name_context, class_decl_id, class_decl,
+                 class_info, is_definition, is_extern);
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.is_valid();
@@ -162,12 +157,6 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // Build the `Self` type using the resulting type constant.
     auto& class_info = context.classes().Get(class_decl.class_id);
     class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
-  }
-
-  if (is_extern) {
-    context.ReplaceInstBeforeConstantUse(
-        extern_decl_id,
-        SemIR::ExternDecl{SemIR::TypeId::TypeType, class_decl_id});
   }
 
   return {class_decl.class_id, class_decl_id};
