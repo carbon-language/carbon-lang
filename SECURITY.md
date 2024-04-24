@@ -6,6 +6,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Security policy
 
+The Carbon Language is still an
+[experimental project](/README.md#project-status), so please be careful if using
+it in environments with security concerns.
+
 # Reporting a vulnerability
 
 Please use
