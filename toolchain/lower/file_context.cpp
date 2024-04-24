@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
@@ -295,17 +296,13 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 }
 
 auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
-  auto inst = sem_ir_->insts().Get(inst_id);
-  // TODO: Use CARBON_KIND_SWITCH here.
-  switch (inst.kind()) {
-    case SemIR::ArrayType::Kind: {
-      auto array_type = inst.As<SemIR::ArrayType>();
-      return llvm::ArrayType::get(
-          GetType(array_type.element_type_id),
-          sem_ir_->GetArrayBoundValue(array_type.bound_id));
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(inst_id)) {
+    case CARBON_KIND(SemIR::ArrayType inst): {
+      return llvm::ArrayType::get(GetType(inst.element_type_id),
+                                  sem_ir_->GetArrayBoundValue(inst.bound_id));
     }
-    case SemIR::Builtin::Kind: {
-      switch (inst.As<SemIR::Builtin>().builtin_kind) {
+    case CARBON_KIND(SemIR::Builtin inst): {
+      switch (inst.builtin_kind) {
         case SemIR::BuiltinKind::Invalid:
         case SemIR::BuiltinKind::Error:
           CARBON_FATAL() << "Unexpected builtin type in lowering.";
@@ -331,29 +328,30 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           return llvm::StructType::get(*llvm_context_);
       }
     }
-    case SemIR::ClassType::Kind: {
-      auto object_repr_id = sem_ir_->classes()
-                                .Get(inst.As<SemIR::ClassType>().class_id)
-                                .object_repr_id;
+    case CARBON_KIND(SemIR::ClassType inst): {
+      auto object_repr_id =
+          sem_ir_->classes().Get(inst.class_id).object_repr_id;
       return GetType(object_repr_id);
     }
-    case SemIR::ConstType::Kind:
-      return GetType(inst.As<SemIR::ConstType>().inner_id);
-    case SemIR::FloatType::Kind:
+    case CARBON_KIND(SemIR::ConstType inst): {
+      return GetType(inst.inner_id);
+    }
+    case SemIR::FloatType::Kind: {
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
-    case SemIR::IntType::Kind: {
-      auto width = sem_ir_->insts().TryGetAs<SemIR::IntLiteral>(
-          inst.As<SemIR::IntType>().bit_width_id);
+    }
+    case CARBON_KIND(SemIR::IntType inst): {
+      auto width =
+          sem_ir_->insts().TryGetAs<SemIR::IntLiteral>(inst.bit_width_id);
       CARBON_CHECK(width) << "Can't lower int type with symbolic width";
       return llvm::IntegerType::get(
           *llvm_context_, sem_ir_->ints().Get(width->int_id).getZExtValue());
     }
-    case SemIR::PointerType::Kind:
+    case SemIR::PointerType::Kind: {
       return llvm::PointerType::get(*llvm_context_, /*AddressSpace=*/0);
-    case SemIR::StructType::Kind: {
-      auto fields =
-          sem_ir_->inst_blocks().Get(inst.As<SemIR::StructType>().fields_id);
+    }
+    case CARBON_KIND(SemIR::StructType inst): {
+      auto fields = sem_ir_->inst_blocks().Get(inst.fields_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(fields.size());
       for (auto field_id : fields) {
@@ -362,13 +360,12 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
-    case SemIR::TupleType::Kind: {
+    case CARBON_KIND(SemIR::TupleType inst): {
       // TODO: Investigate special-casing handling of empty tuples so that they
       // can be collectively replaced with LLVM's void, particularly around
       // function returns. LLVM doesn't allow declaring variables with a void
       // type, so that may require significant special casing.
-      auto elements =
-          sem_ir_->type_blocks().Get(inst.As<SemIR::TupleType>().elements_id);
+      auto elements = sem_ir_->type_blocks().Get(inst.elements_id);
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(elements.size());
       for (auto element_id : elements) {
@@ -394,7 +391,8 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
 #define CARBON_SEM_IR_INST_KIND_TYPE(...)
 #define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
 #include "toolchain/sem_ir/inst_kind.def"
-      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " " << inst;
+      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " "
+                     << sem_ir_->insts().Get(inst_id);
   }
 }
 
