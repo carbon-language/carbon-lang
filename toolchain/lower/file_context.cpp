@@ -295,29 +295,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
 }
 
 auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
-  switch (inst_id.index) {
-    case SemIR::BuiltinKind::FloatType.AsInt():
-      // TODO: Handle different sizes.
-      return llvm::Type::getDoubleTy(*llvm_context_);
-    case SemIR::BuiltinKind::IntType.AsInt():
-      // TODO: Handle different sizes.
-      return llvm::Type::getInt32Ty(*llvm_context_);
-    case SemIR::BuiltinKind::BoolType.AsInt():
-      // TODO: We may want to have different representations for `bool` storage
-      // (`i8`) versus for `bool` values (`i1`).
-      return llvm::Type::getInt1Ty(*llvm_context_);
-    case SemIR::BuiltinKind::FunctionType.AsInt():
-    case SemIR::BuiltinKind::BoundMethodType.AsInt():
-    case SemIR::BuiltinKind::NamespaceType.AsInt():
-    case SemIR::BuiltinKind::WitnessType.AsInt():
-      // Return an empty struct as a placeholder.
-      return llvm::StructType::get(*llvm_context_);
-    default:
-      // Handled below.
-      break;
-  }
-
   auto inst = sem_ir_->insts().Get(inst_id);
+  // TODO: Use CARBON_KIND_SWITCH here.
   switch (inst.kind()) {
     case SemIR::ArrayType::Kind: {
       auto array_type = inst.As<SemIR::ArrayType>();
@@ -325,13 +304,33 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           GetType(array_type.element_type_id),
           sem_ir_->GetArrayBoundValue(array_type.bound_id));
     }
-    case SemIR::AssociatedEntityType::Kind:
-      // No runtime operations are provided on an associated entity name, so use
-      // an empty representation.
-      return llvm::StructType::get(*llvm_context_);
-    case SemIR::BindSymbolicName::Kind:
-      // Treat non-monomorphized type bindings as opaque.
-      return llvm::StructType::get(*llvm_context_);
+    case SemIR::Builtin::Kind: {
+      switch (inst.As<SemIR::Builtin>().builtin_kind) {
+        case SemIR::BuiltinKind::Invalid:
+        case SemIR::BuiltinKind::Error:
+          CARBON_FATAL() << "Unexpected builtin type in lowering.";
+        case SemIR::BuiltinKind::TypeType:
+          return GetTypeType();
+        case SemIR::BuiltinKind::FloatType:
+          return llvm::Type::getDoubleTy(*llvm_context_);
+        case SemIR::BuiltinKind::IntType:
+          return llvm::Type::getInt32Ty(*llvm_context_);
+        case SemIR::BuiltinKind::BoolType:
+          // TODO: We may want to have different representations for `bool`
+          // storage
+          // (`i8`) versus for `bool` values (`i1`).
+          return llvm::Type::getInt1Ty(*llvm_context_);
+        case SemIR::BuiltinKind::StringType:
+          // TODO: Decide how we want to represent `StringType`.
+          return llvm::PointerType::get(*llvm_context_, 0);
+        case SemIR::BuiltinKind::BoundMethodType:
+        case SemIR::BuiltinKind::FunctionType:
+        case SemIR::BuiltinKind::NamespaceType:
+        case SemIR::BuiltinKind::WitnessType:
+          // Return an empty struct as a placeholder.
+          return llvm::StructType::get(*llvm_context_);
+      }
+    }
     case SemIR::ClassType::Kind: {
       auto object_repr_id = sem_ir_->classes()
                                 .Get(inst.As<SemIR::ClassType>().class_id)
@@ -340,10 +339,11 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
     case SemIR::ConstType::Kind:
       return GetType(inst.As<SemIR::ConstType>().inner_id);
-    case SemIR::InterfaceType::Kind:
-      // Return an empty struct as a placeholder.
-      // TODO: Should we model an interface as a witness table?
-      return llvm::StructType::get(*llvm_context_);
+    case SemIR::ExternType::Kind:
+      CARBON_FATAL() << "Lowering extern types not supported.";
+    case SemIR::FloatType::Kind:
+      // TODO: Handle different sizes.
+      return llvm::Type::getDoubleTy(*llvm_context_);
     case SemIR::IntType::Kind: {
       auto width = sem_ir_->insts().TryGetAs<SemIR::IntLiteral>(
           inst.As<SemIR::IntType>().bit_width_id);
@@ -378,13 +378,25 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       }
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
+    case SemIR::AssociatedEntityType::Kind:
+    case SemIR::InterfaceType::Kind:
     case SemIR::UnboundElementType::Kind: {
       // Return an empty struct as a placeholder.
+      // TODO: Should we model an interface as a witness table, or an associated
+      // entity as an index?
       return llvm::StructType::get(*llvm_context_);
     }
-    default: {
-      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " " << inst;
+
+    // Treat non-monomorphized symbolic types as opaque.
+    case SemIR::BindSymbolicName::Kind:
+    case SemIR::InterfaceWitnessAccess::Kind: {
+      return llvm::StructType::get(*llvm_context_);
     }
+
+#define CARBON_SEM_IR_INST_KIND_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
+#include "toolchain/sem_ir/inst_kind.def"
+      CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " " << inst;
   }
 }
 
