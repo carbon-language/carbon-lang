@@ -24,3 +24,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store { i32 } %.loc9_20.3.tuple.init, ptr %y.var, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 1 }

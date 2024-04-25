@@ -73,8 +73,8 @@ struct AddrPattern {
 
 struct ArrayIndex {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
-      "array_index", InstConstantKind::Conditional);
+  static constexpr auto Kind =
+      InstKind::ArrayIndex.Define<Parse::NodeId>("array_index");
 
   TypeId type_id;
   InstId array_id;
@@ -355,8 +355,7 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
-      "call", InstConstantKind::SymbolicOnly);
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>("call");
 
   TypeId type_id;
   InstId callee_id;
@@ -369,8 +368,7 @@ struct Call {
 
 struct ClassDecl {
   static constexpr auto Kind =
-      InstKind::ClassDecl.Define<Parse::AnyClassDeclId>(
-          "class_decl", InstConstantKind::Always);
+      InstKind::ClassDecl.Define<Parse::AnyClassDeclId>("class_decl");
 
   TypeId type_id;
   // TODO: For a generic class declaration, the name of the class declaration
@@ -448,6 +446,18 @@ struct FacetTypeAccess {
   InstId facet_id;
 };
 
+// A field in a class, of the form `var field: field_type;`. The type of the
+// `FieldDecl` instruction is an `UnboundElementType`.
+struct FieldDecl {
+  static constexpr auto Kind =
+      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
+          "field_decl", InstConstantKind::Always);
+
+  TypeId type_id;
+  NameId name_id;
+  ElementIndex index;
+};
+
 struct FloatLiteral {
   static constexpr auto Kind =
       InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
@@ -465,18 +475,6 @@ struct FloatType {
   // TODO: Consider adding a more compact way of representing either a small
   // float bit width or an inst_id.
   InstId bit_width_id;
-};
-
-// A field in a class, of the form `var field: field_type;`. The type of the
-// `FieldDecl` instruction is an `UnboundElementType`.
-struct FieldDecl {
-  static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::BindingPatternId>(
-          "field_decl", InstConstantKind::Always);
-
-  TypeId type_id;
-  NameId name_id;
-  ElementIndex index;
 };
 
 struct FunctionDecl {
@@ -594,7 +592,7 @@ struct InterfaceWitness {
 struct InterfaceWitnessAccess {
   static constexpr auto Kind =
       InstKind::InterfaceWitnessAccess.Define<Parse::InvalidNodeId>(
-          "interface_witness_access");
+          "interface_witness_access", InstConstantKind::SymbolicOnly);
 
   TypeId type_id;
   InstId witness_id;

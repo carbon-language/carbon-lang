@@ -37,6 +37,11 @@ class ConstantValueStore {
     values_[inst_id.index] = const_id;
   }
 
+  // Returns the constant values mapping as an ArrayRef whose keys are
+  // instruction indexes. Some of the elements in this mapping may be Invalid or
+  // NotConstant.
+  auto array_ref() const -> llvm::ArrayRef<ConstantId> { return values_; }
+
  private:
   const ConstantId default_;
 

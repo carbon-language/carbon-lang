@@ -13,13 +13,13 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_return_value_access.carbon'
 // CHECK:STDOUT: source_filename = "tuple_return_value_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple = internal constant { i32, i32 } { i32 12, i32 24 }
+// CHECK:STDOUT: @const.loc7_39 = internal constant { i32, i32 } { i32 12, i32 24 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_38.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc7_38.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @const.loc7_39, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

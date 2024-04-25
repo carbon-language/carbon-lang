@@ -77,12 +77,6 @@ auto HandleAssociatedConstantDecl(FunctionContext& /*context*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleAssociatedEntity(FunctionContext& /*context*/,
-                            SemIR::InstId /*inst_id*/,
-                            SemIR::AssociatedEntity inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
                      SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
@@ -106,13 +100,6 @@ auto HandleBindSymbolicName(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleBlockArg(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BlockArg inst) -> void {
   context.SetLocal(inst_id, context.GetBlockArg(inst.block_id, inst.type_id));
-}
-
-auto HandleBoolLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::BoolLiteral inst) -> void {
-  llvm::Value* v =
-      llvm::ConstantInt::get(context.builder().getInt1Ty(), inst.value.index);
-  context.SetLocal(inst_id, v);
 }
 
 auto HandleBoundMethod(FunctionContext& context, SemIR::InstId inst_id,
@@ -170,11 +157,6 @@ auto HandleBranchWithArg(FunctionContext& context, SemIR::InstId /*inst_id*/,
   context.GetBlockArg(inst.target_id, arg_type_id)
       ->addIncoming(arg, phi_predecessor);
   context.builder().ClearInsertionPoint();
-}
-
-auto HandleBuiltin(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                   SemIR::Builtin inst) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
 // Get the predicate to use for an `icmp` instruction generated for the
@@ -484,18 +466,6 @@ auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
-auto HandleFloatLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                        SemIR::FloatLiteral inst) -> void {
-  const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
-  context.SetLocal(
-      inst_id, llvm::ConstantFP::get(context.builder().getDoubleTy(), value));
-}
-
-auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                        SemIR::FunctionDecl inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                     SemIR::ImplDecl inst) -> void {
   FatalErrorIfEncountered(inst);
@@ -547,15 +517,6 @@ auto HandleInterfaceWitnessAccess(FunctionContext& context,
   context.SetLocal(inst_id, context.GetValue(const_id.inst_id()));
 }
 
-auto HandleIntLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::IntLiteral inst) -> void {
-  const llvm::APInt& i = context.sem_ir().ints().Get(inst.int_id);
-  // TODO: This won't offer correct semantics, but seems close enough for now.
-  llvm::Value* v =
-      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getZExtValue());
-  context.SetLocal(inst_id, v);
-}
-
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
                    SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
@@ -566,26 +527,9 @@ auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
-auto HandleNamespace(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::Namespace inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleParam(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                  SemIR::Param /*inst*/) -> void {
   CARBON_FATAL() << "Parameters should be lowered by `BuildFunctionDefinition`";
-}
-
-auto HandleRealLiteral(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::RealLiteral inst) -> void {
-  const Real& real = context.sem_ir().reals().Get(inst.real_id);
-  // TODO: This will probably have overflow issues, and should be fixed.
-  double val =
-      real.mantissa.getZExtValue() *
-      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
-  llvm::APFloat llvm_val(val);
-  context.SetLocal(inst_id, llvm::ConstantFP::get(
-                                context.builder().getDoubleTy(), llvm_val));
 }
 
 auto HandleReturn(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -616,12 +560,6 @@ auto HandleSpliceBlock(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::SpliceBlock inst) -> void {
   context.LowerBlock(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
-}
-
-auto HandleStringLiteral(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::StringLiteral inst)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << inst;
 }
 
 auto HandleUnaryOperatorNot(FunctionContext& context, SemIR::InstId inst_id,

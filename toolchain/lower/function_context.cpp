@@ -60,11 +60,16 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
   switch (inst.kind()) {
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
 #define CARBON_SEM_IR_INST_KIND(Name)                     \
   case SemIR::Name::Kind:                                 \
     Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
+
+    default:
+      CARBON_FATAL() << "Missing constant value for constant instruction "
+                     << inst;
   }
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
 }

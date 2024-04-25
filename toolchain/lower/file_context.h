@@ -42,7 +42,7 @@ class FileContext {
   }
 
   // Returns a lowered value to use for a value of type `type`.
-  auto GetTypeAsValue() -> llvm::Value* {
+  auto GetTypeAsValue() -> llvm::Constant* {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
@@ -91,16 +91,19 @@ class FileContext {
 
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  llvm::SmallVector<llvm::Function*> functions_;
+  // We resize this directly to the correct size rather than using a small size.
+  llvm::SmallVector<llvm::Function*, 0> functions_;
 
   // Provides lowered versions of types.
-  llvm::SmallVector<llvm::Type*> types_;
+  // We resize this directly to the correct size rather than using a small size.
+  llvm::SmallVector<llvm::Type*, 0> types_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
 
-  // Maps global instructions to their lowered values.
-  llvm::DenseMap<SemIR::InstId, llvm::Value*> globals_;
+  // Maps constants to their lowered values.
+  // We resize this directly to the correct size rather than using a small size.
+  llvm::SmallVector<llvm::Constant*, 0> constants_;
 };
 
 }  // namespace Carbon::Lower
