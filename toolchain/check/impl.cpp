@@ -11,6 +11,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -124,8 +125,8 @@ static auto BuildInterfaceWitness(
   }
 
   auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst(SemIR::InterfaceWitness{
-      context.GetBuiltinType(SemIR::BuiltinKind::WitnessType), table_id});
+  return context.AddInst(SemIR::LocIdAndInst::NoLoc(SemIR::InterfaceWitness{
+      context.GetBuiltinType(SemIR::BuiltinKind::WitnessType), table_id}));
 }
 
 auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)

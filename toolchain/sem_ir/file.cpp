@@ -78,11 +78,11 @@ File::File(SharedValueStores& value_stores, std::string filename)
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                              \
-  insts_.AddInNoBlock(                                                     \
-      {Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
-                                                       : TypeId::TypeType, \
-               BuiltinKind::Name}});
+#define CARBON_SEM_IR_BUILTIN_KIND(Name, ...)                             \
+  insts_.AddInNoBlock(LocIdAndInst::NoLoc(                                \
+      Builtin{BuiltinKind::Name == BuiltinKind::Error ? TypeId::Error     \
+                                                      : TypeId::TypeType, \
+              BuiltinKind::Name}));
 #include "toolchain/sem_ir/builtin_kind.def"
   CARBON_CHECK(insts_.size() == BuiltinKind::ValidCount)
       << "Builtins should produce " << BuiltinKind::ValidCount

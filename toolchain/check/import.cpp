@@ -140,8 +140,10 @@ static auto CopySingleNameScopeFromImportIR(
   auto make_import_id = [&]() {
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
-    return context.AddInst(SemIR::ImportRefLoaded{
-        .type_id = namespace_type_id, .import_ir_inst_id = import_ir_inst_id});
+    return context.AddInst(
+        {import_ir_inst_id,
+         SemIR::ImportRefLoaded{.type_id = namespace_type_id,
+                                .import_ir_inst_id = import_ir_inst_id}});
   };
   auto [namespace_scope_id, namespace_const_id, _] =
       AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,

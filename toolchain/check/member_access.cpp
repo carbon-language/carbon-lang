@@ -196,8 +196,9 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
   auto subst_type_id =
       SubstType(context, assoc_type.entity_type_id, substitutions);
 
-  return context.AddInst(SemIR::InterfaceWitnessAccess{
-      subst_type_id, witness_id, assoc_entity->index});
+  return context.AddInst(
+      SemIR::LocIdAndInst::NoLoc(SemIR::InterfaceWitnessAccess{
+          subst_type_id, witness_id, assoc_entity->index}));
 }
 
 // Performs a member name lookup into the specified scope, including performing
