@@ -382,8 +382,8 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
       return llvm::StructType::get(*llvm_context_);
     }
 
-#define CARBON_SEM_IR_INST_KIND_TYPE(...)
-#define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
 #define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
 #include "toolchain/sem_ir/inst_kind.def"
       CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " "

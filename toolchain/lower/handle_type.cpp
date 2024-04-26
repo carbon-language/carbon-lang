@@ -9,8 +9,8 @@ namespace Carbon::Lower {
 
 // For instructions that are always of type `type`, produce the trivial runtime
 // representation of type `type`.
-#define CARBON_SEM_IR_INST_KIND_NOT_TYPE(...)
-#define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_NEVER(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(...)
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
