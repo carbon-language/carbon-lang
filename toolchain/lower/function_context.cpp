@@ -5,6 +5,7 @@
 #include "toolchain/lower/function_context.h"
 
 #include "common/vlog.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
@@ -60,11 +61,11 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
-  switch (inst.kind()) {
+  CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
-#define CARBON_SEM_IR_INST_KIND(Name)                     \
-  case SemIR::Name::Kind:                                 \
-    Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
+#define CARBON_SEM_IR_INST_KIND(Name)         \
+  case CARBON_KIND(SemIR::Name typed_inst):   \
+    Handle##Name(*this, inst_id, typed_inst); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
 

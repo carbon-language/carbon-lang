@@ -6,6 +6,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -250,12 +251,12 @@ auto LowerConstants(FileContext& file_context,
 
     auto inst = file_context.sem_ir().insts().Get(const_id.inst_id());
     llvm::Constant* value = nullptr;
-    switch (inst.kind()) {
+    CARBON_KIND_SWITCH(inst) {
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_NEVER(...)
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_SYMBOLIC_ONLY(...)
-#define CARBON_SEM_IR_INST_KIND(Name)                                \
-  case SemIR::Name::Kind:                                            \
-    value = Emit##Name##AsConstant(context, inst.As<SemIR::Name>()); \
+#define CARBON_SEM_IR_INST_KIND(Name)                    \
+  case CARBON_KIND(SemIR::Name const_inst):              \
+    value = Emit##Name##AsConstant(context, const_inst); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
 
