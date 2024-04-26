@@ -4,10 +4,9 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
-#include "toolchain/lower/function_context.h"
+#include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Lower {
@@ -30,9 +29,9 @@ class ConstantContext {
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
     CARBON_CHECK(const_id.is_template() && const_id.inst_id().index >= 0)
         << "Unexpected constant ID " << const_id;
-    auto* constant = constants_[const_id.inst_id().index];
-    CARBON_CHECK(constant) << "Using unknown constant " << const_id;
-    return constant;
+    CARBON_CHECK(const_id.inst_id().index <= last_lowered_constant_index_)
+        << "Queried constant " << const_id << " that has not been lowered yet";
+    return constants_[const_id.inst_id().index];
   }
 
   // Returns a constant for the case of a value that should never be used.
@@ -56,6 +55,12 @@ class ConstantContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Sets the index of the constant we most recently lowered. This is used to
+  // check we don't look at constants that we've not lowered yet.
+  auto SetLastLoweredConstantIndex(int32_t index) {
+    last_lowered_constant_index_ = index;
+  }
+
   auto llvm_context() const -> llvm::LLVMContext& {
     return file_context_->llvm_context();
   }
@@ -67,6 +72,7 @@ class ConstantContext {
  private:
   FileContext* file_context_;
   llvm::MutableArrayRef<llvm::Constant*> constants_;
+  int32_t last_lowered_constant_index_ = -1;
 };
 
 // For each instruction kind that can produce a constant, there is a function
@@ -257,6 +263,7 @@ auto LowerConstants(FileContext& file_context,
     }
 
     constants[const_id.inst_id().index] = value;
+    context.SetLastLoweredConstantIndex(const_id.inst_id().index);
   }
 }
 
