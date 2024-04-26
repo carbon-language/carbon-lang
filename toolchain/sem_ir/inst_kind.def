@@ -19,8 +19,7 @@
 //   Invoked for each instruction that is always of type `type`, and might
 //   define a type constant.
 // - CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
-//   Invoked for each instruction that might define a type constant if it's of
-//   type `type`, but isn't necessarily of type `type`.
+//   Invoked for each instruction that is sometimes of type `type`, and might define a type constant.
 // - CARBON_SEM_IR_INST_KIND_NOT_TYPE(...)
 //   Invoked for each instruction that can never define a type constant. Note
 //   that such instructions can still have type `type`, but are not the
