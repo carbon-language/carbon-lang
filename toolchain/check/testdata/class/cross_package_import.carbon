@@ -64,13 +64,13 @@ import Other library "define";
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "extern";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_extern.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: other_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import Other library "define";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_define.carbon:4:1: Previously declared here.
+// CHECK:STDERR: other_define.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 import Other library "extern";
@@ -235,9 +235,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %struct: C = struct_value () [template]
@@ -252,22 +251,19 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_19 [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loc_19 [template = constants.%C]
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir3, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+2, unloaded
+// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1 {
+// CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -281,7 +277,7 @@ var c: Other.C = {};
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C.2 [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
@@ -298,20 +294,18 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_19 [template = constants.%C]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C.2 [template = constants.%C] {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, loaded [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = file.%import_ref.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

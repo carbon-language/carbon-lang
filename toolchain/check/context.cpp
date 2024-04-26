@@ -326,7 +326,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
     auto import_inst_id =
         AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second});
     if (result_id.is_valid()) {
-      MergeImportRef(context, import_inst_id, result_id);
+      context.DiagnoseDuplicateName(import_inst_id, result_id);
     } else {
       LoadImportRef(context, import_inst_id,
                     mark_imports_used ? loc : SemIR::LocId::Invalid);

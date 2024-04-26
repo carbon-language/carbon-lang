@@ -86,12 +86,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT:     .Bar = %Bar
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, loaded [template = imports.%NS]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bar: <function> = fn_decl @Bar [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:

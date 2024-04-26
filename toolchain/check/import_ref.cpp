@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -40,11 +41,10 @@ auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
   auto& ir_id = context.check_ir_map()[import_ir.sem_ir->check_ir_id().index];
-  if (ir_id.is_valid()) {
-    return ir_id;
+  if (!ir_id.is_valid()) {
+    // Note this updates check_ir_map.
+    ir_id = InternalAddImportIR(context, import_ir);
   }
-  // Note this updates check_ir_map.
-  ir_id = InternalAddImportIR(context, import_ir);
   return ir_id;
 }
 
@@ -102,14 +102,19 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
 // chance of a second call, it's important to reserve all expensive logic until
 // it's been established that input constants are available; this in particular
 // includes GetTypeIdForTypeConstant calls which do a hash table lookup.
+//
+// TODO: Fix class `extern` handling and merging, rewrite tests.
+// - check/testdata/class/cross_package_import.carbon
+// - check/testdata/class/extern.carbon
+// TODO: Fix function `extern` handling and merging, rewrite tests.
+// - check/testdata/function/declaration/import.carbon
+// - check/testdata/packages/cross_package_import.carbon
 class ImportRefResolver {
  public:
   explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
       : context_(context),
         import_ir_id_(import_ir_id),
-        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir),
-        import_ir_constant_values_(
-            context_.import_ir_constant_values()[import_ir_id.index]) {}
+        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir) {}
 
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. See the class comment
@@ -121,7 +126,8 @@ class ImportRefResolver {
       CARBON_CHECK(work.inst_id.is_valid());
 
       // Step 1: check for a constant value.
-      auto existing_const_id = import_ir_constant_values_.Get(work.inst_id);
+      auto [existing_const_id, indirect_insts] =
+          FindResolvedConstId(work.inst_id);
       if (existing_const_id.is_valid() && !work.retry) {
         work_stack_.pop_back();
         continue;
@@ -136,7 +142,9 @@ class ImportRefResolver {
       CARBON_CHECK(!existing_const_id.is_valid() ||
                    existing_const_id == new_const_id)
           << "Constant value changed in second pass.";
-      import_ir_constant_values_.Set(work.inst_id, new_const_id);
+      if (!existing_const_id.is_valid()) {
+        SetResolvedConstId(work.inst_id, indirect_insts, new_const_id);
+      }
 
       // Step 3: pop or retry.
       if (finished) {
@@ -145,7 +153,7 @@ class ImportRefResolver {
         work_stack_[initial_work - 1].retry = true;
       }
     }
-    auto constant_id = import_ir_constant_values_.Get(inst_id);
+    auto constant_id = import_ir_constant_values().Get(inst_id);
     CARBON_CHECK(constant_id.is_valid());
     return constant_id;
   }
@@ -196,6 +204,66 @@ class ImportRefResolver {
     bool finished = true;
   };
 
+  auto FindResolvedConstId(SemIR::InstId inst_id)
+      -> std::pair<SemIR::ConstantId, llvm::SmallVector<SemIR::ImportIRInst>> {
+    if (auto existing_const_id = import_ir_constant_values().Get(inst_id);
+        existing_const_id.is_valid()) {
+      return {existing_const_id, {}};
+    }
+
+    const auto* cursor_ir = &import_ir_;
+    auto cursor_ir_id = SemIR::ImportIRId::Invalid;
+    auto cursor_inst_id = inst_id;
+
+    llvm::SmallVector<SemIR::ImportIRInst> indirect_insts;
+
+    while (true) {
+      auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+      if (!loc_id.is_import_ir_inst_id()) {
+        return {SemIR::ConstantId::Invalid, indirect_insts};
+      }
+      auto ir_inst =
+          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+
+      const auto* prev_ir = cursor_ir;
+      auto prev_inst_id = cursor_inst_id;
+
+      cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id).sem_ir;
+      cursor_ir_id = context_.check_ir_map()[cursor_ir->check_ir_id().index];
+      if (!cursor_ir_id.is_valid()) {
+        // TODO: Should we figure out a location to assign here?
+        cursor_ir_id = AddImportIR(
+            context_, {.node_id = Parse::NodeId::Invalid, .sem_ir = cursor_ir});
+      }
+      cursor_inst_id = ir_inst.inst_id;
+
+      CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id)
+          << cursor_ir->insts().Get(cursor_inst_id);
+
+      if (auto const_id =
+              context_.import_ir_constant_values()[cursor_ir_id.index].Get(
+                  cursor_inst_id);
+          const_id.is_valid()) {
+        SetResolvedConstId(inst_id, indirect_insts, const_id);
+        return {const_id, {}};
+      } else {
+        indirect_insts.push_back(
+            {.ir_id = cursor_ir_id, .inst_id = cursor_inst_id});
+      }
+    }
+  }
+
+  auto SetResolvedConstId(
+      SemIR::InstId inst_id,
+      const llvm::SmallVector<SemIR::ImportIRInst>& indirect_insts,
+      SemIR::ConstantId const_id) -> void {
+    import_ir_constant_values().Set(inst_id, const_id);
+    for (auto indirect_inst : indirect_insts) {
+      context_.import_ir_constant_values()[indirect_inst.ir_id.index].Set(
+          indirect_inst.inst_id, const_id);
+    }
+  }
+
   // Returns true if new unresolved constants were found.
   //
   // At the start of a function, do:
@@ -216,7 +284,7 @@ class ImportRefResolver {
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantId(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = import_ir_constant_values_.Get(inst_id);
+    auto const_id = import_ir_constant_values().Get(inst_id);
     if (!const_id.is_valid()) {
       work_stack_.push_back({inst_id});
     }
@@ -1029,10 +1097,13 @@ class ImportRefResolver {
         context_.GetTypeIdForTypeConstant(elem_const_id)))};
   }
 
+  auto import_ir_constant_values() -> SemIR::ConstantValueStore& {
+    return context_.import_ir_constant_values()[import_ir_id_.index];
+  }
+
   Context& context_;
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
-  SemIR::ConstantValueStore& import_ir_constant_values_;
   llvm::SmallVector<Work> work_stack_;
 };
 
