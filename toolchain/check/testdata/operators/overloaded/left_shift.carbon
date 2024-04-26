@@ -129,16 +129,16 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.1.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.6: C = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = interface_type @LeftShiftAssign [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = interface_type @LeftShiftAssign [template]
 // CHECK:STDOUT:   %Self.2: LeftShiftAssign = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.8: type = ptr_type C [template]
-// CHECK:STDOUT:   %.9: type = ptr_type Self [symbolic]
-// CHECK:STDOUT:   %.10: <witness> = interface_witness (@impl.2.%Op) [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type @LeftShift, <function> [template]
-// CHECK:STDOUT:   %.12: <associated <function> in LeftShift> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type @LeftShiftAssign, <function> [template]
-// CHECK:STDOUT:   %.14: <associated <function> in LeftShiftAssign> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type C [template]
+// CHECK:STDOUT:   %.8: type = ptr_type Self [symbolic]
+// CHECK:STDOUT:   %.9: <witness> = interface_witness (@impl.2.%Op) [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type @LeftShift, <function> [template]
+// CHECK:STDOUT:   %.11: <associated <function> in LeftShift> = assoc_entity element0, file.%import_ref.10 [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type @LeftShiftAssign, <function> [template]
+// CHECK:STDOUT:   %.13: <associated <function> in LeftShiftAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -151,7 +151,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in LeftShift> = import_ref ir2, inst+21, loc_82 [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in LeftShift> = import_ref ir2, inst+21, loc_82 [template = constants.%.11]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+19, loc_19 [template = imports.%Op.1]
 // CHECK:STDOUT:   impl_decl @impl.1 {
@@ -160,15 +160,15 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %LeftShift.decl: type = interface_decl @LeftShift [template = constants.%.2] {}
 // CHECK:STDOUT:     %LeftShift.ref: type = name_ref LeftShift, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in LeftShiftAssign> = import_ref ir2, inst+42, loc_101 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in LeftShiftAssign> = import_ref ir2, inst+42, loc_101 [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+25, unloaded
 // CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+40, loc_47 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %LeftShiftAssign.decl: type = interface_decl @LeftShiftAssign [template = constants.%.7] {}
-// CHECK:STDOUT:     %LeftShiftAssign.ref: type = name_ref LeftShiftAssign, %import_ref.5 [template = constants.%.7]
+// CHECK:STDOUT:     %LeftShiftAssign.decl: type = interface_decl @LeftShiftAssign [template = constants.%.6] {}
+// CHECK:STDOUT:     %LeftShiftAssign.ref: type = name_ref LeftShiftAssign, %import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {
 // CHECK:STDOUT:     %C.ref.loc17_14: type = name_ref C, %C.decl [template = constants.%C]
@@ -184,14 +184,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
 // CHECK:STDOUT:   %TestAssign: <function> = fn_decl @TestAssign [template] {
 // CHECK:STDOUT:     %C.ref.loc21_18: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc21: type = ptr_type C [template = constants.%.8]
+// CHECK:STDOUT:     %.loc21: type = ptr_type C [template = constants.%.7]
 // CHECK:STDOUT:     %a.loc21_15.1: C* = param a
 // CHECK:STDOUT:     @TestAssign.%a: C* = bind_name a, %a.loc21_15.1
 // CHECK:STDOUT:     %C.ref.loc21_25: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b.loc21_22.1: C = param b
 // CHECK:STDOUT:     @TestAssign.%b: C = bind_name b, %b.loc21_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+23, loc_101 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+23, loc_101 [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+40, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,7 +230,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: impl @impl.2: C as LeftShiftAssign {
 // CHECK:STDOUT:   %Op: <function> = fn_decl @Op.3 [template] {
 // CHECK:STDOUT:     %C.ref.loc14_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc14_21: type = ptr_type C [template = constants.%.8]
+// CHECK:STDOUT:     %.loc14_21: type = ptr_type C [template = constants.%.7]
 // CHECK:STDOUT:     %self.loc14_14.1: C* = param self
 // CHECK:STDOUT:     %self.loc14_14.3: C* = bind_name self, %self.loc14_14.1
 // CHECK:STDOUT:     %.loc14_9: C* = addr_pattern %self.loc14_14.3
@@ -238,7 +238,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %other.loc14_24.1: C = param other
 // CHECK:STDOUT:     %other.loc14_24.2: C = bind_name other, %other.loc14_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.10]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op
@@ -253,8 +253,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @Op.1[@impl.1.%self.loc9_9.2: C](@impl.1.%other.loc9_18.2: C) -> @impl.1.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.1.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc10_14 to @impl.1.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

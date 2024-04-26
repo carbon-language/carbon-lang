@@ -166,7 +166,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -194,8 +194,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc6_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc6_20: init C = converted %.loc6_19.1, %.loc6_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6_19.2: init C = class_init (), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_20: init C = converted %.loc6_19.1, %.loc6_19.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -240,7 +240,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -272,8 +272,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc23_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc23_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc23_20: init C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc23_19.2: init C = class_init (), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc23_20: init C = converted %.loc23_19.1, %.loc23_19.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc23_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -285,7 +285,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -316,8 +316,8 @@ var c: Other.C = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc22_19.2: init C = class_init (), file.%c.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc22_20: init C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc22_19.2: init C = class_init (), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc22_20: init C = converted %.loc22_19.1, %.loc22_19.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, %.loc22_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -59,17 +59,17 @@ class A {
 // CHECK:STDOUT:   %.8: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type {.a: i32} [template]
 // CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: A = struct_value (%.10) [template]
-// CHECK:STDOUT:   %.12: type = ptr_type {.b: i32} [template]
-// CHECK:STDOUT:   %.13: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.14: B = struct_value (%.13) [template]
-// CHECK:STDOUT:   %.15: type = ptr_type {.c: i32} [template]
-// CHECK:STDOUT:   %.16: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.17: C = struct_value (%.16) [template]
-// CHECK:STDOUT:   %.18: type = ptr_type {.d: i32} [template]
-// CHECK:STDOUT:   %.19: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.20: D = struct_value (%.19) [template]
-// CHECK:STDOUT:   %.21: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: A = struct_value (%.10) [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.b: i32} [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %struct.2: B = struct_value (%.12) [template]
+// CHECK:STDOUT:   %.13: type = ptr_type {.c: i32} [template]
+// CHECK:STDOUT:   %.14: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %struct.3: C = struct_value (%.14) [template]
+// CHECK:STDOUT:   %.15: type = ptr_type {.d: i32} [template]
+// CHECK:STDOUT:   %.16: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %struct.4: D = struct_value (%.16) [template]
+// CHECK:STDOUT:   %.17: type = tuple_type () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,38 +144,38 @@ class A {
 // CHECK:STDOUT:   %.loc25_25.1: {.a: i32} = struct_literal (%.loc25_24)
 // CHECK:STDOUT:   %.loc25_25.2: ref i32 = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc25_25.3: init i32 = initialize_from %.loc25_24 to %.loc25_25.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc25_25.4: init A = class_init (%.loc25_25.3), %a.var [template = constants.%.11]
-// CHECK:STDOUT:   %.loc25_26: init A = converted %.loc25_25.1, %.loc25_25.4 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc25_25.4: init A = class_init (%.loc25_25.3), %a.var [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc25_26: init A = converted %.loc25_25.1, %.loc25_25.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign %a.var, %.loc25_26
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref B = var b
 // CHECK:STDOUT:   %b: ref B = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc26_24: i32 = int_literal 2 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc26_24: i32 = int_literal 2 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc26_25.1: {.b: i32} = struct_literal (%.loc26_24)
 // CHECK:STDOUT:   %.loc26_25.2: ref i32 = class_element_access %b.var, element0
-// CHECK:STDOUT:   %.loc26_25.3: init i32 = initialize_from %.loc26_24 to %.loc26_25.2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc26_25.4: init B = class_init (%.loc26_25.3), %b.var [template = constants.%.14]
-// CHECK:STDOUT:   %.loc26_26: init B = converted %.loc26_25.1, %.loc26_25.4 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc26_25.3: init i32 = initialize_from %.loc26_24 to %.loc26_25.2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc26_25.4: init B = class_init (%.loc26_25.3), %b.var [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc26_26: init B = converted %.loc26_25.1, %.loc26_25.4 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %b.var, %.loc26_26
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc27_24: i32 = int_literal 3 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc27_24: i32 = int_literal 3 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc27_25.1: {.c: i32} = struct_literal (%.loc27_24)
 // CHECK:STDOUT:   %.loc27_25.2: ref i32 = class_element_access %c.var, element0
-// CHECK:STDOUT:   %.loc27_25.3: init i32 = initialize_from %.loc27_24 to %.loc27_25.2 [template = constants.%.16]
-// CHECK:STDOUT:   %.loc27_25.4: init C = class_init (%.loc27_25.3), %c.var [template = constants.%.17]
-// CHECK:STDOUT:   %.loc27_26: init C = converted %.loc27_25.1, %.loc27_25.4 [template = constants.%.17]
+// CHECK:STDOUT:   %.loc27_25.3: init i32 = initialize_from %.loc27_24 to %.loc27_25.2 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc27_25.4: init C = class_init (%.loc27_25.3), %c.var [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc27_26: init C = converted %.loc27_25.1, %.loc27_25.4 [template = constants.%struct.3]
 // CHECK:STDOUT:   assign %c.var, %.loc27_26
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref D = var d
 // CHECK:STDOUT:   %d: ref D = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc28_24: i32 = int_literal 4 [template = constants.%.19]
+// CHECK:STDOUT:   %.loc28_24: i32 = int_literal 4 [template = constants.%.16]
 // CHECK:STDOUT:   %.loc28_25.1: {.d: i32} = struct_literal (%.loc28_24)
 // CHECK:STDOUT:   %.loc28_25.2: ref i32 = class_element_access %d.var, element0
-// CHECK:STDOUT:   %.loc28_25.3: init i32 = initialize_from %.loc28_24 to %.loc28_25.2 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc28_25.4: init D = class_init (%.loc28_25.3), %d.var [template = constants.%.20]
-// CHECK:STDOUT:   %.loc28_26: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%.20]
+// CHECK:STDOUT:   %.loc28_25.3: init i32 = initialize_from %.loc28_24 to %.loc28_25.2 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc28_25.4: init D = class_init (%.loc28_25.3), %d.var [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc28_26: init D = converted %.loc28_25.1, %.loc28_25.4 [template = constants.%struct.4]
 // CHECK:STDOUT:   assign %d.var, %.loc28_26
 // CHECK:STDOUT:   %AF.ref: <function> = name_ref AF, @A.%AF [template = @A.%AF]
 // CHECK:STDOUT:   %AF.call: init () = call %AF.ref()

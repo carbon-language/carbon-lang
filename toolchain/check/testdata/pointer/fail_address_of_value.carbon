@@ -117,7 +117,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.17: type = ptr_type type [template]
 // CHECK:STDOUT:   %.18: type = const_type i32 [template]
 // CHECK:STDOUT:   %.19: type = ptr_type const i32 [template]
-// CHECK:STDOUT:   %.20: (i32, i32) = tuple_value (%.10, %.11) [template]
+// CHECK:STDOUT:   %tuple: (i32, i32) = tuple_value (%.10, %.11) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -223,9 +223,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc88_9: i32 = int_literal 2 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc88_10.1: (i32, i32) = tuple_literal (%.loc88_6, %.loc88_9)
 // CHECK:STDOUT:   %.loc88_12: i32 = int_literal 0 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc88_10.2: (i32, i32) = tuple_value (%.loc88_6, %.loc88_9) [template = constants.%.20]
-// CHECK:STDOUT:   %.loc88_10.3: (i32, i32) = converted %.loc88_10.1, %.loc88_10.2 [template = constants.%.20]
-// CHECK:STDOUT:   %.loc88_13: i32 = tuple_index %.loc88_10.3, %.loc88_12 [template = constants.%.10]
+// CHECK:STDOUT:   %tuple: (i32, i32) = tuple_value (%.loc88_6, %.loc88_9) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc88_10.2: (i32, i32) = converted %.loc88_10.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc88_13: i32 = tuple_index %.loc88_10.2, %.loc88_12 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc88_3: i32* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

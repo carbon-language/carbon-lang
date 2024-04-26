@@ -16,7 +16,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %x: () = bind_symbolic_name x 0 [symbolic]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,8 +33,8 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref () = var x
 // CHECK:STDOUT:   %x: () = bind_symbolic_name x 0, %x.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %.loc11_17.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_17.2: init () = tuple_init () to %x.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_18: init () = converted %.loc11_17.1, %.loc11_17.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_17.2: init () = tuple_init () to %x.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_18: init () = converted %.loc11_17.1, %.loc11_17.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %x.var, %.loc11_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -148,9 +148,9 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.9: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.10: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.11: <associated <function> in Add> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %.12: C = struct_value () [template]
-// CHECK:STDOUT:   %.13: type = assoc_entity_type @AddAssign, <function> [template]
-// CHECK:STDOUT:   %.14: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, <function> [template]
+// CHECK:STDOUT:   %.13: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.12 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -175,7 +175,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir2, inst+42, loc_102 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.6: <associated <function> in AddAssign> = import_ref ir2, inst+42, loc_102 [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+25, unloaded
 // CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+40, loc_47 [template = imports.%Op.2]
 // CHECK:STDOUT:   impl_decl @impl.2 {
@@ -290,8 +290,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc28_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc28_15.2: init C = class_init (), %a.var [template = constants.%.12]
-// CHECK:STDOUT:   %.loc28_16: init C = converted %.loc28_15.1, %.loc28_15.2 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc28_15.2: init C = class_init (), %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc28_16: init C = converted %.loc28_15.1, %.loc28_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc28_16
 // CHECK:STDOUT:   %a.ref: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b

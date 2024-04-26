@@ -16,7 +16,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,9 +37,9 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_24.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_24.2: () = tuple_value () [template = constants.%.2]
-// CHECK:STDOUT:   %.loc7_25: () = converted %.loc7_24.1, %.loc7_24.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7_24: () = tuple_literal ()
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_25: () = converted %.loc7_24, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc7_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

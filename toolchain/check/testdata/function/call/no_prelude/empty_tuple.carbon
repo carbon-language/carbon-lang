@@ -16,7 +16,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,9 +45,9 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo [template = file.%Echo]
-// CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: () = tuple_value () [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_7: () = converted %.loc12_9.1, %.loc12_9.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_9: () = tuple_literal ()
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_7: () = converted %.loc12_9, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %Echo.call: init () = call %Echo.ref(%.loc12_7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -63,9 +63,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.21: type = struct_type {.base: {.a: i32}, .b: i32} [template]
 // CHECK:STDOUT:   %.22: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.23: type = struct_type {.base: {.base: {.a: i32}, .b: i32}, .c: i32} [template]
-// CHECK:STDOUT:   %.24: A = struct_value (%.19) [template]
-// CHECK:STDOUT:   %.25: B = struct_value (%.24, %.20) [template]
-// CHECK:STDOUT:   %.26: C = struct_value (%.25, %.22) [template]
+// CHECK:STDOUT:   %struct.1: A = struct_value (%.19) [template]
+// CHECK:STDOUT:   %struct.2: B = struct_value (%struct.1, %.20) [template]
+// CHECK:STDOUT:   %struct.3: C = struct_value (%struct.2, %.22) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -231,15 +231,15 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc34_48.2: ref A = class_element_access %.loc34_57.3, element0
 // CHECK:STDOUT:   %.loc34_39.2: ref i32 = class_element_access %.loc34_48.2, element0
 // CHECK:STDOUT:   %.loc34_39.3: init i32 = initialize_from %.loc34_38 to %.loc34_39.2 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc34_39.4: init A = class_init (%.loc34_39.3), %.loc34_48.2 [template = constants.%.24]
-// CHECK:STDOUT:   %.loc34_48.3: init A = converted %.loc34_39.1, %.loc34_39.4 [template = constants.%.24]
+// CHECK:STDOUT:   %.loc34_39.4: init A = class_init (%.loc34_39.3), %.loc34_48.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc34_48.3: init A = converted %.loc34_39.1, %.loc34_39.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc34_48.4: ref i32 = class_element_access %.loc34_57.3, element1
 // CHECK:STDOUT:   %.loc34_48.5: init i32 = initialize_from %.loc34_47 to %.loc34_48.4 [template = constants.%.20]
-// CHECK:STDOUT:   %.loc34_48.6: init B = class_init (%.loc34_48.3, %.loc34_48.5), %.loc34_57.3 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc34_57.4: init B = converted %.loc34_48.1, %.loc34_48.6 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc34_48.6: init B = class_init (%.loc34_48.3, %.loc34_48.5), %.loc34_57.3 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc34_57.4: init B = converted %.loc34_48.1, %.loc34_48.6 [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc34_57.5: ref i32 = class_element_access %.loc34_57.2, element1
 // CHECK:STDOUT:   %.loc34_57.6: init i32 = initialize_from %.loc34_56 to %.loc34_57.5 [template = constants.%.22]
-// CHECK:STDOUT:   %.loc34_57.7: init C = class_init (%.loc34_57.4, %.loc34_57.6), %.loc34_57.2 [template = constants.%.26]
+// CHECK:STDOUT:   %.loc34_57.7: init C = class_init (%.loc34_57.4, %.loc34_57.6), %.loc34_57.2 [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc34_57.8: ref C = temporary %.loc34_57.2, %.loc34_57.7
 // CHECK:STDOUT:   %.loc34_59: ref C = converted %.loc34_57.1, %.loc34_57.8
 // CHECK:STDOUT:   %.loc34_63.1: ref B = class_element_access %.loc34_59, element0

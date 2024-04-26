@@ -22,7 +22,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.8: [i32; 3] = tuple_value (%.4, %.5, %.1) [template]
+// CHECK:STDOUT:   %array: [i32; 3] = tuple_value (%.4, %.5, %.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,8 +74,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc12_20.9: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc12_20.10: ref i32 = array_index %.loc12_20.2, %.loc12_20.9
 // CHECK:STDOUT:   %.loc12_20.11: init i32 = initialize_from %.loc12_19 to %.loc12_20.10 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_20.12: init [i32; 3] = array_init (%.loc12_20.5, %.loc12_20.8, %.loc12_20.11) to %.loc12_20.2 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_11.1: init [i32; 3] = converted %.loc12_20.1, %.loc12_20.12 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12_20.12: init [i32; 3] = array_init (%.loc12_20.5, %.loc12_20.8, %.loc12_20.11) to %.loc12_20.2 [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_11.1: init [i32; 3] = converted %.loc12_20.1, %.loc12_20.12 [template = constants.%array]
 // CHECK:STDOUT:   %.loc12_11.2: ref [i32; 3] = temporary %.loc12_20.2, %.loc12_11.1
 // CHECK:STDOUT:   %.loc12_11.3: [i32; 3] = bind_value %.loc12_11.2
 // CHECK:STDOUT:   %F.call: init i32 = call %F.ref(%.loc12_11.3, %.loc12_23)

@@ -27,7 +27,7 @@ var A: () = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,8 +48,8 @@ var A: () = ();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_14.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_14.2: init () = tuple_init () to file.%A.var.loc24 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc24_15: init () = converted %.loc24_14.1, %.loc24_14.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc24_14.2: init () = tuple_init () to file.%A.var.loc24 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc24_15: init () = converted %.loc24_14.1, %.loc24_14.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%A.var.loc24, %.loc24_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

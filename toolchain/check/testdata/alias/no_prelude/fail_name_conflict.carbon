@@ -32,7 +32,7 @@ alias b = C;
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,12 +62,12 @@ alias b = C;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc17_13.2: init C = class_init (), file.%a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_14: init C = converted %.loc17_13.1, %.loc17_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17_13.2: init C = class_init (), file.%a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_14: init C = converted %.loc17_13.1, %.loc17_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc17_14
 // CHECK:STDOUT:   %.loc19_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc19_13.2: init C = class_init (), file.%b.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc19_14: init C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc19_13.2: init C = class_init (), file.%b.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_14: init C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%b.var, %.loc19_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

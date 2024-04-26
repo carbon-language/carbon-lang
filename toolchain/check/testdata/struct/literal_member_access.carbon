@@ -55,11 +55,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc10_25.6: i32 = bind_value %.loc10_25.5
 // CHECK:STDOUT:   %.loc10_25.7: ref i32 = struct_access %.loc10_25.2, element2
 // CHECK:STDOUT:   %.loc10_25.8: i32 = bind_value %.loc10_25.7
-// CHECK:STDOUT:   %.loc10_25.9: {.x: i32, .y: i32, .z: i32} = struct_value (%.loc10_25.4, %.loc10_25.6, %.loc10_25.8)
-// CHECK:STDOUT:   %.loc10_35.2: {.x: i32, .y: i32, .z: i32} = converted %G.call, %.loc10_25.9
-// CHECK:STDOUT:   %.loc10_35.3: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_value (%.loc10_16, %.loc10_35.2, %.loc10_34)
-// CHECK:STDOUT:   %.loc10_35.4: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = converted %.loc10_35.1, %.loc10_35.3
-// CHECK:STDOUT:   %.loc10_36: {.x: i32, .y: i32, .z: i32} = struct_access %.loc10_35.4, element1
+// CHECK:STDOUT:   %struct.loc10_25: {.x: i32, .y: i32, .z: i32} = struct_value (%.loc10_25.4, %.loc10_25.6, %.loc10_25.8)
+// CHECK:STDOUT:   %.loc10_35.2: {.x: i32, .y: i32, .z: i32} = converted %G.call, %struct.loc10_25
+// CHECK:STDOUT:   %struct.loc10_35: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = struct_value (%.loc10_16, %.loc10_35.2, %.loc10_34)
+// CHECK:STDOUT:   %.loc10_35.3: {.a: i32, .b: {.x: i32, .y: i32, .z: i32}, .c: i32} = converted %.loc10_35.1, %struct.loc10_35
+// CHECK:STDOUT:   %.loc10_36: {.x: i32, .y: i32, .z: i32} = struct_access %.loc10_35.3, element1
 // CHECK:STDOUT:   %.loc10_38: i32 = struct_access %.loc10_36, element1
 // CHECK:STDOUT:   return %.loc10_38
 // CHECK:STDOUT: }

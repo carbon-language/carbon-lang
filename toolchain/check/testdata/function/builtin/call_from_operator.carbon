@@ -87,7 +87,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.13: i32 = int_literal 7 [template]
 // CHECK:STDOUT:   %.14: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.15: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.16: [i32; 3] = tuple_value (%.8, %.11, %.13) [template]
+// CHECK:STDOUT:   %array: [i32; 3] = tuple_value (%.8, %.11, %.13) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -166,8 +166,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_37.8: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_37.9: ref i32 = array_index file.%arr.var, %.loc10_37.8
 // CHECK:STDOUT:   %.loc10_37.10: init i32 = initialize_from %int.sadd to %.loc10_37.9 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc10_37.11: init [i32; 3] = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%.16]
-// CHECK:STDOUT:   %.loc10_38: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc10_37.11: init [i32; 3] = array_init (%.loc10_37.4, %.loc10_37.7, %.loc10_37.10) to file.%arr.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc10_38: init [i32; 3] = converted %.loc10_37.1, %.loc10_37.11 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc10_38
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

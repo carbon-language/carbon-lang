@@ -27,14 +27,14 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc15_11.5 = load i32, ptr %.loc15_11.4.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc15_11.6.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %.loc15_11.1.a, i32 0, i32 2
 // CHECK:STDOUT:   %.loc15_11.7 = load i32, ptr %.loc15_11.6.tuple.elem, align 4
-// CHECK:STDOUT:   %.loc15_11.8.tuple = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   %.loc15_11.8 = getelementptr inbounds { i32, i32, i32 }, ptr %.loc15_11.8.tuple, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %.loc15_11.3, ptr %.loc15_11.8, align 4
-// CHECK:STDOUT:   %.loc15_11.81 = getelementptr inbounds { i32, i32, i32 }, ptr %.loc15_11.8.tuple, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %.loc15_11.5, ptr %.loc15_11.81, align 4
-// CHECK:STDOUT:   %.loc15_11.82 = getelementptr inbounds { i32, i32, i32 }, ptr %.loc15_11.8.tuple, i32 0, i32 2
-// CHECK:STDOUT:   store i32 %.loc15_11.7, ptr %.loc15_11.82, align 4
-// CHECK:STDOUT:   %.loc15_15.tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %.loc15_11.8.tuple, i32 0, i32 1
+// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 8
+// CHECK:STDOUT:   %tuple1 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 0
+// CHECK:STDOUT:   store i32 %.loc15_11.3, ptr %tuple1, align 4
+// CHECK:STDOUT:   %tuple2 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
+// CHECK:STDOUT:   store i32 %.loc15_11.5, ptr %tuple2, align 4
+// CHECK:STDOUT:   %tuple3 = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 2
+// CHECK:STDOUT:   store i32 %.loc15_11.7, ptr %tuple3, align 4
+// CHECK:STDOUT:   %.loc15_15.tuple.index = getelementptr inbounds { i32, i32, i32 }, ptr %tuple, i32 0, i32 1
 // CHECK:STDOUT:   %.loc15_15.tuple.index.load = load i32, ptr %.loc15_15.tuple.index, align 4
 // CHECK:STDOUT:   ret i32 %.loc15_15.tuple.index.load
 // CHECK:STDOUT: }

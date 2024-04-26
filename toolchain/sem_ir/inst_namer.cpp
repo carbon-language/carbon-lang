@@ -12,6 +12,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -473,6 +474,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);
         break;
+      }
+      case StructValue::Kind: {
+        add_inst_name("struct");
+        continue;
+      }
+      case CARBON_KIND(TupleValue inst): {
+        if (sem_ir_.types().Is<ArrayType>(inst.type_id)) {
+          add_inst_name("array");
+        } else {
+          add_inst_name("tuple");
+        }
+        continue;
       }
       case CARBON_KIND(VarStorage inst): {
         add_inst_name_id(inst.name_id, ".var");

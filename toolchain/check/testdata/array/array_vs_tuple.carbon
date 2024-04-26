@@ -20,10 +20,10 @@ fn G() {
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.8: [i32; 3] = tuple_value (%.4, %.5, %.1) [template]
-// CHECK:STDOUT:   %.9: type = tuple_type (type, type, type) [template]
-// CHECK:STDOUT:   %.10: type = ptr_type (i32, i32, i32) [template]
-// CHECK:STDOUT:   %.11: (i32, i32, i32) = tuple_value (%.4, %.5, %.1) [template]
+// CHECK:STDOUT:   %array: [i32; 3] = tuple_value (%.4, %.5, %.1) [template]
+// CHECK:STDOUT:   %.8: type = tuple_type (type, type, type) [template]
+// CHECK:STDOUT:   %.9: type = ptr_type (i32, i32, i32) [template]
+// CHECK:STDOUT:   %tuple: (i32, i32, i32) = tuple_value (%.4, %.5, %.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,8 +54,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_29.8: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc9_29.9: ref i32 = array_index %a.var, %.loc9_29.8
 // CHECK:STDOUT:   %.loc9_29.10: init i32 = initialize_from %.loc9_28 to %.loc9_29.9 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_29.11: init [i32; 3] = array_init (%.loc9_29.4, %.loc9_29.7, %.loc9_29.10) to %a.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_30: init [i32; 3] = converted %.loc9_29.1, %.loc9_29.11 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc9_29.11: init [i32; 3] = array_init (%.loc9_29.4, %.loc9_29.7, %.loc9_29.10) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_30: init [i32; 3] = converted %.loc9_29.1, %.loc9_29.11 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_30
 // CHECK:STDOUT:   %.loc10_24.1: (type, type, type) = tuple_literal (i32, i32, i32)
 // CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, constants.%.6 [template = constants.%.6]
@@ -71,8 +71,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_36.5: init i32 = initialize_from %.loc10_32 to %.loc10_36.4 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc10_36.6: ref i32 = tuple_access %b.var, element2
 // CHECK:STDOUT:   %.loc10_36.7: init i32 = initialize_from %.loc10_35 to %.loc10_36.6 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc10_36.8: init (i32, i32, i32) = tuple_init (%.loc10_36.3, %.loc10_36.5, %.loc10_36.7) to %b.var [template = constants.%.11]
-// CHECK:STDOUT:   %.loc10_37: init (i32, i32, i32) = converted %.loc10_36.1, %.loc10_36.8 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc10_36.8: init (i32, i32, i32) = tuple_init (%.loc10_36.3, %.loc10_36.5, %.loc10_36.7) to %b.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc10_37: init (i32, i32, i32) = converted %.loc10_36.1, %.loc10_36.8 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %b.var, %.loc10_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

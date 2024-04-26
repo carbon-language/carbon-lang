@@ -63,7 +63,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.3: type = struct_type {.k: i32} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.k: i32} [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: Class = struct_value (%.5) [template]
+// CHECK:STDOUT:   %struct: Class = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -200,7 +200,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc31_18.2: ref Class = temporary_storage
 // CHECK:STDOUT:   %.loc31_18.3: ref i32 = class_element_access %.loc31_18.2, element0
 // CHECK:STDOUT:   %.loc31_18.4: init i32 = initialize_from %.loc31_17 to %.loc31_18.3 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc31_18.5: init Class = class_init (%.loc31_18.4), %.loc31_18.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc31_18.5: init Class = class_init (%.loc31_18.4), %.loc31_18.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc31_18.6: ref Class = temporary %.loc31_18.2, %.loc31_18.5
 // CHECK:STDOUT:   %.loc31_20.1: ref Class = converted %.loc31_18.1, %.loc31_18.6
 // CHECK:STDOUT:   %F.ref: <function> = name_ref F, @Class.%F [template = @Class.%F]

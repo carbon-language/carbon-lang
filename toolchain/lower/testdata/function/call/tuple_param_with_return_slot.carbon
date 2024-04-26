@@ -15,7 +15,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param_with_return_slot.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param_with_return_slot.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @const.loc12_4.4 = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.3.loc12_4.4 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) {
 // CHECK:STDOUT: entry:
@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_4.1.temp = alloca { i32, i32, i32 }, align 8
-// CHECK:STDOUT:   call void @F(ptr %.loc12_4.1.temp, { i32 } { i32 1 }, ptr @const.loc12_4.4)
+// CHECK:STDOUT:   call void @F(ptr %.loc12_4.1.temp, { i32 } { i32 1 }, ptr @tuple.3.loc12_4.4)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
