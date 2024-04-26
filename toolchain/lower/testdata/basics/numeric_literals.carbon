@@ -26,8 +26,8 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'numeric_literals.carbon'
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
-// CHECK:STDOUT: @tuple.1 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
+// CHECK:STDOUT: @const.loc15_4 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
+// CHECK:STDOUT: @const.loc23_4 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
 // CHECK:STDOUT: entry:
@@ -36,7 +36,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc15_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 2
 // CHECK:STDOUT:   %.loc15_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i32 3
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @tuple, i64 16, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @const.loc15_4, i64 16, i1 false)
 // CHECK:STDOUT:   %floats.var = alloca [6 x double], align 8
 // CHECK:STDOUT:   %.loc23_3.3.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc23_3.6.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 1
@@ -44,7 +44,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc23_3.12.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 3
 // CHECK:STDOUT:   %.loc23_3.15.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 4
 // CHECK:STDOUT:   %.loc23_3.18.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i32 5
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @tuple.1, i64 48, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @const.loc23_4, i64 48, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

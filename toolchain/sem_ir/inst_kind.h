@@ -79,11 +79,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   template <typename TypedNodeId>
   constexpr auto Define(
       llvm::StringLiteral ir_name,
-      InstConstantKind constant_kind = InstConstantKind::Never) const
-      -> Definition<TypedNodeId>;
-  template <typename TypedNodeId>
-  constexpr auto Define(llvm::StringLiteral ir_name,
-                        TerminatorKind terminator_kind) const
+      TerminatorKind terminator_kind = TerminatorKind::NotTerminator) const
       -> Definition<TypedNodeId>;
 
   using EnumBase::AsInt;
@@ -134,11 +130,6 @@ class InstKind::Definition : public InstKind {
   // Returns the name to use for this instruction kind in Semantics IR.
   constexpr auto ir_name() const -> llvm::StringLiteral { return ir_name_; }
 
-  // Returns whether this kind of instruction is able to define a constant.
-  constexpr auto constant_kind() const -> InstConstantKind {
-    return constant_kind_;
-  }
-
   // Returns whether this instruction kind is a code block terminator. See
   // InstKind::terminator_kind().
   constexpr auto terminator_kind() const -> TerminatorKind {
@@ -149,32 +140,18 @@ class InstKind::Definition : public InstKind {
   friend class InstKind;
 
   constexpr Definition(InstKind kind, llvm::StringLiteral ir_name,
-                       InstConstantKind constant_kind,
                        TerminatorKind terminator_kind)
-      : InstKind(kind),
-        ir_name_(ir_name),
-        constant_kind_(constant_kind),
-        terminator_kind_(terminator_kind) {}
+      : InstKind(kind), ir_name_(ir_name), terminator_kind_(terminator_kind) {}
 
   llvm::StringLiteral ir_name_;
-  InstConstantKind constant_kind_;
   TerminatorKind terminator_kind_;
 };
 
 template <typename TypedNodeId>
 constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
-                                InstConstantKind constant_kind) const
-    -> Definition<TypedNodeId> {
-  return Definition<TypedNodeId>(*this, ir_name, constant_kind,
-                                 TerminatorKind::NotTerminator);
-}
-
-template <typename TypedNodeId>
-constexpr auto InstKind::Define(llvm::StringLiteral ir_name,
                                 TerminatorKind terminator_kind) const
     -> Definition<TypedNodeId> {
-  return Definition<TypedNodeId>(*this, ir_name, InstConstantKind::Never,
-                                 terminator_kind);
+  return Definition<TypedNodeId>(*this, ir_name, terminator_kind);
 }
 
 }  // namespace Carbon::SemIR

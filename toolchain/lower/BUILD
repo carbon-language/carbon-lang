@@ -28,6 +28,8 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "constant.cpp",
+        "constant.h",
         "file_context.cpp",
         "function_context.cpp",
     ] +

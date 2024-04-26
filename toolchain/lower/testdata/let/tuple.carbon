@@ -14,8 +14,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'tuple.carbon'
 // CHECK:STDOUT: source_filename = "tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
-// CHECK:STDOUT: @tuple.1 = internal constant { i32, i32 } { i32 4, i32 5 }
+// CHECK:STDOUT: @const.loc8_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
+// CHECK:STDOUT: @const.loc9_29 = internal constant { i32, i32 } { i32 4, i32 5 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() {
 // CHECK:STDOUT: entry:
@@ -23,11 +23,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc8_36.2.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc8_36.4.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
 // CHECK:STDOUT:   %.loc8_36.6.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 2
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple, i64 12, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @const.loc8_37, i64 12, i1 false)
 // CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %.loc9_28.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc9_28.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %b.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.1, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @const.loc9_29, i64 8, i1 false)
 // CHECK:STDOUT:   %.loc10_43.1.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc10_43.2 = load i32, ptr %.loc10_43.1.tuple.elem, align 4
 // CHECK:STDOUT:   %.loc10_43.3.tuple.elem = getelementptr inbounds { i32, i32, i32 }, ptr %a.var, i32 0, i32 1
@@ -66,8 +66,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 12 }
-// CHECK:STDOUT: uselistorder i32 2, { 0, 1, 3, 2 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

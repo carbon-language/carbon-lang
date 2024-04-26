@@ -8,6 +8,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/file.h"
@@ -50,6 +51,10 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
   // TODO: Lower global variable declarations.
 
+  // Lower constants.
+  constants_.resize(sem_ir_->insts().size());
+  LowerConstants(*this, constants_);
+
   // Lower function definitions.
   for (auto i : llvm::seq(sem_ir_->functions().size())) {
     BuildFunctionDefinition(SemIR::FunctionId(i));
@@ -61,49 +66,38 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
+  auto inst = sem_ir().insts().Get(inst_id);
+
   auto const_id = sem_ir().constant_values().Get(inst_id);
-  if (const_id.is_constant()) {
-    inst_id = const_id.inst_id();
-  }
+  if (const_id.is_template()) {
+    // For value expressions and initializing expressions, the value produced by
+    // a constant instruction is a value representation of the constant. For
+    // initializing expressions, `FinishInit` will perform a copy if needed.
+    // TODO: Handle reference expression constants.
+    auto* const_value = constants_[const_id.inst_id().index];
 
-  // All builtins are types, with the same empty lowered value.
-  if (inst_id.is_builtin()) {
-    return GetTypeAsValue();
-  }
-
-  // TODO: Add a FunctionValue that FunctionDecl evaluates to, and remove this.
-  auto target = sem_ir().insts().Get(inst_id);
-  if (auto function_decl = target.TryAs<SemIR::FunctionDecl>()) {
-    return GetFunction(function_decl->function_id);
-  }
-
-  if (target.Is<SemIR::AssociatedEntity>() || target.Is<SemIR::FieldDecl>() ||
-      target.Is<SemIR::BaseDecl>()) {
-    return llvm::ConstantStruct::getAnon(llvm_context(), {});
-  }
-
-  if (target.type_id() == SemIR::TypeId::TypeType) {
-    return GetTypeAsValue();
-  }
-
-  auto constant_id = sem_ir().constant_values().Get(inst_id);
-  if (constant_id.is_constant()) {
-    if (auto function_decl = sem_ir().insts().TryGetAs<SemIR::FunctionDecl>(
-            constant_id.inst_id())) {
-      return GetFunction(function_decl->function_id);
+    // If we want a pointer to the constant, materialize a global to hold it.
+    // TODO: We could reuse the same global if the constant is used more than
+    // once.
+    auto value_rep = SemIR::GetValueRepr(sem_ir(), inst.type_id());
+    if (value_rep.kind == SemIR::ValueRepr::Pointer) {
+      llvm::StringRef name =
+          inst_namer_ ? inst_namer_->GetUnscopedNameFor(inst_id) : "";
+      llvm::StringRef sep = (name.empty() || name[0] == '.') ? "" : ".";
+      return new llvm::GlobalVariable(
+          llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
+          /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage,
+          const_value, "const" + sep + name);
     }
-    auto* value = globals_.lookup(constant_id.inst_id());
-    if (!value) {
-      // TODO: Less-hacky constant lowering.
-      FunctionContext ctx(*this, nullptr, vlog_stream_);
-      ctx.LowerInst(constant_id.inst_id());
-      value = ctx.GetValue(constant_id.inst_id());
-      globals_.insert({constant_id.inst_id(), value});
-    }
-    return value;
+
+    // Otherwise, we can use the constant value directly.
+    return const_value;
   }
 
-  CARBON_FATAL() << "Missing value: " << inst_id << " " << target;
+  // TODO: For generics, handle references to symbolic constants.
+
+  CARBON_FATAL() << "Missing value: " << inst_id << " "
+                 << sem_ir().insts().Get(inst_id);
 }
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id)
@@ -389,6 +383,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
 
 #define CARBON_SEM_IR_INST_KIND_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
 #define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
 #include "toolchain/sem_ir/inst_kind.def"
       CARBON_FATAL() << "Cannot use inst as type: " << inst_id << " "
