@@ -7,8 +7,8 @@
 
 namespace Carbon::Lower {
 
-// For instructions that are always of type `type`, produce the trivial runtime representation
-// of type `type`.
+// For instructions that are always of type `type`, produce the trivial runtime
+// representation of type `type`.
 #define CARBON_SEM_IR_INST_KIND_NOT_TYPE(...)
 #define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(...)
