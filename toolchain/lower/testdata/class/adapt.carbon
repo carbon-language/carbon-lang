@@ -50,13 +50,13 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; ModuleID = 'adapt_class.carbon'
 // CHECK:STDOUT: source_filename = "adapt_class.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @const.loc9_28 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @struct.loc9_28 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ i32, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_27.2.a = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc9_27.4.b = getelementptr inbounds { i32, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @const.loc9_28, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.loc9_28, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

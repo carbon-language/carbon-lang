@@ -26,8 +26,8 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.4: i32 = int_literal 12 [template]
 // CHECK:STDOUT:   %.5: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.7: [i32; 1] = tuple_value (%.4) [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 2147483647 [template]
+// CHECK:STDOUT:   %array: [i32; 1] = tuple_value (%.4) [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 2147483647 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -55,8 +55,8 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc7_23.2: i32 = int_literal 0 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc7_23.3: ref i32 = array_index file.%a.var, %.loc7_23.2
 // CHECK:STDOUT:   %.loc7_23.4: init i32 = initialize_from %.loc7_20 to %.loc7_23.3 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_23.5: init [i32; 1] = array_init (%.loc7_23.4) to file.%a.var [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_24: init [i32; 1] = converted %.loc7_23.1, %.loc7_23.5 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc7_23.5: init [i32; 1] = array_init (%.loc7_23.4) to file.%a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc7_24: init [i32; 1] = converted %.loc7_23.1, %.loc7_23.5 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_24
 // CHECK:STDOUT:   %a.ref.loc13: ref [i32; 1] = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc13_16: i32 = int_literal 1 [template = constants.%.1]
@@ -64,7 +64,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc13_17.2: i32 = bind_value %.loc13_17.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc13_17.2
 // CHECK:STDOUT:   %a.ref.loc18: ref [i32; 1] = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc18_16: i32 = int_literal 2147483647 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc18_16: i32 = int_literal 2147483647 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc18_27.1: ref i32 = array_index %a.ref.loc18, %.loc18_16 [template = <error>]
 // CHECK:STDOUT:   %.loc18_27.2: i32 = bind_value %.loc18_27.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc18_27.2

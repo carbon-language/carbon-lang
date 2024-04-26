@@ -167,8 +167,7 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
 auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
-                            SemIR::InstBlockId refs_id, llvm::Twine name)
-    -> llvm::Value* {
+                            SemIR::InstBlockId refs_id) -> llvm::Value* {
   auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
@@ -195,9 +194,7 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
-      auto* alloca =
-          context.builder().CreateAlloca(llvm_value_rep_type,
-                                         /*ArraySize=*/nullptr, name);
+      auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
       for (auto [i, ref] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
         context.builder().CreateStore(
@@ -222,8 +219,8 @@ auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "struct"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 auto HandleStructTypeField(FunctionContext& /*context*/,
@@ -264,8 +261,8 @@ auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "tuple"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 }  // namespace Carbon::Lower

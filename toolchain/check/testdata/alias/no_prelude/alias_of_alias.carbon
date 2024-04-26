@@ -17,7 +17,7 @@ let d: c = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,7 +37,7 @@ let d: c = {};
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
 // CHECK:STDOUT:   %.loc11_13.1: {} = struct_literal ()
 // CHECK:STDOUT:   %.loc11_13.2: ref C = temporary_storage
-// CHECK:STDOUT:   %.loc11_13.3: init C = class_init (), %.loc11_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_13.3: init C = class_init (), %.loc11_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc11_13.4: ref C = temporary %.loc11_13.2, %.loc11_13.3
 // CHECK:STDOUT:   %.loc11_14.1: ref C = converted %.loc11_13.1, %.loc11_13.4
 // CHECK:STDOUT:   %.loc11_14.2: C = bind_value %.loc11_14.1

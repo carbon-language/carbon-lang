@@ -22,7 +22,7 @@ fn Constant() {
 // CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,8 +72,8 @@ fn Constant() {
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc15_43.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_43.2: init () = tuple_init () to %a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc15_44: init () = converted %.loc15_43.1, %.loc15_43.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc15_43.2: init () = tuple_init () to %a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc15_44: init () = converted %.loc15_43.1, %.loc15_43.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc15_44
 // CHECK:STDOUT:   %.loc16_17: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   %.loc16_13: bool = not %.loc16_17 [template = constants.%.1]

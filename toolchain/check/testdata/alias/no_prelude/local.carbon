@@ -14,7 +14,7 @@ fn F() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -35,14 +35,14 @@ fn F() -> () {
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc8_16.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_16.2: init () = tuple_init () to %a.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_17: init () = converted %.loc8_16.1, %.loc8_16.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_16.2: init () = tuple_init () to %a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_17: init () = converted %.loc8_16.1, %.loc8_16.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc8_17
 // CHECK:STDOUT:   %a.ref: ref () = name_ref a, %a
 // CHECK:STDOUT:   %b: ref () = bind_alias b, %a
 // CHECK:STDOUT:   %b.ref: ref () = name_ref b, %b
-// CHECK:STDOUT:   %.loc10_10: () = tuple_value () [template = constants.%.2]
-// CHECK:STDOUT:   %.loc10_11: () = converted %b.ref, %.loc10_10 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc10_11
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc10: () = converted %b.ref, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   return %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

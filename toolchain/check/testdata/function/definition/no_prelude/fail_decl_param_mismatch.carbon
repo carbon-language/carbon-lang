@@ -67,9 +67,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: {} = struct_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %struct: {} = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,7 +124,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc64_14: <function> = fn_decl @.6 [template] {
 // CHECK:STDOUT:     %.loc64_12.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc64_12.2: type = converted %.loc64_12.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc64_12.2: type = converted %.loc64_12.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:     @.6.%return: ref {} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -154,9 +154,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.4() -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc45_24.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc45_24.2: () = tuple_value () [template = constants.%.2]
-// CHECK:STDOUT:   %.loc45_25: () = converted %.loc45_24.1, %.loc45_24.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc45_24: () = tuple_literal ()
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc45_25: () = converted %.loc45_24, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc45_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,9 +171,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.6() -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc64_24.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc64_24.2: {} = struct_value () [template = constants.%.4]
-// CHECK:STDOUT:   %.loc64_25: {} = converted %.loc64_24.1, %.loc64_24.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc64_24: {} = struct_literal ()
+// CHECK:STDOUT:   %struct: {} = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:   %.loc64_25: {} = converted %.loc64_24, %struct [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc64_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

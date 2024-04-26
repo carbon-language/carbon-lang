@@ -18,8 +18,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type ((), ()) [template]
 // CHECK:STDOUT:   %.3: type = ptr_type ((), ()) [template]
-// CHECK:STDOUT:   %.4: () = tuple_value () [template]
-// CHECK:STDOUT:   %.5: ((), ()) = tuple_value (%.4, %.4) [template]
+// CHECK:STDOUT:   %tuple.1: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple.2: ((), ()) = tuple_value (%tuple.1, %tuple.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,13 +47,13 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %.loc12_15.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.1: ((), ()) = tuple_literal (%n.ref, %.loc12_15.1)
 // CHECK:STDOUT:   %.loc12_16.2: ref () = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc12_11: init () = tuple_init () to %.loc12_16.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_16.3: init () = converted %n.ref, %.loc12_11 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_11: init () = tuple_init () to %.loc12_16.2 [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc12_16.3: init () = converted %n.ref, %.loc12_11 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc12_16.4: ref () = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc12_15.2: init () = tuple_init () to %.loc12_16.4 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_16.5: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_16.6: init ((), ()) = tuple_init (%.loc12_16.3, %.loc12_16.5) to %return [template = constants.%.5]
-// CHECK:STDOUT:   %.loc12_17: init ((), ()) = converted %.loc12_16.1, %.loc12_16.6 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc12_15.2: init () = tuple_init () to %.loc12_16.4 [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc12_16.5: init () = converted %.loc12_15.1, %.loc12_15.2 [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc12_16.6: init ((), ()) = tuple_init (%.loc12_16.3, %.loc12_16.5) to %return [template = constants.%tuple.2]
+// CHECK:STDOUT:   %.loc12_17: init ((), ()) = converted %.loc12_16.1, %.loc12_16.6 [template = constants.%tuple.2]
 // CHECK:STDOUT:   return %.loc12_17 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

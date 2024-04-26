@@ -28,7 +28,7 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.12: type = ptr_type [i32; 4] [template]
 // CHECK:STDOUT:   %.13: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.14: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.15: [i32; 4] = tuple_value (%.6, %.7, %.1, %.8) [template]
+// CHECK:STDOUT:   %array: [i32; 4] = tuple_value (%.6, %.7, %.1, %.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,8 +67,8 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.loc12_55.12: i32 = int_literal 3 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc12_55.13: ref i32 = array_index %.loc12_55.2, %.loc12_55.12
 // CHECK:STDOUT:   %.loc12_55.14: init i32 = initialize_from %.loc12_54 to %.loc12_55.13 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_55.15: init [i32; 4] = array_init (%.loc12_55.5, %.loc12_55.8, %.loc12_55.11, %.loc12_55.14) to %.loc12_55.2 [template = constants.%.15]
-// CHECK:STDOUT:   %.loc12_57.1: init [i32; 4] = converted %.loc12_55.1, %.loc12_55.15 [template = constants.%.15]
+// CHECK:STDOUT:   %.loc12_55.15: init [i32; 4] = array_init (%.loc12_55.5, %.loc12_55.8, %.loc12_55.11, %.loc12_55.14) to %.loc12_55.2 [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_57.1: init [i32; 4] = converted %.loc12_55.1, %.loc12_55.15 [template = constants.%array]
 // CHECK:STDOUT:   %.loc12_70: i32 = int_literal 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc12_57.2: ref [i32; 4] = temporary %.loc12_55.2, %.loc12_57.1
 // CHECK:STDOUT:   %.loc12_71.1: ref i32 = array_index %.loc12_57.2, %.loc12_70

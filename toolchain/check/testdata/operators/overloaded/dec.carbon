@@ -81,9 +81,9 @@ fn TestOp() {
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.8: C = struct_value () [template]
-// CHECK:STDOUT:   %.9: type = assoc_entity_type @Dec, <function> [template]
-// CHECK:STDOUT:   %.10: <associated <function> in Dec> = assoc_entity element0, file.%import_ref.6 [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type @Dec, <function> [template]
+// CHECK:STDOUT:   %.9: <associated <function> in Dec> = assoc_entity element0, file.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,7 +95,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Dec> = import_ref ir2, inst+15, loc_47 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Dec> = import_ref ir2, inst+15, loc_47 [template = constants.%.9]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+13, loc_19 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
@@ -146,8 +146,8 @@ fn TestOp() {
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc13_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc13_15.2: init C = class_init (), %c.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc13_16: init C = converted %.loc13_15.1, %.loc13_15.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_15.2: init C = class_init (), %c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_16: init C = converted %.loc13_15.1, %.loc13_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %c.var, %.loc13_16
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]

@@ -81,13 +81,29 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id) -> llvm::Value* {
     // once.
     auto value_rep = SemIR::GetValueRepr(sem_ir(), inst.type_id());
     if (value_rep.kind == SemIR::ValueRepr::Pointer) {
-      llvm::StringRef name =
-          inst_namer_ ? inst_namer_->GetUnscopedNameFor(inst_id) : "";
-      llvm::StringRef sep = (name.empty() || name[0] == '.') ? "" : ".";
+      // Include both the name of the constant, if any, and the point of use in
+      // the name of the variable.
+      llvm::StringRef const_name;
+      llvm::StringRef use_name;
+      if (inst_namer_) {
+        const_name = inst_namer_->GetUnscopedNameFor(const_id.inst_id());
+        use_name = inst_namer_->GetUnscopedNameFor(inst_id);
+      }
+
+      // We always need to give the global a name even if the instruction namer
+      // doesn't have one to use.
+      if (const_name.empty()) {
+        const_name = "const";
+      }
+      if (use_name.empty()) {
+        use_name = "anon";
+      }
+      llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
+
       return new llvm::GlobalVariable(
           llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
           /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage,
-          const_value, "const" + sep + name);
+          const_value, const_name + sep + use_name);
     }
 
     // Otherwise, we can use the constant value directly.

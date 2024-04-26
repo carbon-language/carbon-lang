@@ -29,7 +29,7 @@ fn F() -> bool {
 // CHECK:STDOUT:   %.2: type = struct_type {.b: bool} [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {.b: bool} [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.5: Class = struct_value (%.4) [template]
+// CHECK:STDOUT:   %struct: Class = struct_value (%.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

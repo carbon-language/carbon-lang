@@ -28,7 +28,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %.1: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -200,8 +200,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
 // CHECK:STDOUT:   %.loc18_49.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc18_49.2: init () = tuple_init () to %d.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc18_50: init () = converted %.loc18_49.1, %.loc18_49.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc18_49.2: init () = tuple_init () to %d.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc18_50: init () = converted %.loc18_49.1, %.loc18_49.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign %d.var, %.loc18_50
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

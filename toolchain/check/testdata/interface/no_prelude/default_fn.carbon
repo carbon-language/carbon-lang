@@ -31,7 +31,7 @@ class C {
 // CHECK:STDOUT:   %.5: type = struct_type {} [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.8: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,8 +79,8 @@ class C {
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc12_19.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc12_19.2: init C = class_init (), %c.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc12_20: init C = converted %.loc12_19.1, %.loc12_19.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc12_19.2: init C = class_init (), %c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_20: init C = converted %.loc12_19.1, %.loc12_19.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %c.var, %.loc12_20
 // CHECK:STDOUT:   %c.ref: ref C = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: type = name_ref I, @C.%I.decl [template = constants.%.1]

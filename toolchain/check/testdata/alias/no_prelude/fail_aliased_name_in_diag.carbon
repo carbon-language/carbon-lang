@@ -23,7 +23,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: D = struct_value () [template]
+// CHECK:STDOUT:   %struct: D = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,8 +58,8 @@ let c_var: c = d;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc11_13.2: init D = class_init (), file.%d.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc11_14: init D = converted %.loc11_13.1, %.loc11_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc11_13.2: init D = class_init (), file.%d.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_14: init D = converted %.loc11_13.1, %.loc11_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc11_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
