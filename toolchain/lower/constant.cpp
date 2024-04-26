@@ -227,6 +227,7 @@ static auto EmitStructTypeFieldAsConstant(ConstantContext& /*context*/,
                                           SemIR::StructTypeField /*inst*/)
     -> llvm::Constant* {
   // A StructTypeField isn't a value, so this constant value won't ever be used.
+  // It also doesn't even have a type, so we can't use GetUnusedConstant.
   return nullptr;
 }
 

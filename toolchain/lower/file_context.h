@@ -91,18 +91,18 @@ class FileContext {
 
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  // We resize this directly to the correct size rather than using a small size.
+  // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Function*, 0> functions_;
 
   // Provides lowered versions of types.
-  // We resize this directly to the correct size rather than using a small size.
+  // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Type*, 0> types_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
 
   // Maps constants to their lowered values.
-  // We resize this directly to the correct size rather than using a small size.
+  // We resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Constant*, 0> constants_;
 };
 
