@@ -84,8 +84,8 @@ class ConstantContext {
 
 // For constants that are always of type `type`, produce the trivial runtime
 // representation of type `type`.
-#define CARBON_SEM_IR_INST_KIND_NOT_TYPE(...)
-#define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_NEVER(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
 #define CARBON_SEM_IR_INST_KIND_CONSTANT_SYMBOLIC_ONLY(...)
 #define CARBON_SEM_IR_INST_KIND(Name)                                      \
   static auto Emit##Name##AsConstant(                                      \

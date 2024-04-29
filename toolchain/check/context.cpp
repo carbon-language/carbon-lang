@@ -940,8 +940,8 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND_TYPE(...)
-#define CARBON_SEM_IR_INST_KIND_MAYBE_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
 #define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
 #include "toolchain/sem_ir/inst_kind.def"
       CARBON_FATAL() << "Type refers to non-type inst " << inst;
