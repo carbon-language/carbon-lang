@@ -126,9 +126,8 @@ class ImportRefResolver {
       CARBON_CHECK(work.inst_id.is_valid());
 
       // Step 1: check for a constant value.
-      auto [existing_const_id, indirect_insts] =
-          FindResolvedConstId(work.inst_id);
-      if (existing_const_id.is_valid() && !work.retry) {
+      auto existing = FindResolvedConstId(work.inst_id);
+      if (existing.const_id.is_valid() && !work.retry) {
         work_stack_.pop_back();
         continue;
       }
@@ -136,14 +135,14 @@ class ImportRefResolver {
       // Step 2: resolve the instruction.
       auto initial_work = work_stack_.size();
       auto [new_const_id, finished] =
-          TryResolveInst(work.inst_id, existing_const_id);
+          TryResolveInst(work.inst_id, existing.const_id);
       CARBON_CHECK(finished == !HasNewWork(initial_work));
 
-      CARBON_CHECK(!existing_const_id.is_valid() ||
-                   existing_const_id == new_const_id)
+      CARBON_CHECK(!existing.const_id.is_valid() ||
+                   existing.const_id == new_const_id)
           << "Constant value changed in second pass.";
-      if (!existing_const_id.is_valid()) {
-        SetResolvedConstId(work.inst_id, indirect_insts, new_const_id);
+      if (!existing.const_id.is_valid()) {
+        SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
       }
 
       // Step 3: pop or retry.
@@ -204,23 +203,38 @@ class ImportRefResolver {
     bool finished = true;
   };
 
-  auto FindResolvedConstId(SemIR::InstId inst_id)
-      -> std::pair<SemIR::ConstantId, llvm::SmallVector<SemIR::ImportIRInst>> {
+  // The constant found by FindResolvedConstId.
+  struct ResolvedConstId {
+    // The constant for the instruction. Invalid if not yet resolved.
+    SemIR::ConstantId const_id = SemIR::ConstantId::Invalid;
+
+    // Instructions which are indirect but equivalent to the current instruction
+    // being resolved, and should have their constant set to the same. Empty
+    // when const_id is valid.
+    llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
+  };
+
+  // Looks to see if an instruction has been resolved. If a constant is only
+  // found indirectly, sets the constant for any indirect steps that don't
+  // already have the constant. If a constant isn't found, returns the indirect
+  // instructions so that they can have the resolved constant assigned later.
+  auto FindResolvedConstId(SemIR::InstId inst_id) -> ResolvedConstId {
+    ResolvedConstId result;
+
     if (auto existing_const_id = import_ir_constant_values().Get(inst_id);
         existing_const_id.is_valid()) {
-      return {existing_const_id, {}};
+      result.const_id = existing_const_id;
+      return result;
     }
 
     const auto* cursor_ir = &import_ir_;
     auto cursor_ir_id = SemIR::ImportIRId::Invalid;
     auto cursor_inst_id = inst_id;
 
-    llvm::SmallVector<SemIR::ImportIRInst> indirect_insts;
-
     while (true) {
       auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
       if (!loc_id.is_import_ir_inst_id()) {
-        return {SemIR::ConstantId::Invalid, indirect_insts};
+        return result;
       }
       auto ir_inst =
           cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
@@ -244,19 +258,21 @@ class ImportRefResolver {
               context_.import_ir_constant_values()[cursor_ir_id.index].Get(
                   cursor_inst_id);
           const_id.is_valid()) {
-        SetResolvedConstId(inst_id, indirect_insts, const_id);
-        return {const_id, {}};
+        SetResolvedConstId(inst_id, result.indirect_insts, const_id);
+        result.const_id = const_id;
+        result.indirect_insts.clear();
+        return result;
       } else {
-        indirect_insts.push_back(
+        result.indirect_insts.push_back(
             {.ir_id = cursor_ir_id, .inst_id = cursor_inst_id});
       }
     }
   }
 
-  auto SetResolvedConstId(
-      SemIR::InstId inst_id,
-      const llvm::SmallVector<SemIR::ImportIRInst>& indirect_insts,
-      SemIR::ConstantId const_id) -> void {
+  // Sets a resolved constant into the current and indirect instructions.
+  auto SetResolvedConstId(SemIR::InstId inst_id,
+                          llvm::ArrayRef<SemIR::ImportIRInst> indirect_insts,
+                          SemIR::ConstantId const_id) -> void {
     import_ir_constant_values().Set(inst_id, const_id);
     for (auto indirect_inst : indirect_insts) {
       context_.import_ir_constant_values()[indirect_inst.ir_id.index].Set(
