@@ -56,11 +56,6 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void;
 
-// Merges an import ref at new_inst_id another at prev_inst_id. May print a
-// diagnostic if merging is invalid.
-auto MergeImportRef(Context& context, SemIR::InstId new_inst_id,
-                    SemIR::InstId prev_inst_id) -> void;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_MERGE_H_

@@ -253,7 +253,7 @@ auto ImportLibraryFromCurrentPackage(Context& context,
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});
       if (!success) {
-        MergeImportRef(context, target_id, it->second);
+        context.DiagnoseDuplicateName(target_id, it->second);
       }
     }
   }

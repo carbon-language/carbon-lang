@@ -84,11 +84,76 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- merge.carbon
+// --- fail_todo_merge.carbon
 
 library "merge" api;
 
 import library "api";
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+65]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+52]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE-20]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:5:1: Name is previously declared here.
+// CHECK:STDERR: fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+39]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE-33]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:6:1: Name is previously declared here.
+// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+26]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE-46]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:7:1: Name is previously declared here.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge.carbon:[[@LINE-59]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:10:1: Name is previously declared here.
+// CHECK:STDERR: fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR:
 import library "extern_api";
 
 var a: () = A();
@@ -97,11 +162,76 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- merge_reverse.carbon
+// --- fail_todo_merge_reverse.carbon
 
 library "merge_reverse" api;
 
 import library "extern_api";
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+65]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+52]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE-20]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:5:1: Name is previously declared here.
+// CHECK:STDERR: extern fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+39]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE-33]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:6:1: Name is previously declared here.
+// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+26]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE-46]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:7:1: Name is previously declared here.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+13]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE-59]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:10:1: Name is previously declared here.
+// CHECK:STDERR: extern fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "api";
 
 var a: () = A();
@@ -162,12 +292,13 @@ import library "api";
 
 var a: () = A();
 
-// CHECK:STDERR: fail_extern_after_use.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of imported entity that was previously used.
+// CHECK:STDERR: fail_extern_after_use.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of imported entity that was previously used.
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_extern_after_use.carbon:[[@LINE-5]]:13: Import used here.
 // CHECK:STDERR: var a: () = A();
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 extern fn A();
 
 // --- unloaded.carbon
@@ -182,11 +313,75 @@ library "unloaded_extern" api;
 
 import library "extern_api";
 
-// --- loaded_merge.carbon
+// --- fail_todo_loaded_merge.carbon
 
 library "loaded_merge" api;
 
 import library "api";
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+64]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn A();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn A();
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+51]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:5:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE-20]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:5:1: Name is previously declared here.
+// CHECK:STDERR: fn B(b: i32) -> i32;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+38]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:6:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE-33]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:6:1: Name is previously declared here.
+// CHECK:STDERR: fn C(c: (i32,)) -> {.c: i32};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+25]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:7:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE-46]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:7:1: Name is previously declared here.
+// CHECK:STDERR: extern fn D();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "extern_api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: extern_api.carbon:10:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE-59]]:1: In import.
+// CHECK:STDERR: import library "api";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: api.carbon:10:1: Name is previously declared here.
+// CHECK:STDERR: fn NS.E();
+// CHECK:STDERR: ^~~~~~~~~~
 import library "extern_api";
 
 // CHECK:STDOUT: --- api.carbon
@@ -588,14 +783,14 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- merge.carbon
+// CHECK:STDOUT: --- fail_todo_merge.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.4) [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -612,103 +807,93 @@ import library "extern_api";
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loc_19 [template = imports.%A.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_28 [template = imports.%B.1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, loc_43 [template = imports.%C.1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loc_57 [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loc_19 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_28 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, loc_43 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loc_57 [template = imports.%D]
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+20, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+21, loc_69 [template = imports.%E.1]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+2, loaded [template = imports.%A.2]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+6, loaded [template = imports.%B.2]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+18, loaded [template = imports.%C.2]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+19, loaded [template = imports.%D.2]
-// CHECK:STDOUT:   %import_ref.11: <function> = import_ref ir2, inst+21, loaded [template = imports.%E.2]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+21, loc_69 [template = imports.%E]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+21, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc72_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc72_9.2: type = converted %.loc72_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc9: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc74: type = struct_type {.c: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %c.var: ref {.c: i32} = var c
 // CHECK:STDOUT:   %c: ref {.c: i32} = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc75_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc75_9.2: type = converted %.loc75_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc11_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc76_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc76_9.2: type = converted %.loc76_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A.1();
+// CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2();
+// CHECK:STDOUT: fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B.1(%b: i32) -> i32;
+// CHECK:STDOUT: fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C.1(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.2();
+// CHECK:STDOUT: fn @E();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A.1]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
 // CHECK:STDOUT:   %A.call: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B.1]
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc8)
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
+// CHECK:STDOUT:   %.loc73: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc73)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C.1]
-// CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_25: (i32,) = tuple_literal (%.loc9_23)
-// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.loc9_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc9_21: (i32,) = converted %.loc9_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init {.c: i32} = call %C.ref(%.loc9_21)
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
+// CHECK:STDOUT:   %.loc74_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc74_25: (i32,) = tuple_literal (%.loc74_23)
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.loc74_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc74_21: (i32,) = converted %.loc74_25, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init {.c: i32} = call %C.ref(%.loc74_21)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %D.call: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %E.ref: <function> = name_ref E, file.%import_ref.6 [template = imports.%E.1]
+// CHECK:STDOUT:   %E.ref: <function> = name_ref E, file.%import_ref.6 [template = imports.%E]
 // CHECK:STDOUT:   %E.call: init () = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- merge_reverse.carbon
+// CHECK:STDOUT: --- fail_todo_merge_reverse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.4) [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: i32} [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (i32) [template]
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = %import_ref.1
+// CHECK:STDOUT:     .B = %import_ref.2
+// CHECK:STDOUT:     .C = %import_ref.3
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:     .NS = %NS
-// CHECK:STDOUT:     .A = imports.%A.2
-// CHECK:STDOUT:     .B = imports.%B.2
-// CHECK:STDOUT:     .C = imports.%C.2
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -716,81 +901,71 @@ import library "extern_api";
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loaded [template = imports.%A.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loaded [template = imports.%B.1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, loaded [template = imports.%C.1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loc_57 [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loc_19 [template = imports.%A]
+// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loc_28 [template = imports.%B]
+// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, loc_43 [template = imports.%C]
+// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loc_57 [template = imports.%D]
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+20, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
-// CHECK:STDOUT:     .E = imports.%E.2
+// CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+21, loaded [template = imports.%E.1]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+2, loaded [template = imports.%A.2]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+6, loaded [template = imports.%B.2]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+18, loaded [template = imports.%C.2]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+19, loaded [template = imports.%D.2]
-// CHECK:STDOUT:   %import_ref.11: <function> = import_ref ir2, inst+21, loaded [template = imports.%E.2]
+// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+21, loc_69 [template = imports.%E]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+21, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc7_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_9.2: type = converted %.loc7_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc72_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc72_9.2: type = converted %.loc72_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc9: type = struct_type {.c: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc74: type = struct_type {.c: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %c.var: ref {.c: i32} = var c
 // CHECK:STDOUT:   %c: ref {.c: i32} = bind_name c, %c.var
-// CHECK:STDOUT:   %.loc10_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_9.2: type = converted %.loc10_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc75_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc75_9.2: type = converted %.loc75_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %d.var: ref () = var d
 // CHECK:STDOUT:   %d: ref () = bind_name d, %d.var
-// CHECK:STDOUT:   %.loc11_9.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc76_9.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc76_9.2: type = converted %.loc76_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %e.var: ref () = var e
 // CHECK:STDOUT:   %e: ref () = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1();
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2();
+// CHECK:STDOUT: extern fn @B(%b: i32) -> i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.1(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @C(%c: (i32,)) -> {.c: i32};
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2(%b: i32) -> i32;
+// CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.1(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.2();
+// CHECK:STDOUT: extern fn @E();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, imports.%A.2 [template = imports.%A.2]
+// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.1 [template = imports.%A]
 // CHECK:STDOUT:   %A.call: init () = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   %B.ref: <function> = name_ref B, imports.%B.2 [template = imports.%B.2]
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc8)
+// CHECK:STDOUT:   %B.ref: <function> = name_ref B, file.%import_ref.2 [template = imports.%B]
+// CHECK:STDOUT:   %.loc73: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %B.call: init i32 = call %B.ref(%.loc73)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, imports.%C.2 [template = imports.%C.2]
-// CHECK:STDOUT:   %.loc9_23: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_25: (i32,) = tuple_literal (%.loc9_23)
-// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.loc9_23) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc9_21: (i32,) = converted %.loc9_25, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init {.c: i32} = call %C.ref(%.loc9_21)
+// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%import_ref.3 [template = imports.%C]
+// CHECK:STDOUT:   %.loc74_23: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc74_25: (i32,) = tuple_literal (%.loc74_23)
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.loc74_23) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc74_21: (i32,) = converted %.loc74_25, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init {.c: i32} = call %C.ref(%.loc74_21)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
-// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D.1]
+// CHECK:STDOUT:   %D.ref: <function> = name_ref D, file.%import_ref.4 [template = imports.%D]
 // CHECK:STDOUT:   %D.call: init () = call %D.ref()
 // CHECK:STDOUT:   assign file.%d.var, %D.call
 // CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %E.ref: <function> = name_ref E, imports.%E.2 [template = imports.%E.2]
+// CHECK:STDOUT:   %E.ref: <function> = name_ref E, file.%import_ref.6 [template = imports.%E]
 // CHECK:STDOUT:   %E.call: init () = call %E.ref()
 // CHECK:STDOUT:   assign file.%e.var, %E.call
 // CHECK:STDOUT:   return
@@ -975,12 +1150,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- loaded_merge.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type (i32) [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.c: i32} [template]
-// CHECK:STDOUT: }
+// CHECK:STDOUT: --- fail_todo_loaded_merge.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
@@ -991,40 +1161,20 @@ import library "extern_api";
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir1, inst+2, loaded [template = imports.%A.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+6, loaded [template = imports.%B.1]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir1, inst+18, loaded [template = imports.%C.1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loaded [template = imports.%D.1]
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+20, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: <function> = import_ref ir1, inst+21, loaded [template = imports.%E.1]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+2, loaded [template = imports.%A.2]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+6, loaded [template = imports.%B.2]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+18, loaded [template = imports.%C.2]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+19, loaded [template = imports.%D.2]
-// CHECK:STDOUT:   %import_ref.11: <function> = import_ref ir2, inst+21, loaded [template = imports.%E.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+21, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B.1(%b: i32) -> i32;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2(%b: i32) -> i32;
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C.1(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%c: (i32,)) -> {.c: i32};
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.2();
 // CHECK:STDOUT:
