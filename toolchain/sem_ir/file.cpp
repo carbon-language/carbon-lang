@@ -62,18 +62,15 @@ auto TypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "{constant: " << constant_id << ", value_rep: " << value_repr << "}";
 }
 
-File::File(SharedValueStores& value_stores, std::string filename)
-    : value_stores_(&value_stores),
+File::File(CheckIRId check_ir_id, SharedValueStores& value_stores,
+           std::string filename)
+    : check_ir_id_(check_ir_id),
+      value_stores_(&value_stores),
       filename_(std::move(filename)),
       type_blocks_(allocator_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(*this, allocator_) {
-  auto api_placeholder_id =
-      import_irs_.Add({.node_id = Parse::NodeId::Invalid, .sem_ir = nullptr});
-  CARBON_CHECK(api_placeholder_id == ImportIRId::ApiForImpl)
-      << "ApiForImpl must be the first IR";
-
   insts_.Reserve(BuiltinKind::ValidCount);
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the

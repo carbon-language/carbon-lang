@@ -82,10 +82,6 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
-  // Adds an import_ref instruction for the specified instruction in the
-  // specified IR. The import_ref is initially marked as unused.
-  auto AddImportRef(SemIR::ImportIRInst import_ir_inst) -> SemIR::InstId;
-
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
   // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used
@@ -315,6 +311,10 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
+  auto check_ir_map() -> llvm::SmallVector<SemIR::ImportIRId>& {
+    return check_ir_map_;
+  }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -433,6 +433,9 @@ class Context {
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Maps CheckIRId to ImportIRId.
+  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
