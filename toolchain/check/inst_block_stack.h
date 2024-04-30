@@ -130,6 +130,9 @@ class InstBlockStack {
   // The size of the stack. Entries after this in `stack_` are kept around so
   // that we can reuse the allocated buffer for their content.
   int size_ = 0;
+
+  // Current global init block to push.
+  SemIR::InstBlockId init_block_id_ = SemIR::InstBlockId::GlobalInit;
 };
 
 }  // namespace Carbon::Check
