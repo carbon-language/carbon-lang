@@ -19,6 +19,17 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
+  // Determine whether we're handling an associated constant. These share the
+  // syntax for a compile-time binding, but don't behave like other compile-time
+  // bindings.
+  // TODO: Consider using a different parse node kind to make this easier.
+  bool is_associated_constant = false;
+  if (is_generic) {
+    auto inst_id = context.scope_stack().PeekInstId();
+    is_associated_constant =
+        inst_id.is_valid() && context.insts().Is<SemIR::InterfaceDecl>(inst_id);
+  }
+
   // Create the appropriate kind of binding for this pattern.
   auto make_bind_name = [&](SemIR::TypeId type_id,
                             SemIR::InstId value_id) -> SemIR::LocIdAndInst {
@@ -29,7 +40,7 @@ auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
          .enclosing_scope_id = context.scope_stack().PeekNameScopeId(),
          // TODO: Don't allocate a compile-time binding index for an associated
          // constant declaration.
-         .bind_index = is_generic
+         .bind_index = is_generic && !is_associated_constant
                            ? context.scope_stack().AddCompileTimeBinding()
                            : SemIR::CompileTimeBindIndex::Invalid});
     if (is_generic) {
