@@ -124,6 +124,9 @@ class InstBlockStack {
 
   std::vector<SemIR::InstId> init_block_;
 
+  // Current global init block to push.
+  SemIR::InstBlockId init_block_id_ = SemIR::InstBlockId::GlobalInit;
+
   // The actual stack.
   llvm::SmallVector<StackEntry> stack_;
 
