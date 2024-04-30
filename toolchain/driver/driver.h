@@ -57,7 +57,9 @@ class Driver {
 
  private:
   struct Options;
+  struct CodegenOptions;
   struct CompileOptions;
+  struct LinkOptions;
   class CompilationUnit;
 
   // Delegates to the command line library to parse the arguments and store the
@@ -70,7 +72,12 @@ class Driver {
   auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
 
   // Implements the compile subcommand of the driver.
-  auto Compile(const CompileOptions& options) -> RunResult;
+  auto Compile(const CompileOptions& options,
+               const CodegenOptions& codegen_options) -> RunResult;
+
+  // Implements the link subcommand of the driver.
+  auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
+      -> RunResult;
 
   // The filesystem for source code.
   llvm::vfs::FileSystem& fs_;
