@@ -35,6 +35,6 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Call(ptr %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_13 = call i32 @F(ptr %a)
-// CHECK:STDOUT:   ret i32 %.loc23_13
+// CHECK:STDOUT:   %F.call = call i32 @F(ptr %a)
+// CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }

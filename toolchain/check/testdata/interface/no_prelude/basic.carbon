@@ -20,8 +20,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %Self.1: Empty = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = interface_type @ForwardDeclared [template]
 // CHECK:STDOUT:   %Self.2: ForwardDeclared = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type @ForwardDeclared, <function> [template]
-// CHECK:STDOUT:   %.4: <associated <function> in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%F [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type @ForwardDeclared, F [template]
+// CHECK:STDOUT:   %.5: <associated F in ForwardDeclared> = assoc_entity element0, @ForwardDeclared.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,13 +47,13 @@ interface ForwardDeclared {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %Self: ForwardDeclared = bind_symbolic_name Self 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %.loc13: <associated <function> in ForwardDeclared> = assoc_entity element0, %F [template = constants.%.4]
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %.loc13: <associated F in ForwardDeclared> = assoc_entity element0, %F.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc13
-// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

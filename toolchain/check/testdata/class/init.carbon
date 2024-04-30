@@ -25,20 +25,25 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.2: type = ptr_type Class [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type Class, Class* [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.n: i32, .next: Class*} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.n: i32, .next: Class*} [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.next: Class*, .n: i32} [template]
+// CHECK:STDOUT:   %Make: type = fn_type @Make [template]
+// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Make = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.n: i32, .next: Class*} [template]
+// CHECK:STDOUT:   %MakeReorder: type = fn_type @MakeReorder [template]
+// CHECK:STDOUT:   %struct.2: MakeReorder = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = struct_type {.next: Class*, .n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .Make = %Make
-// CHECK:STDOUT:     .MakeReorder = %MakeReorder
+// CHECK:STDOUT:     .Make = %Make.decl
+// CHECK:STDOUT:     .MakeReorder = %MakeReorder.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
+// CHECK:STDOUT:   %Make.decl: Make = fn_decl @Make [template = constants.%struct.1] {
 // CHECK:STDOUT:     %n.loc12_9.1: i32 = param n
 // CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc12_9.1
 // CHECK:STDOUT:     %Class.ref.loc12_23: type = name_ref Class, %Class.decl [template = constants.%Class]
@@ -48,7 +53,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %Class.ref.loc12_34: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeReorder: <function> = fn_decl @MakeReorder [template] {
+// CHECK:STDOUT:   %MakeReorder.decl: MakeReorder = fn_decl @MakeReorder [template = constants.%struct.2] {
 // CHECK:STDOUT:     %n.loc16_16.1: i32 = param n
 // CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc16_16.1
 // CHECK:STDOUT:     %Class.ref.loc16_30: type = name_ref Class, %Class.decl [template = constants.%Class]

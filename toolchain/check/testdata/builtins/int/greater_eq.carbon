@@ -27,10 +27,16 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: --- int_greater_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %GreaterEq: type = fn_type @GreaterEq [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: GreaterEq = struct_value () [template]
+// CHECK:STDOUT:   %Negate: type = fn_type @Negate [template]
+// CHECK:STDOUT:   %struct.2: Negate = struct_value () [template]
 // CHECK:STDOUT:   %True: type = class_type @True [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %False: type = class_type @False [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
@@ -38,34 +44,36 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.7: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal -1 [template]
+// CHECK:STDOUT:   %RuntimeCall: type = fn_type @RuntimeCall [template]
+// CHECK:STDOUT:   %struct.4: RuntimeCall = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .GreaterEq = %GreaterEq
-// CHECK:STDOUT:     .Negate = %Negate
+// CHECK:STDOUT:     .GreaterEq = %GreaterEq.decl
+// CHECK:STDOUT:     .Negate = %Negate.decl
 // CHECK:STDOUT:     .True = %True.decl
 // CHECK:STDOUT:     .False = %False.decl
-// CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:     .RuntimeCall = %RuntimeCall
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %GreaterEq: <function> = fn_decl @GreaterEq [template] {
+// CHECK:STDOUT:   %GreaterEq.decl: GreaterEq = fn_decl @GreaterEq [template = constants.%struct.1] {
 // CHECK:STDOUT:     %a.loc2_14.1: i32 = param a
 // CHECK:STDOUT:     @GreaterEq.%a: i32 = bind_name a, %a.loc2_14.1
 // CHECK:STDOUT:     %b.loc2_22.1: i32 = param b
 // CHECK:STDOUT:     @GreaterEq.%b: i32 = bind_name b, %b.loc2_22.1
 // CHECK:STDOUT:     @GreaterEq.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Negate: <function> = fn_decl @Negate [template] {
+// CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.2] {
 // CHECK:STDOUT:     %a.loc3_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc3_11.1
 // CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
 // CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
 // CHECK:STDOUT:     %true_.loc8_6.1: True = param true_
 // CHECK:STDOUT:     @F.%true_: True = bind_name true_, %true_.loc8_6.1
@@ -73,7 +81,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     %false_.loc8_19.1: False = param false_
 // CHECK:STDOUT:     @F.%false_: False = bind_name false_, %false_.loc8_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %RuntimeCall: <function> = fn_decl @RuntimeCall [template] {
+// CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.4] {
 // CHECK:STDOUT:     %a.loc16_16.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc16_16.1
 // CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
@@ -99,7 +107,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: fn @F(%true_: True, %false_: False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: False = name_ref false_, %false_
-// CHECK:STDOUT:   %GreaterEq.ref.loc9: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
+// CHECK:STDOUT:   %GreaterEq.ref.loc9: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc9_27: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_30: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %int.greater_eq.loc9: init bool = call %GreaterEq.ref.loc9(%.loc9_27, %.loc9_30) [template = constants.%.6]
@@ -118,7 +126,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc10: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc10: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
+// CHECK:STDOUT:   %GreaterEq.ref.loc10: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_29: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.greater_eq.loc10: init bool = call %GreaterEq.ref.loc10(%.loc10_26, %.loc10_29) [template = constants.%.7]
@@ -137,7 +145,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc10:
 // CHECK:STDOUT:   %.loc10_13.3: type = block_arg !if.expr.result.loc10 [template = constants.%True]
 // CHECK:STDOUT:   %true_.ref.loc11: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc11: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
+// CHECK:STDOUT:   %GreaterEq.ref.loc11: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc11_26: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_29: i32 = int_literal 0 [template = constants.%.8]
 // CHECK:STDOUT:   %int.greater_eq.loc11: init bool = call %GreaterEq.ref.loc11(%.loc11_26, %.loc11_29) [template = constants.%.7]
@@ -156,8 +164,8 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_13.3: type = block_arg !if.expr.result.loc11 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref.loc12: False = name_ref false_, %false_
-// CHECK:STDOUT:   %GreaterEq.ref.loc12: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
-// CHECK:STDOUT:   %Negate.ref.loc12: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
+// CHECK:STDOUT:   %GreaterEq.ref.loc12: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Negate.ref.loc12: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc12_34: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_34) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_38: i32 = int_literal 0 [template = constants.%.8]
@@ -179,9 +187,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc12:
 // CHECK:STDOUT:   %.loc12_14.3: type = block_arg !if.expr.result.loc12 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc13: True = name_ref true_, %true_
-// CHECK:STDOUT:   %GreaterEq.ref.loc13: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
+// CHECK:STDOUT:   %GreaterEq.ref.loc13: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc13_26: i32 = int_literal 0 [template = constants.%.8]
-// CHECK:STDOUT:   %Negate.ref.loc13: <function> = name_ref Negate, file.%Negate [template = file.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc13: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc13_36: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc13: init i32 = call %Negate.ref.loc13(%.loc13_36) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_25.1: i32 = value_of_initializer %int.snegate.loc13 [template = constants.%.9]
@@ -206,7 +214,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %GreaterEq.ref: <function> = name_ref GreaterEq, file.%GreaterEq [template = file.%GreaterEq]
+// CHECK:STDOUT:   %GreaterEq.ref: GreaterEq = name_ref GreaterEq, file.%GreaterEq.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.greater_eq: init bool = call %GreaterEq.ref(%a.ref, %b.ref)

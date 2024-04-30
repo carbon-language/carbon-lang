@@ -19,7 +19,10 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -32,12 +35,12 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.loc8: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc15: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl.loc8: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc15: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F.loc8
+// CHECK:STDOUT:   .F = %F.decl.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

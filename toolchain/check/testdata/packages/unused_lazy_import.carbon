@@ -16,13 +16,19 @@ package Implicit impl;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

@@ -145,13 +145,19 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other_conflict.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = fn_type @C [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
+// CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {

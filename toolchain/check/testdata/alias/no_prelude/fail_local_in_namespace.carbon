@@ -26,16 +26,18 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc9_12.1: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @F.%return: ref {} = var <return slot>

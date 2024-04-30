@@ -25,7 +25,6 @@
 // CHECK:STDOUT:     instIntType:     {kind: Builtin, arg0: IntType, type: typeTypeType}
 // CHECK:STDOUT:     instFloatType:   {kind: Builtin, arg0: FloatType, type: typeTypeType}
 // CHECK:STDOUT:     instStringType:  {kind: Builtin, arg0: StringType, type: typeTypeType}
-// CHECK:STDOUT:     instFunctionType: {kind: Builtin, arg0: FunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instBoundMethodType: {kind: Builtin, arg0: BoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: Builtin, arg0: NamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     instWitnessType: {kind: Builtin, arg0: WitnessType, type: typeTypeType}
@@ -37,7 +36,6 @@
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType
 // CHECK:STDOUT:     instStringType:  template instStringType
-// CHECK:STDOUT:     instFunctionType: template instFunctionType
 // CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
 // CHECK:STDOUT:     instNamespaceType: template instNamespaceType
 // CHECK:STDOUT:     instWitnessType: template instWitnessType

@@ -484,6 +484,14 @@ struct FunctionDecl {
   InstBlockId decl_block_id;
 };
 
+struct FunctionType {
+  static constexpr auto Kind =
+      InstKind::FunctionType.Define<Parse::AnyFunctionDeclId>("fn_type");
+
+  TypeId type_id;
+  FunctionId function_id;
+};
+
 struct ImplDecl {
   static constexpr auto Kind =
       InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");

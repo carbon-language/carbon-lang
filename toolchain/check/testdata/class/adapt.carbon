@@ -95,10 +95,14 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapted: type = class_type @Adapted [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %AdaptNotExtend: type = class_type @AdaptNotExtend [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
+// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,12 +110,12 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Adapted = %Adapted.decl
 // CHECK:STDOUT:     .AdaptNotExtend = %AdaptNotExtend.decl
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Adapted.decl: type = class_decl @Adapted [template = constants.%Adapted] {}
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [template = constants.%AdaptNotExtend] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, %AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
 // CHECK:STDOUT:     %a.loc12_6.1: AdaptNotExtend = param a
 // CHECK:STDOUT:     @F.2.%a: AdaptNotExtend = bind_name a, %a.loc12_6.1
@@ -119,11 +123,11 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapted
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptNotExtend {

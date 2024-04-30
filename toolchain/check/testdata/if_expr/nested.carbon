@@ -11,19 +11,22 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %a.loc7_6.1: bool = param a
 // CHECK:STDOUT:     @F.%a: bool = bind_name a, %a.loc7_6.1
 // CHECK:STDOUT:     %b.loc7_15.1: bool = param b
@@ -44,11 +47,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then.loc8_20 else br !if.expr.else.loc8_20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_20:
-// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_20:
-// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_37)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_20:
@@ -60,11 +63,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %c.ref br !if.expr.then.loc8_44 else br !if.expr.else.loc8_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_44:
-// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3 [template = constants.%.4]
 // CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_54)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_44:
-// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4 [template = constants.%.5]
 // CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_61)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_44:

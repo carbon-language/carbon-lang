@@ -15,12 +15,18 @@ fn F() {}
 
 // CHECK:STDOUT: --- fail_redef.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.loc7
+// CHECK:STDOUT:     .F = %F.decl.loc7
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.loc7: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc14: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl.loc7: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc14: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

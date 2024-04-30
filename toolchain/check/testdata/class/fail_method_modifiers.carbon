@@ -55,9 +55,20 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %Abstract.1: type = fn_type @Abstract.1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Abstract = struct_value () [template]
+// CHECK:STDOUT:   %Virtual: type = fn_type @Virtual [template]
+// CHECK:STDOUT:   %struct.2: Virtual = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %AbstractClass: type = class_type @AbstractClass [template]
+// CHECK:STDOUT:   %Default: type = fn_type @Default [template]
+// CHECK:STDOUT:   %struct.3: Default = struct_value () [template]
+// CHECK:STDOUT:   %Final: type = fn_type @Final [template]
+// CHECK:STDOUT:   %struct.4: Final = struct_value () [template]
 // CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template]
+// CHECK:STDOUT:   %Abstract.2: type = fn_type @Abstract.2 [template]
+// CHECK:STDOUT:   %struct.5: Abstract = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,12 +85,12 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.1 [template] {
+// CHECK:STDOUT:   %Abstract.decl: Abstract = fn_decl @Abstract.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.loc16_24.1: FinalClass = param self
 // CHECK:STDOUT:     %self.loc16_24.2: FinalClass = bind_name self, %self.loc16_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Virtual: <function> = fn_decl @Virtual [template] {
+// CHECK:STDOUT:   %Virtual.decl: Virtual = fn_decl @Virtual [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.loc25_22.1: FinalClass = param self
 // CHECK:STDOUT:     %self.loc25_22.2: FinalClass = bind_name self, %self.loc25_22.1
@@ -87,17 +98,17 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%FinalClass
-// CHECK:STDOUT:   .Abstract = %Abstract
-// CHECK:STDOUT:   .Virtual = %Virtual
+// CHECK:STDOUT:   .Abstract = %Abstract.decl
+// CHECK:STDOUT:   .Virtual = %Virtual.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
-// CHECK:STDOUT:   %Default: <function> = fn_decl @Default [template] {
+// CHECK:STDOUT:   %Default.decl: Default = fn_decl @Default [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Self.ref.loc34: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.loc34_22.1: AbstractClass = param self
 // CHECK:STDOUT:     %self.loc34_22.2: AbstractClass = bind_name self, %self.loc34_22.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Final: <function> = fn_decl @Final [template] {
+// CHECK:STDOUT:   %Final.decl: Final = fn_decl @Final [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Self.ref.loc40: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.loc40_18.1: AbstractClass = param self
 // CHECK:STDOUT:     %self.loc40_18.2: AbstractClass = bind_name self, %self.loc40_18.1
@@ -105,12 +116,12 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractClass
-// CHECK:STDOUT:   .Default = %Default
-// CHECK:STDOUT:   .Final = %Final
+// CHECK:STDOUT:   .Default = %Default.decl
+// CHECK:STDOUT:   .Final = %Final.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
-// CHECK:STDOUT:   %Abstract: <function> = fn_decl @Abstract.2 [template] {
+// CHECK:STDOUT:   %Abstract.decl: Abstract = fn_decl @Abstract.2 [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT:     %self.loc51_24.1: BaseClass = param self
 // CHECK:STDOUT:     %self.loc51_24.2: BaseClass = bind_name self, %self.loc51_24.1
@@ -118,7 +129,7 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%BaseClass
-// CHECK:STDOUT:   .Abstract = %Abstract
+// CHECK:STDOUT:   .Abstract = %Abstract.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Abstract.1[@FinalClass.%self.loc16_24.2: FinalClass]();

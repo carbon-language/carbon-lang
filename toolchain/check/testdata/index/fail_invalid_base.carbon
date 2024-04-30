@@ -33,11 +33,14 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
-// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %struct: {.a: i32, .b: i32} = struct_value (%.2, %.3) [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %struct.2: {.a: i32, .b: i32} = struct_value (%.3, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,7 +48,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
@@ -54,7 +57,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref i32 = var c
@@ -70,17 +73,17 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, file.%N [template = file.%N]
 // CHECK:STDOUT:   %.loc12: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%F [template = file.%F]
-// CHECK:STDOUT:   %.loc19: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%F.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc19: i32 = int_literal 1 [template = constants.%.3]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %.loc25_20: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25_28: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_20: i32 = int_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc25_28: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc25_29.1: {.a: i32, .b: i32} = struct_literal (%.loc25_20, %.loc25_28)
 // CHECK:STDOUT:   %.loc25_31: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %struct: {.a: i32, .b: i32} = struct_value (%.loc25_20, %.loc25_28) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = converted %.loc25_29.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %struct: {.a: i32, .b: i32} = struct_value (%.loc25_20, %.loc25_28) [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = converted %.loc25_29.1, %struct [template = constants.%struct.2]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %.loc30_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc30_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.5]
 // CHECK:STDOUT:   %.loc30_33: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return

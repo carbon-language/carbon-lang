@@ -31,7 +31,12 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Class, T [symbolic]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: T} [symbolic]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: T} [symbolic]
+// CHECK:STDOUT:   %.4: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,7 +49,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.loc11_13.1: type = param T
 // CHECK:STDOUT:     %T.loc11_13.2: type = bind_symbolic_name T 0, %T.loc11_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc26: <function> = fn_decl @.1 [template] {
+// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %T.loc26_10.1: type = param T
 // CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc26_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
@@ -53,7 +58,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, file.%T.loc11_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc12: <unbound element of class Class> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc13_8.2: Class = bind_name self, %self.loc13_8.1
@@ -65,7 +70,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@Class.%self.loc13_8.2: Class](@Class.%n.loc13_20.2: T);

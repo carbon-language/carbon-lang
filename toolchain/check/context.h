@@ -240,6 +240,9 @@ class Context {
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
 
+  // Gets a function type. The returned type will be complete.
+  auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 

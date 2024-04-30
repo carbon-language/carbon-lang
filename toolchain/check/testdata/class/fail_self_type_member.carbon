@@ -27,9 +27,12 @@ fn F() -> bool {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Class, bool [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.b: bool} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.b: bool} [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal true [template]
-// CHECK:STDOUT:   %struct: Class = struct_value (%.4) [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.b: bool} [template]
+// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %struct.2: Class = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

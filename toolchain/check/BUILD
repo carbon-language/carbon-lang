@@ -177,6 +177,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -222,6 +223,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
