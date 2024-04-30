@@ -435,7 +435,7 @@ auto HandleBaseDecl(Context& context, Parse::BaseDeclId node_id) -> bool {
        SemIR::StructTypeField{SemIR::NameId::Base, base_info.type_id}}));
 
   // Bind the name `base` in the class to the base field.
-  context.decl_name_stack().AddNameToLookup(
+  context.decl_name_stack().AddNameOrDiagnoseDuplicate(
       context.decl_name_stack().MakeUnqualifiedName(node_id,
                                                     SemIR::NameId::Base),
       class_info.base_id);

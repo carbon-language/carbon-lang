@@ -57,14 +57,16 @@ auto HandleVariableDecl(Context& context, Parse::VariableDeclId node_id)
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
         context.insts().GetLocId(value_id),
         context.bind_names().Get(bind_name->bind_name_id).name_id);
-    context.decl_name_stack().AddNameToLookup(name_context, value_id);
+    context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context,
+                                                         value_id);
     value_id = bind_name->value_id;
   } else if (auto field_decl =
                  context.insts().TryGetAs<SemIR::FieldDecl>(value_id)) {
     // Introduce the field name into the class.
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
         context.insts().GetLocId(value_id), field_decl->name_id);
-    context.decl_name_stack().AddNameToLookup(name_context, value_id);
+    context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context,
+                                                         value_id);
   }
   // TODO: Handle other kinds of pattern.
 

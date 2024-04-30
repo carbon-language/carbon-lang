@@ -10,6 +10,29 @@
 
 namespace Carbon::Check {
 
+auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
+  switch (state) {
+    case NameContext::State::Error:
+      // The name is invalid and a diagnostic has already been emitted.
+      return SemIR::InstId::Invalid;
+
+    case NameContext::State::Empty:
+      CARBON_FATAL()
+          << "Name is missing, not expected to call existing_inst_id (but "
+             "that may change based on error handling).";
+
+    case NameContext::State::Resolved:
+    case NameContext::State::ResolvedNonScope:
+      return resolved_inst_id;
+
+    case NameContext::State::Unresolved:
+      return SemIR::InstId::Invalid;
+
+    case NameContext::State::Finished:
+      CARBON_FATAL() << "Finished state should only be used internally";
+  }
+}
+
 auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
   return NameContext{
       .enclosing_scope = context_->scope_stack().PeekIndex(),
@@ -94,20 +117,11 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
   }
 }
 
-auto DeclNameStack::LookupOrAddName(NameContext name_context,
-                                    SemIR::InstId target_id) -> SemIR::InstId {
+auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
+    -> void {
   switch (name_context.state) {
     case NameContext::State::Error:
-      // The name is invalid and a diagnostic has already been emitted.
-      return SemIR::InstId::Invalid;
-
-    case NameContext::State::Empty:
-      CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
-                        "(but that may change based on error handling).";
-
-    case NameContext::State::Resolved:
-    case NameContext::State::ResolvedNonScope:
-      return name_context.resolved_inst_id;
+      return;
 
     case NameContext::State::Unresolved:
       if (!name_context.target_scope_id.is_valid()) {
@@ -141,19 +155,31 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
             << name_context.unresolved_name_id << " in "
             << name_context.target_scope_id;
       }
-      return SemIR::InstId::Invalid;
+      break;
 
-    case NameContext::State::Finished:
-      CARBON_FATAL() << "Finished state should only be used internally";
+    default:
+      CARBON_FATAL() << "Should not be calling AddName";
+      break;
   }
 }
 
-auto DeclNameStack::AddNameToLookup(NameContext name_context,
-                                    SemIR::InstId target_id) -> void {
-  auto existing_inst_id = LookupOrAddName(name_context, target_id);
-  if (existing_inst_id.is_valid()) {
-    context_->DiagnoseDuplicateName(target_id, existing_inst_id);
+auto DeclNameStack::AddNameOrDiagnoseDuplicate(NameContext name_context,
+                                               SemIR::InstId target_id)
+    -> void {
+  if (auto id = name_context.prev_inst_id(); id.is_valid()) {
+    context_->DiagnoseDuplicateName(target_id, id);
+  } else {
+    AddName(name_context, target_id);
   }
+}
+
+auto DeclNameStack::LookupOrAddName(NameContext name_context,
+                                    SemIR::InstId target_id) -> SemIR::InstId {
+  if (auto id = name_context.prev_inst_id(); id.is_valid()) {
+    return id;
+  }
+  AddName(name_context, target_id);
+  return SemIR::InstId::Invalid;
 }
 
 auto DeclNameStack::ApplyNameQualifier(SemIR::LocId loc_id,

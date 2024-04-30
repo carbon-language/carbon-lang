@@ -91,15 +91,14 @@ class DeclNameStack {
       Error,
     };
 
-    // Returns whether the name resolved to an existing entity.
-    auto is_resolved() -> bool {
-      return state != State::Unresolved && state != State::Empty;
-    }
+    // Returns any name collision found, or Invalid.
+    auto prev_inst_id() -> SemIR::InstId;
 
     // Returns the name_id for a new instruction. This is invalid when the name
     // resolved.
     auto name_id_for_new_inst() -> SemIR::NameId {
-      return !is_resolved() ? unresolved_name_id : SemIR::NameId::Invalid;
+      return state == State::Unresolved ? unresolved_name_id
+                                        : SemIR::NameId::Invalid;
     }
 
     // Returns the enclosing_scope_id for a new instruction. This is invalid
@@ -107,7 +106,8 @@ class DeclNameStack {
     // the NameContext, which refers to the scope of the introducer rather than
     // the scope of the name.
     auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return !is_resolved() ? target_scope_id : SemIR::NameScopeId::Invalid;
+      return state == State::Unresolved ? target_scope_id
+                                        : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will
@@ -130,10 +130,10 @@ class DeclNameStack {
     union {
       // The ID of a resolved qualifier, including both identifiers and
       // expressions. Invalid indicates resolution failed.
-      SemIR::InstId resolved_inst_id = SemIR::InstId::Invalid;
+      SemIR::InstId resolved_inst_id;
 
       // The ID of an unresolved identifier.
-      SemIR::NameId unresolved_name_id;
+      SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
     };
   };
 
@@ -214,9 +214,12 @@ class DeclNameStack {
   // describes an existing scope, such as a namespace or a defined class.
   auto ApplyNameQualifier(SemIR::LocId loc_id, SemIR::NameId name_id) -> void;
 
+  // Adds a name to name lookup. Assumes duplicates are already handled.
+  auto AddName(NameContext name_context, SemIR::InstId target_id) -> void;
+
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(NameContext name_context, SemIR::InstId target_id)
-      -> void;
+  auto AddNameOrDiagnoseDuplicate(NameContext name_context,
+                                  SemIR::InstId target_id) -> void;
 
   // Adds a name to name lookup, or returns the existing instruction if this
   // name has already been declared in this scope.

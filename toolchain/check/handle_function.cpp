@@ -132,24 +132,8 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = function_info.decl_id;
   }
 
-  // At interface scope, a function declaration introduces an associated
-  // function.
-  auto lookup_result_id = function_info.decl_id;
-  if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
-      !name_context.has_qualifiers) {
-    auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
-        name_context.enclosing_scope_id_for_new_inst());
-    if (auto interface_scope =
-            context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
-                scope_inst_id)) {
-      lookup_result_id = BuildAssociatedEntity(
-          context, interface_scope->interface_id, function_info.decl_id);
-    }
-  }
-
   // Check whether this is a redeclaration.
-  auto prev_id =
-      context.decl_name_stack().LookupOrAddName(name_context, lookup_result_id);
+  auto prev_id = name_context.prev_inst_id();
   if (prev_id.is_valid()) {
     auto prev_inst_for_merge =
         ResolvePrevInstForMerge(context, node_id, prev_id);
@@ -178,6 +162,27 @@ static auto BuildFunctionDecl(Context& context,
 
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
+
+  // Check if we need to add this to name lookup, now that the function decl is
+  // done.
+  if (!prev_id.is_valid()) {
+    // At interface scope, a function declaration introduces an associated
+    // function.
+    auto lookup_result_id = function_info.decl_id;
+    if (name_context.enclosing_scope_id_for_new_inst().is_valid() &&
+        !name_context.has_qualifiers) {
+      auto scope_inst_id = context.name_scopes().GetInstIdIfValid(
+          name_context.enclosing_scope_id_for_new_inst());
+      if (auto interface_scope =
+              context.insts().TryGetAsIfValid<SemIR::InterfaceDecl>(
+                  scope_inst_id)) {
+        lookup_result_id = BuildAssociatedEntity(
+            context, interface_scope->interface_id, function_info.decl_id);
+      }
+    }
+
+    context.decl_name_stack().AddName(name_context, lookup_result_id);
+  }
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.

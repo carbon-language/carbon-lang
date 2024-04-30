@@ -69,7 +69,7 @@ auto HandleAlias(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   // Add the name of the binding to the current scope.
   context.decl_name_stack().PopScope();
-  context.decl_name_stack().AddNameToLookup(name_context, alias_id);
+  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, alias_id);
   return true;
 }
 
