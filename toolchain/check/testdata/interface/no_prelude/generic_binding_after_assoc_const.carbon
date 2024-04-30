@@ -42,20 +42,20 @@ interface I {
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
 // CHECK:STDOUT:   %.loc9: <associated type in I> = assoc_entity element1, %U [template = constants.%.5]
 // CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %T.loc10_8.1: type = param T
-// CHECK:STDOUT:     %T.loc10_8.2: type = bind_symbolic_name T 1, %T.loc10_8.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %T.loc12_8.1: type = param T
+// CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T 1, %T.loc12_8.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: <associated <function> in I> = assoc_entity element2, %G [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12: <associated <function> in I> = assoc_entity element2, %G [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc8
 // CHECK:STDOUT:   .U = %.loc9
-// CHECK:STDOUT:   .G = %.loc10
+// CHECK:STDOUT:   .G = %.loc12
 // CHECK:STDOUT:   witness = (%F, %U, %G)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(@I.%T.loc8_8.2: type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(@I.%T.loc10_8.2: type);
+// CHECK:STDOUT: fn @G(@I.%T.loc12_8.2: type);
 // CHECK:STDOUT:
