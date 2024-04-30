@@ -165,13 +165,15 @@ struct UnitInfo {
     llvm::SmallVector<Import> imports;
   };
 
-  explicit UnitInfo(Unit& unit)
-      : unit(&unit),
+  explicit UnitInfo(SemIR::CheckIRId check_ir_id, Unit& unit)
+      : check_ir_id(check_ir_id),
+        unit(&unit),
         converter(unit.tokens, unit.tokens->source().filename(),
                   unit.parse_tree),
         err_tracker(*unit.consumer),
         emitter(converter, err_tracker) {}
 
+  SemIR::CheckIRId check_ir_id;
   Unit* unit;
 
   // Emitter information.
@@ -193,26 +195,29 @@ struct UnitInfo {
   // imports only touch `api` files.
   llvm::SmallVector<UnitInfo*> incoming_imports;
 
-  // True if this is an `impl` file and an `api` implicit import has
-  // successfully been added. Used for determining the number of import IRs.
-  bool has_api_for_impl = false;
+  // The corresponding `api` unit if this is an `impl` file. The entry should
+  // also be in the corresponding `PackageImports`.
+  UnitInfo* api_for_impl = nullptr;
 };
 
 // Add imports to the root block.
-static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
-    -> void {
+static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
+                                       int total_ir_count) -> void {
   // First create the constant values map for all imported IRs. We'll populate
   // these with mappings for namespaces as we go.
-  size_t num_irs = context.import_irs().size();
+  size_t num_irs = 0;
   for (auto& [_, package_imports] : unit_info.package_imports_map) {
     num_irs += package_imports.imports.size();
   }
-  if (unit_info.has_api_for_impl) {
-    // One of the IRs replaces ImportIRId::ApiForImpl.
-    --num_irs;
+  if (!unit_info.api_for_impl) {
+    // Leave an empty slot for ImportIRId::ApiForImpl.
+    ++num_irs;
   }
-  context.import_ir_constant_values().resize(
-      num_irs, SemIR::ConstantValueStore(SemIR::ConstantId::Invalid));
+
+  context.import_irs().Reserve(num_irs);
+  context.import_ir_constant_values().reserve(num_irs);
+
+  context.check_ir_map().resize(total_ir_count, SemIR::ImportIRId::Invalid);
 
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
@@ -231,19 +236,26 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
                         SemIR::InstId::Invalid}});
   CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
 
+  // If there is an implicit `api` import, set it first so that it uses the
+  // ImportIRId::ApiForImpl when processed for imports.
+  if (unit_info.api_for_impl) {
+    SetApiImportIR(
+        context,
+        {.node_id = context.parse_tree().packaging_directive()->names.node_id,
+         .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
+  } else {
+    SetApiImportIR(context,
+                   {.node_id = Parse::InvalidNodeId(), .sem_ir = nullptr});
+  }
+
   // Add imports from the current package.
   auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
   if (self_import != unit_info.package_imports_map.end()) {
     bool error_in_import = self_import->second.has_load_error;
-    const auto& packaging = context.parse_tree().packaging_directive();
-    auto current_library_id =
-        packaging ? packaging->names.library_id : StringLiteralValueId::Invalid;
     for (const auto& import : self_import->second.imports) {
-      bool is_api_for_impl = current_library_id == import.names.library_id;
       const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
       ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import.names.node_id, is_api_for_impl,
-                                      import_sem_ir);
+                                      import.names.node_id, import_sem_ir);
       error_in_import |= import_sem_ir.name_scopes()
                              .Get(SemIR::NameScopeId::Package)
                              .has_error;
@@ -277,10 +289,6 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info)
                                     package_imports.node_id, package_id,
                                     import_irs, package_imports.has_load_error);
   }
-
-  CARBON_CHECK(context.import_irs().size() == num_irs)
-      << "Created an unexpected number of IRs: expected " << num_irs
-      << ", have " << context.import_irs().size();
 }
 
 namespace {
@@ -728,9 +736,10 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
 static auto CheckParseTree(
     llvm::DenseMap<const SemIR::File*, Parse::NodeLocConverter*>*
         node_converters,
-    UnitInfo& unit_info, llvm::raw_ostream* vlog_stream) -> void {
+    UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
+    -> void {
   unit_info.unit->sem_ir->emplace(
-      *unit_info.unit->value_stores,
+      unit_info.check_ir_id, *unit_info.unit->value_stores,
       unit_info.unit->tokens->source().filename().str());
 
   // For ease-of-access.
@@ -747,7 +756,7 @@ static auto CheckParseTree(
   // Add a block for the file.
   context.inst_block_stack().Push();
 
-  InitPackageScopeAndImports(context, unit_info);
+  InitPackageScopeAndImports(context, unit_info, total_ir_count);
 
   // Import all impls declared in imports.
   // TODO: Do this selectively when we see an impl query.
@@ -924,10 +933,10 @@ static auto TrackImport(
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
 
-    // If this is the implicit import, note it was successfully imported.
+    // If this is the implicit import, note we have it.
     if (!explicit_import_map) {
-      CARBON_CHECK(!import.package_id.is_valid());
-      unit_info.has_api_for_impl = true;
+      CARBON_CHECK(!unit_info.api_for_impl);
+      unit_info.api_for_impl = api->second;
     }
   } else {
     // The imported api is missing.
@@ -1040,8 +1049,8 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   // UnitInfo is big due to its SmallVectors, so we default to 0 on the stack.
   llvm::SmallVector<UnitInfo, 0> unit_infos;
   unit_infos.reserve(units.size());
-  for (auto& unit : units) {
-    unit_infos.emplace_back(unit);
+  for (auto [i, unit] : llvm::enumerate(units)) {
+    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
   }
 
   llvm::DenseMap<ImportKey, UnitInfo*> api_map =
@@ -1093,7 +1102,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckParseTree(&node_converters, *unit_info, vlog_stream);
+    CheckParseTree(&node_converters, *unit_info, units.size(), vlog_stream);
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -1110,7 +1119,6 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // on a part of it.
     // TODO: Better identify cycles, maybe try to untangle them.
     for (auto& unit_info : unit_infos) {
-      const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
       if (unit_info.imports_remaining > 0) {
         for (auto& [package_id, package_imports] :
              unit_info.package_imports_map) {
@@ -1128,9 +1136,8 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                                      ImportCycleDetected);
               // Make this look the same as an import which wasn't found.
               package_imports.has_load_error = true;
-              if (packaging && !package_id.is_valid() &&
-                  packaging->names.library_id == import_it->names.library_id) {
-                unit_info.has_api_for_impl = false;
+              if (unit_info.api_for_impl == import_it->unit_info) {
+                unit_info.api_for_impl = nullptr;
               }
               import_it = package_imports.imports.erase(import_it);
             }
@@ -1143,7 +1150,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckParseTree(&node_converters, unit_info, vlog_stream);
+        CheckParseTree(&node_converters, unit_info, units.size(), vlog_stream);
       }
     }
   }

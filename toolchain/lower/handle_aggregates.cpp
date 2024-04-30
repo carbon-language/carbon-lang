@@ -148,16 +148,6 @@ auto HandleClassInit(FunctionContext& context, SemIR::InstId inst_id,
                                         "class.init"));
 }
 
-auto HandleBaseDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                    SemIR::BaseDecl /*inst*/) -> void {
-  // No action to perform.
-}
-
-auto HandleFieldDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                     SemIR::FieldDecl /*inst*/) -> void {
-  // No action to perform.
-}
-
 auto HandleStructAccess(FunctionContext& context, SemIR::InstId inst_id,
                         SemIR::StructAccess inst) -> void {
   auto struct_type_id = context.sem_ir().insts().Get(inst.struct_id).type_id();
@@ -177,8 +167,7 @@ auto HandleStructLiteral(FunctionContext& /*context*/,
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
 auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
-                            SemIR::InstBlockId refs_id, llvm::Twine name)
-    -> llvm::Value* {
+                            SemIR::InstBlockId refs_id) -> llvm::Value* {
   auto value_rep = SemIR::GetValueRepr(context.sem_ir(), type_id);
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
@@ -203,47 +192,16 @@ auto EmitAggregateValueRepr(FunctionContext& context, SemIR::TypeId type_id,
       auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
       auto* llvm_value_rep_type = context.GetType(pointee_type_id);
 
-      auto refs = context.sem_ir().inst_blocks().Get(refs_id);
-      if (context.builder().GetInsertBlock()) {
-        // Write the value representation to a local alloca so we can produce a
-        // pointer to it as the value representation of the struct or tuple.
-        auto* alloca =
-            context.builder().CreateAlloca(llvm_value_rep_type,
-                                           /*ArraySize=*/nullptr, name);
-        for (auto [i, ref] : llvm::enumerate(refs)) {
-          context.builder().CreateStore(context.GetValue(ref),
-                                        context.builder().CreateStructGEP(
-                                            llvm_value_rep_type, alloca, i));
-        }
-        return alloca;
-      } else {
-        // TODO: Move this out to a separate constant lowering file.
-        llvm::SmallVector<llvm::Constant*> elements;
-        elements.reserve(refs.size());
-        for (auto ref : refs) {
-          auto ref_value_rep = SemIR::GetValueRepr(
-              context.sem_ir(), context.sem_ir().insts().Get(ref).type_id());
-          auto* inner_value = llvm::cast<llvm::Constant>(context.GetValue(ref));
-          if (ref_value_rep.kind == SemIR::ValueRepr::Pointer) {
-            inner_value =
-                llvm::cast<llvm::GlobalVariable>(inner_value)->getInitializer();
-          }
-          elements.push_back(inner_value);
-        }
-        llvm::Constant* value;
-        if (auto* struct_type =
-                llvm::dyn_cast<llvm::StructType>(llvm_value_rep_type)) {
-          value = llvm::ConstantStruct::get(struct_type, elements);
-        } else if (auto* array_type =
-                       llvm::dyn_cast<llvm::ArrayType>(llvm_value_rep_type)) {
-          value = llvm::ConstantArray::get(array_type, elements);
-        } else {
-          CARBON_FATAL() << "Unknown aggregate value representation";
-        }
-        return new llvm::GlobalVariable(
-            context.llvm_module(), llvm_value_rep_type, /*isConstant=*/true,
-            llvm::GlobalVariable::InternalLinkage, value, name);
+      // Write the value representation to a local alloca so we can produce a
+      // pointer to it as the value representation of the struct or tuple.
+      auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
+      for (auto [i, ref] :
+           llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
+        context.builder().CreateStore(
+            context.GetValue(ref),
+            context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
       }
+      return alloca;
     }
 
     case SemIR::ValueRepr::Custom:
@@ -261,8 +219,8 @@ auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "struct"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 auto HandleStructTypeField(FunctionContext& /*context*/,
@@ -303,8 +261,8 @@ auto HandleTupleInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleTupleValue(FunctionContext& context, SemIR::InstId inst_id,
                       SemIR::TupleValue inst) -> void {
-  context.SetLocal(inst_id, EmitAggregateValueRepr(context, inst.type_id,
-                                                   inst.elements_id, "tuple"));
+  context.SetLocal(
+      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }
 
 }  // namespace Carbon::Lower

@@ -7,8 +7,22 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+// Sets the IR for ImportIRId::ApiForImpl. Should be called before AddImportIR
+// in order to ensure the correct ID is assigned.
+auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void;
+
+// Adds an ImportIR, returning the ID. May use an existing ID if already added.
+auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
+    -> SemIR::ImportIRId;
+
+// Adds an import_ref instruction for the specified instruction in the
+// specified IR. The import_ref is initially marked as unused.
+auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
+    -> SemIR::InstId;
 
 // If the passed in instruction ID is an ImportRefUnloaded, loads it for use.
 // The result will be an ImportRefUsed.

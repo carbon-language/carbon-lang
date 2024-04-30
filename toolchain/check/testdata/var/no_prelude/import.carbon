@@ -20,7 +20,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,8 +36,8 @@ var a: () = a_ref;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_18.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_18.2: init () = tuple_init () to file.%a_ref.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_19: init () = converted %.loc4_18.1, %.loc4_18.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_18.2: init () = tuple_init () to file.%a_ref.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_19: init () = converted %.loc4_18.1, %.loc4_18.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc4_19
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -46,7 +46,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: () = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -64,8 +64,8 @@ var a: () = a_ref;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_ref.ref: ref () = name_ref a_ref, file.%import_ref
-// CHECK:STDOUT:   %.loc4_13: init () = tuple_init () to file.%a.var [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_18: init () = converted %a_ref.ref, %.loc4_13 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_13: init () = tuple_init () to file.%a.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc4_18: init () = converted %a_ref.ref, %.loc4_13 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

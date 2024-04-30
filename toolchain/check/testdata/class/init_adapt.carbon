@@ -85,7 +85,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %struct: C = struct_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -110,7 +110,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
 // CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1
@@ -194,7 +194,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %struct: C = struct_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -219,7 +219,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
 // CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1

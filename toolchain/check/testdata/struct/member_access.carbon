@@ -15,7 +15,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.2: type = ptr_type {.a: f64, .b: i32} [template]
 // CHECK:STDOUT:   %.3: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: {.a: f64, .b: i32} = struct_value (%.3, %.4) [template]
+// CHECK:STDOUT:   %struct: {.a: f64, .b: i32} = struct_value (%.3, %.4) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,8 +44,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc7_46.3: init f64 = initialize_from %.loc7_35 to %.loc7_46.2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_46.4: ref i32 = struct_access file.%x.var, element1
 // CHECK:STDOUT:   %.loc7_46.5: init i32 = initialize_from %.loc7_45 to %.loc7_46.4 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_46.6: init {.a: f64, .b: i32} = struct_init (%.loc7_46.3, %.loc7_46.5) to file.%x.var [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_47: init {.a: f64, .b: i32} = converted %.loc7_46.1, %.loc7_46.6 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc7_46.6: init {.a: f64, .b: i32} = struct_init (%.loc7_46.3, %.loc7_46.5) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_47: init {.a: f64, .b: i32} = converted %.loc7_46.1, %.loc7_46.6 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_47
 // CHECK:STDOUT:   %x.ref: ref {.a: f64, .b: i32} = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc8_15.1: ref i32 = struct_access %x.ref, element1

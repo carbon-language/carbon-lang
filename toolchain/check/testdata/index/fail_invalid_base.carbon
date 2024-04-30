@@ -37,7 +37,7 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.6: {.a: i32, .b: i32} = struct_value (%.2, %.3) [template]
+// CHECK:STDOUT:   %struct: {.a: i32, .b: i32} = struct_value (%.2, %.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,8 +77,8 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %.loc25_28: i32 = int_literal 2 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc25_29.1: {.a: i32, .b: i32} = struct_literal (%.loc25_20, %.loc25_28)
 // CHECK:STDOUT:   %.loc25_31: i32 = int_literal 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = struct_value (%.loc25_20, %.loc25_28) [template = constants.%.6]
-// CHECK:STDOUT:   %.loc25_29.3: {.a: i32, .b: i32} = converted %.loc25_29.1, %.loc25_29.2 [template = constants.%.6]
+// CHECK:STDOUT:   %struct: {.a: i32, .b: i32} = struct_value (%.loc25_20, %.loc25_28) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_29.2: {.a: i32, .b: i32} = converted %.loc25_29.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   %.loc30_31: type = struct_type {.a: i32, .b: i32} [template = constants.%.4]
 // CHECK:STDOUT:   %.loc30_33: i32 = int_literal 0 [template = constants.%.1]

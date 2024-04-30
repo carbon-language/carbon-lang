@@ -29,15 +29,14 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct = internal constant { i32 } { i32 4 }
-// CHECK:STDOUT: @struct.1 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
+// CHECK:STDOUT: @struct.2.loc18_36 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Make(ptr sret({ { i32 }, i32 }) %return) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_35.2.base = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 0
 // CHECK:STDOUT:   %.loc18_26.2.b = getelementptr inbounds { i32 }, ptr %.loc18_35.2.base, i32 0, i32 0
 // CHECK:STDOUT:   %.loc18_35.4.d = getelementptr inbounds { { i32 }, i32 }, ptr %return, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.1, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.2.loc18_36, i64 8, i1 false)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

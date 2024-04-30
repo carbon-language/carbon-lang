@@ -129,13 +129,13 @@ import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_then_decl.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: decl.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_todo_import_extern_decl_then_decl.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -149,13 +149,13 @@ import library "decl";
 // CHECK:STDERR: fail_todo_import_decl_then_extern_decl.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: extern_decl.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_import_decl_then_extern_decl.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -169,13 +169,13 @@ import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_then_def.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "def";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: def.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: def.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_todo_import_extern_decl_then_def.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -189,13 +189,13 @@ import library "extern_decl";
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: decl.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: decl.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -203,13 +203,13 @@ import library "decl";
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+13]]:1: In import.
 // CHECK:STDERR: import library "def";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: def.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: def.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE-21]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -223,13 +223,13 @@ import library "extern_decl";
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import library "extern_decl_copy";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl_copy.carbon:4:1: ERROR: Only one library can declare `class C` without `extern`.
+// CHECK:STDERR: extern_decl_copy.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "extern_decl";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: extern_decl.carbon:4:1: Previously declared here.
+// CHECK:STDERR: extern_decl.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: extern class C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 import library "extern_decl_copy";
@@ -484,139 +484,64 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_then_decl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_decl_then_extern_decl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_then_def.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C.3 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir3, inst+2, loaded [template = constants.%C.3]
-// CHECK:STDOUT:   %C.decl.3: type = class_decl @C.3 [template = constants.%C.3] {}
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir3, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.4
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.3 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.1: type = class_type @C.1 [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C.2]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+2, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %C.decl.1: type = class_decl @C.1 [template = constants.%C.1] {}
-// CHECK:STDOUT:   %C.decl.2: type = class_decl @C.2 [template = constants.%C.2] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.1;
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_decl_after_import_extern_decl.carbon
 // CHECK:STDOUT:

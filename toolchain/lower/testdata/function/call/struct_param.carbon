@@ -13,7 +13,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'struct_param.carbon'
 // CHECK:STDOUT: source_filename = "struct_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @struct.3.loc10_4.3 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F({ i32 } %b, ptr %c) {
 // CHECK:STDOUT: entry:
@@ -22,6 +22,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr @struct)
+// CHECK:STDOUT:   call void @F({ i32 } { i32 1 }, ptr @struct.3.loc10_4.3)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

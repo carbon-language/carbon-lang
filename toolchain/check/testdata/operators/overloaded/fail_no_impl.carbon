@@ -203,15 +203,15 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Self.2: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.8: type = assoc_entity_type @Add, <function> [template]
 // CHECK:STDOUT:   %.9: <associated <function> in Add> = assoc_entity element0, file.%import_ref.10 [template]
-// CHECK:STDOUT:   %.10: C = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = interface_type @AddAssign [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = interface_type @AddAssign [template]
 // CHECK:STDOUT:   %Self.3: AddAssign = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.12: type = assoc_entity_type @AddAssign, <function> [template]
-// CHECK:STDOUT:   %.13: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.15 [template]
-// CHECK:STDOUT:   %.14: type = interface_type @Inc [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type @AddAssign, <function> [template]
+// CHECK:STDOUT:   %.12: <associated <function> in AddAssign> = assoc_entity element0, file.%import_ref.15 [template]
+// CHECK:STDOUT:   %.13: type = interface_type @Inc [template]
 // CHECK:STDOUT:   %Self.4: Inc = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.15: type = assoc_entity_type @Inc, <function> [template]
-// CHECK:STDOUT:   %.16: <associated <function> in Inc> = assoc_entity element0, file.%import_ref.20 [template]
+// CHECK:STDOUT:   %.14: type = assoc_entity_type @Inc, <function> [template]
+// CHECK:STDOUT:   %.15: <associated <function> in Inc> = assoc_entity element0, file.%import_ref.20 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -256,13 +256,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.loc24_12.1: C = param b
 // CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc24_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+36, loc_66 [template = constants.%.11]
-// CHECK:STDOUT:   %import_ref.12: <associated <function> in AddAssign> = import_ref ir2, inst+55, loc_66 [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+36, loc_66 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.12: <associated <function> in AddAssign> = import_ref ir2, inst+55, loc_66 [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+38, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+53, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+57, loc_69 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.17: <associated <function> in Inc> = import_ref ir2, inst+71, loc_69 [template = constants.%.16]
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+57, loc_69 [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.17: <associated <function> in Inc> = import_ref ir2, inst+71, loc_69 [template = constants.%.15]
 // CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+59, unloaded
 // CHECK:STDOUT:   %import_ref.19 = import_ref ir2, inst+69, unloaded
 // CHECK:STDOUT:   %import_ref.20 = import_ref ir2, inst+69, unloaded
@@ -322,14 +322,14 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a.var: ref C = var a
 // CHECK:STDOUT:   %a: ref C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc25_15.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc25_15.2: init C = class_init (), %a.var [template = constants.%.10]
-// CHECK:STDOUT:   %.loc25_16: init C = converted %.loc25_15.1, %.loc25_15.2 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc25_15.2: init C = class_init (), %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_16: init C = converted %.loc25_15.1, %.loc25_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc25_16
 // CHECK:STDOUT:   %a.ref.loc30: ref C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %AddAssign.decl: type = interface_decl @AddAssign [template = constants.%.11] {}
+// CHECK:STDOUT:   %AddAssign.decl: type = interface_decl @AddAssign [template = constants.%.10] {}
 // CHECK:STDOUT:   %a.ref.loc34: ref C = name_ref a, %a
-// CHECK:STDOUT:   %Inc.decl: type = interface_decl @Inc [template = constants.%.14] {}
+// CHECK:STDOUT:   %Inc.decl: type = interface_decl @Inc [template = constants.%.13] {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -13,14 +13,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple = internal constant { i32, i32 } { i32 12, i32 7 }
+// CHECK:STDOUT: @tuple.loc8_30 = internal constant { i32, i32 } { i32 12, i32 7 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %.loc8_29.2.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc8_29.4.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple, i64 8, i1 false)
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc8_30, i64 8, i1 false)
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8
 // CHECK:STDOUT:   %.loc9_23.1.tuple.elem = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
 // CHECK:STDOUT:   %.loc9_23.2 = load i32, ptr %.loc9_23.1.tuple.elem, align 4

@@ -39,11 +39,11 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.10: i32 = int_literal 4 [template]
 // CHECK:STDOUT:   %.11: i32 = int_literal 7 [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.base: {.b: i32}, .d: i32} [template]
-// CHECK:STDOUT:   %.13: Base = struct_value (%.10) [template]
-// CHECK:STDOUT:   %.14: Derived = struct_value (%.13, %.11) [template]
-// CHECK:STDOUT:   %.15: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.16: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.17: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %struct.1: Base = struct_value (%.10) [template]
+// CHECK:STDOUT:   %struct.2: Derived = struct_value (%struct.1, %.11) [template]
+// CHECK:STDOUT:   %.13: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %.15: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,7 +66,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:     %d.loc21_11.1: Derived = param d
 // CHECK:STDOUT:     @Access.%d: Derived = bind_name d, %d.loc21_11.1
 // CHECK:STDOUT:     %.loc21_35.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:     %.loc21_35.2: type = converted %.loc21_35.1, constants.%.16 [template = constants.%.16]
+// CHECK:STDOUT:     %.loc21_35.2: type = converted %.loc21_35.1, constants.%.14 [template = constants.%.14]
 // CHECK:STDOUT:     @Access.%return: ref (i32, i32) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -100,12 +100,12 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_35.2: ref Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc18_26.2: ref i32 = class_element_access %.loc18_35.2, element0
 // CHECK:STDOUT:   %.loc18_26.3: init i32 = initialize_from %.loc18_25 to %.loc18_26.2 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc18_26.4: init Base = class_init (%.loc18_26.3), %.loc18_35.2 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc18_35.3: init Base = converted %.loc18_26.1, %.loc18_26.4 [template = constants.%.13]
+// CHECK:STDOUT:   %.loc18_26.4: init Base = class_init (%.loc18_26.3), %.loc18_35.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc18_35.3: init Base = converted %.loc18_26.1, %.loc18_26.4 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc18_35.4: ref i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc18_35.5: init i32 = initialize_from %.loc18_34 to %.loc18_35.4 [template = constants.%.11]
-// CHECK:STDOUT:   %.loc18_35.6: init Derived = class_init (%.loc18_35.3, %.loc18_35.5), %return [template = constants.%.14]
-// CHECK:STDOUT:   %.loc18_36: init Derived = converted %.loc18_35.1, %.loc18_35.6 [template = constants.%.14]
+// CHECK:STDOUT:   %.loc18_35.6: init Derived = class_init (%.loc18_35.3, %.loc18_35.5), %return [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc18_36: init Derived = converted %.loc18_35.1, %.loc18_35.6 [template = constants.%struct.2]
 // CHECK:STDOUT:   return %.loc18_36 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

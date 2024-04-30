@@ -153,24 +153,6 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   constant_values().Set(inst_id, const_id);
 }
 
-auto Context::AddImportRef(SemIR::ImportIRInst import_ir_inst)
-    -> SemIR::InstId {
-  auto import_ir_inst_id = import_ir_insts().Add(import_ir_inst);
-  auto import_ref_id = AddPlaceholderInstInNoBlock(
-      {import_ir_inst_id, SemIR::ImportRefUnloaded{import_ir_inst_id}});
-
-  // We can't insert this instruction into whatever block we happen to be in,
-  // because this function is typically called by name lookup in the middle of
-  // an otherwise unknown checking step. But we need to add the instruction
-  // somewhere, because it's referenced by other instructions and needs to be
-  // visible in textual IR. Adding it to the file block is arbitrary but is the
-  // best place we have right now.
-  //
-  // TODO: Consider adding a dedicated block for import_refs.
-  inst_block_stack().AddInstIdToFileBlock(import_ref_id);
-  return import_ref_id;
-}
-
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
     -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
@@ -342,9 +324,9 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       continue;
     }
     auto import_inst_id =
-        context.AddImportRef({.ir_id = import_ir_id, .inst_id = it->second});
+        AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second});
     if (result_id.is_valid()) {
-      MergeImportRef(context, import_inst_id, result_id);
+      context.DiagnoseDuplicateName(import_inst_id, result_id);
     } else {
       LoadImportRef(context, import_inst_id,
                     mark_imports_used ? loc : SemIR::LocId::Invalid);
@@ -940,7 +922,8 @@ class TypeCompleter {
   auto BuildValueRepr(SemIR::TypeId type_id, SemIR::Inst inst) const
       -> SemIR::ValueRepr {
     CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND_TYPE(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_ALWAYS(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
 #define CARBON_SEM_IR_INST_KIND(Name) case SemIR::Name::Kind:
 #include "toolchain/sem_ir/inst_kind.def"
       CARBON_FATAL() << "Type refers to non-type inst " << inst;

@@ -81,9 +81,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Op) [template]
 // CHECK:STDOUT:   %.4: type = tuple_type () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.6: C = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = assoc_entity_type @Negate, <function> [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Negate> = assoc_entity element0, file.%import_ref.6 [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type @Negate, <function> [template]
+// CHECK:STDOUT:   %.7: <associated <function> in Negate> = assoc_entity element0, file.%import_ref.6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,7 +95,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir2, inst+16, loc_50 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.2: <associated <function> in Negate> = import_ref ir2, inst+16, loc_50 [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+14, loc_19 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
@@ -145,8 +145,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @Op.1[@impl.%self.loc9_9.2: C]() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%.6]
-// CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_13.2: init C = class_init (), @impl.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc10_14: init C = converted %.loc10_13.1, %.loc10_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc10_14 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

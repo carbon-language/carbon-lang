@@ -17,11 +17,12 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Path.h"
 #include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
+#include "toolchain/driver/clang_runner.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
@@ -69,6 +70,30 @@ auto Driver::FindPreludeFiles(llvm::StringRef data_dir,
   return result;
 }
 
+struct Driver::CodegenOptions {
+  void Build(CommandLine::CommandBuilder& b) {
+    b.AddStringOption(
+        {
+            .name = "target",
+            .help = R"""(
+Select a target platform. Uses the LLVM target syntax. Also known as a "triple"
+for historical reasons.
+
+This corresponds to the `target` flag to Clang and accepts the same strings
+documented there:
+https://clang.llvm.org/docs/CrossCompilation.html#target-triple
+)""",
+        },
+        [&](auto& arg_b) {
+          arg_b.Default(host);
+          arg_b.Set(&target);
+        });
+  }
+
+  std::string host = llvm::sys::getDefaultTargetTriple();
+  llvm::StringRef target;
+};
+
 struct Driver::CompileOptions {
   static constexpr CommandLine::CommandInfo Info = {
       .name = "compile",
@@ -115,7 +140,7 @@ can be written to standard output as these phases progress.
     return out;
   }
 
-  void Build(CommandLine::CommandBuilder& b) {
+  void Build(CommandLine::CommandBuilder& b, CodegenOptions& codegen_options) {
     b.AddStringPositionalArg(
         {
             .name = "FILE",
@@ -169,22 +194,10 @@ object output can be forced by enabling `--force-obj-output`.
         },
         [&](auto& arg_b) { arg_b.Set(&output_filename); });
 
-    b.AddStringOption(
-        {
-            .name = "target",
-            .help = R"""(
-Select a target platform. Uses the LLVM target syntax. Also known as a "triple"
-for historical reasons.
-
-This corresponds to the `target` flag to Clang and accepts the same strings
-documented there:
-https://clang.llvm.org/docs/CrossCompilation.html#target-triple
-)""",
-        },
-        [&](auto& arg_b) {
-          arg_b.Default(host);
-          arg_b.Set(&target);
-        });
+    // Include the common code generation options at this point to render it
+    // after the more common options above, but before the more unusual options
+    // below.
+    codegen_options.Build(b);
 
     b.AddFlag(
         {
@@ -318,9 +331,6 @@ Excludes files with the given prefix from dumps.
 
   Phase phase;
 
-  std::string host = llvm::sys::getDefaultTargetTriple();
-  llvm::StringRef target;
-
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> input_filenames;
 
@@ -339,6 +349,52 @@ Excludes files with the given prefix from dumps.
   bool prelude_import = false;
 
   llvm::StringRef exclude_dump_file_prefix;
+};
+
+struct Driver::LinkOptions {
+  static constexpr CommandLine::CommandInfo Info = {
+      .name = "link",
+      .help = R"""(
+Link Carbon executables.
+
+This subcommand links Carbon executables by combining object files.
+
+TODO: Support linking binary libraries, both archives and shared libraries.
+TODO: Support linking against binary libraries.
+)""",
+  };
+
+  void Build(CommandLine::CommandBuilder& b, CodegenOptions& codegen_options) {
+    b.AddStringPositionalArg(
+        {
+            .name = "OBJECT_FILE",
+            .help = R"""(
+The input object files.
+)""",
+        },
+        [&](auto& arg_b) {
+          arg_b.Required(true);
+          arg_b.Append(&object_filenames);
+        });
+
+    b.AddStringOption(
+        {
+            .name = "output",
+            .value_name = "FILE",
+            .help = R"""(
+The linked file name. The output is always a linked binary.
+)""",
+        },
+        [&](auto& arg_b) {
+          arg_b.Required(true);
+          arg_b.Set(&output_filename);
+        });
+
+    codegen_options.Build(b);
+  }
+
+  llvm::StringRef output_filename;
+  llvm::SmallVector<llvm::StringRef> object_filenames;
 };
 
 struct Driver::Options {
@@ -363,6 +419,7 @@ For questions, issues, or bug reports, please use our GitHub project:
 
   enum class Subcommand : int8_t {
     Compile,
+    Link,
   };
 
   void Build(CommandLine::CommandBuilder& b) {
@@ -376,9 +433,14 @@ For questions, issues, or bug reports, please use our GitHub project:
 
     b.AddSubcommand(CompileOptions::Info,
                     [&](CommandLine::CommandBuilder& sub_b) {
-                      compile_options.Build(sub_b);
+                      compile_options.Build(sub_b, codegen_options);
                       sub_b.Do([&] { subcommand = Subcommand::Compile; });
                     });
+
+    b.AddSubcommand(LinkOptions::Info, [&](CommandLine::CommandBuilder& sub_b) {
+      link_options.Build(sub_b, codegen_options);
+      sub_b.Do([&] { subcommand = Subcommand::Link; });
+    });
 
     b.RequiresSubcommand();
   }
@@ -386,7 +448,9 @@ For questions, issues, or bug reports, please use our GitHub project:
   bool verbose;
   Subcommand subcommand;
 
+  CodegenOptions codegen_options;
   CompileOptions compile_options;
+  LinkOptions link_options;
 };
 
 auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
@@ -412,7 +476,9 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult {
 
   switch (options.subcommand) {
     case Options::Subcommand::Compile:
-      return Compile(options.compile_options);
+      return Compile(options.compile_options, options.codegen_options);
+    case Options::Subcommand::Link:
+      return Link(options.link_options, options.codegen_options);
   }
   llvm_unreachable("All subcommands handled!");
 }
@@ -457,10 +523,12 @@ auto Driver::ValidateCompileOptions(const CompileOptions& options) const
 class Driver::CompilationUnit {
  public:
   explicit CompilationUnit(Driver* driver, const CompileOptions& options,
+                           const CodegenOptions& codegen_options,
                            DiagnosticConsumer* consumer,
                            llvm::StringRef input_filename)
       : driver_(driver),
         options_(options),
+        codegen_options_(codegen_options),
         input_filename_(input_filename),
         vlog_stream_(driver_->vlog_stream_) {
     if (vlog_stream_ != nullptr || options_.stream_errors) {
@@ -606,8 +674,8 @@ class Driver::CompilationUnit {
  private:
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool {
-    std::optional<CodeGen> codegen =
-        CodeGen::Make(*module_, options_.target, driver_->error_stream_);
+    std::optional<CodeGen> codegen = CodeGen::Make(
+        *module_, codegen_options_.target, driver_->error_stream_);
     if (!codegen) {
       return false;
     }
@@ -690,6 +758,7 @@ class Driver::CompilationUnit {
   Driver* driver_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
+  const CodegenOptions& codegen_options_;
   std::string input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
@@ -710,7 +779,8 @@ class Driver::CompilationUnit {
   std::unique_ptr<llvm::Module> module_;
 };
 
-auto Driver::Compile(const CompileOptions& options) -> RunResult {
+auto Driver::Compile(const CompileOptions& options,
+                     const CodegenOptions& codegen_options) -> RunResult {
   if (!ValidateCompileOptions(options)) {
     return {.success = false};
   }
@@ -734,13 +804,13 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
   // Add the prelude files.
   for (const auto& input_filename : prelude) {
     units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, input_filename));
+        this, options, codegen_options, &stream_consumer, input_filename));
   }
 
   // Add the input source files.
   for (const auto& input_filename : options.input_filenames) {
     units.push_back(std::make_unique<CompilationUnit>(
-        this, options, &stream_consumer, input_filename));
+        this, options, codegen_options, &stream_consumer, input_filename));
   }
 
   auto on_exit = llvm::make_scope_exit([&]() {
@@ -828,6 +898,61 @@ auto Driver::Compile(const CompileOptions& options) -> RunResult {
     unit->RunCodeGen();
   }
   return make_result();
+}
+
+static void AddOSFlags(llvm::StringRef target,
+                       llvm::SmallVectorImpl<llvm::StringRef>& args) {
+  llvm::Triple triple(target);
+  switch (triple.getOS()) {
+    case llvm::Triple::Darwin:
+    case llvm::Triple::MacOSX:
+      // On macOS we need to set the sysroot to a viable SDK. Currently, this
+      // hard codes the path to be the unversioned symlink. The prefix is also
+      // hard coded in Homebrew and so this seems likely to work reasonably
+      // well. Homebrew and I suspect the Xcode Clang both have this hard coded
+      // at build time, so this seems reasonably safe but we can revisit if/when
+      // needed.
+      args.push_back(
+          "--sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      // We also need to insist on a modern linker, otherwise the driver tries
+      // too old and deprecated flags. The specific number here comes from an
+      // inspection of the Clang driver source code to understand where features
+      // were enabled, and this appears to be the latest version to control
+      // driver behavior.
+      //
+      // TODO: We should replace this with use of `lld` eventually.
+      args.push_back("-mlinker-version=705");
+      break;
+
+    default:
+      // By default, just let the Clang driver handle everything.
+      break;
+  }
+}
+
+auto Driver::Link(const LinkOptions& options,
+                  const CodegenOptions& codegen_options) -> RunResult {
+  // TODO: Currently we use the Clang driver to link. This works well on Unix
+  // OSes but we likely need to directly build logic to invoke `link.exe` on
+  // Windows where `cl.exe` doesn't typically cover that logic.
+
+  // Use a reasonably large small vector here to minimize allocations. We expect
+  // to link reasonably large numbers of object files.
+  llvm::SmallVector<llvm::StringRef, 128> clang_args;
+
+  // We link using a C++ mode of the driver.
+  clang_args.push_back("--driver-mode=g++");
+
+  // Add OS-specific flags based on the target.
+  AddOSFlags(codegen_options.target, clang_args);
+
+  clang_args.push_back("-o");
+  clang_args.push_back(options.output_filename);
+  clang_args.append(options.object_filenames.begin(),
+                    options.object_filenames.end());
+
+  ClangRunner runner("FIXME", codegen_options.target, vlog_stream_);
+  return {.success = runner.Run(clang_args)};
 }
 
 }  // namespace Carbon

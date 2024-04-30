@@ -31,7 +31,7 @@ class A {
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (@impl.%Make) [template]
 // CHECK:STDOUT:   %.6: type = tuple_type () [template]
 // CHECK:STDOUT:   %.7: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.8: C = struct_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,8 +93,8 @@ class A {
 // CHECK:STDOUT: fn @Make.2() -> @impl.%return.var: C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_33.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc17_33.2: init C = class_init (), @impl.%return.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc17_34: init C = converted %.loc17_33.1, %.loc17_33.2 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc17_33.2: init C = class_init (), @impl.%return.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_34: init C = converted %.loc17_33.1, %.loc17_33.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc17_34 to @impl.%return.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

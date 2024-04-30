@@ -5,6 +5,7 @@
 #include "toolchain/lower/function_context.h"
 
 #include "common/vlog.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {
@@ -47,24 +48,30 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 
 auto FunctionContext::LowerBlock(SemIR::InstBlockId block_id) -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
-    // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
-    if (sem_ir().constant_values().Get(inst_id).is_constant()) {
-      continue;
-    }
     LowerInst(inst_id);
   }
 }
 
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
+  // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
+  if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+    return;
+  }
+
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG() << "Lowering " << inst_id << ": " << inst << "\n";
   builder_.getInserter().SetCurrentInstId(inst_id);
-  switch (inst.kind()) {
-#define CARBON_SEM_IR_INST_KIND(Name)                     \
-  case SemIR::Name::Kind:                                 \
-    Handle##Name(*this, inst_id, inst.As<SemIR::Name>()); \
+  CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
+#define CARBON_SEM_IR_INST_KIND(Name)         \
+  case CARBON_KIND(SemIR::Name typed_inst):   \
+    Handle##Name(*this, inst_id, typed_inst); \
     break;
 #include "toolchain/sem_ir/inst_kind.def"
+
+    default:
+      CARBON_FATAL() << "Missing constant value for constant instruction "
+                     << inst;
   }
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::Invalid);
 }

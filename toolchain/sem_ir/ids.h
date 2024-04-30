@@ -220,6 +220,16 @@ struct FunctionId : public IdBase, public Printable<FunctionId> {
 
 constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
 
+// The ID of an IR within the set of all IRs being evaluated in the current
+// check execution.
+struct CheckIRId : public IdBase, public Printable<CheckIRId> {
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "check_ir";
+    IdBase::Print(out);
+  }
+};
+
 // The ID of a class.
 struct ClassId : public IdBase, public Printable<ClassId> {
   using ValueType = Class;
@@ -268,7 +278,7 @@ struct ImplId : public IdBase, public Printable<ImplId> {
 
 constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
 
-// The ID of an imported IR.
+// The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   using ValueType = ImportIR;
 

@@ -160,7 +160,9 @@ class FunctionContext {
   llvm::DenseMap<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Declare handlers for each SemIR::File instruction.
+// Declare handlers for each SemIR::File instruction that is not always
+// constant.
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(Name)
 #define CARBON_SEM_IR_INST_KIND(Name)                                \
   auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
                     SemIR::Name inst) -> void;

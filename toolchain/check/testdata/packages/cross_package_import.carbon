@@ -54,14 +54,30 @@ fn Run() {
   Other.F2();
 }
 
-// --- main_use_other_extern.carbon
+// --- fail_todo_main_use_other_extern.carbon
 
 library "use_other_extern" api;
 
 import Other library "fn";
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import Other library "fn_extern";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_fn_extern.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: extern fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import Other library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn F() {}
+// CHECK:STDERR: ^~~~~~~~
 import Other library "fn_extern";
 
 fn Run() {
+  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: In name lookup for `F`.
+  // CHECK:STDERR:   Other.F();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   Other.F();
 }
 
@@ -80,13 +96,13 @@ import Other library "fn";
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+12]]:1: In import.
 // CHECK:STDERR: import Other library "fn_conflict";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Function redeclaration differs because of parameter count of 1.
+// CHECK:STDERR: other_fn_conflict.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn F(x: i32) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import Other library "fn";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: other_fn.carbon:4:1: Previously declared with parameter count of 0.
+// CHECK:STDERR: other_fn.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
 import Other library "fn_conflict";
@@ -269,7 +285,7 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_use_other_extern.carbon
+// CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -284,21 +300,19 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+2, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F.2();
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
@@ -326,21 +340,19 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F.1]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+4, loaded [template = imports.%F.2]
+// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F.1]
+// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x: i32);
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:

@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
@@ -212,18 +213,9 @@ static auto CopyEnclosingNameScopesFromImportIR(
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
-                                     bool is_api_for_impl,
                                      const SemIR::File& import_sem_ir) -> void {
-  auto ir_id = SemIR::ImportIRId::Invalid;
-  if (is_api_for_impl) {
-    ir_id = SemIR::ImportIRId::ApiForImpl;
-    auto& import_ir = context.import_irs().Get(ir_id);
-    CARBON_CHECK(import_ir.sem_ir == nullptr) << "ApiForImpl is only set once";
-    import_ir = {.node_id = node_id, .sem_ir = &import_sem_ir};
-  } else {
-    ir_id = context.import_irs().Add(
-        {.node_id = node_id, .sem_ir = &import_sem_ir});
-  }
+  auto ir_id =
+      AddImportIR(context, {.node_id = node_id, .sem_ir = &import_sem_ir});
 
   context.import_ir_constant_values()[ir_id.index].Set(
       SemIR::InstId::PackageNamespace,
@@ -256,12 +248,12 @@ auto ImportLibraryFromCurrentPackage(Context& context,
     } else {
       // Leave a placeholder that the inst comes from the other IR.
       auto target_id =
-          context.AddImportRef({.ir_id = ir_id, .inst_id = import_inst_id});
+          AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id});
       auto [it, success] = context.name_scopes()
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});
       if (!success) {
-        MergeImportRef(context, target_id, it->second);
+        context.DiagnoseDuplicateName(target_id, it->second);
       }
     }
   }
@@ -285,7 +277,7 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   auto& scope = context.name_scopes().Get(namespace_scope_id);
   scope.is_closed_import = !is_duplicate;
   for (auto import_ir : import_irs) {
-    auto ir_id = context.import_irs().Add(import_ir);
+    auto ir_id = AddImportIR(context, import_ir);
     scope.import_ir_scopes.push_back({ir_id, SemIR::NameScopeId::Package});
     context.import_ir_constant_values()[ir_id.index].Set(
         SemIR::InstId::PackageNamespace, namespace_const_id);

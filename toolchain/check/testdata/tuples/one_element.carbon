@@ -13,7 +13,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %.1: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %.2: type = tuple_type (i32) [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.4: (i32,) = tuple_value (%.3) [template]
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,8 +37,8 @@ var y: (i32,) = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_18: i32 = int_literal 4 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc7_20.1: (i32,) = tuple_literal (%.loc7_18)
-// CHECK:STDOUT:   %.loc7_20.2: init (i32,) = tuple_init (%.loc7_18) to file.%x.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc7_21: init (i32,) = converted %.loc7_20.1, %.loc7_20.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc7_20.2: init (i32,) = tuple_init (%.loc7_18) to file.%x.var [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_21: init (i32,) = converted %.loc7_20.1, %.loc7_20.2 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%x.var, %.loc7_21
 // CHECK:STDOUT:   %x.ref: ref (i32,) = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc8_17.1: ref i32 = tuple_access %x.ref, element0

@@ -18,7 +18,7 @@ var a: A = {};
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.4: A = struct_value () [template]
+// CHECK:STDOUT:   %struct: A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,16 +47,16 @@ var a: A = {};
 // CHECK:STDOUT: fn @ret_a() -> %return: A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_11.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc9_11.2: init A = class_init (), %return [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_12: init A = converted %.loc9_11.1, %.loc9_11.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_11.2: init A = class_init (), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_12: init A = converted %.loc9_11.1, %.loc9_11.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc9_12 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: {} = struct_literal ()
-// CHECK:STDOUT:   %.loc12_13.2: init A = class_init (), file.%a.var [template = constants.%.4]
-// CHECK:STDOUT:   %.loc12_14: init A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_13.2: init A = class_init (), file.%a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_14: init A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
