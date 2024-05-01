@@ -13,7 +13,10 @@ filegroup(
 
 cc_library(
     name = "diagnostic_emitter",
-    srcs = ["diagnostic_consumer.cpp"],
+    srcs = [
+        "diagnostic.cpp",
+        "diagnostic_consumer.cpp",
+    ],
     hdrs = [
         "diagnostic.h",
         "diagnostic_consumer.h",

@@ -716,14 +716,10 @@ static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     auto loc = converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
-    int32_t length_this_line = std::min(
-        loc.length, static_cast<int32_t>(loc.line.size()) - loc.column_number);
-    output << loc.filename << ":" << loc.line_number << ":" << loc.column_number
-           << ": Check::Handle" << context.parse_tree().node_kind(node_id)
-           << "\n"
-           << loc.line << "\n"
-           << std::string(std::max(loc.column_number - 1, 0), ' ') << '^'
-           << std::string(std::max(length_this_line - 1, 0), '~');
+    loc.FormatLocation(output);
+    output << ": Check::Handle" << context.parse_tree().node_kind(node_id)
+           << "\n";
+    loc.FormatSnippet(output);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
