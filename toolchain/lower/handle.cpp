@@ -507,14 +507,10 @@ auto HandleInterfaceWitness(FunctionContext& /*context*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleInterfaceWitnessAccess(FunctionContext& context,
-                                  SemIR::InstId inst_id,
+auto HandleInterfaceWitnessAccess(FunctionContext& /*context*/,
+                                  SemIR::InstId /*inst_id*/,
                                   SemIR::InterfaceWitnessAccess inst) -> void {
-  // TODO: Add general constant lowering.
-  auto const_id = context.sem_ir().constant_values().Get(inst_id);
-  CARBON_CHECK(const_id.is_constant())
-      << "Lowering non-constant witness access " << inst;
-  context.SetLocal(inst_id, context.GetValue(const_id.inst_id()));
+  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,
