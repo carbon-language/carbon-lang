@@ -706,12 +706,28 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
-                           ErrorTrackingDiagnosticConsumer& err_tracker)
-    -> bool {
+                           ErrorTrackingDiagnosticConsumer& err_tracker,
+                           Parse::NodeLocConverter* converter) -> bool {
   NodeIdTraversal traversal(context, vlog_stream);
 
+  Parse::NodeId node_id = Parse::NodeId::Invalid;
+
+  // On crash, report which token we were handling.
+  PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
+    auto loc = converter->ConvertLoc(
+        node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+    int32_t length_this_line = std::min(
+        loc.length, static_cast<int32_t>(loc.line.size()) - loc.column_number);
+    output << loc.filename << ":" << loc.line_number << ":" << loc.column_number
+           << ": Check::Handle" << context.parse_tree().node_kind(node_id)
+           << "\n"
+           << loc.line << "\n"
+           << std::string(std::max(loc.column_number - 1, 0), ' ') << '^'
+           << std::string(std::max(length_this_line - 1, 0), '~');
+  });
+
   while (auto maybe_node_id = traversal.Next()) {
-    auto node_id = *maybe_node_id;
+    node_id = *maybe_node_id;
     auto parse_kind = context.parse_tree().node_kind(node_id);
 
     switch (parse_kind) {
@@ -762,7 +778,8 @@ static auto CheckParseTree(
   // TODO: Do this selectively when we see an impl query.
   ImportImpls(context);
 
-  if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker)) {
+  if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
+                      &unit_info.converter)) {
     context.sem_ir().set_has_errors(true);
     return;
   }
