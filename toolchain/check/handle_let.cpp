@@ -56,7 +56,7 @@ static auto BuildAssociatedConstantDecl(
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context =
       context.decl_name_stack().MakeUnqualifiedName(pattern.loc_id, name_id);
-  context.decl_name_stack().AddNameToLookup(name_context, assoc_id);
+  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, assoc_id);
 }
 
 auto HandleLetDecl(Context& context, Parse::LetDeclId node_id) -> bool {
