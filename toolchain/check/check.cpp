@@ -706,12 +706,24 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 static auto ProcessNodeIds(Context& context, llvm::raw_ostream* vlog_stream,
-                           ErrorTrackingDiagnosticConsumer& err_tracker)
-    -> bool {
+                           ErrorTrackingDiagnosticConsumer& err_tracker,
+                           Parse::NodeLocConverter* converter) -> bool {
   NodeIdTraversal traversal(context, vlog_stream);
 
+  Parse::NodeId node_id = Parse::NodeId::Invalid;
+
+  // On crash, report which token we were handling.
+  PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
+    auto loc = converter->ConvertLoc(
+        node_id, [](DiagnosticLoc, const Internal::DiagnosticBase<>&) {});
+    loc.FormatLocation(output);
+    output << ": Check::Handle" << context.parse_tree().node_kind(node_id)
+           << "\n";
+    loc.FormatSnippet(output);
+  });
+
   while (auto maybe_node_id = traversal.Next()) {
-    auto node_id = *maybe_node_id;
+    node_id = *maybe_node_id;
     auto parse_kind = context.parse_tree().node_kind(node_id);
 
     switch (parse_kind) {
@@ -762,7 +774,8 @@ static auto CheckParseTree(
   // TODO: Do this selectively when we see an impl query.
   ImportImpls(context);
 
-  if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker)) {
+  if (!ProcessNodeIds(context, vlog_stream, unit_info.err_tracker,
+                      &unit_info.converter)) {
     context.sem_ir().set_has_errors(true);
     return;
   }

@@ -46,6 +46,14 @@ enum class DiagnosticLevel : int8_t {
 // is required to be less than SourceBuffer that it refers to due to the
 // contained filename and line references.
 struct DiagnosticLoc {
+  // Write the filename, line number, and column number corresponding to this
+  // location to the given stream.
+  auto FormatLocation(llvm::raw_ostream& out) const -> void;
+
+  // Write the source snippet corresponding to this location to the given
+  // stream.
+  auto FormatSnippet(llvm::raw_ostream& out) const -> void;
+
   // Name of the file or buffer that this diagnostic refers to.
   llvm::StringRef filename;
   // A reference to the line of the error.
