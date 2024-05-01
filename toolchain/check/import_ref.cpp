@@ -1564,8 +1564,13 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
   ImportRefResolver resolver(context, load_ir_inst.ir_id);
+  // The resolver calls into Context to create instructions. Don't register
+  // those instructions as part of the enclosing generic scope if they're
+  // dependent on a generic parameter.
+  context.generic_region_stack().Push();
   auto type_id = resolver.ResolveType(load_type_id);
   auto constant_id = resolver.Resolve(load_ir_inst.inst_id);
+  context.generic_region_stack().Pop();
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
   // doesn't use ReplaceInstBeforeConstantUse because it would trigger

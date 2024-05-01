@@ -8,36 +8,60 @@
 
 namespace Carbon::Check {
 
-auto StartGenericDecl(Context& /*context*/) -> void {
-  // TODO: Start tracking the contents of this declaration.
+auto StartGenericDecl(Context& context) -> void {
+  context.generic_region_stack().Push();
 }
 
-auto StartGenericDefinition(Context& /*context*/,
+auto StartGenericDefinition(Context& context,
                             SemIR::GenericId /*generic_id*/) -> void {
-  // TODO: Start tracking the contents of this definition.
+  // Push a generic region even if we don't have a generic_id. We might still
+  // have locally-introduced generic parameters to track:
+  //
+  // fn F() {
+  //   let T:! type = i32;
+  //   var x: T;
+  // }
+  context.generic_region_stack().Push();
 }
 
 auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   if (context.scope_stack().compile_time_binding_stack().empty()) {
+    CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty())
+        << "Have dependent instructions but no compile time bindings are in "
+           "scope.";
+    context.generic_region_stack().Pop();
     return SemIR::GenericId::Invalid;
   }
 
   auto bindings_id = context.inst_blocks().Add(
       context.scope_stack().compile_time_binding_stack());
+  // TODO: Track the list of dependent instructions in this region.
+  context.generic_region_stack().Pop();
   return context.generics().Add(
       SemIR::Generic{.decl_id = decl_id, .bindings_id = bindings_id});
 }
 
-auto FinishGenericRedecl(Context& /*context*/, SemIR::InstId /*decl_id*/,
+auto FinishGenericRedecl(Context& context, SemIR::InstId /*decl_id*/,
                          SemIR::GenericId /*generic_id*/) -> void {
   // TODO: Compare contents of this declaration with the existing one on the
   // generic.
+  context.generic_region_stack().Pop();
 }
 
-auto FinishGenericDefinition(Context& /*context*/,
-                             SemIR::GenericId /*generic_id*/) -> void {
-  // TODO: Track contents of this generic definition.
+auto FinishGenericDefinition(Context& context,
+                             SemIR::GenericId generic_id) -> void {
+    if (!generic_id.is_valid()) {
+    // TODO: We can have symbolic constants in a context that had a non-generic
+    // declaration, for example if there's a local generic let binding in a
+    // function definition. Handle this case somehow -- perhaps by forming
+    // substituted constant values now.
+    context.generic_region_stack().Pop();
+    return;
+  }
+
+  // TODO: Track the list of dependent instructions in this region.
+  context.generic_region_stack().Pop();
 }
 
 auto MakeGenericInstance(Context& context, SemIR::GenericId generic_id,

@@ -53,6 +53,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   type_ids_for_type_constants_.insert(
       {SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
        SemIR::TypeId::TypeType});
+
+  // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
+  // in the right places.
+  generic_region_stack().Push();
 }
 
 auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
