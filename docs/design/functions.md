@@ -121,7 +121,7 @@ fn Add(a: i64, b: i64) -> i64 {
 
 The corresponding definition may be provided later in the same file or, when the
 declaration is in an
-[`api` file of a library](code_and_name_organization/#libraries), in the `impl`
+[API file of a library](code_and_name_organization/#libraries), in the `impl`
 file of the same library. The signature of a function declaration must match the
 corresponding definition. This includes the [return clause](#return-clause);
 even though an omitted return type has equivalent behavior to `-> ()`, the

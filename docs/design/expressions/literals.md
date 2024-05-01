@@ -220,7 +220,7 @@ package that is automatically imported by the prelude:
 ### Usage
 
 ```carbon
-package sample api;
+package sample;
 
 fn Sum(x: i32, y: i32) -> i32 {
   return x + y;

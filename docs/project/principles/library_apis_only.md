@@ -40,9 +40,9 @@ outside the common case.
 
 ## Principle
 
-In Carbon, every public function is declared in some Carbon `api` file, and
-every public `interface`, `impl`, and first-class type is defined in some Carbon
-`api` file. In some cases, the bodies of public functions will not be defined as
+In Carbon, every public function is declared in some Carbon API file, and every
+public `interface`, `impl`, and first-class type is defined in some Carbon API
+file. In some cases, the bodies of public functions will not be defined as
 Carbon code, or will be defined as hybrid Carbon code using intrinsics that
 aren't available to ordinary Carbon code. However, we will try to minimize those
 situations.
