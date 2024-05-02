@@ -29,7 +29,7 @@
 // CHECK:STDOUT:     instBoundMethodType: {kind: Builtin, arg0: BoundMethodType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: Builtin, arg0: NamespaceType, type: typeTypeType}
 // CHECK:STDOUT:     instWitnessType: {kind: Builtin, arg0: WitnessType, type: typeTypeType}
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
 // CHECK:STDOUT:     instError:       template instError
@@ -41,7 +41,7 @@
 // CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
 // CHECK:STDOUT:     instNamespaceType: template instNamespaceType
 // CHECK:STDOUT:     instWitnessType: template instWitnessType
-// CHECK:STDOUT:     inst+0:          template inst+0
+// CHECK:STDOUT:     'inst+0':          template inst+0
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}
