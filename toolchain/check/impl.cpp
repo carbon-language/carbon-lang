@@ -34,7 +34,6 @@ static auto NoteAssociatedFunction(Context& context,
 static auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionId interface_function_id,
     SemIR::InstId impl_decl_id, Substitutions substitutions) -> SemIR::InstId {
-  CARBON_CHECK(!context.insts().Is<SemIR::FunctionType>(impl_decl_id));
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {

@@ -1069,7 +1069,7 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
   auto type_id = GetTypeImpl<SemIR::FunctionType>(*this, fn_id);
   // To keep client code simpler, complete function types before returning them.
   bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Failed to complete builtin type";
+  CARBON_CHECK(complete) << "Failed to complete function type";
   return type_id;
 }
 
