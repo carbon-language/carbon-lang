@@ -317,11 +317,13 @@ class ImportRefResolver {
   // to work_stack_.
   auto GetLocalParamConstantIds(SemIR::InstBlockId param_refs_id)
       -> llvm::SmallVector<SemIR::ConstantId> {
-    if (param_refs_id == SemIR::InstBlockId::Empty) {
-      return {};
-    }
-    const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> const_ids;
+    if (!param_refs_id.is_valid() ||
+        param_refs_id == SemIR::InstBlockId::Empty) {
+      return const_ids;
+    }
+
+    const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
     const_ids.reserve(param_refs.size());
     for (auto inst_id : param_refs) {
       const_ids.push_back(
@@ -345,8 +347,9 @@ class ImportRefResolver {
       SemIR::InstBlockId param_refs_id,
       const llvm::SmallVector<SemIR::ConstantId>& const_ids)
       -> SemIR::InstBlockId {
-    if (param_refs_id == SemIR::InstBlockId::Empty) {
-      return SemIR::InstBlockId::Empty;
+    if (!param_refs_id.is_valid() ||
+        param_refs_id == SemIR::InstBlockId::Empty) {
+      return param_refs_id;
     }
     const auto& param_refs = import_ir_.inst_blocks().Get(param_refs_id);
     llvm::SmallVector<SemIR::InstId> new_param_refs;
@@ -685,8 +688,10 @@ class ImportRefResolver {
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
-        // Set in the second pass once we've imported it.
+        // Set in the second pass once we've imported them.
         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
+        .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
+        .param_refs_id = SemIR::InstBlockId::Invalid,
         // `.self_type_id` depends on the ClassType, so is set below.
         .self_type_id = SemIR::TypeId::Invalid,
         .decl_id = class_decl_id,
@@ -755,6 +760,10 @@ class ImportRefResolver {
 
     auto enclosing_scope_id =
         GetLocalNameScopeId(import_class.enclosing_scope_id);
+    llvm::SmallVector<SemIR::ConstantId> implicit_param_const_ids =
+        GetLocalParamConstantIds(import_class.implicit_param_refs_id);
+    llvm::SmallVector<SemIR::ConstantId> param_const_ids =
+        GetLocalParamConstantIds(import_class.param_refs_id);
     auto object_repr_const_id =
         import_class.object_repr_id.is_valid()
             ? GetLocalConstantId(import_class.object_repr_id)
@@ -772,6 +781,10 @@ class ImportRefResolver {
             .GetAs<SemIR::ClassType>(class_const_id.inst_id())
             .class_id);
     new_class.enclosing_scope_id = enclosing_scope_id;
+    new_class.implicit_param_refs_id = GetLocalParamRefsId(
+        import_class.implicit_param_refs_id, implicit_param_const_ids);
+    new_class.param_refs_id =
+        GetLocalParamRefsId(import_class.param_refs_id, param_const_ids);
 
     if (import_class.is_defined()) {
       AddClassDefinition(import_class, new_class, object_repr_const_id,

@@ -87,12 +87,12 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            bool is_definition)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  if (context.node_stack().PopIf<Parse::NodeKind::TuplePattern>()) {
-    context.TODO(node_id, "generic class");
-  }
-  if (context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>()) {
-    context.TODO(node_id, "generic class");
-  }
+  auto param_refs_id =
+      context.node_stack().PopIf<Parse::NodeKind::TuplePattern>().value_or(
+          SemIR::InstBlockId::Invalid);
+  auto implicit_param_refs_id =
+      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>().value_or(
+          SemIR::InstBlockId::Invalid);
 
   auto name_context = context.decl_name_stack().FinishName();
   context.node_stack()
@@ -133,6 +133,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   SemIR::Class class_info = {
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
+      .implicit_param_refs_id = implicit_param_refs_id,
+      .param_refs_id = param_refs_id,
       // `.self_type_id` depends on the ClassType, so is set below.
       .self_type_id = SemIR::TypeId::Invalid,
       .decl_id = class_decl_id,

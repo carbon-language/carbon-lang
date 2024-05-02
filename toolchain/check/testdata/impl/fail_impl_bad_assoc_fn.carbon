@@ -48,7 +48,7 @@ class FAlias {
 
 class FExtraParam {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Function redeclaration differs because of parameter count of 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of parameter count of 1.
     // CHECK:STDERR:     fn F(b: bool);
     // CHECK:STDERR:     ^~~~~~~~~~~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-47]]:15: Previously declared with parameter count of 0.
@@ -61,7 +61,7 @@ class FExtraParam {
 
 class FExtraImplicitParam {
   impl as I {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Function redeclaration differs because of implicit parameter count of 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of implicit parameter count of 1.
     // CHECK:STDERR:     fn F[self: Self]();
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-60]]:15: Previously declared with implicit parameter count of 0.
@@ -90,7 +90,7 @@ interface J { fn F[self: bool](b: bool) -> bool; }
 
 class FMissingParam {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Function redeclaration differs because of parameter count of 0.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of parameter count of 0.
     // CHECK:STDERR:     fn F[self: bool]() -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-7]]:15: Previously declared with parameter count of 1.
@@ -103,7 +103,7 @@ class FMissingParam {
 
 class FMissingImplicitParam {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Function redeclaration differs because of implicit parameter count of 0.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: ERROR: Redeclaration differs because of implicit parameter count of 0.
     // CHECK:STDERR:     fn F(b: bool) -> bool;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-20]]:15: Previously declared with implicit parameter count of 1.
@@ -129,7 +129,7 @@ class FMissingReturnType {
 
 class FDifferentParamType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: ERROR: Function redeclaration differs at parameter 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: ERROR: Redeclaration differs at parameter 1.
     // CHECK:STDERR:     fn F[self: bool](b: Self) -> bool;
     // CHECK:STDERR:                      ^
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-46]]:32: Previous declaration's corresponding parameter here.
@@ -142,7 +142,7 @@ class FDifferentParamType {
 
 class FDifferentImplicitParamType {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: ERROR: Function redeclaration differs at implicit parameter 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: ERROR: Redeclaration differs at implicit parameter 1.
     // CHECK:STDERR:     fn F[self: Self](b: bool) -> bool;
     // CHECK:STDERR:          ^~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-59]]:20: Previous declaration's corresponding implicit parameter here.
@@ -169,7 +169,7 @@ class FDifferentReturnType {
 // TODO: This should probably be permitted.
 class FDifferentParamName {
   impl as J {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: ERROR: Function redeclaration differs at parameter 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:22: ERROR: Redeclaration differs at parameter 1.
     // CHECK:STDERR:     fn F[self: bool](not_b: bool) -> bool;
     // CHECK:STDERR:                      ^~~~~
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-86]]:32: Previous declaration's corresponding parameter here.
@@ -186,7 +186,7 @@ interface SelfNested {
 
 class SelfNestedBadParam {
   impl as SelfNested {
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: ERROR: Function redeclaration differs at parameter 1.
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:10: ERROR: Redeclaration differs at parameter 1.
     // CHECK:STDERR:     fn F(x: (SelfNestedBadParam*, {.x: i32, .y: i32})) -> [SelfNestedBadParam; 4];
     // CHECK:STDERR:          ^
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-8]]:8: Previous declaration's corresponding parameter here.

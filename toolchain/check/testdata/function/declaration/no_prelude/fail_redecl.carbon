@@ -25,7 +25,7 @@ fn B(x: ());
 fn B(x: ());
 
 fn C();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because of parameter count of 1.
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 1.
 // CHECK:STDERR: fn C(x: ());
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 0.

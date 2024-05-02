@@ -4,13 +4,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+7]]:1: ERROR: Semantics TODO: `generic class`.
-// CHECK:STDERR: class C[]();
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+3]]:1: ERROR: Semantics TODO: `generic class`.
-// CHECK:STDERR: class C[]();
-// CHECK:STDERR: ^~~~~~~~~~~~
 class C[]();
 
 // CHECK:STDOUT: --- fail_todo_generic.carbon

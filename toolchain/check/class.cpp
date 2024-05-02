@@ -17,8 +17,11 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   SemIRLoc prev_loc =
       prev_class.is_defined() ? prev_class.definition_id : prev_class.decl_id;
 
-  // TODO: Check that the generic parameter list agrees with the prior
-  // declaration.
+  // Check the generic parameters match, if they were specified.
+  if (!CheckRedeclParamsMatch(context, EntityInfo(new_class),
+                              EntityInfo(prev_class), {})) {
+    return false;
+  }
 
   CheckIsAllowedRedecl(context, Lex::TokenKind::Class, prev_class.name_id,
                        {.loc = new_loc,
@@ -43,6 +46,8 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   }
 
   if (new_is_definition) {
+    prev_class.implicit_param_refs_id = new_class.implicit_param_refs_id;
+    prev_class.param_refs_id = new_class.param_refs_id;
     prev_class.definition_id = new_class.definition_id;
     prev_class.scope_id = new_class.scope_id;
     prev_class.body_block_id = new_class.body_block_id;
