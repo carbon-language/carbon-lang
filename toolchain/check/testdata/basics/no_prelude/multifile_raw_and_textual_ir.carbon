@@ -33,12 +33,12 @@ fn B() {}
 // CHECK:STDOUT:     type1:           {constant: template instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
-// CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
+// CHECK:STDOUT:     'inst+2':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+0:          template inst+0
-// CHECK:STDOUT:     inst+1:          template inst+1
+// CHECK:STDOUT:     'inst+0':          template inst+0
+// CHECK:STDOUT:     'inst+1':          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
@@ -80,12 +80,12 @@ fn B() {}
 // CHECK:STDOUT:     type1:           {constant: template instFunctionType, value_rep: {kind: copy, type: type1}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
-// CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
+// CHECK:STDOUT:     'inst+2':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+0:          template inst+0
-// CHECK:STDOUT:     inst+1:          template inst+1
+// CHECK:STDOUT:     'inst+0':          template inst+0
+// CHECK:STDOUT:     'inst+1':          template inst+1
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
