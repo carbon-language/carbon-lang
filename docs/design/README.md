@@ -2193,13 +2193,13 @@ selected yet.
 -   **Files** are grouped into libraries, which are in turn grouped into
     packages. There are two kinds of files:
     -   API files describe the interface of a library.
-    -   `impl` files implement part of the interface of a library.
+    -   Implementation files implement part of the interface of a library.
 -   **Libraries** are the granularity of code reuse through imports.
 -   **Packages** are the unit of distribution.
 
 Each library must have exactly one API file. This file includes declarations for
 all public names of the library. Definitions for those declarations must be in
-some file in the library, either the API file or an `impl` file.
+some file in the library, either the API file or an implementation file.
 
 Every package has its own namespace. This means libraries within a package need
 to coordinate to avoid name conflicts, but not across packages.
@@ -2214,8 +2214,8 @@ to coordinate to avoid name conflicts, but not across packages.
 
 Files start with an optional package declaration, consisting of:
 
--   optionally, the `impl` modifier keyword, indicating the file is an `impl`
-    file rather than an API file,
+-   optionally, the `impl` modifier keyword, indicating the file is an
+    implementation file rather than an API file,
 -   optionally, the `package` keyword followed by an identifier specifying the
     package name,
 -   optionally, the `library` keyword followed by a string with the library
@@ -2227,7 +2227,7 @@ For example:
 ```carbon
 // Package name is `Geometry`.
 // Library name is "Shapes".
-// This file is an API file, not an `impl` file.
+// This file is an API file, not an implementation file.
 package Geometry library "Shapes";
 ```
 
@@ -2242,10 +2242,10 @@ Parts of this declaration may be omitted:
 
 -   If both keywords are omitted, the package declaration must be omitted
     entirely. In this case, the file is the API file for the default library of
-    the `Main` package, which cannot have any `impl` files. This library is used
-    to define the entry point for the program, and tests and smaller examples
-    may choose to reside entirely within this library. No other library can
-    import this library even from within the default package.
+    the `Main` package, which cannot have any implementation files. This library
+    is used to define the entry point for the program, and tests and smaller
+    examples may choose to reside entirely within this library. No other library
+    can import this library even from within the default package.
 
 If the default library of the `Main` package contains a function named `Run`,
 that function is the program entry point. Otherwise, the program's entry point
@@ -2286,8 +2286,8 @@ given library to the top-level scope of the current file as
 [`private`](#name-visibility) names, and similarly for names in
 [namespaces](#namespaces).
 
-Every `impl` file automatically imports the API file for its library. Attempting
-to perform an import of the current library is invalid.
+Every implementation file automatically imports the API file for its library.
+Attempting to perform an import of the current library is invalid.
 
 ```
 impl package MyPackage library "Widgets";
@@ -2352,13 +2352,13 @@ The names visible from an imported library are determined by these rules:
     any file that imports that library. This matches class members, which are
     also [default public](#access-control).
 -   A `private` prefix on a declaration in an API file makes the name _library
-    private_. This means the name is visible in the file and all `impl` files
-    for the same library.
+    private_. This means the name is visible in the file and all implementation
+    files for the same library.
 -   The visibility of a name is determined by its first declaration, considering
-    API files before `impl` files. The `private` prefix is only allowed on the
-    first declaration.
--   A name declared in an `impl` file and not the corresponding API file is
-    _file private_, meaning visible in just that file. Its first declaration
+    API files before implementation files. The `private` prefix is only allowed
+    on the first declaration.
+-   A name declared in an implementation file and not the corresponding API file
+    is _file private_, meaning visible in just that file. Its first declaration
     must be marked with a `private` prefix. **TODO:** This needs to be finalized
     in a proposal to resolve inconsistency between
     [#665](https://github.com/carbon-language/carbon-lang/issues/665#issuecomment-914661914)
@@ -2388,8 +2388,8 @@ The top-level scope in a file is the scope of the package. This means:
 
 -   Within this scope (and its sub-namespaces), all visible names from the same
     package appear. This includes names from the same file, names from the API
-    file of a library when inside an `impl` file, and names from imported
-    libraries of the same package.
+    file of a library when inside an implementation file, and names from
+    imported libraries of the same package.
 -   In scopes where package members might have a name conflict with something
     else, the syntax `package.Foo` can be used to name the `Foo` member of the
     current package.

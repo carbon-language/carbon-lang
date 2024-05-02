@@ -39,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
     -   [Potential refactorings](#potential-refactorings)
         -   [Update imports](#update-imports)
-        -   [Between API and `impl` files](#between-api-and-impl-files)
+        -   [Between API and implementation files](#between-api-and-implementation-files)
         -   [Other refactorings](#other-refactorings)
     -   [Preference for few child namespaces](#preference-for-few-child-namespaces)
     -   [Redundant markers](#redundant-markers)
@@ -486,18 +486,19 @@ However, separate implementation files are still desirable for a few reasons:
 -   From a code maintenance perspective, having smaller files can make a library
     more maintainable.
 
-Entities in the `impl` file should never have visibility keywords. If they are
-forward declared in the API file, they use the declaration's visibility; if they
-are only present in the `impl` file, they are implicitly `private`.
+Entities in an implementation file should never have visibility keywords. If
+they are forward declared in the API file, they use the declaration's
+visibility; if they are only present in an implementation file, they are
+implicitly `private`.
 
 #### Granularity of libraries
 
 The compilation graph of Carbon will generally consist of API files depending on
-each other, and `impl` files depending only on API files. Compiling a given file
-requires compiling the transitive closure of API files first. Parallelization of
-compilation is then limited by how large that transitive closure is, in terms of
-total volume of code rather than quantity. This also affects build cache
-invalidation.
+each other, and implementation files depending only on API files. Compiling a
+given file requires compiling the transitive closure of API files first.
+Parallelization of compilation is then limited by how large that transitive
+closure is, in terms of total volume of code rather than quantity. This also
+affects build cache invalidation.
 
 In order to maximize opportunities to improve compilation performance, we will
 encourage granular libraries. Conceptually, we want libraries to be very small,
@@ -588,7 +589,7 @@ import Math;
 import Math library "Trigonometry";
 ```
 
-NOTE: A library must never import itself. Any `impl` files in a library
+NOTE: A library must never import itself. Any implementation files in a library
 automatically import the API, so a self-import should never be required.
 
 #### Imports from the current package
@@ -778,56 +779,58 @@ check build dependencies for where imports should be added from, such as a
 database of possible entities and their libraries. However, adding references
 may require manually adding imports.
 
-#### Between API and `impl` files
+#### Between API and implementation files
 
--   Move an implementation of an API from an API file to an `impl` file, while
-    leaving a declaration behind.
+-   Move the definition of an entity from an API file to an implementation file,
+    while leaving a declaration behind.
 
     -   This should be a local change that will not affect any calling code.
     -   Inlining will be affected because the implementation won't be visible to
         callers.
     -   [Update imports](#update-imports).
 
--   Split an API and `impl` file.
+-   Split an API and implementation file.
 
     -   This is a repeated operation of individual API moves, as noted above.
 
--   Move an implementation of an API from an `impl` file to an API file.
+-   Move the definition of an entity from an implementation file to the API
+    file.
 
     -   This should be a local change that will not affect any calling code.
     -   Inlining will be affected because the implementation becomes visible to
         callers.
     -   [Update imports](#update-imports).
 
--   Combine an API and `impl` file.
+-   Combine an API and implementation file.
 
     -   This is a repeated operation of individual API moves, as noted above.
 
--   Remove the API label from a declaration.
+-   Add the `private` modifier to a declaration.
 
     -   Search for library-external callers, and fix them first.
 
--   Add the API label to a declaration.
+-   Remove the `private` modifier from a declaration.
 
     -   This should be a local change that will not affect any calling code.
 
--   Move a non-API-labeled declaration from an API file to an `impl` file.
+-   Move a `private` declaration from the API file to an implementation file.
 
-    -   The declaration must be moved to the same file as the implementation of
-        the declaration.
-    -   The declaration can only be used by the `impl` file that now contains
-        it. Search for other callers within the library, and fix them first.
+    -   The declaration must be moved to the same file as the definition of the
+        entity.
+    -   The declaration can only be used by the implementation file that now
+        contains it. Search for other callers within the library, and fix them
+        first.
     -   [Update imports](#update-imports).
 
--   Move a non-API-labeled declaration from an `impl` file to an API file.
+-   Move a `private` declaration from an implementation file to the API file.
 
     -   This should be a local change that will not affect any calling code.
     -   [Update imports](#update-imports).
 
--   Move a declaration and implementation from one `impl` file to another.
+-   Move a declaration and definition from one implementation file to another.
 
-    -   Search for any callers within the source `impl` file, and either move
-        them too, or fix them first.
+    -   Search for any callers within the source implementation file, and either
+        move them too, or fix them first.
     -   [Update imports](#update-imports).
 
 #### Other refactorings
@@ -838,15 +841,14 @@ may require manually adding imports.
     -   All call sites must be changed, as the package name changes.
     -   [Update imports](#update-imports).
 
--   Move an API-labeled declaration and implementation between different
-    packages.
+-   Move a public declaration and definition between different packages.
 
     -   The imports of all calling files must be updated accordingly.
     -   All call sites must be changed, as the package name changes.
     -   [Update imports](#update-imports).
 
--   Move an API-labeled declaration and implementation between libraries in the
-    same package.
+-   Move a public declaration and definition between libraries in the same
+    package.
 
     -   The imports of all calling files must be updated accordingly.
     -   As long as the namespaces remain the same, no call sites will need to be
@@ -855,20 +857,19 @@ may require manually adding imports.
 
 -   Rename a library.
 
-    -   This is equivalent to a repeated operation of moving an API-labeled
-        declaration and implementation between libraries in the same package.
+    -   This is equivalent to a repeated operation of moving a public
+        declaration and definition between libraries in the same package.
 
--   Move a declaration and implementation from one namespace to another.
+-   Move a declaration and definition from one namespace to another.
 
-    -   Ensure the new namespace is declared for the declaration and
-        implementation.
+    -   Ensure the new namespace is declared for the declaration and definition.
     -   Update the namespace used by call sites.
     -   The imports of all calling files may remain the same.
 
 -   Rename a namespace.
 
     -   This is equivalent to a repeated operation of moving a declaration and
-        implementation from one namespace to another.
+        definition from one namespace to another.
 
 -   Rename a file, or move a file between directories.
 
@@ -898,21 +899,21 @@ fewer namespaces.
 
 We use a few possibly redundant markers for packages and libraries:
 
--   The `package` keyword requires one of API and `impl`, rather than excluding
-    either or both.
--   The filename repeats the API versus `impl` choice.
+-   The filename and the presence or absence of the `impl` keyword duplicate the
+    API versus implementation choice.
+-   The filename and the library name portion of the package declaration
+    duplicate the name of the library.
 -   The `import` keyword requires the full library.
 
 These choices are made to assist human readability and tooling:
 
 -   Being explicit about imports creates the opportunity to generate build
     dependencies from files, rather than having them maintained separately.
--   Being explicit about API versus `impl` makes it easier for both humans and
-    tooling to determine what to expect.
--   Repeating the type in the filename makes it possible to check the type
-    without reading file content.
--   Repeating the type in the file content makes non-file-system-based builds
-    possible.
+-   Being explicit about API versus implementation in the filename makes it
+    easier for both humans and tooling to determine what to expect, and makes it
+    possible to check the type without reading file content.
+-   Repeating the type and library name in the file content makes
+    non-file-system-based builds possible.
 
 ## Open questions
 
