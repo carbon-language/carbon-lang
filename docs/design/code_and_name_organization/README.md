@@ -1010,6 +1010,7 @@ files. This should be part of a larger testing plan.
     -   [Multiple API files](/proposals/p0107.md#multiple-api-files)
     -   [Name paths as library names](/proposals/p0107.md#name-paths-as-library-names)
     -   [Put the `impl` modifier at the end](/proposals/p3927.md)
+    -   [Put the `impl` modifier before `library`](/proposals/p3927.md#put-the-impl-modifier-before-library)
 -   Imports
     -   [Block imports](/proposals/p0107.md#block-imports)
     -   [Block imports of libraries of a single package](/proposals/p0107.md#block-imports-of-libraries-of-a-single-package)
