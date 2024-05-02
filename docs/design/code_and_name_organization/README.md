@@ -1001,7 +1001,7 @@ files. This should be part of a larger testing plan.
     -   [Default API to private](/proposals/p0752.md#default-api-to-private)
     -   [Default `impl` to public](/proposals/p0752.md#default-impl-to-public)
     -   [Different file type labels](/proposals/p0107.md#different-file-type-labels)
-    -   [Don't default to introducing an API file](/proposals/p3927.md)
+    -   [Don't default to introducing an API file](/proposals/p3927.md#mandatory-api-or-impl-as-suffix)
     -   [Function-like syntax](/proposals/p0107.md#function-like-syntax)
     -   [Inlining from implementation files](/proposals/p0107.md#inlining-from-implementation-files)
     -   [Library-private access controls](/proposals/p0107.md#library-private-access-controls)
@@ -1009,7 +1009,7 @@ files. This should be part of a larger testing plan.
     -   [Managing API versus implementation in libraries](/proposals/p0107.md#managing-api-versus-implementation-in-libraries)
     -   [Multiple API files](/proposals/p0107.md#multiple-api-files)
     -   [Name paths as library names](/proposals/p0107.md#name-paths-as-library-names)
-    -   [Put the `impl` modifier at the end](/proposals/p3927.md)
+    -   [Put the `impl` modifier at the end](/proposals/p3927.md#mandatory-api-or-impl-as-suffix)
     -   [Put the `impl` modifier before `library`](/proposals/p3927.md#put-the-impl-modifier-before-library)
 -   Imports
     -   [Block imports](/proposals/p0107.md#block-imports)
