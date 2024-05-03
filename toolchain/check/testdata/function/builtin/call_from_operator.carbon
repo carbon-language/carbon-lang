@@ -104,10 +104,10 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_9 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2: <associated Op in Add> = import_ref ir2, inst+24, loc_36 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Add> = import_ref ir2, inst+24, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+19, loc_10 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+19, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Add.decl: type = interface_decl @Add [template = constants.%.1] {}
@@ -115,7 +115,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loc_36 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+19, unloaded
 // CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc10_18: <bound method> = bound_method %.loc10_16, %.1 [template = constants.%.8]
@@ -123,7 +123,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_21: type = array_type %int.sadd, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loc_47 [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loaded [template = constants.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {

@@ -93,7 +93,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
-  auto prev_inst_for_merge = ResolvePrevInstForMerge(context, node_id, prev_id);
+  auto prev_inst_for_merge = ResolvePrevInstForMerge(context, prev_id);
   auto prev_function_id =
       GetRedeclFunctionId(context, prev_inst_for_merge.inst);
   if (!prev_function_id.is_valid()) {

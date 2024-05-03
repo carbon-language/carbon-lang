@@ -54,7 +54,7 @@ var i: Int() = 0;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .i = %i
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Int = import_ref ir1, inst+3, loc_11 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Int = import_ref ir1, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Int.ref: Int = name_ref Int, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32: init type = call %Int.ref() [template = i32]

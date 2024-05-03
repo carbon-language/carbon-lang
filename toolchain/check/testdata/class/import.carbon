@@ -156,18 +156,18 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_16 [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loc_24 [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loc_42 [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+31, loc_71 [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%Field]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+31, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir1, inst+8, loc_36 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir1, inst+8, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.9: G = import_ref ir1, inst+28, loc_56 [template = constants.%struct.6]
-// CHECK:STDOUT:   %import_ref.10: F = import_ref ir1, inst+18, loc_50 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.9: G = import_ref ir1, inst+28, loaded [template = constants.%struct.6]
+// CHECK:STDOUT:   %import_ref.10: F = import_ref ir1, inst+18, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+28, unloaded
 // CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+18, unloaded

@@ -49,8 +49,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
   auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
   if (prev_id.is_valid()) {
-    auto prev_inst_for_merge =
-        ResolvePrevInstForMerge(context, node_id, prev_id);
+    auto prev_inst_for_merge = ResolvePrevInstForMerge(context, prev_id);
 
     auto prev_class_id = SemIR::ClassId::Invalid;
     CARBON_KIND_SWITCH(prev_inst_for_merge.inst) {

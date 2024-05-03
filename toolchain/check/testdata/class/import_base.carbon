@@ -129,12 +129,12 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+25, loc_16 [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+25, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.3: F = import_ref ir1, inst+7, loc_44 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.3: F = import_ref ir1, inst+7, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+18, loc_38 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+18, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+26, unloaded

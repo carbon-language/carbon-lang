@@ -83,8 +83,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     .a_ptr = %a_ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir0, inst+11, loc_12
-// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir0, inst+19, loc_22
+// CHECK:STDOUT:   %import_ref.2: ref const i32 = import_ref ir0, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.3: ref const i32* = import_ref ir0, inst+19, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc6_8: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc6_17: type = ptr_type const i32 [template = constants.%.2]

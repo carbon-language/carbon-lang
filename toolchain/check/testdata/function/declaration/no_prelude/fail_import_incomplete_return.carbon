@@ -179,10 +179,10 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: ReturnCUnused = import_ref ir1, inst+7, loc_14 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.4: ReturnCUsed = import_ref ir1, inst+13, loc_18 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.5: ReturnDUnused = import_ref ir1, inst+18, loc_22 [template = constants.%struct.4]
-// CHECK:STDOUT:   %import_ref.6: ReturnDUsed = import_ref ir1, inst+23, loc_26 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.3: ReturnCUnused = import_ref ir1, inst+7, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: ReturnCUsed = import_ref ir1, inst+13, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.5: ReturnDUnused = import_ref ir1, inst+18, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.6: ReturnDUsed = import_ref ir1, inst+23, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+26, unloaded
 // CHECK:STDOUT:   %CallFAndGIncomplete.decl: CallFAndGIncomplete = fn_decl @CallFAndGIncomplete [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+4, unloaded

@@ -54,7 +54,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir1, inst+3, loc_11 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir1, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Bool.ref: Bool = name_ref Bool, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]

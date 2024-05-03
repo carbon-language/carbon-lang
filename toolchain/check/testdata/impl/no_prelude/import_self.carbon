@@ -96,10 +96,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     .Add = %import_ref.1
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loc_13 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated Op in Add> = import_ref ir1, inst+24, loc_58 [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Add> = import_ref ir1, inst+24, loaded [template = constants.%.5]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir1, inst+19, loc_14 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir1, inst+19, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]

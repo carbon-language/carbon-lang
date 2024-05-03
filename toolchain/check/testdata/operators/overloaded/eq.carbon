@@ -194,12 +194,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loc_68 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loc_88 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: Equal = import_ref ir2, inst+16, loc_19 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.6: NotEqual = import_ref ir2, inst+34, loc_19 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: Equal = import_ref ir2, inst+16, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.6: NotEqual = import_ref ir2, inst+34, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -215,7 +215,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestEqual.%b: C = bind_name b, %b.loc13_20.1
 // CHECK:STDOUT:     @TestEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loc_68 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+16, unloaded
 // CHECK:STDOUT:   %TestNotEqual.decl: TestNotEqual = fn_decl @TestNotEqual [template = constants.%struct.6] {
 // CHECK:STDOUT:     %C.ref.loc17_20: type = name_ref C, %C.decl [template = constants.%C]
@@ -226,7 +226,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%b: C = bind_name b, %b.loc17_23.1
 // CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loc_88 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,10 +343,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestEqual.%b: D = bind_name b, %b.loc8_20.1
 // CHECK:STDOUT:     @TestEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_30 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loc_30 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loc_50 [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+16, unloaded
@@ -359,7 +359,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestNotEqual.%b: D = bind_name b, %b.loc16_23.1
 // CHECK:STDOUT:     @TestNotEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: type = import_ref ir2, inst+1, loc_50 [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -435,12 +435,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_23 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loc_73 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loc_93 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: Equal = import_ref ir2, inst+16, loc_24 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.6: NotEqual = import_ref ir2, inst+34, loc_24 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.3: <associated Equal in Eq> = import_ref ir2, inst+21, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: <associated NotEqual in Eq> = import_ref ir2, inst+38, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.5: Equal = import_ref ir2, inst+16, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.6: NotEqual = import_ref ir2, inst+34, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -456,7 +456,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestRhsBad.%b: D = bind_name b, %b.loc14_21.1
 // CHECK:STDOUT:     @TestRhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loc_73 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+16, unloaded
 // CHECK:STDOUT:   %TestLhsBad.decl: TestLhsBad = fn_decl @TestLhsBad [template = constants.%struct.6] {
 // CHECK:STDOUT:     %D.ref.loc25: type = name_ref D, %D.decl [template = constants.%D]
@@ -467,7 +467,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     @TestLhsBad.%b: C = bind_name b, %b.loc25_21.1
 // CHECK:STDOUT:     @TestLhsBad.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loc_93 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+34, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

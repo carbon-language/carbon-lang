@@ -174,10 +174,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .UseForwardDeclaredF = %UseForwardDeclaredF
 // CHECK:STDOUT:     .f = %f.loc16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loc_13 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loc_22 [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+20, loc_31 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.4: ref {.f: ForwardDeclared} = import_ref ir1, inst+42, loc_70
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+20, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.4: ref {.f: ForwardDeclared} = import_ref ir1, inst+42, loaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %UseEmpty.decl: UseEmpty = fn_decl @UseEmpty [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Empty.decl: type = interface_decl @Empty [template = constants.%.1] {}
@@ -186,8 +186,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     @UseEmpty.%e: Empty = bind_name e, %e.loc6_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.7: <associated F in Basic> = import_ref ir1, inst+18, loc_48 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.8: <associated type in Basic> = import_ref ir1, inst+11, loc_41 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.7: <associated F in Basic> = import_ref ir1, inst+18, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.8: <associated type in Basic> = import_ref ir1, inst+11, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %UseBasic.decl: UseBasic = fn_decl @UseBasic [template = constants.%struct.2] {
@@ -197,8 +197,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     @UseBasic.%e: Basic = bind_name e, %e.loc7_13.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.12: <associated F in ForwardDeclared> = import_ref ir1, inst+32, loc_62 [template = constants.%.12]
-// CHECK:STDOUT:   %import_ref.13: <associated type in ForwardDeclared> = import_ref ir1, inst+26, loc_55 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.12: <associated F in ForwardDeclared> = import_ref ir1, inst+32, loaded [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.13: <associated type in ForwardDeclared> = import_ref ir1, inst+26, loaded [template = constants.%.10]
 // CHECK:STDOUT:   %import_ref.14 = import_ref ir1, inst+24, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir1, inst+28, unloaded
 // CHECK:STDOUT:   %UseForwardDeclared.decl: UseForwardDeclared = fn_decl @UseForwardDeclared [template = constants.%struct.3] {

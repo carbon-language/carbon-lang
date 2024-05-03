@@ -296,8 +296,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.2: F2 = import_ref ir3, inst+2, loc_28 [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: F2 = import_ref ir3, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -334,7 +334,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,7 +378,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

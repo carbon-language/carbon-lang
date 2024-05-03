@@ -24,10 +24,9 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
 auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
     -> SemIR::InstId;
 
-// If the passed in instruction ID is an ImportRefUnloaded, loads it for use.
-// The result will be an ImportRefUsed.
-auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
-    -> void;
+// If the passed in instruction ID is an ImportRefUnloaded, turns it into an
+// ImportRefLoaded for use.
+auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;
 
 // Load all impls declared in IRs imported into this context.
 auto ImportImpls(Context& context) -> void;

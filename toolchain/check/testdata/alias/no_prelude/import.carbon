@@ -57,7 +57,7 @@ library "var3" api;
 // CHECK:STDERR: fail_var3.carbon:[[@LINE+6]]:1: In import.
 // CHECK:STDERR: import library "var2";
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: var2.carbon:8:5: ERROR: Semantics TODO: `Non-constant ImportRefUsed (comes up with var)`.
+// CHECK:STDERR: var2.carbon:8:5: ERROR: Semantics TODO: `Non-constant ImportRefLoaded (comes up with var)`.
 // CHECK:STDERR: var b: () = a_alias;
 // CHECK:STDERR:     ^
 import library "var2";
@@ -109,7 +109,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loc_12 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
@@ -140,7 +140,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+9, loc_11 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+9, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+14, unloaded
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
@@ -199,7 +199,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref () = import_ref ir1, inst+12, loc_12
+// CHECK:STDOUT:   %import_ref.2: ref () = import_ref ir1, inst+12, loaded
 // CHECK:STDOUT:   %a_alias.ref: ref () = name_ref a_alias, %import_ref.2
 // CHECK:STDOUT:   %a_alias_alias: ref () = bind_alias a_alias_alias, %import_ref.2
 // CHECK:STDOUT:   %.loc8_9.1: () = tuple_literal ()
@@ -230,7 +230,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %import_ref.2
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref () = import_ref ir1, inst+5, loc_15 [template = <error>]
+// CHECK:STDOUT:   %import_ref.1: ref () = import_ref ir1, inst+5, loaded [template = <error>]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]

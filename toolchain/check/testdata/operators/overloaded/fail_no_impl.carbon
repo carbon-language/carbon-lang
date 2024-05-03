@@ -256,8 +256,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc8_23: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestUnary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_25 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: <associated Op in Negate> = import_ref ir2, inst+15, loc_25 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Negate> = import_ref ir2, inst+15, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+10, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+10, unloaded
@@ -271,8 +271,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc16_30: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestBinary.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+17, loc_45 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.7: <associated Op in Add> = import_ref ir2, inst+39, loc_45 [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+17, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7: <associated Op in Add> = import_ref ir2, inst+39, loaded [template = constants.%.9]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+19, unloaded
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+35, unloaded
@@ -281,13 +281,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.loc24_12.1: C = param b
 // CHECK:STDOUT:     @TestRef.%b: C = bind_name b, %b.loc24_12.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+41, loc_66 [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.12: <associated Op in AddAssign> = import_ref ir2, inst+62, loc_66 [template = constants.%.13]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+41, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.12: <associated Op in AddAssign> = import_ref ir2, inst+62, loaded [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+58, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+64, loc_69 [template = constants.%.14]
-// CHECK:STDOUT:   %import_ref.17: <associated Op in Inc> = import_ref ir2, inst+80, loc_69 [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+64, loaded [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.17: <associated Op in Inc> = import_ref ir2, inst+80, loaded [template = constants.%.17]
 // CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+66, unloaded
 // CHECK:STDOUT:   %import_ref.19 = import_ref ir2, inst+76, unloaded
 // CHECK:STDOUT:   %import_ref.20 = import_ref ir2, inst+76, unloaded

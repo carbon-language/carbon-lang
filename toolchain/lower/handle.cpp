@@ -492,12 +492,6 @@ auto HandleImportRefLoaded(FunctionContext& /*context*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleImportRefUsed(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::ImportRefUsed inst)
-    -> void {
-  FatalErrorIfEncountered(inst);
-}
-
 auto HandleInitializeFrom(FunctionContext& context, SemIR::InstId /*inst_id*/,
                           SemIR::InitializeFrom inst) -> void {
   auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();

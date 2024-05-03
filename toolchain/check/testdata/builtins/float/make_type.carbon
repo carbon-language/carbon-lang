@@ -82,7 +82,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Float = import_ref ir1, inst+5, loc_11 [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref: Float = import_ref ir1, inst+5, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref: Float = name_ref Float, %import_ref [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc6_14: i32 = int_literal 64 [template = constants.%.2]
@@ -135,7 +135,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .dyn_size = %dyn_size
 // CHECK:STDOUT:     .dyn = %dyn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Float = import_ref ir1, inst+5, loc_11 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Float = import_ref ir1, inst+5, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Float.ref.loc10: Float = name_ref Float, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %.loc10_26: i32 = int_literal 32 [template = constants.%.2]

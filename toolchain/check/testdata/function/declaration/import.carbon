@@ -240,7 +240,7 @@ var c: {.c: i32} = C((1,));
 var d: () = D();
 var e: () = NS.E();
 
-// --- fail_decl_after_use.carbon
+// --- decl_after_use.carbon
 
 library "decl_after_use" api;
 
@@ -248,34 +248,20 @@ import library "extern_api";
 
 var a: () = A();
 
-// CHECK:STDERR: fail_decl_after_use.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of imported entity that was previously used.
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_decl_after_use.carbon:[[@LINE-5]]:13: Import used here.
-// CHECK:STDERR: var a: () = A();
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
 fn A();
 
-// --- fail_decl_after_use_two_errors.carbon
+// --- fail_redecl_mismatch_after_use.carbon
 
-library "decl_after_use_two_errors" api;
+library "redecl_mismatch_after_use" api;
 
 import library "extern_api";
 
 var a: () = A();
 
-// CHECK:STDERR: fail_decl_after_use_two_errors.carbon:[[@LINE+17]]:1: ERROR: Redeclaration of imported entity that was previously used.
+// CHECK:STDERR: fail_redecl_mismatch_after_use.carbon:[[@LINE+10]]:1: ERROR: Function redeclaration differs because return type is `i32`.
 // CHECK:STDERR: fn A() -> i32;
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_after_use_two_errors.carbon:[[@LINE-5]]:13: Import used here.
-// CHECK:STDERR: var a: () = A();
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_decl_after_use_two_errors.carbon:[[@LINE+10]]:1: ERROR: Function redeclaration differs because return type is `i32`.
-// CHECK:STDERR: fn A() -> i32;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_after_use_two_errors.carbon:[[@LINE-14]]:1: In import.
+// CHECK:STDERR: fail_redecl_mismatch_after_use.carbon:[[@LINE-7]]:1: In import.
 // CHECK:STDERR: import library "extern_api";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: extern_api.carbon:4:1: Previously declared with no return type.
@@ -284,7 +270,7 @@ var a: () = A();
 // CHECK:STDERR:
 fn A() -> i32;
 
-// --- fail_extern_after_use.carbon
+// --- todo_fail_extern_after_use.carbon
 
 library "extern_after_use" api;
 
@@ -292,13 +278,6 @@ import library "api";
 
 var a: () = A();
 
-// CHECK:STDERR: fail_extern_after_use.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of imported entity that was previously used.
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_after_use.carbon:[[@LINE-5]]:13: Import used here.
-// CHECK:STDERR: var a: () = A();
-// CHECK:STDERR:             ^
-// CHECK:STDERR:
 extern fn A();
 
 // --- unloaded.carbon
@@ -538,15 +517,15 @@ import library "extern_api";
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_15 [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loc_24 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loc_39 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loc_53 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+29, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loc_65 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
@@ -869,15 +848,15 @@ import library "extern_api";
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_19 [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loc_28 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loc_43 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loc_57 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+29, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loc_69 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+23, unloaded
@@ -973,15 +952,15 @@ import library "extern_api";
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_19 [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loc_28 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loc_43 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loc_57 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+9, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+23, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.4: D = import_ref ir1, inst+26, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref ir1, inst+29, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loc_69 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.6: E = import_ref ir1, inst+30, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+23, unloaded
@@ -1043,7 +1022,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_use.carbon
+// CHECK:STDOUT: --- decl_after_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -1061,7 +1040,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_15 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+26, unloaded
@@ -1088,7 +1067,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_use_two_errors.carbon
+// CHECK:STDOUT: --- fail_redecl_mismatch_after_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -1108,7 +1087,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_15 [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+26, unloaded
@@ -1139,7 +1118,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_after_use.carbon
+// CHECK:STDOUT: --- todo_fail_extern_after_use.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
@@ -1157,7 +1136,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_15 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+26, unloaded

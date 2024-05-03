@@ -122,7 +122,7 @@ static auto ScopeNeedsImplLookup(Context& context,
 // Given a type and an interface, searches for an impl that describes how that
 // type implements that interface, and returns the corresponding witness.
 // Returns an invalid InstId if no matching impl is found.
-static auto LookupInterfaceWitness(Context& context, SemIRLoc loc,
+static auto LookupInterfaceWitness(Context& context,
                                    SemIR::ConstantId type_const_id,
                                    SemIR::InterfaceId interface_id)
     -> SemIR::InstId {
@@ -147,7 +147,7 @@ static auto LookupInterfaceWitness(Context& context, SemIRLoc loc,
       // TODO: Diagnose if the impl isn't defined yet?
       return SemIR::InstId::Invalid;
     }
-    LoadImportRef(context, impl.witness_id, loc);
+    LoadImportRef(context, impl.witness_id);
     return impl.witness_id;
   }
   return SemIR::InstId::Invalid;
@@ -160,8 +160,8 @@ static auto PerformImplLookup(Context& context, Parse::NodeId node_id,
                               SemIR::AssociatedEntityType assoc_type,
                               SemIR::InstId member_id) -> SemIR::InstId {
   auto& interface = context.interfaces().Get(assoc_type.interface_id);
-  auto witness_id = LookupInterfaceWitness(context, node_id, type_const_id,
-                                           assoc_type.interface_id);
+  auto witness_id =
+      LookupInterfaceWitness(context, type_const_id, assoc_type.interface_id);
   if (!witness_id.is_valid()) {
     CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
                       "Cannot access member of interface {0} in type {1} "
