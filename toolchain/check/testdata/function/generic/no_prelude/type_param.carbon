@@ -13,14 +13,17 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = ptr_type T [symbolic]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = ptr_type T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %T.loc7_6.1: type = param T
 // CHECK:STDOUT:     @F.%T: type = bind_symbolic_name T 0, %T.loc7_6.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
@@ -29,7 +32,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: fn @F(%T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %.loc8: type = ptr_type T [symbolic = constants.%.2]
 // CHECK:STDOUT:   %p.var: ref T* = var p
 // CHECK:STDOUT:   %p: ref T* = bind_name p, %p.var
 // CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, %T [symbolic = constants.%T]

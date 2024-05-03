@@ -29,21 +29,26 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: --- fail_let_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %Six: type = fn_type @Six [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Six = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT:   %y: type = bind_symbolic_name y 0 [symbolic]
+// CHECK:STDOUT:   %HalfDozen: type = fn_type @HalfDozen [template]
+// CHECK:STDOUT:   %struct.2: HalfDozen = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> y {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc20: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

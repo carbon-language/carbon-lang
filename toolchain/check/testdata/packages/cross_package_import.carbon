@@ -178,13 +178,19 @@ fn Other.G() {}
 
 // CHECK:STDOUT: --- other_fn.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -194,26 +200,38 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other_fn_extern.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other_fn_conflict.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %x.loc4_6.1: i32 = param x
 // CHECK:STDOUT:     @F.%x: i32 = bind_name x, %x.loc4_6.1
 // CHECK:STDOUT:   }
@@ -226,13 +244,19 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- other_fn2.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F2: type = fn_type @F2 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F2 = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F2 = %F2
+// CHECK:STDOUT:     .F2 = %F2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F2: <function> = fn_decl @F2 [template] {}
+// CHECK:STDOUT:   %F2.decl: F2 = fn_decl @F2 [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F2() {
@@ -254,29 +278,35 @@ fn Other.G() {}
 // CHECK:STDOUT: --- main_use_other.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Run = struct_value () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %F2: type = fn_type @F2 [template]
+// CHECK:STDOUT:   %struct.3: F2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F]
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir3, inst+2, loc_28 [template = imports.%F2]
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: F2 = import_ref ir3, inst+2, loc_28 [template = constants.%struct.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%import_ref.1 [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F2.ref: <function> = name_ref F2, file.%import_ref.2 [template = imports.%F2]
+// CHECK:STDOUT:   %F2.ref: F2 = name_ref F2, file.%import_ref.2 [template = constants.%struct.3]
 // CHECK:STDOUT:   %F2.call: init () = call %F2.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -288,26 +318,30 @@ fn Other.G() {}
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Run = struct_value () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%import_ref.1 [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -328,26 +362,30 @@ fn Other.G() {}
 // CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Run = struct_value () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Other = %Other
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
-// CHECK:STDOUT:   %import_ref.1: <function> = import_ref ir2, inst+2, loc_22 [template = imports.%F]
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %import_ref.1: F = import_ref ir2, inst+2, loc_22 [template = constants.%struct.2]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir3, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, file.%Other [template = file.%Other]
-// CHECK:STDOUT:   %F.ref: <function> = name_ref F, file.%import_ref.1 [template = imports.%F]
+// CHECK:STDOUT:   %F.ref: F = name_ref F, file.%import_ref.1 [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.call: init () = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -355,6 +393,12 @@ fn Other.G() {}
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
@@ -364,8 +408,8 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir2, inst+2, loaded [template = imports.%F]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %import_ref.2: F = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -375,6 +419,12 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_reopen_other.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: G = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -382,10 +432,10 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -395,6 +445,12 @@ fn Other.G() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_add_to_other.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: G = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
@@ -402,9 +458,9 @@ fn Other.G() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {

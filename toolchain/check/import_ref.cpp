@@ -549,6 +549,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FunctionDecl inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::FunctionType inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::ImportRefUsed inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
@@ -822,7 +825,6 @@ class ImportRefResolver {
 
   auto TryResolveTypedInst(SemIR::FunctionDecl inst) -> ResolveResult {
     auto initial_work = work_stack_.size();
-    auto type_const_id = GetLocalConstantId(inst.type_id);
 
     const auto& function = import_ir_.functions().Get(inst.function_id);
     auto return_type_const_id = SemIR::ConstantId::Invalid;
@@ -840,9 +842,9 @@ class ImportRefResolver {
     }
 
     // Add the function declaration.
-    auto function_decl = SemIR::FunctionDecl{
-        context_.GetTypeIdForTypeConstant(type_const_id),
-        SemIR::FunctionId::Invalid, SemIR::InstBlockId::Empty};
+    auto function_decl =
+        SemIR::FunctionDecl{SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid,
+                            SemIR::InstBlockId::Empty};
     // Prefer pointing diagnostics towards a definition.
     auto import_ir_inst_id = AddImportIRInst(function.definition_id.is_valid()
                                                  ? function.definition_id
@@ -879,9 +881,23 @@ class ImportRefResolver {
          .definition_id = function.definition_id.is_valid()
                               ? function_decl_id
                               : SemIR::InstId::Invalid});
+    function_decl.type_id = context_.GetFunctionType(function_decl.function_id);
     // Write the function ID into the FunctionDecl.
     context_.ReplaceInstBeforeConstantUse(function_decl_id, function_decl);
     return {context_.constant_values().Get(function_decl_id)};
+  }
+
+  auto TryResolveTypedInst(SemIR::FunctionType inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto fn_const_id = GetLocalConstantId(
+        import_ir_.functions().Get(inst.function_id).decl_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    auto fn_val = context_.insts().Get(fn_const_id.inst_id());
+    CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
+    return {context_.types().GetConstantId(fn_val.type_id())};
   }
 
   auto TryResolveTypedInst(SemIR::ImportRefUsed /*inst*/, SemIR::InstId inst_id)

@@ -9,6 +9,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -219,6 +220,12 @@ auto HandleStructInit(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleStructValue(FunctionContext& context, SemIR::InstId inst_id,
                        SemIR::StructValue inst) -> void {
+  if (auto fn_type = context.sem_ir().types().TryGetAs<SemIR::FunctionType>(
+          inst.type_id)) {
+    context.SetLocal(inst_id, context.GetFunction(fn_type->function_id));
+    return;
+  }
+
   context.SetLocal(
       inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
 }

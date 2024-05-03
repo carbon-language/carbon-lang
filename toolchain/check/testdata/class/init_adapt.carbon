@@ -85,7 +85,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %struct.1: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %MakeC: type = fn_type @MakeC [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.2: MakeC = struct_value () [template]
+// CHECK:STDOUT:   %MakeAdaptC: type = fn_type @MakeAdaptC [template]
+// CHECK:STDOUT:   %struct.3: MakeAdaptC = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,8 +98,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .AdaptC = %AdaptC.decl
-// CHECK:STDOUT:     .MakeC = %MakeC
-// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC
+// CHECK:STDOUT:     .MakeC = %MakeC.decl
+// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC.decl
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
@@ -110,7 +115,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
 // CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1
@@ -127,11 +132,11 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc17_14.1: C = as_compatible %b.ref
 // CHECK:STDOUT:   %.loc17_14.2: C = converted %b.ref, %.loc17_14.1
 // CHECK:STDOUT:   %c: C = bind_name c, %.loc17_14.2
-// CHECK:STDOUT:   %MakeC: <function> = fn_decl @MakeC [template] {
+// CHECK:STDOUT:   %MakeC.decl: MakeC = fn_decl @MakeC [template = constants.%struct.2] {
 // CHECK:STDOUT:     %C.ref.loc19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeAdaptC: <function> = fn_decl @MakeAdaptC [template] {
+// CHECK:STDOUT:   %MakeAdaptC.decl: MakeAdaptC = fn_decl @MakeAdaptC [template = constants.%struct.3] {
 // CHECK:STDOUT:     %AdaptC.ref.loc21: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:     @MakeAdaptC.%return: ref AdaptC = var <return slot>
 // CHECK:STDOUT:   }
@@ -167,14 +172,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
+// CHECK:STDOUT:   %MakeC.ref: MakeC = name_ref MakeC, file.%MakeC.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc23_5: ref AdaptC = splice_block file.%d.var {}
 // CHECK:STDOUT:   %MakeC.call: init C = call %MakeC.ref() to %.loc23_5
 // CHECK:STDOUT:   %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:   %.loc23_25.1: init AdaptC = as_compatible %MakeC.call
 // CHECK:STDOUT:   %.loc23_25.2: init AdaptC = converted %MakeC.call, %.loc23_25.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc23_25.2
-// CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
+// CHECK:STDOUT:   %MakeAdaptC.ref: MakeAdaptC = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc25_5: ref C = splice_block file.%e.var {}
 // CHECK:STDOUT:   %MakeAdaptC.call: init AdaptC = call %MakeAdaptC.ref() to %.loc25_5
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -194,7 +199,12 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %struct: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %struct.1: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %MakeC: type = fn_type @MakeC [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.2: MakeC = struct_value () [template]
+// CHECK:STDOUT:   %MakeAdaptC: type = fn_type @MakeAdaptC [template]
+// CHECK:STDOUT:   %struct.3: MakeAdaptC = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -202,8 +212,8 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .AdaptC = %AdaptC.decl
-// CHECK:STDOUT:     .MakeC = %MakeC
-// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC
+// CHECK:STDOUT:     .MakeC = %MakeC.decl
+// CHECK:STDOUT:     .MakeAdaptC = %MakeAdaptC.decl
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
@@ -219,7 +229,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.4: init i32 = initialize_from %.loc13_18 to %.loc13_27.3 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc13_27.5: ref i32 = class_element_access %.loc13_27.2, element1
 // CHECK:STDOUT:   %.loc13_27.6: init i32 = initialize_from %.loc13_26 to %.loc13_27.5 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_27.7: init C = class_init (%.loc13_27.4, %.loc13_27.6), %.loc13_27.2 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc13_27.8: ref C = temporary %.loc13_27.2, %.loc13_27.7
 // CHECK:STDOUT:   %.loc13_28.1: ref C = converted %.loc13_27.1, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_28.2: C = bind_value %.loc13_28.1
@@ -230,11 +240,11 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %b.ref: AdaptC = name_ref b, %b
 // CHECK:STDOUT:   %c: C = bind_name c, <error>
-// CHECK:STDOUT:   %MakeC: <function> = fn_decl @MakeC [template] {
+// CHECK:STDOUT:   %MakeC.decl: MakeC = fn_decl @MakeC [template = constants.%struct.2] {
 // CHECK:STDOUT:     %C.ref.loc29: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @MakeC.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeAdaptC: <function> = fn_decl @MakeAdaptC [template] {
+// CHECK:STDOUT:   %MakeAdaptC.decl: MakeAdaptC = fn_decl @MakeAdaptC [template = constants.%struct.3] {
 // CHECK:STDOUT:     %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [template = constants.%AdaptC]
 // CHECK:STDOUT:     @MakeAdaptC.%return: ref AdaptC = var <return slot>
 // CHECK:STDOUT:   }
@@ -270,11 +280,11 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeC.ref: <function> = name_ref MakeC, file.%MakeC [template = file.%MakeC]
+// CHECK:STDOUT:   %MakeC.ref: MakeC = name_ref MakeC, file.%MakeC.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc37: ref C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init C = call %MakeC.ref() to %.loc37
 // CHECK:STDOUT:   assign file.%d.var, <error>
-// CHECK:STDOUT:   %MakeAdaptC.ref: <function> = name_ref MakeAdaptC, file.%MakeAdaptC [template = file.%MakeAdaptC]
+// CHECK:STDOUT:   %MakeAdaptC.ref: MakeAdaptC = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc42: ref AdaptC = temporary_storage
 // CHECK:STDOUT:   %MakeAdaptC.call: init AdaptC = call %MakeAdaptC.ref() to %.loc42
 // CHECK:STDOUT:   assign file.%e.var, <error>

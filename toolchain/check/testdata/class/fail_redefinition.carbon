@@ -42,7 +42,22 @@ fn Class.I() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %H.1: type = fn_type @H.1 [template]
+// CHECK:STDOUT:   %struct.2: H = struct_value () [template]
+// CHECK:STDOUT:   %I.1: type = fn_type @I.1 [template]
+// CHECK:STDOUT:   %struct.3: I = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.4: G = struct_value () [template]
+// CHECK:STDOUT:   %H.2: type = fn_type @H.2 [template]
+// CHECK:STDOUT:   %struct.5: H = struct_value () [template]
+// CHECK:STDOUT:   %I.2: type = fn_type @I.2 [template]
+// CHECK:STDOUT:   %struct.6: I = struct_value () [template]
+// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %struct.7: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,23 +68,23 @@ fn Class.I() {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl.loc7: type = class_decl @Class [template = constants.%Class] {}
 // CHECK:STDOUT:   %Class.decl.loc20: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
-// CHECK:STDOUT:   %H: <function> = fn_decl @H.2 [template] {}
-// CHECK:STDOUT:   %I: <function> = fn_decl @I.2 [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.7] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.4] {}
+// CHECK:STDOUT:   %H.decl: H = fn_decl @H.2 [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %I.decl: I = fn_decl @I.2 [template = constants.%struct.6] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
-// CHECK:STDOUT:   %H: <function> = fn_decl @H.2 [template] {}
-// CHECK:STDOUT:   %I: <function> = fn_decl @I.2 [template] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.4] {}
+// CHECK:STDOUT:   %H.decl: H = fn_decl @H.2 [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %I.decl: I = fn_decl @I.2 [template = constants.%struct.6] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .G = %G
-// CHECK:STDOUT:   .H = %H
-// CHECK:STDOUT:   .I = %I
-// CHECK:STDOUT:   .F = file.%F
+// CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   .H = %H.decl
+// CHECK:STDOUT:   .I = %I.decl
+// CHECK:STDOUT:   .F = file.%F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

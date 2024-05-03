@@ -20,8 +20,13 @@ interface Interface {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Interface, <function> [template]
-// CHECK:STDOUT:   %.3: <associated <function> in Interface> = assoc_entity element0, @Interface.%F [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Interface, F [template]
+// CHECK:STDOUT:   %.4: <associated F in Interface> = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %.5: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -33,14 +38,14 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: Interface = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %.loc8: <associated <function> in Interface> = assoc_entity element0, %F [template = constants.%.3]
-// CHECK:STDOUT:   %.loc15: <function> = fn_decl @.1 [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %.loc8: <associated F in Interface> = assoc_entity element0, %F.decl [template = constants.%.4]
+// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc8
-// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

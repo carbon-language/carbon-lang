@@ -49,54 +49,63 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
+// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
-// CHECK:STDOUT:   %.1: type = ptr_type Inner [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type Inner, Inner* [template]
-// CHECK:STDOUT:   %.3: type = ptr_type Outer [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type Inner, Outer* [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type Outer, Outer* [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type Outer, Inner* [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type Inner [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type Inner, Inner* [template]
+// CHECK:STDOUT:   %.4: type = ptr_type Outer [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type Inner, Outer* [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %H: type = fn_type @H [template]
+// CHECK:STDOUT:   %struct.3: H = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = unbound_element_type Outer, Outer* [template]
+// CHECK:STDOUT:   %.8: type = unbound_element_type Outer, Inner* [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type {.po: Outer*, .qo: Outer*, .pi: Inner*} [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.pi: Inner*, .po: Outer*, .qi: Inner*} [template]
+// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %struct.4: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Outer = %Outer.decl
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [template = constants.%Outer] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, %Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %.loc37: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:     %.loc37: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:     %a.loc37_6.1: Outer* = param a
 // CHECK:STDOUT:     @F.2.%a: Outer* = bind_name a, %a.loc37_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {}
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
+// CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc32_15: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc32_15: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:   %.loc32_9: <unbound element of class Outer> = field_decl po, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc33_16: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc33_16: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:   %.loc33_9: <unbound element of class Outer> = field_decl qo, element1 [template]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc34_16: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc34_16: type = ptr_type Inner [template = constants.%.2]
 // CHECK:STDOUT:   %.loc34_9: <unbound element of class Outer> = field_decl pi, element2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Inner = %Inner.decl
-// CHECK:STDOUT:   .H = %H
+// CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .po = %.loc32_9
 // CHECK:STDOUT:   .qo = %.loc33_9
 // CHECK:STDOUT:   .pi = %.loc34_9
@@ -104,22 +113,22 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc15_17: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc15_17: type = ptr_type Inner [template = constants.%.2]
 // CHECK:STDOUT:   %.loc15_11: <unbound element of class Inner> = field_decl pi, element0 [template]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %.loc16_18: type = ptr_type Outer [template = constants.%.3]
+// CHECK:STDOUT:   %.loc16_18: type = ptr_type Outer [template = constants.%.4]
 // CHECK:STDOUT:   %.loc16_11: <unbound element of class Inner> = field_decl po, element1 [template]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc17_18: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_18: type = ptr_type Inner [template = constants.%.2]
 // CHECK:STDOUT:   %.loc17_11: <unbound element of class Inner> = field_decl qi, element2 [template]
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .pi = %.loc15_11
 // CHECK:STDOUT:   .po = %.loc16_11
 // CHECK:STDOUT:   .qi = %.loc17_11
-// CHECK:STDOUT:   .G = %G
+// CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
@@ -159,7 +168,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %.loc38_21: type = ptr_type Inner [template = constants.%.1]
+// CHECK:STDOUT:   %.loc38_21: type = ptr_type Inner [template = constants.%.2]
 // CHECK:STDOUT:   %a.ref.loc38: Outer* = name_ref a, %a
 // CHECK:STDOUT:   %.loc38_26: ref Outer = deref %a.ref.loc38
 // CHECK:STDOUT:   %pi.ref.loc38: <unbound element of class Outer> = name_ref pi, @Outer.%.loc34_9 [template = @Outer.%.loc34_9]

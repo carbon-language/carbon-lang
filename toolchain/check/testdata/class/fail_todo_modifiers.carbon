@@ -70,11 +70,26 @@ abstract class Abstract {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Access: type = class_type @Access [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type Access, i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.k: i32, .l: i32} [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Access, i32 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.k: i32, .l: i32} [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %H: type = fn_type @H [template]
+// CHECK:STDOUT:   %struct.3: H = struct_value () [template]
+// CHECK:STDOUT:   %I: type = fn_type @I [template]
+// CHECK:STDOUT:   %struct.4: I = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
+// CHECK:STDOUT:   %J: type = fn_type @J [template]
+// CHECK:STDOUT:   %struct.5: J = struct_value () [template]
+// CHECK:STDOUT:   %K: type = fn_type @K [template]
+// CHECK:STDOUT:   %struct.6: K = struct_value () [template]
+// CHECK:STDOUT:   %L: type = fn_type @L [template]
+// CHECK:STDOUT:   %struct.7: L = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,39 +106,39 @@ abstract class Abstract {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %.loc25: <unbound element of class Access> = field_decl k, element0 [template]
 // CHECK:STDOUT:   %.loc31: <unbound element of class Access> = field_decl l, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
-// CHECK:STDOUT:   .F = %F
-// CHECK:STDOUT:   .G = %G
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .k = %.loc25
 // CHECK:STDOUT:   .l = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %H: <function> = fn_decl @H [template] {}
-// CHECK:STDOUT:   %I: <function> = fn_decl @I [template] {}
+// CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %I.decl: I = fn_decl @I [template = constants.%struct.4] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .H = %H
-// CHECK:STDOUT:   .I = %I
+// CHECK:STDOUT:   .H = %H.decl
+// CHECK:STDOUT:   .I = %I.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %J: <function> = fn_decl @J [template] {}
-// CHECK:STDOUT:   %K: <function> = fn_decl @K [template] {}
-// CHECK:STDOUT:   %L: <function> = fn_decl @L [template] {}
+// CHECK:STDOUT:   %J.decl: J = fn_decl @J [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %K.decl: K = fn_decl @K [template = constants.%struct.6] {}
+// CHECK:STDOUT:   %L.decl: L = fn_decl @L [template = constants.%struct.7] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
-// CHECK:STDOUT:   .J = %J
-// CHECK:STDOUT:   .K = %K
-// CHECK:STDOUT:   .L = %L
+// CHECK:STDOUT:   .J = %J.decl
+// CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   .L = %L.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

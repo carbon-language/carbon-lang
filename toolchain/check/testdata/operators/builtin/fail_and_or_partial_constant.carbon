@@ -42,18 +42,20 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %PartialConstant: type = fn_type @PartialConstant [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: PartialConstant = struct_value () [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .PartialConstant = %PartialConstant
+// CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %PartialConstant: <function> = fn_decl @PartialConstant [template] {
+// CHECK:STDOUT:   %PartialConstant.decl: PartialConstant = fn_decl @PartialConstant [template = constants.%struct] {
 // CHECK:STDOUT:     %x.loc4_20.1: bool = param x
 // CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc4_20.1
 // CHECK:STDOUT:   }
@@ -61,8 +63,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   if %.loc9_13 br !and.rhs else br !and.result(%.loc9_18.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
@@ -78,16 +80,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
 // CHECK:STDOUT:   %.loc9_40: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_34: type = converted %.loc9_40, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_34: type = converted %.loc9_40, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc14_13: bool = bool_literal false [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_19.1: bool = not %.loc14_13 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_19.2: bool = bool_literal true [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14_13: bool = bool_literal false [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_19.1: bool = not %.loc14_13 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_19.2: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc14_19.1 br !or.rhs else br !or.result(%.loc14_19.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
@@ -103,7 +105,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
 // CHECK:STDOUT:   %.loc14_40: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_34: type = converted %.loc14_40, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14_34: type = converted %.loc14_40, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_34)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
@@ -116,18 +118,20 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: --- fail_despite_known_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %KnownValueButNonConstantCondition: type = fn_type @KnownValueButNonConstantCondition [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: KnownValueButNonConstantCondition = struct_value () [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .KnownValueButNonConstantCondition = %KnownValueButNonConstantCondition
+// CHECK:STDOUT:     .KnownValueButNonConstantCondition = %KnownValueButNonConstantCondition.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %KnownValueButNonConstantCondition: <function> = fn_decl @KnownValueButNonConstantCondition [template] {
+// CHECK:STDOUT:   %KnownValueButNonConstantCondition.decl: KnownValueButNonConstantCondition = fn_decl @KnownValueButNonConstantCondition [template = constants.%struct] {
 // CHECK:STDOUT:     %x.loc4_38.1: bool = param x
 // CHECK:STDOUT:     @KnownValueButNonConstantCondition.%x: bool = bind_name x, %x.loc4_38.1
 // CHECK:STDOUT:   }
@@ -136,11 +140,11 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
-// CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   if %x.ref.loc11 br !and.rhs else br !and.result(%.loc11_15.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc11_19: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_19: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   br !and.result(%.loc11_19)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
@@ -152,7 +156,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
 // CHECK:STDOUT:   %.loc11_41: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_35: type = converted %.loc11_41, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_35: type = converted %.loc11_41, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_35)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc11:
@@ -177,7 +181,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
 // CHECK:STDOUT:   %.loc15_39: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_33: type = converted %.loc15_39, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_33: type = converted %.loc15_39, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_33)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc15:

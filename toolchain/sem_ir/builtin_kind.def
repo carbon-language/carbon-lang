@@ -64,9 +64,6 @@ CARBON_SEM_IR_BUILTIN_KIND(FloatType, "f64")
 // The type of string values and String literals.
 CARBON_SEM_IR_BUILTIN_KIND(StringType, "String")
 
-// The type of function values.
-CARBON_SEM_IR_BUILTIN_KIND(FunctionType, "<function>")
-
 // The type of bound method values.
 CARBON_SEM_IR_BUILTIN_KIND(BoundMethodType, "<bound method>")
 

@@ -331,7 +331,6 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
           // TODO: Decide how we want to represent `StringType`.
           return llvm::PointerType::get(*llvm_context_, 0);
         case SemIR::BuiltinKind::BoundMethodType:
-        case SemIR::BuiltinKind::FunctionType:
         case SemIR::BuiltinKind::NamespaceType:
         case SemIR::BuiltinKind::WitnessType:
           // Return an empty struct as a placeholder.
@@ -385,6 +384,7 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
     }
     case SemIR::AssociatedEntityType::Kind:
     case SemIR::InterfaceType::Kind:
+    case SemIR::FunctionType::Kind:
     case SemIR::UnboundElementType::Kind: {
       // Return an empty struct as a placeholder.
       // TODO: Should we model an interface as a witness table, or an associated

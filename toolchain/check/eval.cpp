@@ -8,6 +8,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -687,10 +688,12 @@ static auto PerformBuiltinFloatComparison(
   return MakeBoolResult(context, bool_type_id, result);
 }
 
-static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
-                               SemIR::BuiltinFunctionKind builtin_kind,
-                               llvm::ArrayRef<SemIR::InstId> arg_ids,
-                               Phase phase) -> SemIR::ConstantId {
+// Returns a constant for a call to a builtin function.
+static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
+                                       SemIR::Call call,
+                                       SemIR::BuiltinFunctionKind builtin_kind,
+                                       llvm::ArrayRef<SemIR::InstId> arg_ids,
+                                       Phase phase) -> SemIR::ConstantId {
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL() << "Not a builtin function.";
@@ -810,8 +813,9 @@ static auto PerformBuiltinCall(Context& context, SemIRLoc loc, SemIR::Call call,
   return SemIR::ConstantId::NotConstant;
 }
 
-static auto PerformCall(Context& context, SemIRLoc loc, SemIR::Call call)
-    -> SemIR::ConstantId {
+// Makes a constant for a call instruction.
+static auto MakeConstantForCall(Context& context, SemIRLoc loc,
+                                SemIR::Call call) -> SemIR::ConstantId {
   Phase phase = Phase::Template;
 
   // A call with an invalid argument list is used to represent an erroneous
@@ -828,10 +832,15 @@ static auto PerformCall(Context& context, SemIRLoc loc, SemIR::Call call)
     return SemIR::ConstantId::NotConstant;
   }
 
+  auto callee_function =
+      SemIR::GetCalleeFunction(context.sem_ir(), call.callee_id);
+  if (!callee_function.function_id.is_valid()) {
+    return SemIR::ConstantId::Error;
+  }
+  const auto& function = context.functions().Get(callee_function.function_id);
+
   // Handle calls to builtins.
-  if (auto builtin_function_kind = SemIR::BuiltinFunctionKind::ForCallee(
-          context.sem_ir(), call.callee_id);
-      builtin_function_kind != SemIR::BuiltinFunctionKind::None) {
+  if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
     if (!ReplaceFieldWithConstantValue(context, &call, &SemIR::Call::args_id,
                                        &phase)) {
       return SemIR::ConstantId::NotConstant;
@@ -839,8 +848,9 @@ static auto PerformCall(Context& context, SemIRLoc loc, SemIR::Call call)
     if (phase == Phase::UnknownDueToError) {
       return SemIR::ConstantId::Error;
     }
-    return PerformBuiltinCall(context, loc, call, builtin_function_kind,
-                              context.inst_blocks().Get(call.args_id), phase);
+    return MakeConstantForBuiltinCall(context, loc, call, function.builtin_kind,
+                                      context.inst_blocks().Get(call.args_id),
+                                      phase);
   }
   return SemIR::ConstantId::NotConstant;
 }
@@ -955,8 +965,16 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
 
     case SemIR::AssociatedEntity::Kind:
     case SemIR::Builtin::Kind:
+    case SemIR::FunctionType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
+
+    case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
+      return MakeConstantResult(
+          context,
+          SemIR::StructValue{fn_decl.type_id, SemIR::InstBlockId::Empty},
+          Phase::Template);
+    }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
       // TODO: Once classes have generic arguments, handle them.
@@ -986,7 +1004,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
-    case SemIR::FunctionDecl::Kind:
     case SemIR::Namespace::Kind:
       return SemIR::ConstantId::ForTemplateConstant(inst_id);
 
@@ -1012,7 +1029,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return PerformAggregateIndex(context, inst);
 
     case CARBON_KIND(SemIR::Call call): {
-      return PerformCall(context, inst_id, call);
+      return MakeConstantForCall(context, inst_id, call);
     }
 
     // TODO: These need special handling.

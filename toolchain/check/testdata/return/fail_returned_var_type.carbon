@@ -18,16 +18,19 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: --- fail_returned_var_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %Mismatch: type = fn_type @Mismatch [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Mismatch = struct_value () [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Mismatch = %Mismatch
+// CHECK:STDOUT:     .Mismatch = %Mismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Mismatch: <function> = fn_decl @Mismatch [template] {
+// CHECK:STDOUT:   %Mismatch.decl: Mismatch = fn_decl @Mismatch [template = constants.%struct] {
 // CHECK:STDOUT:     @Mismatch.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -35,7 +38,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc14: f64 = float_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc14: f64 = float_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

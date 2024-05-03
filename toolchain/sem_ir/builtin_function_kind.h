@@ -31,11 +31,6 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
   // is unknown.
   static auto ForBuiltinName(llvm::StringRef name) -> BuiltinFunctionKind;
 
-  // Returns the builtin function kind corresponding to the given function
-  // callee, or None if the callee is not known to be a builtin.
-  static auto ForCallee(const File& sem_ir, InstId callee_id)
-      -> BuiltinFunctionKind;
-
   // Determines whether this builtin function kind can have the specified
   // function type.
   auto IsValidType(const File& sem_ir, llvm::ArrayRef<TypeId> arg_types,

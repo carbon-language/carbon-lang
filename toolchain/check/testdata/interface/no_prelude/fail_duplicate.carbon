@@ -43,28 +43,33 @@ interface Class { }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Interface [template]
 // CHECK:STDOUT:   %Self.1: Interface = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = interface_type @.1 [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %Function: type = fn_type @Function [template]
+// CHECK:STDOUT:   %struct.2: Function = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = interface_type @.1 [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.3: type = interface_type @.2 [template]
+// CHECK:STDOUT:   %.4: type = interface_type @.2 [template]
 // CHECK:STDOUT:   %Self.2: <invalid> = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Interface = %Interface.decl.loc7
-// CHECK:STDOUT:     .Function = %Function
+// CHECK:STDOUT:     .Function = %Function.decl
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Interface.decl.loc7: type = interface_decl @Interface [template = constants.%.1] {}
 // CHECK:STDOUT:   %Interface.decl.loc16: type = interface_decl @Interface [template = constants.%.1] {}
-// CHECK:STDOUT:   %Function: <function> = fn_decl @Function [template] {}
-// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.1 [template = constants.%.2] {}
+// CHECK:STDOUT:   %Function.decl: Function = fn_decl @Function [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.1 [template = constants.%.3] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %.decl.loc39: type = interface_decl @.2 [template = constants.%.3] {}
+// CHECK:STDOUT:   %.decl.loc39: type = interface_decl @.2 [template = constants.%.4] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = <error>

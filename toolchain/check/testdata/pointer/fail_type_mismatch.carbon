@@ -19,15 +19,18 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %.3: type = ptr_type const {} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = const_type {}* [template]
+// CHECK:STDOUT:   %ConstMismatch: type = fn_type @ConstMismatch [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: ConstMismatch = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .ConstMismatch = %ConstMismatch
+// CHECK:STDOUT:     .ConstMismatch = %ConstMismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch [template] {
+// CHECK:STDOUT:   %ConstMismatch.decl: ConstMismatch = fn_decl @ConstMismatch [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc7_28: {} = struct_literal ()
 // CHECK:STDOUT:     %.loc7_21.1: type = converted %.loc7_28, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_21.2: type = const_type {} [template = constants.%.2]

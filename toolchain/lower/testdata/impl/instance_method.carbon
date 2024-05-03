@@ -32,6 +32,6 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @Call(ptr %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_18 = call ptr @Get(ptr %a)
-// CHECK:STDOUT:   ret ptr %.loc22_18
+// CHECK:STDOUT:   %Get.call = call ptr @Get(ptr %a)
+// CHECK:STDOUT:   ret ptr %Get.call
 // CHECK:STDOUT: }
