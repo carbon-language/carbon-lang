@@ -895,10 +895,9 @@ class ImportRefResolver {
     if (HasNewWork(initial_work)) {
       return ResolveResult::Retry();
     }
-    auto fn_val =
-        context_.insts().GetAs<SemIR::StructValue>(fn_const_id.inst_id());
-    CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id));
-    return {context_.types().GetConstantId(fn_val.type_id)};
+    auto fn_val = context_.insts().Get(fn_const_id.inst_id());
+    CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
+    return {context_.types().GetConstantId(fn_val.type_id())};
   }
 
   auto TryResolveTypedInst(SemIR::ImportRefUsed /*inst*/, SemIR::InstId inst_id)
