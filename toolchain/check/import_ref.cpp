@@ -397,13 +397,16 @@ class ImportRefResolver {
           case SemIR::BindSymbolicName::Kind: {
             // The symbolic name will be created on first reference, so might
             // already exist. Update the value in it to refer to the parameter.
+            auto new_bind_inst_id = GetLocalConstantId(bind_id).inst_id();
             auto new_bind_inst =
                 context_.insts().GetAs<SemIR::BindSymbolicName>(
-                    GetLocalConstantId(bind_id).inst_id());
+                    new_bind_inst_id);
             new_bind_inst.value_id = new_param_id;
             // This is not before constant use, but doesn't change the
             // constant value of the instruction.
-            context_.ReplaceInstBeforeConstantUse(bind_id, new_bind_inst);
+            context_.ReplaceInstBeforeConstantUse(new_bind_inst_id,
+                                                  new_bind_inst);
+            new_param_id = new_bind_inst_id;
             break;
           }
           default: {
@@ -682,7 +685,7 @@ class ImportRefResolver {
     auto class_decl =
         SemIR::ClassDecl{SemIR::TypeId::TypeType, SemIR::ClassId::Invalid,
                          SemIR::InstBlockId::Empty};
-    auto class_decl_id = context_.AddPlaceholderInst(
+    auto class_decl_id = context_.AddPlaceholderInstInNoBlock(
         {AddImportIRInst(import_class.decl_id), class_decl});
     // Regardless of whether ClassDecl is a complete type, we first need an
     // incomplete type so that any references have something to point at.
@@ -925,7 +928,7 @@ class ImportRefResolver {
     auto interface_decl = SemIR::InterfaceDecl{SemIR::TypeId::TypeType,
                                                SemIR::InterfaceId::Invalid,
                                                SemIR::InstBlockId::Empty};
-    auto interface_decl_id = context_.AddPlaceholderInst(
+    auto interface_decl_id = context_.AddPlaceholderInstInNoBlock(
         {AddImportIRInst(import_interface.decl_id), interface_decl});
 
     // Start with an incomplete interface.

@@ -111,7 +111,6 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loc_12 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+10, unloaded
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, %import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, %import_ref.2 [template = constants.%C]
@@ -142,7 +141,6 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+9, loc_11 [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %c_alias_alias.ref: type = name_ref c_alias_alias, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %.loc6: type = ptr_type C [template = constants.%.2]

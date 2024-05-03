@@ -102,7 +102,6 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+19, loc_10 [template = imports.%Op]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Add.decl: type = interface_decl @Add [template = constants.%.1] {}
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.3]

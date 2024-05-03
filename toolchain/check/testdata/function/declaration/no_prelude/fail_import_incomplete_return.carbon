@@ -176,12 +176,10 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %ReturnCUnused.ref: <function> = name_ref ReturnCUnused, file.%import_ref.3 [template = imports.%ReturnCUnused]
 // CHECK:STDOUT:   %ReturnCUnused.call: init <error> = call %ReturnCUnused.ref()
 // CHECK:STDOUT:   %ReturnCUsed.ref: <function> = name_ref ReturnCUsed, file.%import_ref.4 [template = imports.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
-// CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
 // CHECK:STDOUT:   %ReturnDUnused.ref: <function> = name_ref ReturnDUnused, file.%import_ref.5 [template = imports.%ReturnDUnused]
 // CHECK:STDOUT:   %.loc24_16.1: ref D = temporary_storage
 // CHECK:STDOUT:   %ReturnDUnused.call: init D = call %ReturnDUnused.ref() to %.loc24_16.1

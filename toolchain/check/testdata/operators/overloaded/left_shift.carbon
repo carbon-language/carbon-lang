@@ -157,7 +157,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %LeftShift.decl: type = interface_decl @LeftShift [template = constants.%.2] {}
 // CHECK:STDOUT:     %LeftShift.ref: type = name_ref LeftShift, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+23, loc_46 [template = constants.%.6]
@@ -167,7 +166,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %LeftShiftAssign.decl: type = interface_decl @LeftShiftAssign [template = constants.%.6] {}
 // CHECK:STDOUT:     %LeftShiftAssign.ref: type = name_ref LeftShiftAssign, %import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {

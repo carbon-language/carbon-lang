@@ -101,7 +101,6 @@ fn TestOp() {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Dec.decl: type = interface_decl @Dec [template = constants.%.2] {}
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {}

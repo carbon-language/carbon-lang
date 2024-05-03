@@ -101,7 +101,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Negate.decl: type = interface_decl @Negate [template = constants.%.2] {}
 // CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp: <function> = fn_decl @TestOp [template] {

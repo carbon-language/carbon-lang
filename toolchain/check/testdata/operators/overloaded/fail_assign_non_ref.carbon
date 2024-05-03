@@ -160,7 +160,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Inc.decl: type = interface_decl @Inc [template = constants.%.2] {}
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+17, loc_38 [template = constants.%.6]
@@ -170,7 +169,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %AddAssign.decl: type = interface_decl @AddAssign [template = constants.%.6] {}
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, %import_ref.5 [template = constants.%.6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestIncNonRef: <function> = fn_decl @TestIncNonRef [template] {
