@@ -27,7 +27,12 @@ fn Class(T:! type).F(n: T) -> T {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,14 +45,14 @@ fn Class(T:! type).F(n: T) -> T {
 // CHECK:STDOUT:     %T.loc7_13.1: type = param T
 // CHECK:STDOUT:     %T.loc7_13.2: type = bind_symbolic_name T 0, %T.loc7_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23: <function> = fn_decl @.1 [template] {
+// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %T.loc21_10.1: type = param T
 // CHECK:STDOUT:     @.1.%T: type = bind_symbolic_name T 0, %T.loc21_10.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
 // CHECK:STDOUT:     %T.ref.loc8_11: type = name_ref T, file.%T.loc7_13.2 [symbolic = constants.%T]
 // CHECK:STDOUT:     %n.loc8_8.1: T = param n
 // CHECK:STDOUT:     %n.loc8_8.2: T = bind_name n, %n.loc8_8.1
@@ -57,7 +62,7 @@ fn Class(T:! type).F(n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(@Class.%n.loc8_8.2: T) -> T;

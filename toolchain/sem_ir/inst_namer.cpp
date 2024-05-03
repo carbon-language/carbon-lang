@@ -398,27 +398,23 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(Call inst): {
+        auto callee_function =
+            SemIR::GetCalleeFunction(sem_ir_, inst.callee_id);
+        if (!callee_function.function_id.is_valid()) {
+          break;
+        }
+        const auto& function =
+            sem_ir_.functions().Get(callee_function.function_id);
         // Name the call's result based on the callee.
-        if (auto builtin_kind =
-                SemIR::BuiltinFunctionKind::ForCallee(sem_ir_, inst.callee_id);
-            builtin_kind != SemIR::BuiltinFunctionKind::None) {
+        if (function.builtin_kind != SemIR::BuiltinFunctionKind::None) {
           // For a builtin, use the builtin name. Otherwise, we'd typically pick
           // the name `Op` below, which is probably not very useful.
-          add_inst_name(builtin_kind.name().str());
+          add_inst_name(function.builtin_kind.name().str());
           continue;
-        } else if (auto const_callee_id =
-                       sem_ir_.constant_values().Get(inst.callee_id);
-                   const_callee_id.is_constant()) {
-          // For a direct function call, use the leaf function name.
-          if (auto callee_fn = sem_ir_.insts().TryGetAs<SemIR::FunctionDecl>(
-                  const_callee_id.inst_id())) {
-            add_inst_name_id(
-                sem_ir_.functions().Get(callee_fn->function_id).name_id,
-                ".call");
-            continue;
-          }
         }
-        break;
+
+        add_inst_name_id(function.name_id, ".call");
+        continue;
       }
       case CARBON_KIND(ClassDecl inst): {
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id, ".decl");
@@ -430,8 +426,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(FunctionDecl inst): {
-        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
+        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id,
+                         ".decl");
         CollectNamesInBlock(scope_id, inst.decl_block_id);
+        continue;
+      }
+      case CARBON_KIND(FunctionType inst): {
+        add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
         continue;
       }
       case CARBON_KIND(ImplDecl inst): {
@@ -439,8 +440,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         break;
       }
       case ImportRefUnloaded::Kind:
-      case ImportRefLoaded::Kind:
-      case ImportRefUsed::Kind: {
+      case ImportRefLoaded::Kind: {
         add_inst_name("import_ref");
         // When building import refs, we frequently add instructions without
         // a block. Constants that refer to them need to be separately

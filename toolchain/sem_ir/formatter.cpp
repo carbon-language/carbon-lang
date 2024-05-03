@@ -637,10 +637,6 @@ class Formatter {
     out_ << ", loaded";
   }
 
-  auto FormatInstructionRHS(ImportRefUsed inst) -> void {
-    FormatArgs(inst.import_ir_inst_id, inst.used_id);
-  }
-
   auto FormatInstructionRHS(SpliceBlock inst) -> void {
     FormatArgs(inst.result_id);
     FormatTrailingBlock(inst.block_id);

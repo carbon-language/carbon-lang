@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -58,6 +59,55 @@ static auto DiagnoseModifiers(Context& context, bool is_definition,
   RequireDefaultFinalOnlyInInterfaces(context, decl_kind, target_scope_id);
 
   return context.decl_state_stack().innermost().modifier_set;
+}
+
+// Returns the function ID for the instruction, or invalid.
+static auto GetRedeclFunctionId(Context& context, SemIR::Inst prev_inst)
+    -> SemIR::FunctionId {
+  CARBON_KIND_SWITCH(prev_inst) {
+    case CARBON_KIND(SemIR::StructValue struct_value): {
+      if (auto fn_type = context.types().TryGetAs<SemIR::FunctionType>(
+              struct_value.type_id)) {
+        return fn_type->function_id;
+      }
+      return SemIR::FunctionId::Invalid;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
+      return fn_decl.function_id;
+    }
+    default:
+      // This is a redeclaration of something other than a function. This
+      // includes the case where an associated function redeclares another
+      // associated function.
+      return SemIR::FunctionId::Invalid;
+  }
+}
+
+// Check whether this is a redeclaration, merging if needed.
+static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
+                           SemIR::InstId prev_id,
+                           SemIR::FunctionDecl& function_decl,
+                           SemIR::Function& function_info, bool is_definition)
+    -> void {
+  if (!prev_id.is_valid()) {
+    return;
+  }
+
+  auto prev_inst_for_merge = ResolvePrevInstForMerge(context, prev_id);
+  auto prev_function_id =
+      GetRedeclFunctionId(context, prev_inst_for_merge.inst);
+  if (!prev_function_id.is_valid()) {
+    context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
+    return;
+  }
+
+  if (MergeFunctionRedecl(context, node_id, function_info,
+                          /*new_is_import=*/false, is_definition,
+                          prev_function_id,
+                          prev_inst_for_merge.import_ir_inst_id)) {
+    // When merging, use the existing function rather than adding a new one.
+    function_decl.function_id = prev_function_id;
+  }
 }
 
 // Build a FunctionDecl describing the signature of a function. This
@@ -118,8 +168,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // Add the function declaration.
   auto function_decl = SemIR::FunctionDecl{
-      context.GetBuiltinType(SemIR::BuiltinKind::FunctionType),
-      SemIR::FunctionId::Invalid, decl_block_id};
+      SemIR::TypeId::Invalid, SemIR::FunctionId::Invalid, decl_block_id};
   auto function_info = SemIR::Function{
       .name_id = name_context.name_id_for_new_inst(),
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
@@ -134,40 +183,21 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = function_info.decl_id;
   }
 
-  // Check whether this is a redeclaration.
-  auto prev_id = name_context.prev_inst_id();
-  if (prev_id.is_valid()) {
-    auto prev_inst_for_merge =
-        ResolvePrevInstForMerge(context, node_id, prev_id);
-
-    if (auto prev_function_decl =
-            prev_inst_for_merge.inst.TryAs<SemIR::FunctionDecl>()) {
-      if (MergeFunctionRedecl(context, node_id, function_info,
-                              /*new_is_import=*/false, is_definition,
-                              prev_function_decl->function_id,
-                              prev_inst_for_merge.import_ir_inst_id)) {
-        // When merging, use the existing function rather than adding a new one.
-        function_decl.function_id = prev_function_decl->function_id;
-      }
-    } else {
-      // This is a redeclaration of something other than a function. This
-      // includes the case where an associated function redeclares another
-      // associated function.
-      context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
-    }
-  }
+  TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
+                 function_info, is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
     function_decl.function_id = context.functions().Add(function_info);
   }
+  function_decl.type_id = context.GetFunctionType(function_decl.function_id);
 
   // Write the function ID into the FunctionDecl.
   context.ReplaceInstBeforeConstantUse(function_info.decl_id, function_decl);
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
-  if (!prev_id.is_valid()) {
+  if (!name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = function_info.decl_id;

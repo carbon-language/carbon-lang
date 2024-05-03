@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "f747f3ca0f4cd26f15f1bdb5d4e117245377124dbe291fddc28136aa40a927c4",
+  "moduleFileHash": "93b7acb43f1cabce8291aa0a0f87b56afabbfb021e6625c01be806a93726e716",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -68,13 +68,12 @@
                 ],
                 "patches": [
                   "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-                  "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-                  "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch"
+                  "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch"
                 ],
-                "sha256": "1e6cc2eb634438a59fb5e1b87e7bb35883fb680dc2934f431150db22fb3a6c09",
-                "strip_prefix": "llvm-project-be15a6b3b68bed7b9d982f25b2e10a273302002a",
+                "sha256": "57c598287c774ff0a6919de6bcdf331bb60bb962f8ba74b4ce6a3fc0cb6aaa0c",
+                "strip_prefix": "llvm-project-a7b968a57834a0e522505b56fab0ca4b979cb68f",
                 "urls": [
-                  "https://github.com/llvm/llvm-project/archive/be15a6b3b68bed7b9d982f25b2e10a273302002a.tar.gz"
+                  "https://github.com/llvm/llvm-project/archive/a7b968a57834a0e522505b56fab0ca4b979cb68f.tar.gz"
                 ],
                 "name": "llvm-raw"
               },
@@ -112,7 +111,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 127,
+            "line": 126,
             "column": 29
           },
           "imports": {
@@ -129,7 +128,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 139,
+            "line": 138,
             "column": 23
           },
           "imports": {
@@ -145,7 +144,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 140,
+                "line": 139,
                 "column": 17
               }
             }
@@ -1714,7 +1713,7 @@
     },
     "//bazel/llvm_project:llvm_project.bzl%llvm_project": {
       "general": {
-        "bzlTransitiveDigest": "tHgfM+Nmv0eP7sYjIzNwlZ8PBPZsDBwZN0+xb709g6Y=",
+        "bzlTransitiveDigest": "QG2kkxgw5yvNHGJYbsdwlidT0uFXu5uZMW6KftuXDsI=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -1735,11 +1734,6 @@
             "",
             "llvm-raw",
             "_main~_repo_rules~llvm-raw"
-          ],
-          [
-            "_main~_repo_rules~llvm-raw",
-            "bazel_tools",
-            "bazel_tools"
           ]
         ]
       }

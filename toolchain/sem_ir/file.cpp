@@ -177,6 +177,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case Builtin::Kind:
     case ClassType::Kind:
     case FloatType::Kind:
+    case FunctionType::Kind:
     case InterfaceType::Kind:
     case InterfaceWitnessAccess::Kind:
     case IntType::Kind:
@@ -313,6 +314,11 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         }
         break;
       }
+      case CARBON_KIND(FunctionType inst): {
+        auto fn_name_id = sem_ir.functions().Get(inst.function_id).name_id;
+        out << sem_ir.names().GetFormatted(fn_name_id);
+        break;
+      }
       case CARBON_KIND(InterfaceType inst): {
         auto interface_name_id =
             sem_ir.interfaces().Get(inst.interface_id).name_id;
@@ -432,7 +438,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ImplDecl::Kind:
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
-      case ImportRefUsed::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
@@ -505,10 +510,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case ImportRefLoaded::Kind:
-      case ImportRefUsed::Kind: {
-        auto import_ir_inst = ir->import_ir_insts().Get(
-            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
+      case CARBON_KIND(ImportRefLoaded inst): {
+        auto import_ir_inst = ir->import_ir_insts().Get(inst.import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
         continue;
@@ -550,6 +553,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FacetTypeAccess::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:
+      case FunctionType::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:

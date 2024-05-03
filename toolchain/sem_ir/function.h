@@ -121,6 +121,20 @@ struct Function : public Printable<Function> {
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 };
 
+class File;
+
+struct CalleeFunction {
+  // The function. Invalid if not a function.
+  SemIR::FunctionId function_id;
+  // The bound `self` parameter. Invalid if not a method.
+  SemIR::InstId self_id;
+  // True if an error instruction was found.
+  bool is_error;
+};
+
+// Returns information for the function corresponding to callee_id.
+auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_

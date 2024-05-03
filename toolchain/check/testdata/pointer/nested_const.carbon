@@ -17,15 +17,18 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.3: type = const_type const i32* [template]
 // CHECK:STDOUT:   %.4: type = ptr_type const (const i32*) [template]
 // CHECK:STDOUT:   %.5: type = const_type const (const i32*)* [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc8_23: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc8_32: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc8_16: type = const_type const i32* [template = constants.%.3]

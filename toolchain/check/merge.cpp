@@ -125,35 +125,16 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
   }
 }
 
-auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
-                             SemIR::InstId prev_inst_id) -> InstForMerge {
+auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
+    -> InstForMerge {
   InstForMerge result = {.inst = context.insts().Get(prev_inst_id),
                          .import_ir_inst_id = SemIR::ImportIRInstId::Invalid};
-
-  CARBON_KIND_SWITCH(result.inst) {
-    case CARBON_KIND(SemIR::ImportRefUsed import_ref): {
-      CARBON_DIAGNOSTIC(
-          RedeclOfUsedImport, Error,
-          "Redeclaration of imported entity that was previously used.");
-      CARBON_DIAGNOSTIC(UsedImportLoc, Note, "Import used here.");
-      context.emitter()
-          .Build(node_id, RedeclOfUsedImport)
-          .Note(import_ref.used_id, UsedImportLoc)
-          .Emit();
-      [[fallthrough]];
-    }
-    case SemIR::ImportRefLoaded::Kind: {
-      // Follow the import ref.
-      auto import_ref = result.inst.As<SemIR::AnyImportRef>();
-      result.import_ir_inst_id = import_ref.import_ir_inst_id;
-      result.inst = context.insts().Get(
-          context.constant_values().Get(prev_inst_id).inst_id());
-      break;
-    }
-    default:
-      break;
+  if (auto import_ref = result.inst.TryAs<SemIR::ImportRefLoaded>()) {
+    // Follow the import ref.
+    result.import_ir_inst_id = import_ref->import_ir_inst_id;
+    result.inst = context.insts().Get(
+        context.constant_values().Get(prev_inst_id).inst_id());
   }
-
   return result;
 }
 

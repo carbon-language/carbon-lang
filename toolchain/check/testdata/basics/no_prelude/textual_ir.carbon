@@ -17,6 +17,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = tuple_type ((), ()) [template]
+// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %struct: Foo = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type ((), ()) [template]
 // CHECK:STDOUT:   %tuple.1: () = tuple_value () [template]
 // CHECK:STDOUT:   %tuple.2: ((), ()) = tuple_value (%tuple.1, %tuple.1) [template]
@@ -24,9 +26,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
+// CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc11_12.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_12.2: type = converted %.loc11_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %n.loc11_8.1: () = param n

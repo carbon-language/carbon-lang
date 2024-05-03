@@ -34,9 +34,12 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.6: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type Derived [template]
 // CHECK:STDOUT:   %.8: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.11: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %Access: type = fn_type @Access [template]
+// CHECK:STDOUT:   %.9: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Access = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,12 +47,12 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
-// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template] {
+// CHECK:STDOUT:   %Access.decl: Access = fn_decl @Access [template = constants.%struct] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc20_21: type = ptr_type Derived [template = constants.%.7]
 // CHECK:STDOUT:     %p.loc20_11.1: Derived* = param p

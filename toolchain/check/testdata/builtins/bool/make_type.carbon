@@ -20,13 +20,19 @@ var b: Bool() = false;
 
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Bool = %Bool
+// CHECK:STDOUT:     .Bool = %Bool.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Bool: <function> = fn_decl @Bool [template] {
+// CHECK:STDOUT:   %Bool.decl: Bool = fn_decl @Bool [template = constants.%struct] {
 // CHECK:STDOUT:     @Bool.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -36,7 +42,10 @@ var b: Bool() = false;
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
+// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,9 +54,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: <function> = import_ref ir1, inst+3, loc_11 [template = imports.%Bool]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir1, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Bool.ref: <function> = name_ref Bool, %import_ref [template = imports.%Bool]
+// CHECK:STDOUT:   %Bool.ref: Bool = name_ref Bool, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]
@@ -59,7 +68,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6: bool = bool_literal false [template = constants.%.2]
 // CHECK:STDOUT:   assign file.%b.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

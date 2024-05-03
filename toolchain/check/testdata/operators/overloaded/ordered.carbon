@@ -93,11 +93,23 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Ordered [template]
 // CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Ordered, <function> [template]
-// CHECK:STDOUT:   %.3: <associated <function> in Ordered> = assoc_entity element0, @Ordered.%Less [template]
-// CHECK:STDOUT:   %.4: <associated <function> in Ordered> = assoc_entity element1, @Ordered.%LessOrEquivalent [template]
-// CHECK:STDOUT:   %.5: <associated <function> in Ordered> = assoc_entity element2, @Ordered.%Greater [template]
-// CHECK:STDOUT:   %.6: <associated <function> in Ordered> = assoc_entity element3, @Ordered.%GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %Less: type = fn_type @Less [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Less = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Ordered, Less [template]
+// CHECK:STDOUT:   %.4: <associated Less in Ordered> = assoc_entity element0, @Ordered.%Less.decl [template]
+// CHECK:STDOUT:   %LessOrEquivalent: type = fn_type @LessOrEquivalent [template]
+// CHECK:STDOUT:   %struct.2: LessOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @Ordered, LessOrEquivalent [template]
+// CHECK:STDOUT:   %.6: <associated LessOrEquivalent in Ordered> = assoc_entity element1, @Ordered.%LessOrEquivalent.decl [template]
+// CHECK:STDOUT:   %Greater: type = fn_type @Greater [template]
+// CHECK:STDOUT:   %struct.3: Greater = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type @Ordered, Greater [template]
+// CHECK:STDOUT:   %.8: <associated Greater in Ordered> = assoc_entity element2, @Ordered.%Greater.decl [template]
+// CHECK:STDOUT:   %GreaterOrEquivalent: type = fn_type @GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %struct.4: GreaterOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type @Ordered, GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %.10: <associated GreaterOrEquivalent in Ordered> = assoc_entity element3, @Ordered.%GreaterOrEquivalent.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -109,7 +121,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
 // CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Less: <function> = fn_decl @Less [template] {
+// CHECK:STDOUT:   %Less.decl: Less = fn_decl @Less [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc8_17: Ordered = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_17.1: type = facet_type_access %Self.ref.loc8_17 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_17.2: type = converted %Self.ref.loc8_17, %.loc8_17.1 [symbolic = constants.%Self]
@@ -122,8 +134,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc8_23.2: Self = bind_name other, %other.loc8_23.1
 // CHECK:STDOUT:     %return.var.loc8: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_43: <associated <function> in Ordered> = assoc_entity element0, %Less [template = constants.%.3]
-// CHECK:STDOUT:   %LessOrEquivalent: <function> = fn_decl @LessOrEquivalent [template] {
+// CHECK:STDOUT:   %.loc8_43: <associated Less in Ordered> = assoc_entity element0, %Less.decl [template = constants.%.4]
+// CHECK:STDOUT:   %LessOrEquivalent.decl: LessOrEquivalent = fn_decl @LessOrEquivalent [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc9_29: Ordered = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc9_29.1: type = facet_type_access %Self.ref.loc9_29 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc9_29.2: type = converted %Self.ref.loc9_29, %.loc9_29.1 [symbolic = constants.%Self]
@@ -136,8 +148,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc9_35.2: Self = bind_name other, %other.loc9_35.1
 // CHECK:STDOUT:     %return.var.loc9: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_55: <associated <function> in Ordered> = assoc_entity element1, %LessOrEquivalent [template = constants.%.4]
-// CHECK:STDOUT:   %Greater: <function> = fn_decl @Greater [template] {
+// CHECK:STDOUT:   %.loc9_55: <associated LessOrEquivalent in Ordered> = assoc_entity element1, %LessOrEquivalent.decl [template = constants.%.6]
+// CHECK:STDOUT:   %Greater.decl: Greater = fn_decl @Greater [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Self.ref.loc10_20: Ordered = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc10_20.1: type = facet_type_access %Self.ref.loc10_20 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc10_20.2: type = converted %Self.ref.loc10_20, %.loc10_20.1 [symbolic = constants.%Self]
@@ -150,8 +162,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc10_26.2: Self = bind_name other, %other.loc10_26.1
 // CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_46: <associated <function> in Ordered> = assoc_entity element2, %Greater [template = constants.%.5]
-// CHECK:STDOUT:   %GreaterOrEquivalent: <function> = fn_decl @GreaterOrEquivalent [template] {
+// CHECK:STDOUT:   %.loc10_46: <associated Greater in Ordered> = assoc_entity element2, %Greater.decl [template = constants.%.8]
+// CHECK:STDOUT:   %GreaterOrEquivalent.decl: GreaterOrEquivalent = fn_decl @GreaterOrEquivalent [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Self.ref.loc11_32: Ordered = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc11_32.1: type = facet_type_access %Self.ref.loc11_32 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc11_32.2: type = converted %Self.ref.loc11_32, %.loc11_32.1 [symbolic = constants.%Self]
@@ -164,7 +176,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc11_38.2: Self = bind_name other, %other.loc11_38.1
 // CHECK:STDOUT:     %return.var.loc11: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_58: <associated <function> in Ordered> = assoc_entity element3, %GreaterOrEquivalent [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_58: <associated GreaterOrEquivalent in Ordered> = assoc_entity element3, %GreaterOrEquivalent.decl [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -172,7 +184,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .LessOrEquivalent = %.loc9_55
 // CHECK:STDOUT:   .Greater = %.loc10_46
 // CHECK:STDOUT:   .GreaterOrEquivalent = %.loc11_58
-// CHECK:STDOUT:   witness = (%Less, %LessOrEquivalent, %Greater, %GreaterOrEquivalent)
+// CHECK:STDOUT:   witness = (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Less[@Ordered.%self.loc8_11.2: Self](@Ordered.%other.loc8_23.2: Self) -> bool;
@@ -190,43 +202,70 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Ordered [template]
 // CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Less, @impl.%LessOrEquivalent, @impl.%Greater, @impl.%GreaterOrEquivalent) [template]
-// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %Less.1: type = fn_type @Less.1 [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Less = struct_value () [template]
+// CHECK:STDOUT:   %LessOrEquivalent.1: type = fn_type @LessOrEquivalent.1 [template]
+// CHECK:STDOUT:   %struct.2: LessOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %Greater.1: type = fn_type @Greater.1 [template]
+// CHECK:STDOUT:   %struct.3: Greater = struct_value () [template]
+// CHECK:STDOUT:   %GreaterOrEquivalent.1: type = fn_type @GreaterOrEquivalent.1 [template]
+// CHECK:STDOUT:   %struct.4: GreaterOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %Less.2: type = fn_type @Less.2 [template]
+// CHECK:STDOUT:   %struct.5: Less = struct_value () [template]
+// CHECK:STDOUT:   %LessOrEquivalent.2: type = fn_type @LessOrEquivalent.2 [template]
+// CHECK:STDOUT:   %struct.6: LessOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %Greater.2: type = fn_type @Greater.2 [template]
+// CHECK:STDOUT:   %struct.7: Greater = struct_value () [template]
+// CHECK:STDOUT:   %GreaterOrEquivalent.2: type = fn_type @GreaterOrEquivalent.2 [template]
+// CHECK:STDOUT:   %struct.8: GreaterOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%struct.1, %struct.2, %struct.3, %struct.4) [template]
+// CHECK:STDOUT:   %TestLess: type = fn_type @TestLess [template]
+// CHECK:STDOUT:   %struct.9: TestLess = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type {} [template]
-// CHECK:STDOUT:   %.6: type = assoc_entity_type @Ordered, <function> [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element0, file.%import_ref.12 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element1, file.%import_ref.14 [template]
-// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element2, file.%import_ref.16 [template]
-// CHECK:STDOUT:   %.10: <associated <function> in Ordered> = assoc_entity element3, file.%import_ref.18 [template]
+// CHECK:STDOUT:   %.6: type = assoc_entity_type @Ordered, Less [template]
+// CHECK:STDOUT:   %.7: <associated Less in Ordered> = assoc_entity element0, file.%import_ref.12 [template]
+// CHECK:STDOUT:   %TestLessEqual: type = fn_type @TestLessEqual [template]
+// CHECK:STDOUT:   %struct.10: TestLessEqual = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = assoc_entity_type @Ordered, LessOrEquivalent [template]
+// CHECK:STDOUT:   %.9: <associated LessOrEquivalent in Ordered> = assoc_entity element1, file.%import_ref.14 [template]
+// CHECK:STDOUT:   %TestGreater: type = fn_type @TestGreater [template]
+// CHECK:STDOUT:   %struct.11: TestGreater = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = assoc_entity_type @Ordered, Greater [template]
+// CHECK:STDOUT:   %.11: <associated Greater in Ordered> = assoc_entity element2, file.%import_ref.16 [template]
+// CHECK:STDOUT:   %TestGreaterEqual: type = fn_type @TestGreaterEqual [template]
+// CHECK:STDOUT:   %struct.12: TestGreaterEqual = struct_value () [template]
+// CHECK:STDOUT:   %.12: type = assoc_entity_type @Ordered, GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %.13: <associated GreaterOrEquivalent in Ordered> = assoc_entity element3, file.%import_ref.18 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .TestLess = %TestLess
-// CHECK:STDOUT:     .TestLessEqual = %TestLessEqual
-// CHECK:STDOUT:     .TestGreater = %TestGreater
-// CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual
+// CHECK:STDOUT:     .TestLess = %TestLess.decl
+// CHECK:STDOUT:     .TestLessEqual = %TestLessEqual.decl
+// CHECK:STDOUT:     .TestGreater = %TestGreater.decl
+// CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir2, inst+60, loc_158 [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated GreaterOrEquivalent in Ordered> = import_ref ir2, inst+72, loaded [template = constants.%.13]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir2, inst+46, loc_138 [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir2, inst+18, loc_98 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir2, inst+32, loc_118 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.7: <function> = import_ref ir2, inst+16, loc_19 [template = imports.%Less]
-// CHECK:STDOUT:   %import_ref.8: <function> = import_ref ir2, inst+31, loc_19 [template = imports.%LessOrEquivalent]
-// CHECK:STDOUT:   %import_ref.9: <function> = import_ref ir2, inst+45, loc_19 [template = imports.%Greater]
-// CHECK:STDOUT:   %import_ref.10: <function> = import_ref ir2, inst+59, loc_19 [template = imports.%GreaterOrEquivalent]
+// CHECK:STDOUT:   %import_ref.4: <associated Greater in Ordered> = import_ref ir2, inst+55, loaded [template = constants.%.11]
+// CHECK:STDOUT:   %import_ref.5: <associated Less in Ordered> = import_ref ir2, inst+21, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: <associated LessOrEquivalent in Ordered> = import_ref ir2, inst+38, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.7: Less = import_ref ir2, inst+16, loaded [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.8: LessOrEquivalent = import_ref ir2, inst+34, loaded [template = constants.%struct.6]
+// CHECK:STDOUT:   %import_ref.9: Greater = import_ref ir2, inst+51, loaded [template = constants.%struct.7]
+// CHECK:STDOUT:   %import_ref.10: GreaterOrEquivalent = import_ref ir2, inst+68, loaded [template = constants.%struct.8]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %TestLess: <function> = fn_decl @TestLess [template] {
+// CHECK:STDOUT:   %TestLess.decl: TestLess = fn_decl @TestLess [template = constants.%struct.9] {
 // CHECK:STDOUT:     %C.ref.loc15_16: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc15_13.1: C = param a
 // CHECK:STDOUT:     @TestLess.%a: C = bind_name a, %a.loc15_13.1
@@ -235,9 +274,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: C = bind_name b, %b.loc15_19.1
 // CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+1, loc_98 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+16, unloaded
-// CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
+// CHECK:STDOUT:   %TestLessEqual.decl: TestLessEqual = fn_decl @TestLessEqual [template = constants.%struct.10] {
 // CHECK:STDOUT:     %C.ref.loc19_21: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc19_18.1: C = param a
 // CHECK:STDOUT:     @TestLessEqual.%a: C = bind_name a, %a.loc19_18.1
@@ -246,9 +285,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: C = bind_name b, %b.loc19_24.1
 // CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.13: type = import_ref ir2, inst+1, loc_118 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+31, unloaded
-// CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
+// CHECK:STDOUT:   %import_ref.13: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref ir2, inst+34, unloaded
+// CHECK:STDOUT:   %TestGreater.decl: TestGreater = fn_decl @TestGreater [template = constants.%struct.11] {
 // CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc23_16.1: C = param a
 // CHECK:STDOUT:     @TestGreater.%a: C = bind_name a, %a.loc23_16.1
@@ -257,9 +296,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: C = bind_name b, %b.loc23_22.1
 // CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.15: type = import_ref ir2, inst+1, loc_138 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.16 = import_ref ir2, inst+45, unloaded
-// CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
+// CHECK:STDOUT:   %import_ref.15: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.16 = import_ref ir2, inst+51, unloaded
+// CHECK:STDOUT:   %TestGreaterEqual.decl: TestGreaterEqual = fn_decl @TestGreaterEqual [template = constants.%struct.12] {
 // CHECK:STDOUT:     %C.ref.loc27_24: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.loc27_21.1: C = param a
 // CHECK:STDOUT:     @TestGreaterEqual.%a: C = bind_name a, %a.loc27_21.1
@@ -268,8 +307,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: C = bind_name b, %b.loc27_27.1
 // CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.17: type = import_ref ir2, inst+1, loc_158 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.18 = import_ref ir2, inst+68, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
@@ -283,7 +322,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: C as Ordered {
-// CHECK:STDOUT:   %Less: <function> = fn_decl @Less.1 [template] {
+// CHECK:STDOUT:   %Less.decl: Less = fn_decl @Less.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %C.ref.loc9_17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc9_11.1: C = param self
 // CHECK:STDOUT:     %self.loc9_11.2: C = bind_name self, %self.loc9_11.1
@@ -292,7 +331,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc9_20.2: C = bind_name other, %other.loc9_20.1
 // CHECK:STDOUT:     %return.var.loc9: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %LessOrEquivalent: <function> = fn_decl @LessOrEquivalent.1 [template] {
+// CHECK:STDOUT:   %LessOrEquivalent.decl: LessOrEquivalent = fn_decl @LessOrEquivalent.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %C.ref.loc10_29: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc10_23.1: C = param self
 // CHECK:STDOUT:     %self.loc10_23.2: C = bind_name self, %self.loc10_23.1
@@ -301,7 +340,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc10_32.2: C = bind_name other, %other.loc10_32.1
 // CHECK:STDOUT:     %return.var.loc10: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Greater: <function> = fn_decl @Greater.1 [template] {
+// CHECK:STDOUT:   %Greater.decl: Greater = fn_decl @Greater.1 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %C.ref.loc11_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc11_14.1: C = param self
 // CHECK:STDOUT:     %self.loc11_14.2: C = bind_name self, %self.loc11_14.1
@@ -310,7 +349,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc11_23.2: C = bind_name other, %other.loc11_23.1
 // CHECK:STDOUT:     %return.var.loc11: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GreaterOrEquivalent: <function> = fn_decl @GreaterOrEquivalent.1 [template] {
+// CHECK:STDOUT:   %GreaterOrEquivalent.decl: GreaterOrEquivalent = fn_decl @GreaterOrEquivalent.1 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %C.ref.loc12_32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.loc12_26.1: C = param self
 // CHECK:STDOUT:     %self.loc12_26.2: C = bind_name self, %self.loc12_26.1
@@ -319,13 +358,13 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %other.loc12_35.2: C = bind_name other, %other.loc12_35.1
 // CHECK:STDOUT:     %return.var.loc12: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Less, %LessOrEquivalent, %Greater, %GreaterOrEquivalent) [template = constants.%.3]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Less = %Less
-// CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent
-// CHECK:STDOUT:   .Greater = %Greater
-// CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent
+// CHECK:STDOUT:   .Less = %Less.decl
+// CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
+// CHECK:STDOUT:   .Greater = %Greater.decl
+// CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent.decl
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,11 +393,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Less]
-// CHECK:STDOUT:   %.loc16_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc16_12.2: init bool = call %.loc16_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc16_15.1: bool = value_of_initializer %.loc16_12.2
-// CHECK:STDOUT:   %.loc16_15.2: bool = converted %.loc16_12.2, %.loc16_15.1
+// CHECK:STDOUT:   %.1: Less = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc16_12: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %Less.call: init bool = call %.loc16_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc16_15.1: bool = value_of_initializer %Less.call
+// CHECK:STDOUT:   %.loc16_15.2: bool = converted %Less.call, %.loc16_15.1
 // CHECK:STDOUT:   return %.loc16_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,11 +405,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element1 [template = @impl.%LessOrEquivalent]
-// CHECK:STDOUT:   %.loc20_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc20_12.2: init bool = call %.loc20_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_16.1: bool = value_of_initializer %.loc20_12.2
-// CHECK:STDOUT:   %.loc20_16.2: bool = converted %.loc20_12.2, %.loc20_16.1
+// CHECK:STDOUT:   %.1: LessOrEquivalent = interface_witness_access @impl.%.1, element1 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc20_12: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %.loc20_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc20_16.1: bool = value_of_initializer %LessOrEquivalent.call
+// CHECK:STDOUT:   %.loc20_16.2: bool = converted %LessOrEquivalent.call, %.loc20_16.1
 // CHECK:STDOUT:   return %.loc20_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,11 +417,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element2 [template = @impl.%Greater]
-// CHECK:STDOUT:   %.loc24_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc24_12.2: init bool = call %.loc24_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc24_15.1: bool = value_of_initializer %.loc24_12.2
-// CHECK:STDOUT:   %.loc24_15.2: bool = converted %.loc24_12.2, %.loc24_15.1
+// CHECK:STDOUT:   %.1: Greater = interface_witness_access @impl.%.1, element2 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc24_12: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %Greater.call: init bool = call %.loc24_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc24_15.1: bool = value_of_initializer %Greater.call
+// CHECK:STDOUT:   %.loc24_15.2: bool = converted %Greater.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -390,11 +429,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: C = name_ref b, %b
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element3 [template = @impl.%GreaterOrEquivalent]
-// CHECK:STDOUT:   %.loc28_12.1: <bound method> = bound_method %a.ref, %.1
-// CHECK:STDOUT:   %.loc28_12.2: init bool = call %.loc28_12.1(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc28_16.1: bool = value_of_initializer %.loc28_12.2
-// CHECK:STDOUT:   %.loc28_16.2: bool = converted %.loc28_12.2, %.loc28_16.1
+// CHECK:STDOUT:   %.1: GreaterOrEquivalent = interface_witness_access @impl.%.1, element3 [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc28_12: <bound method> = bound_method %a.ref, %.1
+// CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %.loc28_12(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc28_16.1: bool = value_of_initializer %GreaterOrEquivalent.call
+// CHECK:STDOUT:   %.loc28_16.2: bool = converted %GreaterOrEquivalent.call, %.loc28_16.1
 // CHECK:STDOUT:   return %.loc28_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -403,29 +442,48 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %TestLess: type = fn_type @TestLess [template]
 // CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: TestLess = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: type = interface_type @Ordered [template]
 // CHECK:STDOUT:   %Self: Ordered = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type @Ordered, <function> [template]
-// CHECK:STDOUT:   %.6: <associated <function> in Ordered> = assoc_entity element0, file.%import_ref.11 [template]
-// CHECK:STDOUT:   %.7: <associated <function> in Ordered> = assoc_entity element1, file.%import_ref.13 [template]
-// CHECK:STDOUT:   %.8: <associated <function> in Ordered> = assoc_entity element2, file.%import_ref.15 [template]
-// CHECK:STDOUT:   %.9: <associated <function> in Ordered> = assoc_entity element3, file.%import_ref.17 [template]
+// CHECK:STDOUT:   %Less: type = fn_type @Less [template]
+// CHECK:STDOUT:   %struct.2: Less = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = assoc_entity_type @Ordered, Less [template]
+// CHECK:STDOUT:   %.6: <associated Less in Ordered> = assoc_entity element0, file.%import_ref.11 [template]
+// CHECK:STDOUT:   %TestLessEqual: type = fn_type @TestLessEqual [template]
+// CHECK:STDOUT:   %struct.3: TestLessEqual = struct_value () [template]
+// CHECK:STDOUT:   %LessOrEquivalent: type = fn_type @LessOrEquivalent [template]
+// CHECK:STDOUT:   %struct.4: LessOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %.7: type = assoc_entity_type @Ordered, LessOrEquivalent [template]
+// CHECK:STDOUT:   %.8: <associated LessOrEquivalent in Ordered> = assoc_entity element1, file.%import_ref.13 [template]
+// CHECK:STDOUT:   %TestGreater: type = fn_type @TestGreater [template]
+// CHECK:STDOUT:   %struct.5: TestGreater = struct_value () [template]
+// CHECK:STDOUT:   %Greater: type = fn_type @Greater [template]
+// CHECK:STDOUT:   %struct.6: Greater = struct_value () [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type @Ordered, Greater [template]
+// CHECK:STDOUT:   %.10: <associated Greater in Ordered> = assoc_entity element2, file.%import_ref.15 [template]
+// CHECK:STDOUT:   %TestGreaterEqual: type = fn_type @TestGreaterEqual [template]
+// CHECK:STDOUT:   %struct.7: TestGreaterEqual = struct_value () [template]
+// CHECK:STDOUT:   %GreaterOrEquivalent: type = fn_type @GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %struct.8: GreaterOrEquivalent = struct_value () [template]
+// CHECK:STDOUT:   %.11: type = assoc_entity_type @Ordered, GreaterOrEquivalent [template]
+// CHECK:STDOUT:   %.12: <associated GreaterOrEquivalent in Ordered> = assoc_entity element3, file.%import_ref.17 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .D = %D.decl
-// CHECK:STDOUT:     .TestLess = %TestLess
-// CHECK:STDOUT:     .TestLessEqual = %TestLessEqual
-// CHECK:STDOUT:     .TestGreater = %TestGreater
-// CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual
+// CHECK:STDOUT:     .TestLess = %TestLess.decl
+// CHECK:STDOUT:     .TestLessEqual = %TestLessEqual.decl
+// CHECK:STDOUT:     .TestGreater = %TestGreater.decl
+// CHECK:STDOUT:     .TestGreaterEqual = %TestGreaterEqual.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
-// CHECK:STDOUT:   %TestLess: <function> = fn_decl @TestLess [template] {
+// CHECK:STDOUT:   %TestLess.decl: TestLess = fn_decl @TestLess [template = constants.%struct.1] {
 // CHECK:STDOUT:     %D.ref.loc8_16: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc8_13.1: D = param a
 // CHECK:STDOUT:     @TestLess.%a: D = bind_name a, %a.loc8_13.1
@@ -434,18 +492,18 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLess.%b: D = bind_name b, %b.loc8_19.1
 // CHECK:STDOUT:     @TestLess.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_30 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Ordered> = import_ref ir2, inst+60, loc_90 [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.2: <associated GreaterOrEquivalent in Ordered> = import_ref ir2, inst+72, loaded [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <associated <function> in Ordered> = import_ref ir2, inst+46, loc_70 [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5: <associated <function> in Ordered> = import_ref ir2, inst+18, loc_30 [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.6: <associated <function> in Ordered> = import_ref ir2, inst+32, loc_50 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.4: <associated Greater in Ordered> = import_ref ir2, inst+55, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.5: <associated Less in Ordered> = import_ref ir2, inst+21, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.6: <associated LessOrEquivalent in Ordered> = import_ref ir2, inst+38, loaded [template = constants.%.8]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+34, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir2, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+68, unloaded
 // CHECK:STDOUT:   %import_ref.11 = import_ref ir2, inst+16, unloaded
-// CHECK:STDOUT:   %TestLessEqual: <function> = fn_decl @TestLessEqual [template] {
+// CHECK:STDOUT:   %TestLessEqual.decl: TestLessEqual = fn_decl @TestLessEqual [template = constants.%struct.3] {
 // CHECK:STDOUT:     %D.ref.loc16_21: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc16_18.1: D = param a
 // CHECK:STDOUT:     @TestLessEqual.%a: D = bind_name a, %a.loc16_18.1
@@ -454,9 +512,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestLessEqual.%b: D = bind_name b, %b.loc16_24.1
 // CHECK:STDOUT:     @TestLessEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.12: type = import_ref ir2, inst+1, loc_50 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+31, unloaded
-// CHECK:STDOUT:   %TestGreater: <function> = fn_decl @TestGreater [template] {
+// CHECK:STDOUT:   %import_ref.12: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir2, inst+34, unloaded
+// CHECK:STDOUT:   %TestGreater.decl: TestGreater = fn_decl @TestGreater [template = constants.%struct.5] {
 // CHECK:STDOUT:     %D.ref.loc24_19: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc24_16.1: D = param a
 // CHECK:STDOUT:     @TestGreater.%a: D = bind_name a, %a.loc24_16.1
@@ -465,9 +523,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreater.%b: D = bind_name b, %b.loc24_22.1
 // CHECK:STDOUT:     @TestGreater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.14: type = import_ref ir2, inst+1, loc_70 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+45, unloaded
-// CHECK:STDOUT:   %TestGreaterEqual: <function> = fn_decl @TestGreaterEqual [template] {
+// CHECK:STDOUT:   %import_ref.14: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.15 = import_ref ir2, inst+51, unloaded
+// CHECK:STDOUT:   %TestGreaterEqual.decl: TestGreaterEqual = fn_decl @TestGreaterEqual [template = constants.%struct.7] {
 // CHECK:STDOUT:     %D.ref.loc32_24: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:     %a.loc32_21.1: D = param a
 // CHECK:STDOUT:     @TestGreaterEqual.%a: D = bind_name a, %a.loc32_21.1
@@ -476,8 +534,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     @TestGreaterEqual.%b: D = bind_name b, %b.loc32_27.1
 // CHECK:STDOUT:     @TestGreaterEqual.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+1, loc_90 [template = constants.%.4]
-// CHECK:STDOUT:   %import_ref.17 = import_ref ir2, inst+59, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref ir2, inst+1, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.17 = import_ref ir2, inst+68, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Ordered {
@@ -502,12 +560,16 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Less[%self: Self](%other: Self) -> bool;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a: D, %b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @LessOrEquivalent[%self: Self](%other: Self) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a: D, %b: D) -> bool {
 // CHECK:STDOUT: !entry:
@@ -516,10 +578,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Greater[%self: Self](%other: Self) -> bool;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a: D, %b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @GreaterOrEquivalent[%self: Self](%other: Self) -> bool;
 // CHECK:STDOUT:

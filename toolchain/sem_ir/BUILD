@@ -81,6 +81,7 @@ cc_library(
         "builtin_function_kind.cpp",
         "constant.cpp",
         "file.cpp",
+        "function.cpp",
         "inst_profile.cpp",
         "inst_profile.h",
         "name.cpp",

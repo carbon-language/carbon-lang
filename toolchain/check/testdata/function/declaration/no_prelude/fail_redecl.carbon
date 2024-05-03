@@ -56,42 +56,54 @@ fn E() {}
 // CHECK:STDOUT: --- fail_redecl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
+// CHECK:STDOUT:   %B: type = fn_type @B [template]
+// CHECK:STDOUT:   %struct.2: B = struct_value () [template]
+// CHECK:STDOUT:   %C: type = fn_type @C [template]
+// CHECK:STDOUT:   %struct.3: C = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %struct.4: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %D: type = fn_type @D [template]
+// CHECK:STDOUT:   %struct.5: D = struct_value () [template]
+// CHECK:STDOUT:   %E: type = fn_type @E [template]
+// CHECK:STDOUT:   %struct.6: E = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.loc7
-// CHECK:STDOUT:     .B = %B.loc17
-// CHECK:STDOUT:     .C = %C
-// CHECK:STDOUT:     .D = %D.loc37
-// CHECK:STDOUT:     .E = %E.loc47
+// CHECK:STDOUT:     .A = %A.decl.loc7
+// CHECK:STDOUT:     .B = %B.decl.loc17
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .D = %D.decl.loc37
+// CHECK:STDOUT:     .E = %E.decl.loc47
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A [template] {}
-// CHECK:STDOUT:   %A.loc15: <function> = fn_decl @A [template] {}
-// CHECK:STDOUT:   %B.loc17: <function> = fn_decl @B [template] {
+// CHECK:STDOUT:   %A.decl.loc7: A = fn_decl @A [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %A.decl.loc15: A = fn_decl @A [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %B.decl.loc17: B = fn_decl @B [template = constants.%struct.2] {
 // CHECK:STDOUT:     %.loc17_10.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc17_10.2: type = converted %.loc17_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %x.loc17_6.1: () = param x
 // CHECK:STDOUT:     @B.%x: () = bind_name x, %x.loc17_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.loc25: <function> = fn_decl @B [template] {
+// CHECK:STDOUT:   %B.decl.loc25: B = fn_decl @B [template = constants.%struct.2] {
 // CHECK:STDOUT:     %.loc25_10.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc25_10.2: type = converted %.loc25_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %x.loc25_6.1: () = param x
 // CHECK:STDOUT:     %x.loc25_6.2: () = bind_name x, %x.loc25_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
-// CHECK:STDOUT:   %.loc35_12: <function> = fn_decl @.1 [template] {
+// CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %.decl: <invalid> = fn_decl @.1 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %.loc35_10.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc35_10.2: type = converted %.loc35_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %x.loc35_6.1: () = param x
 // CHECK:STDOUT:     @.1.%x: () = bind_name x, %x.loc35_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.loc37: <function> = fn_decl @D [template] {}
-// CHECK:STDOUT:   %D.loc45: <function> = fn_decl @D [template] {}
-// CHECK:STDOUT:   %E.loc47: <function> = fn_decl @E [template] {}
-// CHECK:STDOUT:   %E.loc54: <function> = fn_decl @E [template] {}
+// CHECK:STDOUT:   %D.decl.loc37: D = fn_decl @D [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %D.decl.loc45: D = fn_decl @D [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %E.decl.loc47: E = fn_decl @E [template = constants.%struct.6] {}
+// CHECK:STDOUT:   %E.decl.loc54: E = fn_decl @E [template = constants.%struct.6] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

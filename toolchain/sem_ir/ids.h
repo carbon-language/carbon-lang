@@ -43,7 +43,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   static const InstId PackageNamespace;
 
   // Returns the instruction ID for a builtin. This relies on File guarantees
-  // for builtin ImportRefUsed placement.
+  // for builtin placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
     return InstId(kind.AsInt());
   }

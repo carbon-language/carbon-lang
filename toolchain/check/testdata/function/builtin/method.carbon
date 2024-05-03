@@ -19,15 +19,20 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @I, <function> [template]
-// CHECK:STDOUT:   %.3: <associated <function> in I> = assoc_entity element0, @I.%F [template]
-// CHECK:STDOUT:   %.4: <witness> = interface_witness (@impl.%F) [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.6: <bound method> = bound_method %.5, @impl.%F [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.8: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.9: type = array_type %.8, i32 [template]
-// CHECK:STDOUT:   %.10: type = ptr_type [i32; 3] [template]
+// CHECK:STDOUT:   %F.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @I, F [template]
+// CHECK:STDOUT:   %.4: <associated F in I> = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%struct.2) [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.7: <bound method> = bound_method %.6, %struct.2 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.10: type = array_type %.9, i32 [template]
+// CHECK:STDOUT:   %.11: type = ptr_type [i32; 3] [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -41,21 +46,21 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15_16: i32 = int_literal 1 [template = constants.%.6]
 // CHECK:STDOUT:   %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.1]
-// CHECK:STDOUT:   %F.ref: <associated <function> in I> = name_ref F, @I.%.loc8_40 [template = constants.%.3]
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%F]
-// CHECK:STDOUT:   %.loc15_17: <bound method> = bound_method %.loc15_16, %.1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc15_24: i32 = int_literal 2 [template = constants.%.7]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc15_17(%.loc15_16, %.loc15_24) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc15_26: type = array_type %int.sadd, i32 [template = constants.%.9]
+// CHECK:STDOUT:   %F.ref: <associated F in I> = name_ref F, @I.%.loc8_40 [template = constants.%.4]
+// CHECK:STDOUT:   %.1: F = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc15_17: <bound method> = bound_method %.loc15_16, %.1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc15_24: i32 = int_literal 2 [template = constants.%.8]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc15_17(%.loc15_16, %.loc15_24) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc15_26: type = array_type %int.sadd, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.1 [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc8_14: I = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_14.1: type = facet_type_access %Self.ref.loc8_14 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc8_14.2: type = converted %Self.ref.loc8_14, %.loc8_14.1 [symbolic = constants.%Self]
@@ -71,26 +76,26 @@ var arr: [i32; 1.(I.F)(2)];
 // CHECK:STDOUT:     %.loc8_36.2: type = converted %Self.ref.loc8_36, %.loc8_36.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_40: <associated <function> in I> = assoc_entity element0, %F [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_40: <associated F in I> = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %.loc8_40
-// CHECK:STDOUT:   witness = (%F)
+// CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as I {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F.2 [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F.2 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %self.loc12_8.1: i32 = param self
 // CHECK:STDOUT:     %self.loc12_8.2: i32 = bind_name self, %self.loc12_8.1
 // CHECK:STDOUT:     %other.loc12_19.1: i32 = param other
 // CHECK:STDOUT:     %other.loc12_19.2: i32 = bind_name other, %other.loc12_19.1
 // CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [template = constants.%.4]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

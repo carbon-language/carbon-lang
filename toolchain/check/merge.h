@@ -46,8 +46,8 @@ struct InstForMerge {
 // to return the instruction relevant for a merge. If an import is found and was
 // previously used, it notes it, although an invalid redeclaration may diagnose
 // for other reasons too.
-auto ResolvePrevInstForMerge(Context& context, Parse::NodeId node_id,
-                             SemIR::InstId prev_inst_id) -> InstForMerge;
+auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
+    -> InstForMerge;
 
 // When the prior name lookup result is an import and we are successfully
 // merging, replace the name lookup result with the reference in the current

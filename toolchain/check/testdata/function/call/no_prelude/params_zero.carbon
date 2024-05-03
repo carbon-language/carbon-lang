@@ -13,16 +13,20 @@ fn Main() {
 // CHECK:STDOUT: --- params_zero.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Foo = struct_value () [template]
+// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
+// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
+// CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -32,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
+// CHECK:STDOUT:   %Foo.ref: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.1]
 // CHECK:STDOUT:   %Foo.call: init () = call %Foo.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -484,6 +484,14 @@ struct FunctionDecl {
   InstBlockId decl_block_id;
 };
 
+struct FunctionType {
+  static constexpr auto Kind =
+      InstKind::FunctionType.Define<Parse::AnyFunctionDeclId>("fn_type");
+
+  TypeId type_id;
+  FunctionId function_id;
+};
+
 struct ImplDecl {
   static constexpr auto Kind =
       InstKind::ImplDecl.Define<Parse::AnyImplDeclId>("impl_decl");
@@ -498,8 +506,7 @@ struct ImplDecl {
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
   static constexpr InstKind Kinds[] = {InstKind::ImportRefUnloaded,
-                                       InstKind::ImportRefLoaded,
-                                       InstKind::ImportRefUsed};
+                                       InstKind::ImportRefLoaded};
 
   InstKind kind;
   ImportIRInstId import_ir_inst_id;
@@ -514,7 +521,7 @@ struct ImportRefUnloaded {
   ImportIRInstId import_ir_inst_id;
 };
 
-// A imported entity that is loaded, but has not yet had a use associated.
+// A imported entity that is loaded, and may be used.
 struct ImportRefLoaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
@@ -522,18 +529,6 @@ struct ImportRefLoaded {
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
-};
-
-// An imported entity that has a reference, and thus should be emitted.
-struct ImportRefUsed {
-  // No parse node: any parse node logic must use the referenced IR.
-  static constexpr auto Kind =
-      InstKind::ImportRefUsed.Define<Parse::InvalidNodeId>("import_ref");
-
-  TypeId type_id;
-  ImportIRInstId import_ir_inst_id;
-  // A location to reference for queries about the use.
-  LocId used_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression

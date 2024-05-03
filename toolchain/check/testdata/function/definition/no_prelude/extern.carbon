@@ -58,11 +58,17 @@ extern fn F();
 
 // CHECK:STDOUT: --- fail_extern_def.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -72,12 +78,18 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_def_for_extern_decl.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl.loc4: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc12: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -87,13 +99,19 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_diag_suppressed.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.loc12
+// CHECK:STDOUT:     .F = %F.decl.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc12: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc13: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl.loc4: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc12: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc13: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -103,12 +121,18 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_decl_after_def.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.loc4
+// CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.loc4: <function> = fn_decl @F [template] {}
-// CHECK:STDOUT:   %F.loc11: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl.loc4: F = fn_decl @F [template = constants.%struct] {}
+// CHECK:STDOUT:   %F.decl.loc11: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

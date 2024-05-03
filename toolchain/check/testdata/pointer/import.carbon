@@ -62,7 +62,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir0, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir0, inst+10, loc_11
+// CHECK:STDOUT:   %import_ref.2: ref i32* = import_ref ir0, inst+10, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc4: type = ptr_type i32 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref i32* = var a

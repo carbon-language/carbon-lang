@@ -16,15 +16,17 @@ var y: () = x;
 // CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Main = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
+// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct] {}
 // CHECK:STDOUT:   %.loc14_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %y.var: ref () = var y

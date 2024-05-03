@@ -30,22 +30,31 @@ fn B() {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {constant: template instFunctionType, value_rep: {kind: copy, type: type1}}
-// CHECK:STDOUT:   type_blocks:     {}
+// CHECK:STDOUT:     type1:           {constant: template inst+2, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:     type2:           {constant: template inst+3, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:   type_blocks:
+// CHECK:STDOUT:     typeBlock0:      {}
+// CHECK:STDOUT:     typeBlock1:      {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
-// CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
+// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type1}
+// CHECK:STDOUT:     'inst+5':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+0:          template inst+0
-// CHECK:STDOUT:     inst+1:          template inst+1
+// CHECK:STDOUT:     'inst+0':          template inst+0
+// CHECK:STDOUT:     'inst+1':          template inst+4
+// CHECK:STDOUT:     'inst+2':          template inst+2
+// CHECK:STDOUT:     'inst+3':          template inst+3
+// CHECK:STDOUT:     'inst+4':          template inst+4
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       0:               inst+5
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
@@ -53,11 +62,17 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -77,22 +92,31 @@ fn B() {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
-// CHECK:STDOUT:     type1:           {constant: template instFunctionType, value_rep: {kind: copy, type: type1}}
-// CHECK:STDOUT:   type_blocks:     {}
+// CHECK:STDOUT:     type1:           {constant: template inst+2, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:     type2:           {constant: template inst+3, value_rep: {kind: none, type: type2}}
+// CHECK:STDOUT:   type_blocks:
+// CHECK:STDOUT:     typeBlock0:      {}
+// CHECK:STDOUT:     typeBlock1:      {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
-// CHECK:STDOUT:     inst+1:          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
-// CHECK:STDOUT:     inst+2:          {kind: Return}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: empty, type: type1}
+// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: typeBlock0, type: typeTypeType}
+// CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: empty, type: type1}
+// CHECK:STDOUT:     'inst+5':          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst+0:          template inst+0
-// CHECK:STDOUT:     inst+1:          template inst+1
+// CHECK:STDOUT:     'inst+0':          template inst+0
+// CHECK:STDOUT:     'inst+1':          template inst+4
+// CHECK:STDOUT:     'inst+2':          template inst+2
+// CHECK:STDOUT:     'inst+3':          template inst+3
+// CHECK:STDOUT:     'inst+4':          template inst+4
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst+1
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     block3:
-// CHECK:STDOUT:       0:               inst+2
+// CHECK:STDOUT:       0:               inst+5
 // CHECK:STDOUT:     block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT:       1:               inst+1
@@ -100,11 +124,17 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = fn_type @B [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: B = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {}
+// CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {

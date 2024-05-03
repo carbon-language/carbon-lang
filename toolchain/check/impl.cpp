@@ -4,6 +4,7 @@
 
 #include "toolchain/check/impl.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
@@ -89,38 +90,49 @@ static auto BuildInterfaceWitness(
        .replacement_id = context.types().GetConstantId(impl.self_id)}};
 
   for (auto decl_id : assoc_entities) {
-    LoadImportRef(context, decl_id, impl.definition_id);
+    LoadImportRef(context, decl_id);
     auto const_id = context.constant_values().Get(decl_id);
     CARBON_CHECK(const_id.is_constant()) << "Non-constant associated entity";
     auto decl = context.insts().Get(const_id.inst_id());
-    if (auto fn_decl = decl.TryAs<SemIR::FunctionDecl>()) {
-      auto& fn = context.functions().Get(fn_decl->function_id);
-      auto impl_decl_id = context.LookupNameInExactScope(
-          decl_id, fn.name_id, impl_scope, /*mark_imports_used=*/true);
-      if (impl_decl_id.is_valid()) {
-        used_decl_ids.push_back(impl_decl_id);
-        table.push_back(CheckAssociatedFunctionImplementation(
-            context, fn_decl->function_id, impl_decl_id, substitutions));
-      } else {
-        CARBON_DIAGNOSTIC(
-            ImplMissingFunction, Error,
-            "Missing implementation of {0} in impl of interface {1}.",
-            SemIR::NameId, SemIR::NameId);
-        auto builder =
-            context.emitter().Build(impl.definition_id, ImplMissingFunction,
-                                    fn.name_id, interface.name_id);
-        NoteAssociatedFunction(context, builder, fn_decl->function_id);
-        builder.Emit();
+    CARBON_KIND_SWITCH(decl) {
+      case CARBON_KIND(SemIR::StructValue struct_value): {
+        if (struct_value.type_id == SemIR::TypeId::Error) {
+          return SemIR::InstId::BuiltinError;
+        }
+        auto type_inst = context.types().GetAsInst(struct_value.type_id);
+        auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
+        if (!fn_type) {
+          CARBON_FATAL() << "Unexpected type: " << type_inst;
+        }
+        auto& fn = context.functions().Get(fn_type->function_id);
+        auto impl_decl_id =
+            context.LookupNameInExactScope(decl_id, fn.name_id, impl_scope);
+        if (impl_decl_id.is_valid()) {
+          used_decl_ids.push_back(impl_decl_id);
+          table.push_back(CheckAssociatedFunctionImplementation(
+              context, fn_type->function_id, impl_decl_id, substitutions));
+        } else {
+          CARBON_DIAGNOSTIC(
+              ImplMissingFunction, Error,
+              "Missing implementation of {0} in impl of interface {1}.",
+              SemIR::NameId, SemIR::NameId);
+          auto builder =
+              context.emitter().Build(impl.definition_id, ImplMissingFunction,
+                                      fn.name_id, interface.name_id);
+          NoteAssociatedFunction(context, builder, fn_type->function_id);
+          builder.Emit();
 
-        table.push_back(SemIR::InstId::BuiltinError);
+          table.push_back(SemIR::InstId::BuiltinError);
+        }
+        break;
       }
-    } else if (auto const_decl = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
-      // TODO: Check we have a value for this constant in the constraint.
-      context.TODO(impl.definition_id,
-                   "impl of interface with associated constant");
-      return SemIR::InstId::BuiltinError;
-    } else {
-      CARBON_FATAL() << "Unexpected kind of associated entity " << decl;
+      case SemIR::AssociatedConstantDecl::Kind:
+        // TODO: Check we have a value for this constant in the constraint.
+        context.TODO(impl.definition_id,
+                     "impl of interface with associated constant");
+        return SemIR::InstId::BuiltinError;
+      default:
+        CARBON_FATAL() << "Unexpected kind of associated entity " << decl;
     }
   }
 

@@ -339,24 +339,6 @@ auto BuiltinFunctionKind::ForBuiltinName(llvm::StringRef name)
   return BuiltinFunctionKind::None;
 }
 
-// Returns the builtin function kind corresponding to the given function
-// callee, or None if the callee is not known to be a builtin.
-auto BuiltinFunctionKind::ForCallee(const File& sem_ir, InstId callee_id)
-    -> BuiltinFunctionKind {
-  if (auto bound_method =
-          sem_ir.insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-    callee_id = bound_method->function_id;
-  }
-  callee_id = sem_ir.constant_values().Get(callee_id).inst_id();
-  if (!callee_id.is_valid()) {
-    return SemIR::BuiltinFunctionKind::None;
-  }
-  if (auto callee = sem_ir.insts().TryGetAs<SemIR::FunctionDecl>(callee_id)) {
-    return sem_ir.functions().Get(callee->function_id).builtin_kind;
-  }
-  return SemIR::BuiltinFunctionKind::None;
-}
-
 auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
                                       llvm::ArrayRef<TypeId> arg_types,
                                       TypeId return_type) const -> bool {

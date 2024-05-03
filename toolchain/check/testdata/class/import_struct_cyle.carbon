@@ -67,12 +67,15 @@ fn Run() {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Run = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
-// CHECK:STDOUT:   %.1: type = ptr_type Cycle [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.b: Cycle*} [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.c: {.b: Cycle*}} [template]
-// CHECK:STDOUT:   %.4: type = ptr_type {.c: {.b: Cycle*}} [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type Cycle, {.b: Cycle*} [template]
+// CHECK:STDOUT:   %.2: type = ptr_type Cycle [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.b: Cycle*} [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.c: {.b: Cycle*}} [template]
+// CHECK:STDOUT:   %.5: type = ptr_type {.c: {.b: Cycle*}} [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type Cycle, {.b: Cycle*} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -80,14 +83,14 @@ fn Run() {
 // CHECK:STDOUT:     .Cycle = %import_ref.1
 // CHECK:STDOUT:     .a = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir1, inst+12, loc_14
+// CHECK:STDOUT:   %import_ref.2: ref {.b: Cycle*} = import_ref ir1, inst+12, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir1, inst+19, loc_24 [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.4: <unbound element of class Cycle> = import_ref ir1, inst+19, loaded [template = imports.%.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {

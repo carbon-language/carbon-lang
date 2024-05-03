@@ -31,8 +31,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @Add [template]
 // CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type @Add, <function> [template]
-// CHECK:STDOUT:   %.3: <associated <function> in Add> = assoc_entity element0, @Add.%Op [template]
+// CHECK:STDOUT:   %Op: type = fn_type @Op [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Op = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type @Add, Op [template]
+// CHECK:STDOUT:   %.4: <associated Op in Add> = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -44,7 +47,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Op: <function> = fn_decl @Op [template] {
+// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op [template = constants.%struct] {
 // CHECK:STDOUT:     %Self.ref.loc5_15: Add = name_ref Self, %Self [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_15.1: type = facet_type_access %Self.ref.loc5_15 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %.loc5_15.2: type = converted %Self.ref.loc5_15, %.loc5_15.1 [symbolic = constants.%Self]
@@ -60,12 +63,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %.loc5_37.1 [symbolic = constants.%Self]
 // CHECK:STDOUT:     %return.var: ref Self = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5_41: <associated <function> in Add> = assoc_entity element0, %Op [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_41: <associated Op in Add> = assoc_entity element0, %Op.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Op = %.loc5_41
-// CHECK:STDOUT:   witness = (%Op)
+// CHECK:STDOUT:   witness = (%Op.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op[@Add.%self.loc5_9.2: Self](@Add.%other.loc5_21.2: Self) -> Self;
@@ -76,27 +79,33 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %.2: type = interface_type @Add [template]
 // CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (@impl.%Op) [template]
+// CHECK:STDOUT:   %Op.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %struct.1: Op = struct_value () [template]
+// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %struct.2: Op = struct_value () [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (%struct.1) [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type @Add, <function> [template]
-// CHECK:STDOUT:   %.5: <associated <function> in Add> = assoc_entity element0, file.%import_ref.5 [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type @Add, Op [template]
+// CHECK:STDOUT:   %.5: <associated Op in Add> = assoc_entity element0, file.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Add = %import_ref.1
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loc_13 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated <function> in Add> = import_ref ir1, inst+21, loc_58 [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Add> = import_ref ir1, inst+24, loaded [template = constants.%.5]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir1, inst+19, loc_14 [template = imports.%Op]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir1, inst+19, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %.loc6_7.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
 // CHECK:STDOUT:     %.loc10_10.1: () = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %x.loc10_6.1: () = param x
@@ -120,7 +129,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: () as Add {
-// CHECK:STDOUT:   %Op: <function> = fn_decl @Op.1 [template] {
+// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc7_9.1: () = param self
 // CHECK:STDOUT:     %self.loc7_9.2: () = bind_name self, %self.loc7_9.1
@@ -130,10 +139,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     %return.var: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op) [template = constants.%.3]
+// CHECK:STDOUT:   %.1: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Op
+// CHECK:STDOUT:   .Op = %Op.decl
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,15 +160,15 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: () = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, file.%import_ref.1 [template = constants.%.2]
-// CHECK:STDOUT:   %Op.ref: <associated <function> in Add> = name_ref Op, file.%import_ref.2 [template = constants.%.5]
-// CHECK:STDOUT:   %.1: <function> = interface_witness_access @impl.%.1, element0 [template = @impl.%Op]
+// CHECK:STDOUT:   %Op.ref: <associated Op in Add> = name_ref Op, file.%import_ref.2 [template = constants.%.5]
+// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc11_11: <bound method> = bound_method %x.ref, %.1
 // CHECK:STDOUT:   %y.ref: () = name_ref y, %y
-// CHECK:STDOUT:   %.loc11_20.1: init () = call %.loc11_11(%x.ref, %y.ref)
-// CHECK:STDOUT:   %.loc11_20.2: ref () = temporary_storage
-// CHECK:STDOUT:   %.loc11_20.3: ref () = temporary %.loc11_20.2, %.loc11_20.1
+// CHECK:STDOUT:   %Op.call: init () = call %.loc11_11(%x.ref, %y.ref)
+// CHECK:STDOUT:   %.loc11_20.1: ref () = temporary_storage
+// CHECK:STDOUT:   %.loc11_20.2: ref () = temporary %.loc11_20.1, %Op.call
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_23: () = converted %.loc11_20.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_23: () = converted %Op.call, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc11_23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

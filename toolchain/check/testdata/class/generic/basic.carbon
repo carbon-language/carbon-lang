@@ -25,9 +25,14 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type Class [template]
 // CHECK:STDOUT:   %.2: type = ptr_type T [symbolic]
-// CHECK:STDOUT:   %.3: type = unbound_element_type Class, T [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {.k: T} [symbolic]
-// CHECK:STDOUT:   %.5: type = ptr_type {.k: T} [symbolic]
+// CHECK:STDOUT:   %GetAddr: type = fn_type @GetAddr [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: GetAddr = struct_value () [template]
+// CHECK:STDOUT:   %GetValue: type = fn_type @GetValue [template]
+// CHECK:STDOUT:   %struct.2: GetValue = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Class, T [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {.k: T} [symbolic]
+// CHECK:STDOUT:   %.6: type = ptr_type {.k: T} [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,7 +48,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %GetAddr: <function> = fn_decl @GetAddr [template] {
+// CHECK:STDOUT:   %GetAddr.decl: GetAddr = fn_decl @GetAddr [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc8: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc8_29: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc8_19.1: Class* = param self
@@ -53,7 +58,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc8_38: type = ptr_type T [symbolic = constants.%.2]
 // CHECK:STDOUT:     %return.var.loc8: ref T* = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GetValue: <function> = fn_decl @GetValue [template] {
+// CHECK:STDOUT:   %GetValue.decl: GetValue = fn_decl @GetValue [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_15.1: Class = param self
 // CHECK:STDOUT:     %self.loc13_15.2: Class = bind_name self, %self.loc13_15.1
@@ -65,8 +70,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .GetAddr = %GetAddr
-// CHECK:STDOUT:   .GetValue = %GetValue
+// CHECK:STDOUT:   .GetAddr = %GetAddr.decl
+// CHECK:STDOUT:   .GetValue = %GetValue.decl
 // CHECK:STDOUT:   .k = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

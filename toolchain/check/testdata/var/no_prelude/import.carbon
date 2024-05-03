@@ -54,7 +54,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:     .a_ref = %import_ref
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: ref () = import_ref ir0, inst+5, loc_11
+// CHECK:STDOUT:   %import_ref: ref () = import_ref ir0, inst+5, loaded
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a

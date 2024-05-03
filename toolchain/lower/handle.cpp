@@ -12,6 +12,7 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -426,17 +427,20 @@ auto HandleCall(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  auto* callee_value = context.GetValue(inst.callee_id);
+  auto callee_function =
+      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+  CARBON_CHECK(callee_function.function_id.is_valid());
 
-  // A null callee pointer value indicates this isn't a real function.
-  if (!callee_value) {
-    auto builtin_kind =
-        SemIR::BuiltinFunctionKind::ForCallee(context.sem_ir(), inst.callee_id);
+  if (auto builtin_kind = context.sem_ir()
+                              .functions()
+                              .Get(callee_function.function_id)
+                              .builtin_kind;
+      builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
   }
 
-  auto* callee = llvm::cast<llvm::Function>(callee_value);
+  auto* callee = context.GetFunction(callee_function.function_id);
 
   std::vector<llvm::Value*> args;
 
@@ -466,6 +470,11 @@ auto HandleDeref(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.pointer_id));
 }
 
+auto HandleFunctionDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                        SemIR::FunctionDecl inst) -> void {
+  FatalErrorIfEncountered(inst);
+}
+
 auto HandleImplDecl(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                     SemIR::ImplDecl inst) -> void {
   FatalErrorIfEncountered(inst);
@@ -480,12 +489,6 @@ auto HandleImportRefUnloaded(FunctionContext& /*context*/,
 auto HandleImportRefLoaded(FunctionContext& /*context*/,
                            SemIR::InstId /*inst_id*/,
                            SemIR::ImportRefLoaded inst) -> void {
-  FatalErrorIfEncountered(inst);
-}
-
-auto HandleImportRefUsed(FunctionContext& /*context*/,
-                         SemIR::InstId /*inst_id*/, SemIR::ImportRefUsed inst)
-    -> void {
   FatalErrorIfEncountered(inst);
 }
 
@@ -507,14 +510,10 @@ auto HandleInterfaceWitness(FunctionContext& /*context*/,
   FatalErrorIfEncountered(inst);
 }
 
-auto HandleInterfaceWitnessAccess(FunctionContext& context,
-                                  SemIR::InstId inst_id,
+auto HandleInterfaceWitnessAccess(FunctionContext& /*context*/,
+                                  SemIR::InstId /*inst_id*/,
                                   SemIR::InterfaceWitnessAccess inst) -> void {
-  // TODO: Add general constant lowering.
-  auto const_id = context.sem_ir().constant_values().Get(inst_id);
-  CARBON_CHECK(const_id.is_constant())
-      << "Lowering non-constant witness access " << inst;
-  context.SetLocal(inst_id, context.GetValue(const_id.inst_id()));
+  FatalErrorIfEncountered(inst);
 }
 
 auto HandleNameRef(FunctionContext& context, SemIR::InstId inst_id,

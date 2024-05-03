@@ -23,15 +23,18 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %.3: type = ptr_type const i32* [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.5: type = ptr_type i32* [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: G = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc11_16: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_9: type = const_type const i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_26: type = ptr_type const i32 [template = constants.%.2]

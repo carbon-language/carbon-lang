@@ -179,13 +179,6 @@ static auto EmitFloatLiteralAsConstant(ConstantContext& context,
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
 }
 
-static auto EmitFunctionDeclAsConstant(ConstantContext& context,
-                                       SemIR::FunctionDecl inst)
-    -> llvm::Constant* {
-  // TODO: Add a FunctionValue that FunctionDecl evaluates to, and remove this.
-  return context.GetFunction(inst.function_id);
-}
-
 static auto EmitInterfaceWitnessAsConstant(ConstantContext& context,
                                            SemIR::InterfaceWitness inst)
     -> llvm::Constant* {
