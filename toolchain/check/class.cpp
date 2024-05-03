@@ -18,8 +18,8 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
       prev_class.is_defined() ? prev_class.definition_id : prev_class.decl_id;
 
   // Check the generic parameters match, if they were specified.
-  if (!CheckRedeclParamsMatch(context, EntityInfo(new_class),
-                              EntityInfo(prev_class), {})) {
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
+                              DeclParams(prev_class), {})) {
     return false;
   }
 

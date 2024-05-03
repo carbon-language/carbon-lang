@@ -56,11 +56,11 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void;
 
-// Common information shared by different kinds of named entity, such as classes
-// and functions.
-struct EntityInfo {
+// Information about the parameters of a declaration, which is common across
+// different kinds of entity such as classes and functions.
+struct DeclParams {
   template <typename Entity>
-  explicit EntityInfo(const Entity& entity)
+  explicit DeclParams(const Entity& entity)
       : decl_id(entity.decl_id),
         implicit_param_refs_id(entity.implicit_param_refs_id),
         param_refs_id(entity.param_refs_id) {}
@@ -78,8 +78,8 @@ struct EntityInfo {
 // Checks that the parameters in a redeclaration of an entity match the
 // parameters in the prior declaration. If not, produces a diagnostic and
 // returns false.
-auto CheckRedeclParamsMatch(Context& context, const EntityInfo& new_entity,
-                            const EntityInfo& prev_entity,
+auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
+                            const DeclParams& prev_entity,
                             Substitutions substitutions) -> bool;
 
 }  // namespace Carbon::Check

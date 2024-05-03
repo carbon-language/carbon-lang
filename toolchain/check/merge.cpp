@@ -169,7 +169,7 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 
 // Returns true if there was an error in declaring the entity, which will have
 // previously been diagnosed.
-static auto EntityHasParamError(Context& context, const EntityInfo& info)
+static auto EntityHasParamError(Context& context, const DeclParams& info)
     -> bool {
   for (auto param_refs_id : {info.implicit_param_refs_id, info.param_refs_id}) {
     if (param_refs_id.is_valid() &&
@@ -305,8 +305,8 @@ static auto CheckRedeclParams(Context& context, SemIR::InstId new_decl_id,
   return true;
 }
 
-auto CheckRedeclParamsMatch(Context& context, const EntityInfo& new_entity,
-                            const EntityInfo& prev_entity,
+auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
+                            const DeclParams& prev_entity,
                             Substitutions substitutions) -> bool {
   if (EntityHasParamError(context, new_entity) ||
       EntityHasParamError(context, prev_entity)) {
