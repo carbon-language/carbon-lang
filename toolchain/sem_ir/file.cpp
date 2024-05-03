@@ -438,7 +438,6 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       case ImplDecl::Kind:
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
-      case ImportRefUsed::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
@@ -511,10 +510,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StructTypeField::Kind:
         return ExprCategory::NotExpr;
 
-      case ImportRefLoaded::Kind:
-      case ImportRefUsed::Kind: {
-        auto import_ir_inst = ir->import_ir_insts().Get(
-            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
+      case CARBON_KIND(ImportRefLoaded inst): {
+        auto import_ir_inst = ir->import_ir_insts().Get(inst.import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
         inst_id = import_ir_inst.inst_id;
         continue;

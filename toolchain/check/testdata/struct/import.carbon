@@ -106,8 +106,8 @@ var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref {.a: i32} = import_ref ir0, inst+7, loc_15
-// CHECK:STDOUT:   %import_ref.2: ref {.a: {.b: i32, .c: (i32,)}, .d: i32} = import_ref ir0, inst+38, loc_45
+// CHECK:STDOUT:   %import_ref.1: ref {.a: i32} = import_ref ir0, inst+7, loaded
+// CHECK:STDOUT:   %import_ref.2: ref {.a: {.b: i32, .c: (i32,)}, .d: i32} = import_ref ir0, inst+38, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc4: type = struct_type {.a: i32} [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref {.a: i32} = var a

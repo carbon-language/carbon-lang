@@ -83,8 +83,8 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %ChildNS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .B = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: A = import_ref ir0, inst+4, loc_13 [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: B = import_ref ir0, inst+8, loc_27 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: A = import_ref ir0, inst+4, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: B = import_ref ir0, inst+8, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc4_9.1: () = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%.1 [template = constants.%.1]

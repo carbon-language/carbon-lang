@@ -131,9 +131,9 @@ fn Run() {
 // CHECK:STDOUT:     .B2 = %import_ref.4
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: A = import_ref ir1, inst+3, loc_33 [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.3: B1 = import_ref ir2, inst+3, loc_39 [template = constants.%struct.4]
-// CHECK:STDOUT:   %import_ref.4: B2 = import_ref ir2, inst+9, loc_45 [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.2: A = import_ref ir1, inst+3, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: B1 = import_ref ir2, inst+3, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.4: B2 = import_ref ir2, inst+9, loaded [template = constants.%struct.5]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.1] {}

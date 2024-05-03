@@ -170,20 +170,20 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated Op in Inc> = import_ref ir2, inst+18, loc_65 [template = constants.%.12]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Inc> = import_ref ir2, inst+18, loaded [template = constants.%.12]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+13, loc_19 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+13, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl.1 {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc8: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Inc.decl: type = interface_decl @Inc [template = constants.%.2] {}
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+20, loc_38 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: <associated Op in AddAssign> = import_ref ir2, inst+41, loc_82 [template = constants.%.14]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+20, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: <associated Op in AddAssign> = import_ref ir2, inst+41, loaded [template = constants.%.14]
 // CHECK:STDOUT:   %import_ref.7 = import_ref ir2, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.8: Op = import_ref ir2, inst+37, loc_39 [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.8: Op = import_ref ir2, inst+37, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   impl_decl @impl.2 {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, %Core [template = %Core]
@@ -195,7 +195,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %a.loc15_18.1: C = param a
 // CHECK:STDOUT:     @TestIncNonRef.%a: C = bind_name a, %a.loc15_18.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loc_65 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.10 = import_ref ir2, inst+13, unloaded
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: TestAddAssignNonRef = fn_decl @TestAddAssignNonRef [template = constants.%struct.6] {
 // CHECK:STDOUT:     %C.ref.loc26_27: type = name_ref C, %C.decl [template = constants.%C]
@@ -205,7 +205,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.loc26_30.1: C = param b
 // CHECK:STDOUT:     @TestAddAssignNonRef.%b: C = bind_name b, %b.loc26_30.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+20, loc_82 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref ir2, inst+20, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.12 = import_ref ir2, inst+37, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

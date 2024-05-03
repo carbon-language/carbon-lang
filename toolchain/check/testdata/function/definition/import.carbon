@@ -204,9 +204,9 @@ fn D() {}
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loc_15 [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+10, loc_24 [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+26, loc_39 [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.1: A = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: B = import_ref ir1, inst+10, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: C = import_ref ir1, inst+26, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+38, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc6_9.1: () = tuple_literal ()

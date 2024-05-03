@@ -440,8 +440,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         break;
       }
       case ImportRefUnloaded::Kind:
-      case ImportRefLoaded::Kind:
-      case ImportRefUsed::Kind: {
+      case ImportRefLoaded::Kind: {
         add_inst_name("import_ref");
         // When building import refs, we frequently add instructions without
         // a block. Constants that refer to them need to be separately

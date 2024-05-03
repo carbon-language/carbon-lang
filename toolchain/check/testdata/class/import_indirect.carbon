@@ -136,7 +136,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .b_ptr = %b_ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_12 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
@@ -187,7 +187,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .c_val = %c_val
 // CHECK:STDOUT:     .c_ptr = %c_ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_12 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
@@ -240,8 +240,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_15 [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+8, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir2, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+23, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -294,10 +294,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+2, loc_15 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+2, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+3, unloaded
@@ -350,10 +350,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loc_15 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+8, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+23, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
@@ -408,10 +408,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loc_23 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+8, loc_15 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir2, inst+8, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir2, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+23, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}

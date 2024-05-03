@@ -1036,7 +1036,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::BindValue::Kind:
     case SemIR::Deref::Kind:
     case SemIR::ImportRefLoaded::Kind:
-    case SemIR::ImportRefUsed::Kind:
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:

@@ -552,7 +552,7 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FunctionType inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::ImportRefUsed inst): {
+      case CARBON_KIND(SemIR::ImportRefLoaded inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
       case CARBON_KIND(SemIR::InterfaceDecl inst): {
@@ -900,8 +900,8 @@ class ImportRefResolver {
     return {context_.types().GetConstantId(fn_val.type_id())};
   }
 
-  auto TryResolveTypedInst(SemIR::ImportRefUsed /*inst*/, SemIR::InstId inst_id)
-      -> ResolveResult {
+  auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,
+                           SemIR::InstId inst_id) -> ResolveResult {
     auto initial_work = work_stack_.size();
     // Return the constant for the instruction of the imported constant.
     auto constant_id = import_ir_.constant_values().Get(inst_id);
@@ -909,7 +909,8 @@ class ImportRefResolver {
       return {SemIR::ConstantId::Error};
     }
     if (!constant_id.is_constant()) {
-      context_.TODO(inst_id, "Non-constant ImportRefUsed (comes up with var)");
+      context_.TODO(inst_id,
+                    "Non-constant ImportRefLoaded (comes up with var)");
       return {SemIR::ConstantId::Error};
     }
 
@@ -1139,61 +1140,29 @@ class ImportRefResolver {
   llvm::SmallVector<Work> work_stack_;
 };
 
-// Returns the LocId corresponding to the input location.
-static auto SemIRLocToLocId(Context& context, SemIRLoc loc) -> SemIR::LocId {
-  if (loc.is_inst_id) {
-    return context.insts().GetLocId(loc.inst_id);
-  } else {
-    return loc.loc_id;
+auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
+  auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
+  if (!inst) {
+    return;
   }
-}
+  auto import_ir_inst = context.import_ir_insts().Get(inst->import_ir_inst_id);
 
-// Replace the ImportRefUnloaded instruction with an appropriate ImportRef. This
-// doesn't use ReplaceInstBeforeConstantUse because it would trigger
-// TryEvalInst, which we want to avoid with ImportRefs.
-static auto SetInst(Context& context, SemIR::InstId inst_id,
-                    SemIR::TypeId type_id,
-                    SemIR::ImportIRInstId import_ir_inst_id, SemIRLoc loc,
-                    bool set_if_invalid_loc) -> void {
-  if (auto loc_id = SemIRLocToLocId(context, loc); loc_id.is_valid()) {
-    context.sem_ir().insts().Set(
-        inst_id, SemIR::ImportRefUsed{type_id, import_ir_inst_id, loc_id});
-  } else if (set_if_invalid_loc) {
-    context.sem_ir().insts().Set(
-        inst_id, SemIR::ImportRefLoaded{type_id, import_ir_inst_id});
-  }
-}
+  const SemIR::File& import_ir =
+      *context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+  auto import_inst = import_ir.insts().Get(import_ir_inst.inst_id);
 
-auto LoadImportRef(Context& context, SemIR::InstId inst_id, SemIRLoc loc)
-    -> void {
-  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
-    case CARBON_KIND(SemIR::ImportRefLoaded inst): {
-      SetInst(context, inst_id, inst.type_id, inst.import_ir_inst_id, loc,
-              /*set_if_invalid_loc=*/false);
-      return;
-    }
-    case CARBON_KIND(SemIR::ImportRefUnloaded inst): {
-      auto import_ir_inst =
-          context.import_ir_insts().Get(inst.import_ir_inst_id);
+  ImportRefResolver resolver(context, import_ir_inst.ir_id);
+  auto type_id = resolver.ResolveType(import_inst.type_id());
+  auto constant_id = resolver.Resolve(import_ir_inst.inst_id);
 
-      const SemIR::File& import_ir =
-          *context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      auto import_inst = import_ir.insts().Get(import_ir_inst.inst_id);
+  // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
+  // doesn't use ReplaceInstBeforeConstantUse because it would trigger
+  // TryEvalInst, which we want to avoid with ImportRefs.
+  context.sem_ir().insts().Set(
+      inst_id, SemIR::ImportRefLoaded{type_id, inst->import_ir_inst_id});
 
-      ImportRefResolver resolver(context, import_ir_inst.ir_id);
-      auto type_id = resolver.ResolveType(import_inst.type_id());
-      auto constant_id = resolver.Resolve(import_ir_inst.inst_id);
-
-      SetInst(context, inst_id, type_id, inst.import_ir_inst_id, loc,
-              /*set_if_invalid_loc=*/true);
-
-      // Store the constant for both the ImportRefUsed and imported instruction.
-      context.constant_values().Set(inst_id, constant_id);
-      return;
-    }
-    default:
-      return;
-  }
+  // Store the constant for both the ImportRefLoaded and imported instruction.
+  context.constant_values().Set(inst_id, constant_id);
 }
 
 // Imports the impl `import_impl_id` from the imported IR `import_ir`.

@@ -103,10 +103,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loc_18 [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2: <associated Op in Negate> = import_ref ir2, inst+19, loc_50 [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <associated Op in Negate> = import_ref ir2, inst+19, loaded [template = constants.%.7]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+14, loc_19 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir2, inst+14, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
@@ -120,7 +120,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %C.ref.loc14_20: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @TestOp.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loc_50 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir2, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir2, inst+14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

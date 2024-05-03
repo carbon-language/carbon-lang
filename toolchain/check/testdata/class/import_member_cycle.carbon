@@ -67,7 +67,7 @@ fn Run() {
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loc_16 [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct] {}
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded

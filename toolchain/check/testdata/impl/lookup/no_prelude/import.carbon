@@ -117,18 +117,18 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+13, unloaded
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.2] {}
-// CHECK:STDOUT:   %import_ref.2: <associated F in HasF> = import_ref ir1, inst+10, loc_20 [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2: <associated F in HasF> = import_ref ir1, inst+10, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+21, loc_22 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+12, loc_10 [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+21, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+12, loaded [template = constants.%C]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: C = param c
 // CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, loc_18 [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+1, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

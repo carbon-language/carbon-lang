@@ -116,7 +116,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .Symbolic = %Symbolic.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loc_13 [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %UInt.ref.loc6_9: UInt = name_ref UInt, %import_ref [template = constants.%struct.1]
@@ -202,7 +202,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loc_11 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %UInt.ref: UInt = name_ref UInt, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %.loc10_13: i32 = int_literal 0 [template = constants.%.2]
@@ -234,7 +234,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Negate = %Negate.decl
 // CHECK:STDOUT:     .n = %n.loc12
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loc_23 [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.1] {
 // CHECK:STDOUT:     %n.loc6_11.1: i32 = param n
@@ -273,7 +273,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .m = %m
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loc_11 [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: UInt = import_ref ir1, inst+5, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %UInt.ref: UInt = name_ref UInt, %import_ref [template = constants.%struct]
 // CHECK:STDOUT:   %.loc9_13: i32 = int_literal 1000000000 [template = constants.%.2]
