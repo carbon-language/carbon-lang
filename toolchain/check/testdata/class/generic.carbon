@@ -6,7 +6,7 @@
 
 class C[]();
 
-// CHECK:STDOUT: --- fail_todo_generic.carbon
+// CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
