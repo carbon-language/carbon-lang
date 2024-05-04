@@ -13,26 +13,31 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 6 [template]
+// CHECK:STDOUT:   %Six: type = fn_type @Six [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Six = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:     .Six = %Six
+// CHECK:STDOUT:     .Six = %Six.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %Six: <function> = fn_decl @Six [template] {
+// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
 // CHECK:STDOUT:     %.loc11: type = bind_value %x.ref
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:     @Six.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 6 [template = constants.%.2]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

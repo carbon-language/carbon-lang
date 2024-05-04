@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "llvm/ADT/APSInt.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/inst.h"
@@ -25,10 +25,10 @@ static auto ValidateTupleIndex(Context& context, Parse::NodeId node_id,
   if (index_val.uge(size)) {
     CARBON_DIAGNOSTIC(
         TupleIndexOutOfBounds, Error,
-        "Tuple element index `{0}` is past the end of type `{1}`.",
-        llvm::APSInt, SemIR::TypeId);
+        "Tuple element index `{0}` is past the end of type `{1}`.", TypedInt,
+        SemIR::TypeId);
     context.emitter().Emit(node_id, TupleIndexOutOfBounds,
-                           llvm::APSInt(index_val, /*isUnsigned=*/true),
+                           TypedInt{index_inst.type_id, index_val},
                            operand_inst.type_id());
     return nullptr;
   }
@@ -41,12 +41,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
   operand_inst_id = ConvertToValueOrRefExpr(context, operand_inst_id);
   auto operand_inst = context.insts().Get(operand_inst_id);
   auto operand_type_id = operand_inst.type_id();
-  auto operand_type_inst = context.types().GetAsInst(operand_type_id);
-
-  switch (operand_type_inst.kind()) {
-    case SemIR::ArrayType::Kind: {
-      auto array_type = operand_type_inst.As<SemIR::ArrayType>();
-      auto index_node_id = context.insts().GetNodeId(index_inst_id);
+  CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
+    case CARBON_KIND(SemIR::ArrayType array_type): {
+      auto index_node_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
           context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
@@ -73,9 +70,9 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
       context.node_stack().Push(node_id, elem_id);
       return true;
     }
-    case SemIR::TupleType::Kind: {
+    case CARBON_KIND(SemIR::TupleType tuple_type): {
       SemIR::TypeId element_type_id = SemIR::TypeId::Error;
-      auto index_node_id = context.insts().GetNodeId(index_inst_id);
+      auto index_node_id = context.insts().GetLocId(index_inst_id);
       index_inst_id = ConvertToValueOfType(
           context, index_node_id, index_inst_id,
           context.GetBuiltinType(SemIR::BuiltinKind::IntType));
@@ -91,8 +88,7 @@ auto HandleIndexExpr(Context& context, Parse::IndexExprId node_id) -> bool {
       } else {
         auto index_literal =
             context.insts().GetAs<SemIR::IntLiteral>(index_const_id.inst_id());
-        auto type_block = context.type_blocks().Get(
-            operand_type_inst.As<SemIR::TupleType>().elements_id);
+        auto type_block = context.type_blocks().Get(tuple_type.elements_id);
         if (const auto* index_val =
                 ValidateTupleIndex(context, node_id, operand_inst,
                                    index_literal, type_block.size())) {

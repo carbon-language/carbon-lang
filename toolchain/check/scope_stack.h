@@ -47,6 +47,9 @@ class ScopeStack {
     SemIR::NameScopeId name_scope_id;
   };
 
+  // Information about a scope that has been temporarily removed from the stack.
+  struct SuspendedScope;
+
   // Pushes a scope onto scope_stack_. NameScopeId::Invalid is used for new
   // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
   // given namespace may contain a mix of both successful and failed name
@@ -112,6 +115,19 @@ class ScopeStack {
   auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
       -> SemIR::InstId;
 
+  // Adds a compile-time binding in the current scope, and returns its index.
+  auto AddCompileTimeBinding() -> SemIR::CompileTimeBindIndex {
+    auto index = scope_stack_.back().next_compile_time_bind_index;
+    ++scope_stack_.back().next_compile_time_bind_index.index;
+    return index;
+  }
+
+  // Temporarily removes the top of the stack and its lexical lookup results.
+  auto Suspend() -> SuspendedScope;
+
+  // Restores a suspended scope stack entry.
+  auto Restore(SuspendedScope scope) -> void;
+
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
@@ -140,21 +156,31 @@ class ScopeStack {
     // The name scope associated with this entry, if any.
     SemIR::NameScopeId scope_id;
 
-    // The previous state of lexical_lookup_has_load_error_, restored on pop.
-    bool prev_lexical_lookup_has_load_error;
+    // The next compile-time binding index to allocate in this scope.
+    SemIR::CompileTimeBindIndex next_compile_time_bind_index;
 
-    // Names which are registered with lexical_lookup_, and will need to be
-    // unregistered when the scope ends.
-    llvm::DenseSet<SemIR::NameId> names;
+    // Whether lexical_lookup_ has load errors from this scope or an enclosing
+    // scope.
+    bool lexical_lookup_has_load_error;
 
     // Whether a `returned var` was introduced in this scope, and needs to be
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // Names which are registered with lexical_lookup_, and will need to be
+    // unregistered when the scope ends.
+    llvm::DenseSet<SemIR::NameId> names = {};
+
     // TODO: This likely needs to track things which need to be destructed.
   };
 
   auto Peek() const -> const ScopeStackEntry& { return scope_stack_.back(); }
+
+  // Returns whether lexical lookup currently has any load errors.
+  auto LexicalLookupHasLoadError() const -> bool {
+    return !scope_stack_.empty() &&
+           scope_stack_.back().lexical_lookup_has_load_error;
+  }
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
@@ -175,10 +201,15 @@ class ScopeStack {
 
   // Tracks lexical lookup results.
   LexicalLookup lexical_lookup_;
+};
 
-  // Whether lexical_lookup_ has load errors, updated whenever scope_stack_ is
-  // pushed or popped.
-  bool lexical_lookup_has_load_error_ = false;
+struct ScopeStack::SuspendedScope {
+  // The suspended scope stack entry.
+  ScopeStackEntry entry;
+  // The lexical lookups for the suspended entry. The inline size is an attempt
+  // to keep the size of a `SuspendedFunction` reasonable while avoiding heap
+  // allocations most of the time.
+  llvm::SmallVector<LexicalLookup::SuspendedResult, 8> suspended_lookups;
 };
 
 }  // namespace Carbon::Check

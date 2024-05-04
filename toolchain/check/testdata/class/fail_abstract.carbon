@@ -37,36 +37,43 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.4: type = unbound_element_type Derived, Abstract [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type Derived, i32 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.base: Abstract, .d: i32} [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: {.a: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.8: type = ptr_type {.base: {.a: i32}*, .d: i32} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type {.base: Abstract, .d: i32} [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 7 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.base: {.a: i32}, .d: i32} [template]
-// CHECK:STDOUT:   %.13: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.14: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.15: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %Make: type = fn_type @Make [template]
+// CHECK:STDOUT:   %.7: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Make = struct_value () [template]
+// CHECK:STDOUT:   %.8: type = struct_type {.base: {.a: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type {.base: {.a: i32}*, .d: i32} [template]
+// CHECK:STDOUT:   %.10: type = ptr_type {.base: Abstract, .d: i32} [template]
+// CHECK:STDOUT:   %.11: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.12: i32 = int_literal 7 [template]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: {.a: i32}, .d: i32} [template]
+// CHECK:STDOUT:   %.14: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.15: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %Access: type = fn_type @Access [template]
+// CHECK:STDOUT:   %struct.2: Access = struct_value () [template]
+// CHECK:STDOUT:   %.16: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Abstract = %Abstract.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
-// CHECK:STDOUT:     .Make = %Make
-// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:     .Make = %Make.decl
+// CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [template = constants.%Abstract] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
-// CHECK:STDOUT:   %Make: <function> = fn_decl @Make [template] {
+// CHECK:STDOUT:   %Make.decl: Make = fn_decl @Make [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Derived.ref.loc17: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     @Make.%return: ref Derived = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template] {
+// CHECK:STDOUT:   %Access.decl: Access = fn_decl @Access [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Derived.ref.loc25: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d.loc25_11.1: Derived = param d
 // CHECK:STDOUT:     @Access.%d: Derived = bind_name d, %d.loc25_11.1
 // CHECK:STDOUT:     %.loc25_35.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:     %.loc25_35.2: type = converted %.loc25_35.1, constants.%.14 [template = constants.%.14]
+// CHECK:STDOUT:     %.loc25_35.2: type = converted %.loc25_35.1, constants.%.15 [template = constants.%.15]
 // CHECK:STDOUT:     @Access.%return: ref (i32, i32) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -88,16 +95,16 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .d = %.loc14
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: Derived {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc22_25: i32 = int_literal 1 [template = constants.%.11]
 // CHECK:STDOUT:   %.loc22_26: {.a: i32} = struct_literal (%.loc22_25)
-// CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc22_34: i32 = int_literal 7 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc22_35: {.base: {.a: i32}, .d: i32} = struct_literal (%.loc22_26, %.loc22_34)
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d: Derived) -> %return: (i32, i32) {
@@ -119,7 +126,7 @@ fn Access(d: Derived) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc26_24.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc26_24.5: init i32 = initialize_from %.loc26_22.2 to %.loc26_24.4
 // CHECK:STDOUT:   %.loc26_24.6: init (i32, i32) = tuple_init (%.loc26_24.3, %.loc26_24.5) to %return
-// CHECK:STDOUT:   %.loc26_24.7: init (i32, i32) = converted %.loc26_24.1, %.loc26_24.6
-// CHECK:STDOUT:   return %.loc26_24.7
+// CHECK:STDOUT:   %.loc26_25: init (i32, i32) = converted %.loc26_24.1, %.loc26_24.6
+// CHECK:STDOUT:   return %.loc26_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -8,17 +8,20 @@
 
 package Implicit api;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: ERROR: Name `x` not found.
 // CHECK:STDERR: var a_ref: x;
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var a_ref: x;
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:18: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:18: ERROR: Name `x` not found.
 // CHECK:STDERR: var b_ref: {.a = x};
 // CHECK:STDERR:                  ^
+// CHECK:STDERR:
 var b_ref: {.a = x};
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:13: ERROR: Name `x` not found.
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:13: ERROR: Name `x` not found.
 // CHECK:STDERR: var c_ref: (x,);
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 var c_ref: (x,);
 // CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: ERROR: Name `x` not found.
 // CHECK:STDERR: var d_ref: x*;
@@ -40,24 +43,26 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:     .b_ref = %b_ref
 // CHECK:STDOUT:     .c_ref = %c_ref
 // CHECK:STDOUT:     .d_ref = %d_ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref.loc7: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %x.ref.loc8: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %a_ref.var: ref <error> = var a_ref
 // CHECK:STDOUT:   %a_ref: ref <error> = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %x.ref.loc11: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc11: <error> = struct_literal (%x.ref.loc11)
+// CHECK:STDOUT:   %x.ref.loc13: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc13: <error> = struct_literal (%x.ref.loc13)
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var b_ref
 // CHECK:STDOUT:   %b_ref: ref <error> = bind_name b_ref, %b_ref.var
-// CHECK:STDOUT:   %x.ref.loc15: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15: <error> = tuple_literal (%x.ref.loc15)
+// CHECK:STDOUT:   %x.ref.loc18: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: <error> = tuple_literal (%x.ref.loc18)
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var c_ref
 // CHECK:STDOUT:   %c_ref: ref <error> = bind_name c_ref, %c_ref.var
-// CHECK:STDOUT:   %x.ref.loc19: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc19: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %x.ref.loc22: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var d_ref
 // CHECK:STDOUT:   %d_ref: ref <error> = bind_name d_ref, %d_ref.var
 // CHECK:STDOUT: }
@@ -70,15 +75,17 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:     .b_ref = %import_ref.2
 // CHECK:STDOUT:     .c_ref = %import_ref.3
 // CHECK:STDOUT:     .d_ref = %import_ref.4
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir1, inst+3, used
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir1, inst+8, used
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir1, inst+12, used
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir1, inst+16, used
+// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref ir0, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref ir0, inst+9, loaded
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref ir0, inst+13, loaded
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref ir0, inst+17, loaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b

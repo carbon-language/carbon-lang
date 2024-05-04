@@ -40,7 +40,7 @@ auto HandleLetFinish(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Semi)) {
     end_token = context.Consume();
   } else {
-    context.EmitExpectedDeclSemi(Lex::TokenKind::Let);
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Let);
     state.has_error = true;
     end_token = context.SkipPastLikelyEnd(state.token);
   }

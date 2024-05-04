@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:11: ERROR: Expected `=`; `let` declaration must have an initializer.
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: ERROR: Expected `=`; `let` declaration must have an initializer.
 // CHECK:STDERR: let n: i32;
 // CHECK:STDERR:           ^
+// CHECK:STDERR:
 let n: i32;
 
 fn F() {
@@ -18,12 +19,20 @@ fn F() {
 
 // CHECK:STDOUT: --- fail_missing_value.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %n: i32 = bind_name n, <error>
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

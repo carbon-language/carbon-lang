@@ -25,26 +25,33 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type C, i32 [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
-// CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.6: C = struct_value (%.4, %.5) [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %struct.2: C = struct_value (%.5, %.6) [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.3: G = struct_value () [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .F = %F
-// CHECK:STDOUT:     .G = %G
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     @F.%return: ref C = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
-// CHECK:STDOUT:     %return.var.loc17: ref i32 = var <return slot>
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
+// CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -62,17 +69,17 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %result: ref C = bind_name result, %return
-// CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc13_42: i32 = int_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13_42: i32 = int_literal 2 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc13_43.1: {.a: i32, .b: i32} = struct_literal (%.loc13_34, %.loc13_42)
 // CHECK:STDOUT:   %.loc13_43.2: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc13_43.3: init i32 = initialize_from %.loc13_34 to %.loc13_43.2 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13_43.3: init i32 = initialize_from %.loc13_34 to %.loc13_43.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_43.4: ref i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc13_43.5: init i32 = initialize_from %.loc13_42 to %.loc13_43.4 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc13_43.6: init C = class_init (%.loc13_43.3, %.loc13_43.5), %return [template = constants.%.6]
-// CHECK:STDOUT:   %.loc13_43.7: init C = converted %.loc13_43.1, %.loc13_43.6 [template = constants.%.6]
-// CHECK:STDOUT:   assign %return, %.loc13_43.7
-// CHECK:STDOUT:   return %result
+// CHECK:STDOUT:   %.loc13_43.5: init i32 = initialize_from %.loc13_42 to %.loc13_43.4 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc13_43.6: init C = class_init (%.loc13_43.3, %.loc13_43.5), %return [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc13_44: init C = converted %.loc13_43.1, %.loc13_43.6 [template = constants.%struct.2]
+// CHECK:STDOUT:   assign %return, %.loc13_44
+// CHECK:STDOUT:   return %result to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {

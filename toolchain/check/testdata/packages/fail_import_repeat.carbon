@@ -19,30 +19,33 @@ library "lib" api;
 // --- fail_import.carbon
 
 import Api;
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Api;
 
 import Api library "lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import Api library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Api library "lib";
 
 import library "lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+6]]:1: ERROR: Library imported more than once.
+// CHECK:STDERR: fail_import.carbon:[[@LINE+7]]:1: ERROR: Library imported more than once.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import.carbon:[[@LINE-4]]:1: First import here.
 // CHECK:STDERR: import library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import library "lib";
 
 // --- fail_default_import.carbon
@@ -61,19 +64,28 @@ import library default;
 // CHECK:STDOUT: --- api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import.carbon
@@ -81,13 +93,18 @@ import library default;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Api = %Api
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_default_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

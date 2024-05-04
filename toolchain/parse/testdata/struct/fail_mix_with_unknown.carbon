@@ -4,17 +4,20 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+6]]:25: ERROR: Expected `.field = value`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+8]]:25: ERROR: Expected `.field = value`.
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                         ^
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:29: ERROR: Expected `.field = value`.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:29: ERROR: Expected `.field = value`.
 // CHECK:STDERR: var x: i32 = {.a = 1, .b, .c: i32};
 // CHECK:STDERR:                             ^
+// CHECK:STDERR:
 var x: i32 = {.a = 1, .b, .c: i32};
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+6]]:26: ERROR: Expected `.field: field_type`.
+// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+7]]:26: ERROR: Expected `.field: field_type`.
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                          ^
+// CHECK:STDERR:
 // CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+3]]:31: ERROR: Expected `.field: field_type`.
 // CHECK:STDERR: var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDERR:                               ^
@@ -28,11 +31,11 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:         {kind: 'StructFieldValue', text: '=', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructField', text: '=', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
@@ -48,11 +51,11 @@ var x: i32 = {.a: i32, .b, .c = 1};
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:         {kind: 'StructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'StructFieldType', text: ':', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'StructTypeField', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'StructComma', text: ','},
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: 'b'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},

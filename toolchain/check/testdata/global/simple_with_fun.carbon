@@ -13,16 +13,21 @@ var a: i32 = test_a();
 // CHECK:STDOUT: --- simple_with_fun.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %test_a: type = fn_type @test_a [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: test_a = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .test_a = %test_a
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .test_a = %test_a.decl
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_a: <function> = fn_decl @test_a [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %test_a.decl: test_a = fn_decl @test_a [template = constants.%struct] {
+// CHECK:STDOUT:     @test_a.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref i32 = var a
 // CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
@@ -30,15 +35,15 @@ var a: i32 = test_a();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @test_a() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %test_a.ref: <function> = name_ref test_a, file.%test_a [template = file.%test_a]
-// CHECK:STDOUT:   %.loc11: init i32 = call %test_a.ref()
-// CHECK:STDOUT:   assign file.%a.var, %.loc11
+// CHECK:STDOUT:   %test_a.ref: test_a = name_ref test_a, file.%test_a.decl [template = constants.%struct]
+// CHECK:STDOUT:   %test_a.call: init i32 = call %test_a.ref()
+// CHECK:STDOUT:   assign file.%a.var, %test_a.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

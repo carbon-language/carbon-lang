@@ -81,7 +81,6 @@ static auto BuildInterfaceDecl(Context& context,
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
     // invalid.
-    // TODO: should have a `Self` type id member
     interface_decl.interface_id = context.interfaces().Add(
         {.name_id = name_context.name_id_for_new_inst(),
          .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
@@ -89,8 +88,7 @@ static auto BuildInterfaceDecl(Context& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  context.ReplaceInstBeforeConstantUse(interface_decl_id,
-                                       {node_id, interface_decl});
+  context.ReplaceInstBeforeConstantUse(interface_decl_id, interface_decl);
 
   return {interface_decl.interface_id, interface_decl_id};
 }
@@ -146,7 +144,8 @@ auto HandleInterfaceDefinitionStart(Context& context,
     // the `value_id` on the `BindSymbolicName`.
     auto bind_name_id = context.bind_names().Add(
         {.name_id = SemIR::NameId::SelfType,
-         .enclosing_scope_id = interface_info.scope_id});
+         .enclosing_scope_id = interface_info.scope_id,
+         .bind_index = context.scope_stack().AddCompileTimeBinding()});
     interface_info.self_param_id =
         context.AddInst({Parse::NodeId::Invalid,
                          SemIR::BindSymbolicName{self_type_id, bind_name_id,
@@ -175,8 +174,6 @@ auto HandleInterfaceDefinition(Context& context,
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
   context.inst_block_stack().Pop();
-  context.scope_stack().Pop();
-  context.decl_name_stack().PopScope();
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
   // The interface type is now fully defined.
@@ -184,6 +181,7 @@ auto HandleInterfaceDefinition(Context& context,
   if (!interface_info.associated_entities_id.is_valid()) {
     interface_info.associated_entities_id = associated_entities_id;
   }
+  // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;
 }
 

@@ -50,39 +50,49 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "class.cpp",
         "context.cpp",
         "convert.cpp",
         "decl_name_stack.cpp",
         "eval.cpp",
+        "function.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
+        "merge.cpp",
         "modifiers.cpp",
         "return.cpp",
+        "subst.cpp",
     ],
     hdrs = [
+        "class.h",
         "context.h",
         "convert.h",
         "decl_name_stack.h",
         "decl_state.h",
+        "diagnostic_helpers.h",
         "eval.h",
+        "function.h",
         "import_ref.h",
         "inst_block_stack.h",
+        "merge.h",
         "modifiers.h",
         "param_and_arg_refs_stack.h",
         "pending_block.h",
         "return.h",
+        "subst.h",
     ],
     deps = [
         ":node_stack",
         "//common:check",
         "//common:vlog",
         "//toolchain/base:index_base",
+        "//toolchain/base:kind_switch",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_location_translator",
+        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:builtin_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -94,7 +104,10 @@ cc_library(
 
 cc_library(
     name = "check",
-    srcs = ["check.cpp"] +
+    srcs = [
+        "check.cpp",
+        "handle.h",
+    ] +
     # Glob handler files to avoid missing any.
     glob([
         "handle_*.cpp",
@@ -103,7 +116,6 @@ cc_library(
     deps = [
         ":call",
         ":context",
-        ":function",
         ":impl",
         ":import",
         ":interface",
@@ -111,7 +123,11 @@ cc_library(
         ":operator",
         ":pointer_dereference",
         "//common:check",
+        "//common:error",
         "//common:ostream",
+        "//common:variant_helpers",
+        "//common:vlog",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -119,7 +135,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/parse:tree_node_location_translator",
+        "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -155,26 +171,13 @@ cc_library(
 )
 
 cc_library(
-    name = "function",
-    srcs = ["function.cpp"],
-    hdrs = ["function.h"],
-    deps = [
-        ":context",
-        ":subst",
-        "//common:check",
-        "//toolchain/sem_ir:file",
-    ],
-)
-
-cc_library(
     name = "impl",
     srcs = ["impl.cpp"],
     hdrs = ["impl.h"],
     deps = [
         ":context",
-        ":function",
-        ":subst",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -190,6 +193,7 @@ cc_library(
     deps = [
         ":context",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/parse:node_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -218,8 +222,8 @@ cc_library(
     hdrs = ["member_access.h"],
     deps = [
         ":context",
-        ":subst",
         "//common:check",
+        "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
@@ -254,22 +258,6 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:ids",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "subst",
-    srcs = ["subst.cpp"],
-    hdrs = ["subst.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",

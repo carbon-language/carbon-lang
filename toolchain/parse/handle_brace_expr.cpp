@@ -10,9 +10,8 @@ auto HandleBraceExpr(Context& context) -> void {
   auto state = context.PopState();
   context.PushState(state, State::BraceExprFinishAsUnknown);
 
-  CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(
-      Lex::TokenKind::OpenCurlyBrace,
-      NodeKind::StructLiteralOrStructTypeLiteralStart));
+  CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::OpenCurlyBrace,
+                                               NodeKind::Placeholder));
   if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
     context.PushState(State::BraceExprParamAsUnknown);
   }
@@ -163,12 +162,12 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind node_kind,
 }
 
 auto HandleBraceExprParamFinishAsType(Context& context) -> void {
-  HandleBraceExprParamFinish(context, NodeKind::StructFieldType,
+  HandleBraceExprParamFinish(context, NodeKind::StructTypeField,
                              State::BraceExprParamAsType);
 }
 
 auto HandleBraceExprParamFinishAsValue(Context& context) -> void {
-  HandleBraceExprParamFinish(context, NodeKind::StructFieldValue,
+  HandleBraceExprParamFinish(context, NodeKind::StructField,
                              State::BraceExprParamAsValue);
 }
 
@@ -178,24 +177,27 @@ auto HandleBraceExprParamFinishAsUnknown(Context& context) -> void {
 }
 
 // Handles BraceExprFinishAs(Type|Value|Unknown).
-static auto HandleBraceExprFinish(Context& context, NodeKind node_kind)
-    -> void {
+static auto HandleBraceExprFinish(Context& context, NodeKind start_kind,
+                                  NodeKind end_kind) -> void {
   auto state = context.PopState();
 
-  context.AddNode(node_kind, context.Consume(), state.subtree_start,
+  context.ReplacePlaceholderNode(state.subtree_start, start_kind, state.token);
+  context.AddNode(end_kind, context.Consume(), state.subtree_start,
                   state.has_error);
 }
 
 auto HandleBraceExprFinishAsType(Context& context) -> void {
-  HandleBraceExprFinish(context, NodeKind::StructTypeLiteral);
+  HandleBraceExprFinish(context, NodeKind::StructTypeLiteralStart,
+                        NodeKind::StructTypeLiteral);
 }
 
 auto HandleBraceExprFinishAsValue(Context& context) -> void {
-  HandleBraceExprFinish(context, NodeKind::StructLiteral);
+  HandleBraceExprFinish(context, NodeKind::StructLiteralStart,
+                        NodeKind::StructLiteral);
 }
 
 auto HandleBraceExprFinishAsUnknown(Context& context) -> void {
-  HandleBraceExprFinish(context, NodeKind::StructLiteral);
+  HandleBraceExprFinishAsValue(context);
 }
 
 }  // namespace Carbon::Parse

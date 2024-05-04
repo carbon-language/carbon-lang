@@ -18,21 +18,24 @@ fn If(b: bool) {
 // CHECK:STDOUT: source_filename = "no_else.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @If(i1 %b) {
-// CHECK:STDOUT:   br i1 %b, label %1, label %2
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
+// CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %2
+// CHECK:STDOUT:   br label %if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %1, %0
+// CHECK:STDOUT: if.else:                                          ; preds = %if.then, %entry
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

@@ -31,18 +31,19 @@ fn While() {
 // CHECK:STDOUT: declare void @H()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @While() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @F()
-// CHECK:STDOUT:   br label %1
+// CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
-// CHECK:STDOUT:   %Cond = call i1 @Cond()
-// CHECK:STDOUT:   br i1 %Cond, label %2, label %3
+// CHECK:STDOUT: while.cond:                                       ; preds = %entry
+// CHECK:STDOUT:   %Cond.call = call i1 @Cond()
+// CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %1
+// CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @G()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %1
+// CHECK:STDOUT: while.done:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @H()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

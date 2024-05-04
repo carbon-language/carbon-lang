@@ -10,11 +10,19 @@ on:
     types:
       - ready_for_review
 
+permissions:
+  pull-requests: write # For gh to edit labels.
+
 jobs:
   proposal_ready:
     if: contains(github.event.pull_request.labels.*.name, 'proposal')
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: rfc
         run: |
           gh pr edit "${PR}" \

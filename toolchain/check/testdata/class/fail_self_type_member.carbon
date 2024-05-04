@@ -10,9 +10,10 @@ class Class {
 
 fn F() -> bool {
   var c1: Class = {.b = true};
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+6]]:17: ERROR: Expected identifier after `.`.
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+7]]:17: ERROR: Expected identifier after `.`.
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: ERROR: Semantics TODO: `Error recovery from keyword name.`.
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
@@ -26,9 +27,12 @@ fn F() -> bool {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type Class, bool [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.b: bool} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.b: bool} [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.5: Class = struct_value (%.4) [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.3: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.b: bool} [template]
+// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %struct.2: Class = struct_value (%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_IMPORT_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
@@ -15,6 +16,7 @@ namespace Carbon::Check {
 // though they are several layers deep.
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
+                                     Parse::ImportDirectiveId node_id,
                                      const SemIR::File& import_sem_ir) -> void;
 
 // Adds another package's imports to name lookup, with all libraries together.
@@ -22,13 +24,13 @@ auto ImportLibraryFromCurrentPackage(Context& context,
 // will resolve, and will provide a name scope that can be used for further
 // qualified name lookups.
 //
-// sem_irs will all be non-null, and may be empty. has_load_error is used to
-// indicate if any library in the package failed to import correctly.
+// import_irs may be empty. has_load_error is used to indicate if any library in
+// the package failed to import correctly.
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
                                      IdentifierId package_id,
-                                     llvm::ArrayRef<const SemIR::File*> sem_irs,
+                                     llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void;
 
 }  // namespace Carbon::Check

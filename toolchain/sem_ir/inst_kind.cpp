@@ -31,6 +31,20 @@ auto InstKind::value_kind() const -> InstValueKind {
   return Table[AsInt()];
 }
 
+auto InstKind::constant_kind() const -> InstConstantKind {
+  static constexpr InstConstantKind Table[] = {
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_NEVER(...) InstConstantKind::Never,
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_SYMBOLIC_ONLY(...) \
+  InstConstantKind::SymbolicOnly,
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_CONDITIONAL(...) \
+  InstConstantKind::Conditional,
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(...) InstConstantKind::Always,
+#define CARBON_SEM_IR_INST_KIND(Name)
+#include "toolchain/sem_ir/inst_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 auto InstKind::terminator_kind() const -> TerminatorKind {
   static constexpr const TerminatorKind Table[] = {
 #define CARBON_SEM_IR_INST_KIND(Name) SemIR::Name::Kind.terminator_kind(),

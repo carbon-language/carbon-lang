@@ -288,38 +288,45 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
   return out;
 }
 
-// Associates a NodeId and Inst in order to provide type-checking that the
+// Associates a LocId and Inst in order to provide type-checking that the
 // TypedNodeId corresponds to the InstT.
-struct NodeIdAndInst {
-  // In cases where the NodeId is untyped or the InstT is unknown, the check
-  // can't be done at compile time.
-  // TODO: Consider runtime validation that InstT::Kind::TypedNodeId
-  // corresponds.
-  static auto Untyped(Parse::NodeId node_id, Inst inst) -> NodeIdAndInst {
-    return NodeIdAndInst(node_id, inst, /*is_untyped=*/true);
+struct LocIdAndInst {
+  // For cases with no location.
+  template <typename InstT>
+    requires(!Internal::HasNodeId<InstT>)
+  static auto NoLoc(InstT inst) -> LocIdAndInst {
+    return LocIdAndInst(LocId::Invalid, inst, /*is_untyped=*/true);
   }
 
   // For the common case, support construction as:
   //   context.AddInst({node_id, SemIR::MyInst{...}});
   template <typename InstT>
     requires(Internal::HasNodeId<InstT>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
-      : node_id(node_id), inst(inst) {}
+  LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+      : loc_id(node_id), inst(inst) {}
 
-  // For cases with no parse node, support construction as:
-  //   context.AddInst({SemIR::MyInst{...}});
+  // If TypedNodeId is Parse::NodeId, allow construction with a LocId.
+  // TODO: This is somewhat historical due to fetching the NodeId from insts()
+  // for things like Temporary; should we require Untyped in these cases?
   template <typename InstT>
-    requires(!Internal::HasNodeId<InstT>)
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  NodeIdAndInst(InstT inst) : node_id(Parse::NodeId::Invalid), inst(inst) {}
+    requires(std::same_as<typename decltype(InstT::Kind)::TypedNodeId,
+                          Parse::NodeId>)
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
-  Parse::NodeId node_id;
+  // Imports can pass an ImportIRInstId instead of another location.
+  template <typename InstT>
+  LocIdAndInst(ImportIRInstId import_ir_inst_id, InstT inst)
+      : loc_id(import_ir_inst_id), inst(inst) {}
+
+  LocId loc_id;
   Inst inst;
 
  private:
-  explicit NodeIdAndInst(Parse::NodeId node_id, Inst inst, bool /*is_untyped*/)
-      : node_id(node_id), inst(inst) {}
+  // Expose the internal constructor for GetWithLocId.
+  friend class InstStore;
+
+  explicit LocIdAndInst(LocId loc_id, Inst inst, bool /*is_untyped*/)
+      : loc_id(loc_id), inst(inst) {}
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
@@ -330,17 +337,17 @@ class InstStore {
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
   // should usually be used instead, to add the instruction to the current
   // block.
-  auto AddInNoBlock(NodeIdAndInst node_id_and_inst) -> InstId {
-    node_ids_.push_back(node_id_and_inst.node_id);
-    return values_.Add(node_id_and_inst.inst);
+  auto AddInNoBlock(LocIdAndInst loc_id_and_inst) -> InstId {
+    loc_ids_.push_back(loc_id_and_inst.loc_id);
+    return values_.Add(loc_id_and_inst.inst);
   }
 
   // Returns the requested instruction.
   auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
 
-  // Returns the requested instruction and its parse node.
-  auto GetWithNodeId(InstId inst_id) const -> NodeIdAndInst {
-    return NodeIdAndInst::Untyped(GetNodeId(inst_id), Get(inst_id));
+  // Returns the requested instruction and its location ID.
+  auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
+    return LocIdAndInst(GetLocId(inst_id), Get(inst_id), /*is_untyped=*/true);
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -373,23 +380,30 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetNodeId(InstId inst_id) const -> Parse::NodeId {
-    return node_ids_[inst_id.index];
+  auto GetLocId(InstId inst_id) const -> LocId {
+    CARBON_CHECK(inst_id.index >= 0) << inst_id.index;
+    CARBON_CHECK(inst_id.index < (int)loc_ids_.size())
+        << inst_id.index << " " << loc_ids_.size();
+    return loc_ids_[inst_id.index];
   }
 
-  // Overwrites a given instruction and parse node with a new value.
-  auto Set(InstId inst_id, NodeIdAndInst node_id_and_inst) -> void {
-    values_.Get(inst_id) = node_id_and_inst.inst;
-    node_ids_[inst_id.index] = node_id_and_inst.node_id;
+  // Overwrites a given instruction with a new value.
+  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
+
+  // Overwrites a given instruction's location with a new value.
+  auto SetLocId(InstId inst_id, LocId loc_id) -> void {
+    loc_ids_[inst_id.index] = loc_id;
   }
 
-  auto SetNodeId(InstId inst_id, Parse::NodeId node_id) -> void {
-    node_ids_[inst_id.index] = node_id;
+  // Overwrites a given instruction and location ID with a new value.
+  auto SetLocIdAndInst(InstId inst_id, LocIdAndInst loc_id_and_inst) -> void {
+    Set(inst_id, loc_id_and_inst.inst);
+    SetLocId(inst_id, loc_id_and_inst.loc_id);
   }
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
-    node_ids_.reserve(size);
+    loc_ids_.reserve(size);
     values_.Reserve(size);
   }
 
@@ -397,7 +411,7 @@ class InstStore {
   auto size() const -> int { return values_.size(); }
 
  private:
-  llvm::SmallVector<Parse::NodeId> node_ids_;
+  llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId> values_;
 };
 

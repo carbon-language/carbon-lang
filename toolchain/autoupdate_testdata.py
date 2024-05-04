@@ -8,17 +8,39 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 
 def main() -> None:
+    # Use the most recently used build mode, or `fastbuild` if missing
+    # `bazel-bin`.
+    build_mode = "fastbuild"
+    workspace = subprocess.check_output(
+        [
+            "bazel",
+            "info",
+            "workspace",
+            "--ui_event_filters=stdout",
+        ],
+        encoding="utf-8",
+    ).strip()
+    bazel_bin_path = Path(workspace).joinpath("bazel-bin")
+    if bazel_bin_path.exists():
+        link = str(bazel_bin_path.readlink())
+        m = re.search(r"-(\w+)/bin$", link)
+        if m:
+            build_mode = m[1]
+        else:
+            exit(f"Build mode not found in `bazel-bin` symlink: {link}")
+
     argv = [
         "bazel",
         "run",
         "-c",
-        "opt",
+        build_mode,
         "--experimental_convenience_symlinks=ignore",
         "--ui_event_filters=-info,-stdout,-stderr,-finish",
         "//toolchain/testing:file_test",

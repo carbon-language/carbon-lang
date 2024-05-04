@@ -22,6 +22,7 @@ file_test(
     ],
     deps = [
         "//common:all_llvm_targets",
+        "//common:error",
         "//testing/file_test:file_test_base",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",

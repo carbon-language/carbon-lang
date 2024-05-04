@@ -3248,7 +3248,7 @@ parameter.
 
 **Comparison with other languages:** Both Swift
 ([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
-[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference))
+[2](https://github.com/apple/swift/blob/main/docs/archive/Generics.rst#constraint-inference))
 and
 [Rust](https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=0b2d645bd205f24a7a6e2330d652c32e)
 support some form of this feature as part of their type inference (and

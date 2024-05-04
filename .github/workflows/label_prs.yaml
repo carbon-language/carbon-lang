@@ -7,12 +7,20 @@ on:
   pull_request_target:
     types: [opened, ready_for_review]
 
+permissions:
+  pull-requests: write # For gh to edit labels.
+
 jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
           filters: |
             documentation:

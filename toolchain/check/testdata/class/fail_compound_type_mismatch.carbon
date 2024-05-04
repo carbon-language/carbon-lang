@@ -28,23 +28,28 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type B, i32 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {.b: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.a: i32} [template]
-// CHECK:STDOUT:   %.6: type = ptr_type {.b: i32} [template]
+// CHECK:STDOUT:   %AccessBInA: type = fn_type @AccessBInA [template]
+// CHECK:STDOUT:   %.5: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: AccessBInA = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.a: i32} [template]
+// CHECK:STDOUT:   %.7: type = ptr_type {.b: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .AccessBInA = %AccessBInA
+// CHECK:STDOUT:     .AccessBInA = %AccessBInA.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {}
-// CHECK:STDOUT:   %AccessBInA: <function> = fn_decl @AccessBInA [template] {
+// CHECK:STDOUT:   %AccessBInA.decl: AccessBInA = fn_decl @AccessBInA [template = constants.%struct] {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:     %a.loc15_15.1: A = param a
 // CHECK:STDOUT:     @AccessBInA.%a: A = bind_name a, %a.loc15_15.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @AccessBInA.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

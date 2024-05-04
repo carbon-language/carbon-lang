@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+3]]:22: ERROR: Choice definition expected.
+// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:22: ERROR: Choice definition expected.
 // CHECK:STDERR: choice InvalidBraces |
 // CHECK:STDERR:                      ^
+// CHECK:STDERR:
 choice InvalidBraces |
   Some
 // CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+3]]:1: ERROR: Unrecognized declaration introducer.

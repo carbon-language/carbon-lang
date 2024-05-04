@@ -59,6 +59,24 @@ TEST(ValueStore, Real) {
   EXPECT_THAT(real2.is_decimal, Eq(real2_copy.is_decimal));
 }
 
+TEST(ValueStore, Float) {
+  llvm::APFloat float1(1.0);
+  llvm::APFloat float2(2.0);
+
+  SharedValueStores value_stores;
+  FloatId id1 = value_stores.floats().Add(float1);
+  FloatId id2 = value_stores.floats().Add(float2);
+
+  ASSERT_TRUE(id1.is_valid());
+  ASSERT_TRUE(id2.is_valid());
+  EXPECT_THAT(id1, Not(Eq(id2)));
+
+  EXPECT_THAT(value_stores.floats().Get(id1).compare(float1),
+              Eq(llvm::APFloatBase::cmpEqual));
+  EXPECT_THAT(value_stores.floats().Get(id2).compare(float2),
+              Eq(llvm::APFloatBase::cmpEqual));
+}
+
 TEST(ValueStore, String) {
   std::string a = "a";
   std::string b = "b";

@@ -14,12 +14,6 @@
 
 namespace Carbon::Check {
 
-// Constructs builtins. A single instance should be reused with CheckParseTree
-// calls associated with a given compilation.
-inline auto MakeBuiltins(SharedValueStores& value_stores) -> SemIR::File {
-  return SemIR::File(value_stores);
-}
-
 // Checking information that's tracked per file.
 struct Unit {
   SharedValueStores* value_stores;
@@ -32,8 +26,7 @@ struct Unit {
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-auto CheckParseTrees(const SemIR::File& builtin_ir,
-                     llvm::MutableArrayRef<Unit> units,
+auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::raw_ostream* vlog_stream) -> void;
 
 }  // namespace Carbon::Check

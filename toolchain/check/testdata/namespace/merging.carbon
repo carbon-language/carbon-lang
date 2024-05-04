@@ -44,14 +44,22 @@ fn Run() {
 
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: A = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A
+// CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {}
+// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
@@ -61,17 +69,27 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B1: type = fn_type @B1 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: B1 = struct_value () [template]
+// CHECK:STDOUT:   %B2: type = fn_type @B2 [template]
+// CHECK:STDOUT:   %struct.2: B2 = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .NS = %NS
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B1 = %B1
-// CHECK:STDOUT:     .B2 = %B2
+// CHECK:STDOUT:     .B1 = %B1.decl
+// CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B1: <function> = fn_decl @B1 [template] {}
+// CHECK:STDOUT:   %B1.decl: B1 = fn_decl @B1 [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B2: <function> = fn_decl @B2 [template] {}
+// CHECK:STDOUT:   %B2.decl: B2 = fn_decl @B2 [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B1() {
@@ -87,27 +105,39 @@ fn Run() {
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = fn_type @C [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: C = struct_value () [template]
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
+// CHECK:STDOUT:   %struct.2: Run = struct_value () [template]
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %struct.3: A = struct_value () [template]
+// CHECK:STDOUT:   %B1: type = fn_type @B1 [template]
+// CHECK:STDOUT:   %struct.4: B1 = struct_value () [template]
+// CHECK:STDOUT:   %B2: type = fn_type @B2 [template]
+// CHECK:STDOUT:   %struct.5: B2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .NS = %NS
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+1, used
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .B1 = %import_ref.3
 // CHECK:STDOUT:     .B2 = %import_ref.4
-// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <function> = import_ref ir1, inst+2, used [template = imports.%A]
-// CHECK:STDOUT:   %import_ref.3: <function> = import_ref ir2, inst+2, used [template = imports.%B1]
-// CHECK:STDOUT:   %import_ref.4: <function> = import_ref ir2, inst+5, used [template = imports.%B2]
+// CHECK:STDOUT:   %import_ref.2: A = import_ref ir1, inst+3, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: B1 = import_ref ir2, inst+3, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.4: B2 = import_ref ir2, inst+9, loaded [template = constants.%struct.5]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C: <function> = fn_decl @C [template] {}
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C() {
@@ -118,17 +148,17 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %A.ref: <function> = name_ref A, file.%import_ref.2 [template = imports.%A]
-// CHECK:STDOUT:   %.loc12: init () = call %A.ref()
+// CHECK:STDOUT:   %A.ref: A = name_ref A, file.%import_ref.2 [template = constants.%struct.3]
+// CHECK:STDOUT:   %A.call: init () = call %A.ref()
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %B1.ref: <function> = name_ref B1, file.%import_ref.3 [template = imports.%B1]
-// CHECK:STDOUT:   %.loc13: init () = call %B1.ref()
+// CHECK:STDOUT:   %B1.ref: B1 = name_ref B1, file.%import_ref.3 [template = constants.%struct.4]
+// CHECK:STDOUT:   %B1.call: init () = call %B1.ref()
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %B2.ref: <function> = name_ref B2, file.%import_ref.4 [template = imports.%B2]
-// CHECK:STDOUT:   %.loc14: init () = call %B2.ref()
+// CHECK:STDOUT:   %B2.ref: B2 = name_ref B2, file.%import_ref.4 [template = constants.%struct.5]
+// CHECK:STDOUT:   %B2.call: init () = call %B2.ref()
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, file.%NS [template = file.%NS]
-// CHECK:STDOUT:   %C.ref: <function> = name_ref C, file.%C [template = file.%C]
-// CHECK:STDOUT:   %.loc15: init () = call %C.ref()
+// CHECK:STDOUT:   %C.ref: C = name_ref C, file.%C.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %C.call: init () = call %C.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

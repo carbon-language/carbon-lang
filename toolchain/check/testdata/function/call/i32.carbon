@@ -15,20 +15,27 @@ fn Main() {
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %Echo: type = fn_type @Echo [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Echo = struct_value () [template]
+// CHECK:STDOUT:   %Main: type = fn_type @Main [template]
+// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Echo = %Echo
-// CHECK:STDOUT:     .Main = %Main
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Echo = %Echo.decl
+// CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Echo: <function> = fn_decl @Echo [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Echo.decl: Echo = fn_decl @Echo [template = constants.%struct.1] {
 // CHECK:STDOUT:     %a.loc7_9.1: i32 = param a
 // CHECK:STDOUT:     @Echo.%a: i32 = bind_name a, %a.loc7_9.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @Echo.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main: <function> = fn_decl @Main [template] {}
+// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
@@ -41,10 +48,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %Echo.ref: <function> = name_ref Echo, file.%Echo [template = file.%Echo]
-// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_20: init i32 = call %Echo.ref(%.loc12_21)
-// CHECK:STDOUT:   assign %b.var, %.loc12_20
+// CHECK:STDOUT:   %Echo.ref: Echo = name_ref Echo, file.%Echo.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc12: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %Echo.call: init i32 = call %Echo.ref(%.loc12)
+// CHECK:STDOUT:   assign %b.var, %Echo.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -23,20 +23,27 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %.1: type = ptr_type Class [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %.3: type = tuple_type (i32, i32) [template]
-// CHECK:STDOUT:   %.4: type = ptr_type (i32, i32) [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %.4: type = tuple_type (i32, i32) [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = unbound_element_type Class, i32 [template]
 // CHECK:STDOUT:   %.6: type = struct_type {.n: i32} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type {.n: i32} [template]
+// CHECK:STDOUT:   %.8: type = ptr_type (i32, i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_27: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc13_17.1: Class* = param self
@@ -45,20 +52,20 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc13_30.1: i32 = param r#self
 // CHECK:STDOUT:     @F.%self.loc13_30: i32 = bind_name r#self, %self.loc13_30.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc17_12.1: Class = param self
 // CHECK:STDOUT:     @G.%self.loc17_12: Class = bind_name self, %self.loc17_12.1
 // CHECK:STDOUT:     %self.loc17_24.1: i32 = param r#self
 // CHECK:STDOUT:     @G.%self.loc17_24: i32 = bind_name r#self, %self.loc17_24.1
 // CHECK:STDOUT:     %.loc17_49.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:     %.loc17_49.2: type = converted %.loc17_49.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc17_49.2: type = converted %.loc17_49.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     @G.%return: ref (i32, i32) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Self.ref.loc8: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc8_23: type = ptr_type Class [template = constants.%.1]
 // CHECK:STDOUT:     %self.loc8_13.1: Class* = param self
@@ -67,22 +74,22 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc8_26.1: i32 = param r#self
 // CHECK:STDOUT:     %self.loc8_26.2: i32 = bind_name r#self, %self.loc8_26.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc9: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc9_8.1: Class = param self
 // CHECK:STDOUT:     %self.loc9_8.2: Class = bind_name self, %self.loc9_8.1
 // CHECK:STDOUT:     %self.loc9_20.1: i32 = param r#self
 // CHECK:STDOUT:     %self.loc9_20.2: i32 = bind_name r#self, %self.loc9_20.1
 // CHECK:STDOUT:     %.loc9_45.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:     %.loc9_45.2: type = converted %.loc9_45.1, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:     %.loc9_45.2: type = converted %.loc9_45.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %return.var: ref (i32, i32) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F
-// CHECK:STDOUT:   .G = %G
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .n = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,7 +117,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc18_25.4: ref i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc18_25.5: init i32 = initialize_from %self.ref.loc18_19 to %.loc18_25.4
 // CHECK:STDOUT:   %.loc18_25.6: init (i32, i32) = tuple_init (%.loc18_25.3, %.loc18_25.5) to %return
-// CHECK:STDOUT:   %.loc18_25.7: init (i32, i32) = converted %.loc18_25.1, %.loc18_25.6
-// CHECK:STDOUT:   return %.loc18_25.7
+// CHECK:STDOUT:   %.loc18_26: init (i32, i32) = converted %.loc18_25.1, %.loc18_25.6
+// CHECK:STDOUT:   return %.loc18_26 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

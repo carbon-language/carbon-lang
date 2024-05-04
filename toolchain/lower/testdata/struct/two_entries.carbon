@@ -13,20 +13,27 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @struct.2.loc8_47 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() {
-// CHECK:STDOUT:   %x = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4
-// CHECK:STDOUT:   %b = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4
-// CHECK:STDOUT:   %y = alloca { i32, i32 }, align 8
-// CHECK:STDOUT:   %a1 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %a1, align 4
-// CHECK:STDOUT:   %a2 = getelementptr inbounds { i32, i32 }, ptr %y, i32 0, i32 0
-// CHECK:STDOUT:   store i32 %1, ptr %a2, align 4
-// CHECK:STDOUT:   %b3 = getelementptr inbounds { i32, i32 }, ptr %x, i32 0, i32 1
-// CHECK:STDOUT:   %2 = load i32, ptr %b3, align 4
-// CHECK:STDOUT:   %b4 = getelementptr inbounds { i32, i32 }, ptr %y, i32 0, i32 1
-// CHECK:STDOUT:   store i32 %2, ptr %b4, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %.loc8_46.2.a = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc8_46.4.b = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.2.loc8_47, i64 8, i1 false)
+// CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8
+// CHECK:STDOUT:   %.loc9_31.1.a = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 0
+// CHECK:STDOUT:   %.loc9_31.2 = load i32, ptr %.loc9_31.1.a, align 4
+// CHECK:STDOUT:   %.loc9_31.3.a = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 0
+// CHECK:STDOUT:   store i32 %.loc9_31.2, ptr %.loc9_31.3.a, align 4
+// CHECK:STDOUT:   %.loc9_31.5.b = getelementptr inbounds { i32, i32 }, ptr %x.var, i32 0, i32 1
+// CHECK:STDOUT:   %.loc9_31.6 = load i32, ptr %.loc9_31.5.b, align 4
+// CHECK:STDOUT:   %.loc9_31.7.b = getelementptr inbounds { i32, i32 }, ptr %y.var, i32 0, i32 1
+// CHECK:STDOUT:   store i32 %.loc9_31.6, ptr %.loc9_31.7.b, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

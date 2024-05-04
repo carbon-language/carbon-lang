@@ -85,9 +85,10 @@ cc_binary(
     srcs = ["numeric_literal_benchmark.cpp"],
     deps = [
         ":numeric_literal",
+        "//common:benchmark_main",
         "//common:check",
         "//toolchain/diagnostics:null_diagnostics",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
     ],
 )
 
@@ -139,8 +140,9 @@ cc_binary(
     srcs = ["string_literal_benchmark.cpp"],
     deps = [
         ":string_literal",
+        "//common:benchmark_main",
         "//toolchain/diagnostics:null_diagnostics",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
     ],
 )
 
@@ -186,6 +188,7 @@ cc_library(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:variant_helpers",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
@@ -270,12 +273,13 @@ cc_binary(
         ":lex",
         ":token_kind",
         ":tokenized_buffer",
+        "//common:benchmark_main",
         "//common:check",
         "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@abseil-cpp//absl/random",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -10,5 +10,6 @@ fn Foo() {}
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

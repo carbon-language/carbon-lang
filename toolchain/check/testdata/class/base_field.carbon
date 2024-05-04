@@ -34,26 +34,31 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.6: type = struct_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT:   %.7: type = ptr_type Derived [template]
 // CHECK:STDOUT:   %.8: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.9: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.10: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
-// CHECK:STDOUT:   %.11: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %Access: type = fn_type @Access [template]
+// CHECK:STDOUT:   %.9: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Access = struct_value () [template]
+// CHECK:STDOUT:   %.10: type = struct_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.11: type = ptr_type {.base: {.a: i32, .b: i32, .c: i32}*, .d: i32, .e: i32} [template]
+// CHECK:STDOUT:   %.12: type = ptr_type {.base: Base, .d: i32, .e: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Derived = %Derived.decl
-// CHECK:STDOUT:     .Access = %Access
+// CHECK:STDOUT:     .Access = %Access.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
-// CHECK:STDOUT:   %Access: <function> = fn_decl @Access [template] {
+// CHECK:STDOUT:   %Access.decl: Access = fn_decl @Access [template = constants.%struct] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc20_21: type = ptr_type Derived [template = constants.%.7]
 // CHECK:STDOUT:     %p.loc20_11.1: Derived* = param p
 // CHECK:STDOUT:     @Access.%p: Derived* = bind_name p, %p.loc20_11.1
 // CHECK:STDOUT:     %.loc20_30: type = ptr_type i32 [template = constants.%.8]
-// CHECK:STDOUT:     %return.var: ref i32* = var <return slot>
+// CHECK:STDOUT:     @Access.%return: ref i32* = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,18 +85,18 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .d = %.loc16
 // CHECK:STDOUT:   .e = %.loc17
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: Derived* = name_ref p, %p
-// CHECK:STDOUT:   %.loc21_12.1: ref Derived = deref %p.ref
+// CHECK:STDOUT:   %.loc21_12: ref Derived = deref %p.ref
 // CHECK:STDOUT:   %c.ref: <unbound element of class Base> = name_ref c, @Base.%.loc10 [template = @Base.%.loc10]
-// CHECK:STDOUT:   %.loc21_15.1: ref Base = class_element_access %.loc21_12.1, element0
-// CHECK:STDOUT:   %.loc21_12.2: ref Base = converted %.loc21_12.1, %.loc21_15.1
-// CHECK:STDOUT:   %.loc21_15.2: ref i32 = class_element_access %.loc21_12.2, element2
-// CHECK:STDOUT:   %.loc21_10: i32* = addr_of %.loc21_15.2
+// CHECK:STDOUT:   %.loc21_15.1: ref Base = class_element_access %.loc21_12, element0
+// CHECK:STDOUT:   %.loc21_15.2: ref Base = converted %.loc21_12, %.loc21_15.1
+// CHECK:STDOUT:   %.loc21_15.3: ref i32 = class_element_access %.loc21_15.2, element2
+// CHECK:STDOUT:   %.loc21_10: i32* = addr_of %.loc21_15.3
 // CHECK:STDOUT:   return %.loc21_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

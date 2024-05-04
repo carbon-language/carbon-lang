@@ -10,44 +10,24 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/decl_state.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/parse/tree_node_location_translator.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
 
-// Diagnostic locations produced by checking may be either a parse node
-// directly, or an inst ID which is later translated to a parse node.
-struct SemIRLocation {
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(SemIR::InstId inst_id) : inst_id(inst_id), is_inst_id(true) {}
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeLocation node_location)
-      : node_location(node_location), is_inst_id(false) {}
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLocation(Parse::NodeId node_id)
-      : SemIRLocation(Parse::NodeLocation(node_id)) {}
-
-  union {
-    SemIR::InstId inst_id;
-    Parse::NodeLocation node_location;
-  };
-
-  bool is_inst_id;
-};
-
 // Context and shared functionality for semantics handlers.
 class Context {
  public:
-  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLocation>;
+  using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
 
   // Stores references for work.
@@ -56,44 +36,50 @@ class Context {
                    SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(SemIRLocation loc, std::string label) -> bool;
+  auto TODO(SemIRLoc loc, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() -> void;
 
   // Adds an instruction to the current block, returning the produced ID.
-  auto AddInst(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
+  auto AddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely.
-  auto AddInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst) -> SemIR::InstId;
+  auto AddInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInst(SemIR::NodeIdAndInst node_id_and_inst)
-      -> SemIR::InstId;
+  auto AddPlaceholderInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
 
   // Adds an instruction in no block, returning the produced ID. Should be used
   // rarely. The instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
-  auto AddPlaceholderInstInNoBlock(SemIR::NodeIdAndInst node_id_and_inst)
+  auto AddPlaceholderInstInNoBlock(SemIR::LocIdAndInst loc_id_and_inst)
       -> SemIR::InstId;
 
   // Adds an instruction to the constants block, returning the produced ID.
   auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId;
 
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
-  // result.
-  auto AddInstAndPush(SemIR::NodeIdAndInst node_id_and_inst) -> void;
+  // result. Only valid if the LocId is for a NodeId.
+  auto AddInstAndPush(SemIR::LocIdAndInst loc_id_and_inst) -> void;
 
-  // Replaces the value of the instruction `inst_id` with `node_id_and_inst`.
+  // Replaces the instruction `inst_id` with `loc_id_and_inst`. The instruction
+  // is required to not have been used in any constant evaluation, either
+  // because it's newly created and entirely unused, or because it's only used
+  // in a position that constant evaluation ignores, such as a return slot.
+  auto ReplaceLocIdAndInstBeforeConstantUse(SemIR::InstId inst_id,
+                                            SemIR::LocIdAndInst loc_id_and_inst)
+      -> void;
+
+  // Replaces the instruction `inst_id` with `inst`, not affecting location.
   // The instruction is required to not have been used in any constant
   // evaluation, either because it's newly created and entirely unused, or
   // because it's only used in a position that constant evaluation ignores, such
   // as a return slot.
-  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
-                                    SemIR::NodeIdAndInst node_id_and_inst)
+  auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
   // Sets only the parse node of an instruction. This is only used when setting
@@ -103,7 +89,7 @@ class Context {
   // remain const.
   auto SetNamespaceNodeId(SemIR::InstId inst_id, Parse::NodeId node_id)
       -> void {
-    sem_ir().insts().SetNodeId(inst_id, node_id);
+    sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
@@ -112,7 +98,7 @@ class Context {
   // Performs name lookup in a specified scope for a name appearing in a
   // declaration, returning the referenced instruction. If scope_id is invalid,
   // uses the current contextual scope.
-  auto LookupNameInDecl(Parse::NodeId node_id, SemIR::NameId name_id,
+  auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id) -> SemIR::InstId;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
@@ -122,7 +108,7 @@ class Context {
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
-  auto LookupNameInExactScope(SemIRLocation loc, SemIR::NameId name_id,
+  auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
@@ -131,13 +117,15 @@ class Context {
                            SemIR::NameScopeId scope_id, bool required = true)
       -> SemIR::InstId;
 
+  // Returns the instruction corresponding to a name in the core package, or
+  // BuiltinError if not found.
+  auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
+
   // Prints a diagnostic for a duplicate name.
-  auto DiagnoseDuplicateName(SemIRLocation dup_def, SemIRLocation prev_def)
-      -> void;
+  auto DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def) -> void;
 
   // Prints a diagnostic for a missing name.
-  auto DiagnoseNameNotFound(Parse::NodeId node_id, SemIR::NameId name_id)
-      -> void;
+  auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -189,6 +177,17 @@ class Context {
       Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
 
+  // Sets the constant value of a block argument created as the result of a
+  // branch.  `select_id` should be a `BlockArg` that selects between two
+  // values. `cond_id` is the condition, `if_false` is the value to use if the
+  // condition is false, and `if_true` is the value to use if the condition is
+  // true.  We don't track enough information in the `BlockArg` inst for
+  // `TryEvalInst` to do this itself.
+  auto SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
+                                          SemIR::InstId cond_id,
+                                          SemIR::InstId if_true,
+                                          SemIR::InstId if_false) -> void;
+
   // Add the current code block to the enclosing function.
   // TODO: The node_id is taken for expressions, which can occur in
   // non-function contexts. This should be refactored to support non-function
@@ -238,6 +237,9 @@ class Context {
 
   // Gets a builtin type. The returned type will be complete.
   auto GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId;
+
+  // Gets a function type. The returned type will be complete.
+  auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
 
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
@@ -310,6 +312,10 @@ class Context {
     return scope_stack().break_continue_stack();
   }
 
+  auto check_ir_map() -> llvm::SmallVector<SemIR::ImportIRId>& {
+    return check_ir_map_;
+  }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -322,6 +328,7 @@ class Context {
   }
   auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
+  auto floats() -> ValueStore<FloatId>& { return sem_ir().floats(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
@@ -338,6 +345,9 @@ class Context {
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
     return sem_ir().import_irs();
+  }
+  auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
+    return sem_ir().import_ir_insts();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -424,6 +434,9 @@ class Context {
 
   // The list which will form NodeBlockId::Exports.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Maps CheckIRId to ImportIRId.
+  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.

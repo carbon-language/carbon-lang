@@ -19,6 +19,7 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
@@ -27,6 +28,8 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "constant.cpp",
+        "constant.h",
         "file_context.cpp",
         "function_context.cpp",
     ] +
@@ -41,10 +44,12 @@ cc_library(
     deps = [
         "//common:check",
         "//common:vlog",
+        "//toolchain/base:kind_switch",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],

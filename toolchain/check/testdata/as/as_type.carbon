@@ -14,9 +14,12 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc7_24.1: (type, type) = tuple_literal (i32, i32)
-// CHECK:STDOUT:   %.loc7_24.2: type = converted %.loc7_24.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:   %t: type = bind_name t, %.loc7_24.2
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %.loc7_24: (type, type) = tuple_literal (i32, i32)
+// CHECK:STDOUT:   %.loc7_26: type = converted %.loc7_24, constants.%.2 [template = constants.%.2]
+// CHECK:STDOUT:   %t: type = bind_name t, %.loc7_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

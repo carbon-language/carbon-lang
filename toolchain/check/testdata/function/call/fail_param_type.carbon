@@ -19,20 +19,26 @@ fn F() {
 // CHECK:STDOUT: --- fail_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = real_literal 10e-1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: G = struct_value () [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .G = %G
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G: <function> = fn_decl @G [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {
 // CHECK:STDOUT:     %a.loc7_6.1: i32 = param a
 // CHECK:STDOUT:     @G.%a: i32 = bind_name a, %a.loc7_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a: i32) {
@@ -42,9 +48,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: <function> = name_ref G, file.%G [template = file.%G]
-// CHECK:STDOUT:   %.loc16_5: f64 = real_literal 10e-1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc16_4: init () = call %G.ref(<invalid>)
+// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc16: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %G.call: init () = call %G.ref(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

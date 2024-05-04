@@ -4,12 +4,14 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+6]]:13: ERROR: Expected identifier after `.`.
+// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+8]]:13: ERROR: Expected identifier after `.`.
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+3]]:13: ERROR: Semantics TODO: `Error recovery from keyword name.`.
+// CHECK:STDERR:
+// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:13: ERROR: Semantics TODO: `Error recovery from keyword name.`.
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
+// CHECK:STDERR:
 fn F() -> {.class: i32};
 
 // CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+3]]:19: ERROR: Expected identifier after `.`.

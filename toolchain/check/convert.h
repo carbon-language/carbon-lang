@@ -50,15 +50,14 @@ struct ConversionTarget {
 };
 
 // Convert a value to another type and expression category.
-auto Convert(Context& context, Parse::NodeId node_id, SemIR::InstId expr_id,
+auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the
 // target using a suitable node for the kind of initialization.
-auto Initialize(Context& context, Parse::NodeId node_id,
-                SemIR::InstId target_id, SemIR::InstId value_id)
-    -> SemIR::InstId;
+auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
+                SemIR::InstId value_id) -> SemIR::InstId;
 
 // Convert the given expression to a value expression of the same type.
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
@@ -70,18 +69,18 @@ auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId;
 
 // Converts `expr_id` to a value expression of type `type_id`.
-auto ConvertToValueOfType(Context& context, Parse::NodeId node_id,
+auto ConvertToValueOfType(Context& context, SemIR::LocId loc_id,
                           SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 // Convert the given expression to a value or reference expression of the given
 // type.
-auto ConvertToValueOrRefOfType(Context& context, Parse::NodeId node_id,
+auto ConvertToValueOrRefOfType(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId expr_id, SemIR::TypeId type_id)
     -> SemIR::InstId;
 
 // Converts `value_id` to a value expression of type `bool`.
-auto ConvertToBoolValue(Context& context, Parse::NodeId node_id,
+auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId;
 
 // Converts `value_id` to type `type_id` for an `as` expression.
@@ -92,7 +91,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
 // argument values.
-auto ConvertCallArgs(Context& context, Parse::NodeId call_node_id,
+auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_storage_id, SemIR::InstId callee_id,
@@ -100,7 +99,7 @@ auto ConvertCallArgs(Context& context, Parse::NodeId call_node_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId;
 
 // Converts an expression for use as a type.
-auto ExprAsType(Context& context, Parse::NodeId node_id, SemIR::InstId value_id)
+auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
     -> SemIR::TypeId;
 
 }  // namespace Carbon::Check

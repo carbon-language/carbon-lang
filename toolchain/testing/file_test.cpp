@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -28,37 +29,60 @@ class ToolchainFileTest : public FileTestBase {
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
            llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override {
-    Driver driver(fs, stdout, stderr);
+    const llvm::StringRef data_dir = "";
+
+    auto prelude = Driver::FindPreludeFiles(data_dir, stderr);
+    if (prelude.empty()) {
+      return Error("Could not find prelude");
+    }
+    for (const auto& file : prelude) {
+      CARBON_RETURN_IF_ERROR(AddFile(fs, file));
+    }
+
+    Driver driver(fs, data_dir, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
     RunResult result{
         .success = driver_result.success,
         .per_file_success = std::move(driver_result.per_file_success)};
-    // Drop entries that don't look like a file. Note this can empty out the
-    // list.
+    // Drop entries that don't look like a file, and entries corresponding to
+    // the prelude. Note this can empty out the list.
     llvm::erase_if(result.per_file_success,
-                   [](std::pair<llvm::StringRef, bool> entry) {
+                   [&](std::pair<llvm::StringRef, bool> entry) {
                      return entry.first == "." || entry.first == "-" ||
-                            entry.first.starts_with("not_file");
+                            entry.first.starts_with("not_file") ||
+                            llvm::is_contained(prelude, entry.first);
                    });
     return result;
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    if (component_ == "check") {
-      return {"compile", "--phase=check", "--dump-sem-ir", "%s"};
-    } else if (component_ == "lex") {
-      return {"compile", "--phase=lex", "--dump-tokens", "%s"};
-    } else if (component_ == "lower") {
-      return {"compile", "--phase=lower", "--dump-llvm-ir", "%s"};
+    llvm::SmallVector<std::string> args = {"compile",
+                                           "--phase=" + component_.str()};
+
+    if (component_ == "lex") {
+      args.push_back("--dump-tokens");
     } else if (component_ == "parse") {
-      return {"compile", "--phase=parse", "--dump-parse-tree", "%s"};
-    } else if (component_ == "codegen" || component_ == "driver") {
-      CARBON_FATAL() << "ARGS is always set in these tests";
+      args.push_back("--dump-parse-tree");
+    } else if (component_ == "check") {
+      args.push_back("--dump-sem-ir");
+    } else if (component_ == "lower") {
+      args.push_back("--dump-llvm-ir");
     } else {
       CARBON_FATAL() << "Unexpected test component " << component_ << ": "
                      << test_name();
     }
+
+    // For `lex` and `parse`, we don't need to import the prelude; exclude it to
+    // focus errors. In other phases we only do this for explicit "no_prelude"
+    // tests.
+    if (component_ == "lex" || component_ == "parse" ||
+        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
+      args.push_back("--no-prelude-import");
+    }
+
+    args.insert(args.end(), {"--exclude-dump-file-prefix=core/", "%s"});
+    return args;
   }
 
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames)
@@ -102,6 +126,20 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
+  // Adds a file to the fs.
+  auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+      -> ErrorOr<Success> {
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+        llvm::MemoryBuffer::getFile(path);
+    if (file.getError()) {
+      return ErrorBuilder() << file.getError().message();
+    }
+    if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
+      return ErrorBuilder() << "Duplicate file: " << path;
+    }
+    return Success();
+  }
+
   // Returns the toolchain subdirectory being tested.
   static auto GetComponent(llvm::StringRef test_name) -> llvm::StringRef {
     // This handles cases where the toolchain directory may be copied into a

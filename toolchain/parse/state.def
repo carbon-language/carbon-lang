@@ -307,6 +307,12 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 // ^~~~~~~
 //   1. DeclScopeLoop
 //
+// adapt ...
+// ^~~~~
+//   1. Expr
+//   2. AdaptDecl
+//   3. DeclScopeLoop
+//
 // alias ...
 // ^~~~~
 //   1. Alias
@@ -399,12 +405,12 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 //
 // expr . ( ... )
 //      ^
-//   1. ParenExpr
+//   1. OnlyParenExpr
 //   2. CompoundMemberAccess
 //
 // expr -> ( ... )
 //      ^~
-//   1. ParenExpr
+//   1. OnlyParenExpr
 //   2. CompoundPointerMemberAccess
 CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
 
@@ -815,6 +821,20 @@ CARBON_PARSE_STATE_VARIANTS3(ParenCondition, If, While, Match)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
 
+// Handles compound member access `(` after `->` or `.`
+//
+// ( ... )
+// ^
+//   1. Expr
+//   2. OnlyParenExprFinish
+CARBON_PARSE_STATE(OnlyParenExpr)
+
+// Handles the `)` after `->(`... or `.(`...
+//
+// ( ... )
+//       ^
+CARBON_PARSE_STATE(OnlyParenExprFinish)
+
 // Handles the `(` of a parenthesized single expression
 //
 // ( )
@@ -1174,14 +1194,24 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 // class/impl/interface/constraint name ( ... ) ???
 //                                              ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface, NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
+                             NamedConstraint)
+
+// Handles processing of a completed `adapt T` declaration.
+//
+// adapt T ;
+//         ^
+// adapt T ??? ;
+//         ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(AdaptDecl)
 
 // Handles processing of a completed `base: B` declaration.
 //
 // base: B ;
 //         ^
 // base: B ??? ;
-//         ^
+//         ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(BaseDecl)
 
@@ -1344,8 +1374,8 @@ CARBON_PARSE_STATE(ChoiceDefinitionStart)
 //   1. ChoiceAlternativeFinish
 CARBON_PARSE_STATE(ChoiceAlternative)
 
-// Finishes parsing a choice's alternative, including the optional trailing `,`. If there
-// are more alternatives, enqueues another alternative parsing state.
+// Finishes parsing a choice's alternative, including the optional trailing `,`.
+// If there are more alternatives, enqueues another alternative parsing state.
 //
 // ... , }
 //     ^

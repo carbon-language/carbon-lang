@@ -4,14 +4,16 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:5: ERROR: Expected binding pattern.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:5: ERROR: Expected binding pattern.
 // CHECK:STDERR: var package.val: i32;
 // CHECK:STDERR:     ^~~~~~~
+// CHECK:STDERR:
 var package.val: i32;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:11: ERROR: `namespace` introducer should be followed by a name.
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:11: ERROR: `namespace` introducer should be followed by a name.
 // CHECK:STDERR: namespace package.NS;
 // CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR:
 namespace package.NS;
 
 // CHECK:STDERR: fail_in_name.carbon:[[@LINE+3]]:7: ERROR: `class` introducer should be followed by a name.

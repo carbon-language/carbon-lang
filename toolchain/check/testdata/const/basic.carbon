@@ -18,16 +18,23 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   %.1: type = const_type i32 [template]
 // CHECK:STDOUT:   %.2: type = ptr_type const i32 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type const i32* [template]
-// CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
-// CHECK:STDOUT:   %.5: type = const_type i32* [template]
+// CHECK:STDOUT:   %A: type = fn_type @A [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = ptr_type i32 [template]
+// CHECK:STDOUT:   %.6: type = const_type i32* [template]
+// CHECK:STDOUT:   %B: type = fn_type @B [template]
+// CHECK:STDOUT:   %struct.2: B = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A
-// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: <function> = fn_decl @A [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {
 // CHECK:STDOUT:     %.loc7_9: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_18: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_19: type = ptr_type const i32* [template = constants.%.3]
@@ -36,16 +43,16 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %.loc7_25: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc7_34: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_35: type = ptr_type const i32* [template = constants.%.3]
-// CHECK:STDOUT:     %return.var.loc7: ref const i32** = var <return slot>
+// CHECK:STDOUT:     @A.%return: ref const i32** = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
-// CHECK:STDOUT:     %.loc11_19: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc11_9: type = const_type i32* [template = constants.%.5]
+// CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.2] {
+// CHECK:STDOUT:     %.loc11_19: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_9: type = const_type i32* [template = constants.%.6]
 // CHECK:STDOUT:     %p.loc11_6.1: const (i32*) = param p
 // CHECK:STDOUT:     @B.%p: const (i32*) = bind_name p, %p.loc11_6.1
-// CHECK:STDOUT:     %.loc11_36: type = ptr_type i32 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc11_26: type = const_type i32* [template = constants.%.5]
-// CHECK:STDOUT:     %return.var.loc11: ref const (i32*) = var <return slot>
+// CHECK:STDOUT:     %.loc11_36: type = ptr_type i32 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc11_26: type = const_type i32* [template = constants.%.6]
+// CHECK:STDOUT:     @B.%return: ref const (i32*) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -14,12 +14,13 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: source_filename = "and_empty_block.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @And(i1 %b, i1 %c) {
-// CHECK:STDOUT:   br i1 %b, label %1, label %2
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
-// CHECK:STDOUT:   br label %2
+// CHECK:STDOUT: and.rhs:                                          ; preds = %entry
+// CHECK:STDOUT:   br label %and.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %1, %0
-// CHECK:STDOUT:   %3 = phi i1 [ false, %0 ], [ %c, %1 ]
-// CHECK:STDOUT:   ret i1 %3
+// CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
+// CHECK:STDOUT:   ret i1 %0
 // CHECK:STDOUT: }

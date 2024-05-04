@@ -22,23 +22,33 @@ let a: T = 0;
 
 // CHECK:STDOUT: --- implicit.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, i32 [symbolic]
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0, i32 [symbolic = constants.%T]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.1: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .T = %import_ref
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref ir1, inst+1, used [symbolic = <unexpected instref inst+2>]
-// CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = <unexpected instref inst+2>]
+// CHECK:STDOUT:   %import_ref: type = import_ref ir0, inst+2, loaded [symbolic = constants.%T]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %T.ref: type = name_ref T, %import_ref [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]
 // CHECK:STDOUT:   %a: T = bind_name a, <error>
 // CHECK:STDOUT: }

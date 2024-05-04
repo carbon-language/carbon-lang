@@ -19,9 +19,11 @@ let b_test: b = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %a: type = bind_alias a, i32 [template = i32]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = i32]
 // CHECK:STDOUT:   %.loc8: i32 = int_literal 0 [template = constants.%.1]

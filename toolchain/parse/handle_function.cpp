@@ -44,17 +44,41 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::OpenCurlyBrace: {
-      context.AddNode(NodeKind::FunctionDefinitionStart, context.Consume(),
-                      state.subtree_start, state.has_error);
+      context.AddFunctionDefinitionStart(context.Consume(), state.subtree_start,
+                                         state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
       context.PushState(state, State::FunctionDefinitionFinish);
       context.PushState(State::StatementScopeLoop);
       break;
     }
+    case Lex::TokenKind::Equal: {
+      context.AddNode(NodeKind::BuiltinFunctionDefinitionStart,
+                      context.Consume(), state.subtree_start, state.has_error);
+      if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::StringLiteral,
+                                           NodeKind::BuiltinName)) {
+        CARBON_DIAGNOSTIC(ExpectedBuiltinName, Error,
+                          "Expected builtin function name after `=`.");
+        context.emitter().Emit(*context.position(), ExpectedBuiltinName);
+        state.has_error = true;
+      }
+      auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
+      if (!semi && !state.has_error) {
+        context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
+        state.has_error = true;
+      }
+      if (state.has_error) {
+        context.RecoverFromDeclError(state, NodeKind::BuiltinFunctionDefinition,
+                                     /*skip_past_likely_end=*/true);
+      } else {
+        context.AddNode(NodeKind::BuiltinFunctionDefinition, *semi,
+                        state.subtree_start, state.has_error);
+      }
+      break;
+    }
     default: {
       if (!state.has_error) {
-        context.EmitExpectedDeclSemiOrDefinition(Lex::TokenKind::Fn);
+        context.DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind::Fn);
       }
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =
@@ -69,8 +93,8 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::FunctionDefinition, context.Consume(),
-                  state.subtree_start, state.has_error);
+  context.AddFunctionDefinition(context.Consume(), state.subtree_start,
+                                state.has_error);
 }
 
 }  // namespace Carbon::Parse

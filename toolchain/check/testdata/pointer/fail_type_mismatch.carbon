@@ -19,24 +19,29 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   %.3: type = ptr_type const {} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.5: type = const_type {}* [template]
+// CHECK:STDOUT:   %ConstMismatch: type = fn_type @ConstMismatch [template]
+// CHECK:STDOUT:   %.6: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: ConstMismatch = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ConstMismatch = %ConstMismatch
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .ConstMismatch = %ConstMismatch.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ConstMismatch: <function> = fn_decl @ConstMismatch [template] {
-// CHECK:STDOUT:     %.loc7_28.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc7_28.2: type = converted %.loc7_28.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc7_21: type = const_type {} [template = constants.%.2]
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %ConstMismatch.decl: ConstMismatch = fn_decl @ConstMismatch [template = constants.%struct] {
+// CHECK:STDOUT:     %.loc7_28: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc7_21.1: type = converted %.loc7_28, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc7_21.2: type = const_type {} [template = constants.%.2]
 // CHECK:STDOUT:     %.loc7_29: type = ptr_type const {} [template = constants.%.3]
 // CHECK:STDOUT:     %p.loc7_18.1: const {}* = param p
 // CHECK:STDOUT:     @ConstMismatch.%p: const {}* = bind_name p, %p.loc7_18.1
-// CHECK:STDOUT:     %.loc7_43.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc7_43.2: type = converted %.loc7_43.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc7_44: type = ptr_type {} [template = constants.%.4]
+// CHECK:STDOUT:     %.loc7_43: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc7_44.1: type = converted %.loc7_43, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc7_44.2: type = ptr_type {} [template = constants.%.4]
 // CHECK:STDOUT:     %.loc7_35: type = const_type {}* [template = constants.%.5]
-// CHECK:STDOUT:     %return.var: ref const ({}*) = var <return slot>
+// CHECK:STDOUT:     @ConstMismatch.%return: ref const ({}*) = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -25,7 +25,7 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
   }
 
   if (!context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    context.EmitExpectedDeclSemiOrDefinition(
+    context.DiagnoseExpectedDeclSemiOrDefinition(
         context.tokens().GetKind(state.token));
     context.RecoverFromDeclError(state, decl_kind,
                                  /*skip_past_likely_end=*/true);

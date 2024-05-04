@@ -11,8 +11,9 @@
 namespace Carbon {
 
 namespace {
-struct FilenameTranslator : DiagnosticLocationTranslator<llvm::StringRef> {
-  auto GetLocation(llvm::StringRef filename) -> DiagnosticLocation override {
+struct FilenameConverter : DiagnosticConverter<llvm::StringRef> {
+  auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
+      -> DiagnosticLoc override {
     return {.filename = filename};
   }
 };
@@ -28,8 +29,8 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
                                 llvm::StringRef filename,
                                 DiagnosticConsumer& consumer)
     -> std::optional<SourceBuffer> {
-  FilenameTranslator translator;
-  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+  FilenameConverter converter;
+  DiagnosticEmitter<llvm::StringRef> emitter(converter, consumer);
 
   llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> file =
       fs.openFileForRead(filename);
@@ -63,8 +64,8 @@ auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
     DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
-  FilenameTranslator translator;
-  DiagnosticEmitter<llvm::StringRef> emitter(translator, consumer);
+  FilenameConverter converter;
+  DiagnosticEmitter<llvm::StringRef> emitter(converter, consumer);
 
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "Error reading file: {0}",

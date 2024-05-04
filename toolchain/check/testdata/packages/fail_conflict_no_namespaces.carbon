@@ -14,12 +14,6 @@ fn Foo();
 
 package Example library "var" api;
 
-// CHECK:STDERR: var.carbon:[[@LINE+6]]:5: ERROR: Duplicate name being declared in the same scope.
-// CHECK:STDERR: var Foo: i32;
-// CHECK:STDERR:     ^~~
-// CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
-// CHECK:STDERR: fn Foo();
-// CHECK:STDERR: ^~~~~~~~~
 var Foo: i32;
 
 // --- fail_conflict.carbon
@@ -27,15 +21,35 @@ var Foo: i32;
 package Example library "conflict" api;
 
 import library "fn";
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.
+// CHECK:STDERR: import library "var";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: var.carbon:4:5: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: var Foo: i32;
+// CHECK:STDERR:     ^~~
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE-7]]:1: In import.
+// CHECK:STDERR: import library "fn";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fn.carbon:4:1: Name is previously declared here.
+// CHECK:STDERR: fn Foo();
+// CHECK:STDERR: ^~~~~~~~~
 import library "var";
 
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Foo = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %Foo
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
@@ -44,8 +58,10 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .Foo = %Foo
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Foo.var: ref i32 = var Foo
 // CHECK:STDOUT:   %Foo: ref i32 = bind_name Foo, %Foo.var
 // CHECK:STDOUT: }
@@ -55,8 +71,10 @@ import library "var";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Foo = %import_ref.1
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+1, unused
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+2, unused
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

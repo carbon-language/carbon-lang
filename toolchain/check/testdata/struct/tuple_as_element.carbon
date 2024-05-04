@@ -16,15 +16,17 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.4: type = ptr_type {.a: i32, .b: (i32,)} [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.7: (i32,) = tuple_value (%.6) [template]
-// CHECK:STDOUT:   %.8: {.a: i32, .b: (i32,)} = struct_value (%.5, %.7) [template]
+// CHECK:STDOUT:   %tuple: (i32,) = tuple_value (%.6) [template]
+// CHECK:STDOUT:   %struct: {.a: i32, .b: (i32,)} = struct_value (%.5, %tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7_27.1: (type,) = tuple_literal (i32)
 // CHECK:STDOUT:   %.loc7_27.2: type = converted %.loc7_27.1, constants.%.2 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)} [template = constants.%.3]
@@ -46,12 +48,12 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc7_50.2: ref i32 = struct_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc7_50.3: init i32 = initialize_from %.loc7_38 to %.loc7_50.2 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7_50.4: ref (i32,) = struct_access file.%x.var, element1
-// CHECK:STDOUT:   %.loc7_49.2: init (i32,) = tuple_init (%.loc7_47) to %.loc7_50.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_49.3: init (i32,) = converted %.loc7_49.1, %.loc7_49.2 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_50.5: init (i32,) = initialize_from %.loc7_49.3 to %.loc7_50.4 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc7_50.6: init {.a: i32, .b: (i32,)} = struct_init (%.loc7_50.3, %.loc7_50.5) to file.%x.var [template = constants.%.8]
-// CHECK:STDOUT:   %.loc7_50.7: init {.a: i32, .b: (i32,)} = converted %.loc7_50.1, %.loc7_50.6 [template = constants.%.8]
-// CHECK:STDOUT:   assign file.%x.var, %.loc7_50.7
+// CHECK:STDOUT:   %.loc7_49.2: init (i32,) = tuple_init (%.loc7_47) to %.loc7_50.4 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_50.5: init (i32,) = converted %.loc7_49.1, %.loc7_49.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_50.6: init (i32,) = initialize_from %.loc7_50.5 to %.loc7_50.4 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_50.7: init {.a: i32, .b: (i32,)} = struct_init (%.loc7_50.3, %.loc7_50.6) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_51: init {.a: i32, .b: (i32,)} = converted %.loc7_50.1, %.loc7_50.7 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc7_51
 // CHECK:STDOUT:   %x.ref: ref {.a: i32, .b: (i32,)} = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc8_32.1: ref i32 = struct_access %x.ref, element0
 // CHECK:STDOUT:   %.loc8_32.2: i32 = bind_value %.loc8_32.1
@@ -65,8 +67,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc8_32.10: init (i32,) = converted %.loc8_32.5, %.loc8_32.9
 // CHECK:STDOUT:   %.loc8_32.11: init (i32,) = initialize_from %.loc8_32.10 to %.loc8_32.8
 // CHECK:STDOUT:   %.loc8_32.12: init {.a: i32, .b: (i32,)} = struct_init (%.loc8_32.4, %.loc8_32.11) to file.%y.var
-// CHECK:STDOUT:   %.loc8_32.13: init {.a: i32, .b: (i32,)} = converted %x.ref, %.loc8_32.12
-// CHECK:STDOUT:   assign file.%y.var, %.loc8_32.13
+// CHECK:STDOUT:   %.loc8_33: init {.a: i32, .b: (i32,)} = converted %x.ref, %.loc8_32.12
+// CHECK:STDOUT:   assign file.%y.var, %.loc8_33
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

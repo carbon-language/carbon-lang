@@ -6,30 +6,34 @@
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library Shapes api;
 // CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:
 library Shapes api;
 
 // --- fail_raw_identifier.carbon
 
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library r#default api;
 // CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:
 library r#default api;
 
 // --- fail_missing.carbon
 
-// CHECK:STDERR: fail_missing.carbon:[[@LINE+3]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_missing.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 library;
 
 // --- fail_missing_with_api.carbon
 
-// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+3]]:9: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
 // CHECK:STDERR: library api;
 // CHECK:STDERR:         ^~~
+// CHECK:STDERR:
 library api;
 
 // --- fail_no_semi.carbon

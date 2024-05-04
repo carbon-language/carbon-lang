@@ -105,8 +105,8 @@ bazel_dep(name = "zstd", version = "1.5.5.bcr.1", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2024-03-06.
-llvm_project_version = "be15a6b3b68bed7b9d982f25b2e10a273302002a"
+# HEAD as of 2024-04-30.
+llvm_project_version = "a7b968a57834a0e522505b56fab0ca4b979cb68f"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
@@ -116,9 +116,8 @@ http_archive(
     patches = [
         "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "@carbon//bazel/llvm_project:0003_Add_library_for_clangd.patch",
     ],
-    sha256 = "1e6cc2eb634438a59fb5e1b87e7bb35883fb680dc2934f431150db22fb3a6c09",
+    sha256 = "57c598287c774ff0a6919de6bcdf331bb60bb962f8ba74b4ce6a3fc0cb6aaa0c",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )

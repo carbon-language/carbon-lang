@@ -16,23 +16,30 @@ fn Run() {
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: f64 = real_literal 10e-1 [template]
+// CHECK:STDOUT:   %Foo: type = fn_type @Foo [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Foo = struct_value () [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %Run: type = fn_type @Run [template]
+// CHECK:STDOUT:   %struct.2: Run = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:     .Run = %Run
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Foo = %Foo.decl
+// CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: <function> = fn_decl @Foo [template] {
-// CHECK:STDOUT:     %return.var: ref f64 = var <return slot>
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Foo.decl: Foo = fn_decl @Foo [template = constants.%struct.1] {
+// CHECK:STDOUT:     @Foo.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run: <function> = fn_decl @Run [template] {}
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.2] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc7: f64 = float_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,8 +47,8 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %Foo.ref: <function> = name_ref Foo, file.%Foo [template = file.%Foo]
-// CHECK:STDOUT:   %.loc13: init f64 = call %Foo.ref()
+// CHECK:STDOUT:   %Foo.ref: Foo = name_ref Foo, file.%Foo.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

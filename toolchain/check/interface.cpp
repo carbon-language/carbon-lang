@@ -6,6 +6,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -29,7 +30,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   // not the declaration itself.
   auto type_id = context.GetAssociatedEntityType(
       interface_id, context.insts().Get(decl_id).type_id());
-  return context.AddInst({context.insts().GetNodeId(decl_id),
+  return context.AddInst({context.insts().GetLocId(decl_id),
                           SemIR::AssociatedEntity{type_id, index, decl_id}});
 }
 

@@ -4,36 +4,40 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:42: ERROR: Duplicated field name `abc` in struct type literal.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: ERROR: Duplicated field name `abc` in struct type literal.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Field with the same name here.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: Field with the same name here.
 // CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 // CHECK:STDERR:                      ^~~
+// CHECK:STDERR:
 fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:19: ERROR: Duplicated field name `a` in struct type literal.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:19: ERROR: Duplicated field name `a` in struct type literal.
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:10: Field with the same name here.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: Field with the same name here.
 // CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
 // CHECK:STDERR:          ^
+// CHECK:STDERR:
 let v: {.a: i32, .a: i32} = {.a = 1};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:26: ERROR: Duplicated field name `def` in struct literal.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:26: ERROR: Duplicated field name `def` in struct literal.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:16: Field with the same name here.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: Field with the same name here.
 // CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:                ^~~
+// CHECK:STDERR:
 let w: i32 = {.def = 1, .def = 2}.def;
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:30: ERROR: Duplicated field name `a` in struct literal.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:30: ERROR: Duplicated field name `a` in struct literal.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                              ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:22: Field with the same name here.
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: Field with the same name here.
 // CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:                      ^
+// CHECK:STDERR:
 var x: {.a: i32} = {.a = 1, .a = 2};
 
 // CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: ERROR: Duplicated field name `b` in struct literal.
@@ -47,34 +51,39 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: --- fail_duplicate_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.3: i32 = int_literal 2 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type {.b: i32, .c: i32} [template]
-// CHECK:STDOUT:   %.6: i32 = int_literal 3 [template]
-// CHECK:STDOUT:   %.7: i32 = int_literal 4 [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: i32} [template]
+// CHECK:STDOUT:   %.4: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type {.b: i32, .c: i32} [template]
+// CHECK:STDOUT:   %.7: i32 = int_literal 3 [template]
+// CHECK:STDOUT:   %.8: i32 = int_literal 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
-// CHECK:STDOUT:     %return.var: ref <error> = var <return slot>
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
+// CHECK:STDOUT:     @F.%return: ref <error> = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_35: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc21_36: {.a: i32} = struct_literal (%.loc21_35)
+// CHECK:STDOUT:   %.loc23_35: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc23_36: {.a: i32} = struct_literal (%.loc23_35)
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
-// CHECK:STDOUT:   %.loc29_22: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc29_32: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc32_22: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc32_32: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   %w: i32 = bind_name w, <error>
-// CHECK:STDOUT:   %.loc37: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %.loc41: type = struct_type {.a: i32} [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref {.a: i32} = var x
 // CHECK:STDOUT:   %x: ref {.a: i32} = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc45: type = struct_type {.b: i32, .c: i32} [template = constants.%.4]
+// CHECK:STDOUT:   %.loc49: type = struct_type {.b: i32, .c: i32} [template = constants.%.5]
 // CHECK:STDOUT:   %y.var: ref {.b: i32, .c: i32} = var y
 // CHECK:STDOUT:   %y: ref {.b: i32, .c: i32} = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -83,11 +92,11 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc37_26: i32 = int_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc37_34: i32 = int_literal 2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc41_26: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc41_34: i32 = int_literal 2 [template = constants.%.4]
 // CHECK:STDOUT:   assign file.%x.var, <error>
-// CHECK:STDOUT:   %.loc45_35: i32 = int_literal 3 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc45_43: i32 = int_literal 4 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc49_35: i32 = int_literal 3 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc49_43: i32 = int_literal 4 [template = constants.%.8]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

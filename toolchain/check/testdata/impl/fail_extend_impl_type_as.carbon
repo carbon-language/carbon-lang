@@ -7,19 +7,21 @@
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl i32 as I {}
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extend impl i32 as I {}
 }
 
 class D {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+6]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+7]]:3: ERROR: Cannot `extend` an `impl` with an explicit self type.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+3]]:15: Remove the explicit `Self` type here.
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15: Remove the explicit `Self` type here.
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   extend impl D as I;
 }
 
@@ -37,6 +39,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = interface_type @I [template]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
@@ -46,11 +49,13 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {}
@@ -58,7 +63,7 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self [symbolic]
+// CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -99,7 +104,7 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -110,6 +115,6 @@ class E {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
-// CHECK:STDOUT:   extend name_scope1
+// CHECK:STDOUT:   extend name_scope2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

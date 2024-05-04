@@ -4,9 +4,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:12: ERROR: `constraint` introducer should be followed by a name.
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:12: ERROR: `constraint` introducer should be followed by a name.
 // CHECK:STDERR: constraint "Foo"
 // CHECK:STDERR:            ^~~~~
+// CHECK:STDERR:
 constraint "Foo"
 
 // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:1: ERROR: `constraint` introducer should be followed by a name.

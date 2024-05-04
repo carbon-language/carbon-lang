@@ -3693,7 +3693,7 @@ tools. However, there is a large gap in programming models between the two
 languages, generally requiring a revision to the architecture. So, thus far the
 common pattern in the Rust community is to "rewrite it in Rust"
 ([1](https://deprogrammaticaipsum.com/the-great-rewriting-in-rust/),
-[2](https://unhandledexpression.com/rust/2017/07/10/why-you-should-actually-rewrite-it-in-rust.html),
+[2](https://web.archive.org/web/20230923033736/https://unhandledexpression.com/rust/2017/07/10/why-you-should-actually-rewrite-it-in-rust.html),
 [3](https://transitiontech.ca/random/RIIR)). Carbon's approach is to focus on
 migration from C++, including seamless interop, and then incrementally improve
 safety.

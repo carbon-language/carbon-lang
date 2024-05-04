@@ -44,6 +44,15 @@
 
 namespace Carbon::SemIR {
 
+// An adapted type declaration in a class, of the form `adapt T;`.
+struct AdaptDecl {
+  static constexpr auto Kind =
+      InstKind::AdaptDecl.Define<Parse::AdaptDeclId>("adapt_decl");
+
+  // No type_id; this is not a value.
+  TypeId adapted_type_id;
+};
+
 struct AddrOf {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
@@ -139,6 +148,15 @@ struct ArrayType {
   TypeId type_id;
   InstId bound_id;
   TypeId element_type_id;
+};
+
+// Perform a no-op conversion to a compatible type.
+struct AsCompatible {
+  static constexpr auto Kind =
+      InstKind::AsCompatible.Define<Parse::NodeId>("as_compatible");
+
+  TypeId type_id;
+  InstId source_id;
 };
 
 // Performs a source-level initialization or assignment of `lhs_id` from
@@ -437,6 +455,24 @@ struct FieldDecl {
   ElementIndex index;
 };
 
+struct FloatLiteral {
+  static constexpr auto Kind =
+      InstKind::FloatLiteral.Define<Parse::RealLiteralId>("float_literal");
+
+  TypeId type_id;
+  FloatId float_id;
+};
+
+struct FloatType {
+  static constexpr auto Kind =
+      InstKind::FloatType.Define<Parse::NodeId>("float_type");
+
+  TypeId type_id;
+  // TODO: Consider adding a more compact way of representing either a small
+  // float bit width or an inst_id.
+  InstId bit_width_id;
+};
+
 struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>("fn_decl");
@@ -446,6 +482,14 @@ struct FunctionDecl {
   // The declaration block, containing the function declaration's parameters and
   // their types.
   InstBlockId decl_block_id;
+};
+
+struct FunctionType {
+  static constexpr auto Kind =
+      InstKind::FunctionType.Define<Parse::AnyFunctionDeclId>("fn_type");
+
+  TypeId type_id;
+  FunctionId function_id;
 };
 
 struct ImplDecl {
@@ -461,34 +505,30 @@ struct ImplDecl {
 
 // Common representation for all kinds of `ImportRef*` node.
 struct AnyImportRef {
-  static constexpr InstKind Kinds[] = {InstKind::ImportRefUnused,
-                                       InstKind::ImportRefUsed};
+  static constexpr InstKind Kinds[] = {InstKind::ImportRefUnloaded,
+                                       InstKind::ImportRefLoaded};
 
   InstKind kind;
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
 };
 
-// An imported entity that hasn't yet been referenced. If referenced, it should
-// turn into an ImportRefUsed.
-struct ImportRefUnused {
+// An imported entity that is not yet been loaded.
+struct ImportRefUnloaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefUnused.Define<Parse::InvalidNodeId>("import_ref");
+      InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>("import_ref");
 
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
 };
 
-// An imported entity that has a reference, and thus should be emitted.
-struct ImportRefUsed {
+// A imported entity that is loaded, and may be used.
+struct ImportRefLoaded {
   // No parse node: any parse node logic must use the referenced IR.
   static constexpr auto Kind =
-      InstKind::ImportRefUsed.Define<Parse::InvalidNodeId>("import_ref");
+      InstKind::ImportRefLoaded.Define<Parse::InvalidNodeId>("import_ref");
 
   TypeId type_id;
-  ImportIRId ir_id;
-  InstId inst_id;
+  ImportIRInstId import_ir_inst_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression
@@ -558,6 +598,17 @@ struct IntLiteral {
   IntId int_id;
 };
 
+struct IntType {
+  static constexpr auto Kind =
+      InstKind::IntType.Define<Parse::NodeId>("int_type");
+
+  TypeId type_id;
+  IntKind int_kind;
+  // TODO: Consider adding a more compact way of representing either a small
+  // unsigned integer bit width or an inst_id.
+  InstId bit_width_id;
+};
+
 struct NameRef {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
@@ -618,6 +669,8 @@ struct ReturnExpr {
 
   // This is a statement, so has no type.
   InstId expr_id;
+  // The return slot, if any. Invalid if we're not returning through memory.
+  InstId dest_id;
 };
 
 struct SpliceBlock {

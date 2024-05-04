@@ -128,39 +128,48 @@ struct Extractable<NodeIdInCategory<Category>> {
   }
 };
 
-static auto NodeIdForKindAccept(NodeKind kind1, NodeKind kind2,
-                                const Tree* tree,
-                                const Tree::SiblingIterator& it,
-                                Tree::SiblingIterator end, ErrorBuilder* trace)
+static auto NodeIdOneOfAccept(std::initializer_list<NodeKind> kinds,
+                              const Tree* tree, const Tree::SiblingIterator& it,
+                              Tree::SiblingIterator end, ErrorBuilder* trace)
     -> bool {
+  auto trace_kinds = [&] {
+    llvm::ListSeparator sep(" or ");
+    for (auto kind : kinds) {
+      *trace << sep << kind;
+    }
+  };
   auto kind = tree->node_kind(*it);
-  if (it == end || (kind != kind1 && kind != kind2)) {
+  if (it == end || std::find(kinds.begin(), kinds.end(), kind) == kinds.end()) {
     if (trace) {
       if (it == end) {
-        *trace << "NodeIdOneOf error: no more children, expected " << kind1
-               << " or " << kind2 << "\n";
+        *trace << "NodeIdOneOf error: no more children, expected ";
+        trace_kinds();
+        *trace << "\n";
       } else {
         *trace << "NodeIdOneOf error: wrong kind " << tree->node_kind(*it)
-               << ", expected " << kind1 << " or " << kind2 << "\n";
+               << ", expected ";
+        trace_kinds();
+        *trace << "\n";
       }
     }
     return false;
   }
   if (trace) {
-    *trace << "NodeIdOneOf " << kind1 << " or " << kind2 << ": "
-           << tree->node_kind(*it) << " consumed\n";
+    *trace << "NodeIdOneOf ";
+    trace_kinds();
+    *trace << ": " << tree->node_kind(*it) << " consumed\n";
   }
   return true;
 }
 
-// Extract a `NodeIdOneOf<T, U>` as a single required child.
-template <typename T, typename U>
-struct Extractable<NodeIdOneOf<T, U>> {
+// Extract a `NodeIdOneOf<T...>` as a single required child.
+template <typename... T>
+struct Extractable<NodeIdOneOf<T...>> {
   static auto Extract(const Tree* tree, Tree::SiblingIterator& it,
                       Tree::SiblingIterator end, ErrorBuilder* trace)
-      -> std::optional<NodeIdOneOf<T, U>> {
-    if (NodeIdForKindAccept(T::Kind, U::Kind, tree, it, end, trace)) {
-      return NodeIdOneOf<T, U>(*it++);
+      -> std::optional<NodeIdOneOf<T...>> {
+    if (NodeIdOneOfAccept({T::Kind...}, tree, it, end, trace)) {
+      return NodeIdOneOf<T...>(*it++);
     } else {
       return std::nullopt;
     }

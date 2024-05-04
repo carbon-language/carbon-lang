@@ -26,27 +26,35 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: --- shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A.1: type = fn_type @A.1 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: A = struct_value () [template]
+// CHECK:STDOUT:   %A.2: type = fn_type @A.2 [template]
+// CHECK:STDOUT:   %struct.2: A = struct_value () [template]
+// CHECK:STDOUT:   %B: type = fn_type @B [template]
+// CHECK:STDOUT:   %struct.3: B = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.loc7
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .A = %A.decl.loc7
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc7: <function> = fn_decl @A.1 [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A.decl.loc7: A = fn_decl @A.1 [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = %A.loc10
+// CHECK:STDOUT:     .A = %A.decl.loc10
 // CHECK:STDOUT:     .M = %M
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc10: <function> = fn_decl @A.2 [template] {}
+// CHECK:STDOUT:   %A.decl.loc10: A = fn_decl @A.2 [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %M: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: <function> = fn_decl @B [template] {
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.3] {
+// CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,8 +64,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc16: <function> = name_ref A, file.%A.loc10 [template = file.%A.loc10]
-// CHECK:STDOUT:   %.loc16: init () = call %A.ref.loc16()
+// CHECK:STDOUT:   %A.ref.loc16: A = name_ref A, file.%A.decl.loc10 [template = constants.%struct.2]
+// CHECK:STDOUT:   %A.call: init () = call %A.ref.loc16()
 // CHECK:STDOUT:   %.loc17: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   if %.loc17 br !if.then else br !if.else
 // CHECK:STDOUT:

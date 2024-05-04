@@ -11,6 +11,10 @@ fn I32() -> type {
   return i32;
 }
 
+fn I48() -> type {
+  return i48;
+}
+
 fn F64() -> type {
   return f64;
 }
@@ -21,9 +25,16 @@ fn F64() -> type {
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %type @I32() {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret %type zeroinitializer
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define %type @I48() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type zeroinitializer
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %type @F64() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type zeroinitializer
 // CHECK:STDOUT: }

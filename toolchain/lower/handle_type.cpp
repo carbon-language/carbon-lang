@@ -7,53 +7,20 @@
 
 namespace Carbon::Lower {
 
-auto HandleArrayType(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::ArrayType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleAssociatedEntityType(FunctionContext& context, SemIR::InstId inst_id,
-                                SemIR::AssociatedEntityType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleClassType(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::ClassType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleConstType(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::ConstType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
+// For instructions that are always of type `type`, produce the trivial runtime
+// representation of type `type`.
+#define CARBON_SEM_IR_INST_KIND_TYPE_NEVER(...)
+#define CARBON_SEM_IR_INST_KIND_TYPE_MAYBE(...)
+#define CARBON_SEM_IR_INST_KIND_CONSTANT_ALWAYS(...)
+#define CARBON_SEM_IR_INST_KIND(Name)                                \
+  auto Handle##Name(FunctionContext& context, SemIR::InstId inst_id, \
+                    SemIR::Name /*inst*/) -> void {                  \
+    context.SetLocal(inst_id, context.GetTypeAsValue());             \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
 
 auto HandleFacetTypeAccess(FunctionContext& context, SemIR::InstId inst_id,
                            SemIR::FacetTypeAccess /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleInterfaceType(FunctionContext& context, SemIR::InstId inst_id,
-                         SemIR::InterfaceType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandlePointerType(FunctionContext& context, SemIR::InstId inst_id,
-                       SemIR::PointerType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleStructType(FunctionContext& context, SemIR::InstId inst_id,
-                      SemIR::StructType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleTupleType(FunctionContext& context, SemIR::InstId inst_id,
-                     SemIR::TupleType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleUnboundElementType(FunctionContext& context, SemIR::InstId inst_id,
-                              SemIR::UnboundElementType /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
 

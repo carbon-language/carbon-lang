@@ -18,13 +18,18 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %.1: type = const_type i32 [template]
 // CHECK:STDOUT:   %.2: type = ptr_type const i32 [template]
 // CHECK:STDOUT:   %.3: type = ptr_type const i32* [template]
+// CHECK:STDOUT:   %F: type = fn_type @F [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: F = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F: <function> = fn_decl @F [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {
 // CHECK:STDOUT:     %.loc11_9: type = const_type i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_18: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_19: type = ptr_type const i32* [template = constants.%.3]
@@ -34,7 +39,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     %.loc11_25: type = const_type const i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc11_42: type = ptr_type const i32 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc11_43: type = ptr_type const i32* [template = constants.%.3]
-// CHECK:STDOUT:     %return.var: ref const i32** = var <return slot>
+// CHECK:STDOUT:     @F.%return: ref const i32** = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,13 +11,16 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/state.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
 // A relative location for characters in errors.
-enum class RelativeLocation : int8_t {
+enum class RelativeLoc : int8_t {
   Around,
   After,
   Before,
@@ -25,20 +28,20 @@ enum class RelativeLocation : int8_t {
 
 }  // namespace Carbon::Parse
 
-// Adapts RelativeLocation for use with formatv.
+// Adapts RelativeLoc for use with formatv.
 template <>
-struct llvm::format_provider<Carbon::Parse::RelativeLocation> {
-  using RelativeLocation = Carbon::Parse::RelativeLocation;
-  static void format(const RelativeLocation& loc, raw_ostream& out,
+struct llvm::format_provider<Carbon::Parse::RelativeLoc> {
+  using RelativeLoc = Carbon::Parse::RelativeLoc;
+  static void format(const RelativeLoc& loc, raw_ostream& out,
                      StringRef /*style*/) {
     switch (loc) {
-      case RelativeLocation::Around:
+      case RelativeLoc::Around:
         out << "around";
         break;
-      case RelativeLocation::After:
+      case RelativeLoc::After:
         out << "after";
         break;
-      case RelativeLocation::Before:
+      case RelativeLoc::Before:
         out << "before";
         break;
     }
@@ -338,14 +341,13 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
       CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                        "Whitespace missing {0} binary operator.",
-                        RelativeLocation);
+                        "Whitespace missing {0} binary operator.", RelativeLoc);
       emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace,
                      tokens().HasLeadingWhitespace(*position_)
-                         ? RelativeLocation::After
+                         ? RelativeLoc::After
                          : (tokens().HasTrailingWhitespace(*position_)
-                                ? RelativeLocation::Before
-                                : RelativeLocation::Around));
+                                ? RelativeLoc::Before
+                                : RelativeLoc::Around));
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -356,18 +358,16 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
                 : tokens().HasLeadingWhitespace(*position_))) {
       CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
                         "Whitespace is not allowed {0} this unary operator.",
-                        RelativeLocation);
-      emitter_->Emit(
-          *position_, UnaryOperatorHasWhitespace,
-          prefix ? RelativeLocation::After : RelativeLocation::Before);
+                        RelativeLoc);
+      emitter_->Emit(*position_, UnaryOperatorHasWhitespace,
+                     prefix ? RelativeLoc::After : RelativeLoc::Before);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
                         "Whitespace is required {0} this unary operator.",
-                        RelativeLocation);
-      emitter_->Emit(
-          *position_, UnaryOperatorRequiresWhitespace,
-          prefix ? RelativeLocation::Before : RelativeLocation::After);
+                        RelativeLoc);
+      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace,
+                     prefix ? RelativeLoc::Before : RelativeLoc::After);
     }
   }
 }
@@ -412,19 +412,60 @@ auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
           /*has_error=*/true);
 }
 
-auto Context::EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
+auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`.", Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
 }
 
-auto Context::EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
+auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
     -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemiOrDefinition, Error,
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition.",
                     Lex::TokenKind);
   emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
+}
+
+// Returns whether we are currently parsing in a scope in which function
+// definitions are deferred, such as a class or interface.
+static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
+  auto& stack = context.state_stack();
+  if (stack.size() < 2 || stack.back().state != State::DeclScopeLoop) {
+    return false;
+  }
+  auto state = stack[stack.size() - 2].state;
+  return state == State::DeclDefinitionFinishAsClass ||
+         state == State::DeclDefinitionFinishAsImpl ||
+         state == State::DeclDefinitionFinishAsInterface ||
+         state == State::DeclDefinitionFinishAsNamedConstraint;
+}
+
+auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token,
+                                         int subtree_start, bool has_error)
+    -> void {
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    enclosing_deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add(
+            {.start_id = FunctionDefinitionStartId(
+                 NodeId(tree_->node_impls_.size()))}));
+  }
+
+  AddNode(NodeKind::FunctionDefinitionStart, token, subtree_start, has_error);
+}
+
+auto Context::AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
+                                    bool has_error) -> void {
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    auto definition_index = enclosing_deferred_definition_stack_.pop_back_val();
+    auto& definition = tree_->deferred_definitions_.Get(definition_index);
+    definition.definition_id =
+        FunctionDefinitionId(NodeId(tree_->node_impls_.size()));
+    definition.next_definition_index =
+        DeferredDefinitionIndex(tree_->deferred_definitions().size());
+  }
+
+  AddNode(NodeKind::FunctionDefinition, token, subtree_start, has_error);
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

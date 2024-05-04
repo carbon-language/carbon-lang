@@ -26,10 +26,12 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: source_filename = "instance_method.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @Get(ptr %self) {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @Call(ptr %a) {
-// CHECK:STDOUT:   %Get = call ptr @Get(ptr %a)
-// CHECK:STDOUT:   ret ptr %Get
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %Get.call = call ptr @Get(ptr %a)
+// CHECK:STDOUT:   ret ptr %Get.call
 // CHECK:STDOUT: }

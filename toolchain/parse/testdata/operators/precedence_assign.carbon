@@ -50,7 +50,7 @@ fn F(c: bool) {
 // CHECK:STDOUT:           {kind: 'IfExprElse', text: 'else', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'InfixOperatorEqual', text: '=', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
-// CHECK:STDOUT:             {kind: 'ExprOpenParen', text: '('},
+// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'c'},
 // CHECK:STDOUT:               {kind: 'IfExprIf', text: 'if', subtree_size: 2},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},

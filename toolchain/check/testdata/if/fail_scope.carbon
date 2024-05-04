@@ -18,17 +18,22 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: --- fail_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: i32 = int_literal 2 [template]
+// CHECK:STDOUT:   %VarScope: type = fn_type @VarScope [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: VarScope = struct_value () [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .VarScope = %VarScope
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .VarScope = %VarScope.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %VarScope: <function> = fn_decl @VarScope [template] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %VarScope.decl: VarScope = fn_decl @VarScope [template = constants.%struct] {
 // CHECK:STDOUT:     %b.loc7_13.1: bool = param b
 // CHECK:STDOUT:     @VarScope.%b: bool = bind_name b, %b.loc7_13.1
-// CHECK:STDOUT:     %return.var: ref i32 = var <return slot>
+// CHECK:STDOUT:     @VarScope.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -40,7 +45,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %.loc9: i32 = int_literal 2 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 2 [template = constants.%.2]
 // CHECK:STDOUT:   assign %n.var, %.loc9
 // CHECK:STDOUT:   %n.ref.loc10: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc10: i32 = bind_value %n.ref.loc10

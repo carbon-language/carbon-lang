@@ -27,7 +27,7 @@ fn F() {
 // CHECK:STDOUT:                   {kind: 'IdentifierName', text: 'd'},
 // CHECK:STDOUT:                 {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
 // CHECK:STDOUT:                 {kind: 'CallExprComma', text: ','},
-// CHECK:STDOUT:                   {kind: 'ExprOpenParen', text: '('},
+// CHECK:STDOUT:                   {kind: 'ParenExprStart', text: '('},
 // CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'e'},
 // CHECK:STDOUT:                 {kind: 'ParenExpr', text: ')', subtree_size: 3},
 // CHECK:STDOUT:               {kind: 'CallExpr', text: ')', subtree_size: 14},

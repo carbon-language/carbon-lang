@@ -20,18 +20,18 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.6: type = tuple_type (i32, i32) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.8: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.9: [i32; 2] = tuple_value (%.4, %.5) [template]
-// CHECK:STDOUT:   %.10: i32 = int_literal 1 [template]
-// CHECK:STDOUT:   %.11: i32 = int_literal 0 [template]
+// CHECK:STDOUT:   %array: [i32; 2] = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 2 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc7_15: type = array_type %.loc7_14, i32 [template = constants.%.2]
 // CHECK:STDOUT:   %a.var: ref [i32; 2] = var a
@@ -55,13 +55,13 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_26.5: i32 = int_literal 1 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc7_26.6: ref i32 = array_index file.%a.var, %.loc7_26.5
 // CHECK:STDOUT:   %.loc7_26.7: init i32 = initialize_from %.loc7_24 to %.loc7_26.6 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc7_26.8: init [i32; 2] = array_init (%.loc7_26.4, %.loc7_26.7) to file.%a.var [template = constants.%.9]
-// CHECK:STDOUT:   %.loc7_26.9: init [i32; 2] = converted %.loc7_26.1, %.loc7_26.8 [template = constants.%.9]
-// CHECK:STDOUT:   assign file.%a.var, %.loc7_26.9
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc7_26.8: init [i32; 2] = array_init (%.loc7_26.4, %.loc7_26.7) to file.%a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc7_27: init [i32; 2] = converted %.loc7_26.1, %.loc7_26.8 [template = constants.%array]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7_27
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 1 [template = constants.%.8]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8
 // CHECK:STDOUT:   %a.ref.loc9: ref [i32; 2] = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc9_17.1: ref i32 = array_index %a.ref.loc9, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = bind_value %.loc9_17.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc9_17.2

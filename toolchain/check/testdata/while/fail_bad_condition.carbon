@@ -14,15 +14,20 @@ fn While() {
 // CHECK:STDOUT: --- fail_bad_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = ptr_type String [template]
-// CHECK:STDOUT:   %.2: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %While: type = fn_type @While [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: While = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = ptr_type String [template]
+// CHECK:STDOUT:   %.3: String = string_literal "Hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .While = %While
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %While: <function> = fn_decl @While [template] {}
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %While.decl: While = fn_decl @While [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @While() {
@@ -30,7 +35,7 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11: String = string_literal "Hello" [template = constants.%.3]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

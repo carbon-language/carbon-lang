@@ -22,8 +22,9 @@ fn Run() {
 // CHECK:STDOUT: declare void @F(ptr sret({ i32, ptr }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() {
-// CHECK:STDOUT:   %c = alloca { i32, ptr }, align 8
-// CHECK:STDOUT:   %d = alloca { i32, ptr }, align 8
-// CHECK:STDOUT:   call void @F(ptr %d, ptr %c)
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8
+// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8
+// CHECK:STDOUT:   call void @F(ptr %d.var, ptr %c.var)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

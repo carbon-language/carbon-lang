@@ -29,7 +29,7 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
              context.PositionIs(Lex::TokenKind::OpenParen)) {
     state.state = paren_state;
     context.PushState(state);
-    context.PushState(State::ParenExpr);
+    context.PushState(State::OnlyParenExpr);
     return;
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,

@@ -92,7 +92,7 @@ these.
 -   Write `const` before the type when at the outer level: `const int N = 42;`.
 -   Only use line comments (with `//`, not `/* ... */`), on a line by
     themselves, except for
-    [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment),
+    [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone/argument-comment.html),
     [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
     and similar structural comments. In particular, don't append comments about
     a line of code to the end of its line:

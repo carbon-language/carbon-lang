@@ -312,6 +312,20 @@ struct FunctionDefinition {
   llvm::SmallVector<AnyStatementId> body;
 };
 
+using BuiltinFunctionDefinitionStart =
+    FunctionSignature<NodeKind::BuiltinFunctionDefinitionStart,
+                      NodeCategory::None>;
+using BuiltinName = LeafNode<NodeKind::BuiltinName>;
+
+// A builtin function definition: `fn F() -> i32 = "builtin name";`
+struct BuiltinFunctionDefinition {
+  static constexpr auto Kind =
+      NodeKind::BuiltinFunctionDefinition.Define(NodeCategory::Decl);
+
+  BuiltinFunctionDefinitionStartId signature;
+  BuiltinNameId builtin_name;
+};
+
 // `alias` nodes
 // -------------
 
@@ -616,17 +630,18 @@ struct IndexExpr {
   AnyExprId index;
 };
 
-using ExprOpenParen = LeafNode<NodeKind::ExprOpenParen>;
+using ParenExprStart = LeafNode<NodeKind::ParenExprStart>;
 
 // A parenthesized expression: `(a)`.
 struct ParenExpr {
   static constexpr auto Kind =
       NodeKind::ParenExpr.Define(NodeCategory::Expr | NodeCategory::MemberExpr);
 
-  ExprOpenParenId left_paren;
+  ParenExprStartId start;
   AnyExprId expr;
 };
 
+using TupleLiteralStart = LeafNode<NodeKind::TupleLiteralStart>;
 using TupleLiteralComma = LeafNode<NodeKind::TupleLiteralComma>;
 
 // A tuple literal: `()`, `(a, b, c)`, or `(a,)`.
@@ -634,7 +649,7 @@ struct TupleLiteral {
   static constexpr auto Kind =
       NodeKind::TupleLiteral.Define(NodeCategory::Expr);
 
-  ExprOpenParenId left_paren;
+  TupleLiteralStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> elements;
 };
 
@@ -806,12 +821,12 @@ struct ChoiceDefinition {
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
 };
 
-// Struct literals and struct type literals
+// Struct type and value literals
 // ----------------------------------------
 
 // `{`
-using StructLiteralOrStructTypeLiteralStart =
-    LeafNode<NodeKind::StructLiteralOrStructTypeLiteralStart>;
+using StructLiteralStart = LeafNode<NodeKind::StructLiteralStart>;
+using StructTypeLiteralStart = LeafNode<NodeKind::StructTypeLiteralStart>;
 // `,`
 using StructComma = LeafNode<NodeKind::StructComma>;
 
@@ -823,16 +838,16 @@ struct StructFieldDesignator {
 };
 
 // `.a = 0`
-struct StructFieldValue {
-  static constexpr auto Kind = NodeKind::StructFieldValue.Define();
+struct StructField {
+  static constexpr auto Kind = NodeKind::StructField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId expr;
 };
 
 // `.a: i32`
-struct StructFieldType {
-  static constexpr auto Kind = NodeKind::StructFieldType.Define();
+struct StructTypeField {
+  static constexpr auto Kind = NodeKind::StructTypeField.Define();
 
   StructFieldDesignatorId designator;
   AnyExprId type_expr;
@@ -843,8 +858,8 @@ struct StructLiteral {
   static constexpr auto Kind =
       NodeKind::StructLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldValueId, StructCommaId> fields;
+  StructLiteralStartId start;
+  CommaSeparatedList<StructFieldId, StructCommaId> fields;
 };
 
 // Struct type literals, such as `{.a: i32}`.
@@ -852,8 +867,8 @@ struct StructTypeLiteral {
   static constexpr auto Kind =
       NodeKind::StructTypeLiteral.Define(NodeCategory::Expr);
 
-  StructLiteralOrStructTypeLiteralStartId introducer;
-  CommaSeparatedList<StructFieldTypeId, StructCommaId> fields;
+  StructTypeLiteralStartId start;
+  CommaSeparatedList<StructTypeFieldId, StructCommaId> fields;
 };
 
 // `class` declarations and definitions
@@ -887,6 +902,20 @@ struct ClassDefinition {
 
   ClassDefinitionStartId signature;
   llvm::SmallVector<AnyDeclId> members;
+};
+
+// Adapter declaration
+// -------------------
+
+// `adapt`
+using AdaptIntroducer = LeafNode<NodeKind::AdaptIntroducer>;
+// `adapt SomeType;`
+struct AdaptDecl {
+  static constexpr auto Kind = NodeKind::AdaptDecl.Define(NodeCategory::Decl);
+
+  AdaptIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyExprId adapted_type;
 };
 
 // Base class declaration

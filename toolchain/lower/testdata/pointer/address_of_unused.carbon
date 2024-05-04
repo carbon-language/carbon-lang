@@ -13,7 +13,8 @@ fn F() {
 // CHECK:STDOUT: source_filename = "address_of_unused.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @F() {
-// CHECK:STDOUT:   %n = alloca i32, align 4
-// CHECK:STDOUT:   store i32 0, ptr %n, align 4
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %n.var = alloca i32, align 4
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

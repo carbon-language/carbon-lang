@@ -95,7 +95,6 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
 #include "toolchain/parse/node_kind.def"
 
 constexpr int NodeKind::ValidCount = 0
-// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define CARBON_PARSE_NODE_KIND(Name) +1
 #include "toolchain/parse/node_kind.def"
     ;

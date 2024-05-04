@@ -14,11 +14,48 @@ filegroup(
 )
 
 cc_library(
+    name = "clang_runner",
+    srcs = ["clang_runner.cpp"],
+    hdrs = ["clang_runner.h"],
+    deps = [
+        "//common:command_line",
+        "//common:ostream",
+        "//common:vlog",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:driver",
+        "@llvm-project//clang:frontend",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_test(
+    name = "clang_runner_test",
+    size = "small",
+    srcs = ["clang_runner_test.cpp"],
+    deps = [
+        ":clang_runner",
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//common:ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_library(
     name = "driver",
     srcs = ["driver.cpp"],
     hdrs = ["driver.h"],
+    data = ["//core:prelude"],
     textual_hdrs = ["flags.def"],
     deps = [
+        ":clang_runner",
         "//common:command_line",
         "//common:vlog",
         "//toolchain/base:value_store",
@@ -31,6 +68,7 @@ cc_library(
         "//toolchain/parse",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
+        "//toolchain/sem_ir:inst_namer",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",

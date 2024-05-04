@@ -16,9 +16,11 @@ fn T() -> bool {
 // CHECK:STDOUT: source_filename = "false_true.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 false
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @T() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }

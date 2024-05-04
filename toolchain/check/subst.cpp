@@ -198,13 +198,15 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
       continue;
     }
 
-    if (context.insts().Is<SemIR::BindSymbolicName>(item.inst_id)) {
+    if (auto bind =
+            context.insts().TryGetAs<SemIR::BindSymbolicName>(item.inst_id)) {
       // This is a symbolic binding. Check if we're substituting it.
 
       // TODO: Consider building a hash map for substitutions. We might have a
       // lot of them.
-      for (auto [bind_id, replacement_id] : substitutions) {
-        if (item.inst_id == bind_id) {
+      for (auto [bind_index, replacement_id] : substitutions) {
+        if (context.bind_names().Get(bind->bind_name_id).bind_index ==
+            bind_index) {
           // This is the binding we're replacing. Perform substitution.
           item.inst_id = replacement_id.inst_id();
           break;

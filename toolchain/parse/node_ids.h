@@ -77,14 +77,15 @@ using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
 
-// NodeId with kind that matches either T::Kind or U::Kind.
-template <typename T, typename U>
+// NodeId with kind that matches one of the `T::Kind`s.
+template <typename... T>
 struct NodeIdOneOf : public NodeId {
+  static_assert(sizeof...(T) >= 2, "Expected at least two types.");
   constexpr explicit NodeIdOneOf(NodeId node_id) : NodeId(node_id) {}
   template <const NodeKind& Kind>
   // NOLINTNEXTLINE(google-explicit-constructor)
   NodeIdOneOf(NodeIdForKind<Kind> node_id) : NodeId(node_id) {
-    static_assert(T::Kind == Kind || U::Kind == Kind);
+    static_assert(((T::Kind == Kind) || ...));
   }
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeIdOneOf(InvalidNodeId /*invalid*/)
@@ -92,8 +93,8 @@ struct NodeIdOneOf : public NodeId {
 };
 
 using AnyClassDeclId = NodeIdOneOf<ClassDeclId, ClassDefinitionStartId>;
-using AnyFunctionDeclId =
-    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId>;
+using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
+                                      BuiltinFunctionDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;

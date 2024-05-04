@@ -5,14 +5,16 @@
 // AUTOUPDATE
 
 class A {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: ERROR: `class` or `:` expected after `base`.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: ERROR: `class` or `:` expected after `base`.
   // CHECK:STDERR:   base;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   base;
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:9: ERROR: Expected expression.
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:9: ERROR: Expected expression.
   // CHECK:STDERR:   base: ;
   // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   base: ;
 
   // CHECK:STDERR: fail_base.carbon:[[@LINE+3]]:7: ERROR: Unrecognized declaration introducer.

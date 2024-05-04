@@ -15,22 +15,25 @@ fn And() -> bool {
 // CHECK:STDOUT: source_filename = "and.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @G() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @And() {
-// CHECK:STDOUT:   %F = call i1 @F()
-// CHECK:STDOUT:   br i1 %F, label %1, label %2
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call i1 @F()
+// CHECK:STDOUT:   br i1 %F.call, label %and.rhs, label %and.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
-// CHECK:STDOUT:   %G = call i1 @G()
-// CHECK:STDOUT:   br label %2
+// CHECK:STDOUT: and.rhs:                                          ; preds = %entry
+// CHECK:STDOUT:   %G.call = call i1 @G()
+// CHECK:STDOUT:   br label %and.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %1, %0
-// CHECK:STDOUT:   %3 = phi i1 [ false, %0 ], [ %G, %1 ]
-// CHECK:STDOUT:   ret i1 %3
+// CHECK:STDOUT: and.result:                                       ; preds = %and.rhs, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %G.call, %and.rhs ]
+// CHECK:STDOUT:   ret i1 %0
 // CHECK:STDOUT: }

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --dump-raw-sem-ir --builtin-sem-ir %s
+// ARGS: compile --no-prelude-import --phase=check --dump-raw-sem-ir --builtin-sem-ir %s
 //
 // AUTOUPDATE
 
@@ -19,17 +19,16 @@
 // CHECK:STDOUT:     type0:           {constant: template instNamespaceType, value_rep: {kind: copy, type: type0}}
 // CHECK:STDOUT:   type_blocks:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instTypeType:    {kind: ImportRefUsed, arg0: ir0, arg1: instTypeType, type: typeTypeType}
-// CHECK:STDOUT:     instError:       {kind: ImportRefUsed, arg0: ir0, arg1: instError, type: typeError}
-// CHECK:STDOUT:     instBoolType:    {kind: ImportRefUsed, arg0: ir0, arg1: instBoolType, type: typeTypeType}
-// CHECK:STDOUT:     instIntType:     {kind: ImportRefUsed, arg0: ir0, arg1: instIntType, type: typeTypeType}
-// CHECK:STDOUT:     instFloatType:   {kind: ImportRefUsed, arg0: ir0, arg1: instFloatType, type: typeTypeType}
-// CHECK:STDOUT:     instStringType:  {kind: ImportRefUsed, arg0: ir0, arg1: instStringType, type: typeTypeType}
-// CHECK:STDOUT:     instFunctionType: {kind: ImportRefUsed, arg0: ir0, arg1: instFunctionType, type: typeTypeType}
-// CHECK:STDOUT:     instBoundMethodType: {kind: ImportRefUsed, arg0: ir0, arg1: instBoundMethodType, type: typeTypeType}
-// CHECK:STDOUT:     instNamespaceType: {kind: ImportRefUsed, arg0: ir0, arg1: instNamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     instWitnessType: {kind: ImportRefUsed, arg0: ir0, arg1: instWitnessType, type: typeTypeType}
-// CHECK:STDOUT:     inst+0:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
+// CHECK:STDOUT:     instTypeType:    {kind: Builtin, arg0: TypeType, type: typeTypeType}
+// CHECK:STDOUT:     instError:       {kind: Builtin, arg0: Error, type: typeError}
+// CHECK:STDOUT:     instBoolType:    {kind: Builtin, arg0: BoolType, type: typeTypeType}
+// CHECK:STDOUT:     instIntType:     {kind: Builtin, arg0: IntType, type: typeTypeType}
+// CHECK:STDOUT:     instFloatType:   {kind: Builtin, arg0: FloatType, type: typeTypeType}
+// CHECK:STDOUT:     instStringType:  {kind: Builtin, arg0: StringType, type: typeTypeType}
+// CHECK:STDOUT:     instBoundMethodType: {kind: Builtin, arg0: BoundMethodType, type: typeTypeType}
+// CHECK:STDOUT:     instNamespaceType: {kind: Builtin, arg0: NamespaceType, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: Builtin, arg0: WitnessType, type: typeTypeType}
+// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type0}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    template instTypeType
 // CHECK:STDOUT:     instError:       template instError
@@ -37,11 +36,10 @@
 // CHECK:STDOUT:     instIntType:     template instIntType
 // CHECK:STDOUT:     instFloatType:   template instFloatType
 // CHECK:STDOUT:     instStringType:  template instStringType
-// CHECK:STDOUT:     instFunctionType: template instFunctionType
 // CHECK:STDOUT:     instBoundMethodType: template instBoundMethodType
 // CHECK:STDOUT:     instNamespaceType: template instNamespaceType
 // CHECK:STDOUT:     instWitnessType: template instWitnessType
-// CHECK:STDOUT:     inst+0:          template inst+0
+// CHECK:STDOUT:     'inst+0':          template inst+0
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}

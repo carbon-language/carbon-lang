@@ -6,9 +6,10 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+3]]:24: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fail_errors_sorted.carbon:[[@LINE+4]]:24: ERROR: Opening symbol without a corresponding closing symbol.
 // CHECK:STDERR: fn run(String program) {
 // CHECK:STDERR:                        ^
+// CHECK:STDERR:
 fn run(String program) {
   return True;
 

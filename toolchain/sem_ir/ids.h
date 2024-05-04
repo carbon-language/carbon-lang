@@ -10,6 +10,7 @@
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_kind.h"
 
 namespace Carbon::SemIR {
@@ -20,6 +21,8 @@ class Inst;
 struct BindNameInfo;
 struct Class;
 struct Function;
+struct ImportIR;
+struct ImportIRInst;
 struct Interface;
 struct Impl;
 struct NameScope;
@@ -29,7 +32,7 @@ struct TypeInfo;
 struct InstId : public IdBase, public Printable<InstId> {
   using ValueType = Inst;
 
-  // An explicitly invalid instruction ID.
+  // An explicitly invalid ID.
   static const InstId Invalid;
 
 // Builtin instruction IDs.
@@ -40,7 +43,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   static const InstId PackageNamespace;
 
   // Returns the instruction ID for a builtin. This relies on File guarantees
-  // for builtin ImportRefUsed placement.
+  // for builtin placement.
   static constexpr auto ForBuiltin(BuiltinKind kind) -> InstId {
     return InstId(kind.AsInt());
   }
@@ -170,7 +173,7 @@ constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 struct BindNameId : public IdBase, public Printable<BindNameId> {
   using ValueType = BindNameInfo;
 
-  // An explicitly invalid function ID.
+  // An explicitly invalid ID.
   static const BindNameId Invalid;
 
   using IdBase::IdBase;
@@ -182,11 +185,30 @@ struct BindNameId : public IdBase, public Printable<BindNameId> {
 
 constexpr BindNameId BindNameId::Invalid = BindNameId(InvalidIndex);
 
+// The index of a compile-time binding. This is the de Bruijn level for the
+// binding -- that is, this is the number of other compile time bindings whose
+// scope encloses this binding.
+struct CompileTimeBindIndex : public IndexBase,
+                              public Printable<CompileTimeBindIndex> {
+  // An explicitly invalid index.
+  static const CompileTimeBindIndex Invalid;
+
+  using IndexBase::IndexBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "compTimeBind";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
+    CompileTimeBindIndex(InvalidIndex);
+
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {
   using ValueType = Function;
 
-  // An explicitly invalid function ID.
+  // An explicitly invalid ID.
   static const FunctionId Invalid;
 
   using IdBase::IdBase;
@@ -198,11 +220,21 @@ struct FunctionId : public IdBase, public Printable<FunctionId> {
 
 constexpr FunctionId FunctionId::Invalid = FunctionId(InvalidIndex);
 
+// The ID of an IR within the set of all IRs being evaluated in the current
+// check execution.
+struct CheckIRId : public IdBase, public Printable<CheckIRId> {
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "check_ir";
+    IdBase::Print(out);
+  }
+};
+
 // The ID of a class.
 struct ClassId : public IdBase, public Printable<ClassId> {
   using ValueType = Class;
 
-  // An explicitly invalid class ID.
+  // An explicitly invalid ID.
   static const ClassId Invalid;
 
   using IdBase::IdBase;
@@ -218,7 +250,7 @@ constexpr ClassId ClassId::Invalid = ClassId(InvalidIndex);
 struct InterfaceId : public IdBase, public Printable<InterfaceId> {
   using ValueType = Interface;
 
-  // An explicitly invalid interface ID.
+  // An explicitly invalid ID.
   static const InterfaceId Invalid;
 
   using IdBase::IdBase;
@@ -234,7 +266,7 @@ constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
 struct ImplId : public IdBase, public Printable<ImplId> {
   using ValueType = Impl;
 
-  // An explicitly invalid interface ID.
+  // An explicitly invalid ID.
   static const ImplId Invalid;
 
   using IdBase::IdBase;
@@ -246,11 +278,18 @@ struct ImplId : public IdBase, public Printable<ImplId> {
 
 constexpr ImplId ImplId::Invalid = ImplId(InvalidIndex);
 
-// The ID of an imported IR.
+// The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase, public Printable<ImportIRId> {
-  using ValueType = const File*;
+  using ValueType = ImportIR;
 
-  static const ImportIRId Builtins;
+  // An explicitly invalid ID.
+  static const ImportIRId Invalid;
+
+  // The implicit `api` import, for an `impl` file. A null entry is added if
+  // there is none, as in an `api`, in which case this ID should not show up in
+  // instructions.
+  static const ImportIRId ApiForImpl;
+
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "ir";
@@ -258,12 +297,23 @@ struct ImportIRId : public IdBase, public Printable<ImportIRId> {
   }
 };
 
-constexpr ImportIRId ImportIRId::Builtins = ImportIRId(0);
+constexpr ImportIRId ImportIRId::Invalid = ImportIRId(InvalidIndex);
+constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
 
 // A boolean value.
 struct BoolValue : public IdBase, public Printable<BoolValue> {
   static const BoolValue False;
   static const BoolValue True;
+
+  // Returns the `BoolValue` corresponding to `b`.
+  static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
+
+  // Returns the `bool` corresponding to this `BoolValue`.
+  constexpr auto ToBool() -> bool {
+    CARBON_CHECK(*this == False || *this == True)
+        << "Invalid bool value " << index;
+    return *this != False;
+  }
 
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -280,12 +330,45 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
+// An integer kind value -- either "signed" or "unsigned".
+//
+// This might eventually capture any other properties of an integer type that
+// affect its semantics, such as overflow behavior.
+struct IntKind : public IdBase, public Printable<IntKind> {
+  static const IntKind Unsigned;
+  static const IntKind Signed;
+
+  using IdBase::IdBase;
+
+  // Returns whether this type is signed.
+  constexpr auto is_signed() -> bool { return *this == Signed; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (*this == Unsigned) {
+      out << "unsigned";
+    } else if (*this == Signed) {
+      out << "signed";
+    } else {
+      CARBON_FATAL() << "Invalid int kind value " << index;
+    }
+  }
+};
+
+constexpr IntKind IntKind::Unsigned = IntKind(0);
+constexpr IntKind IntKind::Signed = IntKind(1);
+
+// A float kind value
+struct FloatKind : public IdBase, public Printable<FloatKind> {
+  using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
+};
+
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
 struct NameId : public IdBase, public Printable<NameId> {
   // names().GetFormatted() is used for diagnostics.
-  using DiagnosticType =
-      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::NameId>;
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
   // An explicitly invalid ID.
   static const NameId Invalid;
@@ -422,8 +505,7 @@ constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(2);
 struct TypeId : public IdBase, public Printable<TypeId> {
   using ValueType = TypeInfo;
   // StringifyType() is used for diagnostics.
-  using DiagnosticType =
-      DiagnosticTypeInfo<std::string, DiagnosticTypeTranslation::TypeId>;
+  using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
   // The builtin TypeType.
   static const TypeId TypeType;
@@ -471,6 +553,73 @@ struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
     IndexBase::Print(out);
   }
 };
+
+// The ID of an ImportIRInst.
+struct ImportIRInstId : public IdBase, public Printable<InstId> {
+  using ValueType = ImportIRInst;
+
+  // An explicitly invalid ID.
+  static const ImportIRInstId Invalid;
+
+  using IdBase::IdBase;
+};
+
+constexpr ImportIRInstId ImportIRInstId::Invalid = ImportIRInstId(InvalidIndex);
+
+// A SemIR location used exclusively for diagnostic locations.
+//
+// Contents:
+// - index > Invalid: A Parse::NodeId in the current IR.
+// - index < Invalid: An ImportIRInstId.
+// - index == Invalid: Can be used for either.
+struct LocId : public IdBase, public Printable<LocId> {
+  // An explicitly invalid ID.
+  static const LocId Invalid;
+
+  using IdBase::IdBase;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocId(Parse::InvalidNodeId /*invalid*/) : IdBase(InvalidIndex) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
+    CARBON_CHECK(node_id.is_valid() == is_valid());
+  }
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocId(ImportIRInstId inst_id)
+      : IdBase(InvalidIndex + ImportIRInstId::InvalidIndex - inst_id.index) {
+    CARBON_CHECK(inst_id.is_valid() == is_valid());
+  }
+
+  auto is_node_id() const -> bool { return index > InvalidIndex; }
+  auto is_import_ir_inst_id() const -> bool { return index < InvalidIndex; }
+
+  // This is allowed to return an invalid NodeId, but should never be used for a
+  // valid InstId.
+  auto node_id() const -> Parse::NodeId {
+    CARBON_CHECK(is_node_id() || !is_valid());
+    return Parse::NodeId(index);
+  }
+
+  // This is allowed to return an invalid InstId, but should never be used for a
+  // valid NodeId.
+  auto import_ir_inst_id() const -> ImportIRInstId {
+    CARBON_CHECK(is_import_ir_inst_id() || !is_valid());
+    return ImportIRInstId(InvalidIndex + ImportIRInstId::InvalidIndex - index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "loc_";
+    if (is_node_id() || !is_valid()) {
+      out << node_id();
+    } else {
+      out << import_ir_inst_id();
+    }
+  }
+};
+
+constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
 }  // namespace Carbon::SemIR
 

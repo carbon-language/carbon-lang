@@ -282,10 +282,11 @@ class Context {
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
   // Emits a diagnostic for a declaration missing a semi.
-  auto EmitExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
+  auto DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 
   // Emits a diagnostic for a declaration missing a semi or definition.
-  auto EmitExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind) -> void;
+  auto DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
+      -> void;
 
   // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a
@@ -306,6 +307,15 @@ class Context {
   auto AddImport(Tree::PackagingNames package) -> void {
     tree_->imports_.push_back(package);
   }
+
+  // Adds a function definition start node, and begins tracking a deferred
+  // definition if necessary.
+  auto AddFunctionDefinitionStart(Lex::TokenIndex token, int subtree_start,
+                                  bool has_error) -> void;
+  // Adds a function definition node, and ends tracking a deferred definition if
+  // necessary.
+  auto AddFunctionDefinition(Lex::TokenIndex token, int subtree_start,
+                             bool has_error) -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -357,6 +367,11 @@ class Context {
   Lex::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
+
+  // The deferred definition indexes of functions whose definitions have begun
+  // but not yet finished.
+  llvm::SmallVector<DeferredDefinitionIndex>
+      enclosing_deferred_definition_stack_;
 
   // The current packaging state, whether `import`/`package` are allowed.
   PackagingState packaging_state_ = PackagingState::FileStart;

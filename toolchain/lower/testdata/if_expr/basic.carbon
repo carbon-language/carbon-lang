@@ -15,25 +15,28 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @G() {
+// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Select(i1 %b) {
-// CHECK:STDOUT:   br i1 %b, label %1, label %2
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   br i1 %b, label %if.expr.then, label %if.expr.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: 1:                                                ; preds = %0
-// CHECK:STDOUT:   %F = call i32 @F()
-// CHECK:STDOUT:   br label %3
+// CHECK:STDOUT: if.expr.then:                                     ; preds = %entry
+// CHECK:STDOUT:   %F.call = call i32 @F()
+// CHECK:STDOUT:   br label %if.expr.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 2:                                                ; preds = %0
-// CHECK:STDOUT:   %G = call i32 @G()
-// CHECK:STDOUT:   br label %3
+// CHECK:STDOUT: if.expr.else:                                     ; preds = %entry
+// CHECK:STDOUT:   %G.call = call i32 @G()
+// CHECK:STDOUT:   br label %if.expr.result
 // CHECK:STDOUT:
-// CHECK:STDOUT: 3:                                                ; preds = %2, %1
-// CHECK:STDOUT:   %4 = phi i32 [ %F, %1 ], [ %G, %2 ]
-// CHECK:STDOUT:   ret i32 %4
+// CHECK:STDOUT: if.expr.result:                                   ; preds = %if.expr.else, %if.expr.then
+// CHECK:STDOUT:   %0 = phi i32 [ %F.call, %if.expr.then ], [ %G.call, %if.expr.else ]
+// CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }

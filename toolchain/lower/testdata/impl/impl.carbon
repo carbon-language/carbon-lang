@@ -26,12 +26,14 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: source_filename = "impl.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @F(ptr %self) {
-// CHECK:STDOUT:   %n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %n, align 4
-// CHECK:STDOUT:   ret i32 %1
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc17_16.1.n = getelementptr inbounds { i32 }, ptr %self, i32 0, i32 0
+// CHECK:STDOUT:   %.loc17_16.2 = load i32, ptr %.loc17_16.1.n, align 4
+// CHECK:STDOUT:   ret i32 %.loc17_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Call(ptr %a) {
-// CHECK:STDOUT:   %F = call i32 @F(ptr %a)
-// CHECK:STDOUT:   ret i32 %F
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call i32 @F(ptr %a)
+// CHECK:STDOUT:   ret i32 %F.call
 // CHECK:STDOUT: }
