@@ -178,6 +178,7 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     case ClassType::Kind:
     case FloatType::Kind:
     case FunctionType::Kind:
+    case GenericClassType::Kind:
     case InterfaceType::Kind:
     case InterfaceWitnessAccess::Kind:
     case IntType::Kind:
@@ -316,7 +317,14 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
       }
       case CARBON_KIND(FunctionType inst): {
         auto fn_name_id = sem_ir.functions().Get(inst.function_id).name_id;
+        // TODO: Consider formatting as `typeof(F)` instead.
         out << sem_ir.names().GetFormatted(fn_name_id);
+        break;
+      }
+      case CARBON_KIND(GenericClassType inst): {
+        auto class_name_id = sem_ir.classes().Get(inst.class_id).name_id;
+        // TODO: Consider formatting as `typeof(C)` instead.
+        out << sem_ir.names().GetFormatted(class_name_id);
         break;
       }
       case CARBON_KIND(InterfaceType inst): {
@@ -554,6 +562,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FloatLiteral::Kind:
       case FloatType::Kind:
       case FunctionType::Kind:
+      case GenericClassType::Kind:
       case InterfaceDecl::Kind:
       case InterfaceType::Kind:
       case InterfaceWitness::Kind:

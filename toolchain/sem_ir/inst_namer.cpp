@@ -435,6 +435,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.functions().Get(inst.function_id).name_id);
         continue;
       }
+      case CARBON_KIND(GenericClassType inst): {
+        add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
+        continue;
+      }
       case CARBON_KIND(ImplDecl inst): {
         CollectNamesInBlock(scope_id, inst.decl_block_id);
         break;

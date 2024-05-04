@@ -949,6 +949,7 @@ class TypeCompleter {
       }
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::FunctionType::Kind:
+      case SemIR::GenericClassType::Kind:
       case SemIR::InterfaceType::Kind:
       case SemIR::UnboundElementType::Kind: {
         // These types have no runtime operations, so we use an empty value
@@ -1063,6 +1064,15 @@ auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
   // To keep client code simpler, complete function types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Failed to complete function type";
+  return type_id;
+}
+
+auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+  auto type_id = GetTypeImpl<SemIR::GenericClassType>(*this, class_id);
+  // To keep client code simpler, complete generic class types before returning
+  // them.
+  bool complete = TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Failed to complete generic class type";
   return type_id;
 }
 

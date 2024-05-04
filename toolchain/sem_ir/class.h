@@ -29,6 +29,11 @@ struct Class : public Printable<Class> {
   // we reach the `}` of the class definition.
   auto is_defined() const -> bool { return object_repr_id.is_valid(); }
 
+  // Determines whether this is a generic class.
+  auto is_generic() const -> bool {
+    return implicit_param_refs_id.is_valid() || param_refs_id.is_valid();
+  }
+
   // The following members always have values, and do not change throughout the
   // lifetime of the class.
 

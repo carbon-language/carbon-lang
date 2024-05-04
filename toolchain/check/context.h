@@ -241,6 +241,11 @@ class Context {
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId;
 
+  // Gets a generic class type, which is the type of a name of a generic class,
+  // such as the type of `Vector` given `class Vector(T:! type)`. The returned
+  // type will be complete.
+  auto GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
