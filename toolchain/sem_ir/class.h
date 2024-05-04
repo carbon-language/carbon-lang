@@ -36,6 +36,10 @@ struct Class : public Printable<Class> {
   NameId name_id;
   // The enclosing scope.
   NameScopeId enclosing_scope_id;
+  // A block containing a single reference instruction per implicit parameter.
+  InstBlockId implicit_param_refs_id;
+  // A block containing a single reference instruction per parameter.
+  InstBlockId param_refs_id;
   // The class type, which is the type of `Self` in the class definition.
   TypeId self_type_id;
   // The first declaration of the class. This is a ClassDecl.

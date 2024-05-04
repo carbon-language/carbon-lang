@@ -118,9 +118,7 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%.2] {}
 // CHECK:STDOUT:   %import_ref.2: <associated F in HasF> = import_ref ir1, inst+11, loaded [template = constants.%.6]
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+6, unloaded

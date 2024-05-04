@@ -156,6 +156,12 @@ CARBON_DIAGNOSTIC_KIND(RedeclNonExtern)
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDef)
 CARBON_DIAGNOSTIC_KIND(RedeclRedef)
 CARBON_DIAGNOSTIC_KIND(RedeclExternMismatch)
+CARBON_DIAGNOSTIC_KIND(RedeclParamListDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamListPrevious)
+CARBON_DIAGNOSTIC_KIND(RedeclParamCountDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamCountPrevious)
+CARBON_DIAGNOSTIC_KIND(RedeclParamDiffers)
+CARBON_DIAGNOSTIC_KIND(RedeclParamPrevious)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
@@ -168,10 +174,6 @@ CARBON_DIAGNOSTIC_KIND(InCallToFunctionSelf)
 CARBON_DIAGNOSTIC_KIND(MissingObjectInMethodCall)
 
 // Function declaration checking.
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountDiffers)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamCountPrevious)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamDiffers)
-CARBON_DIAGNOSTIC_KIND(FunctionRedeclParamPrevious)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffers)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypeDiffersNoReturn)
 CARBON_DIAGNOSTIC_KIND(FunctionRedeclReturnTypePrevious)

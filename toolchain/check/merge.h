@@ -6,8 +6,8 @@
 #define CARBON_TOOLCHAIN_CHECK_MERGE_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
 
@@ -55,6 +55,32 @@ auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void;
+
+// Information about the parameters of a declaration, which is common across
+// different kinds of entity such as classes and functions.
+struct DeclParams {
+  template <typename Entity>
+  explicit DeclParams(const Entity& entity)
+      : decl_id(entity.decl_id),
+        implicit_param_refs_id(entity.implicit_param_refs_id),
+        param_refs_id(entity.param_refs_id) {}
+
+  // The declaration of the entity.
+  SemIR::InstId decl_id;
+  // The implicit parameters of the entity. Can be Invalid if there is no
+  // implicit parameter list.
+  SemIR::InstBlockId implicit_param_refs_id;
+  // The explicit parameters of the entity. Can be Invalid if there is no
+  // explicit parameter list.
+  SemIR::InstBlockId param_refs_id;
+};
+
+// Checks that the parameters in a redeclaration of an entity match the
+// parameters in the prior declaration. If not, produces a diagnostic and
+// returns false.
+auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
+                            const DeclParams& prev_entity,
+                            Substitutions substitutions) -> bool;
 
 }  // namespace Carbon::Check
 

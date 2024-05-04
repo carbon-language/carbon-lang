@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because of parameter count of 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 1.
 // CHECK:STDERR: fn F(x: ()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 0.
@@ -15,7 +15,7 @@ fn F();
 fn F(x: ()) {}
 
 fn G(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Function redeclaration differs because of parameter count of 0.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 0.
 // CHECK:STDERR: fn G() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: Previously declared with parameter count of 1.
@@ -25,7 +25,7 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:6: ERROR: Function redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:6: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:      ^
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Previous declaration's corresponding parameter here.
