@@ -60,7 +60,6 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
       prev_class_id = class_decl.class_id;
       break;
     }
-
     case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
       auto import_ir_inst =
           context.import_ir_insts().Get(import_ref.import_ir_inst_id);
@@ -86,7 +85,6 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
       }
       break;
     }
-
     default:
       break;
   }
