@@ -5,8 +5,6 @@
 #include "toolchain/check/merge.h"
 
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/check/class.h"
-#include "toolchain/check/function.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"

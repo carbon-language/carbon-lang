@@ -52,8 +52,9 @@ static auto CheckAssociatedFunctionImplementation(
   // TODO: This should be a semantic check rather than a syntactic one. The
   // functions should be allowed to have different signatures as long as we can
   // synthesize a suitable thunk.
-  if (!CheckFunctionTypeMatches(context, impl_function_decl->function_id,
-                                interface_function_id, substitutions)) {
+  if (!CheckFunctionTypeMatches(
+          context, context.functions().Get(impl_function_decl->function_id),
+          context.functions().Get(interface_function_id), substitutions)) {
     return SemIR::InstId::BuiltinError;
   }
   return impl_decl_id;

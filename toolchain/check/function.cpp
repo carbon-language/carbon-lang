@@ -10,10 +10,10 @@
 
 namespace Carbon::Check {
 
-// Returns false if the provided function declarations differ.
-static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
-                        const SemIR::Function& prev_function,
-                        Substitutions substitutions) -> bool {
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              Substitutions substitutions) -> bool {
   if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
                               DeclParams(prev_function), substitutions)) {
     return false;
@@ -58,80 +58,6 @@ static auto CheckRedecl(Context& context, const SemIR::Function& new_function,
     return false;
   }
 
-  return true;
-}
-
-auto CheckFunctionTypeMatches(Context& context,
-                              SemIR::FunctionId new_function_id,
-                              SemIR::FunctionId prev_function_id,
-                              Substitutions substitutions) -> bool {
-  return CheckRedecl(context, context.functions().Get(new_function_id),
-                     context.functions().Get(prev_function_id), substitutions);
-}
-
-// Returns the return slot usage for a function given the computed usage for two
-// different declarations of the function.
-static auto MergeReturnSlot(SemIR::Function::ReturnSlot a,
-                            SemIR::Function::ReturnSlot b)
-    -> SemIR::Function::ReturnSlot {
-  if (a == SemIR::Function::ReturnSlot::NotComputed) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::NotComputed) {
-    return a;
-  }
-  if (a == SemIR::Function::ReturnSlot::Error) {
-    return b;
-  }
-  if (b == SemIR::Function::ReturnSlot::Error) {
-    return a;
-  }
-  CARBON_CHECK(a == b)
-      << "Different return slot usage computed for the same function.";
-  return a;
-}
-
-auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
-                         SemIR::Function& new_function, bool new_is_import,
-                         bool new_is_definition,
-                         SemIR::FunctionId prev_function_id,
-                         SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_function = context.functions().Get(prev_function_id);
-
-  if (!CheckRedecl(context, new_function, prev_function, {})) {
-    return false;
-  }
-
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       {.loc = new_loc,
-                        .is_definition = new_is_definition,
-                        .is_extern = new_function.is_extern},
-                       {.loc = prev_function.definition_id.is_valid()
-                                   ? prev_function.definition_id
-                                   : prev_function.decl_id,
-                        .is_definition = prev_function.definition_id.is_valid(),
-                        .is_extern = prev_function.is_extern},
-                       prev_import_ir_id);
-
-  if (new_is_definition) {
-    // Track the signature from the definition, so that IDs in the body
-    // match IDs in the signature.
-    prev_function.definition_id = new_function.definition_id;
-    prev_function.implicit_param_refs_id = new_function.implicit_param_refs_id;
-    prev_function.param_refs_id = new_function.param_refs_id;
-    prev_function.return_type_id = new_function.return_type_id;
-    prev_function.return_storage_id = new_function.return_storage_id;
-  }
-  // The new function might have return slot information if it was imported.
-  prev_function.return_slot =
-      MergeReturnSlot(prev_function.return_slot, new_function.return_slot);
-  if ((prev_import_ir_id.is_valid() && !new_is_import) ||
-      (prev_function.is_extern && !new_function.is_extern)) {
-    prev_function.is_extern = new_function.is_extern;
-    prev_function.decl_id = new_function.decl_id;
-    ReplacePrevInstForMerge(context, prev_function.enclosing_scope_id,
-                            prev_function.name_id, new_function.decl_id);
-  }
   return true;
 }
 
