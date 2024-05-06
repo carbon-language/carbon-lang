@@ -772,13 +772,12 @@ class ImportRefResolver {
     } else {
       // On the second pass, compute the class ID from the constant value of the
       // declaration.
-      if (auto class_type = context_.insts().TryGetAs<SemIR::ClassType>(
-              class_const_id.inst_id())) {
+      auto class_const_inst = context_.insts().Get(class_const_id.inst_id());
+      if (auto class_type = class_const_inst.TryAs<SemIR::ClassType>()) {
         class_id = class_type->class_id;
       } else {
         auto generic_class_type =
-            context_.types().GetAs<SemIR::GenericClassType>(
-                context_.insts().Get(class_const_id.inst_id()).type_id());
+            context_.types().GetAs<SemIR::GenericClassType>(class_const_inst.type_id());
         class_id = generic_class_type.class_id;
       }
     }
