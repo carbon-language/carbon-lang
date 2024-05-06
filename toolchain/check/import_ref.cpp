@@ -700,6 +700,8 @@ class ImportRefResolver {
         // These are set in the second pass once we've imported them. Import
         // enough of the parameter lists that we know whether this class is a
         // generic class and can build the right constant value for it.
+        // TODO: Add a better way to represent a generic `Class` prior to
+        // importing the parameters.
         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
         .implicit_param_refs_id = import_class.implicit_param_refs_id.is_valid()
                                       ? SemIR::InstBlockId::Empty

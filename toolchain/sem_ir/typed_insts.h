@@ -495,8 +495,9 @@ struct FunctionType {
 // The type of the name of a generic class. The corresponding value is an empty
 // `StructValue`.
 struct GenericClassType {
+  // This is only ever created as a constant, so doesn't have a location.
   static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::AnyFunctionDeclId>(
+      InstKind::GenericClassType.Define<Parse::InvalidNodeId>(
           "generic_class_type");
 
   TypeId type_id;
