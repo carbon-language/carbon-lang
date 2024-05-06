@@ -1036,8 +1036,8 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
 // and completes the type. This should only be used when type completion cannot
 // fail.
 template <typename InstT, typename... EachArgT>
-static auto GetCompleteTypeImpl(Context& context,
-                                EachArgT... each_arg) -> SemIR::TypeId {
+static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
+    -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
   bool complete = context.TryToCompleteType(type_id);
   CARBON_CHECK(complete) << "Type completion should not fail";

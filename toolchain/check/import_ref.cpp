@@ -779,7 +779,8 @@ class ImportRefResolver {
         class_id = class_type->class_id;
       } else {
         auto generic_class_type =
-            context_.types().GetAs<SemIR::GenericClassType>(class_const_inst.type_id());
+            context_.types().GetAs<SemIR::GenericClassType>(
+                class_const_inst.type_id());
         class_id = generic_class_type.class_id;
       }
     }
