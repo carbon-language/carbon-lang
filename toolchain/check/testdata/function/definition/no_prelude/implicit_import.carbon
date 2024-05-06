@@ -109,10 +109,10 @@ alias B = A;
 
 library "def_alias" impl;
 
-// CHECK:STDERR: def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn B() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: def_alias.impl.carbon:[[@LINE-5]]:1: In import.
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: In import.
 // CHECK:STDERR: library "def_alias" impl;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: def_alias.carbon:5:7: Name is previously declared here.
@@ -333,7 +333,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_alias.impl.carbon
+// CHECK:STDOUT: --- fail_def_alias.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = fn_type @A [template]
