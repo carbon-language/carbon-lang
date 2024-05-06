@@ -72,10 +72,9 @@ static auto DiagnoseNonExtern(Context& context, Lex::TokenKind decl_kind,
 // These all still merge.
 auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
                           SemIR::NameId name_id, RedeclInfo new_decl,
-                          RedeclInfo prev_decl,
-                          SemIR::ImportIRInstId prev_import_ir_inst_id)
+                          RedeclInfo prev_decl, SemIR::ImportIRId import_ir_id)
     -> void {
-  if (!prev_import_ir_inst_id.is_valid()) {
+  if (!import_ir_id.is_valid()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
       DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
@@ -96,8 +95,6 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
     return;
   }
 
-  auto import_ir_id =
-      context.import_ir_insts().Get(prev_import_ir_inst_id).ir_id;
   if (import_ir_id == SemIR::ImportIRId::ApiForImpl) {
     // Check for disallowed redeclarations in the same library. Note that a
     // forward declaration in the impl is allowed.
@@ -123,19 +120,6 @@ auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
     DiagnoseNonExtern(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
     return;
   }
-}
-
-auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
-    -> InstForMerge {
-  InstForMerge result = {.inst = context.insts().Get(prev_inst_id),
-                         .import_ir_inst_id = SemIR::ImportIRInstId::Invalid};
-  if (auto import_ref = result.inst.TryAs<SemIR::ImportRefLoaded>()) {
-    // Follow the import ref.
-    result.import_ir_inst_id = import_ref->import_ir_inst_id;
-    result.inst = context.insts().Get(
-        context.constant_values().Get(prev_inst_id).inst_id());
-  }
-  return result;
 }
 
 auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,

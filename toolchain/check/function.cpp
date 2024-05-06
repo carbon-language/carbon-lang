@@ -95,7 +95,7 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                          SemIR::Function& new_function, bool new_is_import,
                          bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
-                         SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool {
+                         SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_function = context.functions().Get(prev_function_id);
 
   if (!CheckRedecl(context, new_function, prev_function, {})) {
@@ -111,7 +111,7 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                                    : prev_function.decl_id,
                         .is_definition = prev_function.definition_id.is_valid(),
                         .is_extern = prev_function.is_extern},
-                       prev_import_ir_inst_id);
+                       prev_import_ir_id);
 
   if (new_is_definition) {
     // Track the signature from the definition, so that IDs in the body
@@ -125,7 +125,7 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   // The new function might have return slot information if it was imported.
   prev_function.return_slot =
       MergeReturnSlot(prev_function.return_slot, new_function.return_slot);
-  if ((prev_import_ir_inst_id.is_valid() && !new_is_import) ||
+  if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_function.is_extern && !new_function.is_extern)) {
     prev_function.is_extern = new_function.is_extern;
     prev_function.decl_id = new_function.decl_id;

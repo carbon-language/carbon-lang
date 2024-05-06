@@ -21,7 +21,7 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                       SemIR::Class& new_class, bool new_is_import,
                       bool new_is_definition, bool new_is_extern,
                       SemIR::ClassId prev_class_id, bool prev_is_extern,
-                      SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool;
+                      SemIR::ImportIRId prev_import_ir_id) -> bool;
 
 }  // namespace Carbon::Check
 
