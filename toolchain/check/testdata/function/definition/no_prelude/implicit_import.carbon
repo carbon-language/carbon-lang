@@ -105,7 +105,7 @@ library "def_alias" api;
 fn A();
 alias B = A;
 
-// --- def_alias.impl.carbon
+// --- fail_def_alias.impl.carbon
 
 library "def_alias" impl;
 

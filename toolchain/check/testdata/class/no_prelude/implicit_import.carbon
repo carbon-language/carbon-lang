@@ -67,7 +67,7 @@ library "def_alias" api;
 class C;
 alias B = C;
 
-// --- def_alias.impl.carbon
+// --- fail_def_alias.impl.carbon
 
 library "def_alias" impl;
 
