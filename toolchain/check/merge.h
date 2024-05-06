@@ -32,22 +32,7 @@ struct RedeclInfo {
 auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
                           SemIR::NameId name_id, RedeclInfo new_decl,
                           RedeclInfo prev_decl,
-                          SemIR::ImportIRInstId prev_import_ir_inst_id) -> void;
-
-struct InstForMerge {
-  // The resolved instruction.
-  SemIR::Inst inst;
-  // The imported instruction, or invalid if not an import. This should
-  // typically only be used for the ImportIRId, but we only load it if needed.
-  SemIR::ImportIRInstId import_ir_inst_id;
-};
-
-// Resolves prev_inst_id for merging (or name conflicts). This handles imports
-// to return the instruction relevant for a merge. If an import is found and was
-// previously used, it notes it, although an invalid redeclaration may diagnose
-// for other reasons too.
-auto ResolvePrevInstForMerge(Context& context, SemIR::InstId prev_inst_id)
-    -> InstForMerge;
+                          SemIR::ImportIRId prev_import_ir_id) -> void;
 
 // When the prior name lookup result is an import and we are successfully
 // merging, replace the name lookup result with the reference in the current

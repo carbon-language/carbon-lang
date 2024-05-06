@@ -12,7 +12,7 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                       SemIR::Class& new_class, bool new_is_import,
                       bool new_is_definition, bool new_is_extern,
                       SemIR::ClassId prev_class_id, bool prev_is_extern,
-                      SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool {
+                      SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
   SemIRLoc prev_loc =
       prev_class.is_defined() ? prev_class.definition_id : prev_class.decl_id;
@@ -30,7 +30,7 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                        {.loc = prev_loc,
                         .is_definition = prev_class.is_defined(),
                         .is_extern = prev_is_extern},
-                       prev_import_ir_inst_id);
+                       prev_import_ir_id);
 
   // The introducer kind must match the previous declaration.
   // TODO: The rule here is not yet decided. See #3384.
@@ -56,7 +56,7 @@ auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     prev_class.object_repr_id = new_class.object_repr_id;
   }
 
-  if ((prev_import_ir_inst_id.is_valid() && !new_is_import) ||
+  if ((prev_import_ir_id.is_valid() && !new_is_import) ||
       (prev_is_extern && !new_is_extern)) {
     prev_class.decl_id = new_class.decl_id;
     ReplacePrevInstForMerge(
