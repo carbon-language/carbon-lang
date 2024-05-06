@@ -49,51 +49,61 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            bool is_extern) -> void {
   auto prev_id =
       context.decl_name_stack().LookupOrAddName(name_context, class_decl_id);
-  if (prev_id.is_valid()) {
-    auto prev_inst_for_merge = ResolvePrevInstForMerge(context, prev_id);
+  if (!prev_id.is_valid()) {
+    return;
+  }
 
-    auto prev_class_id = SemIR::ClassId::Invalid;
-    CARBON_KIND_SWITCH(prev_inst_for_merge.inst) {
-      case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        prev_class_id = class_decl.class_id;
-        break;
-      }
-      // TODO: Look at the kind of the previous declaration, skipping
-      // `ImportRef`s, rather than the constant value, so we don't need to check
-      // for ClassType and StructVaule here, and so we don't accidentally merge
-      // with aliases.
-      case CARBON_KIND(SemIR::ClassType class_type): {
-        prev_class_id = class_type.class_id;
-        break;
-      }
-      case CARBON_KIND(SemIR::StructValue generic_class_value): {
-        if (auto generic_class_type =
-                context.types().TryGetAs<SemIR::GenericClassType>(
-                    generic_class_value.type_id)) {
-          prev_class_id = generic_class_type->class_id;
-          break;
-        }
-        [[fallthrough]];
-      }
-      default:
-        // This is a redeclaration of something other than a class.
-        context.DiagnoseDuplicateName(class_decl_id, prev_id);
-        break;
+  auto prev_class_id = SemIR::ClassId::Invalid;
+  auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
+  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      prev_class_id = class_decl.class_id;
+      break;
     }
 
-    if (prev_class_id.is_valid()) {
-      // TODO: Fix prev_is_extern logic.
-      if (MergeClassRedecl(context, node_id, class_info,
-                           /*new_is_import=*/false, is_definition, is_extern,
-                           prev_class_id, /*prev_is_extern=*/false,
-                           prev_inst_for_merge.import_ir_inst_id)) {
-        // When merging, use the existing entity rather than adding a new one.
-        class_decl.class_id = prev_class_id;
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      auto import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+
+      // Verify the decl so that things like aliases are name conflicts.
+      const auto* import_ir =
+          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id)) {
+        break;
       }
-    } else {
-      // This is a redeclaration of something other than a class.
-      context.DiagnoseDuplicateName(class_decl_id, prev_id);
+
+      // Use the constant value to get the ID.
+      auto decl_value =
+          context.insts().Get(context.constant_values().Get(prev_id).inst_id());
+      if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
+        prev_class_id = class_type->class_id;
+        prev_import_ir_id = import_ir_inst.ir_id;
+      } else if (auto generic_class_type =
+                     context.types().TryGetAs<SemIR::GenericClassType>(
+                         decl_value.type_id())) {
+        prev_class_id = generic_class_type->class_id;
+        prev_import_ir_id = import_ir_inst.ir_id;
+      }
+      break;
     }
+
+    default:
+      break;
+  }
+
+  if (!prev_class_id.is_valid()) {
+    // This is a redeclaration of something other than a class.
+    context.DiagnoseDuplicateName(class_decl_id, prev_id);
+    return;
+  }
+
+  // TODO: Fix prev_is_extern logic.
+  if (MergeClassRedecl(context, node_id, class_info,
+                       /*new_is_import=*/false, is_definition, is_extern,
+                       prev_class_id, /*prev_is_extern=*/false,
+                       prev_import_ir_id)) {
+    // When merging, use the existing entity rather than adding a new one.
+    class_decl.class_id = prev_class_id;
   }
 }
 

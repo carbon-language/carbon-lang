@@ -61,28 +61,6 @@ static auto DiagnoseModifiers(Context& context, bool is_definition,
   return context.decl_state_stack().innermost().modifier_set;
 }
 
-// Returns the function ID for the instruction, or invalid.
-static auto GetRedeclFunctionId(Context& context, SemIR::Inst prev_inst)
-    -> SemIR::FunctionId {
-  CARBON_KIND_SWITCH(prev_inst) {
-    case CARBON_KIND(SemIR::StructValue struct_value): {
-      if (auto fn_type = context.types().TryGetAs<SemIR::FunctionType>(
-              struct_value.type_id)) {
-        return fn_type->function_id;
-      }
-      return SemIR::FunctionId::Invalid;
-    }
-    case CARBON_KIND(SemIR::FunctionDecl fn_decl): {
-      return fn_decl.function_id;
-    }
-    default:
-      // This is a redeclaration of something other than a function. This
-      // includes the case where an associated function redeclares another
-      // associated function.
-      return SemIR::FunctionId::Invalid;
-  }
-}
-
 // Check whether this is a redeclaration, merging if needed.
 static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                            SemIR::InstId prev_id,
@@ -93,9 +71,39 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
-  auto prev_inst_for_merge = ResolvePrevInstForMerge(context, prev_id);
-  auto prev_function_id =
-      GetRedeclFunctionId(context, prev_inst_for_merge.inst);
+  auto prev_function_id = SemIR::FunctionId::Invalid;
+  auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
+  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
+    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+      prev_function_id = function_decl.function_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::ImportRefLoaded import_ref): {
+      auto import_ir_inst =
+          context.import_ir_insts().Get(import_ref.import_ir_inst_id);
+
+      // Verify the decl so that things like aliases are name conflicts.
+      const auto* import_ir =
+          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+      if (!import_ir->insts().Is<SemIR::FunctionDecl>(import_ir_inst.inst_id)) {
+        break;
+      }
+
+      // Use the type to get the ID.
+      if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
+              context.constant_values().Get(prev_id).inst_id())) {
+        if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
+                struct_value->type_id)) {
+          prev_function_id = function_type->function_id;
+          prev_import_ir_id = import_ir_inst.ir_id;
+        }
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
   if (!prev_function_id.is_valid()) {
     context.DiagnoseDuplicateName(function_info.decl_id, prev_id);
     return;
@@ -103,8 +111,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
   if (MergeFunctionRedecl(context, node_id, function_info,
                           /*new_is_import=*/false, is_definition,
-                          prev_function_id,
-                          prev_inst_for_merge.import_ir_inst_id)) {
+                          prev_function_id, prev_import_ir_id)) {
     // When merging, use the existing function rather than adding a new one.
     function_decl.function_id = prev_function_id;
   }

@@ -46,7 +46,7 @@ auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
                          SemIR::Function& new_function, bool new_is_import,
                          bool new_is_definition,
                          SemIR::FunctionId prev_function_id,
-                         SemIR::ImportIRInstId prev_import_ir_inst_id) -> bool;
+                         SemIR::ImportIRId prev_import_ir_id) -> bool;
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if
