@@ -586,32 +586,20 @@ TEST_F(LexerTest, Whitespace) {
 }
 
 TEST_F(LexerTest, Keywords) {
-  auto buffer = Lex("   fn");
-  EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {TokenKind::FileStart},
-                  {.kind = TokenKind::Fn, .column = 4, .indent_column = 4},
-                  {TokenKind::FileEnd},
-              }));
-
-  buffer = Lex("and or not if else for return var break continue _");
-  EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::FileStart},
-                          {TokenKind::And},
-                          {TokenKind::Or},
-                          {TokenKind::Not},
-                          {TokenKind::If},
-                          {TokenKind::Else},
-                          {TokenKind::For},
-                          {TokenKind::Return},
-                          {TokenKind::Var},
-                          {TokenKind::Break},
-                          {TokenKind::Continue},
-                          {TokenKind::Underscore},
-                          {TokenKind::FileEnd},
-                      }));
+  TokenKind keywords[] = {
+#define CARBON_TOKEN(TokenName)
+#define CARBON_KEYWORD_TOKEN(TokenName, ...) TokenKind::TokenName,
+#include "toolchain/lex/token_kind.def"
+  };
+  for (const auto& keyword : keywords) {
+    auto buffer = Lex(keyword.fixed_spelling());
+    EXPECT_FALSE(buffer.has_errors());
+    EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                            {TokenKind::FileStart},
+                            {.kind = keyword, .column = 1, .indent_column = 1},
+                            {TokenKind::FileEnd},
+                        }));
+  }
 }
 
 TEST_F(LexerTest, Comments) {
