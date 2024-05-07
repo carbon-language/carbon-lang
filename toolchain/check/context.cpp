@@ -949,6 +949,7 @@ class TypeCompleter {
       }
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::FunctionType::Kind:
+      case SemIR::GenericClassType::Kind:
       case SemIR::InterfaceType::Kind:
       case SemIR::UnboundElementType::Kind: {
         // These types have no runtime operations, so we use an empty value
@@ -1021,6 +1022,7 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
   return it->second;
 }
 
+// Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
@@ -1028,6 +1030,18 @@ static auto GetTypeImpl(Context& context, EachArgT... each_arg)
   return context.GetTypeIdForTypeConstant(
       TryEvalInst(context, SemIR::InstId::Invalid,
                   InstT{SemIR::TypeId::TypeType, each_arg...}));
+}
+
+// Gets or forms a type_id for a type, given the instruction kind and arguments,
+// and completes the type. This should only be used when type completion cannot
+// fail.
+template <typename InstT, typename... EachArgT>
+static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
+    -> SemIR::TypeId {
+  auto type_id = GetTypeImpl<InstT>(context, each_arg...);
+  bool complete = context.TryToCompleteType(type_id);
+  CARBON_CHECK(complete) << "Type completion should not fail";
+  return type_id;
 }
 
 auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
@@ -1059,11 +1073,11 @@ auto Context::GetBuiltinType(SemIR::BuiltinKind kind) -> SemIR::TypeId {
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id) -> SemIR::TypeId {
-  auto type_id = GetTypeImpl<SemIR::FunctionType>(*this, fn_id);
-  // To keep client code simpler, complete function types before returning them.
-  bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete) << "Failed to complete function type";
-  return type_id;
+  return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id);
+}
+
+auto Context::GetGenericClassType(SemIR::ClassId class_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericClassType>(*this, class_id);
 }
 
 auto Context::GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId {

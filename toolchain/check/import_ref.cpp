@@ -558,6 +558,9 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::FunctionType inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::GenericClassType inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::ImportRefLoaded inst): {
         return TryResolveTypedInst(inst, inst_id);
       }
@@ -684,7 +687,7 @@ class ImportRefResolver {
   // complete declaration, because things such as `Self` may refer back to the
   // type.
   auto MakeIncompleteClass(const SemIR::Class& import_class)
-      -> SemIR::ConstantId {
+      -> std::pair<SemIR::ClassId, SemIR::ConstantId> {
     auto class_decl =
         SemIR::ClassDecl{SemIR::TypeId::TypeType, SemIR::ClassId::Invalid,
                          SemIR::InstBlockId::Empty};
@@ -694,24 +697,32 @@ class ImportRefResolver {
     // incomplete type so that any references have something to point at.
     class_decl.class_id = context_.classes().Add({
         .name_id = GetLocalNameId(import_class.name_id),
-        // Set in the second pass once we've imported them.
+        // These are set in the second pass once we've imported them. Import
+        // enough of the parameter lists that we know whether this class is a
+        // generic class and can build the right constant value for it.
+        // TODO: Add a better way to represent a generic `Class` prior to
+        // importing the parameters.
         .enclosing_scope_id = SemIR::NameScopeId::Invalid,
-        .implicit_param_refs_id = SemIR::InstBlockId::Invalid,
-        .param_refs_id = SemIR::InstBlockId::Invalid,
-        // `.self_type_id` depends on the ClassType, so is set below.
+        .implicit_param_refs_id = import_class.implicit_param_refs_id.is_valid()
+                                      ? SemIR::InstBlockId::Empty
+                                      : SemIR::InstBlockId::Invalid,
+        .param_refs_id = import_class.param_refs_id.is_valid()
+                             ? SemIR::InstBlockId::Empty
+                             : SemIR::InstBlockId::Invalid,
         .self_type_id = SemIR::TypeId::Invalid,
+        // These fields can be set immediately.
         .decl_id = class_decl_id,
         .inheritance_kind = import_class.inheritance_kind,
     });
 
+    if (import_class.is_generic()) {
+      class_decl.type_id = context_.GetGenericClassType(class_decl.class_id);
+    }
+
     // Write the class ID into the ClassDecl.
     context_.ReplaceInstBeforeConstantUse(class_decl_id, class_decl);
     auto self_const_id = context_.constant_values().Get(class_decl_id);
-
-    // Build the `Self` type using the resulting type constant.
-    auto& class_info = context_.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
-    return self_const_id;
+    return {class_decl.class_id, self_const_id};
   }
 
   // Fills out the class definition for an incomplete class.
@@ -755,10 +766,23 @@ class ImportRefResolver {
                            SemIR::ConstantId class_const_id) -> ResolveResult {
     const auto& import_class = import_ir_.classes().Get(inst.class_id);
 
-    // On the first pass, create a forward declaration of the class for any
-    // recursive references.
+    SemIR::ClassId class_id = SemIR::ClassId::Invalid;
     if (!class_const_id.is_valid()) {
-      class_const_id = MakeIncompleteClass(import_class);
+      // On the first pass, create a forward declaration of the class for any
+      // recursive references.
+      std::tie(class_id, class_const_id) = MakeIncompleteClass(import_class);
+    } else {
+      // On the second pass, compute the class ID from the constant value of the
+      // declaration.
+      auto class_const_inst = context_.insts().Get(class_const_id.inst_id());
+      if (auto class_type = class_const_inst.TryAs<SemIR::ClassType>()) {
+        class_id = class_type->class_id;
+      } else {
+        auto generic_class_type =
+            context_.types().GetAs<SemIR::GenericClassType>(
+                class_const_inst.type_id());
+        class_id = generic_class_type.class_id;
+      }
     }
 
     // Load constants for the definition.
@@ -770,6 +794,7 @@ class ImportRefResolver {
         GetLocalParamConstantIds(import_class.implicit_param_refs_id);
     llvm::SmallVector<SemIR::ConstantId> param_const_ids =
         GetLocalParamConstantIds(import_class.param_refs_id);
+    auto self_const_id = GetLocalConstantId(import_class.self_type_id);
     auto object_repr_const_id =
         import_class.object_repr_id.is_valid()
             ? GetLocalConstantId(import_class.object_repr_id)
@@ -782,15 +807,13 @@ class ImportRefResolver {
       return ResolveResult::Retry(class_const_id);
     }
 
-    auto& new_class = context_.classes().Get(
-        context_.insts()
-            .GetAs<SemIR::ClassType>(class_const_id.inst_id())
-            .class_id);
+    auto& new_class = context_.classes().Get(class_id);
     new_class.enclosing_scope_id = enclosing_scope_id;
     new_class.implicit_param_refs_id = GetLocalParamRefsId(
         import_class.implicit_param_refs_id, implicit_param_const_ids);
     new_class.param_refs_id =
         GetLocalParamRefsId(import_class.param_refs_id, param_const_ids);
+    new_class.self_type_id = context_.GetTypeIdForTypeConstant(self_const_id);
 
     if (import_class.is_defined()) {
       AddClassDefinition(import_class, new_class, object_repr_const_id,
@@ -914,6 +937,20 @@ class ImportRefResolver {
     auto fn_val = context_.insts().Get(fn_const_id.inst_id());
     CARBON_CHECK(context_.types().Is<SemIR::FunctionType>(fn_val.type_id()));
     return {context_.types().GetConstantId(fn_val.type_id())};
+  }
+
+  auto TryResolveTypedInst(SemIR::GenericClassType inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
+    auto class_const_id =
+        GetLocalConstantId(import_ir_.classes().Get(inst.class_id).decl_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    auto class_val = context_.insts().Get(class_const_id.inst_id());
+    CARBON_CHECK(
+        context_.types().Is<SemIR::GenericClassType>(class_val.type_id()));
+    return {context_.types().GetConstantId(class_val.type_id())};
   }
 
   auto TryResolveTypedInst(SemIR::ImportRefLoaded /*inst*/,

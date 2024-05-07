@@ -7,6 +7,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/sem_ir/ids.h"
@@ -70,10 +71,16 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
         break;
       }
 
-      // Use the type to get the ID.
-      if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
-              context.constant_values().Get(prev_id).inst_id())) {
+      // Use the constant value to get the ID.
+      auto decl_value =
+          context.insts().Get(context.constant_values().Get(prev_id).inst_id());
+      if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
         prev_class_id = class_type->class_id;
+        prev_import_ir_id = import_ir_inst.ir_id;
+      } else if (auto generic_class_type =
+                     context.types().TryGetAs<SemIR::GenericClassType>(
+                         decl_value.type_id())) {
+        prev_class_id = generic_class_type->class_id;
         prev_import_ir_id = import_ir_inst.ir_id;
       }
       break;
@@ -164,6 +171,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
     class_decl.class_id = context.classes().Add(class_info);
+    if (class_info.is_generic()) {
+      class_decl.type_id = context.GetGenericClassType(class_decl.class_id);
+    }
   }
 
   // Write the class ID into the ClassDecl.
@@ -171,8 +181,17 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   if (is_new_class) {
     // Build the `Self` type using the resulting type constant.
+    // TODO: Form this as part of building the definition, not as part of the
+    // declaration.
     auto& class_info = context.classes().Get(class_decl.class_id);
-    class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
+    if (class_info.is_generic()) {
+      // TODO: Pass in the generic arguments once we can represent them.
+      class_info.self_type_id = context.GetTypeIdForTypeConstant(TryEvalInst(
+          context, SemIR::InstId::Invalid,
+          SemIR::ClassType{SemIR::TypeId::TypeType, class_decl.class_id}));
+    } else {
+      class_info.self_type_id = context.GetTypeIdForTypeInst(class_decl_id);
+    }
   }
 
   return {class_decl.class_id, class_decl_id};

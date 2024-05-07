@@ -907,6 +907,12 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::BoundMethod::object_id,
                                         &SemIR::BoundMethod::function_id);
+    case SemIR::ClassType::Kind:
+      // TODO: Look at generic arguments once they're modeled.
+      return MakeConstantResult(context, inst, Phase::Template);
+    case SemIR::InterfaceType::Kind:
+      // TODO: Look at generic arguments once they're modeled.
+      return MakeConstantResult(context, inst, Phase::Template);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -966,6 +972,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case SemIR::AssociatedEntity::Kind:
     case SemIR::Builtin::Kind:
     case SemIR::FunctionType::Kind:
+    case SemIR::GenericClassType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(context, inst, Phase::Template);
 
@@ -977,7 +984,15 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     }
 
     case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      // TODO: Once classes have generic arguments, handle them.
+      // If the class has generic arguments, we don't produce a class type, but
+      // a callable whose return value is a class type.
+      if (context.classes().Get(class_decl.class_id).is_generic()) {
+        return MakeConstantResult(
+            context,
+            SemIR::StructValue{class_decl.type_id, SemIR::InstBlockId::Empty},
+            Phase::Template);
+      }
+      // A non-generic class declaration evaluates to the class type.
       return MakeConstantResult(
           context,
           SemIR::ClassType{SemIR::TypeId::TypeType, class_decl.class_id},
@@ -991,11 +1006,6 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
                                interface_decl.interface_id},
           Phase::Template);
     }
-
-    case SemIR::ClassType::Kind:
-    case SemIR::InterfaceType::Kind:
-      CARBON_FATAL() << inst.kind()
-                     << " is only created during corresponding Decl handling.";
 
     // These cases are treated as being the unique canonical definition of the
     // corresponding constant value.
