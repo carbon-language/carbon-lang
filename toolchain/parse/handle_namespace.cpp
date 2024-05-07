@@ -15,20 +15,9 @@ auto HandleNamespace(Context& context) -> void {
 auto HandleNamespaceFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  if (state.has_error) {
-    context.RecoverFromDeclError(state, NodeKind::Namespace,
-                                 /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    context.AddNode(NodeKind::Namespace, *semi, state.subtree_start,
-                    state.has_error);
-  } else {
-    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Namespace);
-    context.RecoverFromDeclError(state, NodeKind::Namespace,
-                                 /*skip_past_likely_end=*/true);
-  }
+  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Namespace,
+                                   NodeKind::Namespace,
+                                   /*is_def_allowed=*/false);
 }
 
 }  // namespace Carbon::Parse

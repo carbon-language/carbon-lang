@@ -281,6 +281,13 @@ class Context {
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
+  // Adds a node expecting a decl semi. Includes error recovery when the token
+  // is not a semi. `is_def_allowed` is only selecting the diagnostic if not a
+  // semi; a definition must be handled separately.
+  auto AddNodeExpectingDeclSemi(StateStackEntry state, Lex::TokenKind decl_kind,
+                                NodeKind node_kind, bool is_def_allowed)
+      -> void;
+
   // Emits a diagnostic for a declaration missing a semi.
   auto DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
 

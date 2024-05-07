@@ -13,20 +13,9 @@ auto HandleAdaptDecl(Context& context) -> void {
   // We should factor out this common work.
   auto state = context.PopState();
 
-  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
-  if (!semi && !state.has_error) {
-    context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
-    state.has_error = true;
-  }
-
-  if (state.has_error) {
-    context.RecoverFromDeclError(state, NodeKind::AdaptDecl,
-                                 /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  context.AddNode(NodeKind::AdaptDecl, *semi, state.subtree_start,
-                  state.has_error);
+  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Adapt,
+                                   NodeKind::AdaptDecl,
+                                   /*is_def_allowed=*/false);
 }
 
 }  // namespace Carbon::Parse
