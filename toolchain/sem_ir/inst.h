@@ -437,6 +437,12 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
     CARBON_CHECK(block_id != InstBlockId::Unreachable);
     BlockValueStore<InstBlockId>::Set(block_id, content);
   }
+
+  // Returns the contents of the specified block, or an empty array if the block
+  // is empty.
+  auto GetOrEmpty(InstBlockId block_id) -> llvm::ArrayRef<InstId> {
+    return block_id.is_valid() ? Get(block_id) : llvm::ArrayRef<InstId>();
+  }
 };
 
 }  // namespace Carbon::SemIR
