@@ -12,6 +12,7 @@
 
 namespace Carbon::Check {
 
+// Performs a call where the callee is the name of a generic class, such as `Vector(i32)`.
 static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
                                SemIR::ClassId class_id,
                                llvm::ArrayRef<SemIR::InstId> arg_ids)
