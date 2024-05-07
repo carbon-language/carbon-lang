@@ -6,7 +6,7 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: ERROR: `import` and `export` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-5]]:1: First declaration is here.
@@ -28,7 +28,7 @@ package D;
 
 fn E();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+6]]:1: ERROR: `import` and `export` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: import F;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-27]]:1: First declaration is here.

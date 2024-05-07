@@ -19,7 +19,11 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
       context.PopAndDiscardState();
       return true;
     }
-    // `import`, `library`, and `package` manage their packaging state.
+    // Packaging-related keywords manage their packaging state.
+    case Lex::TokenKind::Export: {
+      context.PushState(State::Export);
+      return true;
+    }
     case Lex::TokenKind::Import: {
       context.PushState(State::Import);
       return true;
@@ -32,7 +36,7 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
       context.PushState(State::Package);
       return true;
     }
-    default: {
+    default:
       // Because a non-packaging keyword was encountered, packaging is complete.
       // Misplaced packaging keywords may lead to this being re-triggered.
       if (context.packaging_state() !=
@@ -44,7 +48,6 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
             Context::PackagingState::AfterNonPackagingDecl);
       }
       return false;
-    }
   }
 }
 
@@ -124,6 +127,11 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
       HandleBaseAsDecl(context, state);
       return true;
     }
+    case Lex::TokenKind::Choice: {
+      ApplyIntroducer(context, state, NodeKind::ChoiceIntroducer,
+                      State::ChoiceIntroducer);
+      return true;
+    }
     case Lex::TokenKind::Class: {
       ApplyIntroducer(context, state, NodeKind::ClassIntroducer,
                       State::TypeAfterIntroducerAsClass);
@@ -166,11 +174,6 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     case Lex::TokenKind::Var: {
       ApplyIntroducer(context, state, NodeKind::VariableIntroducer,
                       State::VarAsDecl);
-      return true;
-    }
-    case Lex::TokenKind::Choice: {
-      ApplyIntroducer(context, state, NodeKind::ChoiceIntroducer,
-                      State::ChoiceIntroducer);
       return true;
     }
 

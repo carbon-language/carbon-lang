@@ -19,6 +19,8 @@ struct ImportIR : public Printable<ImportIR> {
   Parse::ImportDirectiveId node_id;
   // The imported IR.
   const File* sem_ir;
+  // True if this is part of an `export import`.
+  bool is_export;
 };
 
 // A reference to an instruction in an imported IR. Used for diagnostics with

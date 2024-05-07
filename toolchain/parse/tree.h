@@ -92,6 +92,9 @@ class Tree : public Printable<Tree> {
     ImportDirectiveId node_id;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralValueId library_id = StringLiteralValueId::Invalid;
+    // Whether an import is exported. This is on the file's packaging directive
+    // even though it doesn't apply, for consistency in structure.
+    bool is_export = false;
   };
 
   // The file's packaging.

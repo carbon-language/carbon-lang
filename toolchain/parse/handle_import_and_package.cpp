@@ -73,14 +73,23 @@ static auto HandleApiOrImpl(Context& context)
 // Handles everything after the directive's introducer.
 static auto HandleDirectiveContent(Context& context,
                                    Context::StateStackEntry state,
-                                   NodeKind directive,
+                                   NodeKind directive, bool is_export,
                                    llvm::function_ref<void()> on_parse_error)
     -> void {
   Tree::PackagingNames names{
-      .node_id = ImportDirectiveId(NodeId(state.subtree_start))};
+      .node_id = ImportDirectiveId(NodeId(state.subtree_start)),
+      .is_export = is_export};
   if (directive != NodeKind::LibraryDirective) {
     if (auto package_name_token =
             context.ConsumeIf(Lex::TokenKind::Identifier)) {
+      if (names.is_export) {
+        names.is_export = false;
+        state.has_error = true;
+
+        CARBON_DIAGNOSTIC(ExportImportPackage, Error,
+                          "`export` cannot be used when importing a package.");
+        context.emitter().Emit(*package_name_token, ExportImportPackage);
+      }
       names.package_id = context.tokens().GetIdentifier(*package_name_token);
       context.AddLeafNode(NodeKind::PackageName, *package_name_token);
     } else if (directive == NodeKind::PackageDirective ||
@@ -157,47 +166,94 @@ static auto HandleDirectiveContent(Context& context,
   }
 }
 
-auto HandleImport(Context& context) -> void {
-  auto state = context.PopState();
+// Returns true if currently in a valid state for imports, false otherwise. May
+// update the packaging state respectively.
+static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
+    -> bool {
+  switch (context.packaging_state()) {
+    case Context::PackagingState::FileStart:
+      // `package` is no longer allowed, but `import` may repeat.
+      context.set_packaging_state(Context::PackagingState::InImports);
+      return true;
 
+    case Context::PackagingState::InImports:
+      return true;
+
+    case Context::PackagingState::AfterNonPackagingDecl: {
+      context.set_packaging_state(
+          Context::PackagingState::InImportsAfterNonPackagingDecl);
+      CARBON_DIAGNOSTIC(ImportTooLate, Error,
+                        "`import` and `export` directives must come after the "
+                        "`package` directive (if present) and before any other "
+                        "entities in the file.");
+      CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
+      context.emitter()
+          .Build(intro_token, ImportTooLate)
+          .Note(context.first_non_packaging_token(), FirstDecl)
+          .Emit();
+      return false;
+    }
+
+    case Context::PackagingState::InImportsAfterNonPackagingDecl:
+      // There is a sequential block of misplaced `import` statements, which can
+      // occur if a declaration is added above `import`s. Avoid duplicate
+      // warnings.
+      return false;
+  }
+}
+
+// Common logic for both `import` and `export import`, distinguished by whether
+// `export_token` is valid.
+static auto HandleImportHelper(Context& context,
+                               const Context::StateStackEntry& state,
+                               Lex::TokenIndex export_token) -> void {
   auto directive = NodeKind::ImportDirective;
   auto on_parse_error = [&] { OnParseError(context, state, directive); };
 
   auto intro_token = context.ConsumeChecked(Lex::TokenKind::Import);
   context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
 
-  switch (context.packaging_state()) {
-    case Context::PackagingState::FileStart:
-      // `package` is no longer allowed, but `import` may repeat.
-      context.set_packaging_state(Context::PackagingState::InImports);
-      [[fallthrough]];
-
-    case Context::PackagingState::InImports:
-      HandleDirectiveContent(context, state, directive, on_parse_error);
-      break;
-
-    case Context::PackagingState::AfterNonPackagingDecl: {
-      context.set_packaging_state(
-          Context::PackagingState::InImportsAfterNonPackagingDecl);
-      CARBON_DIAGNOSTIC(
-          ImportTooLate, Error,
-          "`import` directives must come after the `package` directive (if "
-          "present) and before any other entities in the file.");
-      CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
-      context.emitter()
-          .Build(intro_token, ImportTooLate)
-          .Note(context.first_non_packaging_token(), FirstDecl)
-          .Emit();
-      on_parse_error();
-      break;
-    }
-    case Context::PackagingState::InImportsAfterNonPackagingDecl:
-      // There is a sequential block of misplaced `import` statements, which can
-      // occur if a declaration is added above `import`s. Avoid duplicate
-      // warnings.
-      on_parse_error();
-      break;
+  if (export_token.is_valid()) {
+    context.AddLeafNode(NodeKind::ImportExport, export_token);
   }
+
+  if (VerifyInImports(context, intro_token)) {
+    HandleDirectiveContent(context, state, directive, export_token.is_valid(),
+                           on_parse_error);
+  } else {
+    on_parse_error();
+  }
+}
+
+auto HandleExport(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.ConsumeChecked(Lex::TokenKind::Export);
+  if (context.PositionIs(Lex::TokenKind::Import)) {
+    HandleImportHelper(context, state, state.token);
+  } else {
+    if (!VerifyInImports(context, state.token)) {
+      state.has_error = true;
+    }
+    context.AddLeafNode(NodeKind::ExportIntroducer, state.token,
+                        state.has_error);
+    context.PushState(state, State::ExportFinish);
+    context.PushState(State::DeclNameAndParamsAsNone, state.token);
+  }
+}
+
+auto HandleExportFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNodeExpectingDeclSemi(state, NodeKind::ExportDirective,
+                                   Lex::TokenKind::Export,
+                                   /*is_def_allowed=*/false);
+}
+
+auto HandleImport(Context& context) -> void {
+  auto state = context.PopState();
+
+  HandleImportHelper(context, state, /*export_token=*/Lex::TokenIndex::Invalid);
 }
 
 // Handles common logic for `package` and `library`.
@@ -229,7 +285,8 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDirectiveContent(context, state, directive, on_parse_error);
+  HandleDirectiveContent(context, state, directive, /*is_export=*/false,
+                         on_parse_error);
 }
 
 auto HandlePackage(Context& context) -> void {

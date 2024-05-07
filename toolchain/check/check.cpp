@@ -200,6 +200,87 @@ struct UnitInfo {
   UnitInfo* api_for_impl = nullptr;
 };
 
+// Imports the current package.
+static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
+                                 int total_ir_count,
+                                 SemIR::InstId package_inst_id,
+                                 SemIR::TypeId namespace_type_id) -> void {
+  // Add imports from the current package.
+  auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
+  if (self_import == unit_info.package_imports_map.end()) {
+    // Push the scope; there are no names to add.
+    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    return;
+  }
+
+  auto imported_irs = llvm::SmallVector<bool>(total_ir_count, false);
+  bool error_in_import = self_import->second.has_load_error;
+
+  for (const auto& import : self_import->second.imports) {
+    const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
+
+    if (import.names.is_export && unit_info.api_for_impl) {
+      CARBON_DIAGNOSTIC(ExportFromImpl, Error,
+                        "`export` is invalid in `impl` files.");
+      unit_info.emitter.Emit(import.names.node_id, ExportFromImpl);
+    }
+
+    auto& imported_ir = imported_irs[import_sem_ir.check_ir_id().index];
+    if (!imported_ir) {
+      imported_ir = true;
+
+      // Import the IR and its exported imports.
+      error_in_import |= ImportLibraryFromCurrentPackage(
+          context, namespace_type_id, import.names.node_id, import_sem_ir,
+          import.names.is_export);
+
+      for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
+        if (indirect_ir.is_export) {
+          auto& imported_indirect_ir =
+              imported_irs[indirect_ir.sem_ir->check_ir_id().index];
+          if (!imported_indirect_ir) {
+            imported_indirect_ir = true;
+
+            error_in_import |= ImportLibraryFromCurrentPackage(
+                context, namespace_type_id, import.names.node_id,
+                *indirect_ir.sem_ir, import.names.is_export);
+          } else if (import.names.is_export) {
+            // The indirect IR was previously indirectly imported, but it's
+            // found through `export import`. We need to mark it for re-export.
+            context.import_irs()
+                .Get(context.check_ir_map()[indirect_ir.sem_ir->check_ir_id()
+                                                .index])
+                .is_export = true;
+          }
+        }
+      }
+    } else if (import.names.is_export) {
+      // The IR was previously indirectly imported, but it's `export import`.
+      // We need to mark it -- and transitive `export import`s -- for re-export.
+      context.import_irs()
+          .Get(context.check_ir_map()[import_sem_ir.check_ir_id().index])
+          .is_export = true;
+
+      for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
+        if (indirect_ir.is_export) {
+          context.import_irs()
+              .Get(context
+                       .check_ir_map()[indirect_ir.sem_ir->check_ir_id().index])
+              .is_export = true;
+        }
+      }
+    }
+  }
+
+  // If an import of the current package caused an error for the imported
+  // file, it transitively affects the current file too.
+  if (error_in_import) {
+    context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
+  }
+  context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package,
+                             error_in_import);
+}
+
 // Add imports to the root block.
 static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
                                        int total_ir_count) -> void {
@@ -248,30 +329,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
                    {.node_id = Parse::InvalidNodeId(), .sem_ir = nullptr});
   }
 
-  // Add imports from the current package.
-  auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
-  if (self_import != unit_info.package_imports_map.end()) {
-    bool error_in_import = self_import->second.has_load_error;
-    for (const auto& import : self_import->second.imports) {
-      const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-      ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import.names.node_id, import_sem_ir);
-      error_in_import |= import_sem_ir.name_scopes()
-                             .Get(SemIR::NameScopeId::Package)
-                             .has_error;
-    }
-
-    // If an import of the current package caused an error for the imported
-    // file, it transitively affects the current file too.
-    if (error_in_import) {
-      context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
-    }
-    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package,
-                               error_in_import);
-  } else {
-    // Push the scope; there are no names to add.
-    context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
-  }
+  ImportCurrentPackage(context, unit_info, total_ir_count, package_inst_id,
+                       namespace_type_id);
   CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
 
   for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
@@ -283,7 +342,10 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
     llvm::SmallVector<SemIR::ImportIR> import_irs;
     for (auto import : package_imports.imports) {
       import_irs.push_back({.node_id = import.names.node_id,
-                            .sem_ir = &**import.unit_info->unit->sem_ir});
+                            .sem_ir = &**import.unit_info->unit->sem_ir,
+                            .is_export = false});
+      CARBON_CHECK(!import.names.is_export)
+          << "Imports from other packages can't be exported.";
     }
     ImportLibrariesFromOtherPackage(context, namespace_type_id,
                                     package_imports.node_id, package_id,

@@ -143,7 +143,7 @@ struct QualifiedName {
   IdentifierNameId rhs;
 };
 
-// Library, package, import
+// Library, package, import, export
 // ------------------------
 
 // The `package` keyword in an expression.
@@ -179,11 +179,13 @@ struct PackageDirective {
 
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
+using ImportExport = LeafNode<NodeKind::ImportExport>;
 struct ImportDirective {
   static constexpr auto Kind =
       NodeKind::ImportDirective.Define(NodeCategory::Decl);
 
   ImportIntroducerId introducer;
+  std::optional<ImportExportId> export_modifier;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
 };
@@ -199,6 +201,16 @@ struct LibraryDirective {
   NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
+// `export` as a directive.
+using ExportIntroducer = LeafNode<NodeKind::ExportIntroducer>;
+struct ExportDirective {
+  static constexpr auto Kind =
+      NodeKind::ExportDirective.Define(NodeCategory::Decl);
+
+  ExportIntroducerId introducer;
+  AnyNameComponentId name;
+};
+
 // Namespace nodes
 // ---------------
 
@@ -210,7 +222,7 @@ struct Namespace {
 
   NamespaceStartId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  NodeIdOneOf<IdentifierName, QualifiedName> name;
+  AnyNameComponentId name;
 };
 
 // Pattern nodes

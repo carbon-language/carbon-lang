@@ -194,12 +194,15 @@ CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
 
 // `import`:
 //   ImportIntroducer
+//   _optional_: ImportExport
 //   _optional_ _external_: PackageName
 //   _optional_ _external_: LibrarySpecifier
 // ImportDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, Import)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportExport, 0, Export)
 CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
                                CARBON_IF_VALID(Semi))
+
 // `library` as directive:
 //   LibraryIntroducer
 //   DefaultLibrary or _external_: LibraryName
@@ -214,6 +217,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
 //   _external_: LibraryName or DefaultLibrary
 // LibrarySpecifier
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
+
+// `export`:
+//   ExportIntroducer
+//   _external_: IdentifierName or QualifiedName
+// ExportDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportIntroducer, 0, Export)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportDirective, 2, CARBON_IF_VALID(Semi))
 
 // `namespace`:
 //   NamespaceStart
