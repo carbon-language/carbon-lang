@@ -12,7 +12,7 @@
 
 namespace Carbon::Check {
 
-auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
+static auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
                                SemIR::ClassId class_id,
                                llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
