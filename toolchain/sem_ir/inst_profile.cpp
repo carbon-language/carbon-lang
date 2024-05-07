@@ -35,7 +35,15 @@ static auto DefaultProfileArgFunction(llvm::FoldingSetNodeID& id,
 static auto InstBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
                                         const File& sem_ir, int32_t arg)
     -> void {
-  for (auto inst_id : sem_ir.inst_blocks().Get(InstBlockId(arg))) {
+  auto inst_block_id = InstBlockId(arg);
+  if (!inst_block_id.is_valid()) {
+    id.AddInteger(-1);
+    return;
+  }
+
+  auto inst_block = sem_ir.inst_blocks().Get(inst_block_id);
+  id.AddInteger(inst_block.size());
+  for (auto inst_id : inst_block) {
     id.AddInteger(inst_id.index);
   }
 }
@@ -45,7 +53,15 @@ static auto InstBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
 static auto TypeBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
                                         const File& sem_ir, int32_t arg)
     -> void {
-  for (auto type_id : sem_ir.type_blocks().Get(TypeBlockId(arg))) {
+  auto type_block_id = TypeBlockId(arg);
+  if (!type_block_id.is_valid()) {
+    id.AddInteger(-1);
+    return;
+  }
+
+  auto type_block = sem_ir.type_blocks().Get(type_block_id);
+  id.AddInteger(type_block.size());
+  for (auto type_id : type_block) {
     id.AddInteger(type_id.index);
   }
 }

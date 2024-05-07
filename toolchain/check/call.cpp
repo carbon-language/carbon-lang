@@ -12,12 +12,33 @@
 
 namespace Carbon::Check {
 
+auto PerformCallToGenericClass(Context& context, Parse::NodeId node_id,
+                               SemIR::ClassId class_id,
+                               llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
+  auto& class_info = context.classes().Get(class_id);
+
+  // Convert the arguments to match the parameters.
+  auto converted_args_id = ConvertCallArgs(
+      context, node_id, /*self_id=*/SemIR::InstId::Invalid, arg_ids,
+      /*return_storage_id=*/SemIR::InstId::Invalid, class_info.decl_id,
+      class_info.implicit_param_refs_id, class_info.param_refs_id);
+  return context.AddInst(
+      {node_id,
+       SemIR::ClassType{SemIR::TypeId::TypeType, class_id, converted_args_id}});
+}
+
 auto PerformCall(Context& context, Parse::NodeId node_id,
                  SemIR::InstId callee_id, llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   // Identify the function we're calling.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
   if (!callee_function.function_id.is_valid()) {
+    if (auto generic_class = context.types().TryGetAs<SemIR::GenericClassType>(
+            context.insts().Get(callee_id).type_id())) {
+      return PerformCallToGenericClass(context, node_id,
+                                       generic_class->class_id, arg_ids);
+    }
     if (!callee_function.is_error) {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "Value of type `{0}` is not callable.", SemIR::TypeId);

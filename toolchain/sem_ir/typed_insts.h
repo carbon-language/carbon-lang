@@ -402,11 +402,11 @@ struct ClassInit {
 
 struct ClassType {
   static constexpr auto Kind =
-      InstKind::ClassType.Define<Parse::AnyClassDeclId>("class_type");
+      InstKind::ClassType.Define<Parse::NodeId>("class_type");
 
   TypeId type_id;
   ClassId class_id;
-  // TODO: Once we support generic classes, include the class's arguments here.
+  InstBlockId args_id = InstBlockId::Invalid;
 };
 
 struct ConstType {

@@ -1158,8 +1158,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId return_storage_id, SemIR::InstId callee_id,
                      SemIR::InstBlockId implicit_param_refs_id,
                      SemIR::InstBlockId param_refs_id) -> SemIR::InstBlockId {
-  auto implicit_param_refs = context.inst_blocks().Get(implicit_param_refs_id);
-  auto param_refs = context.inst_blocks().Get(param_refs_id);
+  auto implicit_param_refs =
+      context.inst_blocks().GetOrEmpty(implicit_param_refs_id);
+  auto param_refs = context.inst_blocks().GetOrEmpty(param_refs_id);
 
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {

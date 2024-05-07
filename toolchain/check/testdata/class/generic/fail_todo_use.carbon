@@ -14,10 +14,21 @@ class Class(T:! type) {
 
 // TODO: The following should work.
 fn Run() -> i32 {
-  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+3]]:10: ERROR: Value of type `Class` is not callable.
+  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+4]]:23: ERROR: Cannot implicitly convert from `i32` to `T`.
   // CHECK:STDERR:   var v: Class(i32) = {.k = 0};
-  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR:                       ^~~~~~~~
+  // CHECK:STDERR:
   var v: Class(i32) = {.k = 0};
+  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+10]]:3: ERROR: Cannot implicitly convert from `T*` to `i32`.
+  // CHECK:STDERR:   return v.Get();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE+6]]:10: ERROR: Cannot implicitly convert from `Class*` to `Class*`.
+  // CHECK:STDERR:   return v.Get();
+  // CHECK:STDERR:          ^~~~~~
+  // CHECK:STDERR: fail_todo_use.carbon:[[@LINE-21]]:15: Initializing `addr self` parameter of method declared here.
+  // CHECK:STDERR:   fn Get[addr self: Self*]() -> T* {
+  // CHECK:STDERR:               ^~~~
   return v.Get();
 }
 
@@ -38,8 +49,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.6: type = ptr_type {.k: T} [symbolic]
 // CHECK:STDOUT:   %Run: type = fn_type @Run [template]
 // CHECK:STDOUT:   %struct.3: Run = struct_value () [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, (i32) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.k: i32} [template]
+// CHECK:STDOUT:   %.9: type = ptr_type Class [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,12 +104,17 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: Class = name_ref Class, file.%Class.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc20_29: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc20_30: {.k: i32} = struct_literal (%.loc20_29)
+// CHECK:STDOUT:   %Class: type = class_type @Class, (i32) [template = constants.%Class.3]
+// CHECK:STDOUT:   %v.var: ref Class = var v
+// CHECK:STDOUT:   %v: ref Class = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc21_29: i32 = int_literal 0 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21_30: {.k: i32} = struct_literal (%.loc21_29)
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   %v.ref: ref <error> = name_ref v, %v
+// CHECK:STDOUT:   %v.ref: ref Class = name_ref v, %v
+// CHECK:STDOUT:   %Get.ref: Get = name_ref Get, @Class.%Get.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc32_11: <bound method> = bound_method %v.ref, %Get.ref
+// CHECK:STDOUT:   %.loc32_10: Class* = addr_of %v.ref
+// CHECK:STDOUT:   %Get.call: init T* = call %.loc32_11(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
