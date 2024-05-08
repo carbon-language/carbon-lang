@@ -14,9 +14,9 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
   auto state = context.PopState();
 
   if (state.has_error || !context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    context.AddNodeExpectingDeclSemi(state,
+    context.AddNodeExpectingDeclSemi(state, decl_kind,
                                      context.tokens().GetKind(state.token),
-                                     decl_kind, /*is_def_allowed=*/true);
+                                     /*is_def_allowed=*/true);
     return;
   }
 

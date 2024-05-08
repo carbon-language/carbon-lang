@@ -10,8 +10,8 @@ namespace Carbon::Parse {
 auto HandleBaseDecl(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Base,
-                                   NodeKind::BaseDecl,
+  context.AddNodeExpectingDeclSemi(state, NodeKind::BaseDecl,
+                                   Lex::TokenKind::Base,
                                    /*is_def_allowed=*/false);
 }
 

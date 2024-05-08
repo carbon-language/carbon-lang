@@ -15,8 +15,8 @@ auto HandleNamespace(Context& context) -> void {
 auto HandleNamespaceFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Namespace,
-                                   NodeKind::Namespace,
+  context.AddNodeExpectingDeclSemi(state, NodeKind::Namespace,
+                                   Lex::TokenKind::Namespace,
                                    /*is_def_allowed=*/false);
 }
 

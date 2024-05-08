@@ -403,9 +403,9 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
 }
 
 auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
+                                       NodeKind node_kind,
                                        Lex::TokenKind decl_kind,
-                                       NodeKind node_kind, bool is_def_allowed)
-    -> void {
+                                       bool is_def_allowed) -> void {
   // TODO: This could better handle things like:
   //   base: { }
   //   var n: i32;

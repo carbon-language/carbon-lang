@@ -42,8 +42,8 @@ auto HandleAliasAfterName(Context& context) -> void {
 auto HandleAliasFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Alias,
-                                   NodeKind::Alias,
+  context.AddNodeExpectingDeclSemi(state, NodeKind::Alias,
+                                   Lex::TokenKind::Alias,
                                    /*is_def_allowed=*/false);
 }
 

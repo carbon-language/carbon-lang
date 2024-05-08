@@ -13,8 +13,8 @@ auto HandleAdaptDecl(Context& context) -> void {
   // We should factor out this common work.
   auto state = context.PopState();
 
-  context.AddNodeExpectingDeclSemi(state, Lex::TokenKind::Adapt,
-                                   NodeKind::AdaptDecl,
+  context.AddNodeExpectingDeclSemi(state, NodeKind::AdaptDecl,
+                                   Lex::TokenKind::Adapt,
                                    /*is_def_allowed=*/false);
 }
 
