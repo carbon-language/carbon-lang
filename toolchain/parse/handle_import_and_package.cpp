@@ -229,6 +229,16 @@ auto HandleExport(Context& context) -> void {
   auto state = context.PopState();
 
   context.ConsumeChecked(Lex::TokenKind::Export);
+
+  // Error for both Main//default and every implementation file.
+  auto packaging = context.tree().packaging_directive();
+  if (!packaging || packaging->api_or_impl == Tree::ApiOrImpl::Impl) {
+    CARBON_DIAGNOSTIC(ExportFromImpl, Error,
+                      "`export` is only allowed in API files.");
+    context.emitter().Emit(state.token, ExportFromImpl);
+    state.has_error = true;
+  }
+
   if (context.PositionIs(Lex::TokenKind::Import)) {
     HandleImportHelper(context, state, state.token);
   } else {

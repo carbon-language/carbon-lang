@@ -55,11 +55,14 @@ var c: C = {.x = ()};
 
 library "export_in_impl" impl;
 
-// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:8: ERROR: `export` is invalid in `impl` files.
+// CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: `export` is only allowed in API files.
 // CHECK:STDERR: export import library "class";
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 export import library "class";
+
+// Note the import still occurs.
+var c: C = {.x = ()};
 
 // --- export_export_import.impl.carbon
 
@@ -216,11 +219,45 @@ alias Local = C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_in_impl.impl.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT:   %.3: type = ptr_type {.x: ()} [template]
+// CHECK:STDOUT:   %tuple: () = tuple_value () [template]
+// CHECK:STDOUT:   %struct: C = struct_value (%tuple) [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = %import_ref
+// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref = import_ref ir1, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %c.var: ref C = var c
+// CHECK:STDOUT:   %c: ref C = bind_name c, %c.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .x = file.%import_ref.2
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_19.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_20.1: {.x: ()} = struct_literal (%.loc11_19.1)
+// CHECK:STDOUT:   %.loc11_20.2: ref () = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc11_19.2: init () = tuple_init () to %.loc11_20.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_20.3: init () = converted %.loc11_19.1, %.loc11_19.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_20.4: init C = class_init (%.loc11_20.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_21: init C = converted %.loc11_20.1, %.loc11_20.4 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_21
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_export_import.impl.carbon

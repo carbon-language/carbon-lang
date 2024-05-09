@@ -75,6 +75,10 @@ var c: C = {.x = ()};
 library "export_in_impl" impl;
 
 import library "class";
+// CHECK:STDERR: fail_todo_export_in_impl.impl.carbon:[[@LINE+8]]:1: ERROR: `export` is only allowed in API files.
+// CHECK:STDERR: export C;
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_todo_export_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: Semantics TODO: `ExportDirective`.
 // CHECK:STDERR: export C;
 // CHECK:STDERR: ^~~~~~~~~

@@ -219,12 +219,6 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
   for (const auto& import : self_import->second.imports) {
     const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
 
-    if (import.names.is_export && unit_info.api_for_impl) {
-      CARBON_DIAGNOSTIC(ExportFromImpl, Error,
-                        "`export` is invalid in `impl` files.");
-      unit_info.emitter.Emit(import.names.node_id, ExportFromImpl);
-    }
-
     auto& imported_ir = imported_irs[import_sem_ir.check_ir_id().index];
     if (!imported_ir) {
       imported_ir = true;
