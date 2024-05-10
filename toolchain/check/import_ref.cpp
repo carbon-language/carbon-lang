@@ -44,6 +44,10 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
   if (!ir_id.is_valid()) {
     // Note this updates check_ir_map.
     ir_id = InternalAddImportIR(context, import_ir);
+  } else if (import_ir.is_export) {
+    // We're processing an `export import`. In case the IR was indirectly added
+    // as a non-export, mark it as an export.
+    context.import_irs().Get(ir_id).is_export = true;
   }
   return ir_id;
 }
@@ -246,8 +250,9 @@ class ImportRefResolver {
       cursor_ir_id = context_.check_ir_map()[cursor_ir->check_ir_id().index];
       if (!cursor_ir_id.is_valid()) {
         // TODO: Should we figure out a location to assign here?
-        cursor_ir_id = AddImportIR(
-            context_, {.node_id = Parse::NodeId::Invalid, .sem_ir = cursor_ir});
+        cursor_ir_id = AddImportIR(context_, {.node_id = Parse::NodeId::Invalid,
+                                              .sem_ir = cursor_ir,
+                                              .is_export = false});
       }
       cursor_inst_id = ir_inst.inst_id;
 

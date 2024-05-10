@@ -213,9 +213,11 @@ static auto CopyEnclosingNameScopesFromImportIR(
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
-                                     const SemIR::File& import_sem_ir) -> void {
-  auto ir_id =
-      AddImportIR(context, {.node_id = node_id, .sem_ir = &import_sem_ir});
+                                     const SemIR::File& import_sem_ir,
+                                     bool is_export) -> void {
+  auto ir_id = AddImportIR(
+      context,
+      {.node_id = node_id, .sem_ir = &import_sem_ir, .is_export = is_export});
 
   context.import_ir_constant_values()[ir_id.index].Set(
       SemIR::InstId::PackageNamespace,
@@ -256,6 +258,12 @@ auto ImportLibraryFromCurrentPackage(Context& context,
         context.DiagnoseDuplicateName(target_id, it->second);
       }
     }
+  }
+
+  // If an import of the current package caused an error for the imported
+  // file, it transitively affects the current file too.
+  if (import_sem_ir.name_scopes().Get(SemIR::NameScopeId::Package).has_error) {
+    context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
   }
 }
 

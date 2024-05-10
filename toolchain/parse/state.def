@@ -670,12 +670,33 @@ CARBON_PARSE_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
+// Handles `export`.
+//
+// export import library "libname";
+// ^~~~~~
+//   1. Import
+//
+// export Name;
+// ^~~~~~
+//   1. DeclNameAndParamsAsNone
+//   2. ExportFinish
+CARBON_PARSE_STATE(Export)
+
+// Finishes an `export`.
+//
+// export Name;
+//            ^
+//   (state done)
+CARBON_PARSE_STATE(ExportFinish)
+
 // Handles `import`.
 //
 // import pkgname [library "libname"] ;
 // ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // import ??? ;
 // ^~~~~~~~~~~~
+// export import library "libname";
+//        ^~~~~~~~~~~~~~~~~~~~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(Import)
 

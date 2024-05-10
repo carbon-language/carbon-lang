@@ -14,6 +14,11 @@ auto HandleImportIntroducer(Context& /*context*/,
   return true;
 }
 
+auto HandleImportExport(Context& /*context*/, Parse::ImportExportId /*node_id*/)
+    -> bool {
+  return true;
+}
+
 auto HandleImportDirective(Context& /*context*/,
                            Parse::ImportDirectiveId /*node_id*/) -> bool {
   return true;

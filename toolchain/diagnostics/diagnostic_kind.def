@@ -99,6 +99,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryNameOrDefault)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
+CARBON_DIAGNOSTIC_KIND(ExportImportPackage)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
@@ -148,6 +149,7 @@ CARBON_DIAGNOSTIC_KIND(ImportSelf)
 CARBON_DIAGNOSTIC_KIND(ExplicitImportApi)
 CARBON_DIAGNOSTIC_KIND(RepeatedImport)
 CARBON_DIAGNOSTIC_KIND(FirstImported)
+CARBON_DIAGNOSTIC_KIND(ExportFromImpl)
 
 // Merge-related redeclaration checking.
 CARBON_DIAGNOSTIC_KIND(RedeclPrevDecl)
