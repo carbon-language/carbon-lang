@@ -213,8 +213,13 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
     return;
   }
 
-  auto imported_irs = llvm::SmallVector<bool>(total_ir_count, false);
-  bool error_in_import = self_import->second.has_load_error;
+  // Track whether an IR was imported in full, including `export import`. This
+  // distinguishes from IRs that are indirectly added without all names being
+  // exported to this IR.
+  llvm::SmallVector<bool> imported_irs(total_ir_count, false);
+  if (self_import->second.has_load_error) {
+    context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
+  }
 
   for (const auto& import : self_import->second.imports) {
     const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
@@ -224,9 +229,9 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
       imported_ir = true;
 
       // Import the IR and its exported imports.
-      error_in_import |= ImportLibraryFromCurrentPackage(
-          context, namespace_type_id, import.names.node_id, import_sem_ir,
-          import.names.is_export);
+      ImportLibraryFromCurrentPackage(context, namespace_type_id,
+                                      import.names.node_id, import_sem_ir,
+                                      import.names.is_export);
 
       for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
         if (indirect_ir.is_export) {
@@ -235,7 +240,7 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
           if (!imported_indirect_ir) {
             imported_indirect_ir = true;
 
-            error_in_import |= ImportLibraryFromCurrentPackage(
+            ImportLibraryFromCurrentPackage(
                 context, namespace_type_id, import.names.node_id,
                 *indirect_ir.sem_ir, import.names.is_export);
           } else if (import.names.is_export) {
@@ -266,13 +271,9 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
     }
   }
 
-  // If an import of the current package caused an error for the imported
-  // file, it transitively affects the current file too.
-  if (error_in_import) {
-    context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
-  }
-  context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package,
-                             error_in_import);
+  context.scope_stack().Push(
+      package_inst_id, SemIR::NameScopeId::Package,
+      context.name_scopes().Get(SemIR::NameScopeId::Package).has_error);
 }
 
 // Add imports to the root block.

@@ -13,12 +13,12 @@ namespace Carbon::Check {
 
 // Add imports from a single library in the current package. This pulls in all
 // names; conflicts for things such as `package.a.b.c` will be flagged even
-// though they are several layers deep. Returns true if the import has an error.
+// though they are several layers deep.
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
                                      const SemIR::File& import_sem_ir,
-                                     bool is_export) -> bool;
+                                     bool is_export) -> void;
 
 // Adds another package's imports to name lookup, with all libraries together.
 // This only adds the package name to lookup, so that `package.ImportedPackage`

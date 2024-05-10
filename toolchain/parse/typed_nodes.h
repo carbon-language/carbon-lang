@@ -144,7 +144,7 @@ struct QualifiedName {
 };
 
 // Library, package, import, export
-// ------------------------
+// --------------------------------
 
 // The `package` keyword in an expression.
 using PackageExpr = LeafNode<NodeKind::PackageExpr, NodeCategory::Expr>;
