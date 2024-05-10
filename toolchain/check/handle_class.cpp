@@ -68,6 +68,11 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
                         .is_extern = prev_is_extern},
                        prev_import_ir_id);
 
+  if (new_is_definition && prev_class.is_defined()) {
+    // Don't attempt to merge multiple definitions.
+    return false;
+  }
+
   // The introducer kind must match the previous declaration.
   // TODO: The rule here is not yet decided. See #3384.
   if (prev_class.inheritance_kind != new_class.inheritance_kind) {

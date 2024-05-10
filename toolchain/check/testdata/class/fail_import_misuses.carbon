@@ -74,21 +74,22 @@ var a: Incomplete;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = class_type @.1 [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Empty = %import_ref.1
 // CHECK:STDOUT:     .Incomplete = %import_ref.2
 // CHECK:STDOUT:     .Core = %Core
-// CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.2] {}
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, %import_ref.2 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
@@ -96,7 +97,12 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Empty
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @.1 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
