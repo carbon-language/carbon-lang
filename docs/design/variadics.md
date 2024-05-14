@@ -35,7 +35,7 @@ FIXME: Switch to new tuple indexing syntax
 
 A "pack expansion" is a syntactic unit beginning with `...`, which is a kind of
 compile-time loop over sequences called "packs". Packs are initialized and
-referred to using "pack bindings", which are marked with the `each` keyword at
+referred to using "each-names", which are marked with the `each` keyword at
 the point of declaration and the point of use.
 
 The syntax and behavior of a pack expansion depends on its context, and in some
@@ -72,48 +72,44 @@ fn Zip[... each ElementType:! type]
 }
 ```
 
+TODO: Reconsider the statement that packs do not have types.
+
 A _pack_ is a sequence of a fixed number of values called "elements", which may
 be of different types. Packs are very similar to tuple values in many ways, but
 they are not first-class values -- in particular, packs do not have types, and
 no expression evaluates to a pack. The _arity_ of a pack is a compile-time value
 representing the number of values in the sequence.
 
+An _each-name_ consists of the keyword `each` followed by the name of a pack,
+and can only occur inside a pack expansion. On the Nth iteration of the pack
+expansion, an each-name refers to the Nth element of the named pack. As a result,
+a pack binding pattern with an each-name, such as `each ElementType:! type`,
+acts as a declaration of all the elements of the named pack, and thereby
+implicitly acts as a declaration of the pack itself.
+
+Note that `each` is part of the name syntax, not an expression operator, so it
+binds more tightly than any expression syntax. For example, the loop condition
+`...and each iter != each vector.End()` in the implementation of `Zip` is
+equivalent to `...and (each iter) != (each vector).End()`.
+
+FIXME: clean up all uses of "pack binding pattern", "each expression", "expansion site"
+
 A pattern of the form "`...` _subpattern_" is called a _pack expansion pattern_.
 It can only appear as part of a tuple pattern (or an implicit parameter list),
 and it matches a sequence of tuple elements if each element matches
 _subpattern_. Since _subpattern_ will be matched against multiple scrutinees (or
-none) in a single pattern-matching operation, it cannot contain ordinary binding
-patterns. However, it can contain _pack binding patterns_, which are binding
-patterns that begin with `each`, such as `each ElementType:! type`. A pack
-binding pattern can match an arbitrarily large number of times, and binds to a
-pack consisting of all the matched values. A usage of a pack binding always has
-the form "`each` _identifier_".
-
-By default, a pack binding pattern can match any number of times, but `each` can
-optionally be followed by "`(>=` _integer-literal_ `)`", which constrains the
-binding to match at least that many times. This constraint also applies to all
-other packs in the same pack expansion, and all other packs that are deduced to
-have the same arity.
-
-> **TODO:** The minimum-arity constraint syntax is a placeholder. Choose a final
-> syntax.
-
-The declared type of a pack binding can contain a usage of another pack binding,
-but it must be a deduced parameter of the pattern.
+none) in a single pattern-matching operation, a binding patterns within a
+pack expansion pattern must declare an each-name, and the Nth iteration of the
+pack expansion will initialize the Nth element of the named pack from the
+Nth scrutinee. The binding pattern's type expression may contain an each-name,
+but if so, it must be a deduced parameter of the enclosing pattern.
 
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 
-Note that the operand of `each` is always an identifier name or a binding
-pattern, so it does not have a precedence. For example, the loop condition
-`...and each iter != each vector.End()` in the implementation of `Zip` is
-equivalent to `...and (each iter) != (each vector).End()`.
+TODO: Move this passage up, so it doesn't come after discussion of pack expansion patterns?
 
-Usages of the `each` keyword (in other words, pack binding patterns and usages
-of pack bindings) are called _expansion sites_. The _arity_ of an expansion site
-is a symbolic value representing the arity of the underlying pack. Expansion
-sites can only occur in the body of a _pack expansion_, which is an instance of
-one of the following syntactic forms:
+A _pack expansion_ is an instance of one of the following syntactic forms:
 
 -   A statement of the form "`...` _statement_".
 -   A tuple expression element of the form "`...` _expression_", with the same
@@ -124,6 +120,9 @@ one of the following syntactic forms:
     same precedence as `,`.
 -   An expression of the form "`...` `and` _expression_" or "`...` `or`
     _expression_", with the same precedence as `and` and `or`.
+
+The statement, expression, or pattern following the `...` (and the `and`/`or`,
+if present) is called the _body_ of the expansion.
 
 The `...` token can also occur in a tuple expression element of the form "`...`
 `expand` _expression_", with the same precedence as `,`. However, that syntax is
@@ -151,28 +150,26 @@ By convention, `...` is always followed by whitespace, except that `...and`,
 This serves to emphasize that the keyword is not part of the expansion body, but
 rather a modifier on the syntax and semantics of `...`.
 
-In a pack expansion, the statement, expression, or pattern embedded in the
-expansion is called the _body_ of the expansion. All sites of a given expansion
-must have the same arity, which we will also refer to as the arity of the
-expansion. If an expansion has no expansion sites, it must be a pack expansion
-pattern, or an expression in the type position of a binding pattern, and its
-arity is deduced from the scrutinee.
+All each-names in a given expansion must refer to packs with the same arity,
+which we will also refer to as the arity of the expansion. If an expansion
+contains no each-names, it must be a pattern, or an expression in the type
+position of a binding pattern, and its arity is deduced from the scrutinee.
 
 A pack expansion or `...expand` expression cannot contain another pack expansion
 or `...expand` expression.
 
-A pack binding cannot be used in the same pack expansion that declares it. In
-most if not all cases, a binding that violates this rule can be changed to a
-non-pack binding, because pack bindings are only necessary when you need to
+An each-name cannot be used in the same pack expansion that declares it. In
+most if not all cases, an each-name that violates this rule can be changed to an
+ordinary name, because each-names are only necessary when you need to
 transfer a pack from one pack expansion to another.
 
 A pack expansion can be thought of as a kind of loop that executes at compile
 time (specifically, monomorphization time), where the expansion body is
 implicitly parameterized by an integer value called the _pack index_, which
 ranges from 0 to one less than the arity of the expansion. The pack index is
-implicitly used as an index into the expansion site packs. This is easiest to
-see with statement pack expansions. For example, if `a`, `x`, and `y` are pack
-bindings with arity 3, then `... each a += each x * each y;` is roughly
+implicitly used as an index into the packs referred to by each-names. This is easiest to
+see with statement pack expansions. For example, if `a`, `x`, and `y` are packs
+with arity 3, then `... each a += each x * each y;` is roughly
 equivalent to
 
 ```carbon
@@ -291,12 +288,11 @@ A tuple expression element of the form "`...` _expression_" evaluates to a
 sequence of N values, where the k'th value is the value of _operand_ where `$I`
 is equal to k - 1.
 
-An expression of the form "`each` _identifier_", where _identifier_ names a pack
-binding, evaluates to the `$I`th value that it was bound to (indexed from zero).
+An each-name evaluates to the `$I`th value of the pack it refers to (indexed from zero).
 
 ### Pattern matching
 
-`...` expansions can also appear in patterns. The semantics are chosen to follow
+The semantics of pack expansion patterns are chosen to follow
 the general principle that pattern matching is the inverse of expression
 evaluation, so for example if the pattern `(... each x: auto)` matches some
 scrutinee value `s`, the expression `(... each x)` should be equal to `s`. These
@@ -314,7 +310,8 @@ The remaining elements of the scrutinee are iteratively matched against
 _operand_, in order. In each iteration, `$I` is equal to the index of the
 scrutinee element being matched, minus N.
 
-A pack binding pattern binds the name to each of the scrutinee values, in order.
+On the Nth iteration, a binding pattern binds the Nth element of the named pack
+to the Nth scrutinee value.
 
 ## Typechecking
 
@@ -367,173 +364,239 @@ type `T`. We can't represent this as an explicit list of element types until
 those indeterminate numbers are known, so we need a more general representation
 for tuple types.
 
-In this model, at compile time a tuple value (or tuple type) consists of a sequence of _segments_, and a segment
-consists of an expression called the _kernel_, an arity, and an _offset_. 
-The kernel can have an arbitrary type, but the arity and offset have type `Count`.
-We will use the notation `<K; A; O>` to
-represent a segment with kernel `K`, arity `A`, and offset `O`, but note
-that this is just for purposes of illustration; it isn't Carbon syntax.
-Each segment represents a subsequence of elements that share a common structure.
-The arity specifies the number of elements in that sequence, and the kernel
-and offset specify the values of those elements: to determine the i'th element
-of the sequence, we take the kernel and replace each mention of a pack
-binding with the k'th element of the pack, where k is the sum of i and the
-segment's offset. For example, if `P1` and `P2` are packs, the segment `<(P1, P2, X), 3, 2>` represents
-the element sequence
-`(P1[:2:], P2[:2:], X), (P1[:3:], P2[:3:], X), (P1[:4:], P2[:4:], X)`.
+===
+FIXME: new approach: Heterogeneous segment must have the same shape as its kernel, and cover
+whole kernel range; notation is `<kernel>`. Homogeneous segments need an
+explicit shape; notation is `<kernel; shape>`. Note that singular segments are
+homogeneous.
 
-FIXME: explain how the transformation to element form can occur during
-monomorphization (if not before). Maybe explain how this leads to the
-conclusion that a segment is a symbolic value iff its properties are symbolic
-values. I.e. a symbolic value is an expression which can be monomorphized.
+Splitting/merging are only allowed on homogeneous segments, in order to satisfy
+that constraint. Otherwise, must perform substitution/extraction. Each segment
+has a type, which is a segment with the same shape. As a result, substitution/extraction
+must transform type segments the same way. In practice that usually that means
+splitting/merging.
 
-If the kernel refers to any packs, they must all have the same arity, which we will
-call the _kernel arity_.
-A segment is _heterogeneous_ if its kernel refers to at least one pack, and
-_homogeneous_ otherwise. The offset has no meaning on a homogeneous
-segment; homogeneous segments are equal if they have equal kernels and arities,
-whereas heterogeneous segments are equal only if their kernels, arities, and
-offsets are all equal.
-A segment `<K; A1+A2; O>` can be split into two consecutive segments
-`<K; A1; O>, <K; A2; O+A1>` (if `A1` and `A2` are not negative) and conversely
-two consecutive segments `<K; A1; O>, <K; A2; O+A1>` can be merged
-into a single segment `<K; A1+A2; O>`.
+`{ }` is a pack, which is a sequence of segments. Can think of a pack as a
+"vertical" sequence, as opposed to tuples, which are "horizontal". `...` converts
+a pack to a tuple ("rotates" vertical to horizontal). A singuler tuple element `E`
+can always be rewritten as `...{<E; 1>}`. `...{E1}, ...{E2}` can be rewritten
+as `...{E1, E2}`.
 
-A segment is _singular_ if its arity is known to be 1, and _variadic_
-if its arity is unknown. In contexts where all segments are known to be
-singular, we will sometimes refer to them as "elements". 
-
-The kernel arity must be
-greater than or equal to the sum of the segment's arity and offset. A segment
-is _normalized_ if all of the following hold:
-- The segment's offset is 0.
-- Either the segment is homogeneous or its arity is equal to the kernel arity.
-- If the segment's arity is a template constant, it is equal to 1.
-
-A pack or tuple value can always be written as a sequence of normalized segments.
-More precisely, any complete sequence of segments has the following invariants:
-- If a segment's arity is a template constant, it is equal to 1.
-- If a segment is heterogeneous, the sum of its arity and offset is less than or equal to the kernel
-  arity.
-- If a segment has the form `<K; A; O>` where `O` is not 0, it is immediately
-  preceded by a segment `<K; B; P>` where `O` = `B+P`.
-- If a segment has the form `<K; A; O>` where `A+O` is less than the kernel
-  arity, it is immediately followed by a segment `<K; B; A+O>`.
-FIXME: the above may not be complete, and some of the conditions apply only to
-heterogeneous segments (is there a way to make them apply to homogeneous segments
-as well?)
-
-FIXME: An alternate representation might make the invariants more intuitive.
-Maybe left-offset, arity, right-offset, which together sum to the kernel arity?
-Or a more radical change: each segment covers the whole kernel arity, and it's
-split into sub-segments (fragments?)? Or maybe we don't need sub-segments at
-all? That doesn't quite work because of homogeneous segments (where the arity
-is extrinsic).
+===
 
 
-The
-_shape_ of a tuple type is the sequence of arities of its segments, so the shape
-of the type of `z` is `(|x|, 1, |T|)`.
+In this model, at compile time a tuple value (or tuple type) consists of a sequence of _segments_.
+A segment symbolically represents a
+sequence of elements that share a common structure, represented by an expression
+called the _kernel_ of the segment. The individual elements are computed
+from the kernel at monomorphization time by applying pack expansion: the I'th element of the sequence is
+found by replacing every each-name with the I'th element
+of the named pack, and then evaluating the resulting expression.
 
-A segment
-is a symbolic value only if the kernel doesn't name any packs, or the
-segment's arity is equal to the arities of the packs named in the kernel.
-(FIXME explain why?)
+Pack expansion can also be applied symbolically, expanding a segment into a
+sequence of segments, using the segments rather than the elements of packs like `X`.
+This will be described in more detail below.
+
+A _shape_ is a kind of "structured arity": it represents the arity of a segment
+in terms of the arities of the segments that it will be decomposed into by
+symbolic pack expansion. This structure can be recursive: the arities of those
+segments can themselves represented as shapes, if we have information about how
+those segments will be expanded. Otherwise, they are represented as symbolic
+bindings of type `Shape` (FIXME introduce that type or drop this), literal `1`s,
+or sums thereof.
+We will use a tuple notation to represent shapes; for example, `(1, (X, 1))` is
+the shape of a segment that will be symbolically expanded into a singular
+segment and a variadic segment, which will itself be expanded into a segment
+with shape `X` followed by a singular segment. Note that there is no difference
+between a shape consisting of a single element, and that single element in isolation --
+in terms of tuple notation, shapes never have trailing commas.
+
+The shape of a pack is a sequence consisting of the shapes of its segments. The
+shape of a pack binding is the shape of its type. All pack bindings used in a
+kernel must have the same shape, which is also the shape of the segment.
+
+A _homogeneous_ segment is a segment whose kernel does not use any pack
+bindings. As a result, the shape of a homogeneous segment is not implicit in its
+kernel, but is an independent property of the segment. The elements of a
+homogeneous segment all have the same value, which is the value of the kernel
+expression. A segment that is not homogeneous is _heterogeneous_.
+
+A _singular_ segment is a homogeneous segment where the arity is a template
+constant value equal to 1. In contexts where all segments are known to be
+singular, we will sometimes refer to them as elements. 
+
+We will use the notation `<K>` to represent a heterogeneous segment with kernel
+`K`, and `<K; S1, S2, S3>` to represent a homogeneous segment with kernel `K`
+and shape `S1, S2, S3`, but note that this is just for purposes
+of illustration; it isn't Carbon syntax.
+
+Every segment has a type, which is a pack with the same shape as the segment.
+A segment or pack binding is _uniform_ if its type consists of a single segment (FIXME ... that is uniform?). A homogeneous
+segment's type is always a homogeneous segment, but a heterogeneous segment's
+type may be a homogeneous segment, heterogeneous segment, or a pack of multiple
+segments. 
+
+FIXME explain how type is computed?
+A homogeneous segment's type is a homogeneous segment with the same shape,
+whose kernel is the type of the segment kernel.
+In a heterogeneous segment, the type of the kernel is computed by ordinary
+scalar typechecking, with placeholders for the types of `each` expressions, and
+then pack-expanding that type expression using the types of the pack bindings.
+Thus, a segment is uniform if the pack bindings it names are uniform.
+I think that implies that a segment is uniform if its shape has no commas
+(is a single element? shape is homogeneous? need better terminology).
+FIXME: Maybe define uniform that way?
+FIXME: maybe homogeneous segments have homogeneous shapes, which are sums rather
+than tuples. Need to generalize "same shape" to something like "compatible shape"
+though. But does that still meet the needs that motivated giving homogeneous
+segments a shape to begin with? I think so.
+
+FIXME: Can we extend this model to patterns? How?
+
+We care about uniformity because we can type check a sequence of segments against
+a uniform segment in O(N) time.
+
+
+Pack-expanding a uniform segment with packs of uniform segments produces a pack of uniform segments
+But the fact that we can do the expansion implies that the substituted packs have types that are
+compatible with the uniform type of their bindings.
+FIXME is this if and only if? Otherwise the below might be sufficient but not necessary.
+
+What does that imply about merging?
+Given a pack, we're trying to identify a uniform segment, and definitions for the
+bindings it contains, that expand to the pack.
+-> The segment must be uniform, so the bindings must be uniform (necessary and sufficient)
+-> The starting pack must have uniform segments
+-> The bound packs must have uniform segments
+
+For typechecking purposes we usually want the resulting segment to be
+equal to the original pack. 
+That will be the case if for each binding, the binding's type segment equals the
+bound pack's type. i.e. the binding's type segment expands to the bound pack's type.
+Assuming the bound packs have more than one segment (i.e.
+the merge is actually merging something), that can only happen if each bound
+pack's segments have equal homogeneous types, or if we form the binding's
+type via another layer of this process.
+
+FIXME: No, this is too strict. Need to be able to accommodate stuff like
+rewriting `F(a, b, ... each c)` to `F(... each args)` where they have types `A`, `B`, and `each C` that all satisfy some interface `I`.
+ID-expressions for non-template bindings seem to play special role here, because of the fact that they're 
+opaque. So a usage of `A` is just "an arbitrary instance of this type" except that
+it's known to be equal to any other usage of `A`. We can drop the latter if the binding is otherwise unused, or if we can
+perform the same transformation (with the same set of binding definitions!) on all other uses.
+This does mean we can't perform the transformation greedily: we need to know exactly what span of
+segments we must merge, because the validation of that property could be expensive.
+On the other hand, for separate-compilation purposes it would be much cleaner
+if caller and callee can agree on the underlying signature.
+
+Possible way to think about this: bindings are opaque, so pack expansion normally
+adds information, and inverse-expansion normally removes it. The special case
+is if the pack binding value is formed from the concatenated names of bindings
+that have the same phase as the binding, and equal types, and those names are not
+used elsewhere after the transformation. Also, for an expression usage it's
+sort of OK to lose information- can cause typechecking to fail spuriously, but
+not succeed spuriously. But in a pattern context it's inverted, so we have to
+be strict (maybe it's about deducing vs. non-deducing usage rather than pattern vs. expression?)
+
+Probably this belongs in another section
+
+
+
+In an expression context (i.e. arguments, not parameters), the pack type can
+expand to a supertype of the segment types, but that means we're discarding
+type information, so the result is usable in fewer contexts.
+In pattern context it's the other way around: pack type can expand to a subtype
+of the segment types, but result matches in fewer cases.
+
+
+
+
+
+
+
+FIXME remember to discuss typechecking ...expand somewhere. Notably, do we
+allow this kind of thing, where there's no way to replace `auto` with a
+more specific type expression?
+```
+let (...each A: auto) = (...expand G());
+```
 
 FIXME have we explained that packs are made of segments yet?
 
-Segments are a generalized form of expression pack expansion: each segment
+As discussed above, segments are a generalized form of expression pack expansion: each segment
 represents a kind of compile time loop, in which a notional "pack index" ranges
-from the offset to the sum of the offset and the arity minus one, and on each
-iteration the kernel is evaluated, using the pack index to select elements of
-the pack bindings that the kernel refers to.
+from 0 to the arity minus one, and on each iteration the kernel is evaluated,
+using the pack index to select elements of the pack bindings that the kernel
+refers to (if any).
 
 As a result, variable substitution works differently on segments: when the values
 of a segment's pack bindings are known, we don't textually substitute them into
 the segment's kernel. Instead, we perform pack expansion on the segment, which
-evaluates the loop in terms of those pack values.
+evaluates the loop in terms of those pack values. 
 
+
+
+FIXME: notation for packs? e.g. curly braces?
+FIXME: Rewrite this to only use `Vector` in one way, for clarity. Maybe pointer for the other?
 Pack expansion on a segment can be expressed symbolically: for example,
-if a pack `P` consists of the segments `<i32; 1; 0>, <Vector(each T); X; 4>`,
-and a pack `Q` consists of the segments `<f64; 1; 0>, <Optional(each U); X; 4>`,
-then the segment `<(each P, Vector(each Q)); X+1; 0>` can be expanded to
-`<(i32, Vector(f32)); 1; 0>, <(Vector(each T), Vector(Optional(each U))); X; 4>`.
-This expansion actually consists of two steps: first, we split the source segment
-into `<(each P, each Q); 1; 0>, <(each P, each Q); X; 1>` following the rule
-described above, so that its shape
-matches the shape of `P` and `Q` (which we will call the _substituted packs_).
-In the next step, we iterate over the segments in parallel, substituting the kernels
-from the `P` and `Q` segments into the kernel of the source segment,
-and replacing the source segment's offset with the corresponding substituted
-packs' offset.
+if a pack `P` consists of the segments `<i32; 1>, <Vector(each T)>`,
+and a pack `Q` consists of the segments `<f64; 1>, <Optional(each U)>`,
+then the segment `<(each P, Vector(each Q))>` can be expanded to
+`<(i32, Vector(f32)); 1>, <(Vector(each T), Vector(Optional(each U)))>`.
 
-To perform a symbolic pack expansion, all of the following conditions
-must hold:
-- The substituted packs must have the same shape, and corresponding segments
-  of the substituted packs must have the same offsets.
-- The source segment must have offset 0.
-- The arity of the source segment must equal the sum of the arities of the
-  segments in a substituted pack.
-- All packs named in the kernel of the source segment must be substituted.
+FIXME: explain that expansion applies simultaneously to the types. Maybe 
+introduce a notation for a typed segment?
+
+To perform a symbolic pack expansion, all uses of pack bindings in the kernel of the
+source segment must be substituted, and all substituted pack values must have the same shape.
 
 Recall that a symbolic value is an expression where, if we substitute
 template constant values for its symbolic variables, the result will be a
 template constant value. Since symbolic expansion is how we perform substitution
 on a segment, that implies that a segment is a symbolic value if its
-kernel, arity, and offset are symbolic values, and the above conditions are
-guaranteed to hold.
-
-FIXME: Pin down how that works with the constraint on the substituted packs--
-does it go via their types? Maybe it follows from the sum-of-arities constraint
-and some invariant of how we create and transform packs?
-Candidate invariant: we never discard parts of a pack. If a heterogeneous segment
-has a nonzero offset, it's always preceded by a segment it's contiguous with,
-and if its offset plus arity is less than the arity of the kernel, it's
-always followed by a segment it's contiguous with. Then maybe we can merge and then split
-to make it true. Maybe "normalized" means those are all merged, so arity matches kernel arity?
-FIXME: This isn't fully true, though -- user code could choose to violate that, like the
-return type of `ZipRotate`. But maybe that's the point: within the signature,
-that property isn't violated. It could be violated by the callsite, but we
-don't let it. In other words, this invariant applies within a given scope.
-Also, I think it only applies at compile time.
-We could do something similar within a scope using local variables, but then
-they're opaque, so you still never see packs that don't have this property
-
+kernel is a symbolic value.
+FIXME: we may not need any of that; the only nontrivial part is that the arity
+is irrelevant (because we've established as an invariant that it's symbolic), which we don't
+address here.
 
 Segment expansion has an inverse operation, called _segment merging_, which
 takes an expanded pack and a set of substituted packs and computes the
 corresponding source segment. For example, given the definitions of `P` and
-`Q` given earlier, the pack `<(i32, Vector(f32)); 1; 0>, <(Vector(each T), Vector(Optional(each U))); X; 4>`
-can be merged into a single segment `<(each P, Vector(each Q)); X+1; 0>`.
-FIXME: conditions for doing that
+`Q` given earlier, the pack `<(i32, Vector(f32)); 1>, <(Vector(each T), Vector(Optional(each U)))>`
+can be merged into a single segment `<(each P, Vector(each Q))>`.
+FIXME: conditions for doing that: have to do the same thing to the types
+
 FIXME: degenerate case where there are no substituted packs, just a desired shape
 FIXME: build on this somewhere by explaining the use case (where the substituted packs are concatenations)
 
-Every pack expansion pattern, and every pack expansion expression in the type
-position of a binding pattern, has a hidden deduced symbolic parameter that represents
-its arity. Given a pack binding `B`, we will use `|B|` to represent the
-deduced arity parameter of the expansion pattern that contains the definition
-of `B`, but this is only for purposes of illustration; it isn't Carbon syntax.
+FIXME this probably needs to be much earlier:
+
+The type of a pack binding is itself a pack, but the type can only consist of
+multiple segments if the type is deduced from the initializer (currently this is
+only possible with `auto`, but it would also apply to declarations like
+`let [... each T:! type](... each t: T) = (...expand F());`, if Carbon supports
+that). In all other cases, the type of a pack binding is a single segment, whose
+kernel is the binding's declared type. If that kernel is homogeneous, the segment's arity
+is the sum of the arities in the binding's initializer. If the initializer is not
+visible at the point of declaration, we introduce a hidden deduced symbolic binding of type `Count`
+to represent that unknown arity. As a consequence, if a pack binding has a
+homogeneous type, its declaration must either have a visible initializer,
+or occur in a context where deduced bindings are permitted (such as
+a function signature).
+
+Given a pack binding `B` whose initializer is not visible, we will use `|B|` as
+a shorthand for the shape of `B`, but this is only for purposes of illustration;
+it isn't Carbon syntax. (FIXME can/should we limit this to homogeneous-typed bindings?)
 
 So, continuing the earlier example, the type of `z` is represented symbolically
 as
-`(<i32; |x|; 0>, <f32; 1; 0>, <Optional(each T); |T|; 0>)`.
+`(<i32; |x|>, <f32; 0>, <Optional(each T)>)`.
 
-A hidden arity parameter can be thought of as an integer, but its type also records
-the minimum possible value, which is typically 0, but can be
-greater in some circumstances. For example, given this code:
+FIXME should we explicitly talk about this example?
 
 ```carbon
-let (... each x: auto) = (x, ... each y, z);
+let (... each x: i32) = (a, ... each b, c);
 ```
-
-The arity of `x` must be at least the minimum arity of `y`, plus 2, and that
-fact will be recorded in the type of `|x|`. However, this applies only when
-it is not possible to forward-declare `x` (such as if it is local to a function).
-If `x` can be forward-declared, any forward-declaration of `x` also implicitly
-declares `|x|`, and without an initializer for `x`, it cannot deduce any
-minimum other than 0, so the defining declaration must have the same minimum to
-avoid inconsistency.
 
 If a tuple contains a segment `<K; A; O>` such that, if `S` is the sum of
 the arities of all earlier segments, `S` is known to be less than or equal to `I`, and
@@ -549,6 +612,182 @@ down to 1, then `(<K; A; O>).I` reduces to `<K; 1; O+I>`, then 2 segment reducti
 if homogeneous, reduce to `K`, otherwise reduce to `(... K).(O+I)`. Also,
 represent symbolic indices as sums of symbolic indices. No subtraction or comparison per se,
 just removing an element from the sum.
+
+FIXME: Original motivation is to allow symbolic indexing
+expressions that might not be valid, so long as they're not evaluated (e.g. for the
+bound value of the type of a "first" parameter):
+
+```carbon
+fn ZipAtLeastOne[First:! type, ... each Next:! type]
+      (first: Vector(First), ... each next: Vector(each Next))
+      -> Vector((First, ... each Next));
+
+fn F[... each T:! I](... each v: Vector(each T), w: Vector(i32)) -> auto {
+  return ZipAtLeastOne(... each v, w);
+}
+```
+
+====
+Alternate approach
+
+Matching `({<first: Vector(First); 1>, <each next: Vector(each Next)>})` against `({<each v>, <w; 1>})`.
+Can't break down into segments, but
+LHS is all binding patterns (guaranteed to match so long as they typecheck), so
+we can model it as a single composite binding pattern.
+So checking `({<Vector(First); 1>, <Vector(each Next)>})` against (i.e. is supertype of)
+`({<Vector(each T)>, <Vector(i32); 1>})`.
+By inverse pack expansion, checking `Vector({<First; 1>, <each Next>})`
+against `Vector({<each T>, <i32; 1>})`, so checking `{<First; 1>, <each Next>}`
+against `{<each T>, <i32; 1>}`. LHS is all deducing usages, which are like
+binding patterns (guaranteed to match so long as they typecheck), so treat
+as composite deducing usage, and bind `{<each T>, <i32; 1>}` to it.
+Then, checking `{<type; 1>, <type; |T|>}` against `{<I; |T|>, <type; 1>}`.
+Could check pairwise, but that leads to quadratic blow-up. Instead,
+exploit homogeneity: `{<type; 1>, <type; |T|>}` -> `{<type; |T|+1>}`
+-> `{<type; |T|>, <type; 1>}`. Then can match segment-wise.
+
+Then the return type is `Vector((First, ...each Next))`, i.e.
+`Vector(({<First; 1>, <each Next>}))`. We bound a value to `{<First; 1>, <each Next>}`,
+so we can evaluate that to `Vector(({<each T>, <i32; 1>}))`
+
+Variant: when we form the composite binding pattern, immediately try to rewrite
+its type and type-of-type. Corresponds more closely to source code rewrite,
+aligns better with codegen.
+
+====
+
+Checking `({<first: Vector(First); 1>, <each next: Vector(each Next)>})` against `({<each v>, <w; 1>})`.
+So `first: Vector(First)` binds to `{<each v>, <w; 1>}.(0..1)`
+and `each next: Vector(each Next)` binds to `{<each v>, <w; 1>}.(1..|v|+1)`.
+We can't evaluate those until monomorphization. If we're OK with that, we still
+need to verify they will typecheck. That means we're checking
+`{<Vector(First)>}` against `{<Vector(each T)>, <Vector(i32)>}.(0..1)`
+and `{<Vector(each Next)>}` against `{<Vector(each T)>, <Vector(i32)>}.(1..|T|+1)`.
+By inverse pack expansion, we can reduce those to checking
+`Vector({<First>})` against `Vector({<each T>, <i32>}.(0..1))`
+and `Vector({<each Next>})` against `Vector({<each T>, <i32>}.(1..|T|+1))`.
+So `First` binds to `{<each T>, <i32>}.(0..1)`
+and `each Next` binds to `{<each T>, <i32>}.(1..|T|+1)`.
+Again, we can't evaluate until monomorphization, by which point we don't care
+because typechecking is over, but it might be OK if we don't need the value.
+(Or we could declare that that _is_ a value, which is the branching-in-the-typesystem
+option). We need to make sure this binding typechecks, so we're
+checking `{<type; 1>}` against `{<I; |T|>, <type; 1>}.(0..1)`
+and `{<type; |T|>}` against `{<I; |T|>, <type; 1>}.(1..|T|+1)`.
+More precisely, we're checking that those right-hand expressions are subtypes
+of the left-hand expressions. 
+We can check all the cases, but that can go quadratic.
+
+
+Then, the return type is `Vector((First, ...each Rest))`, i.e. `Vector((<First; 1>, <each Rest>))`.
+Substitute (without evaluating!) to get
+`Vector(({<each T>, <i32>}.(0..1), {<each T>, <i32>}.(1..|T|+1)))`.
+which reduces to `Vector(({<each T>, <i32>}))` because the slices add up to the whole.
+
+Uniform arguments case:
+
+```carbon
+fn G[... each T:! C1, V:! C3](... each x: each T, z: V);
+
+fn H[A:! C1 & C2 & C3, ... each C:! C1 & C2 & C3]
+    (a: A, ... each c: each C) {
+  G(a, ... each c);
+}
+```
+
+====
+Alternate approach
+
+Matching `({<each x: each T>, <z: V; 1>})` against `({<a; 1>, <each c>})`.
+All binding patterns, so form composite binding pattern, then typecheck:
+`{<each T>, <V; 1>}` against `{<A; 1>, <each C>}`. LHS is all binding
+patterns, so form composite, then typecheck: `{<C1; |C|>, <C3; 1>}`
+against `{<C1 & C2 & C3; 1>, <C1 & C2 & C3; |C|>}` -> `{<C1 & C2 & C3; |C| + 1>}`
+-> `{<C1 & C2 & C3; |C|>, <C1 & C2 & C3; 1>}`, then check segmentwise.
+Note this time we're exploiting homogeneity on the argument side.
+
+variant: forming composite binding pattern fails because it's not uniform.
+FIXME then what? need to form composite argument instead.
+
+FIXME: does this capture the fact that this wouldn't work if the return type
+were `A`?
+
+====
+
+Checking `({<each x: each T>, <z: V; 1>})` against `({<a; 1>, <each c>})`.
+So `each x: each T` binds to `{<a; 1>, <each c>}.(0..|c|)`
+and `z: V` binds to `{<a; 1>, <each c>}.(|c|..|c|+1)`.
+As before, this is arguably a problem (can't evaluate until monomorphization).
+Putting that aside, have to typecheck.
+Checking `{<each T: C1>}` against `{<A; 1>, <each C>}.(0..|C|)`
+and `{<V: C3; 1>}` against `{<A; 1>, <each C>}.(|C|..|C|+1)`.
+Again, can't evaluate until monomorphization, but that will turn out to be OK.
+Still need to typecheck.
+Checking `{<C1; |C|>}` against `{<C1 & C2 & C3; 1>, <C1 & C2 & C3; |C|>}.(0..|C|)`
+-> `{<C1 & C2 & C3; |C|+1>}.(0..|C|)` -> `{<C1 & C2 & C3; |C|>}`
+and `{<C3; 1>}` against `{<C1 & C2 & C3; 1>, <C1 & C2 & C3; |C|>}.(|C|..|C|+1)`
+-> `{<C1 & C2 & C3; |C|+1>}.(|C|..|C|+1)` -> `{<C1 & C2 & C3; 1>}`
+
+Non-uniform case:
+
+```carbon
+fn F[X:! type, Y:! type, ... each Z:! type](x: X, y: Vector(Y), ... each z: Vector(each Z));
+fn G[... each A:! type](... each a: Vector(each A), b: Vector(B)) {
+  F(0 as i32, ... each a, b);
+}
+```
+
+====
+Alternate approach
+
+Matching `{<x: X; 1>, <y: Vector(Y); 1>, <each z: Vector(each Z)>}` with
+`{<0 as i32; 1>, <each a>, <b; 1>}`. We could eagerly match the leading segments
+or form composite binding. Let's try the latter: checking
+`{<X; 1>, <Vector(Y); 1>, <Vector(each Z)>}` against `{<i32; 1>, <Vector(each A)>, <Vector(B); 1>}`.
+Can't form composite, or perform inverse pack expansion, so have to pair off
+leading segments. Then remainder proceeds as above.
+
+Since we had to split leading segments eventually, based purely on the parameter
+list, there is no benefit to keeping them in the composite binding to begin with.
+So we can model this as a purely signature-driven phase followed by a callsite-driven phase.
+FIXME: No, I think it's more than that: the fact that we have to split means that
+we _can't_ form composite binding in the first place.
+
+====
+
+Checking `{<i32; 1>, <Vector(each A)>, <Vector(B); 1>}` against
+`{<X; 1>, <Vector(Y); 1>, <Vector(each Z)>}`.
+-> checking `{<i32; 1>, <Vector(each A)>, <Vector(B); 1>}.(0..1)`
+against `{<X; 1>}`,
+checking `{<i32; 1>, <Vector(each A)>, <Vector(B); 1>}.(1..2)`
+against `{<Vector(Y); 1>}`,
+checking `{<i32; 1>, <Vector(each A)>, <Vector(B); 1>}.(2..|A|+2)`
+against `{<Vector(each Z)>}`
+-> etc
+
+Key point is that we keep going until we reduce to an expression for each parameter (and then each deduced parameter),
+driven purely by the structure of the parameter types. Content of argument type
+is irrelevant except that reduction may succeed or fail
+
+FIXME: example that merging approach rejects? e.g. `fn F(X, Y, each Z)` called
+as `F(each A, B, C)` where all types are convertible to each other. Must reject
+because it's quadratic and because we can't compute the witness tables at
+typechecking time.
+
+FIXME: pin down rules for inverse pack expansion in this framework
+
+FIXME: how do we model the pre-merging approach in this framework?
+Maybe we're checking against hypothetical most-general argument, and
+infer constraints on it (i.e. infer a more general pattern) as we go?
+Does this also solve the other problem, quadratic behavior?
+What assumptions are we making in order to justify this?
+
+Maybe start with uniform arguments case; seems a little simpler. Part of the
+crux is that the signature doesn't actually use the deduced types; if it did,
+we couldn't merge.
+
+
+
 
 (<K1; A; O1>, S).(A + C) -> (S).(C)
 
@@ -689,19 +928,14 @@ one fails to reject an empty argument list.
 We can avoid even that problem if we
 use the segment representation, leveraging the fact that it represents arity
 explicitly. In that setting, the parameter type is
-`(<Vector(First); 1; 0>, <Vector(each Next); |Next|; 0>)`,
-and we rewrite it to `(<Vector(each Arg); |Next|+1; 0>)` by introducing a new
-deduced parameter `Next`. Recall that `|Next|` is shorthand for a
-hidden deduced parameter, which is independent of `Next` even though it happens
-to correspond to the arity of `Next`, so we can keep using `|Next|` even though
-`Next` itself was eliminated as part of the rewrite. `|Next|` cannot be negative,
-so the arity `|Next| + 1` correctly captures the fact that the parameter tuple
-must have at least one element.
+`(<Vector(First); 1>, <Vector(each Next)>)`,
+and we rewrite it to `(<Vector(each Arg)>)` by introducing a new
+deduced parameter `Arg`. 
 
-Notice that the original parameter type `(<Vector(First); 1; 0>, <Vector(each Next); |Next|; 0>)`
-is the result of symbolically pack-expanding the rewritten type `(<Vector(each Arg); |Next|+1; 0>)`
+Notice that the original parameter type `(<Vector(First); 1>, <Vector(each Next)>)`
+is the result of symbolically pack-expanding the rewritten type `(<Vector(each Arg)>)`
 when `Arg` is the concatenation of `First` and `each Next`, i.e.
-`<First; 1; 0>, <each Next; |Next|; 0>`. The original return type
+`<First; 1>, <each Next>`. The original return type
 is also the result of pack-expanding the rewritten return type with the same
 value of `Arg`. 
 
