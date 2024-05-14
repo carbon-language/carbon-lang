@@ -6,6 +6,7 @@
 
 #include <gmock/gmock.h>
 #include <google/protobuf/descriptor.h>
+#include <google/protobuf/util/message_differencer.h>
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -14,7 +15,8 @@
 #include <variant>
 
 #include "explorer/syntax/parse.h"
-#include "llvm/Support/Error.h"
+#include "testing/base/test_raw_ostream.h"
+#include "testing/fuzzing/proto_to_carbon.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -25,6 +27,17 @@ using ::google::protobuf::Message;
 using ::google::protobuf::Reflection;
 
 static std::vector<llvm::StringRef>* carbon_files = nullptr;
+
+// Returns a string representation of `ast`.
+auto AstToString(const AST& ast) -> std::string {
+  TestRawOstream out;
+  out << "package " << ast.package.package << (ast.is_api ? "api" : "impl")
+      << ";\n";
+  for (auto* declaration : ast.declarations) {
+    out << *declaration << "\n";
+  }
+  return out.TakeStr();
+}
 
 // Concatenates message and field names.
 auto FieldName(const Descriptor& descriptor, const FieldDescriptor& field)
@@ -80,35 +93,30 @@ auto CollectUsedFields(const Message& message,
   }
 }
 
-// Determines which fields in the proto have not been used at all.
-auto GetUnusedFields(const Message& message) -> std::set<std::string> {
-  std::set<std::string> all_messages;
-  std::set<std::string> all_fields;
-  CollectAllFields(*message.GetDescriptor(), all_messages, all_fields);
-
-  std::set<std::string> used_fields;
-  CollectUsedFields(message, used_fields);
-
-  std::set<std::string> unused_fields;
-  std::set_difference(all_fields.begin(), all_fields.end(), used_fields.begin(),
-                      used_fields.end(),
-                      std::inserter(unused_fields, unused_fields.begin()));
-  return unused_fields;
-}
-
 // A 'smoke' test to check that each field present in `carbon.proto` is set at
 // least once after converting all Carbon test sources to proto representation.
 TEST(AstToProtoTest, SetsAllProtoFields) {
-  Carbon::Fuzzing::CompilationUnit merged_proto;
+  Fuzzing::Carbon merged_proto;
   for (const llvm::StringRef f : *carbon_files) {
-    Carbon::Arena arena;
-    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*trace=*/false);
+    Arena arena;
+    const ErrorOr<AST> ast = Parse(*llvm::vfs::getRealFileSystem(), &arena, f,
+                                   FileKind::Main, /*parser_debug=*/false);
     if (ast.ok()) {
       merged_proto.MergeFrom(AstToProto(*ast));
     }
   }
 
-  std::set<std::string> unused_fields = GetUnusedFields(merged_proto);
+  std::set<std::string> all_messages;
+  std::set<std::string> all_fields;
+  CollectAllFields(*Fuzzing::Carbon::GetDescriptor(), all_messages, all_fields);
+
+  std::set<std::string> used_fields;
+  CollectUsedFields(merged_proto, used_fields);
+
+  std::set<std::string> unused_fields;
+  std::set_difference(all_fields.begin(), all_fields.end(), used_fields.begin(),
+                      used_fields.end(),
+                      std::inserter(unused_fields, unused_fields.begin()));
   EXPECT_EQ(unused_fields.size(), 0)
       << "Unused fields"
       << std::accumulate(unused_fields.begin(), unused_fields.end(),
@@ -118,13 +126,83 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
                          });
 }
 
+// Ensures that `carbon.proto` is able to represent ASTs correctly without
+// information loss by doing round-trip testing of files:
+//
+// 1) Converts each parseable Carbon file to a proto representation.
+// 2) Converts back to Carbon source.
+// 3) Parses the source into a second instance of an AST.
+// 4) Compares the second AST with the original.
+TEST(AstToProtoTest, Roundtrip) {
+  int parsed_ok_count = 0;
+  for (const llvm::StringRef f : *carbon_files) {
+    Arena arena;
+    const ErrorOr<AST> ast = Parse(*llvm::vfs::getRealFileSystem(), &arena, f,
+                                   FileKind::Main, /*parser_debug=*/false);
+    if (ast.ok()) {
+      ++parsed_ok_count;
+      const std::string source_from_proto =
+          ProtoToCarbon(AstToProto(*ast), /*maybe_add_main=*/false);
+      SCOPED_TRACE(testing::Message()
+                   << "Carbon file: " << f << ", source from proto:\n"
+                   << source_from_proto);
+      const ErrorOr<AST> ast_from_proto = ParseFromString(
+          &arena, f, FileKind::Main, source_from_proto, /*parser_debug=*/false);
+
+      if (ast_from_proto.ok()) {
+        EXPECT_EQ(AstToString(*ast), AstToString(*ast_from_proto));
+      } else {
+        ADD_FAILURE() << "Parse error " << ast_from_proto.error().message();
+      }
+    }
+  }
+  // Makes sure files were actually processed.
+  EXPECT_GT(parsed_ok_count, 0);
+}
+
+auto CloneAST(Arena& arena, const AST& ast) -> AST {
+  CloneContext context(&arena);
+  return {
+      .package = ast.package,
+      .is_api = ast.is_api,
+      .imports = ast.imports,
+      .declarations = context.Clone(ast.declarations),
+      .main_call = context.Clone(ast.main_call),
+      .num_prelude_declarations = ast.num_prelude_declarations,
+  };
+}
+
+// Verifies that an AST and its clone produce identical protos.
+TEST(AstToProtoTest, SameProtoAfterClone) {
+  int parsed_ok_count = 0;
+  for (const llvm::StringRef f : *carbon_files) {
+    Arena arena;
+    const ErrorOr<AST> ast = Parse(*llvm::vfs::getRealFileSystem(), &arena, f,
+                                   FileKind::Main, /*parser_debug=*/false);
+    if (ast.ok()) {
+      ++parsed_ok_count;
+      const AST clone = CloneAST(arena, *ast);
+      const Fuzzing::Carbon orig_proto = AstToProto(*ast);
+      const Fuzzing::Carbon clone_proto = AstToProto(clone);
+      // TODO: Use EqualsProto once it's available.
+      EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
+          orig_proto, clone_proto))
+          << "clone produced a different AST. original:\n"
+          << AstToString(*ast) << "clone:\n"
+          << AstToString(clone);
+    }
+  }
+  // Makes sure files were actually processed.
+  EXPECT_GT(parsed_ok_count, 0);
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
   // gtest should remove flags, leaving just input files.
-  Carbon::Testing::carbon_files =
-      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
+  std::vector<llvm::StringRef> carbon_files(&argv[1], &argv[argc]);
+  Carbon::Testing::carbon_files = &carbon_files;
   return RUN_ALL_TESTS();
 }

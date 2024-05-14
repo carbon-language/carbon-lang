@@ -6,91 +6,206 @@ name: test
 
 on:
   push:
-    branches: [trunk]
-    paths:
-      # Conservatively run the tests. However, skip them if the only paths in
-      # the pull request match files that we know don't impact the build.
-      - '**'
-      - '!**/*.md'
-      - '!LICENSE'
-      - '!CODEOWNERS'
-      - '!.git*'
-  pull_request_target:
-    paths:
-      # Conservatively run the tests. However, skip them if the only paths in
-      # the pull request match files that we know don't impact the build.
-      - '**'
-      - '!**/*.md'
-      - '!LICENSE'
-      - '!CODEOWNERS'
-      - '!.git*'
+    branches: [trunk, action-test]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # On PRs and in the merge queue test a recent version of each supported
+        # OS. On push (post-submit), also run on `macos-12` to get Intel macOS
+        # coverage.
+        runner:
+          ${{ fromJSON(github.event_name != 'push' && '["ubuntu-22.04",
+          "macos-14"]' || '["ubuntu-22.04", "macos-14", "macos-12"]') }}
         build_mode: [fastbuild, opt]
-    runs-on: ${{ matrix.os }}
+        include:
+          # The clang-tidy config doesn't work on macos (missing `truncate`).
+          - runner: ubuntu-22.04
+            build_mode: clang-tidy
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      os: ${{ startsWith(matrix.runner, 'ubuntu') && 'ubuntu' || 'macos' }}
+
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      # Ubuntu images start with 23GB available, and this adds 14GB more. For
+      # comparison, MacOS images have >100GB free.
+      #
+      # Although we could delete more, if we run into a limit, not deleting
+      # everything provides a little flexibility to get space while trying
+      # to shrink the build.
+      - name: Free up disk space (Ubuntu)
+        if: env.os == 'ubuntu'
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
-        if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout branch
-        if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v3
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      # Tests should only run on applicable paths, but we still need to have an
+      # action run for the merge queue. We filter steps based on the paths here,
+      # and condition steps on the output.
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            has_code:
+              - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
 
       # Setup Python and related tools.
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        if: steps.filter.outputs.has_code == 'true'
         with:
           # Match the min version listed in docs/project/contribution_tools.md
-          python-version: '3.9'
+          # or the oldest version available on the OS.
+          python-version: ${{ matrix.runner == 'macos-14' && '3.11' || '3.9' }}
 
-      # On macOS we need Go and to use it to install Bazelisk.
-      - uses: actions/setup-go@v3
-        if: matrix.os == 'macos-latest'
-      - name: Install bazelisk
-        if: matrix.os == 'macos-latest'
-        run: |
-          go get github.com/bazelbuild/bazelisk
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      # On macOS, use Homebrew to install a recent LLVM and Clang.
-      - name: Setup LLVM and Clang (macOS)
-        if: matrix.os == 'macos-latest'
+      # Install and cache LLVM 16 from Homebrew.
+      # TODO: We can potentially remove this and simplify things when the
+      # Homebrew version of LLVM updates to 16 here:
+      # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+      - name: Cache Homebrew (macOS)
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
+        id: cache-homebrew-macos
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         env:
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
-          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+          cache-name: cache-homebrew
+        with:
+          # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
+          # uses its own prefix making this easy to cover, but we need a few
+          # different paths for Intel.
+          path: |
+            ${{
+              runner.arch == 'ARM64' && '/opt/homebrew' ||
+              '
+                /usr/local/Homebrew
+                /usr/local/Cellar
+                /usr/local/Frameworks
+                /usr/local/bin
+                /usr/local/opt
+              '
+            }}
+          # Note the key needs to include all the packages we're adding.
+          key: Homebrew-Cache-${{ matrix.runner }}-${{ runner.arch }}
+
+      - name: Install LLVM and Clang with Homebrew (macOS)
+        if:
+          steps.filter.outputs.has_code == 'true' && env.os == 'macos' &&
+          steps.cache-homebrew-macos.outputs.cache-hit != 'true'
         run: |
-          echo '*** Updating brew'
-          brew update
+          echo '*** Prune brew leaves'
+          # We prune all the leaf packages to have a minimal environment. This
+          # both minimizes the install space and avoids accidental dependencies
+          # on installed packages.
+          brew leaves
+          LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
+          brew uninstall -f --ignore-dependencies $LEAVES
           echo '*** Installing LLVM deps'
-          brew install --force-bottle --only-dependencies llvm
+          brew install --force-bottle --only-dependencies llvm@16
           echo '*** Installing LLVM itself'
-          brew install --force-bottle --force --verbose llvm
-          echo '*** brew info llvm'
-          brew info llvm
+          brew install --force-bottle --force --verbose llvm@16
+          echo '*** brew info llvm@16'
+          brew info llvm@16
+          echo '*** brew autoremove'
+          brew autoremove
+          echo '*** brew info'
+          brew info
+          echo '*** brew leaves'
+          brew leaves
           echo '*** brew config'
           brew config
-          echo '*** Updating PATH'
-          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      # On Ubuntu, use apt.llvm.org to install a recent LLVM and Clang.
-      - name: Setup LLVM and Clang (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Setup LLVM and Clang (macOS)
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'macos'
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 15 all
-          rm llvm.sh
-          echo "/usr/lib/llvm-15/bin" >> $GITHUB_PATH
+          LLVM_PATH="$(brew --prefix llvm@16)"
+          echo "Using ${LLVM_PATH}"
+          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+          echo '*** ls "${LLVM_PATH}"'
+          ls "${LLVM_PATH}"
+          echo '*** ls "${LLVM_PATH}/bin"'
+          ls "${LLVM_PATH}/bin"
+
+      # Cache and install a recent version of LLVM. This uses the GitHub action
+      # cache to avoid directly downloading on each iteration and improve
+      # reliability.
+      - name: Cache LLVM and Clang installation (Ubuntu)
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
+        id: cache-llvm-ubuntu
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        env:
+          cache-name: cache-llvm
+        with:
+          path: ~/llvm
+          key: LLVM-16-Cache-${{ env.os }}-${{ runner.arch }}
+
+      - name: Download LLVM and Clang installation (Ubuntu)
+        if:
+          steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu' &&
+          steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+        run: |
+          cd ~
+          LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
+          echo "*** Downloading $LLVM_RELEASE"
+          wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/$LLVM_RELEASE.tar.xz"
+          echo "*** Extracting $LLVM_RELEASE"
+          tar -xJf "$LLVM_RELEASE.tar.xz"
+          echo "*** Moving to 'llvm'"
+          mv "$LLVM_RELEASE" llvm
+          echo "*** Testing `clang++ --version`"
+          ~/llvm/bin/clang++ --version
+
+          # The installation contains *huge* parts of LLVM we don't need for the
+          # toolchain. Prune them here to keep our cache small.
+          echo "*** Cleaning the 'llvm' directory"
+          rm llvm/lib/{*.a,*.so,*.so.*,*.bc}
+          rm llvm/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
+          echo "*** Size of the 'llvm' directory"
+          du -hs llvm
+
+      - name: Setup LLVM and Clang paths (Ubuntu)
+        if: steps.filter.outputs.has_code == 'true' && env.os == 'ubuntu'
+        run: |
+          LLVM_PATH=~/llvm
+          echo "Using ${LLVM_PATH}"
+          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+          echo '*** ls "${LLVM_PATH}"'
+          ls "${LLVM_PATH}"
+          echo '*** ls "${LLVM_PATH}/bin"'
+          ls "${LLVM_PATH}/bin"
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
+        if: steps.filter.outputs.has_code == 'true'
         run: |
           echo '*** PATH'
           echo $PATH
@@ -107,25 +222,75 @@ jobs:
           which clang++
           clang++ --version
 
-      # Extract our access key for our build cache.
-      - name: Extract access key
-        env:
-          GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
+      # Disable uploads when the remote cache is read-only.
+      - name: Set up remote cache access (read-only)
+        if:
+          steps.filter.outputs.has_code == 'true' && github.event_name ==
+          'pull_request'
         run: |
-          echo "$GCP_BUILDS_SERVICE_ACCOUNT" \
-            | base64 -d > $HOME/gcp-builds-service-account.json
+          echo "remote_cache_upload=--remote_upload_local_results=false" \
+              >> $GITHUB_ENV
+
+      # Provide a cache key when the remote cache is read-write.
+      - name: Set up remote cache access (read-write)
+        if:
+          steps.filter.outputs.has_code == 'true' && github.event_name !=
+          'pull_request'
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+              >> $GITHUB_ENV
 
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
+        if: steps.filter.outputs.has_code == 'true'
         env:
           # Add a cache version for changes that bazel won't otherwise detect,
           # like llvm version changes.
           CACHE_VERSION: 1
         run: |
           cat >user.bazelrc <<EOF
-          # Enable remote cache for our CI.
-          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}-${{ matrix.os }}
-          build --google_credentials=$HOME/gcp-builds-service-account.json
+          # Enable remote cache for our CI but minimize downloads.
+          build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
+          build --remote_download_minimal
+
+          # We import a special key into every action in order to key the Bazel
+          # remote cache in a way that avoids collisions between different
+          # runners. Anything that might change the system external to Bazel but
+          # not be fully captured by the sand-boxing of the build should be used
+          # as part of the key. We don't need to use the CPU target for example,
+          # as that is captured by Bazel's configuration of each action. And the
+          # Clang version is incorporated by our Clang toolchain setup. But we
+          # do need to capture any differences between GitHub runner OSes that
+          # don't impact the Bazel configuration to avoid collisions between
+          # those.
+          build --action_env=BAZEL_REMOTE_CACHE_KEY=github-action-${{ matrix.runner }}
+
+          build ${{ env.remote_cache_upload }}
+
+          # Set an artificially high jobs count. This flag controls the number
+          # of concurrency Bazel itself uses, which is essential for actions
+          # that are internally blocked on for example downloading results form
+          # the cache above. Without setting this high, Bazel will pick a small
+          # number based on the available host CPUs and the reality will be a
+          # long chain of largely serialized download events with little or no
+          # usage of the host machine. Fortunately, local actions are
+          # *separately* gated on '--local_*_resources' that will avoid a large
+          # jobs value overwhelming the host. There is a bug to make downloads
+          # behave completely asynchronously and remove the need for this filed
+          # back in 2018 but work seemed to not finish:
+          # https://github.com/bazelbuild/bazel/issues/6394
+          #
+          # There is a new effort (yay!) but until then it seems worth using the
+          # workaround of a high jobs value. The biggest downside (increased
+          # heap usage) seems like it isn't currently a big loss for our builds.
+          #
+          # Higher values like 50 have led to CI failures with network errors
+          # and IOExceptions, see
+          # https://discord.com/channels/655572317891461132/707150492370862090/1151605725576056934
+          build --jobs=32
 
           # General build options.
           build --verbose_failures
@@ -133,18 +298,132 @@ jobs:
           EOF
           bazelisk info
 
-      # Build all targets first to isolate build failures.
-      - name: Build (${{ matrix.build_mode }})
-        env:
-          # 'libtool_check_unique failed to generate' workaround.
-          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
-          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: bazelisk build -c ${{ matrix.build_mode }} //...:all
+      # Just for visibility, print space before and after the build.
+      - name: Disk space before build
+        if: steps.filter.outputs.has_code == 'true'
+        run: df -h
 
-      # Run all test targets.
+      - name: Verify MODULE.bazel.lock
+        if: steps.filter.outputs.has_code == 'true'
+        run: |
+          exit_code=0
+          bazelisk mod deps --lockfile_mode=error || exit_code=$?
+          if (( $exit_code != 0 )); then
+            bazelisk mod deps --lockfile_mode=update
+            echo "MODULE.bazel.lock is out of date! Use below file for update."
+            echo "Platforms may require merging output, for example by applying"
+            echo "an update, re-running triggers, and applying the next update."
+            echo "============================================================"
+            cat MODULE.bazel.lock
+            echo "============================================================"
+            exit 1
+          fi
+
+      # Build and run all targets on branch pushes to ensure we always have a
+      # clean tree. We don't expect this to be an interactive path and so don't
+      # optimize the latency of this step.
+      - name: Compute impacted pull request targets (for push)
+        if:
+          steps.filter.outputs.has_code == 'true' && github.event_name == 'push'
+        env:
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          echo "//..." >$TARGETS_FILE
+
+      # Compute the set of possible rules impacted by this change using
+      # Bazel-based diffing. This lets PRs and the merge queue have a much more
+      # efficient test CI action by avoiding even enumerating (and downloading)
+      # all of the unaffected Bazel targets.
+      - name: Compute impacted pull request targets
+        if:
+          steps.filter.outputs.has_code == 'true' && github.event_name != 'push'
+        env:
+          # Compute the base SHA from the different event structures.
+          GIT_BASE_SHA:
+            ${{ github.event_name == 'pull_request' &&
+            github.event.pull_request.base.sha ||
+            github.event.merge_group.base_sha }}
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          # First fetch the relevant base into the git repository.
+          git fetch --depth=1 origin $GIT_BASE_SHA
+
+          # Then use `target-determinator` as wrapped by our script.
+          ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE
+
+          # Bazel requires a test target to run the test command. There may be
+          # no targets or there may only be non-test targets that we want to
+          # build, so simply inject an explicit no-op test target.
+          echo "//scripts:no_op_test" >> $TARGETS_FILE
+
+      # Build and run just the tests impacted by the PR or merge group.
       - name: Test (${{ matrix.build_mode }})
+        if:
+          steps.filter.outputs.has_code == 'true' && matrix.build_mode !=
+          'clang-tidy'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
-        run: bazelisk test -c ${{ matrix.build_mode }} //...:all
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          for i in {1..5}; do
+            if (( $i == 4 )); then
+              # Decrease the jobs sharply if we see repeated failures to try to
+              # work around transient network errors even if it makes things
+              # slower.
+              echo "build --jobs=4" >>user.bazelrc
+            fi
+
+            bazel_exit=0
+            bazelisk test -c ${{ matrix.build_mode }} \
+              --target_pattern_file=$TARGETS_FILE || bazel_exit=$?
+
+            # If we succeed, we're done.
+            if (( $bazel_exit == 0 )); then
+              break
+            fi
+
+            # Several error codes are reliably permanent, break immediately.
+            # `1`  -- The build failed.
+            # `2`  -- Command line or environment problem.
+            # `3`  -- Tests failed or timed out, we don't retry at this layer
+            #         on execution timeout.
+            # `4`  -- No tests found, which should be impossible here.
+            # `8`  -- Explicitly interrupted build.
+            #
+            # Note that `36` is documented as "likely permanent", but we retry
+            # it as most of our transient failures actually produce that error
+            # code.
+            if (( $bazel_exit == 1 || $bazel_exit == 2 || $bazel_exit == 3 || \
+                  $bazel_exit == 4 || $bazel_exit == 8 || $bazel_exit == 8 ))
+            then
+              break
+            fi
+
+            echo "Retrying a failed build as it may be transient..."
+            # Also sleep a bit to try to skip over transient machine load.
+            sleep $i
+          done
+
+          # Propagate the Bazel exit code.
+          exit $bazel_exit
+
+      # Run in the clang-tidy config. This is done as part of tests so that we
+      # aren't duplicating bazel/llvm setup.
+      #
+      # The `-k` flag is used to print all clang-tidy errors.
+      - name: clang-tidy
+        if:
+          steps.filter.outputs.has_code == 'true' && matrix.build_mode ==
+          'clang-tidy'
+        env:
+          TARGETS_FILE: ${{ runner.temp }}/targets
+        run: |
+          bazelisk build --config=clang-tidy -k \
+            --target_pattern_file=$TARGETS_FILE
+
+      # See "Disk space before build".
+      - name: Disk space after build
+        if: steps.filter.outputs.has_code == 'true'
+        run: df -h

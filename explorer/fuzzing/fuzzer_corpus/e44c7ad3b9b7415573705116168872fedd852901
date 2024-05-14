@@ -1,0 +1,120 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name {
+        name: "C"
+      }
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  if_expression {
+                    condition {
+                      operator {
+                        op: Not
+                        arguments {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "WrapInStruct"
+                                object {
+                                  identifier {
+                                    name: "C"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    then_expression {
+                      int_type_literal {
+                      }
+                    }
+                    else_expression {
+                      struct_type_literal {
+                        fields {
+                          name: "n"
+                          expression {
+                            int_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "WrapInStruct"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              bool_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  bool_literal {
+                    value: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

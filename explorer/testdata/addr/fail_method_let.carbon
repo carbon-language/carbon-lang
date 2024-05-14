@@ -2,11 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -16,9 +12,9 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
+  fn GetSetX[addr self: Point*](x: i32) -> i32 {
+    var old: auto = (*self).x;
+    (*self).x = x;
     return old;
   }
 
@@ -28,7 +24,7 @@ class Point {
 
 fn Main() -> i32 {
   let p: Point = Point.Origin();
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
+  // CHECK:STDERR: COMPILATION ERROR: fail_method_let.carbon:[[@LINE+1]]: method p.GetSetX requires its receiver to be a reference expression
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

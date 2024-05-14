@@ -41,7 +41,7 @@ In other words:
 | Types                     | `UpperCamelCase`   | Resolved at compile-time.                                                                  |
 | Functions                 | `UpperCamelCase`   | Resolved at compile-time.                                                                  |
 | Methods                   | `UpperCamelCase`   | Methods, including virtual methods, are equivalent to functions.                           |
-| Generic parameters        | `UpperCamelCase`   | May vary based on inputs, but are ultimately resolved at compile-time.                     |
+| Compile-time parameters   | `UpperCamelCase`   | May vary based on inputs, but are ultimately resolved at compile-time.                     |
 | Compile-time constants    | `UpperCamelCase`   | Resolved at compile-time. See [constants](#constants) for more remarks.                    |
 | Variables                 | `lower_snake_case` | May be reassigned and thus require runtime information.                                    |
 | Member variables          | `lower_snake_case` | Behave like variables.                                                                     |

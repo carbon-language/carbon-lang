@@ -5,144 +5,33 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
-#include <functional>
+#include <cstdint>
 #include <string>
 #include <type_traits>
+#include <utility>
 
+#include "common/check.h"
 #include "llvm/ADT/Any.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/raw_ostream.h"
+#include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
 namespace Carbon {
 
-enum class DiagnosticLevel : int8_t {
-  // A warning diagnostic, indicating a likely problem with the program.
-  Warning,
-  // An error diagnostic, indicating that the program is not valid.
-  Error,
-};
-
-// Provides a definition of a diagnostic. For example:
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "Invalid code!");
-//   CARBON_DIAGNOSTIC(MyDiagnostic, Warning, "Found {0}, expected {1}.",
-//              llvm::StringRef, llvm::StringRef);
-//
-// Arguments are passed to llvm::formatv; see:
-// https://llvm.org/doxygen/FormatVariadic_8h_source.html
-//
-// See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
-  static constexpr auto DiagnosticName =                      \
-      Internal::DiagnosticBase<__VA_ARGS__>(                  \
-          ::Carbon::DiagnosticKind::DiagnosticName,           \
-          ::Carbon::DiagnosticLevel::Level, Format)
-
-struct DiagnosticLocation {
-  // Name of the file or buffer that this diagnostic refers to.
-  // TODO: Move this out of DiagnosticLocation, as part of an expectation that
-  // files will be compiled separately, so storing the file's path
-  // per-diagnostic is wasteful.
-  std::string file_name;
-  // 1-based line number.
-  int32_t line_number;
-  // 1-based column number.
-  int32_t column_number;
-};
-
-// An instance of a single error or warning.  Information about the diagnostic
-// can be recorded into it for more complex consumers.
-struct Diagnostic {
-  // The diagnostic's kind.
-  DiagnosticKind kind;
-
-  // The diagnostic's level.
-  DiagnosticLevel level;
-
-  // The calculated location of the diagnostic.
-  DiagnosticLocation location;
-
-  // The diagnostic's format string. This, along with format_args, will be
-  // passed to format_fn.
-  llvm::StringLiteral format;
-
-  // A list of format arguments.
-  //
-  // These may be used by non-standard consumers to inspect diagnostic details
-  // without needing to parse the formatted string; however, it should be
-  // understood that diagnostic formats are subject to change and the llvm::Any
-  // offers limited compile-time type safety. Integration tests are required.
-  llvm::SmallVector<llvm::Any, 0> format_args;
-
-  // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<std::string(const Diagnostic&)> format_fn;
-};
-
-// Receives diagnostics as they are emitted.
-class DiagnosticConsumer {
- public:
-  virtual ~DiagnosticConsumer() = default;
-
-  // Handle a diagnostic.
-  virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
-
-  // Flushes any buffered input.
-  virtual auto Flush() -> void {}
-};
-
-// An interface that can translate some representation of a location into a
-// diagnostic location.
-//
-// TODO: Revisit this once the diagnostics machinery is more complete and see
-// if we can turn it into a `std::function`.
-template <typename LocationT>
-class DiagnosticLocationTranslator {
- public:
-  virtual ~DiagnosticLocationTranslator() = default;
-
-  [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> DiagnosticLocation = 0;
-};
-
 namespace Internal {
 
-// Use the DIAGNOSTIC macro to instantiate this.
-// This stores static information about a diagnostic category.
-template <typename... Args>
-struct DiagnosticBase {
-  constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
-                           llvm::StringLiteral format)
-      : Kind(kind), Level(level), Format(format) {}
-
-  // Calls formatv with the diagnostic's arguments.
-  auto FormatFn(const Diagnostic& diagnostic) const -> std::string {
-    return FormatFnImpl(diagnostic,
-                        std::make_index_sequence<sizeof...(Args)>());
-  };
-
-  // The diagnostic's kind.
-  DiagnosticKind Kind;
-  // The diagnostic's level.
-  DiagnosticLevel Level;
-  // The diagnostic's format for llvm::formatv.
-  llvm::StringLiteral Format;
-
- private:
-  // Handles the cast of llvm::Any to Args types for formatv.
-  template <std::size_t... N>
-  inline auto FormatFnImpl(const Diagnostic& diagnostic,
-                           std::index_sequence<N...> /*indices*/) const
-      -> std::string {
-    assert(diagnostic.format_args.size() == sizeof...(Args));
-    return llvm::formatv(diagnostic.format.data(),
-                         llvm::any_cast<Args>(diagnostic.format_args[N])...);
-  }
-};
+// Disable type deduction based on `args`; the type of `diagnostic_base`
+// determines the diagnostic's parameter types.
+template <typename Arg>
+using NoTypeDeduction = std::type_identity_t<Arg>;
 
 }  // namespace Internal
+
+template <typename LocT, typename AnnotateFn>
+class DiagnosticAnnotationScope;
 
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
@@ -152,15 +41,121 @@ struct DiagnosticBase {
 // convenient for them, such as a position within a buffer when lexing, a token
 // when parsing, or a parse tree node when type-checking, and to allow unit
 // tests to be decoupled from any concrete location representation.
-template <typename LocationT>
+template <typename LocT>
 class DiagnosticEmitter {
  public:
-  // The `translator` and `consumer` are required to outlive the diagnostic
+  // A builder-pattern type to provide a fluent interface for constructing
+  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
+  // expected usage.
+  // This is nodiscard to protect against accidentally building a diagnostic
+  // without emitting it.
+  class [[nodiscard]] DiagnosticBuilder {
+   public:
+    // DiagnosticBuilder is move-only and cannot be copied.
+    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
+    auto operator=(DiagnosticBuilder&&) noexcept
+        -> DiagnosticBuilder& = default;
+
+    // Adds a note diagnostic attached to the main diagnostic being built.
+    // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    template <typename... Args>
+    auto Note(LocT loc,
+              const Internal::DiagnosticBase<Args...>& diagnostic_base,
+              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+      CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note)
+          << static_cast<int>(diagnostic_base.Level);
+      AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
+      return *this;
+    }
+
+    // Emits the built diagnostic and its attached notes.
+    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    template <typename... Args>
+    auto Emit() -> void {
+      for (auto annotate_fn : emitter_->annotate_fns_) {
+        annotate_fn(*this);
+      }
+      emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
+    }
+
+   private:
+    friend class DiagnosticEmitter<LocT>;
+
+    template <typename... Args>
+    explicit DiagnosticBuilder(
+        DiagnosticEmitter<LocT>* emitter, LocT loc,
+        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        llvm::SmallVector<llvm::Any> args)
+        : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
+      AddMessage(loc, diagnostic_base, std::move(args));
+      CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
+    }
+
+    // Adds a message to the diagnostic, handling conversion of the location and
+    // arguments.
+    template <typename... Args>
+    auto AddMessage(LocT loc,
+                    const Internal::DiagnosticBase<Args...>& diagnostic_base,
+                    llvm::SmallVector<llvm::Any> args) -> void {
+      AddMessageWithDiagnosticLoc(
+          emitter_->converter_->ConvertLoc(
+              loc,
+              [&](DiagnosticLoc context_loc,
+                  const Internal::DiagnosticBase<>& context_diagnostic_base) {
+                AddMessageWithDiagnosticLoc(context_loc,
+                                            context_diagnostic_base, {});
+              }),
+          diagnostic_base, args);
+    }
+
+    // Adds a message to the diagnostic, handling conversion of the arguments. A
+    // DiagnosticLoc must be provided instead of a LocT in order to
+    // avoid potential recursion.
+    template <typename... Args>
+    auto AddMessageWithDiagnosticLoc(
+        DiagnosticLoc loc,
+        const Internal::DiagnosticBase<Args...>& diagnostic_base,
+        llvm::SmallVector<llvm::Any> args) {
+      diagnostic_.messages.emplace_back(DiagnosticMessage{
+          .kind = diagnostic_base.Kind,
+          .level = diagnostic_base.Level,
+          .loc = loc,
+          .format = diagnostic_base.Format,
+          .format_args = std::move(args),
+          .format_fn = [](const DiagnosticMessage& message) -> std::string {
+            return FormatFn<Args...>(
+                message, std::make_index_sequence<sizeof...(Args)>());
+          }});
+    }
+
+    // Handles the cast of llvm::Any to Args types for formatv.
+    // TODO: Custom formatting can be provided with an format_provider, but that
+    // affects all formatv calls. Consider replacing formatv with a custom call
+    // that allows diagnostic-specific formatting.
+    template <typename... Args, std::size_t... N>
+    static auto FormatFn(const DiagnosticMessage& message,
+                         std::index_sequence<N...> /*indices*/) -> std::string {
+      static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
+      CARBON_CHECK(message.format_args.size() == sizeof...(Args))
+          << "Argument count mismatch on " << message.kind << ": "
+          << message.format_args.size() << " != " << sizeof...(Args);
+      return llvm::formatv(
+          message.format.data(),
+          llvm::any_cast<
+              typename Internal::DiagnosticTypeForArg<Args>::StorageType>(
+              message.format_args[N])...);
+    }
+
+    DiagnosticEmitter<LocT>* emitter_;
+    Diagnostic diagnostic_;
+  };
+
+  // The `converter` and `consumer` are required to outlive the diagnostic
   // emitter.
-  explicit DiagnosticEmitter(
-      DiagnosticLocationTranslator<LocationT>& translator,
-      DiagnosticConsumer& consumer)
-      : translator_(&translator), consumer_(&consumer) {}
+  explicit DiagnosticEmitter(DiagnosticConverter<LocT>& converter,
+                             DiagnosticConsumer& consumer)
+      : converter_(&converter), consumer_(&consumer) {}
   ~DiagnosticEmitter() = default;
 
   // Emits an error.
@@ -168,62 +163,73 @@ class DiagnosticEmitter {
   // When passing arguments, they may be buffered. As a consequence, lifetimes
   // may outlive the `Emit` call.
   template <typename... Args>
-  void Emit(LocationT location,
-            const Internal::DiagnosticBase<Args...>& diagnostic_base,
-            // Disable type deduction based on `args`; the type of
-            // `diagnostic_base` determines the diagnostic's parameter types.
-            typename std::common_type_t<Args>... args) {
-    consumer_->HandleDiagnostic({
-        .kind = diagnostic_base.Kind,
-        .level = diagnostic_base.Level,
-        .location = translator_->GetLocation(location),
-        .format = diagnostic_base.Format,
-        .format_args = {std::move(args)...},
-        .format_fn = [&diagnostic_base](const Diagnostic& diagnostic)
-            -> std::string { return diagnostic_base.FormatFn(diagnostic); },
-    });
+  auto Emit(LocT loc, const Internal::DiagnosticBase<Args...>& diagnostic_base,
+            Internal::NoTypeDeduction<Args>... args) -> void {
+    DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
+        .Emit();
+  }
+
+  // A fluent interface for building a diagnostic and attaching notes for added
+  // context or information. For example:
+  //
+  //   emitter_.Build(loc1, MyDiagnostic)
+  //     .Note(loc2, MyDiagnosticNote)
+  //     .Emit();
+  template <typename... Args>
+  auto Build(LocT loc, const Internal::DiagnosticBase<Args...>& diagnostic_base,
+             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
+    return DiagnosticBuilder(this, loc, diagnostic_base,
+                             {MakeAny<Args>(args)...});
   }
 
  private:
-  DiagnosticLocationTranslator<LocationT>* translator_;
+  // Converts an argument to llvm::Any for storage, handling input to storage
+  // type conversion when needed.
+  template <typename Arg>
+  auto MakeAny(Arg arg) -> llvm::Any {
+    llvm::Any converted = converter_->ConvertArg(arg);
+    using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
+    CARBON_CHECK(llvm::any_cast<Storage>(&converted))
+        << "Failed to convert argument of type " << typeid(Arg).name()
+        << " to its storage type " << typeid(Storage).name();
+    return converted;
+  }
+
+  template <typename OtherLocT, typename AnnotateFn>
+  friend class DiagnosticAnnotationScope;
+
+  DiagnosticConverter<LocT>* converter_;
   DiagnosticConsumer* consumer_;
+  llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
+      annotate_fns_;
 };
 
-inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  struct Consumer : DiagnosticConsumer {
-    auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-      llvm::errs() << diagnostic.location.file_name << ":"
-                   << diagnostic.location.line_number << ":"
-                   << diagnostic.location.column_number << ": "
-                   << diagnostic.format_fn(diagnostic) << "\n";
-    }
-  };
-  static auto* consumer = new Consumer;
-  return *consumer;
-}
-
-// Diagnostic consumer adaptor that tracks whether any errors have been
-// produced.
-class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
+// An RAII object that denotes a scope in which any diagnostic produced should
+// be annotated in some way.
+//
+// This object is given a function `annotate` that will be called with a
+// `DiagnosticBuilder& builder` for any diagnostic that is emitted through the
+// given emitter. That function can annotate the diagnostic by calling
+// `builder.Note` to add notes.
+template <typename LocT, typename AnnotateFn>
+class DiagnosticAnnotationScope {
  public:
-  explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
-      : next_consumer_(&next_consumer) {}
-
-  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    seen_error_ |= diagnostic.level == DiagnosticLevel::Error;
-    next_consumer_->HandleDiagnostic(diagnostic);
+  DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter,
+                            AnnotateFn annotate)
+      : emitter_(emitter), annotate_(std::move(annotate)) {
+    emitter_->annotate_fns_.push_back(annotate_);
   }
-
-  // Reset whether we've seen an error.
-  auto Reset() -> void { seen_error_ = false; }
-
-  // Returns whether we've seen an error since the last reset.
-  auto seen_error() const -> bool { return seen_error_; }
+  ~DiagnosticAnnotationScope() { emitter_->annotate_fns_.pop_back(); }
 
  private:
-  DiagnosticConsumer* next_consumer_;
-  bool seen_error_ = false;
+  DiagnosticEmitter<LocT>* emitter_;
+  // Make a copy of the annotation function to ensure that it lives long enough.
+  AnnotateFn annotate_;
 };
+
+template <typename LocT, typename AnnotateFn>
+DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter, AnnotateFn annotate)
+    -> DiagnosticAnnotationScope<LocT, AnnotateFn>;
 
 }  // namespace Carbon
 

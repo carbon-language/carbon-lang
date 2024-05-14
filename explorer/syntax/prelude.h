@@ -8,14 +8,17 @@
 #include <string_view>
 
 #include "explorer/ast/declaration.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/nonnull.h"
+#include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon {
 
 // Adds the Carbon prelude to `declarations`.
-void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
-                std::vector<Nonnull<Declaration*>>* declarations);
+void AddPrelude(llvm::vfs::FileSystem& fs, std::string_view prelude_file_name,
+                Nonnull<Arena*> arena,
+                std::vector<Nonnull<Declaration*>>* declarations,
+                int* num_prelude_declarations);
 
 }  // namespace Carbon
 

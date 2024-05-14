@@ -2,27 +2,24 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
-interface Has(T:! Type) {
+interface Has(T:! type) {
   fn Get() -> T;
 }
-impl i32 as Has(Type) {
-  fn Get() -> Type { return Self; }
+impl i32 as Has(type) {
+  fn Get() -> type { return Self; }
 }
 
-class WithType(T:! Has(Type)) {
-  fn Get() -> Type { return T.Get(); }
+class WithType(T:! Has(type)) {
+  fn Get() -> type { return T.Get(); }
 }
 
 fn Main() -> i32 {
   var v: WithType(i32).Get() = 0;
   return v;
 }
+
+// CHECK:STDOUT: result: 0

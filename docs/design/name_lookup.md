@@ -74,14 +74,13 @@ the package scope for unqualified name lookup.
 
 ### Name lookup for common, standard types
 
-The Carbon standard library is in the `Carbon` package. A very small subset of
-this standard library is provided implicitly in every file's scope. This is
-called the "prelude".
+The Carbon standard library is in the `Core` package. A subset of this package,
+called the "prelude", is implicitly imported in every file, so the package name
+`Core` is always available.
 
-Names in the prelude will be available without a package qualifier. For example,
-the name `Type` can be directly used in code without a `Carbon.` qualifier, even
-though it belongs to the `Carbon` package, and no import is necessary to use the
-name `Type`.
+Some keywords and type literals, such as `bool` and `i32`, are aliases for
+entities in the prelude. Similarly, some of the Carbon language syntax, such as
+operators and `for` loops, is defined in terms of interfaces in the prelude.
 
 ## Open questions
 

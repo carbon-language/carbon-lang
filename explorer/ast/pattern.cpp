@@ -8,8 +8,10 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/error_builders.h"
+#include "explorer/ast/impl_binding.h"
+#include "explorer/ast/value.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -31,7 +33,17 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     }
     case PatternKind::GenericBinding: {
       const auto& binding = cast<GenericBinding>(*this);
+      switch (binding.binding_kind()) {
+        case GenericBinding::BindingKind::Checked:
+          break;
+        case GenericBinding::BindingKind::Template:
+          out << "template ";
+          break;
+      }
       out << binding.name() << ":! " << binding.type();
+      if (auto value = binding.constant_value()) {
+        out << " = " << **value;
+      }
       break;
     }
     case PatternKind::TuplePattern: {
@@ -169,5 +181,17 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
   }
   return result;
 }
+
+GenericBinding::GenericBinding(CloneContext& context,
+                               const GenericBinding& other)
+    : Pattern(context, other),
+      name_(other.name_),
+      type_(context.Clone(other.type_)),
+      binding_kind_(other.binding_kind_),
+      template_value_(context.Clone(other.template_value_)),
+      symbolic_identity_(context.Clone(other.symbolic_identity_)),
+      impl_binding_(context.Clone(other.impl_binding_)),
+      original_(context.Remap(other.original_)),
+      named_as_type_via_dot_self_(other.named_as_type_via_dot_self_) {}
 
 }  // namespace Carbon

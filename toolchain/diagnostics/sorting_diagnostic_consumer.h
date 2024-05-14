@@ -17,27 +17,42 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   explicit SortingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer_(&next_consumer) {}
 
-  ~SortingDiagnosticConsumer() override { Flush(); }
+  ~SortingDiagnosticConsumer() override {
+    // We choose not to automatically flush diagnostics here, because they are
+    // likely to refer to data that gets destroyed before the diagnostics
+    // consumer is destroyed, because the diagnostics consumer is typically
+    // created before the objects that diagnostics refer into are created.
+    CARBON_CHECK(diagnostics_.empty())
+        << "Must flush diagnostics consumer before destroying it";
+  }
 
   // Buffers the diagnostic.
-  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
-    diagnostics_.push_back(diagnostic);
+  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+    diagnostics_.push_back(std::move(diagnostic));
   }
 
   // Sorts and flushes buffered diagnostics.
   void Flush() override {
-    llvm::sort(diagnostics_, [](const Diagnostic& lhs, const Diagnostic& rhs) {
-      return std::tie(lhs.location.line_number, lhs.location.column_number) <
-             std::tie(rhs.location.line_number, rhs.location.column_number);
-    });
-    for (const auto& diagnostic : diagnostics_) {
-      next_consumer_->HandleDiagnostic(diagnostic);
+    llvm::stable_sort(diagnostics_,
+                      [](const Diagnostic& lhs, const Diagnostic& rhs) {
+                        const auto& lhs_loc = lhs.messages[0].loc;
+                        const auto& rhs_loc = rhs.messages[0].loc;
+                        return std::tie(lhs_loc.filename, lhs_loc.line_number,
+                                        lhs_loc.column_number) <
+                               std::tie(rhs_loc.filename, rhs_loc.line_number,
+                                        rhs_loc.column_number);
+                      });
+    for (auto& diag : diagnostics_) {
+      next_consumer_->HandleDiagnostic(std::move(diag));
     }
     diagnostics_.clear();
   }
 
  private:
+  // A Diagnostic is undesirably large for inline storage by SmallVector, so we
+  // specify 0.
   llvm::SmallVector<Diagnostic, 0> diagnostics_;
+
   DiagnosticConsumer* next_consumer_;
 };
 

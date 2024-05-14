@@ -5,60 +5,60 @@
 #ifndef CARBON_COMMON_OSTREAM_H_
 #define CARBON_COMMON_OSTREAM_H_
 
+#include <concepts>
 #include <ostream>
+#include <type_traits>
 
-#include "common/metaprogramming.h"
 #include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Support/raw_ostream.h"
+// Libraries should include this header instead of raw_ostream.
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
 
-// True if T has a method `void Print(llvm::raw_ostream& out) const`.
-template <typename T>
-static constexpr bool HasPrintMethod = Requires<const T, llvm::raw_ostream>(
-    [](auto&& t, auto&& out) -> decltype(t.Print(out)) {});
-
-// Support raw_ostream << for types which implement:
-//   void Print(llvm::raw_ostream& out) const;
-template <typename T, typename = std::enable_if_t<HasPrintMethod<T>>>
-auto operator<<(llvm::raw_ostream& out, const T& obj) -> llvm::raw_ostream& {
-  obj.Print(out);
-  return out;
-}
-
-// Prevents raw_ostream << for pointers to printable types.
-template <typename T, typename = std::enable_if_t<HasPrintMethod<T>>>
-__attribute__((unavailable(
-    "Received a pointer to a printable type, are you missing a `*`? "
-    "To print as a pointer, cast to void*."))) auto
-operator<<(llvm::raw_ostream& out, const T* /*obj*/) -> llvm::raw_ostream&;
-
-// Support std::ostream << for types which implement:
-//   void Print(llvm::raw_ostream& out) const;
-template <typename T, typename = std::enable_if_t<HasPrintMethod<T>>>
-auto operator<<(std::ostream& out, const T& obj) -> std::ostream& {
-  llvm::raw_os_ostream raw_os(out);
-  obj.Print(raw_os);
-  return out;
-}
-
-// Prevents std::ostream << for pointers to printable types.
-template <typename T, typename = std::enable_if_t<HasPrintMethod<T>>>
-__attribute__((unavailable(
-    "Received a pointer to a printable type, are you missing a `*`? "
-    "To print as a pointer, cast to void*."))) auto
-operator<<(std::ostream& out, const T* /*obj*/) -> std::ostream&;
-
-// Allow GoogleTest and GoogleMock to print even pointers by dereferencing them.
-// This is important to allow automatic printing of arguments of mocked APIs.
-template <typename T, typename = std::enable_if_t<HasPrintMethod<T>>>
-void PrintTo(T* p, std::ostream* out) {
-  *out << static_cast<const void*>(p);
-
-  // Also print the object if non-null.
-  if (p) {
-    *out << " pointing to " << *p;
+// CRTP base class for printable types. Children (DerivedT) must implement:
+// - auto Print(llvm::raw_ostream& out) -> void
+template <typename DerivedT>
+class Printable {
+  // Provides simple printing for debuggers.
+  LLVM_DUMP_METHOD void Dump() const {
+    static_cast<const DerivedT*>(this)->Print(llvm::errs());
   }
+
+  // Supports printing to llvm::raw_ostream.
+  friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
+      -> llvm::raw_ostream& {
+    obj.Print(out);
+    return out;
+  }
+
+  // Supports printing to std::ostream.
+  friend auto operator<<(std::ostream& out, const DerivedT& obj)
+      -> std::ostream& {
+    llvm::raw_os_ostream raw_os(out);
+    obj.Print(raw_os);
+    return out;
+  }
+
+  // Allows GoogleTest and GoogleMock to print pointers by dereferencing them.
+  // This is important to allow automatic printing of arguments of mocked
+  // APIs.
+  friend auto PrintTo(DerivedT* p, std::ostream* out) -> void {
+    *out << static_cast<const void*>(p);
+    // Also print the object if non-null.
+    if (p) {
+      *out << " pointing to " << *p;
+    }
+  }
+};
+
+// Returns the result of printing the value.
+template <typename T>
+inline auto PrintToString(const T& val) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream stream(str);
+  stream << val;
+  return str;
 }
 
 }  // namespace Carbon
@@ -73,7 +73,7 @@ namespace llvm {
 //
 // To make this overload be unusually low priority, it is designed to take even
 // the `std::ostream` parameter as a template, and SFINAE disable itself unless
-// that template parameter matches `std::ostream`. This ensures that an
+// that template parameter is derived from `std::ostream`. This ensures that an
 // *explicit* operator will be preferred when provided. Some LLVM types may have
 // this, and so we want to prioritize accordingly.
 //
@@ -81,12 +81,10 @@ namespace llvm {
 // `raw_os_ostream.h` so that we wouldn't need to inject into LLVM's namespace,
 // but supporting `std::ostream` isn't a priority for LLVM so we handle it
 // locally instead.
-template <typename S, typename T,
-          typename = std::enable_if_t<std::is_base_of_v<
-              std::ostream, std::remove_reference_t<std::remove_cv_t<S>>>>,
-          typename = std::enable_if_t<!std::is_same_v<
-              std::remove_reference_t<std::remove_cv_t<T>>, raw_ostream>>>
-auto operator<<(S& standard_out, const T& value) -> S& {
+template <typename StreamT, typename ClassT>
+  requires std::derived_from<std::decay_t<StreamT>, std::ostream> &&
+           (!std::same_as<std::decay_t<ClassT>, raw_ostream>)
+auto operator<<(StreamT& standard_out, const ClassT& value) -> StreamT& {
   raw_os_ostream(standard_out) << value;
   return standard_out;
 }

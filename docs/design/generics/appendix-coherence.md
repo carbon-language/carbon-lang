@@ -36,8 +36,8 @@ implements interfaces. There are a few main problematic use cases to consider:
     `Song` type to support "by title", "by artist", and "by album" orderings.
 -   Implementing an interface for a type when there is no relationship between
     the libraries defining the interface and the type.
--   When the implementation of an interface for a type uses an associated type
-    that can't be referenced from the file or files where the implementation is
+-   When the implementation of an interface for a type relies on something that
+    can't be referenced from the file or files where the implementation is
     allowed to be defined.
 
 These last two cases are highlighted as concerns in Rust in
@@ -67,7 +67,7 @@ this:
 
     ```
     package Container;
-    struct HashSet(Key:! Hashable) { ... }
+    class HashSet(Key:! Hashable) { ... }
     ```
 
 -   A `Song` type is defined in package `SongLib`.
@@ -78,7 +78,7 @@ this:
     package SongHashArtistAndTitle;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[me: Self]() -> u64 { ... }
+      fn Hash[self: Self]() -> u64 { ... }
     }
     ```
 
@@ -105,7 +105,7 @@ this:
     package SongHashAppleMusicURL;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[me: Self]() -> u64 { ... }
+      fn Hash[self: Self]() -> u64 { ... }
     }
     ```
 
@@ -121,7 +121,7 @@ this:
 
     fn SomethingWeirdHappens() {
       var unchained_melody: SongLib.Song = ...;
-      var song_set: auto = Containers.HashSet(SongLib.Song).Create();
+      var song_set: auto = Containers.HashSet(SongLib.Song).Make();
       song_set.Add(unchained_melody);
       // Either this is a compile error or does something unexpected.
       if (SongUtil.IsInHashSet(unchained_melody, &song_set)) {
@@ -141,7 +141,7 @@ function from `SongHashArtistAndTitle` which returns a different hash value for
 
 **Background:** [This post](https://gist.github.com/nikomatsakis/1421744)
 discusses the hashtable problem in the context of Haskell, and
-[this 2011 Rust followup](https://mail.mozilla.org/pipermail/rust-dev/2011-December/001036.html)
+[this 2011 Rust followup](https://www.mail-archive.com/rust-dev@mozilla.org/msg01024.html)
 discusses how to detect problems at compile time.
 
 ## Rejected alternative: no orphan rule
@@ -191,7 +191,7 @@ body of the `SomethingWeirdHappens` function.
 
 This idea is discussed briefly in section 5.4 on separate compilation of WG21
 proposal n1848 for implementing "Indiana" C++0x concepts
-([1](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.86.9526&rep=rep1&type=pdf),
+([1](https://citeseerx.ist.psu.edu/pdf/6e1398d22fd6a3e31aba2519d7a00a8f0d93e7e8),
 and [2](https://wg21.link/n1848)).
 
 This has some downsides:
@@ -208,9 +208,9 @@ This has some downsides:
     varies instead of being known statically.
 -   It is slower to execute from dynamic dispatch and the inability to inline.
 -   In some cases it may not be feasible to use dynamic dispatch. For example,
-    if an interface method returns an associated type, we might not know the
-    calling convention of the function without knowing some details about the
-    type.
+    if the return type of an interface method involves an associated constant,
+    we might not know the calling convention of the function without knowing
+    some details about the value of that constant.
 
 As a result, this doesn't make sense as the default behavior for Carbon based on
 its [goals](/docs/project/goals.md). That being said, this could be a feature

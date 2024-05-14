@@ -2,12 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -15,7 +10,7 @@ class A {
   var n: i32;
 }
 impl i32 as ImplicitAs(A) {
-  fn Convert[me: Self]() -> A { return {.n = me }; }
+  fn Convert[self: Self]() -> A { return {.n = self }; }
 }
 
 fn Main() -> i32 {
@@ -23,3 +18,5 @@ fn Main() -> i32 {
   a = 1;
   return a.n;
 }
+
+// CHECK:STDOUT: result: 1

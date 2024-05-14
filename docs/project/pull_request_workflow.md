@@ -10,14 +10,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
 -   [Trunk based development](#trunk-based-development)
     -   [Green tests](#green-tests)
 -   [Always use pull requests (with review) rather than pushing directly](#always-use-pull-requests-with-review-rather-than-pushing-directly)
 -   [Small, incremental changes](#small-incremental-changes)
-    -   [Managing pull requests with multiple commits](#managing-pull-requests-with-multiple-commits)
 -   [Linear history](#linear-history)
+-   [Merging a pull request](#merging-a-pull-request)
 
 <!-- tocstop -->
+
+## Overview
 
 Carbon repositories follow a few basic principles:
 
@@ -26,8 +29,6 @@ Carbon repositories follow a few basic principles:
 -   Always use pull requests, rather than pushing directly.
 -   Changes should be small, incremental, and review-optimized.
 -   Preserve linear history by
-    [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
-    or
     [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits)
     pull requests rather than using unsquashed merge commits.
 
@@ -101,29 +102,28 @@ review you typically want to leave the development history undisturbed until the
 end so that comments on any particular increment aren't lost. We typically use
 the GitHub squash-and-merge functionality to land things.
 
-### Managing pull requests with multiple commits
-
-Sometimes, it will make sense to _land_ a series of separate commits for a
-single pull request through rebasing. This can happen when there is important
-overarching context that should feed into the review, but the changes can be
-usefully decomposed when landing them. When following this model, each commit
-you intend to end up on the `trunk` branch needs to follow the same fundamental
-rules as the pull request above: they should each build and pass tests when
-landed in order, and they should have well written, cohesive commit messages.
-
-Prior to landing the pull request, you are expected to rebase it to produce this
-final commit sequence, either interactively or not. This kind of rebase rewrites
-the history in Git, which can make it hard to track the resolution of code
-review comments. Typically, only do this as a cleanup step when the review has
-finished, or when it won't otherwise disrupt code review. It is healthy and
-expected to add "addressing review comments" commits during the review and then
-squashing them away before the pull request is merged.
-
 ## Linear history
 
 We want the history of the `trunk` branch of each repository to be as simple and
 easy to understand as possible. While Git has strong support for managing
 complex history and merge patterns, we find understanding and reasoning about
 the history -- especially for humans -- to be at least somewhat simplified by
-sticking to a linear progression. As a consequence, we either squash pull
-requests or rebase them when merging them.
+sticking to a linear progression. As a consequence, pull requests are squashed
+when merging them.
+
+## Merging a pull request
+
+Once approved, and even if all checks have not finished running yet, a pull
+request can be added to a
+[merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue#about-merge-queues).
+When queued, and after all pull request checks pass, this will automatically
+create a squashed version of the commits in a temporary branch on top of `trunk`
+and any previously queued merge. Checks run on this commit help to ensure that
+the `trunk` stays "green" in presence of conflicting merges.
+
+After the merge queue checks pass, the `trunk` branch pointer is updated to
+include the now merged changset. The resulting commit title and description will
+match exactly those of the pull request, so it is important to set those
+appropriately before merging. Co-authors are preserved by this operation. If a
+failure happens at any point, the merge fails, with both `trunk` and the pull
+request branch kept in their original state.

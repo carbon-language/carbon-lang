@@ -5,13 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_H_
 
-#include <cstdint>
-
+#include "common/command_line.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
 
@@ -22,14 +20,25 @@ namespace Carbon {
 // with the language.
 class Driver {
  public:
-  // Default constructed driver uses stderr for all error and informational
-  // output.
-  Driver() : output_stream_(llvm::outs()), error_stream_(llvm::errs()) {}
+  // The result of RunCommand().
+  struct RunResult {
+    // Overall success result.
+    bool success;
+
+    // Per-file success results. May be empty if files aren't individually
+    // processed.
+    llvm::SmallVector<std::pair<std::string, bool>> per_file_success;
+  };
 
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream)
-      : output_stream_(output_stream), error_stream_(error_stream) {}
+  Driver(llvm::vfs::FileSystem& fs, llvm::StringRef data_dir,
+         llvm::raw_pwrite_stream& output_stream,
+         llvm::raw_pwrite_stream& error_stream)
+      : fs_(fs),
+        data_dir_(data_dir),
+        output_stream_(output_stream),
+        error_stream_(error_stream) {}
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -37,36 +46,52 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
-  auto RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> RunResult;
 
-  // Subcommand that prints available help text to the error stream.
-  //
-  // Optionally one positional parameter may be provided to select a particular
-  // subcommand or detailed section of help to print.
-  //
-  // Returns true if appropriate help text was found and printed. If an invalid
-  // positional parameter (or flag) is provided, returns false.
-  auto RunHelpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
-
-  // Subcommand that dumps internal compilation information for the provided
-  // source file.
-  //
-  // Requires exactly one positional parameter to designate the source file to
-  // read. May be `-` to read from stdin.
-  //
-  // Returns true if the operation succeeds. If the operation fails, this
-  // returns false and any information about the failure is printed to the
-  // registered error stream (stderr by default).
-  auto RunDumpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  // Finds the source files that define the prelude and returns a list of their
+  // filenames. On error, writes a message to `error_stream` and returns an
+  // empty list.
+  static auto FindPreludeFiles(llvm::StringRef data_dir,
+                               llvm::raw_ostream& error_stream)
+      -> llvm::SmallVector<std::string>;
 
  private:
-  auto ReportExtraArgs(llvm::StringRef subcommand_text,
-                       llvm::ArrayRef<llvm::StringRef> args) -> void;
+  struct Options;
+  struct CodegenOptions;
+  struct CompileOptions;
+  struct LinkOptions;
+  class CompilationUnit;
 
-  llvm::raw_ostream& output_stream_;
-  llvm::raw_ostream& error_stream_;
+  // Delegates to the command line library to parse the arguments and store the
+  // results in a custom `Options` structure that the rest of the driver uses.
+  auto ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
+      -> CommandLine::ParseResult;
+
+  // Does custom validation of the compile-subcommand options structure beyond
+  // what the command line parsing library supports.
+  auto ValidateCompileOptions(const CompileOptions& options) const -> bool;
+
+  // Implements the compile subcommand of the driver.
+  auto Compile(const CompileOptions& options,
+               const CodegenOptions& codegen_options) -> RunResult;
+
+  // Implements the link subcommand of the driver.
+  auto Link(const LinkOptions& options, const CodegenOptions& codegen_options)
+      -> RunResult;
+
+  // The filesystem for source code.
+  llvm::vfs::FileSystem& fs_;
+
+  // The path within fs for data files.
+  std::string data_dir_;
+
+  // Standard output; stdout.
+  llvm::raw_pwrite_stream& output_stream_;
+  // Error output; stderr.
+  llvm::raw_pwrite_stream& error_stream_;
+
+  // For CARBON_VLOG.
+  llvm::raw_pwrite_stream* vlog_stream_ = nullptr;
 };
 
 }  // namespace Carbon

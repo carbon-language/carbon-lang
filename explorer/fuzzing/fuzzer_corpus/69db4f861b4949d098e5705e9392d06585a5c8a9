@@ -1,0 +1,63 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      deduced_parameters {
+        name: "T"
+        type {
+          tuple_literal {
+            fields {
+              int_type_literal {
+              }
+            }
+            fields {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Omitted
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+    }
+  }
+}

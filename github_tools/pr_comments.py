@@ -239,15 +239,14 @@ class _Thread:
 
     def format(self, long: bool) -> str:
         """Formats the review thread with comments."""
-        lines = []
-        lines.append(
+        lines = [
             "%s\n  - line %d; %s"
             % (
                 self.url,
                 self.line,
                 ("resolved" if self.is_resolved else "unresolved"),
             )
-        )
+        ]
         if self.diff_url:
             lines.append("  - diff: %s" % self.diff_url)
         for comment in self.comments:

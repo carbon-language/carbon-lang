@@ -21,20 +21,20 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Contrast with templates](#contrast-with-templates)
     -   [Implementing interfaces](#implementing-interfaces)
         -   [Accessing members of interfaces](#accessing-members-of-interfaces)
-    -   [Type-of-types](#type-of-types)
+    -   [Facet types](#facet-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
-        -   [Generic type parameters](#generic-type-parameters)
+        -   [Facet parameters](#facet-parameters)
     -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
     -   [Combining interfaces](#combining-interfaces)
         -   [Named constraints](#named-constraints)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
-    -   [Interface input and output types](#interface-input-and-output-types)
-        -   [Associated types](#associated-types)
+    -   [Interface inputs and outputs](#interface-inputs-and-outputs)
+        -   [Associated constants](#associated-constants)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
-    -   [Parameterized impls](#parameterized-impls)
+    -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
@@ -43,14 +43,29 @@ pointers to other design documents that dive deeper into individual topics.
 
 ## Goals
 
-The goal of Carbon generics is to provide an alternative to Carbon (or C++)
-templates. Generics in this form should provide many advantages, including:
+Carbon [generics](terminology.md#generic-means-compile-time-parameterized)
+supports generalizing code to apply to more situations by adding compile-time
+parameters, allowing
+[generic programming](https://en.wikipedia.org/wiki/Generic_programming). Carbon
+supports both
+[checked and template](terminology.md#checked-versus-template-parameters)
+generics.
+
+Template generics provide a similar model to C++ templates, to help with interop
+and migration. They can be more convenient to write, and support some use cases,
+like [metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming), that are
+difficult with checked generics.
+
+Checked generics are an alternative that has advantages including:
 
 -   Function calls and bodies are checked independently against the function
     signatures.
 -   Clearer and earlier error messages.
 -   Fast builds, particularly development builds.
 -   Support for both static and dynamic dispatch.
+
+Checked generics do have some restrictions, but are expected to be more
+appropriate at public API boundaries than templates.
 
 For more detail, see [the detailed discussion of generics goals](goals.md) and
 [generics terminology](terminology.md).
@@ -59,35 +74,47 @@ For more detail, see [the detailed discussion of generics goals](goals.md) and
 
 Summary of how Carbon generics work:
 
--   _Generics_ are parameterized functions and types that can apply generally.
-    They are used to avoid writing specialized, near-duplicate code for similar
-    situations.
--   Generics are written using _interfaces_ which have a name and describe
-    methods, functions, and other entities for types to implement.
+-   _Generics_ are compile-time parameterized functions, types, and other
+    language constructs. Those parameters allow a single definition to apply
+    more generally. They are used to avoid writing specialized, near-duplicate
+    code for similar situations.
+-   The definition of a _checked_ generic is typechecked once, without having to
+    know the specific argument values of the generic parameters it is
+    instantiated with. Typechecking the definition of a checked generic requires
+    a precise contract specifying the requirements on the argument values.
+-   For parameters that will be used as types, those requirements are written
+    using _interfaces_. Interfaces have a name and describe methods, functions,
+    and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
-    its functionality. A given type may implement an interface at most once.
--   Implementations may be part of the type's definition, in which case you can
-    directly call the interface's methods on those types. Or, they may be
-    external, in which case the implementation is allowed to be defined in the
-    library defining the interface.
--   Interfaces are used as the type of a generic type parameter, acting as a
-    _type-of-type_. Type-of-types in general specify the capabilities and
-    requirements of the type. Types define specific implementations of those
-    capabilities. Inside such a generic function, the API of the type is
-    [erased](terminology.md#type-erasure), except for the names defined in the
-    type-of-type.
--   _Deduced parameters_ are parameters whose values are determined by the
-    values and (most commonly) the types of the explicit arguments. Generic type
-    parameters are typically deduced.
--   A function with a generic type parameter can have the same function body as
-    an unparameterized one. Functions can freely mix generic, template, and
-    regular parameters.
+    their functionality. A given type may implement an interface at most once.
+-   Implementations may be declared inline in the body of a class definition or
+    out-of-line.
+-   Types may _extend_ an implementation declared inline, in which case you can
+    directly call the interface's methods on those types.
+-   Out-of-line implementations may be defined in the library defining the
+    interface as an alternative to the type, or
+    [the library defining a type argument](#parameterized-impl-declarations).
+-   Interfaces may be used as the type of a generic parameter. Interfaces are
+    _facet types_, whose values are the subset of all types that implement the
+    interface. Facet types in general specify the capabilities and requirements
+    of the type. The value of a interface is called a _facet_. Facets are not
+    types, but are usable as types.
+-   With a template generic, the concrete argument value used by the caller is
+    used for name lookup and typechecking. With checked generics, that is all
+    done with the declared restrictions expressed as the types of bindings in
+    the declaration. Inside the body of a checked generic with a facet
+    parameter, the API of the facet is just the names defined by the facet type.
+-   _Deduced parameters_ are parameters whose values are determined by the types
+    of the explicit arguments. Generic facet parameters are typically deduced.
+-   A function with a generic parameter can have the same function body as an
+    unparameterized one. Functions can freely mix checked, template, and regular
+    parameters.
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
     interfaces.
--   The `&` operation on type-of-types allows you conveniently combine
-    interfaces. It gives you all the names that don't conflict.
--   You may also declare a new type-of-type directly using
+-   The `&` operation on facet types allows you conveniently combine interfaces.
+    It gives you all the names that don't conflict.
+-   You may also declare a new facet type directly using
     ["named constraints"](terminology.md#named-constraints). Named constraints
     can express requirements that multiple interfaces be implemented, and give
     you control over how name conflicts are handled.
@@ -114,8 +141,9 @@ elements:
 fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `!` to indicate that the parameter named `T` is generic
-and the caller will have to provide a value known at compile time.
+The syntax above adds a `!` to indicate that the parameter named `T` is
+compile-time. By default compile-time parameters are _checked_, the `template`
+keyword may be added to make it a _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -128,14 +156,16 @@ This ability to generalize makes `SortVector` a _generic_.
 ### Interfaces
 
 The `SortVector` function requires a definition of `Comparable`, with the goal
-that the compiler can:
+that the compiler can perform checking. This has two pieces:
 
--   completely type check a generic definition without information from where
-    it's called.
--   completely type check a call to a generic with information only from the
-    function's signature, and not from its body.
+-   definition checking: completely type check a checked-generic definition
+    without information from calls;
+-   encapsulation: completely type check a call to a generic with information
+    only from the function's signature, and not from its body. For Rust, this is
+    called
+    "[Rust's Golden Rule](https://steveklabnik.com/writing/rusts-golden-rule)."
 
-In this example, then, `Comparable` is an _interface_.
+In this example, `Comparable` is an _interface_.
 
 Interfaces describe all the requirements needed for the type `T`. Given that the
 compiler knows `T` satisfies those requirements, it can type check the body of
@@ -159,7 +189,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](rhs: Self) -> bool;
+  fn Less[self: Self](rhs: Self) -> bool;
 }
 ```
 
@@ -174,13 +204,13 @@ an interface.
 
 #### Contrast with templates
 
-Contrast these generics with a C++ template, where the compiler may be able to
-do some checking given a function definition, but more checking of the
-definition is required after seeing the call sites once all the
+Contrast these checked generics with a Carbon or C++ template, where the
+compiler may be able to do some checking given a function definition, but more
+checking of the definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
 Note: [Generics terminology](terminology.md) goes into more detail about the
-[differences between generics and templates](terminology.md#generic-versus-template-parameters).
+[differences between checked and template generic parameters](terminology.md#checked-versus-template-parameters).
 
 ### Implementing interfaces
 
@@ -192,7 +222,7 @@ Consider this interface:
 
 ```
 interface Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 ```
 
@@ -205,44 +235,44 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // without the keyword `external` means all names of `Printable`, such
+  // with the keyword `extend` means all names of `Printable`, such
   // as `F`, are included as a part of the `Song` API.
-  impl as Printable {
+  extend impl as Printable {
     // Could use `Self` in place of `Song` here.
-    fn Print[me: Song]() { ... }
+    fn Print[self: Song]() { ... }
   }
 }
 
 // Implement `Comparable` for `Song` without changing the API of `Song`
-// using an `external impl` declaration. This may be defined in either
-// the library defining `Song` or `Comparable`.
-external impl Song as Comparable {
+// using an `impl` declaration without `extend`. This may be defined in
+// either the library defining `Song` or `Comparable`.
+impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](rhs: Self) -> bool { ... }
+  fn Less[self: Self](rhs: Self) -> bool { ... }
 }
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally start with the `external` keyword to
-say the members of the interface are not members of the class. Out-of-line
-implementations must be external. External implementations may be defined in the
-library defining either the class or the interface.
+out-of-line. Implementations may optionally start with the `extend` keyword to
+say the members of the interface are also members of the class, which may only
+be used in a class scope. Out-of-line implementations may be defined in the
+library defining the class, the interface, or
+[a type argument](#parameterized-impl-declarations).
 
 #### Accessing members of interfaces
 
-The methods of an interface implemented internally within the class definition
-may be called with the
+Methods from an interface that a class extends may be called with the
 [simple member access syntax](terminology.md#simple-member-access). Methods of
 all implemented interfaces may be called with a
 [qualified member access expression](terminology.md#qualified-member-access-expression),
-whether they are defined internally or externally.
+whether the class extends them or not.
 
 ```
 var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// `Less` is defined in `Comparable`, which is
-// implemented externally for `Song`
+// `Less` is defined in `Comparable`, which `Song`
+// does not extend the implementation of.
 song.(Comparable.Less)(song);
 // Can also call `Print` using a qualified member
 // access expression, using the compound member access
@@ -250,28 +280,28 @@ song.(Comparable.Less)(song);
 song.(Printable.Print)();
 ```
 
-### Type-of-types
+### Facet types
 
 To type check a function, the compiler needs to be able to verify that uses of a
 value match the capabilities of the value's type. In `SortVector`, the parameter
-`T` is a type, but that type is a generic parameter. That means that the
-specific type value assigned to `T` is not known when type checking the
-`SortVector` function. Instead it is the constraints on `T` that let the
-compiler know what operations may be performed on values of type `T`. Those
-constraints are represented by the type of `T`, a
-[**_type-of-type_**](terminology.md#type-of-type).
+`T` is a type, but that type is a checked-generic, or _symbolic_, parameter.
+That means that the specific type value assigned to `T` is not known when type
+checking the `SortVector` function. Instead it is the constraints on `T` that
+let the compiler know what operations may be performed on values of type `T`.
+Those constraints are represented by the type of `T`, a
+[**_facet type_**](terminology.md#facet-type).
 
-In general, a type-of-type describes the capabilities of a type, while a type
+In general, a facet type describes the capabilities of a type, while a type
 defines specific implementations of those capabilities. An interface, like
-`Comparable`, may be used as a type-of-type. In that case, the constraint on the
+`Comparable`, may be used as a facet type. In that case, the constraint on the
 type is that it must implement the interface `Comparable`.
 
-A type-of-type also defines a set of names and a mapping to corresponding
+A facet type also defines a set of names and a mapping to corresponding
 qualified names. Those names are used for
 [simple member lookup](terminology.md#simple-member-access) in scopes where the
 value of the type is not known, such as when the type is a generic parameter.
 
-You may combine interfaces into new type-of-types using
+You may combine interfaces into new facet types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
@@ -311,12 +341,12 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:! Type, U:! Type](x: T) -> U { ... }
+fn Illegal[T:! type, U:! type](x: T) -> U { ... }
 ```
 
-#### Generic type parameters
+#### Facet parameters
 
-A function with a generic type parameter can have the same function body as an
+A function with a facet parameter can have the same function body as an
 unparameterized one.
 
 ```
@@ -329,20 +359,24 @@ fn PrintIt(p: Song*) {
 }
 ```
 
-Inside the function body, you can treat the generic type parameter just like any
-other type. There is no need to refer to or access generic parameters
-differently because they are defined as generic, as long as you only refer to
-the names defined by [type-of-type](#type-of-types) for the type parameter.
+Inside the function body, you can treat the facet parameter just like any other
+type. There is no need to refer to or access generic parameters differently
+because they are defined as generic, as long as you only refer to the names
+defined by [facet type](#facet-types) for the facet parameter.
 
-You may also refer to any of the methods of interfaces required by the
-type-of-type using a
-[qualified member access expression](#accessing-members-of-interfaces), as shown
-in the following sections.
+You may also refer to any of the methods of interfaces required by the facet
+type using a
+[qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of generic, template, and regular parameters.
-Likewise, it's allowed to pass a template or generic value to a generic or
-regular parameter. _However, passing a generic value to a template parameter is
-future work._
+A function can have a mix of checked, template, and regular parameters. Each
+kind of parameter is defined using a different syntax: a checked parameter is
+uses a symbolic binding pattern, a template parameter uses a template binding
+pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or regular
+parameter. _We have decided to support passing a symbolic value to a template
+parameter, see
+[leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
+but incorporating it into the design is future work._
 
 ### Requiring or extending another interface
 
@@ -350,17 +384,17 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](rhs: Self) -> bool;
+  fn IsEqual[self: Self](rhs: Self) -> bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
-  impl as Equatable;
-  fn Advance[addr me: Self*]();
+  require Self impls Equatable;
+  fn Advance[addr self: Self*]();
 }
 ```
 
-The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
+The `extend` keyword is used to [extend](terminology.md#extending-an-interface)
 another interface. If interface `Derived` extends interface `Base`, `Base`'s
 interface is both required and all its methods are included in `Derived`'s
 interface.
@@ -368,14 +402,14 @@ interface.
 ```
 // `Hashable` extends `Equatable`.
 interface Hashable {
-  extends Equatable;
-  fn Hash[me: Self]() -> u64;
+  extend Equatable;
+  fn Hash[self: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
-  impl as Equatable;
+  require Self impls Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[me: Self]() -> u64;
+  fn Hash[self: Self]() -> u64;
 }
 ```
 
@@ -385,9 +419,9 @@ methods in the implementation of the derived interface.
 ```
 class Key {
   // ...
-  impl as Hashable {
-    fn IsEqual[me: Key](rhs: Key) -> bool { ... }
-    fn Hash[me: Key]() -> u64 { ... }
+  extend impl as Hashable {
+    fn IsEqual[self: Key](rhs: Key) -> bool { ... }
+    fn Hash[self: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -398,19 +432,19 @@ k.IsEqual(k);
 
 ### Combining interfaces
 
-The `&` operation on type-of-types allows you conveniently combine interfaces.
-It gives you all the names that don't conflict.
+The `&` operation on facet types allows you conveniently combine interfaces. It
+gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[me: Self]() -> (i32, i32);
+  fn GetCenter[self: Self]() -> (i32, i32);
   // Draw the object to the screen
-  fn Draw[me: Self]();
+  fn Draw[self: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr me: Self*](player: i32);
+  fn SetWinner[addr self: Self*](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr me: Self*]();
+  fn Draw[addr self: Self*]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -431,7 +465,7 @@ fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
 
 #### Named constraints
 
-You may also declare a new type-of-type directly using
+You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can
 express requirements that multiple interfaces be implemented, and give you
 control over how name conflicts are handled. Named constraints have other
@@ -439,8 +473,8 @@ applications and capabilities not covered here.
 
 ```
 constraint Combined {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
   alias SetWinner = EndOfGame.SetWinner;
@@ -461,18 +495,17 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 
 #### Type erasure
 
-Inside a generic function, the API of a type argument is
-[erased](terminology.md#type-erasure) except for the names defined in the
-type-of-type. An equivalent model is to say an
-[archetype](terminology.md#archetype) is used for type checking and name lookup
-when the actual type is not known in that scope. The archetype has members
-dictated by the type-of-type.
+Inside a generic function, the API of a facet argument is
+[erased](terminology.md#type-erasure) except for the names defined in the facet
+type. An equivalent model is to say an [archetype](terminology.md#archetype) is
+used for type checking and name lookup when the actual type is not known in that
+scope. The archetype has members dictated by the facet type.
 
 For example: If there were a class `CDCover` defined this way:
 
 ```
 class CDCover  {
-  impl as Printable {
+  extend impl as Printable {
     ...
   }
 }
@@ -503,46 +536,48 @@ In this example, we have multiple ways of sorting a collection of `Song` values.
 ```
 class Song { ... }
 
-adapter SongByArtist extends Song {
-  impl as Comparable { ... }
+class SongByArtist {
+  extend adapt Song;
+  extend impl as Comparable { ... }
 }
 
-adapter SongByTitle extends Song {
-  impl as Comparable { ... }
+class SongByTitle {
+  extend adapt Song;
+  extend impl as Comparable { ... }
 }
 ```
 
 Values of type `Song` may be cast to `SongByArtist` or `SongByTitle` to get a
 specific sort order.
 
-### Interface input and output types
+### Interface inputs and outputs
 
-[Associated types and interface parameters](terminology.md#interface-type-parameters-and-associated-types)
+[Associated constants and interface parameters](terminology.md#interface-parameters-and-associated-constants)
 allow function signatures to vary with the implementing type. The biggest
-difference between these is that associated types ("output types") may be
-deduced from a type, and types can implement the same interface multiple times
-with different interface parameters ("input types").
+difference between these is that associated constants ("outputs") may be deduced
+from a type, and types can implement the same interface multiple times with
+different interface parameters ("inputs").
 
-#### Associated types
+#### Associated constants
 
-Expect types that vary in an interface to be associated types by default. Since
-associated types may be deduced, they are more convenient to use. Imagine a
-`Stack` interface. Different types implementing `Stack` will have different
-element types:
+Expect parts of function signatures that vary in an interface to be associated
+constants by default. Since associated constants may be deduced, they are more
+convenient to use. Imagine a `Stack` interface. Different types implementing
+`Stack` will have different element types:
 
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> bool;
+  fn Push[addr self: Self*](value: ElementType);
+  fn Pop[addr self: Self*]() -> ElementType;
+  fn IsEmpty[addr self: Self*]() -> bool;
 }
 ```
 
-`ElementType` is an associated type of the interface `Stack`. Types that
-implement `Stack` give `ElementType` a specific value of some type implementing
-`Movable`. Functions that accept a type implementing `Stack` can deduce the
-`ElementType` from the stack type.
+`ElementType` is an associated constant of the interface `Stack`. Types that
+implement `Stack` give `ElementType` a specific value that is some type (really,
+facet) implementing `Movable`. Functions that accept a type implementing `Stack`
+can deduce the `ElementType` from the stack type.
 
 ```
 // ✅ This is allowed, since the type of the stack will determine
@@ -560,8 +595,8 @@ those types to be different. An element in a hash map might have type
 `Equatable(Pair(String, i64))`.
 
 ```
-interface Equatable(T:! Type) {
-  fn IsEqual[me: Self](compare_to: T) -> bool;
+interface Equatable(T:! type) {
+  fn IsEqual[self: Self](compare_to: T) -> bool;
 }
 ```
 
@@ -574,27 +609,28 @@ general, unless some other parameter determines `T`.
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `v` parameter.
-fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
+fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
-// Contrast with `PeekAtTopOfStack` in the associated type example.
-fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
+// Contrast with `PeekAtTopOfStack` in the associated constant
+// example.
+fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 ```
 
 ### Constraints
 
-Type-of-types can be further constrained using a `where` clause:
+Facet types can be further constrained using a `where` clause:
 
 ```
-fn FindFirstPrime[T:! Container where .Element == i32]
+fn FindFirstPrime[T:! Container where .Element = i32]
     (c: T, i: i32) -> Optional(i32) {
   // The elements of `c` have type `T.Element`, which is `i32`.
   ...
 }
 
-fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...
@@ -606,23 +642,23 @@ increase the knowledge that may be used in the body of the function to operate
 on values of those types.
 
 Constraints are also used when implementing an interface to specify the values
-of associated types (and other associated constants).
+of associated constants.
 
 ```
 class Vector(T:! Movable) {
-  impl as Stack where .ElementType = T { ... }
+  extend impl as Stack where .ElementType = T { ... }
 }
 ```
 
-### Parameterized impls
+### Parameterized impl declarations
 
 Implementations can be parameterized to apply to multiple types. Those
 parameters can have constraints to restrict when the implementation applies.
 When multiple implementations apply, there is a rule to pick which one is
 considered the most specific:
 
--   All type parameters in each `impl` declaration are replaced with question
-    marks `?`. This is called the type structure of the `impl` declaration.
+-   All parameters in each `impl` declaration are replaced with question marks
+    `?`. This is called the type structure of the `impl` declaration.
 -   Given two type structures, find the first difference when read from
     left-to-right. The one with a `?` is less specific, the one with a concrete
     type name in that position is more specific.
@@ -649,7 +685,7 @@ supports any type implicitly convertible to a specified type, using `like`:
 // Support multiplying values of type `Distance` with
 // values of type `f64` or any type implicitly
 // convertible to `f64`.
-external impl Distance as MultipliableWith(like f64) ...
+impl Distance as MultipliableWith(like f64) ...
 ```
 
 ## Future work

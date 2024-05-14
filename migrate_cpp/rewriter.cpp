@@ -16,18 +16,18 @@ auto OutputWriter::Write(clang::SourceLocation loc,
                          const OutputSegment& segment) const -> bool {
   return std::visit(
       [&](auto& content) {
-        using type = std::decay_t<decltype(content)>;
+        using Type = std::decay_t<decltype(content)>;
         auto [begin, end] = bounds;
 
-        if constexpr (std::is_same_v<type, std::string>) {
+        if constexpr (std::is_same_v<Type, std::string>) {
           auto begin_offset = source_manager.getDecomposedLoc(loc).second;
           // Append the string replacement if the node being replaced falls
           // within `bounds`.
           if (begin <= begin_offset && begin_offset < end) {
             output.append(content);
           }
-        } else if constexpr (std::is_same_v<type, clang::DynTypedNode> ||
-                             std::is_same_v<type, clang::TypeLoc>) {
+        } else if constexpr (std::is_same_v<Type, clang::DynTypedNode> ||
+                             std::is_same_v<Type, clang::TypeLoc>) {
           auto content_loc = content.getSourceRange().getBegin();
           auto begin_offset =
               source_manager.getDecomposedLoc(content_loc).second;
@@ -54,7 +54,7 @@ auto OutputWriter::Write(clang::SourceLocation loc,
             }
           }
         } else {
-          static_assert(std::is_void_v<type>,
+          static_assert(std::is_void_v<Type>,
                         "Failed to handle a case in the `std::variant`.");
         }
         return true;

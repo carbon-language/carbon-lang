@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 TEST(IndirectValueTest, ConstAccess) {
@@ -35,7 +35,7 @@ struct NonMovable {
 
 TEST(IndirectValueTest, Create) {
   IndirectValue<NonMovable> v =
-      CreateIndirectValue([] { return NonMovable(42); });
+      MakeIndirectValue([] { return NonMovable(42); });
   EXPECT_EQ(v->i, 42);
 }
 
@@ -45,7 +45,7 @@ auto GetIntReference() -> const int& {
 }
 
 TEST(IndirectValueTest, CreateWithDecay) {
-  auto v = CreateIndirectValue(GetIntReference);
+  auto v = MakeIndirectValue(GetIntReference);
   EXPECT_TRUE((std::is_same_v<decltype(v), IndirectValue<int>>));
   EXPECT_EQ(*v, 42);
 }
@@ -58,7 +58,7 @@ struct TestValue {
   TestValue(TestValue&& other) noexcept : state("move constructed") {
     other.state = "move constructed from";
   }
-  auto operator=(const TestValue&) noexcept -> TestValue& {
+  auto operator=(const TestValue& /*unused*/) noexcept -> TestValue& {
     state = "copy assigned";
     return *this;
   }
@@ -126,4 +126,4 @@ TEST(IndirectValueTest, IncompleteType) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

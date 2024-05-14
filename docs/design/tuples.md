@@ -10,30 +10,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
+-   [Element access](#element-access)
     -   [Empty tuples](#empty-tuples)
-    -   [Indices as compile-time constants](#indices-as-compile-time-constants)
+    -   [Trailing commas and single-element tuples](#trailing-commas-and-single-element-tuples)
+    -   [Tuple of types and tuple types](#tuple-of-types-and-tuple-types)
     -   [Operations performed field-wise](#operations-performed-field-wise)
+    -   [Pattern matching](#pattern-matching)
 -   [Open questions](#open-questions)
+    -   [Tuple slicing](#tuple-slicing)
     -   [Slicing ranges](#slicing-ranges)
-    -   [Single-value tuples](#single-value-tuples)
-    -   [Function pattern match](#function-pattern-match)
-    -   [Type vs tuple of types](#type-vs-tuple-of-types)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
 ## Overview
 
-The primary composite type involves simple aggregation of other types as a tuple
-(called a "product type" in formal type theory):
+The primary composite type involves simple aggregation of other types as a
+tuple, called a "product type" in formal type theory:
 
 ```
 fn DoubleBoth(x: i32, y: i32) -> (i32, i32) {
@@ -49,39 +44,55 @@ and second elements are expressions referring to the `i32` type. The only
 difference is the type of these expressions. Both are tuples, but one is a tuple
 of types.
 
-Element access uses subscript syntax:
+## Element access
+
+Element access uses a syntax similar to field access, with an element index
+instead of a field name:
 
 ```
-fn Bar(x: i32, y: i32) -> i32 {
+fn Sum(x: i32, y: i32) -> i32 {
   var t: (i32, i32) = (x, y);
-  return t[0] + t[1];
+  return t.0 + t.1;
 }
 ```
 
-Tuples also support multiple indices and slicing to restructure tuple elements:
+A parenthesized template constant expression can also be used to index a tuple:
 
 ```
-fn Baz(x: i32, y: i32, z: i32) -> (i32, i32) {
-  var t1: (i32, i32, i32) = (x, y, z);
-  var t2: (i32, i32, i32) = t1[(2, 1, 0)];
-  return t2[0 .. 2];
+fn Choose(template N:! i32) -> i32 {
+  return (1, 2, 3).(N % 3);
 }
 ```
-
-This code first reverses the tuple, and then extracts a slice using a half-open
-range of indices.
 
 ### Empty tuples
 
 `()` is the empty tuple. This is used in other parts of the design, such as
-[functions](functions.md).
+[functions](functions.md), where a type with a single value is needed.
 
-### Indices as compile-time constants
+### Trailing commas and single-element tuples
 
-In the example `t1[(2, 1, 0)]`, we will likely want to restrict these indices to
-compile-time constants. Without that, run-time indexing would need to suddenly
-switch to a variant-style return type to handle heterogeneous tuples. This would
-both be surprising and complex for little or no value.
+The final element in a tuple literal may be followed by a trailing comma, such
+as `(1, 2,)`. This trailing comma is optional in tuples with two or more
+elements, and mandatory in a tuple with a single element: `(x,)` is a one-tuple,
+whereas `(x)` is a parenthesized single expression.
+
+### Tuple of types and tuple types
+
+A tuple of types can be used in contexts where a type is needed. This is made
+possible by a built-in implicit conversion: a tuple can be implicitly converted
+to type `type` if all of its elements can be converted to type `type`, and the
+result of the conversion is the corresponding tuple type.
+
+For example, `(i32, i32)` is a value of type `(type, type)`, which is not a type
+but can be implicitly converted to a type. `(i32, i32) as type` can be used to
+explicitly refer to the corresponding tuple type, which is the type of
+expressions such as `(1 as i32, 2 as i32)`. However, this is rarely necessary,
+as contexts requiring a type will implicitly convert their operand to a type:
+
+```carbon
+// OK, both (i32, i32) values are implicitly converted to `type`.
+fn F(x: (i32, i32)) -> (i32, i32);
+```
 
 ### Operations performed field-wise
 
@@ -100,11 +111,38 @@ For binary operations, the two tuples must have the same number of components
 and the operation must be defined for the corresponding component types of the
 two tuples.
 
-**References:** The rules for assignment, comparison, and implicit conversion
-for argument passing were decided in
-[question-for-leads issue #710](https://github.com/carbon-language/carbon-lang/issues/710).
+### Pattern matching
+
+Tuple values can be matched using a
+[tuple pattern](/docs/design/pattern_matching.md#tuple-patterns), which is
+written as a tuple of element patterns:
+
+```carbon
+let tup: (i32, i32, i32) = (1, 2, 3);
+match (tup) {
+  case (a: i32, 2, var c: i32) => {
+    c = a;
+    return c + 1;
+  }
+}
+```
 
 ## Open questions
+
+### Tuple slicing
+
+Tuples could support multiple indices and slicing to restructure tuple elements:
+
+```
+fn Baz(x: i32, y: i32, z: i32) -> (i32, i32) {
+  var t1: (i32, i32, i32) = (x, y, z);
+  var t2: (i32, i32, i32) = t1.((2, 1, 0));
+  return t2.(0 .. 2);
+}
+```
+
+This code would first reverse the tuple, and then extract a slice using a
+half-open range of indices.
 
 ### Slicing ranges
 
@@ -125,28 +163,23 @@ answer here:
     -   Do we want to require the `..` to be surrounded by whitespace to
         minimize that collision?
 
-### Single-value tuples
+## Alternatives considered
 
-This remains an area of active investigation. There are serious problems with
-all approaches here. Without the collapse of one-tuples to scalars we need to
-distinguish between a parenthesized expression (`(42)`) and a one tuple (in
-Python or Rust, `(42,)`), and if we distinguish them then we cannot model a
-function call as simply a function name followed by a tuple of arguments; one of
-`f(0)` and `f(0,)` becomes a special case. With the collapse, we either break
-genericity by forbidding `(42)[0]` from working, or it isn't clear what it means
-to access a nested tuple's first element from a parenthesized expression:
-`((1, 2))[0]`.
+-   [Indexing with square brackets](/proposals/p3646.md#square-bracket-notation)
+-   [Indexing from the end of a tuple](/proposals/p3646.md#negative-indexing-from-the-end-of-the-tuple)
+-   [Restrict indexes to decimal integers](/proposals/p3646.md#decimal-indexing-restriction)
+-   [Alternatives to trailing commas](/proposals/p3646.md#trailing-commas)
 
-### Function pattern match
+## References
 
-There are some interesting corner cases we need to expand on to fully and more
-precisely talk about the exact semantic model of function calls and their
-pattern match here, especially to handle variadic patterns and forwarding of
-tuples as arguments. We are hoping for a purely type system answer here without
-needing templates to be directly involved outside the type system as happens in
-C++ variadics.
-
-### Type vs tuple of types
-
-Is `(i32, i32)` a type, a tuple of types, or is there even a difference between
-the two? Is different syntax needed for these cases?
+-   Proposal
+    [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+-   Proposal
+    [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+-   Proposal
+    [#3646: Tuples and tuple indexing](https://github.com/carbon-language/carbon-lang/pull/3646)
+-   Leads issue
+    [#710](https://github.com/carbon-language/carbon-lang/issues/710)
+    established rules for assignment, comparison, and implicit conversion
+-   Leads issue
+    [#2191: one-tuples and one-tuple syntax](https://github.com/carbon-language/carbon-lang/issues/2191)

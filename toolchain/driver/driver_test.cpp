@@ -7,242 +7,205 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/SourceMgr.h"
-#include "toolchain/common/yaml_test_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
+#include <filesystem>
+#include <fstream>
+#include <utility>
 
-namespace Carbon::Testing {
+#include "llvm/ADT/ScopeExit.h"
+#include "llvm/Object/Binary.h"
+#include "llvm/Support/FormatVariadic.h"
+#include "testing/base/test_raw_ostream.h"
+#include "toolchain/testing/yaml_test_helpers.h"
+
+namespace Carbon {
 namespace {
 
-using ::testing::ElementsAre;
+using ::Carbon::Testing::TestRawOstream;
+using ::testing::_;
+using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-/// A raw_ostream that makes it easy to repeatedly check streamed output.
-class RawTestOstream : public llvm::raw_ostream {
- public:
-  ~RawTestOstream() override {
-    flush();
-    if (!buffer_.empty()) {
-      ADD_FAILURE() << "Unchecked output:\n" << buffer_;
-    }
+namespace Yaml = ::Carbon::Testing::Yaml;
+
+// Reads a file to string.
+// TODO: Extract this to a helper and share it with other tests.
+static auto ReadFile(std::filesystem::path path) -> std::string {
+  std::ifstream proto_file(path);
+  std::stringstream buffer;
+  buffer << proto_file.rdbuf();
+  proto_file.close();
+  return buffer.str();
+}
+
+class DriverTest : public testing::Test {
+ protected:
+  DriverTest() : driver_(fs_, "", test_output_stream_, test_error_stream_) {
+    char* tmpdir_env = getenv("TEST_TMPDIR");
+    CARBON_CHECK(tmpdir_env != nullptr);
+    test_tmpdir_ = tmpdir_env;
   }
 
-  /// Flushes the stream and returns the contents so far, clearing the stream
-  /// back to empty.
-  auto TakeStr() -> std::string {
-    flush();
-    std::string result = std::move(buffer_);
-    buffer_.clear();
-    return result;
+  auto MakeTestFile(llvm::StringRef text,
+                    llvm::StringRef filename = "test_file.carbon")
+      -> llvm::StringRef {
+    fs_.addFile(filename, /*ModificationTime=*/0,
+                llvm::MemoryBuffer::getMemBuffer(text));
+    return filename;
   }
 
- private:
-  void write_impl(const char* ptr, size_t size) override {
-    buffer_.append(ptr, ptr + size);
+  // Makes a temp directory and changes the working directory to it. Returns an
+  // LLVM `scope_exit` that will restore the working directory and remove the
+  // temporary directory (and everything it contains) when destroyed.
+  auto ScopedTempWorkingDir() {
+    // Save our current working directory.
+    std::error_code ec;
+    auto original_dir = std::filesystem::current_path(ec);
+    CARBON_CHECK(!ec) << ec.message();
+
+    const auto* unit_test = ::testing::UnitTest::GetInstance();
+    const auto* test_info = unit_test->current_test_info();
+    std::filesystem::path test_dir = test_tmpdir_.append(
+        llvm::formatv("{0}_{1}", test_info->test_suite_name(),
+                      test_info->name())
+            .str());
+    std::filesystem::create_directory(test_dir, ec);
+    CARBON_CHECK(!ec) << "Could not create test working dir '" << test_dir
+                      << "': " << ec.message();
+    std::filesystem::current_path(test_dir, ec);
+    CARBON_CHECK(!ec) << "Could not change the current working dir to '"
+                      << test_dir << "': " << ec.message();
+    return llvm::make_scope_exit([original_dir, test_dir] {
+      std::error_code ec;
+      std::filesystem::current_path(original_dir, ec);
+      CARBON_CHECK(!ec) << "Could not change the current working dir to '"
+                        << original_dir << "': " << ec.message();
+      std::filesystem::remove_all(test_dir, ec);
+      CARBON_CHECK(!ec) << "Could not remove the test working dir '" << test_dir
+                        << "': " << ec.message();
+    });
   }
 
-  [[nodiscard]] auto current_pos() const -> uint64_t override {
-    return buffer_.size();
-  }
+  llvm::vfs::InMemoryFileSystem fs_;
+  TestRawOstream test_output_stream_;
+  TestRawOstream test_error_stream_;
 
-  std::string buffer_;
+  // Some tests work directly with files in the test temporary directory.
+  std::filesystem::path test_tmpdir_;
+
+  Driver driver_;
 };
 
-TEST(DriverTest, FullCommandErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
+TEST_F(DriverTest, BadCommandErrors) {
+  EXPECT_FALSE(driver_.RunCommand({}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunFullCommand({}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_FALSE(driver_.RunCommand({"foo"}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunFullCommand({"foo"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver.RunFullCommand({"foo --bar --baz"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_FALSE(driver_.RunCommand({"foo --bar --baz"}).success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
-TEST(DriverTest, Help) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_TRUE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto help_text = test_output_stream.TakeStr();
-
-  // Help text should mention each subcommand.
-#define CARBON_SUBCOMMAND(Name, Spelling, ...) \
-  EXPECT_THAT(help_text, HasSubstr(Spelling));
-#include "toolchain/driver/flags.def"
-
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"help"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(help_text));
-}
-
-TEST(DriverTest, HelpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"help"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-}
-
-auto CreateTestFile(llvm::StringRef text) -> std::string {
-  int fd = -1;
-  llvm::SmallString<1024> path;
-  auto ec = llvm::sys::fs::createTemporaryFile("test_file", ".txt", fd, path);
-  if (ec) {
-    llvm::report_fatal_error(llvm::Twine("Failed to create temporary file: ") +
-                             ec.message());
-  }
-
-  llvm::raw_fd_ostream s(fd, /*shouldClose=*/true);
-  s << text;
-  s.close();
-
-  return path.str().str();
-}
-
-TEST(DriverTest, DumpTokens) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  auto test_file_path = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                       {"tokens", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto tokenized_text = test_output_stream.TakeStr();
-
-  EXPECT_THAT(Yaml::Value::FromText(tokenized_text),
-              ElementsAre(Yaml::MappingValue{
-                  {"token", Yaml::MappingValue{{"index", "0"},
-                                               {"kind", "Identifier"},
-                                               {"line", "1"},
-                                               {"column", "1"},
-                                               {"indent", "1"},
-                                               {"spelling", "Hello"},
-                                               {"identifier", "0"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "1"},
-                                               {"kind", "Identifier"},
-                                               {"line", "1"},
-                                               {"column", "7"},
-                                               {"indent", "1"},
-                                               {"spelling", "World"},
-                                               {"identifier", "1"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "2"},
-                                               {"kind", "EndOfFile"},
-                                               {"line", "1"},
-                                               {"column", "12"},
-                                               {"indent", "1"},
-                                               {"spelling", ""}}}}));
-
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump", "tokens", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
-}
-
-TEST(DriverTest, DumpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                        {"tokens", "/not/a/real/file/name"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-}
-
-TEST(DriverTest, DumpParseTree) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  auto test_file_path = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                       {"parse-tree", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto tokenized_text = test_output_stream.TakeStr();
-
+TEST_F(DriverTest, CompileCommandErrors) {
+  // No input file. This error message is important so check all of it.
+  EXPECT_FALSE(driver_.RunCommand({"compile"}).success);
   EXPECT_THAT(
-      Yaml::Value::FromText(tokenized_text),
-      ElementsAre(Yaml::SequenceValue{
-          Yaml::MappingValue{
-              {"node_index", "6"},
-              {"kind", "VariableDeclaration"},
-              {"text", "var"},
-              {"subtree_size", "7"},
-              {"children",
-               Yaml::SequenceValue{
-                   Yaml::MappingValue{
-                       {"node_index", "2"},
-                       {"kind", "PatternBinding"},
-                       {"text", ":"},
-                       {"subtree_size", "3"},
-                       {"children",
-                        Yaml::SequenceValue{
-                            Yaml::MappingValue{{"node_index", "0"},
-                                               {"kind", "DeclaredName"},
-                                               {"text", "v"}},
-                            Yaml::MappingValue{{"node_index", "1"},
-                                               {"kind", "NameReference"},
-                                               {"text", "Int"}}}}},
-                   Yaml::MappingValue{{"node_index", "4"},
-                                      {"kind", "VariableInitializer"},
-                                      {"text", "="},
-                                      {"subtree_size", "2"},
-                                      {"children",  //
-                                       Yaml::SequenceValue{Yaml::MappingValue{
-                                           {"node_index", "3"},
-                                           {"kind", "Literal"},
-                                           {"text", "42"}}}}},
-                   Yaml::MappingValue{{"node_index", "5"},
-                                      {"kind", "DeclarationEnd"},
-                                      {"text", ";"}}}}},
-          Yaml::MappingValue{{"node_index", "7"},  //
-                             {"kind", "FileEnd"},
-                             {"text", ""}}}));
+      test_error_stream_.TakeStr(),
+      StrEq("ERROR: Not all required positional arguments were provided. First "
+            "missing and required positional argument: 'FILE'\n"));
 
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump", "parse-tree", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
+  // Invalid output filename. No reliably error message here.
+  // TODO: Likely want a different filename on Windows.
+  auto empty_file = MakeTestFile("");
+  EXPECT_FALSE(driver_
+                   .RunCommand({"compile", "--no-prelude-import",
+                                "--output=/dev/empty", empty_file})
+                   .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(),
+              ContainsRegex("ERROR: .*/dev/empty.*"));
+}
+
+TEST_F(DriverTest, DumpTokens) {
+  auto file = MakeTestFile("Hello World");
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--phase=lex",
+                               "--dump-tokens", file})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  // Verify there is output without examining it.
+  EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
+              Yaml::IsYaml(_));
+}
+
+TEST_F(DriverTest, DumpParseTree) {
+  auto file = MakeTestFile("var v: () = ();");
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import",
+                               "--phase=parse", "--dump-parse-tree", file})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  // Verify there is output without examining it.
+  EXPECT_THAT(Yaml::Value::FromText(test_output_stream_.TakeStr()),
+              Yaml::IsYaml(_));
+}
+
+TEST_F(DriverTest, StdoutOutput) {
+  // Use explicit filenames so we can look for those to validate output.
+  MakeTestFile("fn Main() {}", "test.carbon");
+
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                               "test.carbon"})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  // The default is textual assembly.
+  EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("Main:"));
+
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                               "--force-obj-output", "test.carbon"})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  std::string output = test_output_stream_.TakeStr();
+  auto result =
+      llvm::object::createBinary(llvm::MemoryBufferRef(output, "test_output"));
+  if (auto error = result.takeError()) {
+    FAIL() << toString(std::move(error));
+  }
+  EXPECT_TRUE(result->get()->isObject());
+}
+
+TEST_F(DriverTest, FileOutput) {
+  auto scope = ScopedTempWorkingDir();
+
+  // Use explicit filenames as the default output filename is computed from
+  // this, and we can use this to validate output.
+  MakeTestFile("fn Main() {}", "test.carbon");
+
+  // Object output (the default) uses `.o`.
+  // TODO: This should actually reflect the platform defaults.
+  EXPECT_TRUE(
+      driver_.RunCommand({"compile", "--no-prelude-import", "test.carbon"})
+          .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  // Ensure we wrote an object file of some form with the correct name.
+  auto result = llvm::object::createBinary("test.o");
+  if (auto error = result.takeError()) {
+    FAIL() << toString(std::move(error));
+  }
+  EXPECT_TRUE(result->getBinary()->isObject());
+
+  // Assembly output uses `.s`.
+  // TODO: This should actually reflect the platform defaults.
+  EXPECT_TRUE(driver_
+                  .RunCommand({"compile", "--no-prelude-import", "--asm-output",
+                               "test.carbon"})
+                  .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  // TODO: This may need to be tailored to other assembly formats.
+  EXPECT_THAT(ReadFile("test.s"), ContainsRegex("Main:"));
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

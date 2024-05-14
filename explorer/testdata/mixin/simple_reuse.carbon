@@ -2,17 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 __mixin Operations {
-  fn Square[me: Self](x:i32) -> i32{
+  fn Square[self: Self](x:i32) -> i32{
     return x * x;
   }
 }
@@ -45,3 +40,5 @@ fn Main() -> i32 {
   c.r = 4;
   return p.Square(p.x) - c.Square(c.r) + 7;
 }
+
+// CHECK:STDOUT: result: 0

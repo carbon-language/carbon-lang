@@ -10,14 +10,20 @@
 #define CARBON_EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
 
 #include "explorer/ast/ast.h"
+#include "explorer/base/trace_stream.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {
 
-// Runs the top-level declaration list.
+// Perform semantic analysis on the AST.
+auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
+                    Nonnull<TraceStream*> trace_stream,
+                    Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST>;
+
+// Run the program's `Main` function.
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int>;
+                 Nonnull<TraceStream*> trace_stream,
+                 Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int>;
 
 }  // namespace Carbon
 

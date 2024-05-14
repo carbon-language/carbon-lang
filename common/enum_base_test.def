@@ -1,0 +1,17 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Note that this is an X-macro header. It does not use `#include` guards, and
+// instead is designed to be `#include`ed after the x-macro is defined in order
+// for its inclusion to expand to the desired output.
+
+#ifndef CARBON_ENUM_BASE_TEST_KIND
+#error "Must define the x-macro to use this file."
+#endif
+
+CARBON_ENUM_BASE_TEST_KIND(Beep)
+CARBON_ENUM_BASE_TEST_KIND(Boop)
+CARBON_ENUM_BASE_TEST_KIND(Burr)
+
+#undef CARBON_ENUM_BASE_TEST_KIND

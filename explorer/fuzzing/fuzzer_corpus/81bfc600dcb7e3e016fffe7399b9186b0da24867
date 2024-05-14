@@ -1,0 +1,347 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "A"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "AResult"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "B"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "BResult"
+              type {
+                call {
+                  function {
+                    identifier {
+                      name: "A"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        identifier {
+                          name: "T"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "I"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "X"
+              type {
+                call {
+                  function {
+                    identifier {
+                      name: "B"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        identifier {
+                          name: "T"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "Y"
+              type {
+                simple_member_access {
+                  field: "AResult"
+                  object {
+                    simple_member_access {
+                      field: "BResult"
+                      object {
+                        identifier {
+                          name: "X"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "CA"
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                call {
+                  function {
+                    identifier {
+                      name: "A"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        int_type_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "AResult"
+                  replacement {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "CB"
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                call {
+                  function {
+                    identifier {
+                      name: "B"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        int_type_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "BResult"
+                  replacement {
+                    identifier {
+                      name: "CA"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "CI"
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                call {
+                  function {
+                    identifier {
+                      name: "I"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        int_type_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "X"
+                  replacement {
+                    identifier {
+                      name: "CB"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "Y"
+                  replacement {
+                    int_literal {
+                      value: 5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "CI"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              compound_member_access {
+                object {
+                  identifier {
+                    name: "v"
+                  }
+                }
+                path {
+                  simple_member_access {
+                    field: "Y"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "I"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              int_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

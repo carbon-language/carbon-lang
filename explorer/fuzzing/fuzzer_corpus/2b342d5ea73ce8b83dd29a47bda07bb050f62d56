@@ -1,0 +1,268 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "MyAddWith"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "Result"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "other"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Result"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    constraint {
+      name {
+        name: "MyAdd"
+      }
+      members {
+        interface_extend {
+          base {
+            where {
+              base {
+                call {
+                  function {
+                    identifier {
+                      name: "MyAddWith"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        identifier {
+                          name: "Self"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "Result"
+                  replacement {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "MyAdd"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "other"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "other"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "Op"
+                        object {
+                          identifier {
+                            name: "MyAdd"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

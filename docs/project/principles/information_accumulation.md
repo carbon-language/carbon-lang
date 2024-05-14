@@ -76,9 +76,9 @@ especially important to the coherence of generics and templates.
 -   Classes are incomplete until the end of their definition. Unlike in C++, any
     attempt to observe a property of an incomplete class that is not known until
     the class is complete renders the program invalid.
--   When an `impl` needs to be resolved, only those `impl`s that have already
-    been declared are considered. However, if a later `impl` would change the
-    result of any earlier `impl` lookup, the program is invalid.
+-   When an `impl` needs to be resolved, only those `impl` declarations that
+    appear earlier are considered. However, if a later `impl` declaration would
+    change the result of any earlier `impl` lookup, the program is invalid.
 
 ## Exceptions
 

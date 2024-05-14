@@ -2,38 +2,33 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface Vector {
   fn Zero() -> Self;
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
 
-external impl Point(i32) as Vector {
+impl Point(i32) as Vector {
   // Allowed: `Self` means `Point(i32)` here.
   fn Zero() -> Self {
     return {.x = 0, .y = 0};
   }
 
-  fn Add[me: Self](b: Self) -> Self {
-    return {.x = me.x + b.x, .y = me.y + b.y};
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
 
-  fn Scale[me: Self](v: i32) -> Self {
-    return {.x = me.x * v, .y = me.y * v};
+  fn Scale[self: Self](v: i32) -> Self {
+    return {.x = self.x * v, .y = self.y * v};
   }
 }
 
@@ -46,3 +41,5 @@ fn Main() -> i32 {
   var p: Point(i32) = AddAndScaleGeneric(a, 5);
   return p.x - 10;
 }
+
+// CHECK:STDOUT: result: 0

@@ -17,10 +17,10 @@ static void InitReplacements(RefactoringTool* tool) {
   clang::FileManager& files = tool->getFiles();
   Carbon::Matcher::ReplacementMap& repl = tool->getReplacements();
   for (const std::string& path : tool->getSourcePaths()) {
-    llvm::ErrorOr<const clang::FileEntry*> file = files.getFile(path);
-    if (file.getError()) {
+    llvm::Expected<clang::FileEntryRef> file = files.getFileRef(path);
+    if (!file) {
       llvm::report_fatal_error(llvm::Twine("Error accessing `") + path +
-                               "`: " + file.getError().message() + "\n");
+                               "`: " + llvm::toString(file.takeError()) + "\n");
     }
     repl.insert({files.getCanonicalName(*file).str(), {}});
   }

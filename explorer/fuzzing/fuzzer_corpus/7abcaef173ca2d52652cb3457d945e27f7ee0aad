@@ -1,0 +1,46 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "i"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -343,11 +343,11 @@ high cost feature to achieve full parity for mixed toolchains. Requiring bridge
 code for mixed toolchains is the likely solution to avoid this cost.
 
 Note that this issue differs when considering interoperability for Carbon code
-instantiating C++ templates. The C++ templates must be in C++ headers for
-re-use, which in turn must compile with the Carbon toolchain to re-use the built
-C++ code, regardless of whether a separate C++ toolchain is in use. This may
-also be considered a constraint on mixed toolchain interoperability, but it's
-simpler to address and less likely to burden developers.
+instantiating C++ templates. The C++ templates must be in C++ headers for reuse,
+which in turn must compile with the Carbon toolchain to reuse the built C++
+code, regardless of whether a separate C++ toolchain is in use. This may also be
+considered a constraint on mixed toolchain interoperability, but it's simpler to
+address and less likely to burden developers.
 
 To summarize, developers should expect that while _most_ features will work
 equivalently for mixed toolchains, there will never be full parity.
@@ -358,9 +358,12 @@ Corner cases of C++ will not receive equal support to common cases: the
 complexity of supporting any given construct must be balanced by the real world
 need for that support. For example:
 
--   Interoperability will target C++17. Any interoperability support for future
-    versions of C++, including features such as C++20 modules, will be based on
-    a cost-benefit analysis. Exhaustive support should not be assumed.
+-   Long-term, we expect interoperability will target all of C++, including new
+    features as they are added, standardized, implemented, and adopted across
+    the industry. The priority of _individual_ features will reflect how widely
+    they are used in practice and how any gap impacts users trying to adopt
+    Carbon. Exhaustive, high-quality support of the long-tail or corner cases of
+    C++ features should not be assumed.
 
 -   Support will be focused on idiomatic code, interfaces, and patterns used in
     widespread open source libraries or by other key constituencies. C++ code

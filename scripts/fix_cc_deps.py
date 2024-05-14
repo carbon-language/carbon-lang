@@ -22,30 +22,63 @@ from xml.etree import ElementTree
 import scripts_utils
 
 
+class ExternalRepo(NamedTuple):
+    # A function for remapping files to #include paths.
+    remap: Callable[[str], str]
+    # The target expression to gather rules for within the repo.
+    target: str
+    # Whether to use "" or <> for the include.
+    use_system_include: bool = False
+
+
+class RuleChoice(NamedTuple):
+    # Whether to use "" or <> for the include.
+    use_system_include: bool
+    # Possible rules that may be used.
+    rules: Set[str]
+
+
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
-EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
-    # @llvm-project//llvm:include/llvm/Support/Error.h ->
-    #   llvm/Support/Error.h
-    "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x),
-    # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
-    #   google/protobuf/descriptor.h
-    "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
-    # @com_google_libprotobuf_mutator//:src/libfuzzer/libfuzzer_macro.h ->
-    #   libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h
-    "@com_google_libprotobuf_mutator": lambda x: re.sub(
-        "^(.*:)", "libprotobuf_mutator/", x
+EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
+    # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
+    # clang-tools-extra/clangd:URI.h -> clang-tools-extra/clangd/URI.h
+    "@llvm-project": ExternalRepo(
+        lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
+        "...",
     ),
-    # @bazel_tools//tools/cpp/runfiles:runfiles.h ->
-    #   tools/cpp/runfiles/runfiles.h
-    "@bazel_tools": lambda x: re.sub(":", "/", x),
+    # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
+    # - protobuf_headers is specified because there are multiple overlapping
+    #   targets.
+    "@protobuf": ExternalRepo(
+        lambda x: re.sub("^(.*:src)/", "", x),
+        ":protobuf_headers",
+        use_system_include=True,
+    ),
+    # :src/libfuzzer/libfuzzer_macro.h -> libfuzzer/libfuzzer_macro.h
+    "@com_google_libprotobuf_mutator": ExternalRepo(
+        lambda x: re.sub("^(.*:src)/", "", x), "...", use_system_include=True
+    ),
+    # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
+    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    # absl/flags:flag.h -> absl/flags/flag.h
+    "@abseil-cpp": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
+    # :re2/re2.h -> re2/re2.h
+    "@re2": ExternalRepo(lambda x: re.sub(":", "", x), ":re2"),
+    # :googletest/include/gtest/gtest.h -> gtest/gtest.h
+    "@googletest": ExternalRepo(
+        lambda x: re.sub(":google(?:mock|test)/include/", "", x),
+        ":gtest",
+        use_system_include=True,
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
 # `bazel query` output.
 # Try using `bazel cquery --output=starlark` to print `target.files`.
 # For protobuf, need to add support for `alias` rule kind.
-IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)|(.*google/protobuf/.*)$")
+IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)$")
+IGNORE_SOURCE_FILE_REGEX = re.compile("^third_party/clangd")
 
 
 class Rule(NamedTuple):
@@ -67,9 +100,10 @@ def remap_file(label: str) -> str:
     repo, _, path = label.partition("//")
     if not repo:
         return path.replace(":", "/")
+    # Ignore the version, just use the repo name.
+    repo = repo.split("~", 1)[0]
     assert repo in EXTERNAL_REPOS, repo
-    return EXTERNAL_REPOS[repo](path)
-    exit(f"Don't know how to remap label '{label}'")
+    return EXTERNAL_REPOS[repo].remap(path)
 
 
 def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> Set[str]:
@@ -132,6 +166,8 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
             elif rule_class == "genrule":
                 if list_name == "outs":
                     outs = get_bazel_list(list_child, True)
+            elif rule_class == "tree_sitter_cc_library":
+                continue
             else:
                 exit(f"unexpected rule type: {rule_class}")
         rules[rule_name] = Rule(hdrs, srcs, deps, outs)
@@ -139,22 +175,36 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
 
 
 def map_headers(
-    header_to_rule_map: Dict[str, Set[str]], rules: Dict[str, Rule]
+    header_to_rule_map: Dict[str, RuleChoice], rules: Dict[str, Rule]
 ) -> None:
     """Accumulates headers provided by rules into the map.
 
     The map maps header paths to rule names.
     """
     for rule_name, rule in rules.items():
+        repo, _, path = rule_name.partition("//")
+        use_system_include = False
+        if repo in EXTERNAL_REPOS:
+            use_system_include = EXTERNAL_REPOS[repo].use_system_include
         for header in rule.hdrs:
             if header in header_to_rule_map:
-                header_to_rule_map[header].add(rule_name)
+                header_to_rule_map[header].rules.add(rule_name)
+                if (
+                    use_system_include
+                    != header_to_rule_map[header].use_system_include
+                ):
+                    exit(
+                        "Unexpected use_system_include inconsistency in "
+                        f"{header_to_rule_map[header]}"
+                    )
             else:
-                header_to_rule_map[header] = {rule_name}
+                header_to_rule_map[header] = RuleChoice(
+                    use_system_include, {rule_name}
+                )
 
 
 def get_missing_deps(
-    header_to_rule_map: Dict[str, Set[str]],
+    header_to_rule_map: Dict[str, RuleChoice],
     generated_files: Set[str],
     rule: Rule,
 ) -> Tuple[Set[str], bool]:
@@ -169,42 +219,60 @@ def get_missing_deps(
     for source_file in rule_files:
         if source_file in generated_files:
             continue
-        with open(source_file, "r") as f:
-            for header_groups in re.findall(
-                r'^(#include (?:"([^"]+)"|<((?:gmock|gtest)/[^>]+)>))',
-                f.read(),
-                re.MULTILINE,
-            ):
-                # Ignore whether the source was a quote or system include.
-                header = header_groups[1]
-                if not header:
-                    header = header_groups[2]
+        if IGNORE_SOURCE_FILE_REGEX.match(source_file):
+            continue
 
-                if header in rule_files:
+        with open(source_file, "r") as f:
+            file_content = f.read()
+        file_content_changed = False
+
+        for header_groups in re.findall(
+            r'^(#include (?:(["<])([^">]+)[">]))',
+            file_content,
+            re.MULTILINE,
+        ):
+            (full_include, include_open, header) = header_groups
+            is_system_include = include_open == "<"
+
+            if header in rule_files:
+                continue
+            if header not in header_to_rule_map:
+                if is_system_include:
+                    # Don't error for unexpected system includes.
                     continue
-                if header not in header_to_rule_map:
-                    if IGNORE_HEADER_REGEX.match(header):
-                        print(
-                            f"Ignored missing "
-                            f"'{header_groups[0]}' in '{source_file}'"
-                        )
-                        continue
-                    else:
-                        exit(
-                            f"Missing rule for "
-                            f"'{header_groups[0]}' in '{source_file}'"
-                        )
-                dep_choices = header_to_rule_map[header]
-                if not dep_choices.intersection(rule.deps):
-                    if len(dep_choices) > 1:
-                        print(
-                            f"Ambiguous dependency choice for "
-                            f"'{header_groups[0]}' in '{source_file}': "
-                            f"{', '.join(dep_choices)}"
-                        )
-                        ambiguous = True
-                    # Use the single dep without removing it.
-                    missing_deps.add(next(iter(dep_choices)))
+                if IGNORE_HEADER_REGEX.match(header):
+                    # Don't print anything for explicitly ignored files.
+                    continue
+                exit(
+                    f"Missing rule for " f"'{full_include}' in '{source_file}'"
+                )
+            rule_choice = header_to_rule_map[header]
+            if not rule_choice.rules.intersection(rule.deps):
+                if len(rule_choice.rules) > 1:
+                    print(
+                        f"Ambiguous dependency choice for "
+                        f"'{full_include}' in '{source_file}': "
+                        f"{', '.join(rule_choice.rules)}"
+                    )
+                    ambiguous = True
+                # Use the single dep without removing it.
+                missing_deps.add(next(iter(rule_choice.rules)))
+
+            # If the include style should change, update file content.
+            if is_system_include != rule_choice.use_system_include:
+                if rule_choice.use_system_include:
+                    new_include = f"#include <{header}>"
+                else:
+                    new_include = f'#include "{header}"'
+                print(
+                    f"Fixing include format in '{source_file}': "
+                    f"'{full_include}' to '{new_include}'"
+                )
+                file_content = file_content.replace(full_include, new_include)
+                file_content_changed = True
+        if file_content_changed:
+            with open(source_file, "w") as f:
+                f.write(file_content)
     return missing_deps, ambiguous
 
 
@@ -215,13 +283,13 @@ def main() -> None:
     print("Querying bazel for Carbon targets...")
     carbon_rules = get_rules(bazel, "//...", False)
     print("Querying bazel for external targets...")
-    external_repo_query = " ".join([f"{repo}//..." for repo in EXTERNAL_REPOS])
+    external_repo_query = " ".join(
+        [f"{repo}//{EXTERNAL_REPOS[repo].target}" for repo in EXTERNAL_REPOS]
+    )
     external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
-    header_to_rule_map: Dict[str, Set[str]] = {}
-    header_to_rule_map["gmock/gmock.h"] = {"@com_google_googletest//:gtest"}
-    header_to_rule_map["gtest/gtest.h"] = {"@com_google_googletest//:gtest"}
+    header_to_rule_map: Dict[str, RuleChoice] = {}
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
 

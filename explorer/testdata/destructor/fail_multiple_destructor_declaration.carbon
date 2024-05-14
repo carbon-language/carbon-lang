@@ -2,18 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 2>&1 | %{FileCheck} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A1 {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A1 {0}",self.n);
     }
-    destructor[me: Self]{
-        Print("DESTRUCTOR A2 {0}",me.n);
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_multiple_destructor_declaration.carbon:[[@LINE+1]]: Duplicate name `destructor` also found at {{.*}}/explorer/testdata/destructor/fail_multiple_destructor_declaration.carbon:13
+    destructor[self: Self]{
+        Print("DESTRUCTOR A2 {0}",self.n);
+    // CHECK:STDERR: COMPILATION ERROR: fail_multiple_destructor_declaration.carbon:[[@LINE+1]]: Duplicate name `destructor` also found at fail_multiple_destructor_declaration.carbon:[[@LINE-3]]
     }
     var n: i32;
 }

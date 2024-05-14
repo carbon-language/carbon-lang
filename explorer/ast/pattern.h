@@ -9,13 +9,15 @@
 #include <string>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/ast_rtti.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/static_scope.h"
-#include "explorer/ast/value_category.h"
-#include "explorer/common/source_location.h"
+#include "explorer/ast/expression_category.h"
+#include "explorer/ast/value_node.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 
@@ -33,6 +35,11 @@ class Value;
 // details.
 class Pattern : public AstNode {
  public:
+  explicit Pattern(CloneContext& context, const Pattern& other)
+      : AstNode(context, other),
+        static_type_(context.Clone(other.static_type_)),
+        value_(context.Clone(other.value_)) {}
+
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
 
@@ -71,7 +78,10 @@ class Pattern : public AstNode {
 
   // Sets the value of this pattern. Can only be called once, during
   // typechecking.
-  void set_value(Nonnull<const Value*> value) { value_ = value; }
+  void set_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!value_) << "set_value called more than once";
+    value_ = value;
+  }
 
   // Returns whether the value has been set. Should only be called
   // during typechecking: before typechecking it's guaranteed to be false,
@@ -97,17 +107,31 @@ class Pattern : public AstNode {
 };
 
 // Call the given `visitor` on all patterns nested within the given pattern,
-// including `pattern` itself. Aborts and returns `false` if `visitor` returns
-// `false`, otherwise returns `true`.
+// including `pattern` itself, in a preorder traversal. Aborts and returns
+// `false` if `visitor` returns `false`, otherwise returns `true`.
 auto VisitNestedPatterns(const Pattern& pattern,
                          llvm::function_ref<bool(const Pattern&)> visitor)
     -> bool;
+inline auto VisitNestedPatterns(Pattern& pattern,
+                                llvm::function_ref<bool(Pattern&)> visitor)
+    -> bool {
+  // The non-const version is implemented in terms of the const version. The
+  // const_cast is safe because every pattern reachable through a non-const
+  // pattern is also non-const.
+  const Pattern& const_pattern = pattern;
+  return VisitNestedPatterns(const_pattern, [&](const Pattern& inner) {
+    return visitor(const_cast<Pattern&>(inner));
+  });
+}
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
   explicit AutoPattern(SourceLocation source_loc)
       : Pattern(AstNodeKind::AutoPattern, source_loc) {}
+
+  explicit AutoPattern(CloneContext& context, const AutoPattern& other)
+      : Pattern(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAutoPattern(node->kind());
@@ -119,6 +143,9 @@ class VarPattern : public Pattern {
   explicit VarPattern(SourceLocation source_loc, Nonnull<Pattern*> pattern)
       : Pattern(AstNodeKind::VarPattern, source_loc), pattern_(pattern) {}
 
+  explicit VarPattern(CloneContext& context, const VarPattern& other)
+      : Pattern(context, other), pattern_(context.Clone(other.pattern_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVarPattern(node->kind());
   }
@@ -126,7 +153,9 @@ class VarPattern : public Pattern {
   auto pattern() const -> const Pattern& { return *pattern_; }
   auto pattern() -> Pattern& { return *pattern_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Reference;
+  }
 
  private:
   Nonnull<Pattern*> pattern_;
@@ -140,11 +169,17 @@ class BindingPattern : public Pattern {
 
   BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type,
-                 std::optional<ValueCategory> value_category)
+                 std::optional<ExpressionCategory> expression_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type),
-        value_category_(value_category) {}
+        expression_category_(expression_category) {}
+
+  explicit BindingPattern(CloneContext& context, const BindingPattern& other)
+      : Pattern(context, other),
+        name_(other.name_),
+        type_(context.Clone(other.type_)),
+        expression_category_(other.expression_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -161,21 +196,21 @@ class BindingPattern : public Pattern {
 
   // Returns the value category of this pattern. Can only be called after
   // typechecking.
-  auto value_category() const -> ValueCategory {
-    return value_category_.value();
+  auto expression_category() const -> ExpressionCategory {
+    return expression_category_.value();
   }
 
   // Returns whether the value category has been set. Should only be called
   // during typechecking.
-  auto has_value_category() const -> bool {
-    return value_category_.has_value();
+  auto has_expression_category() const -> bool {
+    return expression_category_.has_value();
   }
 
   // Sets the value category of the variable being bound. Can only be called
   // once during typechecking
-  void set_value_category(ValueCategory vc) {
-    CARBON_CHECK(!value_category_.has_value());
-    value_category_ = vc;
+  void set_expression_category(ExpressionCategory vc) {
+    CARBON_CHECK(!expression_category_.has_value());
+    expression_category_ = vc;
   }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -188,7 +223,7 @@ class BindingPattern : public Pattern {
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
-  std::optional<ValueCategory> value_category_;
+  std::optional<ExpressionCategory> expression_category_;
 };
 
 class AddrPattern : public Pattern {
@@ -196,6 +231,9 @@ class AddrPattern : public Pattern {
   explicit AddrPattern(SourceLocation source_loc,
                        Nonnull<BindingPattern*> binding)
       : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
+
+  explicit AddrPattern(CloneContext& context, const AddrPattern& other)
+      : Pattern(context, other), binding_(context.Clone(other.binding_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAddrPattern(node->kind());
@@ -215,6 +253,9 @@ class TuplePattern : public Pattern {
       : Pattern(AstNodeKind::TuplePattern, source_loc),
         fields_(std::move(fields)) {}
 
+  explicit TuplePattern(CloneContext& context, const TuplePattern& other)
+      : Pattern(context, other), fields_(context.Clone(other.fields_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTuplePattern(node->kind());
   }
@@ -232,14 +273,21 @@ class GenericBinding : public Pattern {
  public:
   using ImplementsCarbonValueNode = void;
 
-  GenericBinding(SourceLocation source_loc, std::string name,
-                 Nonnull<Expression*> type)
+  enum class BindingKind {
+    // A checked generic binding, `T:! type`.
+    Checked,
+    // A template generic binding, `template T:! type`.
+    Template,
+  };
+
+  explicit GenericBinding(SourceLocation source_loc, std::string name,
+                          Nonnull<Expression*> type, BindingKind binding_kind)
       : Pattern(AstNodeKind::GenericBinding, source_loc),
         name_(std::move(name)),
-        type_(type) {}
+        type_(type),
+        binding_kind_(binding_kind) {}
 
-  void Print(llvm::raw_ostream& out) const override;
-  void PrintID(llvm::raw_ostream& out) const override;
+  explicit GenericBinding(CloneContext& context, const GenericBinding& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromGenericBinding(node->kind());
@@ -248,11 +296,27 @@ class GenericBinding : public Pattern {
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
+  auto binding_kind() const -> BindingKind { return binding_kind_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  // The index of this binding, which is the number of bindings that are in
+  // scope at the point where this binding is declared.
+  auto index() const -> int {
+    CARBON_CHECK(index_);
+    return *index_;
+  }
+
+  // Set the index of this binding. Should be called only during type-checking.
+  void set_index(int index) {
+    CARBON_CHECK(!index_) << "should only set depth and index once";
+    index_ = index;
+  }
+
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return std::nullopt;
+    return template_value_;
   }
 
   auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
@@ -261,6 +325,15 @@ class GenericBinding : public Pattern {
   void set_symbolic_identity(Nonnull<const Value*> value) {
     CARBON_CHECK(!symbolic_identity_.has_value());
     symbolic_identity_ = value;
+  }
+
+  void set_template_value(Nonnull<const Value*> template_value) {
+    CARBON_CHECK(binding_kind_ == BindingKind::Template);
+    template_value_ = template_value;
+  }
+  auto has_template_value() const -> bool {
+    CARBON_CHECK(binding_kind_ == BindingKind::Template);
+    return template_value_.has_value();
   }
 
   // The impl binding associated with this type variable.
@@ -275,10 +348,11 @@ class GenericBinding : public Pattern {
 
   // Return the original generic binding.
   auto original() const -> Nonnull<const GenericBinding*> {
-    if (original_.has_value())
+    if (original_.has_value()) {
       return *original_;
-    else
+    } else {
       return this;
+    }
   }
   // Set the original generic binding.
   void set_original(Nonnull<const GenericBinding*> orig) { original_ = orig; }
@@ -295,6 +369,9 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
+  BindingKind binding_kind_;
+  std::optional<int> index_;
+  std::optional<Nonnull<const Value*>> template_value_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
   std::optional<Nonnull<const GenericBinding*>> original_;
@@ -350,6 +427,13 @@ class AlternativePattern : public Pattern {
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
 
+  explicit AlternativePattern(CloneContext& context,
+                              const AlternativePattern& other)
+      : Pattern(context, other),
+        choice_type_(context.Clone(other.choice_type_)),
+        alternative_name_(other.alternative_name_),
+        arguments_(context.Clone(other.arguments_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativePattern(node->kind());
   }
@@ -378,6 +462,11 @@ class ExpressionPattern : public Pattern {
   explicit ExpressionPattern(Nonnull<Expression*> expression)
       : Pattern(AstNodeKind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
+
+  explicit ExpressionPattern(CloneContext& context,
+                             const ExpressionPattern& other)
+      : Pattern(context, other),
+        expression_(context.Clone(other.expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromExpressionPattern(node->kind());

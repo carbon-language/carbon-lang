@@ -2,23 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 4
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as SubWith(i32) where .Result == A {
-  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n - rhs}; }
+impl A as SubWith(i32) where .Result = A {
+  fn Op[self: Self](rhs: i32) -> A { return {.n = self.n - rhs}; }
 }
 
 fn Main() -> i32 {
   var a: A = {.n = 5};
   a = a - 1;
-  return a.n;
+  Print("{0}", a.n);
+  a -= 1;
+  Print("{0}", a.n);
+  Print("{0}", (a - 1).n);
+  return 0;
 }
+
+// CHECK:STDOUT: 4
+// CHECK:STDOUT: 3
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: result: 0

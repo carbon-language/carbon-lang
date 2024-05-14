@@ -1,0 +1,68 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macros are:
+// - CARBON_BUILTIN(Name)
+//   Defines a builtin.
+
+#ifndef CARBON_BUILTIN
+#error "Must define the x-macro to use this file."
+#endif
+
+// Conversions.
+CARBON_BUILTIN(As)
+CARBON_BUILTIN(ImplicitAs)
+
+// Comparison.
+CARBON_BUILTIN(EqWith)
+CARBON_BUILTIN(LessWith)
+CARBON_BUILTIN(LessEqWith)
+CARBON_BUILTIN(GreaterWith)
+CARBON_BUILTIN(GreaterEqWith)
+CARBON_BUILTIN(CompareWith)
+
+// Arithmetic.
+CARBON_BUILTIN(Negate)
+CARBON_BUILTIN(AddWith)
+CARBON_BUILTIN(SubWith)
+CARBON_BUILTIN(MulWith)
+CARBON_BUILTIN(DivWith)
+CARBON_BUILTIN(ModWith)
+
+// Bitwise and shift.
+CARBON_BUILTIN(BitComplement)
+CARBON_BUILTIN(BitAndWith)
+CARBON_BUILTIN(BitOrWith)
+CARBON_BUILTIN(BitXorWith)
+CARBON_BUILTIN(LeftShiftWith)
+CARBON_BUILTIN(RightShiftWith)
+
+// Simple assignment.
+CARBON_BUILTIN(AssignWith)
+
+// Compound assignment.
+CARBON_BUILTIN(AddAssignWith)
+CARBON_BUILTIN(SubAssignWith)
+CARBON_BUILTIN(MulAssignWith)
+CARBON_BUILTIN(DivAssignWith)
+CARBON_BUILTIN(ModAssignWith)
+CARBON_BUILTIN(BitAndAssignWith)
+CARBON_BUILTIN(BitOrAssignWith)
+CARBON_BUILTIN(BitXorAssignWith)
+CARBON_BUILTIN(LeftShiftAssignWith)
+CARBON_BUILTIN(RightShiftAssignWith)
+
+// Increment and decrement.
+CARBON_BUILTIN(Inc)
+CARBON_BUILTIN(Dec)
+
+// Last for the number of builtins.
+CARBON_BUILTIN(Invalid)
+
+#undef CARBON_BUILTIN

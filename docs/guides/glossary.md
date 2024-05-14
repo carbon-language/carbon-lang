@@ -34,7 +34,7 @@ only one identifier needed.
 
 ## namespace
 
-A _namespace_ is a entity that contains entities, and may be nested. For
+A _namespace_ is an entity that contains entities, and may be nested. For
 example, given a name path of `Geometry.Circle`, `Geometry` is a namespace
 containing `Circle`.
 

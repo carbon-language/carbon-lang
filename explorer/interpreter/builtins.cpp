@@ -4,23 +4,32 @@
 
 #include "explorer/interpreter/builtins.h"
 
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 
 using llvm::dyn_cast;
 
 namespace Carbon {
 
+CARBON_DEFINE_ENUM_CLASS_NAMES(Builtin) = {
+#define CARBON_BUILTIN(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+#include "explorer/interpreter/builtins.def"
+};
+
 void Builtins::Register(Nonnull<const Declaration*> decl) {
-  if (auto* interface = dyn_cast<InterfaceDeclaration>(decl)) {
-    static std::map<std::string, int>* builtin_indexes = [] {
-      std::map<std::string, int> builtin_indexes;
-      for (int index = 0; index <= static_cast<int>(Builtin::Last); ++index) {
-        builtin_indexes.emplace(BuiltinNames[index], index);
+  if (const auto* interface = dyn_cast<InterfaceDeclaration>(decl)) {
+    if (interface->name().is_qualified()) {
+      return;
+    }
+
+    static std::map<std::string, int, std::less<>>* builtin_indexes = [] {
+      std::map<std::string, int, std::less<>> builtin_indexes;
+      for (int index = 0; index < Builtin::NumBuiltins; ++index) {
+        builtin_indexes.emplace(Builtin::FromInt(index).name(), index);
       }
       return new auto(std::move(builtin_indexes));
     }();
 
-    auto it = builtin_indexes->find(interface->name());
+    auto it = builtin_indexes->find(interface->name().inner_name());
     if (it != builtin_indexes->end()) {
       builtins_[it->second] = interface;
     }
@@ -29,11 +38,10 @@ void Builtins::Register(Nonnull<const Declaration*> decl) {
 
 auto Builtins::Get(SourceLocation source_loc, Builtin builtin) const
     -> ErrorOr<Nonnull<const Declaration*>> {
-  std::optional<const Declaration*> result =
-      builtins_[static_cast<int>(builtin)];
+  std::optional<const Declaration*> result = builtins_[builtin.AsInt()];
   if (!result.has_value()) {
-    return CompilationError(source_loc)
-           << "missing declaration for builtin `" << GetName(builtin) << "`";
+    return ProgramError(source_loc)
+           << "missing declaration for builtin `" << builtin << "`";
   }
   return result.value();
 }

@@ -49,10 +49,11 @@ auto BinaryOperatorExpressionMatcher::MatchAndExplainImpl(
     return false;
   }
   if (op->op() != op_) {
-    *out << "whose operator is not " << ToString(op_);
+    *out << "whose operator is not " << OperatorToString(op_);
     return false;
   }
-  *out << "which is a " << ToString(op_) << " expression whose left operand ";
+  *out << "which is a " << OperatorToString(op_)
+       << " expression whose left operand ";
   bool matched = lhs_.MatchAndExplain(*op->arguments()[0], out);
   *out << " and right operand ";
   if (!rhs_.MatchAndExplain(*op->arguments()[1], out)) {
@@ -63,7 +64,7 @@ auto BinaryOperatorExpressionMatcher::MatchAndExplainImpl(
 
 void BinaryOperatorExpressionMatcher::DescribeToImpl(std::ostream* out,
                                                      bool negated) const {
-  *out << "is " << (negated ? "not " : "") << "a " << ToString(op_)
+  *out << "is " << (negated ? "not " : "") << "a " << OperatorToString(op_)
        << " expression whose ";
   *out << "left operand ";
   lhs_.DescribeTo(out);
@@ -149,7 +150,8 @@ auto MatchesFunctionDeclarationMatcher::MatchAndExplainImpl(
   llvm::ListSeparator sep(", and");
   if (name_matcher_.has_value()) {
     out << sep << "whose name ";
-    if (!name_matcher_->MatchAndExplain(decl->name(), listener)) {
+    if (!name_matcher_->MatchAndExplain(std::string(decl->name().inner_name()),
+                                        listener)) {
       // We short-circuit here because if the name doesn't match, that's
       // probably the only information the user cares about.
       return false;

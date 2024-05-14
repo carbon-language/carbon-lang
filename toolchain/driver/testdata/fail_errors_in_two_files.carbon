@@ -1,0 +1,23 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// ARGS: compile --phase=lex %s
+//
+// AUTOUPDATE
+
+// --- fail_file1.carbon
+
+// CHECK:STDERR: fail_file1.carbon:[[@LINE+4]]:24: ERROR: Opening symbol without a corresponding closing symbol.
+// CHECK:STDERR: fn run(String program) {
+// CHECK:STDERR:                        ^
+// CHECK:STDERR:
+fn run(String program) {
+  return True;
+
+// --- fail_file2.carbon
+
+// CHECK:STDERR: fail_file2.carbon:[[@LINE+3]]:10: ERROR: Invalid digit 'a' in decimal numeric literal.
+// CHECK:STDERR: var x = 3a;
+// CHECK:STDERR:          ^
+var x = 3a;

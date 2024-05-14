@@ -1,0 +1,133 @@
+From 04fb28b5673d29a8c38519845c87f4c00c76e9cf Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Sat, 13 Jan 2024 02:15:19 -0800
+Subject: [PATCH] Introduce a simple native Bazel build.
+
+---
+ BUILD.bazel     | 84 +++++++++++++++++++++++++++++++++++++++++++++++++
+ MODULE.bazel    | 10 ++++++
+ WORKSPACE.bazel |  5 +++
+ 3 files changed, 99 insertions(+)
+ create mode 100644 BUILD.bazel
+ create mode 100644 MODULE.bazel
+ create mode 100644 WORKSPACE.bazel
+
+diff --git a/BUILD.bazel b/BUILD.bazel
+new file mode 100644
+index 0000000..427c854
+--- /dev/null
++++ b/BUILD.bazel
+@@ -0,0 +1,84 @@
++# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
++# Exceptions. See /LICENSE for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
++package(default_visibility = ["//visibility:public"])
++
++aarch64_srcs = [
++    "lib/pfmlib_arm_perf_event.c",
++    "lib/pfmlib_arm.c",
++    "lib/pfmlib_arm_armv8.c",
++    "lib/pfmlib_arm_armv9.c",
++    "lib/pfmlib_tx2_unc_perf_event.c",
++    "lib/pfmlib_kunpeng_unc_perf_event.c",
++    "lib/pfmlib_arm_priv.h",
++    "lib/events/arm_cortex_a57_events.h",
++    "lib/events/arm_cortex_a53_events.h",
++    "lib/events/arm_xgene_events.h",
++    "lib/events/arm_cavium_tx2_events.h",
++    "lib/events/arm_marvell_tx2_unc_events.h",
++    "lib/events/arm_fujitsu_a64fx_events.h",
++    "lib/events/arm_neoverse_n1_events.h",
++    "lib/events/arm_neoverse_n2_events.h",
++    "lib/events/arm_neoverse_v1_events.h",
++    "lib/events/arm_neoverse_v2_events.h",
++    "lib/events/arm_hisilicon_kunpeng_events.h",
++    "lib/events/arm_hisilicon_kunpeng_unc_events.h",
++]
++
++x86_64_srcs = [
++    "lib/pfmlib_amd64_priv.h",
++] + glob(
++    [
++        "lib/pfmlib_amd64*.c",
++        "lib/pfmlib_intel*.c",
++        "lib/pfmlib_intel*_priv.h",
++        "lib/events/amd64_events_*.h",
++        "lib/events/intel_*_events.h",
++    ],
++    exclude = [
++        # 32-bit CPUs
++        "lib/pfmlib_intel_coreduo.c",
++        "lib/pfmlib_intel_p6.c",
++    ],
++)
++
++cc_library(
++    name = "libpfm",
++    srcs = [
++        "lib/events/perf_events.h",
++        "lib/pfmlib_common.c",
++        "lib/pfmlib_perf_event.c",
++        "lib/pfmlib_perf_event_pmu.c",
++        "lib/pfmlib_perf_event_priv.h",
++        "lib/pfmlib_perf_event_raw.c",
++        "lib/pfmlib_priv.h",
++    ] + select({
++        "@platforms//cpu:aarch64": aarch64_srcs,
++        "@platforms//cpu:x86_64": x86_64_srcs,
++    }),
++    hdrs = glob(["include/perfmon/*.h"]),
++    copts = [
++        "-DHAS_OPENAT",
++        "-D_REENTRANT",
++        "-I.",
++        "-fvisibility=hidden",
++    ] + select({
++        "@platforms//cpu:x86_64": [
++            "-DCONFIG_PFMLIB_ARCH_X86",
++            "-DCONFIG_PFMLIB_ARCH_X86_64",
++        ],
++        "//conditions:default": [],
++    }),
++    strip_include_prefix = "include",
++    target_compatible_with = select({
++        # This library only makes sense on Linux, and we only include support
++        # for building on AArch64 and x86-64. Other CPUs can be added to this
++        # list if build support is added for them.
++        "@platforms//cpu:aarch64": ["@platforms//os:linux"],
++        "@platforms//cpu:x86_64": ["@platforms//os:linux"],
++        "//conditions:default": ["@platforms//:incompatible"],
++    }),
++)
+diff --git a/MODULE.bazel b/MODULE.bazel
+new file mode 100644
+index 0000000..c901cbe
+--- /dev/null
++++ b/MODULE.bazel
+@@ -0,0 +1,10 @@
++# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
++# Exceptions. See /LICENSE for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++"""Bazel modules."""
++
++module(name = "libpfm")
++
++bazel_dep(name = "rules_cc", version = "0.0.9")
++bazel_dep(name = "platforms", version = "0.0.8")
+diff --git a/WORKSPACE.bazel b/WORKSPACE.bazel
+new file mode 100644
+index 0000000..9aad57c
+--- /dev/null
++++ b/WORKSPACE.bazel
+@@ -0,0 +1,5 @@
++# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
++# Exceptions. See /LICENSE for license information.
++# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
++
++# See `MODULE.bazel` for details.
+--
+2.43.0

@@ -8,24 +8,26 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/bindings.h"
-#include "explorer/ast/member.h"
+#include "explorer/ast/element.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/paren_contents.h"
-#include "explorer/ast/static_scope.h"
-#include "explorer/ast/value_category.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/source_location.h"
+#include "explorer/ast/value_node.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
 class Value;
+class Witness;
 class MemberName;
 class VariableType;
 class InterfaceType;
@@ -64,20 +66,22 @@ class Expression : public AstNode {
 
   // The value category of this expression. Cannot be called before
   // typechecking.
-  auto value_category() const -> ValueCategory { return *value_category_; }
+  auto expression_category() const -> ExpressionCategory {
+    return *expression_category_;
+  }
 
   // Sets the value category of this expression. Can be called multiple times,
   // but the argument must have the same value each time.
-  void set_value_category(ValueCategory value_category) {
-    CARBON_CHECK(!value_category_.has_value() ||
-                 value_category == *value_category_);
-    value_category_ = value_category;
+  void set_expression_category(ExpressionCategory expression_category) {
+    CARBON_CHECK(!expression_category_.has_value() ||
+                 expression_category == *expression_category_);
+    expression_category_ = expression_category;
   }
 
   // Determines whether the expression has already been type-checked. Should
   // only be used by type-checking.
-  auto is_type_checked() -> bool {
-    return static_type_.has_value() && value_category_.has_value();
+  auto is_type_checked() const -> bool {
+    return static_type_.has_value() && expression_category_.has_value();
   }
 
  protected:
@@ -87,9 +91,43 @@ class Expression : public AstNode {
   Expression(AstNodeKind kind, SourceLocation source_loc)
       : AstNode(kind, source_loc) {}
 
+  explicit Expression(CloneContext& context, const Expression& other)
+      : AstNode(context, other) {}
+
  private:
   std::optional<Nonnull<const Value*>> static_type_;
-  std::optional<ValueCategory> value_category_;
+  std::optional<ExpressionCategory> expression_category_;
+};
+
+// A mixin for expressions that can be rewritten to a different expression by
+// type-checking.
+template <typename Base>
+class RewritableMixin : public Base {
+ public:
+  using Base::Base;
+
+  explicit RewritableMixin(CloneContext& context, const RewritableMixin& other)
+      : Base(context, other),
+        rewritten_form_(context.Clone(other.rewritten_form_)) {}
+
+  // Set the rewritten form of this expression. Can only be called during type
+  // checking.
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+    this->set_static_type(&rewritten_form->static_type());
+    this->set_expression_category(rewritten_form->expression_category());
+  }
+
+  // Get the rewritten form of this expression. A rewritten form is used when
+  // the expression is rewritten as a function call on an interface. A
+  // rewritten form is not used when providing built-in operator semantics.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
+ private:
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 // A FieldInitializer represents the initialization of a single struct field.
@@ -97,6 +135,10 @@ class FieldInitializer {
  public:
   FieldInitializer(std::string name, Nonnull<Expression*> expression)
       : name_(std::move(name)), expression_(expression) {}
+
+  explicit FieldInitializer(CloneContext& context,
+                            const FieldInitializer& other)
+      : name_(other.name_), expression_(context.Clone(other.expression_)) {}
 
   auto name() const -> const std::string& { return name_; }
 
@@ -140,13 +182,19 @@ enum class Operator {
 };
 
 // Returns the lexical representation of `op`, such as "+" for `Add`.
-auto ToString(Operator op) -> std::string_view;
+auto OperatorToString(Operator op) -> std::string_view;
 
 class IdentifierExpression : public Expression {
  public:
   explicit IdentifierExpression(SourceLocation source_loc, std::string name)
       : Expression(AstNodeKind::IdentifierExpression, source_loc),
         name_(std::move(name)) {}
+
+  explicit IdentifierExpression(CloneContext& context,
+                                const IdentifierExpression& other)
+      : Expression(context, other),
+        name_(other.name_),
+        value_node_(context.Clone(other.value_node_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIdentifierExpression(node->kind());
@@ -173,17 +221,20 @@ class IdentifierExpression : public Expression {
 // A `.Self` expression within either a `:!` binding or a standalone `where`
 // expression.
 //
-// In a `:!` binding, the type of `.Self` is always `Type`. For example, in
+// In a `:!` binding, the type of `.Self` is always `type`. For example, in
 // `A:! AddableWith(.Self)`, the expression `.Self` refers to the same type as
-// `A`, but with type `Type`.
+// `A`, but with type `type`.
 //
 // In a `where` binding, the type of `.Self` is the constraint preceding the
-// `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
-// of `.Self` is `Foo`.
+// `where` keyword. For example, in `Foo where .Result impls Bar(.Self)`, the
+// type of `.Self` is `Foo`.
 class DotSelfExpression : public Expression {
  public:
   explicit DotSelfExpression(SourceLocation source_loc)
       : Expression(AstNodeKind::DotSelfExpression, source_loc) {}
+
+  explicit DotSelfExpression(CloneContext& context,
+                             const DotSelfExpression& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDotSelfExpression(node->kind());
@@ -204,57 +255,108 @@ class DotSelfExpression : public Expression {
   std::optional<Nonnull<GenericBinding*>> self_binding_;
 };
 
-class SimpleMemberAccessExpression : public Expression {
+class MemberAccessExpression : public Expression {
+ public:
+  explicit MemberAccessExpression(AstNodeKind kind, SourceLocation source_loc,
+                                  Nonnull<Expression*> object)
+      : Expression(kind, source_loc), object_(object) {}
+
+  explicit MemberAccessExpression(CloneContext& context,
+                                  const MemberAccessExpression& other);
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMemberAccessExpression(node->kind());
+  }
+
+  auto object() const -> const Expression& { return *object_; }
+  auto object() -> Expression& { return *object_; }
+
+  // Can only be called by type-checking, if a conversion was required.
+  void set_object(Nonnull<Expression*> object) { object_ = object; }
+
+  // Returns true if this is an access of a member of the type of the object,
+  // rather than an access of a member of the object itself. In this case, the
+  // value of the object expression is ignored, and the type is accessed
+  // instead.
+  //
+  // For example, given `x: Class`, `x.StaticFunction` is a type access
+  // equivalent to `T.StaticFunction`, and given `T:! Interface` and `y: T`,
+  // `y.AssociatedConstant` is a type access equivalent to
+  // `T.AssociatedConstant`.
+  auto is_type_access() const -> bool { return is_type_access_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_type_access(bool type_access) { is_type_access_ = type_access; }
+
+  // Returns true if the member is a method that has a "self" declaration in an
+  // AddrPattern.
+  auto is_addr_me_method() const -> bool { return is_addr_me_method_; }
+
+  // Can only be called once, during typechecking.
+  void set_is_addr_me_method() { is_addr_me_method_ = true; }
+
+  // If `object` has a generic type, returns the witness value, which might be
+  // either concrete or symbolic. Otherwise, returns `std::nullopt`. Should not
+  // be called before typechecking.
+  auto impl() const -> std::optional<Nonnull<const Witness*>> { return impl_; }
+
+  // Can only be called once, during typechecking.
+  void set_impl(Nonnull<const Witness*> impl) {
+    CARBON_CHECK(!impl_.has_value());
+    impl_ = impl;
+  }
+
+  // Returns the constant value of this expression, if one has been set. This
+  // value will be used instead of accessing a member. Even if this is present,
+  // the operand of the member access expression must still be evaluated, in
+  // case it has side effects.
+  auto constant_value() const -> std::optional<Nonnull<const Value*>> {
+    return constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+ private:
+  Nonnull<Expression*> object_;
+  bool is_type_access_ = false;
+  bool is_addr_me_method_ = false;
+  std::optional<Nonnull<const Witness*>> impl_;
+  std::optional<Nonnull<const Value*>> constant_value_;
+};
+
+class SimpleMemberAccessExpression
+    : public RewritableMixin<MemberAccessExpression> {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
                                         Nonnull<Expression*> object,
                                         std::string member_name)
-      : Expression(AstNodeKind::SimpleMemberAccessExpression, source_loc),
-        object_(object),
+      : RewritableMixin(AstNodeKind::SimpleMemberAccessExpression, source_loc,
+                        object),
         member_name_(std::move(member_name)) {}
+
+  explicit SimpleMemberAccessExpression(
+      CloneContext& context, const SimpleMemberAccessExpression& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSimpleMemberAccessExpression(node->kind());
   }
 
-  auto object() const -> const Expression& { return *object_; }
-  auto object() -> Expression& { return *object_; }
   auto member_name() const -> const std::string& { return member_name_; }
 
-  // Returns the `Member` that the member name resolved to.
+  // Returns the `NamedElement` that the member name resolved to.
   // Should not be called before typechecking.
-  auto member() const -> const Member& {
+  auto member() const -> const NamedElement& {
     CARBON_CHECK(member_.has_value());
-    return *member_;
+    return *member_.value();
   }
 
   // Can only be called once, during typechecking.
-  void set_member(Member member) {
-    CARBON_CHECK(!member_.has_value());
-    member_ = member;
-  }
-
-  // Returns true if the field is a method that has a "me" declaration in an
-  // AddrPattern.
-  auto is_field_addr_me_method() const -> bool {
-    return is_field_addr_me_method_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_is_field_addr_me_method() { is_field_addr_me_method_ = true; }
-
-  // If `object` has a generic type, returns the `ImplBinding` that
-  // identifies its witness table. Otherwise, returns `std::nullopt`. Should not
-  // be called before typechecking.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
-    CARBON_CHECK(!impl_.has_value());
-    impl_ = impl;
-  }
+  void set_member(Nonnull<const NamedElement*> member) { member_ = member; }
 
   // If `object` is a constrained type parameter and `member` was found in an
   // interface, returns that interface. Should not be called before
@@ -270,13 +372,24 @@ class SimpleMemberAccessExpression : public Expression {
     found_in_interface_ = interface;
   }
 
+  // Returns the ValueNodeView this identifier refers to, if this was
+  // determined by name resolution. Cannot be called before name resolution.
+  auto value_node() const -> std::optional<ValueNodeView> {
+    return value_node_;
+  }
+
+  // Sets the value returned by value_node. Can be called only during name
+  // resolution.
+  void set_value_node(ValueNodeView value_node) {
+    CARBON_CHECK(!value_node_.has_value() || value_node_ == value_node);
+    value_node_ = std::move(value_node);
+  }
+
  private:
-  Nonnull<Expression*> object_;
   std::string member_name_;
-  std::optional<Member> member_;
-  bool is_field_addr_me_method_ = false;
-  std::optional<Nonnull<const Expression*>> impl_;
+  std::optional<Nonnull<const NamedElement*>> member_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // A compound member access expression of the form `object.(path)`.
@@ -292,21 +405,22 @@ class SimpleMemberAccessExpression : public Expression {
 //
 // Note that the `path` is evaluated during type-checking, not at runtime, so
 // the corresponding `member` is determined statically.
-class CompoundMemberAccessExpression : public Expression {
+class CompoundMemberAccessExpression : public MemberAccessExpression {
  public:
   explicit CompoundMemberAccessExpression(SourceLocation source_loc,
                                           Nonnull<Expression*> object,
                                           Nonnull<Expression*> path)
-      : Expression(AstNodeKind::CompoundMemberAccessExpression, source_loc),
-        object_(object),
+      : MemberAccessExpression(AstNodeKind::CompoundMemberAccessExpression,
+                               source_loc, object),
         path_(path) {}
+
+  explicit CompoundMemberAccessExpression(
+      CloneContext& context, const CompoundMemberAccessExpression& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromCompoundMemberAccessExpression(node->kind());
   }
 
-  auto object() const -> const Expression& { return *object_; }
-  auto object() -> Expression& { return *object_; }
   auto path() const -> const Expression& { return *path_; }
   auto path() -> Expression& { return *path_; }
 
@@ -323,26 +437,9 @@ class CompoundMemberAccessExpression : public Expression {
     member_ = member;
   }
 
-  // Returns the expression to use to compute the witness table, if this
-  // expression names an interface member.
-  auto impl() const -> std::optional<Nonnull<const Expression*>> {
-    return impl_;
-  }
-
-  // Can only be called once, during typechecking.
-  void set_impl(Nonnull<const Expression*> impl) {
-    CARBON_CHECK(!impl_.has_value());
-    impl_ = impl;
-  }
-
-  // Can only be called by type-checking, if a conversion was required.
-  void set_object(Nonnull<Expression*> object) { object_ = object; }
-
  private:
-  Nonnull<Expression*> object_;
   Nonnull<Expression*> path_;
   std::optional<Nonnull<const MemberName*>> member_;
-  std::optional<Nonnull<const Expression*>> impl_;
 };
 
 class IndexExpression : public Expression {
@@ -353,6 +450,11 @@ class IndexExpression : public Expression {
       : Expression(AstNodeKind::IndexExpression, source_loc),
         object_(object),
         offset_(offset) {}
+
+  explicit IndexExpression(CloneContext& context, const IndexExpression& other)
+      : Expression(context, other),
+        object_(context.Clone(other.object_)),
+        offset_(context.Clone(other.offset_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIndexExpression(node->kind());
@@ -368,10 +470,40 @@ class IndexExpression : public Expression {
   Nonnull<Expression*> offset_;
 };
 
+class BaseAccessExpression : public MemberAccessExpression {
+ public:
+  explicit BaseAccessExpression(SourceLocation source_loc,
+                                Nonnull<Expression*> object,
+                                Nonnull<const BaseElement*> base)
+      : MemberAccessExpression(AstNodeKind::BaseAccessExpression, source_loc,
+                               object),
+        base_(base) {
+    set_static_type(&base->type());
+    set_expression_category(ExpressionCategory::Value);
+  }
+
+  explicit BaseAccessExpression(CloneContext& context,
+                                const BaseAccessExpression& other)
+      : MemberAccessExpression(context, other),
+        base_(context.Clone(other.base_)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBaseAccessExpression(node->kind());
+  }
+
+  auto element() const -> const BaseElement& { return *base_; }
+
+ private:
+  const Nonnull<const BaseElement*> base_;
+};
+
 class IntLiteral : public Expression {
  public:
   explicit IntLiteral(SourceLocation source_loc, int value)
       : Expression(AstNodeKind::IntLiteral, source_loc), value_(value) {}
+
+  explicit IntLiteral(CloneContext& context, const IntLiteral& other)
+      : Expression(context, other), value_(other.value_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntLiteral(node->kind());
@@ -387,6 +519,9 @@ class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)
       : Expression(AstNodeKind::BoolLiteral, source_loc), value_(value) {}
+
+  explicit BoolLiteral(CloneContext& context, const BoolLiteral& other)
+      : Expression(context, other), value_(other.value_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolLiteral(node->kind());
@@ -404,6 +539,9 @@ class StringLiteral : public Expression {
       : Expression(AstNodeKind::StringLiteral, source_loc),
         value_(std::move(value)) {}
 
+  explicit StringLiteral(CloneContext& context, const StringLiteral& other)
+      : Expression(context, other), value_(other.value_) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStringLiteral(node->kind());
   }
@@ -418,6 +556,10 @@ class StringTypeLiteral : public Expression {
  public:
   explicit StringTypeLiteral(SourceLocation source_loc)
       : Expression(AstNodeKind::StringTypeLiteral, source_loc) {}
+
+  explicit StringTypeLiteral(CloneContext& context,
+                             const StringTypeLiteral& other)
+      : Expression(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStringTypeLiteral(node->kind());
@@ -434,6 +576,9 @@ class TupleLiteral : public Expression {
       : Expression(AstNodeKind::TupleLiteral, source_loc),
         fields_(std::move(fields)) {}
 
+  explicit TupleLiteral(CloneContext& context, const TupleLiteral& other)
+      : Expression(context, other), fields_(context.Clone(other.fields_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTupleLiteral(node->kind());
   }
@@ -447,21 +592,18 @@ class TupleLiteral : public Expression {
   std::vector<Nonnull<Expression*>> fields_;
 };
 
-// A non-empty literal value of a struct type.
-//
-// It can't be empty because the syntax `{}` is a struct type literal as well
-// as a literal value of that type, so for consistency we always represent it
-// as a StructTypeLiteral rather than let it oscillate unpredictably between
-// the two.
+// A literal value of a struct type.
 class StructLiteral : public Expression {
  public:
+  explicit StructLiteral(SourceLocation loc) : StructLiteral(loc, {}) {}
+
   explicit StructLiteral(SourceLocation loc,
                          std::vector<FieldInitializer> fields)
       : Expression(AstNodeKind::StructLiteral, loc),
-        fields_(std::move(fields)) {
-    CARBON_CHECK(!fields_.empty())
-        << "`{}` is represented as a StructTypeLiteral, not a StructLiteral.";
-  }
+        fields_(std::move(fields)) {}
+
+  explicit StructLiteral(CloneContext& context, const StructLiteral& other)
+      : Expression(context, other), fields_(context.Clone(other.fields_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStructLiteral(node->kind());
@@ -474,18 +616,58 @@ class StructLiteral : public Expression {
   std::vector<FieldInitializer> fields_;
 };
 
+// A base class for literals with a constant value determined by type-checking.
+class ConstantValueLiteral : public Expression {
+ public:
+  explicit ConstantValueLiteral(
+      AstNodeKind kind, SourceLocation source_loc,
+      std::optional<Nonnull<const Value*>> constant_value = std::nullopt)
+      : Expression(kind, source_loc), constant_value_(constant_value) {}
+
+  explicit ConstantValueLiteral(CloneContext& context,
+                                const ConstantValueLiteral& other)
+      : Expression(context, other),
+        constant_value_(context.Clone(other.constant_value_)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromConstantValueLiteral(node->kind());
+  }
+
+  // Returns the constant value of this expression.
+  auto constant_value() const -> const Value& {
+    CARBON_CHECK(constant_value_);
+    return **constant_value_;
+  }
+
+  // Sets the value returned by constant_value(). Can only be called once,
+  // during typechecking.
+  void set_constant_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!constant_value_.has_value());
+    constant_value_ = value;
+  }
+
+ private:
+  std::optional<Nonnull<const Value*>> constant_value_;
+};
+
 // A literal representing a struct type.
 //
-// Code that handles this type may sometimes need to have special-case handling
-// for `{}`, which is a struct value in addition to being a struct type.
-class StructTypeLiteral : public Expression {
+// Note that a struct type literal can't be empty because `{}` is a struct
+// value. However, that value implicitly converts to a type.
+class StructTypeLiteral : public ConstantValueLiteral {
  public:
-  explicit StructTypeLiteral(SourceLocation loc) : StructTypeLiteral(loc, {}) {}
-
   explicit StructTypeLiteral(SourceLocation loc,
                              std::vector<FieldInitializer> fields)
-      : Expression(AstNodeKind::StructTypeLiteral, loc),
-        fields_(std::move(fields)) {}
+      : ConstantValueLiteral(AstNodeKind::StructTypeLiteral, loc),
+        fields_(std::move(fields)) {
+    CARBON_CHECK(!fields_.empty())
+        << "`{}` is represented as a StructLiteral, not a StructTypeLiteral.";
+  }
+
+  explicit StructTypeLiteral(CloneContext& context,
+                             const StructTypeLiteral& other)
+      : ConstantValueLiteral(context, other),
+        fields_(context.Clone(other.fields_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromStructTypeLiteral(node->kind());
@@ -498,13 +680,19 @@ class StructTypeLiteral : public Expression {
   std::vector<FieldInitializer> fields_;
 };
 
-class OperatorExpression : public Expression {
+class OperatorExpression : public RewritableMixin<Expression> {
  public:
   explicit OperatorExpression(SourceLocation source_loc, Operator op,
                               std::vector<Nonnull<Expression*>> arguments)
-      : Expression(AstNodeKind::OperatorExpression, source_loc),
+      : RewritableMixin(AstNodeKind::OperatorExpression, source_loc),
         op_(op),
         arguments_(std::move(arguments)) {}
+
+  explicit OperatorExpression(CloneContext& context,
+                              const OperatorExpression& other)
+      : RewritableMixin(context, other),
+        op_(other.op_),
+        arguments_(context.Clone(other.arguments_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromOperatorExpression(node->kind());
@@ -518,28 +706,10 @@ class OperatorExpression : public Expression {
     return arguments_;
   }
 
-  // Set the rewritten form of this expression. Can only be called during type
-  // checking.
-  auto set_rewritten_form(const Expression* rewritten_form) -> void {
-    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
-    rewritten_form_ = rewritten_form;
-    set_static_type(&rewritten_form->static_type());
-    set_value_category(rewritten_form->value_category());
-  }
-  // Get the rewritten form of this expression. A rewritten form is used when
-  // the expression is rewritten as a function call on an interface. A
-  // rewritten form is not used when providing built-in operator semantics.
-  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
-    return rewritten_form_;
-  }
-
  private:
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
-  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
-
-using ImplExpMap = std::map<Nonnull<const ImplBinding*>, Nonnull<Expression*>>;
 
 class CallExpression : public Expression {
  public:
@@ -548,7 +718,14 @@ class CallExpression : public Expression {
                           Nonnull<Expression*> argument)
       : Expression(AstNodeKind::CallExpression, source_loc),
         function_(function),
-        argument_(argument) {}
+        argument_(argument),
+        bindings_({}, {}) {}
+
+  explicit CallExpression(CloneContext& context, const CallExpression& other)
+      : Expression(context, other),
+        function_(context.Clone(other.function_)),
+        argument_(context.Clone(other.argument_)),
+        bindings_(context.Clone(other.bindings_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromCallExpression(node->kind());
@@ -559,22 +736,21 @@ class CallExpression : public Expression {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  // Maps each of `function`'s impl bindings to an expression
-  // that constructs a witness table.
-  // Should not be called before typechecking, or if `function` is not
-  // a generic function.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto bindings() -> const Bindings& { return bindings_; }
 
   // Can only be called once, during typechecking.
-  void set_impls(const ImplExpMap& impls) {
-    CARBON_CHECK(impls_.empty());
-    impls_ = impls;
+  void set_bindings(Bindings bindings) {
+    CARBON_CHECK(bindings_.args().empty() && bindings_.witnesses().empty());
+    bindings_ = std::move(bindings);
   }
 
-  auto deduced_args() const -> const BindingMap& { return deduced_args_; }
+  auto deduced_args() const -> const BindingMap& { return bindings_.args(); }
 
-  void set_deduced_args(const BindingMap& deduced_args) {
-    deduced_args_ = deduced_args;
+  // Maps each of `function`'s impl bindings to a witness.
+  // Should not be called before typechecking, or if `function` is not
+  // a generic function.
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_.witnesses();
   }
 
   // Can only be called by type-checking, if a conversion was required.
@@ -583,18 +759,23 @@ class CallExpression : public Expression {
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
-  ImplExpMap impls_;
-  BindingMap deduced_args_;
+  Bindings bindings_;
 };
 
-class FunctionTypeLiteral : public Expression {
+class FunctionTypeLiteral : public ConstantValueLiteral {
  public:
   explicit FunctionTypeLiteral(SourceLocation source_loc,
                                Nonnull<TupleLiteral*> parameter,
                                Nonnull<Expression*> return_type)
-      : Expression(AstNodeKind::FunctionTypeLiteral, source_loc),
+      : ConstantValueLiteral(AstNodeKind::FunctionTypeLiteral, source_loc),
         parameter_(parameter),
         return_type_(return_type) {}
+
+  explicit FunctionTypeLiteral(CloneContext& context,
+                               const FunctionTypeLiteral& other)
+      : ConstantValueLiteral(context, other),
+        parameter_(context.Clone(other.parameter_)),
+        return_type_(context.Clone(other.return_type_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionTypeLiteral(node->kind());
@@ -615,6 +796,9 @@ class BoolTypeLiteral : public Expression {
   explicit BoolTypeLiteral(SourceLocation source_loc)
       : Expression(AstNodeKind::BoolTypeLiteral, source_loc) {}
 
+  explicit BoolTypeLiteral(CloneContext& context, const BoolTypeLiteral& other)
+      : Expression(context, other) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBoolTypeLiteral(node->kind());
   }
@@ -625,18 +809,11 @@ class IntTypeLiteral : public Expression {
   explicit IntTypeLiteral(SourceLocation source_loc)
       : Expression(AstNodeKind::IntTypeLiteral, source_loc) {}
 
+  explicit IntTypeLiteral(CloneContext& context, const IntTypeLiteral& other)
+      : Expression(context, other) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntTypeLiteral(node->kind());
-  }
-};
-
-class ContinuationTypeLiteral : public Expression {
- public:
-  explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : Expression(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromContinuationTypeLiteral(node->kind());
   }
 };
 
@@ -645,6 +822,9 @@ class TypeTypeLiteral : public Expression {
   explicit TypeTypeLiteral(SourceLocation source_loc)
       : Expression(AstNodeKind::TypeTypeLiteral, source_loc) {}
 
+  explicit TypeTypeLiteral(CloneContext& context, const TypeTypeLiteral& other)
+      : Expression(context, other) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTypeTypeLiteral(node->kind());
   }
@@ -652,34 +832,36 @@ class TypeTypeLiteral : public Expression {
 
 // A literal value. This is used in desugaring, and can't be expressed in
 // source syntax.
-class ValueLiteral : public Expression {
+class ValueLiteral : public ConstantValueLiteral {
  public:
   // Value literals are created by type-checking, and so are created with their
   // type and value category already known.
   ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
-               Nonnull<const Value*> type, ValueCategory value_category)
-      : Expression(AstNodeKind::ValueLiteral, source_loc), value_(value) {
+               Nonnull<const Value*> type,
+               ExpressionCategory expression_category)
+      : ConstantValueLiteral(AstNodeKind::ValueLiteral, source_loc, value) {
     set_static_type(type);
-    set_value_category(value_category);
+    set_expression_category(expression_category);
   }
+
+  explicit ValueLiteral(CloneContext& context, const ValueLiteral& other)
+      : ConstantValueLiteral(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromValueLiteral(node->kind());
   }
-
-  auto value() const -> const Value& { return *value_; }
-
- private:
-  Nonnull<const Value*> value_;
 };
 
-class IntrinsicExpression : public Expression {
+class IntrinsicExpression : public RewritableMixin<Expression> {
  public:
   enum class Intrinsic {
     Print,
     Alloc,
     Dealloc,
+    PrintAllocs,
     Rand,
+    ImplicitAs,
+    ImplicitAsConvert,
     IntEq,
     StrEq,
     StrCompare,
@@ -700,9 +882,15 @@ class IntrinsicExpression : public Expression {
 
   explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
-      : Expression(AstNodeKind::IntrinsicExpression, source_loc),
+      : RewritableMixin(AstNodeKind::IntrinsicExpression, source_loc),
         intrinsic_(intrinsic),
         args_(args) {}
+
+  explicit IntrinsicExpression(CloneContext& context,
+                               const IntrinsicExpression& other)
+      : RewritableMixin(context, other),
+        intrinsic_(other.intrinsic_),
+        args_(context.Clone(other.args_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntrinsicExpression(node->kind());
@@ -728,6 +916,12 @@ class IfExpression : public Expression {
         condition_(condition),
         then_expression_(then_expression),
         else_expression_(else_expression) {}
+
+  explicit IfExpression(CloneContext& context, const IfExpression& other)
+      : Expression(context, other),
+        condition_(context.Clone(other.condition_)),
+        then_expression_(context.Clone(other.then_expression_)),
+        else_expression_(context.Clone(other.else_expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIfExpression(node->kind());
@@ -773,24 +967,34 @@ class WhereClause : public AstNode {
   }
 
  protected:
-  WhereClause(WhereClauseKind kind, SourceLocation source_loc)
+  explicit WhereClause(WhereClauseKind kind, SourceLocation source_loc)
       : AstNode(static_cast<AstNodeKind>(kind), source_loc) {}
+
+  explicit WhereClause(CloneContext& context, const WhereClause& other)
+      : AstNode(context, other) {}
 };
 
-// An `is` where clause.
+// An `impls` where clause.
 //
-// For example, `ConstraintA where .Type is ConstraintB` requires that the
+// For example, `ConstraintA where .Type impls ConstraintB` requires that the
 // associated type `.Type` implements the constraint `ConstraintB`.
-class IsWhereClause : public WhereClause {
+class ImplsWhereClause : public WhereClause {
  public:
-  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
-                         Nonnull<Expression*> constraint)
-      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
+  explicit ImplsWhereClause(SourceLocation source_loc,
+                            Nonnull<Expression*> type,
+                            Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::ImplsWhereClause, source_loc),
         type_(type),
         constraint_(constraint) {}
 
+  explicit ImplsWhereClause(CloneContext& context,
+                            const ImplsWhereClause& other)
+      : WhereClause(context, other),
+        type_(context.Clone(other.type_)),
+        constraint_(context.Clone(other.constraint_)) {}
+
   static auto classof(const AstNode* node) {
-    return InheritsFromIsWhereClause(node->kind());
+    return InheritsFromImplsWhereClause(node->kind());
   }
 
   auto type() const -> const Expression& { return *type_; }
@@ -816,6 +1020,12 @@ class EqualsWhereClause : public WhereClause {
         lhs_(lhs),
         rhs_(rhs) {}
 
+  explicit EqualsWhereClause(CloneContext& context,
+                             const EqualsWhereClause& other)
+      : WhereClause(context, other),
+        lhs_(context.Clone(other.lhs_)),
+        rhs_(context.Clone(other.rhs_)) {}
+
   static auto classof(const AstNode* node) {
     return InheritsFromEqualsWhereClause(node->kind());
   }
@@ -831,18 +1041,53 @@ class EqualsWhereClause : public WhereClause {
   Nonnull<Expression*> rhs_;
 };
 
+// An `=` where clause.
+//
+// For example, `Constraint where .Type = i32` specifies that the associated
+// type `.Type` is rewritten to `i32` whenever used.
+class RewriteWhereClause : public WhereClause {
+ public:
+  explicit RewriteWhereClause(SourceLocation source_loc,
+                              std::string member_name,
+                              Nonnull<Expression*> replacement)
+      : WhereClause(WhereClauseKind::RewriteWhereClause, source_loc),
+        member_name_(std::move(member_name)),
+        replacement_(replacement) {}
+
+  explicit RewriteWhereClause(CloneContext& context,
+                              const RewriteWhereClause& other)
+      : WhereClause(context, other),
+        member_name_(other.member_name_),
+        replacement_(context.Clone(other.replacement_)) {}
+
+  static auto classof(const AstNode* node) {
+    return InheritsFromRewriteWhereClause(node->kind());
+  }
+
+  auto member_name() const -> std::string_view { return member_name_; }
+
+  auto replacement() const -> const Expression& { return *replacement_; }
+  auto replacement() -> Expression& { return *replacement_; }
+
+ private:
+  std::string member_name_;
+  Nonnull<Expression*> replacement_;
+};
+
 // A `where` expression: `AddableWith(i32) where .Result == i32`.
 //
 // The first operand is rewritten to a generic binding, for example
 // `.Self:! AddableWith(i32)`, which may be used in the clauses.
-class WhereExpression : public Expression {
+class WhereExpression : public RewritableMixin<Expression> {
  public:
   explicit WhereExpression(SourceLocation source_loc,
                            Nonnull<GenericBinding*> self_binding,
                            std::vector<Nonnull<WhereClause*>> clauses)
-      : Expression(AstNodeKind::WhereExpression, source_loc),
+      : RewritableMixin(AstNodeKind::WhereExpression, source_loc),
         self_binding_(self_binding),
         clauses_(std::move(clauses)) {}
+
+  explicit WhereExpression(CloneContext& context, const WhereExpression& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromWhereExpression(node->kind());
@@ -850,6 +1095,17 @@ class WhereExpression : public Expression {
 
   auto self_binding() const -> const GenericBinding& { return *self_binding_; }
   auto self_binding() -> GenericBinding& { return *self_binding_; }
+
+  auto enclosing_dot_self() const
+      -> std::optional<Nonnull<const GenericBinding*>> {
+    return enclosing_dot_self_;
+  }
+  // Sets the enclosing value of `.Self`. Can only be called during name
+  // resolution.
+  void set_enclosing_dot_self(Nonnull<const GenericBinding*> dot_self) {
+    CARBON_CHECK(!enclosing_dot_self_ || enclosing_dot_self_ == dot_self);
+    enclosing_dot_self_ = dot_self;
+  }
 
   auto clauses() const -> llvm::ArrayRef<Nonnull<const WhereClause*>> {
     return clauses_;
@@ -859,35 +1115,38 @@ class WhereExpression : public Expression {
  private:
   Nonnull<GenericBinding*> self_binding_;
   std::vector<Nonnull<WhereClause*>> clauses_;
+  std::optional<Nonnull<const GenericBinding*>> enclosing_dot_self_;
 };
 
-// Instantiate a generic impl.
-class InstantiateImpl : public Expression {
+// A builtin conversion to a type determined by type-checking. These are
+// created by type-checking when a type conversion is found to be necessary but
+// that conversion is implemented directly rather than by an `ImplicitAs`
+// implementation.
+class BuiltinConvertExpression : public RewritableMixin<Expression> {
  public:
-  using ImplementsCarbonValueNode = void;
+  BuiltinConvertExpression(Nonnull<Expression*> source_expression)
+      : RewritableMixin(AstNodeKind::BuiltinConvertExpression,
+                        source_expression->source_loc()),
+        source_expression_(source_expression) {}
 
-  explicit InstantiateImpl(SourceLocation source_loc,
-                           Nonnull<Expression*> generic_impl,
-                           const BindingMap& type_args, const ImplExpMap& impls)
-      : Expression(AstNodeKind::InstantiateImpl, source_loc),
-        generic_impl_(generic_impl),
-        type_args_(type_args),
-        impls_(impls) {}
+  explicit BuiltinConvertExpression(CloneContext& context,
+                                    const BuiltinConvertExpression& other)
+      : RewritableMixin(context, other),
+        source_expression_(context.Clone(other.source_expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInstantiateImpl(node->kind());
+    return InheritsFromBuiltinConvertExpression(node->kind());
   }
-  auto generic_impl() const -> Nonnull<Expression*> { return generic_impl_; }
-  auto type_args() const -> const BindingMap& { return type_args_; }
 
-  // Maps each of the impl bindings to an expression that constructs
-  // the witness table for that impl.
-  auto impls() const -> const ImplExpMap& { return impls_; }
+  auto source_expression() -> Nonnull<Expression*> {
+    return source_expression_;
+  }
+  auto source_expression() const -> Nonnull<const Expression*> {
+    return source_expression_;
+  }
 
  private:
-  Nonnull<Expression*> generic_impl_;
-  BindingMap type_args_;
-  ImplExpMap impls_;
+  Nonnull<Expression*> source_expression_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
@@ -906,6 +1165,12 @@ class UnimplementedExpression : public Expression {
         label_(std::move(label)) {
     AddChildren(children...);
   }
+
+  explicit UnimplementedExpression(CloneContext& context,
+                                   const UnimplementedExpression& other)
+      : Expression(context, other),
+        label_(other.label_),
+        children_(context.Clone(other.children_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromUnimplementedExpression(node->kind());
@@ -930,16 +1195,22 @@ class UnimplementedExpression : public Expression {
 };
 
 // A literal representing a statically-sized array type.
-class ArrayTypeLiteral : public Expression {
+class ArrayTypeLiteral : public ConstantValueLiteral {
  public:
   // Constructs an array type literal which uses the given expressions to
   // represent the element type and size.
-  ArrayTypeLiteral(SourceLocation source_loc,
-                   Nonnull<Expression*> element_type_expression,
-                   Nonnull<Expression*> size_expression)
-      : Expression(AstNodeKind::ArrayTypeLiteral, source_loc),
+  explicit ArrayTypeLiteral(
+      SourceLocation source_loc, Nonnull<Expression*> element_type_expression,
+      std::optional<Nonnull<Expression*>> size_expression = std::nullopt)
+      : ConstantValueLiteral(AstNodeKind::ArrayTypeLiteral, source_loc),
         element_type_expression_(element_type_expression),
         size_expression_(size_expression) {}
+
+  explicit ArrayTypeLiteral(CloneContext& context,
+                            const ArrayTypeLiteral& other)
+      : ConstantValueLiteral(context, other),
+        element_type_expression_(context.Clone(other.element_type_expression_)),
+        size_expression_(context.Clone(other.size_expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromArrayTypeLiteral(node->kind());
@@ -952,14 +1223,22 @@ class ArrayTypeLiteral : public Expression {
     return *element_type_expression_;
   }
 
-  auto size_expression() const -> const Expression& {
-    return *size_expression_;
+  auto has_size_expression() const -> bool {
+    return size_expression_.has_value();
   }
-  auto size_expression() -> Expression& { return *size_expression_; }
+
+  auto size_expression() const -> const Expression& {
+    CARBON_CHECK(size_expression_.has_value());
+    return **size_expression_;
+  }
+  auto size_expression() -> Expression& {
+    CARBON_CHECK(size_expression_.has_value());
+    return **size_expression_;
+  }
 
  private:
   Nonnull<Expression*> element_type_expression_;
-  Nonnull<Expression*> size_expression_;
+  std::optional<Nonnull<Expression*>> size_expression_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

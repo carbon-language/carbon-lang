@@ -1,0 +1,62 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Create PR suggestions based on problems found by pre-commit action.
+name: pre-commit-suggestions
+
+# This action is run whenever the `pre-commit` action finishes. Because the
+# `pre-commit` action is an unprivileged action running on (for example) the
+# `pull_request` event, it's run without write permissions to the repository, so
+# we use a separate privileged `workflow_run` action here to pick up its results
+# and convert them into suggestion comments.
+#
+# This action is only run from the workflow file on the trunk branch. Changes to
+# this file will not take effect until they are merged to trunk.
+on:
+  workflow_run:
+    workflows: [pre-commit]
+    types:
+      - completed
+
+# Note reviewdog/reviewdog has its own token.
+permissions:
+  contents: read # For actions/checkout.
+
+jobs:
+  pull-request-suggestions:
+    # Only generate suggestions if pre-commit for a PR failed.
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.actor != 'jonmeow'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+        with:
+          reviewdog_version: latest
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Download pre-commit output
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
+        with:
+          name: pre-commit output
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      # Use https://github.com/reviewdog/reviewdog to create PR suggestions
+      # matching the diff that pre-commit created.
+      - name: Create suggestions
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN:
+            ${{ secrets.CARBON_INFRA_BOT_FOR_REVIEWDOG }}
+        run: |
+          cat ./diff | \
+          GITHUB_EVENT_PATH=./event \
+            reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review

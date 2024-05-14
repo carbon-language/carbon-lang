@@ -2,29 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: DESTRUCTOR A 1
-// CHECK: DESTRUCTOR A 2
-// CHECK: DESTRUCTOR A 3
-// CHECK: DESTRUCTOR A 4
-// CHECK: DESTRUCTOR A 5
-// CHECK: DESTRUCTOR A 6
-// CHECK: DESTRUCTOR A 7
-// CHECK: DESTRUCTOR A 8
-// CHECK: DESTRUCTOR A 6
-// CHECK: DESTRUCTOR A 7
-// CHECK: DESTRUCTOR A 8
-// CHECK: result: 1
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 class A{
-    destructor[me: Self]{
-        Print("DESTRUCTOR A {0}",me.n);
+    destructor[self: Self]{
+        Print("DESTRUCTOR A {0}",self.n);
     }
     var n: i32;
 }
@@ -56,3 +40,16 @@ fn Main() -> i32 {
 
   return 1;
 }
+
+// CHECK:STDOUT: DESTRUCTOR A 1
+// CHECK:STDOUT: DESTRUCTOR A 2
+// CHECK:STDOUT: DESTRUCTOR A 3
+// CHECK:STDOUT: DESTRUCTOR A 4
+// CHECK:STDOUT: DESTRUCTOR A 5
+// CHECK:STDOUT: DESTRUCTOR A 6
+// CHECK:STDOUT: DESTRUCTOR A 7
+// CHECK:STDOUT: DESTRUCTOR A 8
+// CHECK:STDOUT: DESTRUCTOR A 6
+// CHECK:STDOUT: DESTRUCTOR A 7
+// CHECK:STDOUT: DESTRUCTOR A 8
+// CHECK:STDOUT: result: 1

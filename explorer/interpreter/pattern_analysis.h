@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "explorer/ast/pattern.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/interpreter/value.h"
+#include "explorer/ast/value.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/ADT/PointerUnion.h"
 
 namespace Carbon {
@@ -65,7 +65,7 @@ class AbstractPattern {
  private:
   // This is aligned so that we can use it in the `PointerUnion` below.
   struct alignas(8) WildcardTag {};
-  AbstractPattern(WildcardTag)
+  explicit AbstractPattern(WildcardTag /*unused*/)
       : value_(static_cast<const WildcardTag*>(nullptr)), type_(nullptr) {}
 
   void Set(Nonnull<const Pattern*> pattern);

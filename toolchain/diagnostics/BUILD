@@ -2,13 +2,31 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "testdata",
+    data = glob(["testdata/**/*.carbon"]),
+)
 
 cc_library(
     name = "diagnostic_emitter",
-    hdrs = ["diagnostic_emitter.h"],
+    srcs = [
+        "diagnostic.cpp",
+        "diagnostic_consumer.cpp",
+    ],
+    hdrs = [
+        "diagnostic.h",
+        "diagnostic_consumer.h",
+        "diagnostic_converter.h",
+        "diagnostic_emitter.h",
+    ],
     deps = [
         ":diagnostic_kind",
+        "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -20,8 +38,8 @@ cc_test(
     deps = [
         ":diagnostic_emitter",
         ":mocks",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -31,23 +49,10 @@ cc_library(
     srcs = ["diagnostic_kind.cpp"],
     hdrs = ["diagnostic_kind.h"],
     textual_hdrs = [
-        "diagnostic_registry.def",
+        "diagnostic_kind.def",
     ],
     deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "diagnostic_kind_test",
-    size = "small",
-    srcs = ["diagnostic_kind_test.cpp"],
-    deps = [
-        ":diagnostic_kind",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
+        "//common:enum_base",
     ],
 )
 
@@ -78,8 +83,8 @@ cc_test(
         ":diagnostic_emitter",
         ":mocks",
         ":sorting_diagnostic_consumer",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -91,7 +96,7 @@ cc_library(
     hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

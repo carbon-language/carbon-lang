@@ -2,4 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Empty stub.
+filegroup(
+    name = "clang_tidy_config",
+    srcs = [".clang-tidy"],
+    visibility = ["//visibility:public"],
+)

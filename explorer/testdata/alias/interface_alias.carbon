@@ -2,19 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 12345
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 class Class { var a: i32; }
-class GenericClass(T:! Type) { var a: T; }
+class GenericClass(T:! type) { var a: T; }
 interface Interface { fn Make() -> Self; }
-interface GenericInterface(T:! Type) { fn Make() -> (Self, T); }
+interface GenericInterface(T:! type) { fn Make() -> (Self, T); }
 
 alias ClassAlias = Class;
 alias GenericClassAlias = GenericClass;
@@ -60,3 +55,5 @@ fn Main() -> i32 {
 
   return 10000 * a.a + 1000 * b2.a + 100 * n + 10 * c2.a.a + s.a;
 }
+
+// CHECK:STDOUT: result: 12345

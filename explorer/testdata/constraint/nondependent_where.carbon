@@ -2,19 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 1
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface A { fn Get() -> Self; }
 impl i32 as A { fn Get() -> Self { return 1; } }
 
-alias AlsoA = A where i32 is A and 4 == 4;
+alias AlsoA = A where i32 impls A and 4 == 4;
 
 fn F[T:! AlsoA](x: T) -> T { return T.Get(); }
 
@@ -22,3 +17,5 @@ fn Main() -> i32 {
   var z: i32 = 0;
   return F(z);
 }
+
+// CHECK:STDOUT: result: 1

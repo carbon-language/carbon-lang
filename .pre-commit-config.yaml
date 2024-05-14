@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0 # frozen: v4.3.0
+    rev: c4a0b883114b00d8d76b479c820ce7950211c99b # frozen: v4.5.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 2018e667a6a36ee3fbfa8041cd36512f92f60d49 # frozen: 22.8.0
+    rev: 2a1c67e0b2f81df602ec1f6e7aeb030b9709dc7c # frozen: 23.11.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: d0a4882e1c96eca274f90b273f0f809ab3d98aff # frozen: v3.0.0-alpha.0
+    rev: ffb6a759a979008c0e6dff86e39f4745a2d9eac4 # frozen: v3.1.0
     hooks:
       - id: prettier
   - repo: local
@@ -57,28 +57,41 @@ repos:
       - id: buildifier
         name: Bazel buildifier
         entry: scripts/run_buildifier.py
-        args: ['-r', '.']
+        # Beyond just formatting, explicitly fix lint warnings.
+        args: ['--lint=fix', '--warnings=all', '-r', '.']
         language: python
         files: |
-          '(?x)^(
+          (?x)^(
             .*BUILD.*|
+            .*MODULE.bazel.*|
             .*WORKSPACE.*|
             .*\.bzl
-          )$'
+          )$
+      - id: check-bazel-mod-deps
+        # Check this after buildifier because buildifier may modify inputs, and
+        # MODULE.bazel.lock includes line/column details.
+        name: Check bazel mod deps
+        entry: scripts/bazel_mod_deps.py
+        language: python
+        files: |
+          (?x)^(
+            .*MODULE.bazel.*|
+            .*WORKSPACE.*
+          )$
       - id: clang-format
         name: clang-format
         entry: clang-format
-        types_or: [c++, proto]
+        types_or: [c++, proto, def]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==17.0.1']
       - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
-        additional_dependencies: ['clang-format==13.0.1']
+        additional_dependencies: ['clang-format==17.0.1']
 
   - repo: local
     hooks:
@@ -87,7 +100,7 @@ repos:
         name: Check header guards
         entry: scripts/check_header_guards.py
         language: python
-        files: '^.*\.h$'
+        files: ^.*\.h$
       - id: check-sha-filenames
         # This may rename files, so it's deliberately between formatters and
         # linters.
@@ -95,6 +108,18 @@ repos:
         entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
+      - id: check-toolchain-diagnostics
+        name: Check toolchain diagnostics
+        entry: toolchain/diagnostics/check_diagnostics.py
+        language: python
+        files: |
+          (?x)^(
+              toolchain/.*\.cpp|
+              toolchain/.*\.h|
+              toolchain/diagnostics/check_diagnostics\.py|
+              toolchain/diagnostics/diagnostic_kind\.def
+          )$
+        pass_filenames: false
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
@@ -106,11 +131,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: f8e1b317742036ff11ff86356fd2b68147e169f7 # frozen: 5.0.4
+    rev: 10f4af6dbcf93456ba7df762278ae61ba3120dc6 # frozen: 6.1.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'fde4bb992b03943ecb94207a52739ba07957bd06' # frozen: v0.971
+    rev: '4daa14b20c0f48f472528c2b5f5bca28a18a7ce0' # frozen: v1.7.1
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -132,7 +157,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: c6ecb9fc51571a77bc92e6c265c358aef7cb6c38 # frozen: v2.2.1
+    rev: 6e41aba91fb32e9feb741a6258eefeb9c6e4a482 # frozen: v2.2.6
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -155,7 +180,7 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.(carbon|proto|ypp)$'
+          - '\.(carbon|proto|ypp)(\.tmpl)?$'
           - ''
           - '// '
           - ''
@@ -174,13 +199,28 @@ repos:
           - ''
           - '" '
           - ''
+          - --custom_format
+          - '\.scm$'
+          - ''
+          - '; '
+          - ''
+          - --custom_format
+          - '\.lua$'
+          - ''
+          - '-- '
+          - ''
+          - --custom_format
+          - '\.c$'
+          - ''
+          - '// '
+          - ''
         exclude: |
           (?x)^(
               .bazelversion|
               .github/pull_request_template.md|
               compile_flags.txt|
+              github_tools/requirements.txt|
               third_party/.*|
-              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|
@@ -188,10 +228,13 @@ repos:
           )$
       - id: check-links
 
-# Most third-party code is in submodules; local commits are excluded here.
-# We fully exclude fuzzer corpus directories as they are generated binary data.
+# This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      MODULE.bazel.lock|
+      bazel/bazel_clang_tidy/.*\.patch|
+      bazel/google_benchmark/.*\.patch|
+      bazel/libpfm/.*\.patch|
+      bazel/llvm_project/.*\.patch|
       third_party/examples/.*/carbon/.*|
-      third_party/llvm-project/.*|
   )$

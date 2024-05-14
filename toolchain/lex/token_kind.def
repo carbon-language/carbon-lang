@@ -1,0 +1,220 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macros are:
+// - CARBON_TOKEN(Name)
+//   Defines a token. Used directly when a token needs custom parsing, such as
+//   integer literals.
+//   - CARBON_SYMBOL_TOKEN(Name, Spelling)
+//     Defines a symbol which has the provided spelling, such as `*`. Spellings
+//     must be unique.
+//     - CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName)
+//     - CARBON_CLOSING_GROUP_SYMBOL_TOKEN(Name, Spelling, OpeningName)
+//       These two macros together define matches opening and closing symbols,
+//       such as `(` and `)`, and create an association between the two.
+//   - CARBON_KEYWORD_TOKEN(Name, Spelling)
+//     Defines a keyword which has the provided spelling, such as `if`.
+//     Spellings must be unique.
+//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(TokenIndex)
+//     Wrapped around one of the above _TOKEN macros, indicates that this
+//     token has one additional virtual node in the parse tree.
+//
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
+
+#ifndef CARBON_TOKEN
+#define CARBON_TOKEN(Name)
+#endif
+
+// The error token comes first because we want it to get the zero value, which
+// will also be used in default initialization.
+CARBON_TOKEN(Error)
+
+#ifndef CARBON_SYMBOL_TOKEN
+#define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
+#endif
+
+#ifndef CARBON_ONE_CHAR_SYMBOL_TOKEN
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling) \
+  CARBON_SYMBOL_TOKEN(Name, Spelling)
+#endif
+
+#ifndef CARBON_TOKEN_WITH_VIRTUAL_NODE
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) Name
+#endif
+
+// Note that symbols need to be ordered from longest to shortest to effectively
+// provide max-munch lexing.
+
+// clang-format off
+
+CARBON_SYMBOL_TOKEN(GreaterGreaterEqual, ">>=")
+CARBON_SYMBOL_TOKEN(LessEqualGreater,    "<=>")
+CARBON_SYMBOL_TOKEN(LessLessEqual,       "<<=")
+
+CARBON_SYMBOL_TOKEN(AmpEqual,            "&=")
+CARBON_SYMBOL_TOKEN(CaretEqual,          "^=")
+CARBON_SYMBOL_TOKEN(ColonEqual,          ":=")
+CARBON_SYMBOL_TOKEN(ColonExclaim,        ":!")
+CARBON_SYMBOL_TOKEN(EqualEqual,          "==")
+CARBON_SYMBOL_TOKEN(EqualGreater,        "=>")
+CARBON_SYMBOL_TOKEN(ExclaimEqual,        "!=")
+CARBON_SYMBOL_TOKEN(GreaterEqual,        ">=")
+CARBON_SYMBOL_TOKEN(GreaterGreater,      ">>")
+CARBON_SYMBOL_TOKEN(LessEqual,           "<=")
+CARBON_SYMBOL_TOKEN(LessGreater,         "<>")
+CARBON_SYMBOL_TOKEN(LessLess,            "<<")
+CARBON_SYMBOL_TOKEN(LessMinus,           "<-")
+CARBON_SYMBOL_TOKEN(MinusEqual,          "-=")
+CARBON_SYMBOL_TOKEN(MinusGreater,        "->")
+CARBON_SYMBOL_TOKEN(MinusMinus,          "--")
+CARBON_SYMBOL_TOKEN(PercentEqual,        "%=")
+CARBON_SYMBOL_TOKEN(PipeEqual,           "|=")
+CARBON_SYMBOL_TOKEN(PlusEqual,           "+=")
+CARBON_SYMBOL_TOKEN(PlusPlus,            "++")
+CARBON_SYMBOL_TOKEN(SlashEqual,          "/=")
+CARBON_SYMBOL_TOKEN(StarEqual,           "*=")
+CARBON_SYMBOL_TOKEN(TildeEqual,          "~=")
+
+CARBON_SYMBOL_TOKEN(Amp,                 "&")
+CARBON_SYMBOL_TOKEN(At,                  "@")
+CARBON_SYMBOL_TOKEN(Backslash,           "\\")
+CARBON_SYMBOL_TOKEN(Caret,               "^")
+CARBON_SYMBOL_TOKEN(Colon,               ":")
+CARBON_SYMBOL_TOKEN(Equal,               "=")
+CARBON_SYMBOL_TOKEN(Exclaim,             "!")
+CARBON_SYMBOL_TOKEN(Greater,             ">")
+CARBON_SYMBOL_TOKEN(Less,                "<")
+CARBON_SYMBOL_TOKEN(Minus,               "-")
+CARBON_SYMBOL_TOKEN(Percent,             "%")
+CARBON_SYMBOL_TOKEN(Period,              ".")
+CARBON_SYMBOL_TOKEN(Pipe,                "|")
+CARBON_SYMBOL_TOKEN(Plus,                "+")
+CARBON_SYMBOL_TOKEN(Question,            "?")
+CARBON_SYMBOL_TOKEN(Slash,               "/")
+CARBON_SYMBOL_TOKEN(Star,                "*")
+CARBON_SYMBOL_TOKEN(Tilde,               "~")
+
+// Some Carbon symbols are constructively exactly one character and cannot be
+// combined with any other characters to form new symbols. We can lex these
+// without needing to max-munch any other characters. These are typically
+// expected to be terminators or separators that need to compose with all other
+// parts of the grammar. Group symbols are also currently one-character symbols,
+// although we may choose to remove that if we need to add composite grouping
+// symbols in the future.
+CARBON_ONE_CHAR_SYMBOL_TOKEN(Comma,      ",")
+CARBON_ONE_CHAR_SYMBOL_TOKEN(Semi,       ";")
+
+// clang-format on
+
+#ifndef CARBON_OPENING_GROUP_SYMBOL_TOKEN
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName) \
+  CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling)
+#endif
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen, "(", CloseParen)
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenSquareBracket, "[", CloseSquareBracket)
+#undef CARBON_OPENING_GROUP_SYMBOL_TOKEN
+
+#ifndef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(Name, Spelling, OpeningName) \
+  CARBON_ONE_CHAR_SYMBOL_TOKEN(Name, Spelling)
+#endif
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen, ")", OpenParen)
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseCurlyBrace, "}", OpenCurlyBrace)
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseSquareBracket, "]", OpenSquareBracket)
+#undef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
+
+#undef CARBON_ONE_CHAR_SYMBOL_TOKEN
+#undef CARBON_SYMBOL_TOKEN
+
+#ifndef CARBON_KEYWORD_TOKEN
+#define CARBON_KEYWORD_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
+#endif
+// clang-format off
+CARBON_KEYWORD_TOKEN(Abstract,            "abstract")
+CARBON_KEYWORD_TOKEN(Adapt,               "adapt")
+CARBON_KEYWORD_TOKEN(Addr,                "addr")
+CARBON_KEYWORD_TOKEN(Alias,               "alias")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(And,               "and"))
+CARBON_KEYWORD_TOKEN(Api,                 "api")
+CARBON_KEYWORD_TOKEN(As,                  "as")
+CARBON_KEYWORD_TOKEN(Auto,                "auto")
+CARBON_KEYWORD_TOKEN(Base,                "base")
+CARBON_KEYWORD_TOKEN(Bool,                "bool")
+CARBON_KEYWORD_TOKEN(Break,               "break")
+CARBON_KEYWORD_TOKEN(Case,                "case")
+CARBON_KEYWORD_TOKEN(Choice,              "choice")
+CARBON_KEYWORD_TOKEN(Class,               "class")
+CARBON_KEYWORD_TOKEN(Const,               "const")
+CARBON_KEYWORD_TOKEN(Constraint,          "constraint")
+CARBON_KEYWORD_TOKEN(Continue,            "continue")
+CARBON_KEYWORD_TOKEN(Default,             "default")
+CARBON_KEYWORD_TOKEN(Destructor,          "destructor")
+CARBON_KEYWORD_TOKEN(Else,                "else")
+CARBON_KEYWORD_TOKEN(Extend,              "extend")
+CARBON_KEYWORD_TOKEN(Extern,              "extern")
+CARBON_KEYWORD_TOKEN(False,               "false")
+CARBON_KEYWORD_TOKEN(Final,               "final")
+CARBON_KEYWORD_TOKEN(Fn,                  "fn")
+CARBON_KEYWORD_TOKEN(For,                 "for")
+CARBON_KEYWORD_TOKEN(Forall,              "forall")
+CARBON_KEYWORD_TOKEN(Friend,              "friend")
+CARBON_KEYWORD_TOKEN(If,                  "if")
+CARBON_KEYWORD_TOKEN(Impl,                "impl")
+CARBON_KEYWORD_TOKEN(Impls,               "impls")
+CARBON_KEYWORD_TOKEN(Import,              "import")
+CARBON_KEYWORD_TOKEN(In,                  "in")
+CARBON_KEYWORD_TOKEN(Interface,           "interface")
+CARBON_KEYWORD_TOKEN(Let,                 "let")
+CARBON_KEYWORD_TOKEN(Library,             "library")
+CARBON_KEYWORD_TOKEN(Like,                "like")
+CARBON_KEYWORD_TOKEN(Match,               "match")
+CARBON_KEYWORD_TOKEN(Namespace,           "namespace")
+CARBON_KEYWORD_TOKEN(Not,                 "not")
+CARBON_KEYWORD_TOKEN(Observe,             "observe")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(Or,                "or"))
+CARBON_KEYWORD_TOKEN(Package,             "package")
+CARBON_KEYWORD_TOKEN(Partial,             "partial")
+CARBON_KEYWORD_TOKEN(Private,             "private")
+CARBON_KEYWORD_TOKEN(Protected,           "protected")
+CARBON_KEYWORD_TOKEN(Require,             "require")
+CARBON_KEYWORD_TOKEN(Return,              "return")
+CARBON_KEYWORD_TOKEN(Returned,            "returned")
+CARBON_KEYWORD_TOKEN(SelfTypeIdentifier,  "Self")
+CARBON_KEYWORD_TOKEN(SelfValueIdentifier, "self")
+// TODO: Although we provide a String type literal, it's not standardized.
+CARBON_KEYWORD_TOKEN(StringTypeLiteral,   "String")
+CARBON_KEYWORD_TOKEN(Template,            "template")
+CARBON_KEYWORD_TOKEN(Then,                "then")
+CARBON_KEYWORD_TOKEN(True,                "true")
+CARBON_KEYWORD_TOKEN(Type,                "type")
+// Underscore is tokenized as a keyword because it's part of identifiers.
+CARBON_KEYWORD_TOKEN(Underscore,          "_")
+CARBON_KEYWORD_TOKEN(Var,                 "var")
+CARBON_KEYWORD_TOKEN(Virtual,             "virtual")
+CARBON_KEYWORD_TOKEN(Where,               "where")
+CARBON_KEYWORD_TOKEN(While,               "while")
+// clang-format on
+#undef CARBON_KEYWORD_TOKEN
+
+CARBON_TOKEN(Identifier)
+CARBON_TOKEN(IntLiteral)
+CARBON_TOKEN(RealLiteral)
+CARBON_TOKEN(StringLiteral)
+CARBON_TOKEN(IntTypeLiteral)
+CARBON_TOKEN(UnsignedIntTypeLiteral)
+CARBON_TOKEN(FloatTypeLiteral)
+CARBON_TOKEN(FileStart)
+CARBON_TOKEN(FileEnd)
+
+#undef CARBON_TOKEN
+#undef CARBON_TOKEN_WITH_VIRTUAL_NODE

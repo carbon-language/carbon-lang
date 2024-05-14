@@ -2,14 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <cstdint>
 #include <cstring>
-#include <numeric>
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/base/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -40,7 +39,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   // exhaust all memory, so bound the search space to using 2^17 bytes of
   // memory for the argument text itself.
   size_t arg_length_sum = 0;
-  llvm::SmallVector<int, 16> arg_lengths(num_args);
+  llvm::SmallVector<int> arg_lengths(num_args);
   for (int& arg_length : arg_lengths) {
     if (!Read(data, size, arg_length) || arg_length < 0) {
       return 0;
@@ -57,7 +56,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   }
 
   // Lastly, read the contents of each argument out of the data.
-  llvm::SmallVector<llvm::StringRef, 16> args;
+  llvm::SmallVector<llvm::StringRef> args;
   args.reserve(num_args);
   for (int arg_length : arg_lengths) {
     args.push_back(
@@ -66,13 +65,12 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
     size -= arg_length;
   }
 
-  std::string error_text;
-  llvm::raw_string_ostream error_stream(error_text);
-  llvm::raw_null_ostream output_stream;
-  Driver d(output_stream, error_stream);
-  if (!d.RunFullCommand(args)) {
-    error_stream.flush();
-    if (error_text.find("ERROR:") == std::string::npos) {
+  llvm::vfs::InMemoryFileSystem fs;
+  TestRawOstream error_stream;
+  llvm::raw_null_ostream dest;
+  Driver d(fs, "", dest, error_stream);
+  if (!d.RunCommand(args).success) {
+    if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;
     }

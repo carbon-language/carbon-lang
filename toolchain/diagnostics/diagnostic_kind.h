@@ -5,32 +5,40 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_
 
-#include "common/ostream.h"
-#include "llvm/ADT/StringRef.h"
+#include <cstdint>
+
+#include "common/enum_base.h"
 
 namespace Carbon {
 
+// Although this currently fits into int8_t, it shouldn't be expected to
+// long-term.
+// NOLINTNEXTLINE(performance-enum-size)
+CARBON_DEFINE_RAW_ENUM_CLASS(DiagnosticKind, uint16_t) {
+#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#include "toolchain/diagnostics/diagnostic_kind.def"
+};
+
 // An enumeration of all diagnostics provided by the toolchain. Diagnostics must
-// be added to diagnostic_registry.def, and defined locally to where they're
+// be added to diagnostic_kind.def, and defined locally to where they're
 // used using the `DIAGNOSTIC` macro in diagnostic_emitter.h.
 //
 // Diagnostic definitions are decentralized because placing all diagnostic
 // definitions centrally is expected to create a compilation bottleneck
 // long-term, and we also see value to keeping diagnostic format strings close
 // to the consuming code.
-enum class DiagnosticKind : int32_t {
-#define CARBON_DIAGNOSTIC_KIND(DiagnosticName) DiagnosticName,
-#include "toolchain/diagnostics/diagnostic_registry.def"
+class DiagnosticKind : public CARBON_ENUM_BASE(DiagnosticKind) {
+ public:
+#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
+#include "toolchain/diagnostics/diagnostic_kind.def"
 };
 
-auto operator<<(llvm::raw_ostream& out, DiagnosticKind kind)
-    -> llvm::raw_ostream&;
+#define CARBON_DIAGNOSTIC_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DEFINITION(DiagnosticKind, Name)
+#include "toolchain/diagnostics/diagnostic_kind.def"
 
-inline auto operator<<(std::ostream& out, DiagnosticKind kind)
-    -> std::ostream& {
-  llvm::raw_os_ostream(out) << kind;
-  return out;
-}
+// We expect DiagnosticKind to fit into 2 bits.
+static_assert(sizeof(DiagnosticKind) == 2, "DiagnosticKind includes padding!");
 
 }  // namespace Carbon
 

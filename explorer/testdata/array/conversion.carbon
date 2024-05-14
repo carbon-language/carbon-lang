@@ -1,0 +1,34 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+package ExplorerTest api;
+
+class A {
+  var n: i32;
+  impl as ImplicitAs(i32) {
+    fn Convert[self: Self]() -> i32 { return self.n; }
+  }
+}
+impl i32 as ImplicitAs(A) {
+  fn Convert[self: Self]() -> A { return {.n = self}; }
+}
+
+fn Main() -> i32 {
+  var arr1: [i32; 2] = (1, 2 as A);
+  Print("1: {0}", arr1[0]);
+  Print("2: {0}", arr1[1]);
+
+  var arr2: [A; 2] = (3, 4 as A);
+  Print("3: {0}", arr2[0].n);
+  Print("4: {0}", arr2[1].n);
+  return 0;
+}
+
+// CHECK:STDOUT: 1: 1
+// CHECK:STDOUT: 2: 2
+// CHECK:STDOUT: 3: 3
+// CHECK:STDOUT: 4: 4
+// CHECK:STDOUT: result: 0

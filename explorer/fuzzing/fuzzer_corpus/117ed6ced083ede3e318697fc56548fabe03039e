@@ -1,0 +1,512 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "ManyTypes"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T0"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T1"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T2"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T3"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T4"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T5"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T6"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T7"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T8"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T9"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      deduced_parameters {
+        name: "M"
+        type {
+          where {
+            base {
+              identifier {
+                name: "ManyTypes"
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T0"
+                replacement {
+                  designator {
+                    name: "T1"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T1"
+                replacement {
+                  designator {
+                    name: "T2"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T2"
+                replacement {
+                  designator {
+                    name: "T3"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T3"
+                replacement {
+                  designator {
+                    name: "T4"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T4"
+                replacement {
+                  designator {
+                    name: "T5"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T5"
+                replacement {
+                  designator {
+                    name: "T6"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T6"
+                replacement {
+                  designator {
+                    name: "T7"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T7"
+                replacement {
+                  designator {
+                    name: "T8"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T8"
+                replacement {
+                  designator {
+                    name: "T9"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "T9"
+                replacement {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "m"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "M"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "v"
+                type {
+                  expression_pattern {
+                    expression {
+                      simple_member_access {
+                        field: "T0"
+                        object {
+                          identifier {
+                            name: "M"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "v"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "C"
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                identifier {
+                  name: "ManyTypes"
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T0"
+                  replacement {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T1"
+                  replacement {
+                    designator {
+                      name: "T0"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T2"
+                  replacement {
+                    designator {
+                      name: "T1"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T3"
+                  replacement {
+                    designator {
+                      name: "T2"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T4"
+                  replacement {
+                    designator {
+                      name: "T3"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T5"
+                  replacement {
+                    designator {
+                      name: "T4"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T6"
+                  replacement {
+                    designator {
+                      name: "T5"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T7"
+                  replacement {
+                    designator {
+                      name: "T6"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T8"
+                  replacement {
+                    designator {
+                      name: "T7"
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T9"
+                  replacement {
+                    designator {
+                      name: "T8"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "C"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

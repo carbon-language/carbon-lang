@@ -2,29 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: b.n: 1
-// CHECK: d.Get(0): 2
-// CHECK: e.Get(1): 3
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface Addable {
-  fn Add[me: Self](k: i32) -> Self;
+  fn Add[self: Self](k: i32) -> Self;
 }
 impl i32 as Addable {
-  fn Add[me: Self](k: i32) -> Self { return me + k; }
+  fn Add[self: Self](k: i32) -> Self { return self + k; }
 }
 
 class Class { var n: i32; }
 class GenericClass(T:! Addable) {
   var m: T;
-  fn Get[me: Self](n: i32) -> T { return me.m.Add(n); }
+  fn Get[self: Self](n: i32) -> T { return self.m.Add(n); }
 }
 
 alias ClassAlias = Class;
@@ -44,3 +36,8 @@ fn Main() -> i32 {
   Print("e.Get(1): {0}", e.Get(1));
   return 0;
 }
+
+// CHECK:STDOUT: b.n: 1
+// CHECK:STDOUT: d.Get(0): 2
+// CHECK:STDOUT: e.Get(1): 3
+// CHECK:STDOUT: result: 0

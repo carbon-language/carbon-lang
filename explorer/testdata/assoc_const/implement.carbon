@@ -2,12 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 2
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -18,10 +13,11 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
-  impl as Vector where .Dim == 2 {}
+  extend impl as Vector where .Dim = 2 {}
 }
 
 fn Main() -> i32 {
-  var a: Point = {.x = 2, .y = 1};
-  return a.(Vector.Dim);
+  return Point.(Vector.Dim);
 }
+
+// CHECK:STDOUT: result: 2

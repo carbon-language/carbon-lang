@@ -2,28 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 3
+// AUTOUPDATE
 
 package ExplorerTest api;
 
-class Cell(T:! Type) {
+class Cell(T:! type) {
   fn Create(x: T) -> Cell(T) { return { .data = x }; }
 
-  fn Get[me: Self]() -> T {
-    return me.data;
+  fn Get[self: Self]() -> T {
+    return self.data;
   }
-  fn Put[addr me: Self*](x: T) {
-    (*me).data = x;
+  fn Put[addr self: Self*](x: T) {
+    (*self).data = x;
   }
-  fn Update[addr me: Self*, U:! ImplicitAs(T)](x: U) {
-    (*me).data = x;
+  fn Update[addr self: Self*, U:! ImplicitAs(T)](x: U) {
+    (*self).data = x;
   }
-  fn CreateOther[me: Self, U:! Type](x: U) -> Cell(U) {
+  fn CreateOther[self: Self, U:! type](x: U) -> Cell(U) {
     return {.data = x};
   }
   var data: T;
@@ -43,3 +38,5 @@ fn Main() -> i32 {
   var d: Cell(Integer) = c.CreateOther(i); // d contains 2
   return c.data.int + d.data.int;
 }
+
+// CHECK:STDOUT: result: 3

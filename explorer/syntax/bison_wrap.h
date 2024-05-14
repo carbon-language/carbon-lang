@@ -27,6 +27,9 @@ class BisonWrap {
   // NOLINTNEXTLINE(google-explicit-constructor)
   operator T() { return Release(); }
 
+  // Access the contained object, which must already have been set.
+  auto Unwrap() & -> T& { return *val_; }
+
   // Deliberately releases the contained value. Errors if not initialized.
   // Called directly in parser.ypp when releasing pairs.
   auto Release() -> T {

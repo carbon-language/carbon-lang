@@ -2,18 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/diagnostics/diagnostic_kind.h"
+#include "toolchain/diagnostics/diagnostic_kind.h"  // IWYU pragma: keep
 
 namespace Carbon {
 
-auto operator<<(llvm::raw_ostream& out, DiagnosticKind kind)
-    -> llvm::raw_ostream& {
-  static constexpr llvm::StringLiteral Names[] = {
-#define CARBON_DIAGNOSTIC_KIND(DiagnosticName) #DiagnosticName,
-#include "toolchain/diagnostics/diagnostic_registry.def"
-  };
-  out << Names[static_cast<int>(kind)];
-  return out;
-}
+CARBON_DEFINE_ENUM_CLASS_NAMES(DiagnosticKind) = {
+#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+#include "toolchain/diagnostics/diagnostic_kind.def"
+};
 
 }  // namespace Carbon

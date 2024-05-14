@@ -44,11 +44,11 @@ are subject to full instantiation -- other parameters will be type checked and
 bound early to the extent possible. For example:
 
 ```
-class Stack(template T:! Type) {
+class Stack(template T:! type) {
   var storage: Array(T);
 
-  fn Push[addr me: Self*](value: T);
-  fn Pop[addr me: Self*]() -> T;
+  fn Push[addr self: Self*](value: T);
+  fn Pop[addr self: Self*]() -> T;
 }
 ```
 
@@ -67,7 +67,7 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```
-fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+fn Convert[template T:! type](source: T, template U:! type) -> U {
   var converted: U = source;
   return converted;
 }
@@ -101,11 +101,11 @@ specialization, but that is an area that we want to explore cautiously.
 
 Because we consider only specific _parameters_ to be templated and they could be
 individually migrated to a constrained interface using the
-[generics system](README.md#generics), constraining templates themselves may be
-less critical. Instead, we expect parameterized types and functions may use a
-mixture of generic parameters and templated parameters based on where they are
+[checked-generics system](README.md#generics), constraining templates themselves
+may be less critical. Instead, we expect parameterized types and functions may
+use a mixture of checked and template generic parameters based on where they are
 constrained.
 
 However, if there are still use cases, we would like to explore applying the
-interface constraints of the generics system directly to template parameters
-rather than create a new constraint system.
+interface constraints of the checked-generics system directly to template
+parameters rather than create a new constraint system.

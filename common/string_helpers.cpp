@@ -14,7 +14,7 @@
 
 namespace Carbon {
 
-static constexpr llvm::StringRef TripleQuotes = R"(""")";
+static constexpr llvm::StringRef TripleQuotes = "'''";
 static constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
 
 // Carbon only takes uppercase hex input.
@@ -197,7 +197,7 @@ auto ParseBlockStringLiteral(llvm::StringRef source, const int hashtag_num)
 }
 
 auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool {
-  auto le = std::less_equal<const char*>();
+  auto le = std::less_equal<>();
   return le(ref.begin(), ptr) && le(ptr, ref.end());
 }
 

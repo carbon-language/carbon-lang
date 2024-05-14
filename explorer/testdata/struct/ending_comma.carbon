@@ -2,12 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -16,3 +11,5 @@ fn Main() -> i32 {
   var t2: {.x: i32, .y: i32} = {.x = 2, .y = 3,};
   return t1.x - t2.x - t2.y;
 }
+
+// CHECK:STDOUT: result: 0

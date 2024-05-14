@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("install.bzl", "install_path_rule")
 
 # Turns `--//installers/local:install_path=arg` into `$(INSTALL_PATH)`.

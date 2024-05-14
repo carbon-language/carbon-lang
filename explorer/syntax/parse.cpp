@@ -6,21 +6,20 @@
 
 #include "common/check.h"
 #include "common/error.h"
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 #include "explorer/syntax/lexer.h"
 #include "explorer/syntax/parse_and_lex_context.h"
 #include "explorer/syntax/parser.h"
-#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
 static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
-                      std::string_view input_file_name, bool parser_debug)
-    -> ErrorOr<AST> {
+                      std::string_view input_file_name, FileKind file_kind,
+                      bool parser_debug) -> ErrorOr<AST> {
   // Prepare other parser arguments.
   std::optional<AST> ast = std::nullopt;
   ParseAndLexContext context(arena->New<std::string>(input_file_name),
-                             parser_debug);
+                             file_kind, parser_debug);
 
   // Do the parse.
   auto parser = Parser(arena, scanner, context, &ast);
@@ -42,44 +41,49 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
   return *ast;
 }
 
-auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
+auto Parse(llvm::vfs::FileSystem& fs, Nonnull<Arena*> arena,
+           std::string_view input_file_name, FileKind file_kind,
            bool parser_debug) -> ErrorOr<AST> {
-  std::string name_str(input_file_name);
-  FILE* input_file = fopen(name_str.c_str(), "r");
-  if (input_file == nullptr) {
-    return ProgramError(SourceLocation(name_str.c_str(), 0))
-           << "Error opening file: " << std::strerror(errno);
+  llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> input_file =
+      fs.openFileForRead(input_file_name);
+  if (input_file.getError()) {
+    return ProgramError(SourceLocation(input_file_name, 0, file_kind))
+           << "Error opening file: " << input_file.getError().message();
   }
 
-  // Prepare the lexer.
-  yyscan_t scanner;
-  yylex_init(&scanner);
-  auto buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
-  yy_switch_to_buffer(buffer, scanner);
+  llvm::ErrorOr<llvm::vfs::Status> status = (*input_file)->status();
+  if (status.getError()) {
+    return Error(status.getError().message());
+  }
+  auto size = status->getSize();
+  if (size >= std::numeric_limits<int32_t>::max()) {
+    return ProgramError(SourceLocation(input_file_name, 0, file_kind))
+           << "File is over the 2GiB input limit.";
+  }
 
-  ErrorOr<AST> result =
-      ParseImpl(scanner, arena, input_file_name, parser_debug);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
+      (*input_file)
+          ->getBuffer(input_file_name, size, /*RequiresNullTerminator=*/false);
+  if (buffer.getError()) {
+    return Error(buffer.getError().message());
+  }
 
-  // Clean up the lexer.
-  yy_delete_buffer(buffer, scanner);
-  yylex_destroy(scanner);
-  fclose(input_file);
-
-  return result;
+  return ParseFromString(arena, input_file_name, file_kind,
+                         (*buffer)->getBuffer(), parser_debug);
 }
 
 auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
-                     std::string_view file_contents, bool parser_debug)
-    -> ErrorOr<AST> {
+                     FileKind file_kind, std::string_view file_contents,
+                     bool parser_debug) -> ErrorOr<AST> {
   // Prepare the lexer.
   yyscan_t scanner;
   yylex_init(&scanner);
-  auto buffer =
+  auto* buffer =
       yy_scan_bytes(file_contents.data(), file_contents.size(), scanner);
   yy_switch_to_buffer(buffer, scanner);
 
   ErrorOr<AST> result =
-      ParseImpl(scanner, arena, input_file_name, parser_debug);
+      ParseImpl(scanner, arena, input_file_name, file_kind, parser_debug);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);

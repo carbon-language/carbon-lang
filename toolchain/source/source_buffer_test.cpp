@@ -6,70 +6,64 @@
 
 #include <gtest/gtest.h>
 
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/raw_ostream.h"
+#include "common/check.h"
+#include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
-TEST(SourceBufferTest, StringRep) {
-  auto buffer = SourceBuffer::CreateFromText(llvm::Twine("Hello") + " World");
-  EXPECT_EQ("/text", buffer->filename());
+static constexpr llvm::StringLiteral TestFileName = "test.carbon";
+
+TEST(SourceBufferTest, MissingFile) {
+  llvm::vfs::InMemoryFileSystem fs;
+  auto buffer =
+      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  EXPECT_FALSE(buffer);
+}
+
+TEST(SourceBufferTest, SimpleFile) {
+  llvm::vfs::InMemoryFileSystem fs;
+  CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
+                          llvm::MemoryBuffer::getMemBuffer("Hello World")));
+
+  auto buffer =
+      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  ASSERT_TRUE(buffer);
+
+  EXPECT_EQ(TestFileName, buffer->filename());
   EXPECT_EQ("Hello World", buffer->text());
 }
 
-TEST(SourceBufferText, StringRepWithFilename) {
-  // Give a custom filename.
+TEST(SourceBufferTest, NoNull) {
+  llvm::vfs::InMemoryFileSystem fs;
+  static constexpr char NoNull[3] = {'a', 'b', 'c'};
+  CARBON_CHECK(fs.addFile(
+      TestFileName, /*ModificationTime=*/0,
+      llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(NoNull, sizeof(NoNull)),
+                                       /*BufferName=*/"",
+                                       /*RequiresNullTerminator=*/false)));
+
   auto buffer =
-      SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
-  EXPECT_EQ("/custom/text", buffer->filename());
-  EXPECT_EQ("Hello World Again!", buffer->text());
+      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  ASSERT_TRUE(buffer);
+
+  EXPECT_EQ(TestFileName, buffer->filename());
+  EXPECT_EQ("abc", buffer->text());
 }
 
-auto CreateTestFile(llvm::StringRef text) -> std::string {
-  int fd = -1;
-  llvm::SmallString<1024> path;
-  auto error_code =
-      llvm::sys::fs::createTemporaryFile("test_file", ".txt", fd, path);
-  if (error_code) {
-    llvm::report_fatal_error(llvm::Twine("Failed to create temporary file: ") +
-                             error_code.message());
-  }
+TEST(SourceBufferTest, EmptyFile) {
+  llvm::vfs::InMemoryFileSystem fs;
+  CARBON_CHECK(fs.addFile(TestFileName, /*ModificationTime=*/0,
+                          llvm::MemoryBuffer::getMemBuffer("")));
 
-  llvm::raw_fd_ostream out_stream(fd, /*shouldClose=*/true);
-  out_stream << text;
-  out_stream.close();
+  auto buffer =
+      SourceBuffer::MakeFromFile(fs, TestFileName, ConsoleDiagnosticConsumer());
+  ASSERT_TRUE(buffer);
 
-  return path.str().str();
-}
-
-TEST(SourceBufferTest, FileRep) {
-  auto test_file_path = CreateTestFile("Hello World");
-
-  auto expected_buffer = SourceBuffer::CreateFromFile(test_file_path);
-  ASSERT_TRUE(static_cast<bool>(expected_buffer))
-      << "Error message: " << toString(expected_buffer.takeError());
-
-  SourceBuffer& buffer = *expected_buffer;
-
-  EXPECT_EQ(test_file_path, buffer.filename());
-  EXPECT_EQ("Hello World", buffer.text());
-}
-
-TEST(SourceBufferTest, FileRepEmpty) {
-  auto test_file_path = CreateTestFile("");
-
-  auto expected_buffer = SourceBuffer::CreateFromFile(test_file_path);
-  ASSERT_TRUE(static_cast<bool>(expected_buffer))
-      << "Error message: " << toString(expected_buffer.takeError());
-
-  SourceBuffer& buffer = *expected_buffer;
-
-  EXPECT_EQ(test_file_path, buffer.filename());
-  EXPECT_EQ("", buffer.text());
+  EXPECT_EQ(TestFileName, buffer->filename());
+  EXPECT_EQ("", buffer->text());
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

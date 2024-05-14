@@ -10,9 +10,9 @@
 #include <string>
 #include <variant>
 
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 static constexpr std::string_view FileContents = R"(
@@ -24,10 +24,11 @@ fn Foo() {}
 TEST(ParseTest, ParseFromString) {
   Arena arena;
   ErrorOr<AST> parse_result =
-      ParseFromString(&arena, "file.carbon", FileContents, /*trace=*/false);
+      ParseFromString(&arena, "file.carbon", FileKind::Main, FileContents,
+                      /*parser_debug=*/false);
   ASSERT_TRUE(parse_result.ok());
   EXPECT_EQ(parse_result->declarations.size(), 1);
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

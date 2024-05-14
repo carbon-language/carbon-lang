@@ -10,9 +10,10 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
 
 namespace Carbon {
 
@@ -24,8 +25,14 @@ class Value;
 // - An _auto_ term consists of `-> auto`.
 // - An _omitted_ term consists of no tokens at all.
 // Each of these forms has a corresponding factory function.
-class ReturnTerm {
+class ReturnTerm : public Printable<ReturnTerm> {
  public:
+  explicit ReturnTerm(CloneContext& context, const ReturnTerm& other)
+      : kind_(other.kind_),
+        type_expression_(context.Clone(other.type_expression_)),
+        static_type_(context.Clone(other.static_type_)),
+        source_loc_(other.source_loc_) {}
+
   ReturnTerm(const ReturnTerm&) = default;
   auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
 
@@ -73,7 +80,6 @@ class ReturnTerm {
   auto source_loc() const -> SourceLocation { return source_loc_; }
 
   void Print(llvm::raw_ostream& out) const;
-  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:
   enum class ReturnKind { Omitted, Auto, Expression };

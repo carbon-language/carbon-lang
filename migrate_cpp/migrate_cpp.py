@@ -50,7 +50,7 @@ class _Workflow:
             self._print_header("Done!")
         except subprocess.CalledProcessError as e:
             # Discard the stack for subprocess errors.
-            sys.exit(e)
+            sys.exit(str(e))
 
     def _data_file(self, relative_path: str) -> str:
         """Returns the path to a data file."""

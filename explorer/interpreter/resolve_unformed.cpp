@@ -10,11 +10,29 @@
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/print_as_id.h"
+#include "explorer/interpreter/stack_space.h"
 
 using llvm::cast;
 
 namespace Carbon {
+
+auto FlowFacts::action_type_string(ActionType action) const
+    -> std::string_view {
+  switch (action) {
+    case ActionType::AddInit:
+      return "add init";
+    case ActionType::AddUninit:
+      return "add uninit";
+    case ActionType::Form:
+      return "form";
+    case ActionType::Check:
+      return "check";
+    case ActionType::None:
+      return "none";
+  }
+}
 
 auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
                            SourceLocation source_loc, const std::string& name)
@@ -43,7 +61,7 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
       auto entry = facts_.find(node);
       if (entry != facts_.end() &&
           entry->second.formed_state == FormedState::Unformed) {
-        return CompilationError(source_loc)
+        return ProgramError(source_loc)
                << "use of uninitialized variable " << name;
       }
       break;
@@ -51,48 +69,76 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
     case ActionType::None:
       break;
   }
+
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Result() << action_type_string(action) << " `" << name
+                            << "` (" << source_loc << ")\n";
+  }
+
   return Success();
 }
 
-// Traverses the sub-AST rooted at the given node, resolving the formed/unformed
-// states of local variables within it and updating the flow facts.
-static auto ResolveUnformed(Nonnull<const Expression*> expression,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Expression*> expression,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Pattern*> pattern,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Statement*> statement,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
-    -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Statement*> statement,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
 
-static auto ResolveUnformed(Nonnull<const Expression*> expression,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+// Traverses the sub-AST rooted at the given node, resolving the formed/unformed
+// states of local variables within it and updating the flow facts.
+template <typename T>
+static auto ResolveUnformed(Nonnull<TraceStream*> trace_stream,
+                            Nonnull<const T*> expression, FlowFacts& flow_facts,
+                            FlowFacts::ActionType action) -> ErrorOr<Success> {
+  return RunWithExtraStack([&] {
+    return ResolveUnformedImpl(trace_stream, expression, flow_facts, action);
+  });
+}
+
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Expression*> expression,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
-      auto& identifier = cast<IdentifierExpression>(*expression);
+      const auto& identifier = cast<IdentifierExpression>(*expression);
       CARBON_RETURN_IF_ERROR(
           flow_facts.TakeAction(&identifier.value_node().base(), action,
                                 identifier.source_loc(), identifier.name()));
       break;
     }
     case ExpressionKind::CallExpression: {
-      auto& call = cast<CallExpression>(*expression);
+      const auto& call = cast<CallExpression>(*expression);
       CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&call.argument(), flow_facts, action));
+          ResolveUnformed(trace_stream, &call.argument(), flow_facts, action));
+      break;
+    }
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& intrin = cast<IntrinsicExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(trace_stream, &intrin.args(), flow_facts, action));
       break;
     }
     case ExpressionKind::TupleLiteral:
       for (Nonnull<const Expression*> field :
            cast<TupleLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts, action));
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(trace_stream, field, flow_facts, action));
       }
       break;
     case ExpressionKind::OperatorExpression: {
-      auto& opt_exp = cast<OperatorExpression>(*expression);
+      const auto& opt_exp = cast<OperatorExpression>(*expression);
       if (opt_exp.op() == Operator::AddressOf) {
         CARBON_CHECK(opt_exp.arguments().size() == 1)
             << "OperatorExpression with op & can only have 1 argument";
@@ -100,11 +146,15 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
             // When a variable is taken address of, defer the unformed check to
             // runtime. A more sound analysis can be implemented when a
             // points-to analysis is available.
-            ResolveUnformed(opt_exp.arguments().front(), flow_facts,
-                            FlowFacts::ActionType::Form));
+            // TODO: This isn't enough to permit &x.y or &x[i] when x is
+            // uninitialized, because x.y and x[i] both require x to be
+            // initialized.
+            ResolveUnformed(trace_stream, opt_exp.arguments().front(),
+                            flow_facts, FlowFacts::ActionType::Form));
       } else {
         for (Nonnull<const Expression*> operand : opt_exp.arguments()) {
-          CARBON_RETURN_IF_ERROR(ResolveUnformed(operand, flow_facts, action));
+          CARBON_RETURN_IF_ERROR(
+              ResolveUnformed(trace_stream, operand, flow_facts, action));
         }
       }
       break;
@@ -112,15 +162,43 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StructLiteral:
       for (const FieldInitializer& init :
            cast<StructLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&init.expression(), flow_facts,
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &init.expression(),
+                                               flow_facts,
                                                FlowFacts::ActionType::Check));
       }
       break;
     case ExpressionKind::SimpleMemberAccessExpression:
+    case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
       CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
-          FlowFacts::ActionType::Check));
+          trace_stream, &cast<MemberAccessExpression>(*expression).object(),
+          flow_facts, FlowFacts::ActionType::Check));
       break;
+    case ExpressionKind::BuiltinConvertExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream,
+          cast<BuiltinConvertExpression>(*expression).source_expression(),
+          flow_facts, FlowFacts::ActionType::Check));
+      break;
+    case ExpressionKind::IndexExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &cast<IndexExpression>(*expression).object(),
+          flow_facts, FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &cast<IndexExpression>(*expression).offset(),
+          flow_facts, FlowFacts::ActionType::Check));
+      break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_exp = cast<IfExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &if_exp.condition(),
+                                             flow_facts,
+                                             FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &if_exp.then_expression(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &if_exp.else_expression(), flow_facts, action));
+      break;
+    }
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
@@ -129,29 +207,26 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
-    case ExpressionKind::IndexExpression:
-    case ExpressionKind::CompoundMemberAccessExpression:
-    case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::StructTypeLiteral:
-    case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       break;
   }
+
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Pattern*> pattern,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   switch (pattern->kind()) {
     case PatternKind::BindingPattern: {
-      auto& binding_pattern = cast<BindingPattern>(*pattern);
+      const auto& binding_pattern = cast<BindingPattern>(*pattern);
       CARBON_RETURN_IF_ERROR(flow_facts.TakeAction(&binding_pattern, action,
                                                    binding_pattern.source_loc(),
                                                    binding_pattern.name()));
@@ -159,7 +234,8 @@ static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
     case PatternKind::TuplePattern:
       for (Nonnull<const Pattern*> field :
            cast<TuplePattern>(*pattern).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts, action));
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(trace_stream, field, flow_facts, action));
       }
       break;
     case PatternKind::GenericBinding:
@@ -174,145 +250,220 @@ static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<const Statement*> statement,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
+                                Nonnull<const Statement*> statement,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
+  if (trace_stream->is_enabled()) {
+    trace_stream->Start() << "resolving-unformed in stmt `"
+                          << PrintAsID(*statement) << "` ("
+                          << statement->source_loc() << ")\n";
+  }
   switch (statement->kind()) {
     case StatementKind::Block: {
-      auto& block = cast<Block>(*statement);
-      for (auto* block_statement : block.statements()) {
+      const auto& block = cast<Block>(*statement);
+      for (const auto* block_statement : block.statements()) {
         CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(block_statement, flow_facts, action));
+            ResolveUnformed(trace_stream, block_statement, flow_facts, action));
       }
       break;
     }
     case StatementKind::VariableDefinition: {
-      auto& def = cast<VariableDefinition>(*statement);
+      const auto& def = cast<VariableDefinition>(*statement);
       if (def.has_init()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.pattern(), flow_facts,
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &def.pattern(),
+                                               flow_facts,
                                                FlowFacts::ActionType::AddInit));
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&def.init(), flow_facts,
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &def.init(),
+                                               flow_facts,
                                                FlowFacts::ActionType::Check));
       } else {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(
-            &def.pattern(), flow_facts, FlowFacts::ActionType::AddUninit));
+        CARBON_RETURN_IF_ERROR(
+            ResolveUnformed(trace_stream, &def.pattern(), flow_facts,
+                            FlowFacts::ActionType::AddUninit));
       }
       break;
     }
     case StatementKind::ReturnVar: {
-      auto& ret_var = cast<ReturnVar>(*statement);
-      auto& binding_pattern = cast<BindingPattern>(ret_var.value_node().base());
+      const auto& ret_var = cast<ReturnVar>(*statement);
+      const auto& binding_pattern =
+          cast<BindingPattern>(ret_var.value_node().base());
       CARBON_RETURN_IF_ERROR(
           flow_facts.TakeAction(&binding_pattern, FlowFacts::ActionType::Check,
                                 ret_var.source_loc(), binding_pattern.name()));
       break;
     }
     case StatementKind::ReturnExpression: {
-      auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&ret_exp_stmt.expression(),
+      const auto& ret_exp_stmt = cast<ReturnExpression>(*statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(trace_stream, &ret_exp_stmt.expression(), flow_facts,
+                          FlowFacts::ActionType::Check));
+      break;
+    }
+    case StatementKind::Assign: {
+      const auto& assign = cast<Assign>(*statement);
+      if (assign.op() != AssignOperator::Plain) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &assign.lhs(),
+                                               flow_facts,
+                                               FlowFacts::ActionType::Check));
+      } else if (assign.lhs().kind() == ExpressionKind::IdentifierExpression) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &assign.lhs(),
+                                               flow_facts,
+                                               FlowFacts::ActionType::Form));
+      } else {
+        // TODO: Support checking non-identifier lhs expression.
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &assign.lhs(),
+                                               flow_facts,
+                                               FlowFacts::ActionType::None));
+      }
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &assign.rhs(),
                                              flow_facts,
                                              FlowFacts::ActionType::Check));
       break;
     }
-    case StatementKind::Assign: {
-      auto& assign = cast<Assign>(*statement);
-      if (assign.lhs().kind() == ExpressionKind::IdentifierExpression) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
-                                               FlowFacts::ActionType::Form));
-      } else {
-        // TODO: Support checking non-identifier lhs expression.
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
-                                               FlowFacts::ActionType::None));
-      }
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.rhs(), flow_facts,
-                                             FlowFacts::ActionType::Check));
+    case StatementKind::IncrementDecrement: {
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &cast<IncrementDecrement>(statement)->argument(),
+          flow_facts, FlowFacts::ActionType::Check));
       break;
     }
     case StatementKind::ExpressionStatement: {
-      auto& exp_stmt = cast<ExpressionStatement>(*statement);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&exp_stmt.expression(), flow_facts, action));
+      const auto& exp_stmt = cast<ExpressionStatement>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &exp_stmt.expression(), flow_facts, action));
       break;
     }
     case StatementKind::If: {
-      auto& if_stmt = cast<If>(*statement);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_stmt.condition(), flow_facts,
+      const auto& if_stmt = cast<If>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &if_stmt.condition(),
+                                             flow_facts,
                                              FlowFacts::ActionType::Check));
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&if_stmt.then_block(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          trace_stream, &if_stmt.then_block(), flow_facts, action));
       if (if_stmt.else_block().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(*if_stmt.else_block(), flow_facts, action));
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(
+            trace_stream, *if_stmt.else_block(), flow_facts, action));
       }
       break;
     }
     case StatementKind::While: {
-      auto& while_stmt = cast<While>(*statement);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &while_stmt.condition(), flow_facts, FlowFacts::ActionType::Check));
+      const auto& while_stmt = cast<While>(*statement);
       CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&while_stmt.body(), flow_facts, action));
+          ResolveUnformed(trace_stream, &while_stmt.condition(), flow_facts,
+                          FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &while_stmt.body(),
+                                             flow_facts, action));
       break;
     }
     case StatementKind::Match: {
-      auto& match = cast<Match>(*statement);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&match.expression(), flow_facts,
+      const auto& match = cast<Match>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &match.expression(),
+                                             flow_facts,
                                              FlowFacts::ActionType::Check));
-      for (auto& clause : match.clauses()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&clause.pattern(), flow_facts,
+      for (const auto& clause : match.clauses()) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, &clause.pattern(),
+                                               flow_facts,
                                                FlowFacts::ActionType::Check));
-        CARBON_RETURN_IF_ERROR(
-            ResolveUnformed(&clause.statement(), flow_facts, action));
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(
+            trace_stream, &clause.statement(), flow_facts, action));
       }
+      break;
+    }
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(*statement);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(trace_stream, &for_stmt.loop_target(), flow_facts,
+                          FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(trace_stream, &for_stmt.body(), flow_facts, action));
       break;
     }
     case StatementKind::Break:
     case StatementKind::Continue:
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
-    case StatementKind::For:
       // do nothing
       break;
   }
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
+static auto ResolveUnformed(Nonnull<TraceStream*> trace_stream,
+                            Nonnull<const Declaration*> declaration)
+    -> ErrorOr<Success>;
+
+static auto ResolveUnformed(
+    Nonnull<TraceStream*> trace_stream,
+    llvm::ArrayRef<Nonnull<const Declaration*>> declarations)
     -> ErrorOr<Success> {
+  return RunWithExtraStack([trace_stream, declarations]() -> ErrorOr<Success> {
+    for (Nonnull<const Declaration*> declaration : declarations) {
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, declaration));
+    }
+    return Success();
+  });
+}
+
+static auto ResolveUnformed(Nonnull<TraceStream*> trace_stream,
+                            Nonnull<const Declaration*> declaration)
+    -> ErrorOr<Success> {
+  SetFileContext set_file_ctx(*trace_stream, declaration->source_loc());
+
+  if (trace_stream->is_enabled()) {
+    trace_stream->Start() << "resolving-unformed in decl `"
+                          << PrintAsID(*declaration) << "` ("
+                          << declaration->source_loc() << ")\n";
+  }
   switch (declaration->kind()) {
     // Checks formed/unformed state intraprocedurally.
     // Can be extended to an interprocedural analysis when a call graph is
     // available.
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::DestructorDeclaration: {
-      auto& callable = cast<CallableDeclaration>(*declaration);
-      if (callable.body().has_value()) {
-        FlowFacts flow_facts;
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(*callable.body(), flow_facts,
+      const auto& callable = cast<CallableDeclaration>(*declaration);
+      const auto callable_body = callable.body();
+      if (callable_body) {
+        FlowFacts flow_facts(trace_stream);
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, *callable_body,
+                                               flow_facts,
                                                FlowFacts::ActionType::None));
       }
       break;
     }
-    case DeclarationKind::ClassDeclaration:
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::MixDeclaration:
-    case DeclarationKind::MixinDeclaration:
-    case DeclarationKind::InterfaceDeclaration:
-    case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration:
       // do nothing
       break;
+    case DeclarationKind::ClassDeclaration:
+      return ResolveUnformed(trace_stream,
+                             cast<ClassDeclaration>(declaration)->members());
+    case DeclarationKind::MixinDeclaration:
+      return ResolveUnformed(trace_stream,
+                             cast<MixinDeclaration>(declaration)->members());
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
+      return ResolveUnformed(
+          trace_stream,
+          cast<ConstraintTypeDeclaration>(declaration)->members());
+    case DeclarationKind::ImplDeclaration:
+      return ResolveUnformed(trace_stream,
+                             cast<ImplDeclaration>(declaration)->members());
   }
   return Success();
 }
 
-auto ResolveUnformed(const AST& ast) -> ErrorOr<Success> {
-  for (auto declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(ResolveUnformed(declaration));
+auto ResolveUnformed(Nonnull<TraceStream*> trace_stream, const AST& ast)
+    -> ErrorOr<Success> {
+  for (auto* declaration : ast.declarations) {
+    CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, declaration));
   }
   return Success();
 }

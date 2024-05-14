@@ -1,0 +1,30 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+"""Bazel modules.
+
+This is set up as a separate bazel repo from the main Carbon directory in order
+to split up the pip dependency, which makes MODULE.bazel.lock
+platform-dependent. We don't commit the MODULE.bazel.lock for github_tools
+because it's low-value, and would shift the platform dependence costs.
+"""
+
+module(name = "github_tools")
+
+bazel_dep(name = "rules_python", version = "0.27.1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.11",
+)
+use_repo(python, "python_versions")
+
+# Create a central repo that knows about the pip dependencies.
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "py_deps",
+    python_version = "3.11",
+    requirements_lock = "//:requirements.txt",
+)
+use_repo(pip, "py_deps")

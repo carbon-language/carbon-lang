@@ -2,24 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 3
+// AUTOUPDATE
 
 package Foo api;
 
 class X {
-  fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
+  fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   var n: i32;
 }
 
 class Y {
   var m: i32;
-  impl as ImplicitAs(X) {
-    fn Convert[me: Self]() -> X { return {.n = me.m}; }
+  extend impl as ImplicitAs(X) {
+    fn Convert[self: Self]() -> X { return {.n = self.m}; }
   }
 }
 
@@ -28,3 +23,5 @@ fn Main() -> i32 {
   var y2: Y = {.m = 2};
   return y1.(X.F)(y2).n;
 }
+
+// CHECK:STDOUT: result: 3

@@ -1,0 +1,469 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    mixin {
+      name {
+        name: "Operations"
+      }
+      members {
+        function {
+          name {
+            name: "Square"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Mul
+                    arguments {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "Point"
+      }
+      members {
+        function {
+          name {
+            name: "Origin"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Point"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "x"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                    fields {
+                      name: "y"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "y"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        mix {
+          mixin {
+            identifier {
+              name: "Operations"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "Complex"
+      }
+      members {
+        function {
+          name {
+            name: "Zero"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Complex"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "r"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                    fields {
+                      name: "i"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "r"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "i"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        mix {
+          mixin {
+            identifier {
+              name: "Operations"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "p"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Origin"
+                    object {
+                      identifier {
+                        name: "Point"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Complex"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Zero"
+                    object {
+                      identifier {
+                        name: "Complex"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              simple_member_access {
+                field: "x"
+                object {
+                  identifier {
+                    name: "p"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 3
+              }
+            }
+            op: Plain
+          }
+        }
+        statements {
+          assign {
+            lhs {
+              simple_member_access {
+                field: "r"
+                object {
+                  identifier {
+                    name: "c"
+                  }
+                }
+              }
+            }
+            rhs {
+              int_literal {
+                value: 4
+              }
+            }
+            op: Plain
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  operator {
+                    op: Sub
+                    arguments {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Square"
+                            object {
+                              identifier {
+                                name: "p"
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              simple_member_access {
+                                field: "x"
+                                object {
+                                  identifier {
+                                    name: "p"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Square"
+                            object {
+                              identifier {
+                                name: "c"
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              simple_member_access {
+                                field: "r"
+                                object {
+                                  identifier {
+                                    name: "c"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 7
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

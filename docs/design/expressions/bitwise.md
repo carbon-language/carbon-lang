@@ -197,63 +197,63 @@ implementing the following family of interfaces:
 ```
 // Unary `^`.
 interface BitComplement {
-  let Result:! Type = Self;
-  fn Op[me: Self]() -> Result;
+  default let Result:! type = Self;
+  fn Op[self: Self]() -> Result;
 }
 ```
 
 ```
 // Binary `&`.
-interface BitAndWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface BitAndWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint BitAnd {
-  extends BitAndWith(Self) where .Result = Self;
+  extend BitAndWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `|`.
-interface BitOrWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface BitOrWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint BitOr {
-  extends BitOrWith(Self) where .Result = Self;
+  extend BitOrWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `^`.
-interface BitXorWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface BitXorWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint BitXor {
-  extends BitXorWith(Self) where .Result = Self;
+  extend BitXorWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `<<`.
-interface LeftShiftWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface LeftShiftWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint LeftShift {
-  extends LeftShiftWith(Self) where .Result = Self;
+  extend LeftShiftWith(Self) where .Result = Self;
 }
 ```
 
 ```
 // Binary `>>`.
-interface RightShiftWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface RightShiftWith(U:! type) {
+  default let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint RightShift {
-  extends RightShiftWith(Self) where .Result = Self;
+  extend RightShiftWith(Self) where .Result = Self;
 }
 ```
 

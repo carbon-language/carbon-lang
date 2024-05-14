@@ -1,0 +1,303 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "X"
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Y"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "M"
+              type {
+                call {
+                  function {
+                    identifier {
+                      name: "X"
+                    }
+                  }
+                  argument {
+                    tuple_literal {
+                      fields {
+                        identifier {
+                          name: "T"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Z"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "N"
+              type {
+                where {
+                  base {
+                    call {
+                      function {
+                        identifier {
+                          name: "Y"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            designator {
+                              name: "Self"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  clauses {
+                    impls {
+                      type {
+                        int_type_literal {
+                        }
+                      }
+                      constraint {
+                        call {
+                          function {
+                            identifier {
+                              name: "X"
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                designator {
+                                  name: "Self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  clauses {
+                    rewrite {
+                      member_name: "M"
+                      replacement {
+                        int_type_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        call {
+          function {
+            identifier {
+              name: "X"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            call {
+              function {
+                identifier {
+                  name: "Y"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "M"
+              replacement {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "Z"
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "N"
+              replacement {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      deduced_parameters {
+        name: "A"
+        type {
+          identifier {
+            name: "Z"
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "a"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "A"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "A"
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "a"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

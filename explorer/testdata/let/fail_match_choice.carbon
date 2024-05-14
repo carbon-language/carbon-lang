@@ -2,11 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -17,17 +13,17 @@ choice Ints {
 }
 
 fn Main() -> i32 {
-  var x: auto = Ints.None();
+  var x: auto = Ints.None;
   var n: auto = 0;
   match (x) {
     case Ints.One(var x: auto) => {
       x = 2;
     }
-    case Ints.None() => {
+    case Ints.None => {
       n = n - 1;
     }
     case Ints.Two(x: auto, y: auto) => {
-      // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+      // CHECK:STDERR: COMPILATION ERROR: fail_match_choice.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `x`
       x = 0;
     }
   }

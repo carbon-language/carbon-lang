@@ -1,0 +1,36 @@
+From 20d0f1fb854d9b7ce135d08575112fc58c4c7ce7 Mon Sep 17 00:00:00 2001
+From: jonmeow <jperkins@google.com>
+Date: Thu, 14 Sep 2023 20:31:11 +0000
+Subject: [PATCH] Add libfuzzer target to compiler-rt.
+
+---
+ .../compiler-rt/BUILD.bazel                     | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index 9bdd454e1e36..0f30c21f63dc 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -50,3 +50,20 @@ cc_library(
+         ":config",
+     ],
+ )
++
++cc_library(
++    name = "FuzzerMain",
++    srcs = glob(
++        ["lib/fuzzer/Fuzzer*.cpp"],
++    ),
++    hdrs = glob([
++        "lib/fuzzer/Fuzzer*.h",
++        "lib/fuzzer/Fuzzer*.def",
++    ]),
++    copts = [
++      # Not using no-sanitize=address per https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow#false-positives
++      "-fno-sanitize=memory,thread,undefined",
++      "-fsanitize-coverage=0",
++    ],
++    includes = ["lib/fuzzer"],
++)
+--
+2.42.0

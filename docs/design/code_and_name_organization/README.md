@@ -12,23 +12,28 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
+    -   [Small programs](#small-programs)
+    -   [Packages](#packages)
     -   [Sizing packages and libraries](#sizing-packages-and-libraries)
-    -   [Imports](#imports)
 -   [Details](#details)
     -   [Source file introduction](#source-file-introduction)
     -   [Name paths](#name-paths)
+    -   [Packages](#packages-1)
         -   [`package` directives](#package-directives)
-    -   [Packages](#packages)
+        -   [`library` directives](#library-directives)
+        -   [`Main//default`](#maindefault)
+        -   [Files and libraries](#files-and-libraries)
         -   [Shorthand notation for libraries in packages](#shorthand-notation-for-libraries-in-packages)
         -   [Package name conflicts](#package-name-conflicts)
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
         -   [Exporting namespaces](#exporting-namespaces)
-    -   [Imports](#imports-1)
+    -   [Imports](#imports)
         -   [Imports from the current package](#imports-from-the-current-package)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
+        -   [Declaring namespace members](#declaring-namespace-members)
         -   [Aliasing](#aliasing)
 -   [Caveats](#caveats)
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
@@ -84,7 +89,79 @@ Important Carbon goals for code and name organization are:
 Carbon [source files](source_files.md) have a `.carbon` extension, such as
 `geometry.carbon`. These files are the basic unit of compilation.
 
-Each file begins with a declaration of which
+### Small programs
+
+For programs that fit into a single source file, no syntax is required to
+introduce the file. A very simple Carbon program can consist of a single file
+containing only a `Run` function:
+
+```
+fn Run() -> i32 {
+  return 6 * 9;
+}
+```
+
+However, as the program grows larger, it is desirable to split it across
+multiple source files. To support this,
+_libraries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>
+can be written containing pieces of the program:
+
+```
+library "Colors" api;
+
+choice Color { Red, Green, Blue }
+
+fn ColorName(c: Color) -> String;
+```
+
+```
+library "Colors" impl;
+
+fn ColorName(c: Color) -> String {
+  match (c) {
+    case .Red => { return "Red"; }
+    case .Green => { return "Green"; }
+    case .Blue => { return "Blue"; }
+  }
+}
+```
+
+```
+// Make the "Colors" library visible here.
+import library "Colors";
+
+fn Run() {
+  Print(ColorName(Color.Red));
+}
+```
+
+A library is the basic unit of _dependency_. Separating code into multiple
+libraries can speed up the overall build while also making it clear which code
+is being reused.
+
+A library has a single `api` file which defines its interface, plus zero or more
+`impl` files that can provide any implementation details that were omitted from
+the `api` file. These files are distinguished by the `library` declaration
+ending with `api;` or `impl;`. By convention, implementation files also use a
+file extension of `.impl.carbon`.
+
+Separating a library into interface and implementation may help organize code as
+a library grows, or to let the build system distinguish between the dependencies
+of the API itself and its underlying implementation. Implementation files allow
+for code to be extracted out from the API file, while only being callable from
+other files within the library, including both API and implementation files.
+
+A source file that does not specify a library is implicitly within the default
+library. This is the library in which a Carbon `Run` function should reside.
+
+### Packages
+
+A program usually doesn't consist of only a single collection of source files
+developed by a team of people working together. In order to make it easy for
+different components of a program to be independently authored, Carbon supports
+_packages_ of code.
+
+Each source file in a package begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
 it belongs in. The package is the unit of _distribution_. The package name is a
 single identifier, such as `Geometry`. An example API file in the `Geometry`
@@ -94,34 +171,62 @@ package would start with:
 package Geometry api;
 ```
 
-A tiny package may consist of a single library with a single file, and not use
-any further features of the `package` keyword.
-
-It is often useful to use separate files for the API and its implementation.
-This may help organize code as a library grows, or to let the build system
-distinguish between the dependencies of the API itself and its underlying
-implementation. Implementation files allow for code to be extracted out from the
-API file, while only being callable from other files within the library,
-including both API and implementation files. Implementation files are marked by
-both naming the file to use an extension of `.impl.carbon` and instead start
-with:
+A tiny package may consist of a single library with a single `api` file. As with
+libraries, additional implementation files can be added to the package by using
+the `impl` keyword in the package declaration:
 
 ```
 package Geometry impl;
 ```
 
 However, as a package adds more files, it will probably want to separate out
-into multiple
-_libraries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
-A library is the basic unit of _dependency_. Separating code into multiple
-libraries can speed up the overall build while also making it clear which code
-is being reused. For example, an API file adding the library `Shapes` to the
+into multiple libraries. These work exactly like the libraries described above.
+In fact, if no package is specified for a source file, it is implicitly part of
+the `Main` package. For example, an API file adding the library `Shapes` to the
 `Geometry` package, or `Geometry//Shapes` in
 [shorthand](#shorthand-notation-for-libraries-in-packages), would start with:
 
 ```
 package Geometry library "Shapes" api;
 ```
+
+This library can be imported within the same package by using:
+
+```
+import library "Shapes";
+```
+
+This will result in the public names declared in the `"Shapes"` library becoming
+visible in the importer, for example `Circle` might refer to a public type
+`Circle` declared in library `"Shapes"`.
+
+From a different package, this library can be imported by using:
+
+```
+import Geometry library "Shapes";
+```
+
+Unlike in a same-package import, this import only introduces the name
+`Geometry`, as a private name for the importer to use to refer to the `Geometry`
+package. Names declared within this package can be found as members of the name
+`Geometry`, for example `Geometry.Circle`. The `library` portion is optional in
+this syntax, and if omitted, the default (unnamed) library is imported.
+
+```
+// Imports the source file beginning `package Geometry api;`
+import Geometry;
+```
+
+The default library of a named package can be imported within that same package
+by using:
+
+```
+import library default;
+```
+
+The `Main` package can only be imported from other parts of the `Main` package,
+never other packages. Importing `Main//default` is invalid, regardless of which
+package is used.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
@@ -139,8 +244,8 @@ namespace TwoDimensional;
 struct TwoDimensional.Circle { ... };
 ```
 
-This scaling of packages into libraries and namespaces is how Carbon supports
-both small and large codebases.
+This scaling of programs into packages, libraries, and namespaces is how Carbon
+supports both small and large codebases.
 
 ### Sizing packages and libraries
 
@@ -171,28 +276,13 @@ other libraries within the package. However, doing so would also provide the
 transitive closure of build-time dependencies, and is likely to be discouraged
 in many cases.
 
-### Imports
-
-The `import` keyword supports reusing code from other files and libraries.
-
-For example, to use `Geometry.Circle` from the `Geometry//Shapes` library:
-
-```carbon
-import Geometry library "Shapes";
-
-fn Area(circle: Geometry.Circle) { ... };
-```
-
-The `library` keyword is optional for `import`, and its use should parallel that
-of `library` on the `package` of the code being imported.
-
 ## Details
 
 ### Source file introduction
 
 Every source file will consist of, in order:
 
-1. One `package` directive.
+1. Either a `package` directive, a `library` directive, or no introduction.
 2. A section of zero or more `import` directives.
 3. Source file body, with other code.
 
@@ -212,9 +302,9 @@ IDENTIFIER(\.IDENTIFIER)*
 
 Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
-#### `package` directives
-
 ### Packages
+
+#### `package` directives
 
 The `package` directive's syntax may be loosely expressed as a regular
 expression:
@@ -239,27 +329,52 @@ Breaking this apart:
         words, if the file declares `struct Line`, that may be used from within
         the file as both `Line` directly and `Geometry.TwoDimensional.Line`
         using the `Geometry` package entity created by the `package` keyword.
+    -   `Main` is invalid for use as the package name. `Main` libraries must be
+        defined by either the [`library` directive](#library-directives) or the
+        [`Main//default`](#maindefault) rule.
 -   When the optional `library` keyword is specified, sets the name of the
     library within the package. In this example, the
     `Geometry//Objects/FourSides` library will be used.
+    -   If the `library` portion is omitted, the file is implicitly part of the
+        default library, which does not have a string name.
 -   The use of the `api` keyword indicates this is an API files as described
     under [libraries](#libraries). If it instead had `impl`, this would be an
     implementation file.
 
-Because every file must have exactly one `package` directive, there are a couple
-important and deliberate side-effects:
+#### `library` directives
 
--   Every file will be in precisely one library.
-    -   A library still exists even when there is no explicit library argument,
-        such as `package Geometry api;`. This could be considered equivalent to
-        `package Geometry library "" api;`, although we should not allow that
-        specific syntax as error-prone.
--   Every entity in Carbon will be in a namespace, even if its namespace path
-    consists of only the package name. There is no "global" namespace.
-    -   Every entity in a file will be defined within the namespace described in
-        the `package` directive.
-    -   Entities within a file may be defined in
-        [child namespaces](#namespaces).
+The syntax for `library` directives is the same, without the `package` portion:
+
+```regex
+library STRING (api|impl);
+```
+
+For example:
+
+```carbon
+library "PrimeGenerator" impl;
+```
+
+If the `library` directive is used, the file is implicitly part of the `Main`
+package, whose name cannot be written explicitly.
+
+#### `Main//default`
+
+If neither a `package` directive nor a `library` directive is provided, the file
+is an `api` file for `Main//default`. An `impl` cannot be provided for
+`Main//default`.
+
+#### Files and libraries
+
+Every file is in exactly one library, which is always part of a package.
+
+Because every file is within a package, and packages act as top-level
+namespaces, every entity in Carbon will be in a namespace, even if its namespace
+path consists of only the package name. There is no "global" namespace.
+
+-   Every entity in a file will be defined within the namespace described in the
+    `package` directive.
+-   Entities within a file may be defined in [child namespaces](#namespaces).
 
 Files contributing to the `Geometry//Objects/FourSides` library must all start
 with `package Geometry library "Objects/FourSides"`, but will differ on
@@ -272,6 +387,11 @@ text. `PACKAGE//default` will refer to the name of the library used when no
 `library` argument is specified, although `PACKAGE` may also be used in
 situations where it is unambiguous that it still refers to the default library.
 
+The package name `Main` is always used implicitly and cannot appear as a package
+name within source code, but still appears in shorthand notation. For example,
+`Main//default` is the library that is expected to contain a Carbon `Run`
+function.
+
 It's recommended that libraries use a single `/` for separators where desired,
 in order to distinguish between the `//` of the package and `/` separating
 library segments. For example, `Geometry//Objects/FourSides` uses a single `/`
@@ -279,21 +399,16 @@ to separate the `Object/FourSides` library name.
 
 #### Package name conflicts
 
-Because the package also declares a namespace entity with the same name,
-conflicts with the package name are possible. We do not support packages
-providing entities with the same name as the package.
+Because an import of a package declares a namespace entity with the same name,
+conflicts with the package name are possible.
 
 For example, this is a conflict for `DateTime`:
 
 ```carbon
-package DateTime api;
+import DateTime;
 
-struct DateTime { ... };
+struct DateTime { ... }
 ```
-
-This declaration is important for [implementation files](#libraries), which
-implicitly import the library's API, because it keeps the package name as an
-explicit entity in source files.
 
 Note that [imported name conflicts](#package-and-library-name-conflicts) are
 handled differently.
@@ -394,17 +509,16 @@ libraries.
 
 #### Exporting namespaces
 
-Any entity may be marked with `api` except for namespace and package entities.
-That is, `api namespace Sha256;` is invalid code. Instead, namespaces are
-implicitly exported based on the name paths of other entities marked as `api`.
-
-For example, given this code:
+A namespace declared in an `api` file is only exported if it contains at least
+one `public` non-namespace name. For example, given this code:
 
 ```carbon
 package Checksums library "Sha" api;
 
-namespaces Sha256;
+namespace Sha256;
+namespace ImplementationDetails;
 
+private fn ImplementationDetails.ShaHelper(data: Bytes) -> Bytes;
 fn Sha256.HexDigest(data: Bytes) -> String { ... }
 ```
 
@@ -423,7 +537,8 @@ fn Process(data: Bytes) {
 ```
 
 In this example, the `Sha256` namespace is exported as part of the API
-implicitly.
+implicitly, but the name `Checksums.ImplementationDetails` is not available in
+the caller.
 
 ### Imports
 
@@ -432,13 +547,19 @@ implicitly.
 
 ```regex
 import IDENTIFIER (library NAME_PATH)?;
+import library NAME_PATH;
+import library default;
 ```
 
-An import declares a package entity named after the imported package, and makes
-API entities from the imported library available through it. The full name path
-is a concatenation of the names of the package entity, any namespace entities
-applied, and the final entity addressed. Child namespaces or entities may be
-[aliased](/docs/design/aliases.md) if desired.
+An import with a package name `IDENTIFIER` declares a package entity named after
+the imported package, and makes API entities from the imported library available
+through it. `Main` cannot be imported from other packages; in other words, only
+`import library NAME_PATH` syntax can be used to import from `Main`. Imports of
+`Main//default` are invalid.
+
+The full name path is a concatenation of the names of the package entity, any
+namespace entities applied, and the final entity addressed. Child namespaces or
+entities may be [aliased](/docs/design/aliases.md) if desired.
 
 For example, given a library:
 
@@ -475,9 +596,13 @@ automatically import the `api`, so a self-import should never be required.
 
 #### Imports from the current package
 
-Entities defined in the current file may be used without mentioning the package
-prefix. However, other symbols from the package must be imported and accessed
-through the package namespace just like symbols from any other package.
+An import without a package name imports the public names from the given library
+of the same package.
+
+Entities defined in the API of the current library and in imported libraries in
+the current package may be used without mentioning the package prefix. However,
+symbols from other packages must be imported and accessed through the package
+namespace.
 
 For example:
 
@@ -485,18 +610,20 @@ For example:
 package Geometry api;
 
 // This is required even though it's still in the Geometry package.
-import Geometry library "Shapes";
+import library "Shapes";
 
-// Circle must be referenced using the Geometry namespace of the import.
-fn GetArea(c: Geometry.Circle) { ... }
+// Circle is visible here. The name Geometry is not declared, so
+// Geometry.Circle is invalid.
+fn GetArea(c: Circle) { ... }
 ```
 
 ### Namespaces
 
-Namespaces offer named paths for entities. Namespaces may be nested. Multiple
-libraries may contribute to the same namespace. In practice, packages may have
-namespaces such as `Testing` containing entities that benefit from an isolated
-space but are present in many libraries.
+Namespaces offer named paths for entities. Namespaces must be declared at file
+scope, and may be nested. Multiple libraries may contribute to the same
+namespace. In practice, packages may have namespaces such as `Testing`
+containing entities that benefit from an isolated space but are present in many
+libraries.
 
 The `namespace` keyword's syntax may loosely be expressed as a regular
 expression:
@@ -524,7 +651,7 @@ the file's namespace. In the above example, after declaring
 
 #### Re-declaring imported namespaces
 
-Namespaces may exist on imported package entities, in addition to being declared
+Namespaces may exist in imported package entities, in addition to being declared
 in the current file. However, even if the namespace already exists in an
 imported library from the current package, the namespace must still be declared
 locally in order to add symbols to it.
@@ -535,7 +662,7 @@ For example, if the `Geometry//Shapes/ThreeSides` library provides the
 ```carbon
 package Geometry library "Shapes/FourSides" api;
 
-import Geometry library "Shapes/ThreeSides";
+import library "Shapes/ThreeSides";
 
 // This does not conflict with the existence of `Geometry.Shapes` from
 // `Geometry//Shapes/ThreeSides`, even though the name path is identical.
@@ -545,6 +672,54 @@ namespace Shapes;
 // `Geometry.Shapes` from `Geometry//Shapes/ThreeSides`.
 struct Shapes.Square { ... };
 ```
+
+#### Declaring namespace members
+
+Namespace members may only be declared in the same name scope which was used to
+declare the namespace. For example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+class NS.ClassT {
+  // ❌ Error: A class body has its own name scope.
+  var NS.a: i32 = 0;
+}
+
+fn Function() {
+  // ❌ Error: A function body has its own name scope.
+  var NS.b: i32 = 1;
+}
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS`.
+namespace NS.MemberNS;
+
+// ✅ Allowed: declaration is in file scope, which also declared `NS.MemberNS`.
+class NS.MemberNS.MemberClassT {}
+```
+
+When multiple names are declared by binding patterns in the same pattern, all
+names must be in the same namespace. Because namespace members can only be
+declared in the same scope as the namespace, a namespace-qualified pattern
+binding can only be used in the pattern of a `var` or `let` declaration. For
+example:
+
+```carbon
+namespace NS;
+
+// ✅ Allowed: `a` and `b` use the default namespace.
+var (a: i32, b: i32) = (1, 2);
+
+// ✅ Allowed: `c` and `d` are in the same namespace.
+var (NS.c: i32, NS.d: i32) = (3, 4);
+
+// ❌ Error: `e` and `f` are not in the same namespace.
+var (e: i32, NS.f: i32) = (5, 6);
+```
+
+This restriction only applies when declaring names in binding patterns, not
+other name uses in patterns.
 
 #### Aliasing
 
@@ -563,7 +738,7 @@ fn ParseData(data: TI.RawData);
 
 ### Package and library name conflicts
 
-Library name conflicts should not occur, because it's expected that a given
+Library name conflicts should be avoidable, because it's expected that a given
 package is maintained by a single organization. It's the responsibility of that
 organization to maintain unique library names within their package.
 
@@ -808,6 +983,13 @@ should be part of a larger testing plan.
     -   [Remove the `library` keyword from `package` and `import`](/proposals/p0107.md#remove-the-library-keyword-from-package-and-import)
     -   [Rename package concept](/proposals/p0107.md#rename-package-concept)
     -   [No association between the file system path and library/namespace](/proposals/p0107.md#no-association-between-the-file-system-path-and-librarynamespace)
+    -   [Require the use of the identifier `Main` in package declarations](/proposals/p2550.md#require-the-use-of-the-identifier-main-in-package-declarations)
+    -   [Permit the use of the identifier `Main` in package declarations](/proposals/p2550.md#permit-the-use-of-the-identifier-main-in-package-declarations)
+    -   [Make the main package be unnamed](/proposals/p2550.md#make-the-main-package-be-unnamed)
+    -   [Use a different name for the main package](/proposals/p2550.md#use-a-different-name-for-the-main-package)
+    -   [Use a different name for the entry point](/proposals/p2550.md#use-a-different-name-for-the-entry-point)
+    -   [Distinguish file scope from package scope](/proposals/p2550.md#distinguish-file-scope-from-package-scope)
+    -   [Default to `Main//default impl` instead of `Main//default api`](/proposals/p3403.md#default-to-maindefault-impl-instead-of-maindefault-api)
 -   Libraries
     -   [Allow exporting namespaces](/proposals/p0107.md#allow-exporting-namespaces)
     -   [Allow importing implementation files from within the same library](/proposals/p0107.md#allow-importing-implementation-files-from-within-the-same-library)
@@ -833,12 +1015,22 @@ should be part of a larger testing plan.
     -   [Block imports of libraries of a single package](/proposals/p0107.md#block-imports-of-libraries-of-a-single-package)
     -   [Broader imports, either all names or arbitrary code](/proposals/p0107.md#broader-imports-either-all-names-or-arbitrary-code)
     -   [Direct name imports](/proposals/p0107.md#direct-name-imports)
-    -   [Optional package names](/proposals/p0107.md#optional-package-names)
+    -   [Always include the package name in imports](/proposals/p2550.md#keep-the-package-name-in-imports)
 -   Namespaces
     -   [File-level namespaces](/proposals/p0107.md#file-level-namespaces)
     -   [Scoped namespaces](/proposals/p0107.md#scoped-namespaces)
+    -   [Allow prefixing a tuple binding pattern with a namespace](/proposals/p3407.md#allow-prefixing-a-tuple-binding-pattern-with-a-namespace)
+    -   [Allow binding patterns to declare names in multiple namespaces](/proposals/p3407.md#allow-binding-patterns-to-declare-names-in-multiple-namespaces)
+    -   [Allow declaring names in namespaces not owned by the current scope](/proposals/p3407.md#allow-declaring-names-in-namespaces-not-owned-by-the-current-scope)
+    -   [Allow declaring namespaces in scopes other than the file scope](/proposals/p3407.md#allow-declaring-namespaces-in-scopes-other-than-the-file-scope)
 
 ## References
 
 -   Proposal
     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+-   Proposal
+    [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
+-   Proposal
+    [#3403: Change Main//default to an api file](https://github.com/carbon-language/carbon-lang/pull/3403)
+-   Proposal
+    [#3453: Clarify name bindings in namespaces.](https://github.com/carbon-language/carbon-lang/pull/3407)

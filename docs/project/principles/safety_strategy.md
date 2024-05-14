@@ -392,7 +392,7 @@ Strong testing is more than good test coverage. It means a combination of:
 These practices are necessary for reliable, large-scale software engineering.
 Maintaining correctness of business logic over time requires continuous and
 thorough testing. Without it, such software systems cannot be changed and
-evolved over time reliably. Carbon will re-use these practices in conjunction
+evolved over time reliably. Carbon will reuse these practices in conjunction
 with checking build modes to mitigate the limitations of Carbon's safety
 guarantees without imposing overhead on production systems.
 
@@ -694,8 +694,8 @@ Advantages:
 -   Probabilistic safety should come at lower performance cost (including CPU,
     memory, and disk space).
     -   This will sometimes be significant, and as a result of multiple checks,
-        could be the difference between the hardened build mode being 50% slower
-        than the performance build mode and being 200% slower.
+        could result in the hardened build mode being 50% slower than the
+        performance build mode instead of being 200% slower.
 
 Disadvantages:
 
@@ -767,5 +767,5 @@ addition. If build modes are added for non-safety-related reasons, this may lead
 to moving build modes out of the safety strategy.
 
 **Experiment**: This can be considered an experiment. Carbon may eventually add
-more than the initial three build modes, although the reticence to add more is
+more than the initial three build modes, although the reluctance to add more is
 likely to remain.

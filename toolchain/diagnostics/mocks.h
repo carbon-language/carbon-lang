@@ -13,33 +13,52 @@ namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  MOCK_METHOD(void, HandleDiagnostic, (const Diagnostic& diagnostic),
-              (override));
+  MOCK_METHOD(void, HandleDiagnostic, (Diagnostic diagnostic), (override));
 };
 
-MATCHER_P(IsDiagnosticMessage, matcher, "") {
-  const Diagnostic& diag = arg;
-  return testing::ExplainMatchResult(matcher, diag.format_fn(diag),
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
+MATCHER_P(IsDiagnosticMessageString, matcher, "") {
+  const DiagnosticMessage& message = arg;
+  return testing::ExplainMatchResult(matcher, message.format_fn(message),
                                      result_listener);
 }
 
-inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
-                         testing::Matcher<DiagnosticLevel> level,
-                         testing::Matcher<int> line_number,
-                         testing::Matcher<int> column_number,
-                         testing::Matcher<std::string> message) {
+inline auto IsDiagnosticMessage(testing::Matcher<DiagnosticKind> kind,
+                                testing::Matcher<DiagnosticLevel> level,
+                                testing::Matcher<int> line_number,
+                                testing::Matcher<int> column_number,
+                                testing::Matcher<std::string> message)
+    -> testing::Matcher<DiagnosticMessage> {
+  using testing::AllOf;
+  using testing::Field;
+  return AllOf(Field("kind", &DiagnosticMessage::kind, kind),
+               Field("level", &DiagnosticMessage::level, level),
+               Field(&DiagnosticMessage::loc,
+                     AllOf(Field("line_number", &DiagnosticLoc::line_number,
+                                 line_number),
+                           Field("column_number", &DiagnosticLoc::column_number,
+                                 column_number))),
+               IsDiagnosticMessageString(message));
+}
+
+inline auto IsDiagnostic(
+    testing::Matcher<DiagnosticLevel> level,
+    testing::Matcher<llvm::SmallVector<DiagnosticMessage>> elements)
+    -> testing::Matcher<Diagnostic> {
   return testing::AllOf(
-      testing::Field("kind", &Diagnostic::kind, kind),
       testing::Field("level", &Diagnostic::level, level),
-      testing::Field(
-          &Diagnostic::location,
-          testing::AllOf(
-              testing::Field("line_number", &DiagnosticLocation::line_number,
-                             line_number),
-              testing::Field("column_number",
-                             &DiagnosticLocation::column_number,
-                             column_number))),
-      IsDiagnosticMessage(message));
+      testing::Field("messages", &Diagnostic::messages, elements));
+}
+
+inline auto IsSingleDiagnostic(testing::Matcher<DiagnosticKind> kind,
+                               testing::Matcher<DiagnosticLevel> level,
+                               testing::Matcher<int> line_number,
+                               testing::Matcher<int> column_number,
+                               testing::Matcher<std::string> message)
+    -> testing::Matcher<Diagnostic> {
+  return IsDiagnostic(
+      level, testing::ElementsAre(IsDiagnosticMessage(kind, level, line_number,
+                                                      column_number, message)));
 }
 
 }  // namespace Carbon::Testing

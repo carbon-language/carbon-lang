@@ -2,20 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 4213
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface IntLike {
-  fn Convert[me: Self]() -> i32;
+  fn Convert[self: Self]() -> i32;
 }
 impl i32 as IntLike {
-  fn Convert[me: i32]() -> i32 { return me; }
+  fn Convert[self: i32]() -> i32 { return self; }
 }
 
 fn add[T:! IntLike](x: {.a: T, .b: ({.m: i32, .n: T}, i32)}) -> i32 {
@@ -25,3 +20,5 @@ fn add[T:! IntLike](x: {.a: T, .b: ({.m: i32, .n: T}, i32)}) -> i32 {
 fn Main() -> i32 {
   return add({.b = ({.n = 1, .m = 2}, 3), .a = 4});
 }
+
+// CHECK:STDOUT: result: 4213

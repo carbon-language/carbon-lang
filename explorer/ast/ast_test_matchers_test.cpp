@@ -11,9 +11,9 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 using ::testing::_;
@@ -21,9 +21,9 @@ using ::testing::ElementsAre;
 using ::testing::IsEmpty;
 using ::testing::Not;
 
-static constexpr SourceLocation DummyLoc("dummy", 0);
+static constexpr SourceLocation DummyLoc("dummy", 0, FileKind::Main);
 
-TEST(BlockContentsAreTest, BasicUsage) {
+TEST(ASTTestMatchers, BlockContentsAreTest) {
   Block empty_block(DummyLoc, {});
   EXPECT_THAT(empty_block, BlockContentsAre(IsEmpty()));
   EXPECT_THAT(&empty_block, BlockContentsAre(IsEmpty()));
@@ -35,7 +35,7 @@ TEST(BlockContentsAreTest, BasicUsage) {
   EXPECT_THAT(break_block, Not(BlockContentsAre(IsEmpty())));
 }
 
-TEST(MatchesLiteralTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesLiteralTest) {
   IntLiteral literal(DummyLoc, 42);
   EXPECT_THAT(literal, MatchesLiteral(42));
   EXPECT_THAT(&literal, MatchesLiteral(42));
@@ -43,7 +43,7 @@ TEST(MatchesLiteralTest, BasicUsage) {
   EXPECT_THAT(StringLiteral(DummyLoc, "foo"), Not(MatchesLiteral(42)));
 }
 
-TEST(MatchesMulTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesMulTest) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
   OperatorExpression mul(DummyLoc, Operator::Mul, {&two, &three});
@@ -61,7 +61,7 @@ TEST(MatchesMulTest, BasicUsage) {
                          MatchesMul(MatchesLiteral(2), MatchesLiteral(3))));
 }
 
-TEST(MatchesBinaryOpTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesBinaryOpTest) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
 
@@ -80,7 +80,7 @@ TEST(MatchesBinaryOpTest, BasicUsage) {
               MatchesSub(MatchesLiteral(2), MatchesLiteral(3)));
 }
 
-TEST(MatchesReturnTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesReturnTest) {
   TupleLiteral unit(DummyLoc);
   ReturnExpression empty_return(DummyLoc, &unit,
                                 /*is_omitted_expression=*/true);
@@ -98,11 +98,12 @@ TEST(MatchesReturnTest, BasicUsage) {
   EXPECT_THAT(int_val, Not(MatchesReturn(_)));
 }
 
-TEST(MatchesFunctionDeclarationTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesFunctionDeclarationTest) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+  FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
+                           std::nullopt, &params, ReturnTerm::Omitted(DummyLoc),
+                           &body, VirtualOverride::None);
 
   EXPECT_THAT(decl, MatchesFunctionDeclaration());
   EXPECT_THAT(&decl, MatchesFunctionDeclaration());
@@ -114,15 +115,16 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   EXPECT_THAT(decl,
               Not(MatchesFunctionDeclaration().WithBody(MatchesLiteral(0))));
 
-  FunctionDeclaration forward_decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                                   ReturnTerm::Omitted(DummyLoc), std::nullopt);
+  FunctionDeclaration forward_decl(
+      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &params,
+      ReturnTerm::Omitted(DummyLoc), std::nullopt, VirtualOverride::None);
   EXPECT_THAT(forward_decl, MatchesFunctionDeclaration().WithName("Foo"));
   EXPECT_THAT(forward_decl, Not(MatchesFunctionDeclaration().WithBody(_)));
 
   EXPECT_THAT(body, Not(MatchesFunctionDeclaration()));
 }
 
-TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
+TEST(ASTTestMatchers, MatchesUnimplementedExpressionTest) {
   IntLiteral two(DummyLoc, 2);
   IntLiteral three(DummyLoc, 3);
   UnimplementedExpression unimplemented(DummyLoc, "DummyLabel", &two, &three);
@@ -144,11 +146,12 @@ TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
               Not(MatchesUnimplementedExpression("DummyLabel", IsEmpty())));
 }
 
-TEST(ASTDeclarationsTest, BasicUsage) {
+TEST(ASTTestMatchers, ASTDeclarationsTest) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+  FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
+                           std::nullopt, &params, ReturnTerm::Omitted(DummyLoc),
+                           &body, VirtualOverride::None);
   AST ast = {.declarations = {&decl}};
 
   EXPECT_THAT(ast, ASTDeclarations(ElementsAre(MatchesFunctionDeclaration())));
@@ -156,4 +159,4 @@ TEST(ASTDeclarationsTest, BasicUsage) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

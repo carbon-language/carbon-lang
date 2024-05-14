@@ -1,0 +1,38 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+var a: i32 = (1);
+var b: i32 = ((2));
+
+// CHECK:STDOUT: --- parens.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.1: i32 = int_literal 1 [template]
+// CHECK:STDOUT:   %.2: i32 = int_literal 2 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .a = %a
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %a.var: ref i32 = var a
+// CHECK:STDOUT:   %a: ref i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %b.var: ref i32 = var b
+// CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1 [template = constants.%.1]
+// CHECK:STDOUT:   assign file.%a.var, %.loc7
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   assign file.%b.var, %.loc8
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

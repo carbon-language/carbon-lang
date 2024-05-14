@@ -58,9 +58,9 @@ def check_path(path: Path) -> bool:
 
     guard_path = str(path).upper().replace("/", "_").replace(".", "_")
     guard = f"CARBON_{guard_path}_"
-    ifndef = find_guard(lines, "#ifndef ([A-Z_]+_H_)", False)
-    define = find_guard(lines, "#define ([A-Z_]+_H_)", False)
-    endif = find_guard(lines, "#endif(?:  // ([A-Z_]+_H_))?", True)
+    ifndef = find_guard(lines, "#ifndef ([A-Z0-9_]+_H_)", False)
+    define = find_guard(lines, "#define ([A-Z0-9_]+_H_)", False)
+    endif = find_guard(lines, "#endif(?:  // ([A-Z0-9_]+_H_))?", True)
     if ifndef is None or define is None or endif is None:
         print(f"Incomplete header guard in {path}:", file=sys.stderr)
         if ifndef is None:

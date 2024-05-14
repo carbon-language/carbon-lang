@@ -151,14 +151,14 @@ the `a` and `b` parameters of `Add`.
 Other designs build upon basic function syntax to add advanced features:
 
 -   [Generic functions](generics/overview.md#generic-functions) adds support for
-    deduced parameters and generic type parameters.
+    deduced parameters and compile-time parameters.
 -   [Class member functions](classes.md#member-functions) adds support for
     methods and class functions.
 
 ## Alternatives considered
 
 -   [Function keyword](/proposals/p0438.md#function-keyword)
--   [Only allow `auto` return types if parameters are generic](/proposals/p0826.md#only-allow-auto-return-types-if-parameters-are-generic)
+-   [Only allow `auto` return types if parameters are compile-time](/proposals/p0826.md#only-allow-auto-return-types-if-parameters-are-generic)
 -   [Provide alternate function syntax for concise return type inference](/proposals/p0826.md#provide-alternate-function-syntax-for-concise-return-type-inference)
 -   [Allow separate declaration and definition](/proposals/p0826.md#allow-separate-declaration-and-definition)
 

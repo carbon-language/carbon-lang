@@ -20,7 +20,7 @@ def _run(repository_ctx, cmd):
 def _clang_version(version_output):
     """Returns version information, or a (None, "unknown") tuple if not found.
 
-    Returns both the major version number (14) and the full version number for
+    Returns both the major version number (16) and the full version number for
     caching.
     """
     clang_version = None
@@ -39,7 +39,7 @@ def _clang_version(version_output):
         return (clang_version, clang_version_for_cache)
     clang_version_for_cache = version_output[version_start:version_newline]
 
-    # Find a dot to indicate something like 'clang version 14.0.6', and grab the
+    # Find a dot to indicate something like 'clang version 16.0.1', and grab the
     # major version.
     version_dot = version_output.find(".", version_start)
     if version_dot != -1 and version_dot < version_newline:
@@ -69,7 +69,7 @@ def _detect_system_clang(repository_ctx):
     if "clang" not in version_output:
         fail("Searching for clang or CC (%s), and found (%s), which is not a Clang compiler" % (cc, cc_path))
     clang_version, clang_version_for_cache = _clang_version(version_output)
-    return (cc_path, clang_version, clang_version_for_cache)
+    return (cc_path.realpath, clang_version, clang_version_for_cache)
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -88,6 +88,17 @@ def _compute_mac_os_sysroot(repository_ctx):
         fail("`xcrun` not found: is Xcode installed?")
     output = _run(repository_ctx, [xcrun, "--show-sdk-path"]).stdout
     return output.splitlines()[0]
+
+def _compute_bsd_sysroot(repository_ctx):
+    """Look around for sysroot. Return root (/) if nothing found."""
+
+    # Try it-just-works for CMake users.
+    default = "/"
+    sysroot = repository_ctx.os.environ.get("CMAKE_SYSROOT", default)
+    sysroot_path = repository_ctx.path(sysroot)
+    if sysroot_path.exists:
+        return sysroot_path.realpath
+    return default
 
 def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
@@ -165,16 +176,18 @@ def _configure_clang_toolchain_impl(repository_ctx):
     (clang, clang_version, clang_version_for_cache) = _detect_system_clang(
         repository_ctx,
     )
-    clang = clang.realpath.dirname.get_child("clang++")
+    clang_cpp = clang.dirname.get_child("clang++")
 
     # Compute the various directories used by Clang.
-    resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
+    resource_dir = _compute_clang_resource_dir(repository_ctx, clang_cpp)
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
         sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
+    if repository_ctx.os.name == "freebsd":
+        sysroot_dir = _compute_bsd_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
-        clang,
+        clang_cpp,
         sysroot_dir,
     )
 
@@ -182,10 +195,10 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # First look for llvm-ar adjacent to clang, so that if found,
     # it is most likely to match the same version as clang.
     # Otherwise, try PATH.
-    arpath = clang.dirname.get_child("llvm-ar")
-    if not arpath.exists:
-        arpath = repository_ctx.which("llvm-ar")
-        if not arpath:
+    ar_path = clang.dirname.get_child("llvm-ar")
+    if not ar_path.exists:
+        ar_path = repository_ctx.which("llvm-ar")
+        if not ar_path:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
 
     # By default Windows uses '\' in its paths. These will be
@@ -199,14 +212,15 @@ def _configure_clang_toolchain_impl(repository_ctx):
         "clang_detected_variables.bzl",
         repository_ctx.attr._clang_detected_variables_template,
         substitutions = {
-            "{LLVM_BINDIR}": str(arpath.dirname),
             "{CLANG_BINDIR}": str(clang.dirname),
-            "{CLANG_VERSION}": str(clang_version),
-            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
-            "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str(
                 [str(path) for path in include_dirs],
             ),
+            "{CLANG_RESOURCE_DIR}": resource_dir,
+            "{CLANG_VERSION_FOR_CACHE}": clang_version_for_cache.replace('"', "_").replace("\\", "_"),
+            "{CLANG_VERSION}": str(clang_version),
+            "{LLVM_BINDIR}": str(ar_path.dirname),
+            "{LLVM_SYMBOLIZER}": str(ar_path.dirname.get_child("llvm-symbolizer")),
             "{SYSROOT}": str(sysroot_dir),
         },
         executable = False,
@@ -217,10 +231,6 @@ configure_clang_toolchain = repository_rule(
     configure = True,
     local = True,
     attrs = {
-        "_clang_toolchain_build": attr.label(
-            default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
-            allow_single_file = True,
-        ),
         "_clang_cc_toolchain_config": attr.label(
             default = Label(
                 "//bazel/cc_toolchains:clang_cc_toolchain_config.bzl",
@@ -233,6 +243,14 @@ configure_clang_toolchain = repository_rule(
             ),
             allow_single_file = True,
         ),
+        "_clang_toolchain_build": attr.label(
+            default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
+            allow_single_file = True,
+        ),
     },
     environ = ["CC"],
+)
+
+clang_toolchain_extension = module_extension(
+    implementation = lambda ctx: configure_clang_toolchain(name = "bazel_cc_toolchain"),
 )

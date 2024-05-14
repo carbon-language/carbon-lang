@@ -1,0 +1,139 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    mixin {
+      name {
+        name: "M"
+      }
+      members {
+        function {
+          name {
+            name: "F"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "x"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  identifier {
+                    name: "x"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      self {
+        name: "Self"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "C"
+      }
+      members {
+        variable {
+          binding {
+            name: "F"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+          initializer {
+            int_literal {
+              value: 0
+            }
+          }
+        }
+      }
+      members {
+        mix {
+          mixin {
+            identifier {
+              name: "M"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

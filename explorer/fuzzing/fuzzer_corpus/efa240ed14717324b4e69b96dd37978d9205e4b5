@@ -1,0 +1,248 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "Base"
+      }
+      members {
+        function {
+          name {
+            name: "F"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Omitted
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Extension"
+      }
+      members {
+        interface_extend {
+          base {
+            identifier {
+              name: "Base"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      deduced_parameters {
+        name: "T"
+        type {
+          where {
+            base {
+              type_type_literal {
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  identifier {
+                    name: "Extension"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Omitted
+      }
+      body {
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "x"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "F"
+                        object {
+                          identifier {
+                            name: "Extension"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "Extension"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "F"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Print"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          string_literal {
+                            value: "i32.F"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 0
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

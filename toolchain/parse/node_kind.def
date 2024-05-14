@@ -1,0 +1,846 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macros are:
+// - CARBON_PARSE_NODE_KIND(Name)
+//   Used as a fallback if other macros are missing.
+//   - CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName, LexTokenKind)
+//     Defines a bracketed node kind. BracketName should refer to the node
+//     kind that is the _start_ of the bracketed range.
+//   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount, LexTokenKind)
+//     Defines a parse node with a set number of children, often 0. This count
+//     must be correct even when the node contains errors.
+//     - CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name)
+//       Defines a parse node for a prefix operator, with the Name as token.
+//     - CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name)
+//       Defines a parse node for an infix operator, with the Name as token.
+//     - CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name)
+//       Defines a parse node for a postfix operator, with the Name as token.
+//     - CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKind)
+//       Defines a parse node that corresponds to a token that is a single-token
+//       literal. The token is wrapped for LexTokenKinds.
+//     - CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name)
+//       A token-based modifier. The Name is the TokenKind, and will be appended
+//       with "Modifier" for the parse kind.
+//
+// LexTokenKind indicates the token kind required on a valid node.
+// It will be either `kind_name` to indicate it's required even if the node is
+// an error, or `CARBON_IF_VALID(kind_name)` to indicate that the kind is
+// not enforced on error. A token kind of `Error` may be used if the kind should
+// never be enforced; this should only be used when the node is either not in
+// trees (`Placeholder`) or is always invalid (such as `InvalidParse`).
+//
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
+//
+// Parse nodes are clustered based on language feature. Comments will show their
+// relationship in postorder, using indentation for child node relationships.
+
+#if !(defined(CARBON_PARSE_NODE_KIND) ||          \
+      (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
+       defined(CARBON_PARSE_NODE_KIND_CHILD_COUNT)))
+#error "Must define CARBON_PARSE_NODE_KIND family x-macros to use this file."
+#endif
+
+// The BRACKET and CHILD_COUNT macros will use CARBON_PARSE_NODE_KIND by default
+// when undefined.
+#ifndef CARBON_PARSE_NODE_KIND_BRACKET
+#define CARBON_PARSE_NODE_KIND_BRACKET(Name, ...) CARBON_PARSE_NODE_KIND(Name)
+#endif
+#ifndef CARBON_PARSE_NODE_KIND_CHILD_COUNT
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) \
+  CARBON_PARSE_NODE_KIND(Name)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
+#define CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator##Name, 1, Name)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator##Name, 2, Name)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
+#define CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator##Name, 1, Name)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle literal cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
+#define CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(Name, LexTokenKinds) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0, LexTokenKinds)
+#endif
+
+// This is expected to be used with something like:
+//
+//   // Use x-macros to handle modifier cases.
+//   #define CARBON_PARSE_NODE_KIND(...)
+//   #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) <code>
+#ifndef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) \
+  CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name##Modifier, 0, Name)
+#endif
+
+// The start of the file.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileStart, 0, FileStart)
+
+// The end of the file.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0, FileEnd)
+
+// An invalid parse. Used to balance the parse tree. Always has an error.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0, Error)
+
+// An invalid subtree. Always has an error.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParseStart, 0, Error)
+CARBON_PARSE_NODE_KIND_BRACKET(InvalidParseSubtree, InvalidParseStart, Error)
+
+// A placeholder node to be replaced; it will never exist in a valid parse tree.
+// Its token kind is not enforced even when valid.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Placeholder, 0, Error)
+
+// An empty declaration, such as `;`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDecl, 0, CARBON_IF_VALID(Semi))
+
+// An identifier name in a non-expression context, such as a declaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierName, 0,
+                                   CARBON_IF_VALID(Identifier))
+
+// An identifier name in an expression context.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IdentifierNameExpr, 0, Identifier)
+
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0, SelfValueIdentifier)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueNameExpr, 0, SelfValueIdentifier)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpr, 0, SelfTypeIdentifier)
+
+// The `base` value keyword, introduced by `base: B`. Typically referenced in
+// an expression, as in `x.base` or `{.base = ...}`, but can also be used as a
+// declared name, as in `{.base: partial B}`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseName, 0, Base)
+
+// The `package` keyword in an expression.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageExpr, 0, Package)
+
+// ----------------------------------------------------------------------------
+
+// The comments below follow this pattern:
+//
+// // Descriptive heading:
+// //   Child1
+// //   Child2
+// // Parent
+//
+// In this, `Child1`, `Child2`, and `Parent` are all kinds of parse nodes, which
+// are then defined using the `CARBON_PARSE_NODE_KIND_*` macros. They are
+// written in postorder, with the indentation showing the tree structure. See
+// tree.h for more information.
+//
+// A parse node kind may be preceded by:
+// -  `_optional_` if this node (or nodes) may be present or omitted in valid
+//    parses, depending on which tokens are in the source code.
+// -  `_repeated_` if this node (or nodes) may be repeated or omitted in valid
+//    parses, depending on which tokens are in the source code.
+// -  `_external_:` if this node is the child of multiple kinds of nodes and
+//    is documented separately.
+//
+// There is generally a close correspondence between handling of tokens and the
+// creation of non-external nodes in a given block.
+
+// ----------------------------------------------------------------------------
+
+// The name of a package or library for `package`, `import`, and `library`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageName, 0, Identifier)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryName, 0, StringLiteral)
+
+// `package`:
+//   PackageIntroducer
+//   _optional_ _external_: PackageName
+//   _optional_ _external_: LibrarySpecifier
+//   PackageApi or PackageImpl
+// PackageDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageIntroducer, 0, Package)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, Api)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, Impl)
+CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `import`:
+//   ImportIntroducer
+//   _optional_ _external_: PackageName
+//   _optional_ _external_: LibrarySpecifier
+// ImportDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, Import)
+CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
+                               CARBON_IF_VALID(Semi))
+// `library` as directive:
+//   LibraryIntroducer
+//   DefaultLibrary or _external_: LibraryName
+//   PackageApi or PackageImpl
+// LibraryDirective
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, Default)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, Library)
+CARBON_PARSE_NODE_KIND_BRACKET(LibraryDirective, LibraryIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `library` in `package` or `import`:
+//   _external_: LibraryName or DefaultLibrary
+// LibrarySpecifier
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
+
+// `namespace`:
+//   NamespaceStart
+//   _repeated_ _external_: modifier
+//   _external_: IdentifierName or QualifiedName
+// Namespace
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0, Namespace)
+CARBON_PARSE_NODE_KIND_BRACKET(Namespace, NamespaceStart, CARBON_IF_VALID(Semi))
+
+// A code block:
+//   CodeBlockStart
+//   _repeated_ _external_: statement
+// CodeBlock
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CodeBlockStart, 0,
+                                   CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// `fn` declarations start with a function signature:
+//
+//   FunctionIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: IdentifierName or QualifiedName
+//   _optional_ _external_: ImplicitParamList
+//   _external_: TuplePattern
+//     _external_: type expression
+//   ReturnType
+// _function signature_
+//
+// There are three forms of function declaration:
+//
+//   _function signature_
+// FunctionDecl
+//
+//     _function signature_
+//   FunctionDefinitionStart
+//   _repeated_ _external_: statement
+// FunctionDefinition
+//
+//     _function signature_
+//   BuiltinFunctionDefinitionStart
+//   BuiltinName
+// BuiltinFunctionDefinition
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0, Fn)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1, MinusGreater)
+CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(FunctionDecl, FunctionIntroducer,
+                               CARBON_IF_VALID(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(BuiltinFunctionDefinitionStart,
+                               FunctionIntroducer, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BuiltinName, 0, StringLiteral)
+CARBON_PARSE_NODE_KIND_BRACKET(BuiltinFunctionDefinition,
+                               BuiltinFunctionDefinitionStart,
+                               CARBON_IF_VALID(Semi))
+
+// `alias`:
+//   AliasIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: IdentifierName or QualifiedName
+//   AliasInitializer
+//   _external_: expression
+// Alias
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AliasIntroducer, 0, Alias)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AliasInitializer, 0, Equal)
+CARBON_PARSE_NODE_KIND_BRACKET(Alias, AliasIntroducer, CARBON_IF_VALID(Semi))
+
+// A tuple pattern:
+//   TuplePatternStart
+//     _external_: [Generic]BindingPattern
+//     PatternListComma
+//   _repeated_
+// TuplePattern
+//
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TuplePatternStart, 0, OpenParen)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternListComma, 0, Comma)
+CARBON_PARSE_NODE_KIND_BRACKET(TuplePattern, TuplePatternStart, CloseParen)
+
+// An implicit parameter list:
+//   ImplicitParamListStart
+//     _external_: [Generic]BindingPattern
+//     PatternListComma
+//   _repeated_
+// ImplicitParamList
+//
+// Patterns and PatternListComma may repeat with PatternListComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplicitParamListStart, 0, OpenSquareBracket)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplicitParamList, ImplicitParamListStart,
+                               CloseSquareBracket)
+
+// An array type, such as  `[i32; 3]` or `[i32;]`:
+//     ArrayExprStart
+//     _external_: type expression
+//   ArrayExprSemi
+//   _optional_ _external_: expression
+// ArrayExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExprStart, 0, OpenSquareBracket)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExprSemi, 2, CARBON_IF_VALID(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpr, ArrayExprSemi, CloseSquareBracket)
+
+// A binding pattern, such as `name: Type`:
+//       IdentifierName or SelfValueName
+//       _external_: type expression
+//     [Generic]BindingPattern
+//   _optional_ Addr
+// _optional_ Template
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BindingPattern, 2, CARBON_IF_VALID(Colon))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CompileTimeBindingPattern, 2, ColonExclaim)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Addr, 1, Addr)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1, Template)
+
+// `let` declarations, including associated constant declarations:
+//   LetIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: BindingPattern or TuplePattern
+//     LetInitializer
+//     _external_: expression
+//   _optional_
+// LetDecl
+//
+// Modifier keywords only appear for `let` declarations, not `let` statements.
+//
+// The LetInitializer and following expression are paired: either both will be
+// present, or neither will.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetIntroducer, 0, Let)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(LetInitializer, 0, Equal)
+CARBON_PARSE_NODE_KIND_BRACKET(LetDecl, LetIntroducer, CARBON_IF_VALID(Semi))
+
+// `var` and `returned var`:
+//   VariableIntroducer
+//   _repeated_ _external_: modifier
+//   _optional_ ReturnedModifier
+//   _external_: BindingPattern or TuplePattern
+//     VariableInitializer
+//     _external_: expression
+//   _optional_
+// VariableDecl
+//
+// Access and declaration modifier keywords only appear for `var` declarations,
+// whereas the returned modifier only appears on `var` statements.
+//
+// The VariableInitializer and following expression are paired: either both will
+// be present, or neither will.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0, CARBON_IF_VALID(Var))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnedModifier, 0, Returned)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0, Equal)
+CARBON_PARSE_NODE_KIND_BRACKET(VariableDecl, VariableIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// An expression statement:
+//   _external_: expression
+// ExprStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExprStatement, 1, CARBON_IF_VALID(Semi))
+
+// `break`:
+//   BreakStatementStart
+// BreakStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatementStart, 0, Break)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BreakStatement, 1, CARBON_IF_VALID(Semi))
+
+// `continue`:
+//   ContinueStatementStart
+// ContinueStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatementStart, 0, Continue)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ContinueStatement, 1, CARBON_IF_VALID(Semi))
+
+// `return`:
+//   ReturnStatementStart
+//   _optional_ ReturnVarModifier or _external_: expression
+// ReturnStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnStatementStart, 0, Return)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnVarModifier, 0, Var)
+CARBON_PARSE_NODE_KIND_BRACKET(ReturnStatement, ReturnStatementStart,
+                               CARBON_IF_VALID(Semi))
+
+// `for`:
+//     ForHeaderStart
+//       VariableIntroducer
+//       _external_: BindingPattern
+//     ForIn
+//     _external_: expression
+//   ForHeader
+//   _external_: CodeBlock
+// ForStatement
+//
+// Versus a normal `var`, ForIn replaces VariableDecl.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForHeaderStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(ForIn, VariableIntroducer, CARBON_IF_VALID(In))
+CARBON_PARSE_NODE_KIND_BRACKET(ForHeader, ForHeaderStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2, For)
+
+// `if` statement + `else`:
+//     IfConditionStart
+//     _external_: expression
+//   IfCondition
+//   _external_: CodeBlock
+//   IfStatementElse
+//   _external_: CodeBlock or IfStatement
+// IfStatement
+//
+// IfStatementElse and the following node are optional based on `else` presence.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(IfCondition, IfConditionStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfStatementElse, 0, Else)
+CARBON_PARSE_NODE_KIND_BRACKET(IfStatement, IfCondition, If)
+
+// `while`:
+//     WhileConditionStart
+//     _external_: expression
+//   WhileCondition
+//   _external_: CodeBlock
+// WhileStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2, While)
+
+// Index expressions, such as `a[1]`:
+//     _external_: expression
+//   IndexExprStart
+//   _external_: expression
+// IndexExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExprStart, 1, OpenSquareBracket)
+CARBON_PARSE_NODE_KIND_BRACKET(IndexExpr, IndexExprStart, CloseSquareBracket)
+
+// Parenthesized single expressions, such as `(2)`:
+//   ParenExprStart
+//   _external_: expression
+// ParenExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParenExprStart, 0, OpenParen)
+CARBON_PARSE_NODE_KIND_BRACKET(ParenExpr, ParenExprStart, CloseParen)
+
+// Tuples, such as `(1, 2)`:
+//   TupleLiteralStart
+//     _external_: expression
+//     TupleLiteralComma
+//   _repeated_
+// TupleLiteral
+//
+// Expressions and TupleLiteralComma may repeat with TupleLiteralComma as a
+// separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralStart, 0, OpenParen)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TupleLiteralComma, 0, Comma)
+CARBON_PARSE_NODE_KIND_BRACKET(TupleLiteral, TupleLiteralStart, CloseParen)
+
+// Call expressions, such as `a()`:
+//     _external_: expression
+//   CallExprStart
+//     _external_: expression
+//     CallExprComma
+//   _repeated_
+// CallExpr
+//
+// Exprs and CallExprComma may repeat with CallExprComma as a separator.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprStart, 1, OpenParen)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExprComma, 0, Comma)
+CARBON_PARSE_NODE_KIND_BRACKET(CallExpr, CallExprStart, CloseParen)
+
+// A qualified declaration, such as `a.b`:
+//   _external_: IdentifierName or QualifiedName
+//   _external_: IdentifierName
+// QualifiedName
+//
+// TODO: This will eventually more general expressions, for example with
+// `GenericType(type_args).ChildType(child_type_args).Name`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedName, 2, Period)
+
+// A member access expression, such as `a.b` or
+// `GetObject().(Interface.member)`:
+//   _external_: lhs expression
+//   _external_: rhs expression
+// MemberAccessExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpr, 2, Period)
+
+// A pointer member access expression, such as `a->b` or
+// `GetObject()->(Interface.member)`:
+//   _external_: lhs expression
+//   _external_: rhs expression
+// PointerMemberAccessExpr
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpr, 2, MinusGreater)
+
+// A value literal.
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, False)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, True)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntLiteral, IntLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, RealLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, StringLiteral)
+
+// A type literal.
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolTypeLiteral, Bool)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(IntTypeLiteral, IntTypeLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(UnsignedIntTypeLiteral,
+                                     UnsignedIntTypeLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(FloatTypeLiteral, FloatTypeLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringTypeLiteral, StringTypeLiteral)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(TypeTypeLiteral, Type)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(AutoTypeLiteral, Auto)
+
+// A prefix operator, such as `not`:
+//   _external_: expression
+// PrefixOperator<name>
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Amp)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Caret)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Const)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Not)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Minus)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(MinusMinus)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(PlusPlus)
+CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR(Star)
+
+// An infix operator, such as `+`:
+//   _external_: lhs expression
+//   _external_: rhs expression
+// InfixOperator<name>
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Amp)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(AmpEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(As)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Caret)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(CaretEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Equal)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(EqualEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(ExclaimEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Greater)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(GreaterEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(GreaterGreater)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(GreaterGreaterEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Less)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(LessEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(LessEqualGreater)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(LessLess)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(LessLessEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Minus)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(MinusEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Percent)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(PercentEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Pipe)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(PipeEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Plus)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(PlusEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Slash)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(SlashEqual)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Star)
+CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(StarEqual)
+
+// A postfix operator, currently only `*`:
+//   _external_: expression
+// PostfixOperator<name>
+CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR(Star)
+
+// A short-circuiting infix operator, such as `and`:
+//     _external_: expression
+//   ShortCircuitOperand(And|Or)
+//   _external_: expression
+// ShortCircuitOperand(And|Or)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandAnd, 1, And)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperandOr, 1, Or)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorAnd, 2, And)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperatorOr, 2, Or)
+
+// `if` expression + `then` + `else`:
+//     _external_: expression
+//   IfExprIf
+//     _external_: expression
+//   IfExprThen
+//   _external_: expression
+// IfExprElse
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprIf, 1, If)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprThen, 1, Then)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExprElse, 3, CARBON_IF_VALID(Else))
+
+// Struct literals, such as `{.a = 0}`:
+//   StructLiteralStart
+//         _external_: IdentifierName or BaseName
+//       StructFieldDesignator
+//       _external_: expression
+//     StructField
+//     StructComma
+//   _repeated_
+// StructLiteral
+//
+// Struct type literals, such as `{.a: i32}`:
+//   StructTypeLiteralStart
+//         _external_: IdentifierName or BaseName
+//       StructFieldDesignator
+//       _external_: type expression
+//     StructTypeField
+//     StructComma
+//   _repeated_
+// StructTypeLiteral
+//
+// Elements (StructField and StructTypeField, respectively) and StructComma
+// may repeat with StructComma as a separator.
+//
+// When a valid StructTypeField or StructField cannot be formed, elements
+// may be replaced by InvalidParse, which may have a preceding sibling
+// StructFieldDesignator if one was successfully parsed.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructLiteralStart, 0, OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructTypeLiteralStart, 0, OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructFieldDesignator, 1, Period)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructField, 2, Equal)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructTypeField, 2, Colon)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(StructComma, 0, Comma)
+CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral, StructLiteralStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral, StructTypeLiteralStart,
+                               CloseCurlyBrace)
+
+// Various modifiers. These are all a single token.
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extern)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Impl)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Private)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Protected)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Virtual)
+
+// `class`:
+//     ClassIntroducer
+//     _repeated_ _external_: modifier
+//     _external_: IdentifierName or QualifiedName
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
+//   ClassDefinitionStart
+//   _external_: declarations
+// ClassDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// ClassDefinitionStart and later nodes are removed and replaced by
+// ClassDecl.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0, Class)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDecl, ClassIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `adapt`:
+//   AdaptIntroducer
+//   _repeated_ _external_: modifier
+//   _external_: expression
+// AdaptDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(AdaptIntroducer, 0, Adapt)
+CARBON_PARSE_NODE_KIND_BRACKET(AdaptDecl, AdaptIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `base`:
+//   BaseIntroducer
+//   _repeated_ _external_: modifier
+//   BaseColon
+//   _external_: expression
+// BaseDecl
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseIntroducer, 0, Base)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(BaseColon, 0, Colon)
+CARBON_PARSE_NODE_KIND_BRACKET(BaseDecl, BaseIntroducer, CARBON_IF_VALID(Semi))
+
+// `interface`:
+//     InterfaceIntroducer
+//     _repeated_ _external_: modifier
+//     _external_: IdentifierName or QualifiedName
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
+//   InterfaceDefinitionStart
+//   _external_: declarations
+// InterfaceDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// InterfaceDefinitionStart and later nodes are removed and replaced by
+// InterfaceDecl.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceIntroducer, 0, Interface)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDecl, InterfaceIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `impl ... as`:
+//     ImplIntroducer
+//     _repeated_ _external_: modifier
+//     _optional_ _external_: ImplForall
+//     _optional_ _external_: expression
+//     _external_: DefaultSelfImplAs or TypeImplAs
+//     _external_: expression
+//   ImplDefinitionStart
+//   _external_: declarations
+// ImplDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// ImplDefinitionStart and later nodes are removed and replaced by
+// ImplDecl.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplIntroducer, 0, Impl)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinitionStart, ImplIntroducer,
+                               OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDefinition, ImplDefinitionStart,
+                               CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(ImplDecl, ImplIntroducer, CARBON_IF_VALID(Semi))
+
+// `forall ...`:
+//   _external_: ImplicitParamList
+// ImplForall
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImplForall, 1, Forall)
+
+// `... as`:
+//   _external_: expression
+// TypeImplAs
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(TypeImplAs, 1, As)
+// `as` without a type before it
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultSelfImplAs, 0, As)
+
+// `constraint`:
+//     NamedConstraintIntroducer
+//     _repeated_ _external_: modifier
+//     _external_: IdentifierName or QualifiedName
+//     _optional_ _external_: ImplicitParamList
+//     _optional_ _external_: TuplePattern
+//   NamedConstraintDefinitionStart
+//   _external_: declarations
+// NamedConstraintDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// NamedConstraintDefinitionStart and later nodes are removed and replaced by
+// NamedConstraintDecl.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamedConstraintIntroducer, 0, Constraint)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
+                               NamedConstraintIntroducer, OpenCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
+                               NamedConstraintDefinitionStart, CloseCurlyBrace)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDecl, NamedConstraintIntroducer,
+                               CARBON_IF_VALID(Semi))
+
+// `choice`:
+//     ChoiceIntroducer
+//     _external_: IdentifierName or QualifiedDecl
+//   ChoiceDefinitionStart
+//   _optional_ _external_: ChoiceAlternativeList
+// ChoiceDefinition
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceIntroducer, 0, Choice)
+CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinitionStart, ChoiceIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(ChoiceDefinition, ChoiceDefinitionStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// Choice alternative list:
+//     _external_: IdentifierName
+//     _optional_ _external_ : TuplePattern
+//     _optional_: ChoiceAlternativeListComma
+//   _repeated_
+// ChoiceAlternativeList
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ChoiceAlternativeListComma, 0, Comma)
+
+// `match`:
+//     MatchIntroducer
+//       MatchConditionStart
+//       _external_: expression
+//     MatchCondition
+//   MatchStatementStart
+//   _repeated_ _external_: MatchCase
+//   _optional_ _external_: MatchStatementDefault
+// MatchStatement
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchIntroducer, 0, Match)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchConditionStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCondition, MatchConditionStart,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatementStart, MatchIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchStatement, MatchStatementStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// `case`:
+//     MatchCaseIntroducer
+//     _external_: Pattern
+//       MatchCaseGuardIntroducer
+//       MatchCaseGuardStart
+//       _external_: expression
+//     MatchCaseGuard
+//     MatchCaseEqualGreater
+//   MatchCaseStart
+//   _repeated_ _external_: statement
+// MatchCase
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseIntroducer, 0, Case)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardIntroducer, 0, If)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseGuardStart, 0,
+                                   CARBON_IF_VALID(OpenParen))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseGuard, MatchCaseGuardIntroducer,
+                               CARBON_IF_VALID(CloseParen))
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchCaseEqualGreater, 0,
+                                   CARBON_IF_VALID(EqualGreater))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCaseStart, MatchCaseIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchCase, MatchCaseStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+// `default`:
+//     MatchDefaultIntroducer
+//     MatchDefaultEqualGreater
+//   MatchDefaultStart
+//   _repeated_ _external_: statement
+// MatchDefault
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefaultIntroducer, 0, Default)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MatchDefaultEqualGreater, 0,
+                                   CARBON_IF_VALID(EqualGreater))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchDefaultStart, MatchDefaultIntroducer,
+                               CARBON_IF_VALID(OpenCurlyBrace))
+CARBON_PARSE_NODE_KIND_BRACKET(MatchDefault, MatchDefaultStart,
+                               CARBON_IF_VALID(CloseCurlyBrace))
+
+#undef CARBON_PARSE_NODE_KIND
+#undef CARBON_PARSE_NODE_KIND_BRACKET
+#undef CARBON_PARSE_NODE_KIND_CHILD_COUNT
+#undef CARBON_PARSE_NODE_KIND_INFIX_OPERATOR
+#undef CARBON_PARSE_NODE_KIND_POSTFIX_OPERATOR
+#undef CARBON_PARSE_NODE_KIND_PREFIX_OPERATOR
+#undef CARBON_PARSE_NODE_KIND_TOKEN_LITERAL
+#undef CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER
+#undef CARBON_IF_VALID

@@ -32,18 +32,18 @@ example by pushing a new `Action` onto it. When an `Action` is done executing,
 it can optionally produce a value as its result, which is made available to the
 `Action` below it on the stack.
 
-Carbon values are represented as [`Value`](value.h) objects, both at compile
-time and at run time. Note that in Carbon, a type is a kind of value, so types
-are represented as `Value`s. More subtly, `Value` can also represent information
-that isn't a true Carbon value, but needs to be propagated through channels that
-use `Value`. Most notably, certain kinds of `Value` are used to represent the
-result of "evaluating" a `Pattern`, which evaluates all the subexpressions
-nested within it, while preserving the structure of the non-expression parts for
-use in pattern matching.
+Carbon values are represented as [`Value`](../ast/value.h) objects, both at
+compile time and at run time. Note that in Carbon, a type is a kind of value, so
+types are represented as `Value`s. More subtly, `Value` can also represent
+information that isn't a true Carbon value, but needs to be propagated through
+channels that use `Value`. Most notably, certain kinds of `Value` are used to
+represent the result of "evaluating" a `Pattern`, which evaluates all the
+subexpressions nested within it, while preserving the structure of the
+non-expression parts for use in pattern matching.
 
 `Value`s are always immutable. The abstract machine's mutable memory is
 represented using the [`Heap`](heap.h) class, which is essentially a mapping of
-[`Address`es](address.h) to `Value`s.
+[`Address`es](../ast/address.h) to `Value`s.
 
 ### Example
 

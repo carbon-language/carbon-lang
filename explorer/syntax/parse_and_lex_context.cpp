@@ -4,7 +4,7 @@
 
 #include "explorer/syntax/parse_and_lex_context.h"
 
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 
 namespace Carbon {
 
@@ -17,7 +17,7 @@ auto ParseAndLexContext::RecordSyntaxError(Error error) -> Parser::symbol_type {
 
 auto ParseAndLexContext::RecordSyntaxError(const std::string& message)
     -> Parser::symbol_type {
-  return RecordSyntaxError(CompilationError(source_loc()) << message);
+  return RecordSyntaxError(ProgramError(source_loc()) << message);
 }
 
 }  // namespace Carbon

@@ -10,182 +10,140 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Objective for 2022: make Carbon public, finish 0.1 language](#objective-for-2022-make-carbon-public-finish-01-language)
-    -   [Completing the language design](#completing-the-language-design)
-    -   [Going public](#going-public)
--   [Key results in 2022](#key-results-in-2022)
-    -   [Broaden participation so no organization is >50%](#broaden-participation-so-no-organization-is-50)
-    -   [Example ports of C++ libraries to Carbon (100% of woff2, 99% of RE2)](#example-ports-of-c-libraries-to-carbon-100-of-woff2-99-of-re2)
-        -   [Language design covers the syntax and semantics of the example port code.](#language-design-covers-the-syntax-and-semantics-of-the-example-port-code)
-    -   [Demo implementation of core features with working examples](#demo-implementation-of-core-features-with-working-examples)
-    -   [Carbon explorer implementation of core features with test cases](#carbon-explorer-implementation-of-core-features-with-test-cases)
--   [Beyond 2022](#beyond-2022)
-    -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
-    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-ship-10-language--organization)
+-   [Objective for 2024: a working toolchain that supports C++ interop](#objective-for-2024-a-working-toolchain-that-supports-c-interop)
+-   [Key results in 2024](#key-results-in-2024)
+    -   [Carbon's toolchain implements enough of the language to build realistic code](#carbons-toolchain-implements-enough-of-the-language-to-build-realistic-code)
+    -   [Carbon's toolchain can build C++ code](#carbons-toolchain-can-build-c-code)
+    -   [Carbon's toolchain works with existing, simple C++ build systems](#carbons-toolchain-works-with-existing-simple-c-build-systems)
+    -   [Carbon has a design and toolchain implementation of basic C++ interop](#carbon-has-a-design-and-toolchain-implementation-of-basic-c-interop)
+    -   [Give talks at 2-3 conferences covering 3-4 different Carbon topics](#give-talks-at-2-3-conferences-covering-3-4-different-carbon-topics)
+    -   [Start building our initial tutorial and introductory material](#start-building-our-initial-tutorial-and-introductory-material)
+-   [Beyond 2024](#beyond-2024)
+    -   [Potential 2025 goals: ship a working 0.1 language for evaluation](#potential-2025-goals-ship-a-working-01-language-for-evaluation)
+    -   [Potential 2026-2027 goals: finish 0.2 language, stop experimenting](#potential-2026-2027-goals-finish-02-language-stop-experimenting)
+    -   [Potential goals _beyond_ 2027: ship 1.0 language & organization](#potential-goals-beyond-2027-ship-10-language--organization)
 
 <!-- tocstop -->
 
-## Objective for 2022: make Carbon public, finish 0.1 language
+## Objective for 2024: a working toolchain that supports C++ interop
 
-We have two primary goals for 2022:
+Our focus for 2024 will be to get the Carbon toolchain working, including C++
+interop. We see three key criteria:
 
--   Shift the experiment to being public.
--   Reach the point where the core language design is substantially complete.
+-   Building realistic Carbon code for interesting interop with C++.
+-   Building realistic C++ code for interesting interop with Carbon.
+-   The interop itself to allow a single program mixing the two languages.
 
-### Completing the language design
+This will both allow folks to explore Carbon using a more traditional and
+realistic compiler model, and allow that exploratory Carbon to lean on C++ for
+libraries and other functionality that doesn't exist in Carbon yet. It will also
+demonstrate how the interop will work in practice.
 
-By the end of 2022, the core Carbon language design should be substantially
-complete, including designs for expressions and statements, classes, generics
-and templates, core built-in types and interfaces such as integers and pointers,
-and interoperability with C++. The design choices made to reach this point are
-expected to be experimental, and many of them may need revisiting before we
-reach 1.0, but the broad shape of the language should be clear at this point,
-and it should be possible to write non-trivial Carbon programs.
+This objective and focus are oriented around the toolchain and implementation of
+Carbon. We still expect some work on language design, but for its priority to be
+driven largely as a function of being in the critical path of some aspect of our
+implementation work.
 
-An initial rough framework for the core standard library functionality should be
-provided, as necessary to support the core language components. A largely
-complete implementation of the core language design should be available in
-Carbon explorer. The toolchain should be able to parse the core language design,
-with some support for name lookup and type-checking.
+## Key results in 2024
 
-We should have begun writing non-trivial portions of the standard library, such
-as common higher-level data structures and algorithms.
+### Carbon's toolchain implements enough of the language to build realistic code
 
-### Going public
+This goal is not necessarily about complete support for the entire language
+design, but rather enough of it to support building the realistic and
+interesting Carbon code that interoperates with C++.
 
-At some point in 2022 we should shift the experiment to be public. This will
-allow us to significantly expand both those directly involved and contributing
-to Carbon but also those able to evaluate and give us feedback.
+Here are some example language features that we think are key to success, but
+this is far from an exhaustive list:
 
-We don't expect Carbon to shift away from an experiment until after it becomes
-public and after we have been able to collect and incorporate a reasonable
-amount of feedback from the broader industry and community. This feedback will
-be central in determining whether Carbon should continue past the experimental
-stage.
+-   Imports and a working [prelude] (the earliest stages of a standard library)
+-   Operator overloading and dispatch for expressions
+-   Generic types and functions
+-   Templates (likely only partial support and focused on interop use cases)
 
-## Key results in 2022
+[prelude]: /docs/design#name-lookup-for-common-types
 
-There are several milestones that we believe are on the critical path to
-successfully achieving our main goal for the year, and point to concrete areas
-of focus for the project.
+### Carbon's toolchain can build C++ code
 
-### Broaden participation so no organization is >50%
+We need the toolchain to be able to build C++ code as if it were Clang in order
+to build the C++ code that Carbon is interoperating with. This isn't about
+building anything new or novel, but about packaging and exposing Clang for this
+purpose.
 
-Our goal is that no single organization makes up >50% of participation in the
-Carbon project, to ensure that we are including as broad and representative a
-set of perspectives in the evolution of Carbon as possible.
+### Carbon's toolchain works with existing, simple C++ build systems
 
-As a proxy for the amount of participation, we will count the number of active
-participants from each organization in 2022, with the aim that each organization
-is represented by less than 50% of all active participants.
+We should be able to drop Carbon's toolchain into at least simple `Makefile` or
+CMake build systems as a replacement for the C++ toolchain and provide a Carbon
+toolchain. This doesn't include supporting everything or even moderately complex
+builds; only the simplest of builds using these build systems need to work at
+first.
 
-There are many ways in which someone could be an active participant, and when
-the leads come to reflect on this at the end of the year, we expect this to be a
-judgment call. We will consider at least the following when measuring our
-success on this objective:
+### Carbon has a design and toolchain implementation of basic C++ interop
 
--   Pull requests authored and reviewed, including proposals, code changes, and
-    documentation changes.
--   Contribution to discussions, including Discord, teleconferences, and GitHub
-    issues.
+Our end goal is to compile a minimal but non-trivial example of bi-directionally
+mixing C++ and Carbon code such as our main example and run it successfully.
+However, completing everything involved in this example isn't expected to be
+realistic by the end of the year. We expect to work towards this example and in
+rough priority order across the following interop features and all the Carbon
+features they depend on:
 
-### Example ports of C++ libraries to Carbon (100% of [woff2](https://github.com/google/woff2), 99% of [RE2](https://github.com/google/re2))
+-   Calling C++ functions from Carbon.
+-   Importing concrete C++ types as Carbon types.
+-   (stretch) Using Carbon generics with a C++ type in Carbon.
+-   (stretch) Calling Carbon functions from C++.
+-   (stretch) Importing concrete Carbon types into C++.
 
-The first part of this result is that all of the woff2 library is ported to
-Carbon in a way that exports the same C++ API. There should be no gaps in this
-port given that woff2 has a very simple C++ API and uses few C++ language
-features.
+### Give talks at 2-3 conferences covering 3-4 different Carbon topics
 
-RE2 is a larger library using significantly more language features. For that
-part of the result, fewer than 1% of its C++ lines of code should be missing a
-semantically meaningful port into Carbon code.
+We want to continue to engage with the external C++ community as the Carbon
+toolchain becomes a more real and complete toolchain. We specifically want to
+share when interop becomes something people can experiment with and explore.
 
-An important nuance of this goal is that it doesn't include building a complete
-Carbon standard library beyond the most basic necessary types. The intent is to
-exercise and show the interoperability layers of Carbon by re-using the C++
-standard library in many cases and exporting a compatible C++ API to both woff2
-and RE2's current API.
+### Start building our initial tutorial and introductory material
 
-While this key result isn't directly tied to the main objective, we believe it
-represents a critical milestone for being able to achieve this objective. It
-both measures our progress solidifying Carbon's design and demonstrating the
-value proposition of Carbon.
+Because of the nature of Carbon's experiment, the tutorial and introductory
+material won't be focused on typical teaching of the language to general
+developers. Instead, it will be focused on enabling C++ developers to start
+evaluating specific aspects of Carbon for interoperating with existing C++
+codebases.
 
-Note that both woff2 and RE2 libraries are chosen somewhat arbitrarily and could
-easily be replaced with a different, more effective libraries to achieve the
-fundamental result of demonstrating a compelling body of cohesive design and the
-overarching value proposition.
+We only expect to _start_ building this material in 2024. We want to learn what
+any critical gaps are for folks to start evaluating C++ interop and how best to
+close them going into 2025.
 
-#### Language design covers the syntax and semantics of the example port code.
-
-We should have a clear understanding of the syntax and semantics used by these
-example ports. We should be able to demonstrate that self-contained portions of
-the ported code work correctly using Carbon explorer.
-
-### Demo implementation of core features with working examples
-
-A core set of Carbon features should be implemented sufficiently to build
-working examples of those features and run them successfully. These features
-could include:
-
--   User-defined types, functions, namespaces, packages, and importing.
--   Basic generic functions and types using interfaces.
--   Initial/simple implementation of safety checking including at least bounds
-    checking, simple lifetime checking, and simple initialization checking.
--   Sum types sufficient for optional-types to model nullable pointers.
--   Pattern matching sufficient for basic function overloading on types and
-    arity, as well as unwrapping of optional types for guard statements.
-
-Stretch goals if we can hit the above:
-
--   Instantiating a basic C++ template through interop layer for use within
-    Carbon.
-
-The demo implementation should also provide demos outside of specific language
-features including:
-
--   Basic benchmarking of the different phases of compilation (lexing, parsing,
-    etc).
--   A basic REPL command line.
-
-Stretch goals if we can hit the above:
-
--   Automatic code formatter on top of the implementation infrastructure.
--   A [compiler explorer](https://compiler-explorer.com/) fork with REPL
-    integrated.
-
-Benchmarking at this stage isn't expected to include extensive optimization.
-Instead, it should focus on letting us track large/high-level impact on
-different phases as they are developed or features are added. They may also help
-illustrate initial high-level performance characteristics of the implementation,
-but the long term focus should be on end-to-end user metrics.
-
-Automatic code formatting could be achieved many ways, but it seems useful to
-ensure the language and implementation both support use cases like formatting.
-
-### Carbon explorer implementation of core features with test cases
-
-This should include both a human readable rendering of the formal semantics as
-well as an execution environment to run test cases through those semantics. The
-implementation should cover enough of the core language that example code, such
-as the above ports of woff2 and RE2 and the Carbon standard library, can be
-verified with Carbon explorer.
-
-## Beyond 2022
+## Beyond 2024
 
 Longer term goals are hard to pin down and always subject to change, but we want
 to give an idea of what kinds of things are expected at a high level further out
-in order to illustrate how the goals and priorities we have in 2022 feed into
+in order to illustrate how the goals and priorities we have in 2024 feed into
 subsequent years.
 
-### Potential 2023 goals: finish 0.2 language, stop experimenting
+### Potential 2025 goals: ship a working [0.1 language] for evaluation
+
+[0.1 language]:
+    /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
+
+As we adjust our schedule and roadmap to reflect the realistic rate of progress,
+the _earliest_ it seems feasible to have everything we need to evaluate the 0.1
+language is 2025. We're starting to be optimistic in 2024 that we'll be able to
+hit this in 2025, but ultimately this remains a lower bound. As we progress, we
+may discover things that push the schedule out further. That is the nature of an
+experimental project like Carbon.
+
+We expect that once we reach this milestone the community will be able to start
+realistically evaluating Carbon as a C++ successor language. Of course, this
+evaluation will take some time.
+
+### Potential 2026-2027 goals: finish [0.2 language], stop experimenting
+
+[0.2 language]:
+    /docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
 
 Once Carbon is moving quickly and getting public feedback, we should be able to
 conclude the experiment. We should know if this is the right direction for
 moving C++ forward for a large enough portion of the industry and community, and
 whether the value proposition of this direction outweighs the cost.
 
-However, there will still be a _lot_ of work to make Carbon into a production
+However, there will still be a lot of work left to make Carbon into a production
 quality language, even if the experiment concludes successfully.
 
 Some concrete goals that might show up in this time frame:
@@ -201,15 +159,18 @@ Some concrete goals that might show up in this time frame:
 -   Create a foundation or similar organization to manage the Carbon project,
     separate from any corporate entities that fund work on Carbon.
 
-### Potential 2024-2025 goals: _ship_ 1.0 language & organization
+### Potential goals _beyond_ 2027: ship [1.0 language] & organization
 
-A major milestone will be the first version of a production language. We should
-also have finished transferring all governance of Carbon to an independent open
+[1.0 language]:
+    /docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
+
+A major milestone will be the first version of a production language. We also
+plan to finish transferring all governance of Carbon to an independent open
 source organization at that point. However, we won't know what a more realistic
 or clear schedule for these milestones will be until we get closer.
 
-Another important aspect of our goals in this time frame is expanding them to
-encompass the broader ecosystem of the language:
+Goals in this time frame will expand to encompass the broader ecosystem of the
+language:
 
 -   End-to-end developer tooling and experience.
 -   Teaching and training material.

@@ -1,0 +1,45 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: pre-commit
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [trunk]
+
+permissions:
+  contents: read # For actions/checkout.
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+
+      # We want to automatically create github suggestions for pre-commit file
+      # changes for a pull request. But `pull_request` actions never have write
+      # permissions to the repository, so we create the suggestions in a separate
+      # privileged `workflow_run` action in pre_commit_suggestions.yaml. Here,
+      # we upload the diffs and event configuration to an artifact for use by
+      # that action.
+      - name: Collect pre-commit output
+        if: failure()
+        run: |
+          mkdir -p pre-commit-output
+          git diff > pre-commit-output/diff
+          cp $GITHUB_EVENT_PATH pre-commit-output/event
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        if: failure()
+        with:
+          name: pre-commit output
+          path: pre-commit-output/*

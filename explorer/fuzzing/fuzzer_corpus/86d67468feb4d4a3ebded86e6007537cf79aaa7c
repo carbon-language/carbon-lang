@@ -1,0 +1,131 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name {
+        name: "A"
+      }
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Get"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  simple_member_access {
+                    field: "n"
+                    object {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Get"
+                    object {
+                      operator {
+                        op: As
+                        arguments {
+                          struct_literal {
+                            fields {
+                              name: "n"
+                              expression {
+                                int_literal {
+                                  value: 5
+                                }
+                              }
+                            }
+                          }
+                        }
+                        arguments {
+                          identifier {
+                            name: "A"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

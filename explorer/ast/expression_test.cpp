@@ -10,10 +10,10 @@
 #include <string>
 
 #include "explorer/ast/paren_contents.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon::Testing {
+namespace Carbon {
 namespace {
 
 using llvm::cast;
@@ -24,7 +24,7 @@ using testing::IsEmpty;
 MATCHER(IntField, "") { return arg->kind() == ExpressionKind::IntLiteral; }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return SourceLocation("<test>", line_num);
+  return SourceLocation("<test>", line_num, FileKind::Main);
 }
 
 class ExpressionTest : public ::testing::Test {
@@ -135,4 +135,4 @@ TEST_F(ExpressionTest, BinaryAsTuple) {
 }
 
 }  // namespace
-}  // namespace Carbon::Testing
+}  // namespace Carbon

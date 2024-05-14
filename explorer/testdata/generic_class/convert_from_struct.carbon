@@ -2,24 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 5
+// AUTOUPDATE
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
 
-fn GetX[T:! Type](pt: Point(T)) -> T {
+fn GetX[T:! type](pt: Point(T)) -> T {
   return pt.x;
 }
-fn GetY(T:! Type, pt: Point(T)) -> T {
+fn GetY(T:! type, pt: Point(T)) -> T {
   return pt.y;
 }
 
@@ -28,3 +23,5 @@ fn Main() -> i32 {
   // TODO: Should `GetX({.x = 1, .y = 2})` work? See #1251.
   return GetX(p) + GetY(i32, {.x = 3, .y = 4});
 }
+
+// CHECK:STDOUT: result: 5

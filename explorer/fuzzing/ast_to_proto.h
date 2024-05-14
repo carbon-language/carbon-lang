@@ -5,14 +5,14 @@
 #ifndef CARBON_EXPLORER_FUZZING_AST_TO_PROTO_H_
 #define CARBON_EXPLORER_FUZZING_AST_TO_PROTO_H_
 
-#include "common/fuzzing/carbon.pb.h"
 #include "explorer/ast/ast.h"
+#include "testing/fuzzing/carbon.pb.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // Builds a protobuf representation of `ast`.
-auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit;
+auto AstToProto(const AST& ast) -> Fuzzing::Carbon;
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // CARBON_EXPLORER_FUZZING_AST_TO_PROTO_H_

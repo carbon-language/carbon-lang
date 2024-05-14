@@ -9,7 +9,7 @@
 
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/library_name.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 
 namespace Carbon {
 
@@ -25,6 +25,10 @@ struct AST {
   std::vector<Nonnull<Declaration*>> declarations;
   // Synthesized call to `Main`. Injected after parsing.
   std::optional<Nonnull<CallExpression*>> main_call;
+  // The number of declarations which came from the prelude.
+  // TODO: This should be removed once the prelude AST can be separated from
+  // per-file ASTs.
+  int num_prelude_declarations = 0;
 };
 
 }  // namespace Carbon

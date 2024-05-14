@@ -1,0 +1,1527 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macros are:
+// - CARBON_PARSE_STATE(Name)
+//   Defines a parser state.
+//
+// Parser states may be clustered when there are multiple related variants,
+// named `StateAsVariant`. When there are variants, they share a common helper
+// function for most logic.
+//
+// The comments before each state describe the portion of the grammar that the
+// state is implementing, by giving an example of each kind of token sequence
+// that this state handles. In this example, `...` indicates a sequence of
+// tokens handled by some other state, and `???` indicates a sequence of invalid
+// tokens. A trailing `??? ;` indicates an attempt to skip to the end of the
+// declaration, which may or may not actually find a `;` token.
+//
+// The position in the token stream before the state is indicated by the caret
+// `^` on the line below the example, and all tokens consumed by the state are
+// underlined by the caret and following `~`s. If no tokens are consumed, the
+// caret will point between tokens. Therefore, the position in the token stream
+// after the state is the first token in the example after the underlined
+// region.
+//
+// Following each set of examples, the output states for that situation are
+// listed. States are numbered in the order they'll be executed; in other
+// words, `1` is the top of the state stack. The comment `(state done)`
+// indicates that no new states are added to the stack.
+
+#ifndef CARBON_PARSE_STATE
+#error "Must define the x-macro to use this file."
+#endif
+
+// Use CARBON_PARSE_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
+// StateAsVariant1, StateAsVariant2, ... states.
+#define CARBON_PARSE_STATE_VARIANT(State, Variant) \
+  CARBON_PARSE_STATE(State##As##Variant)
+#define CARBON_PARSE_STATE_VARIANTS2(State, Variant1, Variant2) \
+  CARBON_PARSE_STATE_VARIANT(State, Variant1)                   \
+  CARBON_PARSE_STATE_VARIANT(State, Variant2)
+#define CARBON_PARSE_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
+  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS2(State, Variant2, Variant3)
+#define CARBON_PARSE_STATE_VARIANTS4(State, Variant1, Variant2, Variant3, \
+                                     Variant4)                            \
+  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
+
+// Used as a default for StateStackEntry initialization in some cases. Should
+// not be put on the state stack.
+CARBON_PARSE_STATE(Invalid)
+
+// Handles an index expression:
+//
+// a[0]
+//  ^
+//   1. Expr
+//   2. IndexExprFinish
+CARBON_PARSE_STATE(IndexExpr)
+
+// Handles finishing the index expression.
+//
+// a[0]
+//    ^
+//   (state done)
+CARBON_PARSE_STATE(IndexExprFinish)
+
+// Handles an array expression.
+//
+// [T; N]
+// ^
+//   1. Expr
+//   2. ArrayExprSemi
+CARBON_PARSE_STATE(ArrayExpr)
+
+// Handles ';' in an array expression.
+//
+// [T;]
+//   ^
+//   1. ArrayExprFinish
+//
+// [T; N]
+//   ^
+//   1. Expr
+//   2. ArrayExprFinish
+CARBON_PARSE_STATE(ArrayExprSemi)
+
+// Handles finishing the array expression.
+//
+// [T;]
+//    ^
+// [T; N]
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(ArrayExprFinish)
+
+// Handles the `{` of a brace expression.
+//
+// {}
+// ^
+//   1. BraceExprFinishAsUnknown
+//
+// { ... }
+// ^
+//   1. BraceExprParamAsUnknown
+//   2. BraceExprFinishAsUnknown
+CARBON_PARSE_STATE(BraceExpr)
+
+// Handles a brace expression parameter. Note this will always start as unknown,
+// but should be known after the first valid parameter. All later inconsistent
+// parameters are invalid.
+//
+// { .foo ... }
+//  ^
+//   1. PeriodAsStruct
+//   2. BraceExprParamAfterDesignatorAs(Type|Value|Unknown)
+//
+// { ???
+//  ^
+//   1. BraceExprParamFinishAs(Type|Value|Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
+
+// Handles a brace expression parameter after the initial designator. This
+// should be at a `:` or `=`, depending on whether it's a type or value literal.
+//
+// { .foo = bar ... }
+//        ^
+//   1. Expr
+//   2. BraceExprParamFinishAsValue
+//
+// { .foo: bar ... }
+//       ^
+//   1. Expr
+//   2. BraceExprParamFinishAsType
+//
+// { .foo ???
+//       ^
+//   1. BraceExprParamFinishAs(Type|Value|Unknown)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParamAfterDesignator, Type, Value,
+                             Unknown)
+
+// Handles the end of a brace expression parameter.
+//
+// { ... }
+//      ^
+//   (state done)
+//
+// { .foo = bar, ... }
+//             ^
+//   1. BraceExprParamAsValue
+//
+// { .foo: bar, ... }
+//            ^
+//   1. BraceExprParamAsType
+//
+// { ??? , ... }
+//       ^
+//   1. BraceExprParamAsUnknown
+CARBON_PARSE_STATE_VARIANTS3(BraceExprParamFinish, Type, Value, Unknown)
+
+// Handles the `}` of a brace expression.
+//
+// { ... }
+//       ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
+
+// Handles a call expression `(...)`.
+//
+// F()
+//  ^
+//   1. CallExprFinish
+//
+// F( ...
+//  ^
+//   1. Expr
+//   2. CallExprParamFinish
+//   3. CallExprFinish
+CARBON_PARSE_STATE(CallExpr)
+
+// Handles the `,` or `)` after a call parameter.
+//
+// F(a, ...)
+//    ^
+//   1. Expr
+//   2. CallExprParamFinish
+//
+// F(a )
+//    ^
+//   (state done)
+CARBON_PARSE_STATE(CallExprParamFinish)
+
+// Handles finishing the call expression.
+//
+// F(a, b)
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(CallExprFinish)
+
+// Handles processing at the `{` on a typical code block.
+//
+// if (cond) {
+//           ^
+//   1. StatementScopeLoop
+//   2. CodeBlockFinish
+//
+// if (cond) ???
+//          ^
+//   1. Statement
+//   2. CodeBlockFinish
+CARBON_PARSE_STATE(CodeBlock)
+
+// Handles processing at the `}` on a typical code block, after a statement
+// scope is done.
+//
+// if (cond) { ... }
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(CodeBlockFinish)
+
+// Handles a declaration name and parameters, such as `Foo[...](...)`.
+//
+// Allowed parameters:
+// - None: `Foo` only.
+// - Optional: `Foo`, `Foo(...)`, or `Foo[...](...)`.
+// - Required: `Foo(...)` or `Foo[...](...)`.
+//
+// name . ...
+// ^~~~
+//   1. PeriodAsDecl
+//   2. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//
+// name ...
+// ^~~~
+//   1. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//
+//  ???
+// ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, None, Optional, Required)
+
+// Handles a declaration name between the main name and implicit parameters.
+//
+// name . ...
+//     ^
+//   1. PeriodAsDecl
+//   2. DeclNameAndParamsAfterNameAs(None|Optional|Required)
+//
+// name [ ... ]    (variant is not None)
+//     ^
+//   1. PatternListAsImplicit
+//   2. DeclNameAndParamsAfterImplicit
+//
+// name ( ... )    (variant is not None)
+//     ^
+//   1. PatternListAsTuple
+//
+// name ...        (variant is not Required)
+//     ^
+//   (state done)
+//
+// name ???        (variant is Required)
+//     ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParamsAfterName, None, Optional,
+                             Required)
+
+// Handles regular parameters such as `(...)` for the general declaration case.
+// Only used after implicit parameters.
+//
+// name [ ... ] ( ... )
+//             ^
+//   1. PatternListAsTuple
+//
+// name [ ... ] ???
+//             ^
+//   (state done)
+CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
+
+// Handles processing of a declaration scope. Things like fn, class, interface,
+// and so on.
+//
+// abstract
+// ^~~~~~~~
+// base class
+// ^~~~
+// default
+// ^~~~~~~
+// extend base
+// ^~~~~~
+// final
+// ^~~~~
+// impl fn
+// ^~~~
+// private
+// ^~~~~~~
+// protected
+// ^~~~~~~~~
+// virtual
+// ^~~~~~~
+//   1. DeclScopeLoop
+//
+// adapt ...
+// ^~~~~
+//   1. Expr
+//   2. AdaptDecl
+//   3. DeclScopeLoop
+//
+// alias ...
+// ^~~~~
+//   1. Alias
+//   2. DeclScopeLoop
+//
+// class ...
+// ^~~~~
+//   1. TypeAfterIntroducerAsClass
+//   2. DeclScopeLoop
+//
+// base : ...
+// ^~~~~~
+//   1. Expr
+//   2. BaseDecl
+//   3. DeclScopeLoop
+//
+// constraint ...
+// ^~~~~~~~~~
+//   1. TypeAfterIntroducerAsNamedConstraint
+//   2. DeclScopeLoop
+//
+// fn ...
+// ^~
+//   1. FunctionIntroducer
+//   2. DeclScopeLoop
+//
+// impl ...
+// ^~~~
+//   1. ImplAfterIntroducer
+//   2. DeclScopeLoop
+//
+// interface ...
+// ^~~~~~~~~
+//   1. TypeAfterIntroducerAsInterface
+//   2. DeclScopeLoop
+//
+// namespace ...
+// ^~~~~~~~~
+//   1. Namespace
+//   2. DeclScopeLoop
+//
+// ;
+// ^
+//   1. DeclScopeLoop
+//
+// var ...
+// ^~~
+//   1. VarAsDecl
+//   2. DeclScopeLoop
+//
+// let ...
+// ^~~
+//   1. Let
+//   2. DeclScopeLoop
+//
+//  choice ...
+// ^
+//   1. ChoiceIntroducer
+//   2. DeclScopeLoop
+//
+// ??? ;
+// ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(DeclScopeLoop)
+
+// Handles periods. Only does one `.<expression>` segment; the source is
+// responsible for handling chaining.
+//
+// The forms of this are:
+// - Qualified names in declarations.
+// - Member access expressions.
+// - Designated names in structs.
+//
+// Declarations and expressions have qualifiers such as `x.y`, while structs
+// have designators such as `.z`.
+//
+// . name
+// ^~~~~~
+// -> name
+// ^~~~~~~
+// . base    (variant is not Decl)
+// ^~~~~~
+// -> base   (variant is not Decl)
+// ^~~~~~~
+// . ???     (??? consumed if it is a keyword)
+// ^
+// -> ???    (??? consumed if it is a keyword)
+// ^~
+//   (state done)
+//
+// expr . ( ... )
+//      ^
+//   1. OnlyParenExpr
+//   2. CompoundMemberAccess
+//
+// expr -> ( ... )
+//      ^~
+//   1. OnlyParenExpr
+//   2. CompoundPointerMemberAccess
+CARBON_PARSE_STATE_VARIANTS3(Period, Decl, Expr, Struct)
+
+// Handles a compound member access after we parse the name expression.
+//
+// expr . ( expr )
+//                ^
+CARBON_PARSE_STATE(CompoundMemberAccess)
+
+// Handles a compound pointer member access after we parse the name expression.
+//
+// expr -> ( expr )
+//                 ^
+CARBON_PARSE_STATE(CompoundPointerMemberAccess)
+
+// Handles `->name` expressions. Identical to PeriodAsExpr except for the
+// leading token.
+//
+// -> name
+// ^~~~~~~
+//   (state done)
+//
+// -> ???    (??? consumed if it is a keyword)
+// ^~
+//   (state done)
+CARBON_PARSE_STATE(ArrowExpr)
+
+// Handles processing of an expression.
+//
+// if ...
+// ^~
+//   1. Expr
+//   2. IfExprCondition
+//   3. IfExprFinish
+//
+// <prefix operator> ...
+// ^~~~~~~~~~~~~~~~~
+//   1. Expr
+//   2. ExprLoopForPrefix
+//
+//  ...
+// ^
+//   1. ExprInPostfix
+//   2. ExprLoop
+CARBON_PARSE_STATE(Expr)
+
+// Handles the initial part of postfix expressions, such as an identifier or
+// literal value, then proceeds to the loop.
+//
+// identifier
+// ^~~~~~~~~~
+// literal
+// ^~~~~~~
+// self
+// ^~~~
+// Self
+// ^~~~
+//   1. ExprInPostfixLoop
+//
+//  {
+// ^
+//   1. BraceExpr
+//   2. ExprInPostfixLoop
+//
+//  (
+// ^
+//   1. ParenExpr
+//   2. ExprInPostfixLoop
+//
+//  [
+// ^
+//   1. ArrayExpr
+//   2. ExprInPostfixLoop
+//
+//  ???
+// ^
+//   (state done)
+CARBON_PARSE_STATE(ExprInPostfix)
+
+// Handles looping through elements following the initial postfix expression,
+// such as designators or parenthesized parameters.
+//
+// expr . ...
+//     ^
+//   1. PeriodAsExpr
+//   2. ExprInPostfixLoop
+//
+// expr -> ...
+//     ^
+//   1. ArrowExpr
+//   2. ExprInPostfixLoop
+//
+// expr ( ... )
+//     ^
+//   1. CallExpr
+//   2. ExprInPostfixLoop
+//
+// expr [ ... ]
+//     ^
+//   1. IndexExprStart
+//   2. ExprInPostfixLoop
+//
+//  ...
+// ^
+//   (state done)
+CARBON_PARSE_STATE(ExprInPostfixLoop)
+
+// Handles processing of an expression.
+//
+// expr <infix operator> ...
+//      ^~~~~~~~~~~~~~~~
+//   1. Expr
+//   2. ExprLoopForBinary
+//
+// expr <postfix operator>
+//      ^~~~~~~~~~~~~~~~~~
+//   1. ExprLoop
+//
+// expr <short circuit operator> ...
+//      ^~~~~~~~~~~~~~~~~~~~~~~~
+//   1. Expr
+//   2. ExprLoopForShortCircuitOperator
+//
+// expr ...
+//     ^
+//   (state done)
+CARBON_PARSE_STATE(ExprLoop)
+
+// Completes an ExprLoop pass by adding an infix operator, then goes back
+// to ExprLoop.
+//
+// expr <infix operator> expr ...
+//                           ^
+//   1. ExprLoop
+CARBON_PARSE_STATE(ExprLoopForInfixOperator)
+
+// Completes an ExprLoop pass by adding a prefix operator, then goes back
+// to ExprLoop.
+//
+// <prefix operator> expr ...
+//                       ^
+//   1. ExprLoop
+CARBON_PARSE_STATE(ExprLoopForPrefixOperator)
+
+// Completes an ExprLoop pass by adding a short circuit operator, then goes back
+// to ExprLoop.
+//
+// expr <short circuit operator> expr ...
+//                                   ^
+//   1. ExprLoop
+CARBON_PARSE_STATE_VARIANTS2(ExprLoopForShortCircuitOperator, And, Or)
+
+// Completes the condition of an `if` expression and handles the `then` token.
+//
+// if expr then ...
+//         ^~~~
+//   1. Expr
+//   2. IfExprFinishThen
+//
+// if expr ???
+//        ^
+//  (state done)
+CARBON_PARSE_STATE(IfExprFinishCondition)
+
+// Completes the first alternative in an `if` expression and handles the `else`
+// token.
+//
+// if expr then expr else ...
+//                   ^~~~
+//   1. Expr
+//   2. IfExprFinishElse
+//
+// if expr then expr ???
+//                  ^
+//  (state done)
+CARBON_PARSE_STATE(IfExprFinishThen)
+
+// Completes the second alternative in an `if` expression.
+//
+// if expr then expr else expr
+//                            ^
+//  (state done)
+CARBON_PARSE_STATE(IfExprFinishElse)
+
+// Completes an IfExpr.
+//
+// if expr then expr else expr
+//                            ^
+// if ???
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(IfExprFinish)
+
+// Handles the `;` for an expression statement, which is different from most
+// keyword statements.
+//
+// expr ;
+//      ^
+// expr ??? ;
+//      ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(ExprStatementFinish)
+
+// Handles a function's introducer.
+//
+// fn ...
+//   ^
+//   1. DeclNameAndParamsAsRequired
+//   2. FunctionAfterParams
+CARBON_PARSE_STATE(FunctionIntroducer)
+
+// Handles processing of a function's syntax after `)`, primarily the
+// possibility a `->` return type is there. Always enqueues signature finish
+// handling.
+//
+// fn F(...) -> ...
+//           ^~
+//   1. Expr
+//   2. FunctionReturnTypeFinish
+//   3. FunctionSignatureFinish
+//
+// fn F(...) ...
+//          ^
+//   1. FunctionSignatureFinish
+CARBON_PARSE_STATE(FunctionAfterParams)
+
+// Finishes a function return type.
+//
+// fn F(...) -> expr ...
+//                  ^
+//   (state done)
+CARBON_PARSE_STATE(FunctionReturnTypeFinish)
+
+// Finishes a function signature. If it's a declaration, the function is done;
+// otherwise, this also starts definition processing.
+//
+// fn ... ;
+//        ^
+//   (state done)
+//
+// fn ... {
+//        ^
+//   1. StatementScopeLoop
+//   2. FunctionDefinitionFinish
+//
+// fn ... ??? ;
+//        ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(FunctionSignatureFinish)
+
+// Finishes a function definition.
+//
+// fn ... }
+//         ^
+// fn ... ;
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(FunctionDefinitionFinish)
+
+// Handles `import`.
+//
+// import pkgname [library "libname"] ;
+// ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// import ??? ;
+// ^~~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(Import)
+
+// Handles `library` in directive form.
+//
+// Always:
+//   (state done)
+CARBON_PARSE_STATE(Library)
+
+// Handles `namespace`.
+//
+// namespace ...
+//          ^
+//   1. DeclNameAndParamsAsNone
+//   2. NamespaceFinish
+CARBON_PARSE_STATE(Namespace)
+
+// Handles `namespace` after the name.
+//
+// namespace ... ;
+//               ^
+// namespace ... ??? ;
+//               ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(NamespaceFinish)
+
+// Handles `package`.
+//
+// package pkgname [library "libname"] [api|impl] ;
+// ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// package ??? ;
+// ^~~~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(Package)
+
+// Handles `alias` after the introducer.
+//
+// alias ...
+//      ^
+//   1. DeclNameAndParamsAsNone
+//   2. AliasInitializer
+CARBON_PARSE_STATE(Alias)
+
+// Handles `alias` after the name.
+//
+// alias ... = ... ;
+//           ^
+//   1. Expr
+//   2. AliasFinish
+//
+// alias ???
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(AliasAfterName)
+
+// Handles `alias` at the end.
+//
+// alias ... ;
+//           ^
+// alias ???
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(AliasFinish)
+
+// Starts parsing a pattern in a comma-separated list. The variants mark
+// whether it is part of an implicit parameter list or a tuple pattern.
+//
+//  ...
+// ^
+//   1. BindingPattern
+//   2. PatternListElementFinishAs(Implicit|Tuple)
+CARBON_PARSE_STATE_VARIANTS2(PatternListElement, Implicit, Tuple)
+
+// Finishes parsing a pattern in a comma-separated list, including the
+// optional trailing `,`. If there are more patterns, enqueues another
+// pattern parsing state.
+//
+// ... , )  (variant is Tuple)
+//     ^
+//   (state done)
+//
+// ... , ]  (variant is Implicit)
+//     ^
+//   (state done)
+//
+// ... , ...
+//     ^
+//   1. PatternListElementAs(Implicit|Tuple)
+//
+// ...
+//    ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS2(PatternListElementFinish, Implicit, Tuple)
+
+// Handles processing of a tuple pattern (parentheses) or implicit parameter
+// list (square brackets).
+//
+// ( )        (variant is Tuple)
+// ^
+// [ ]        (variant is Implicit)
+// ^
+//   1. PatternListFinishAs(Tuple|Implicit)
+//
+// ( ... )    (variant is Tuple)
+// ^
+// [ ... ]    (variant is Implicit)
+// ^
+//   1. PatternListElementAs(Tuple|Implicit)
+//   2. PatternListFinishAs(Tuple|Implicit)
+CARBON_PARSE_STATE_VARIANTS2(PatternList, Implicit, Tuple)
+
+// Handles processing of a parameter list `]` or `)`.
+//
+// ( ... )    (variant is Tuple)
+//       ^
+// [ ... ]    (variant is Implicit)
+//       ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS2(PatternListFinish, Implicit, Tuple)
+
+// Handles the processing of a `(condition)` up through the expression.
+//
+// if/while/match {    (invalid)
+//               ^
+//   1. ParenConditionAs(If|While|Match)Finish
+//
+// if/while/match ( ... )
+//                ^
+// if/while/match ???
+//               ^
+//   1. Expr
+//   2. ParenConditionAs(If|While|Match)Finish
+CARBON_PARSE_STATE_VARIANTS3(ParenCondition, If, While, Match)
+
+// Finishes the processing of a `(condition)` after the expression.
+//
+// if/while/match ( expr )
+//                       ^
+// if/while/match {
+//               ^
+// if/while/match ??? {
+//                   ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
+
+// Handles compound member access `(` after `->` or `.`
+//
+// ( ... )
+// ^
+//   1. Expr
+//   2. OnlyParenExprFinish
+CARBON_PARSE_STATE(OnlyParenExpr)
+
+// Handles the `)` after `->(`... or `.(`...
+//
+// ( ... )
+//       ^
+CARBON_PARSE_STATE(OnlyParenExprFinish)
+
+// Handles the `(` of a parenthesized single expression
+//
+// ( )
+// ^
+//   1. TupleLiteralFinish
+//
+// ( ... )
+// ^
+//   1. Expr
+//   2. ExprAfterOpenParenFinish
+//   3. ParenExprFinish    (SPECIAL: may be replaced)
+CARBON_PARSE_STATE(ParenExpr)
+
+// Handles the `)` of a tuple literal.
+//
+// ( ... )
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(TupleLiteralFinish)
+
+// Handles the end of an expression following an open parenthesis.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... , ... )
+//       ^
+//   1. Expr
+//   2. TupleLiteralElementFinish
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
+
+// Handles the end of an expression that is known to be an element of a tuple
+// literal expression.
+//
+// ( ... , )
+//       ^
+//   (state done)
+//
+// ( ... , ... )
+//       ^
+//   1. Expr
+//   2. TupleLiteralElementFinish
+//
+// ( ... )
+//      ^
+//   (state done)
+CARBON_PARSE_STATE(TupleLiteralElementFinish)
+
+// Handles the `)` of a parenthesized single expression.
+//
+// ( ... )
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(ParenExprFinish)
+
+// Handles processing of a pattern.
+//
+//  ( ... )
+// ^
+//   1. PatternListAsTuple
+//
+//  ...
+// ^
+//   1. BindingPattern
+CARBON_PARSE_STATE(Pattern)
+
+// Handles the initial part of a binding pattern, enqueuing type expression
+// processing.
+//
+// template    (variant is not Variable)
+// ^~~~~~~~
+//   4. BindingPatternTemplate
+//
+// THEN
+//
+// addr        (variant is not Variable)
+// ^~~~
+//   3. BindingPatternAddr
+//
+// THEN
+//
+// name: ...
+// ^~~~~
+// self: ...
+// ^~~~~
+//   1. Expr
+//   2. BindingPatternFinishAsRegular
+//
+// name:! ...
+// ^~~~~~
+// self:! ...
+// ^~~~~~
+//   1. Expr
+//   2. BindingPatternFinishAsGeneric
+//
+//  ???
+// ^
+//   1. BindingPatternFinishAsRegular
+CARBON_PARSE_STATE(BindingPattern)
+
+// Handles `addr` in a binding pattern.
+//
+// addr name: type
+//                ^
+//   (state done)
+CARBON_PARSE_STATE(BindingPatternAddr)
+
+// Handles `template` in a binding pattern.
+//
+// template name:! type
+//                     ^
+//   (state done)
+CARBON_PARSE_STATE(BindingPatternTemplate)
+
+// Finishes binding pattern processing.
+//
+// name: type
+//           ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
+
+// Handles a single statement. While typically within a statement block, this
+// can also be used for error recovery where we expect a statement block and
+// are missing braces.
+//
+// break ...
+// ^~~~~
+//   1. StatementBreakFinish
+//
+// continue ...
+// ^~~~~~~~
+//   1. StatementContinueFinish
+//
+// for ...
+// ^~~
+//   1. StatementForHeader
+//   2. StatementForFinish
+//
+//  if ...
+// ^
+//   1. StatementIf
+//
+//  return ...
+// ^
+//   1. StatementReturn
+//
+//  var ...
+// ^
+//   1. VarAsDecl
+//
+//  returned ...
+// ^
+//   1. VarAsReturned
+//
+//  while ...
+// ^
+//   1. StatementWhile
+//
+//  ...
+// ^
+//   1. Expr
+//   2. ExprStatementFinish
+//
+//  match ...
+// ^
+//   1. MatchIntroducer
+CARBON_PARSE_STATE(Statement)
+
+// Handles `break` processing at the `;`.
+//
+// break ;
+//       ^
+//   (state done)
+CARBON_PARSE_STATE(StatementBreakFinish)
+
+// Handles `continue` processing at the `;`.
+//
+// continue ;
+//          ^
+//   (state done)
+CARBON_PARSE_STATE(StatementContinueFinish)
+
+// Handles `for` processing of `(var`, proceeding to a binding pattern before
+// continuing.
+//
+// for ( var ... )
+//     ^
+//   1. VarAsFor
+//   2. StatementForHeaderIn
+//
+// for ( ???
+//     ^
+// for ( ??? in ...
+//     ^~~~~~~~
+// for ??? in ...
+//     ^~~~~~
+// for ???
+//    ^
+//   1. StatementForHeaderIn
+CARBON_PARSE_STATE(StatementForHeader)
+
+// Handles `for` processing of `in`, proceeding to an expression before
+// continuing.
+//
+// for ( ... in ... )
+//             ^
+//   1. Expr
+//   2. StatementForHeaderFinish
+CARBON_PARSE_STATE(StatementForHeaderIn)
+
+// Handles `for` processing of `)`, proceeding to the statement block.
+//
+// for ( ... ) ...
+//           ^
+//   1. CodeBlock
+CARBON_PARSE_STATE(StatementForHeaderFinish)
+
+// Handles `for` processing after the final `}`.
+//
+// for ( ... ) { ... }
+//                    ^
+//   (state done)
+CARBON_PARSE_STATE(StatementForFinish)
+
+// Handles `if` processing at the start.
+//
+// if ...
+// ^~
+//   1. ParenConditionAsIf
+//   2. StatementIfConditionFinish
+CARBON_PARSE_STATE(StatementIf)
+
+// Handles `if` processing between the condition and start of the first code
+// block.
+//
+// if ( ... ) ...
+//           ^
+//   1. CodeBlock
+//   2. StatementIfThenBlockFinish
+CARBON_PARSE_STATE(StatementIfConditionFinish)
+
+// Handles `if` processing after the end of the first code block, with the
+// optional `else`.
+//
+// if ( ... ) { ... } else if ...
+//                    ^~~~
+//   1. StatementIf
+//   2. StatementIfElseBlockFinish
+//
+// if ( ... ) { ... } else ...
+//                    ^~~~
+//   1. CodeBlock
+//   2. StatementIfElseBlockFinish
+//
+// if ( ... ) { ... } ...
+//   (state done)
+CARBON_PARSE_STATE(StatementIfThenBlockFinish)
+
+// Handles `if` processing after a provided `else` code block.
+//
+// if ( ... ) { ... } else { ... }
+//                                ^
+//   (state done)
+CARBON_PARSE_STATE(StatementIfElseBlockFinish)
+
+// Handles `return` processing.
+//
+// return ;
+// ^~~~~~
+//   1. StatementReturnFinish
+//
+// return var ...
+// ^~~~~~~~~~
+//   1. StatementReturnFinish
+//
+// return ...
+// ^~~~~~
+//   1. Expr
+//   2. StatementReturnFinish
+CARBON_PARSE_STATE(StatementReturn)
+
+// Handles `return` processing at the `;`.
+//
+// return ... ;
+//            ^
+//   (state done)
+CARBON_PARSE_STATE(StatementReturnFinish)
+
+// Handles processing of statements within a scope.
+//
+// { ... }
+//      ^
+//   (state done)
+//
+// { ... ... }
+//      ^
+//   1. Statement
+//   2. StatementScopeLoop
+CARBON_PARSE_STATE(StatementScopeLoop)
+
+// Handles `while` processing.
+//
+// while ...
+// ^~~~~
+//   1. ParenConditionAsWhile
+//   2. StatementWhileConditionFinish
+CARBON_PARSE_STATE(StatementWhile)
+
+// Handles `while` processing between the condition and start of the code block.
+//
+// while ( ... ) ...
+//              ^
+//   1. CodeBlock
+//   2. StatementWhileBlockFinish
+CARBON_PARSE_STATE(StatementWhileConditionFinish)
+
+// Handles `while` processing after the end of the code block.
+//
+// while ( ... ) { ... }
+//                      ^
+//   (state done)
+CARBON_PARSE_STATE(StatementWhileBlockFinish)
+
+// Handles parsing after the declaration scope of a type.
+//
+// class/impl/interface/constraint ... { ... }
+//                                           ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
+                             NamedConstraint)
+
+// Handles processing of a type after its introducer.
+//
+// class/interface/constraint ...
+//                           ^
+//   1. DeclNameAndParamsAsOptional
+//   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
+CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
+                             NamedConstraint)
+
+// Handles processing of a type after its optional parameters.
+//
+// class/impl/interface/constraint name ( ... ) {
+//                                              ^
+//   1. DeclScopeLoop
+//   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
+//
+// class/impl/interface/constraint name ( ... ) ;
+//                                              ^
+// class/impl/interface/constraint name ( ... ) ???
+//                                              ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
+                             NamedConstraint)
+
+// Handles processing of a completed `adapt T` declaration.
+//
+// adapt T ;
+//         ^
+// adapt T ??? ;
+//         ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(AdaptDecl)
+
+// Handles processing of a completed `base: B` declaration.
+//
+// base: B ;
+//         ^
+// base: B ??? ;
+//         ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(BaseDecl)
+
+// Handles processing of an `impl...as` declaration after the introducer.
+//
+// impl forall [ ...
+//      ^~~~~~
+//   1. PatternListAsImplicit
+//   2. ImplAfterForall
+//   3. DeclOrDefinitionAsImpl
+// impl as ...
+//      ^~
+//   1. Expr
+//   2. DeclOrDefinitionAsImpl
+// impl type_expression as ...
+//     ^
+//   1. Expr
+//   2. ImplBeforeAs
+//   3. DeclOrDefinitionAsImpl
+CARBON_PARSE_STATE(ImplAfterIntroducer)
+
+// Handles processing of an `impl forall` declaration after the implicit
+// parameter list.
+//
+// impl forall [ ... ] as ...
+//                     ^~
+//   1. Expr
+// impl forall [ ... ] type_expression as ...
+//                    ^
+//   1. Expr
+//   2. ImplBeforeAs
+CARBON_PARSE_STATE(ImplAfterForall)
+
+// Handles processing of the `as` in an `impl` declaration after the type
+// expression.
+//
+// impl TypeExpression as ...
+//                     ^~
+//   1. Expr
+CARBON_PARSE_STATE(ImplBeforeAs)
+
+// Handles the start of a `var` or `returned var`.
+//
+// var ...             (variant is Decl)
+//    ^
+//   1. Pattern
+//   2. VarAfterPattern
+//   3. VarFinishAsDecl
+//
+// var ...             (variant is For)
+//    ^
+//   1. Pattern
+//   2. VarFinishAsFor
+//
+// returned var ...    (variant is Returned)
+// ^~~~~~~~~~~~
+//   1. Pattern
+//   2. VarAfterPattern
+//   3. VarFinishAsDecl
+//
+// returned ??? ;      (variant is Returned)
+// ^~~~~~~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
+
+// Handles `var` after the pattern, either followed by an initializer or the
+// semicolon.
+//
+// var ... = ...
+//         ^
+// var ... ??? = ...
+//         ^~~~~
+//   1. Expr
+//
+// var ... ...
+//        ^
+//   (state done)
+CARBON_PARSE_STATE(VarAfterPattern)
+
+// Handles `var` parsing at the end.
+//
+// var ... ;        (variant is Semicolon)
+//         ^
+// var ... ??? ;    (variant is Semicolon)
+//         ^~~~~
+//   (state done)
+//
+// var ... in       (variant is For)
+//         ^~
+// var ... :        (variant is For, invalid)
+//         ^
+//   (state done)
+CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
+
+// Handles the start of a `let`.
+//
+// let ...
+//    ^
+//   1. Pattern
+//   2. LetAfterPattern
+//   3. LetFinish
+CARBON_PARSE_STATE(Let)
+
+// Handles `let` after the pattern, optionally followed by an initializer. The
+// initializer is required except in an associated constant declaration, but
+// that is enforced by check.
+//
+// let ... = ...
+//         ^
+// let ... ??? = ...
+//         ^~~~~
+//   1. Expr
+//
+// let ... ;
+//        ^
+// let ... ??? ;
+//         ^~~
+//   (state done)
+CARBON_PARSE_STATE(LetAfterPattern)
+
+// Handles `let` parsing at the end.
+//
+// let ... ;
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(LetFinish)
+
+// Handles a choice's introducer.
+//
+// choice ...
+// ^~~~~~
+//   1. DeclNameAndParamsAsOptional
+//   2. ChoiceAlternativeListStart
+//   3. ChoiceDefinitionFinish
+CARBON_PARSE_STATE(ChoiceIntroducer)
+
+// Handles processing of a choice after its optional parameters.
+//
+// choice name ... {}
+//                 ^
+//   (state done)
+//
+// choice name ... { ... }
+//                 ^
+//   1. ChoiceAlternative
+//
+// choice name ... ???
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceDefinitionStart)
+
+// Starts alternative parsing.
+//
+//  name( ... )
+//  ^~~~
+//   1. ParamListAsRegular
+//   2. ChoiceAlternativeFinish
+//  name ...
+//  ^~~~
+//   1. ChoiceAlternativeFinish
+CARBON_PARSE_STATE(ChoiceAlternative)
+
+// Finishes parsing a choice's alternative, including the optional trailing `,`.
+// If there are more alternatives, enqueues another alternative parsing state.
+//
+// ... , }
+//     ^
+//   (state done)
+//
+// ... , ...
+//     ^
+//   1. ChoiceAlternative
+//
+// ...
+//    ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceAlternativeFinish)
+
+// Finishes a choice definition.
+//
+// choice ... }
+//            ^
+//   (state done)
+CARBON_PARSE_STATE(ChoiceDefinitionFinish)
+
+// Handles `match` introducer.
+//
+// match ...
+// ^~~~~
+//   1. ParenConditionAsMatch
+//   2. MatchConditionFinish
+CARBON_PARSE_STATE(MatchIntroducer)
+
+// Handles `match` cases block start after the condition.
+//
+// match (...) { ... }
+//             ^
+//   1. MatchCaseLoop
+//   2. MatchStatementFinish
+//
+// match (...) ???
+//             ^
+//   (state done)
+CARBON_PARSE_STATE(MatchConditionFinish)
+
+// Handles `match` cases.
+//
+// match (...) { case ...}
+//              ^
+//   1. MatchCaseIntroducer
+//   2. MatchCaseLoop
+// match (...) { default ...}
+//              ^
+//   1. MatchDefaultIntroducer
+//   2. MatchCaseLoopAfterDefault
+CARBON_PARSE_STATE(MatchCaseLoop)
+
+// Handles `match` `case` introducer.
+//
+// match (...) { case ...}
+//               ^~~~
+//   1. Pattern
+//   2. MatchCaseAfterPattern
+CARBON_PARSE_STATE(MatchCaseIntroducer)
+
+// Handles `match` case after pattern.
+//
+// match (...) { case ... => ... }
+//                       ^
+//   1. MatchCaseStart
+// match (...) { case ... if (...) }
+//                        ^~~~
+//   1. Expr
+//   2. MatchCaseGuardFinish
+//   3. MatchCaseStart
+CARBON_PARSE_STATE(MatchCaseAfterPattern)
+
+// Handles `match` case guard closing parenthesis.
+//
+// match (...) { case ... if (...) => ... }
+//                               ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseGuardFinish)
+
+// Handles `match` case `=>` and `{` opening statements block.
+//
+// match (...) { case ... => {...} }
+//                        ^~~~
+//   1. StatementScopeLoop
+//   2. MatchCaseFinish
+//
+// match (...) { case ... ??? }
+//                        ^
+//   (state done)
+//
+// match (...) { case ... => ??? }
+//                           ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseStart)
+
+// Handles `match` case statements block closing `}`.
+//
+// match (...) { case ... => {...} }
+//                               ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseFinish)
+
+// Handles `match` default introducer, `=>` and `{` opening statements block.
+//
+// match (...) { default => {...} }
+//               ^~~~~~~~~~~~
+//   1. StatementScopeLoop
+//   2. MatchDefaultFinish
+//
+// match (...) { default ??? }
+//                       ^
+//   (state done)
+//
+// match (...) { default => ??? }
+//                          ^
+//   (state done)
+CARBON_PARSE_STATE(MatchDefaultIntroducer)
+
+// Handles `match` default case statements block closing `}`.
+//
+// match (...) { default => {...} }
+//                              ^
+//   (state done)
+CARBON_PARSE_STATE(MatchDefaultFinish)
+
+// Handles `match` cases after the `default` case.
+//
+// match (...) { default => {...} case ... }
+//                                ^~~~
+//   1. MatchCaseLoopAfterDefault
+//
+// match (...) { default => {...} default ... }
+//                                ^~~~~~~
+//   1. MatchCaseLoopAfterDefault
+//
+// match (...) { default => {...} }
+//                                ^
+//   (state done)
+CARBON_PARSE_STATE(MatchCaseLoopAfterDefault)
+
+// Finishes `match` statement.
+//
+// match (...) {...}
+//                 ^
+//   (state done)
+CARBON_PARSE_STATE(MatchStatementFinish)
+
+#undef CARBON_PARSE_STATE

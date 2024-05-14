@@ -1,0 +1,32 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+
+package ExplorerTest api;
+
+interface Base {
+  fn F();
+}
+
+interface Extension {
+  extend Base;
+}
+
+fn F[T:! type where .Self impls Extension](x: T) {
+  x.(Extension.F)();
+}
+
+impl i32 as Extension {
+  fn F() { Print("i32.F"); }
+}
+
+fn Main() -> i32 {
+  var n: i32 = 0;
+  F(n);
+  return 0;
+}
+
+// CHECK:STDOUT: i32.F
+// CHECK:STDOUT: result: 0

@@ -1,0 +1,852 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "A"
+      }
+      members {
+        function {
+          name {
+            name: "Which"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "X"
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Y"
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Z"
+      }
+    }
+  }
+  declarations {
+    match_first {
+      impl_declarations {
+        impl {
+          kind: ExternalImpl
+          impl_type {
+            identifier {
+              name: "T"
+            }
+          }
+          interface {
+            identifier {
+              name: "A"
+            }
+          }
+          members {
+            function {
+              name {
+                name: "Which"
+              }
+              param_pattern {
+              }
+              return_term {
+                kind: Expression
+                type {
+                  int_type_literal {
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      impl_declarations {
+        impl {
+          kind: ExternalImpl
+          impl_type {
+            identifier {
+              name: "T"
+            }
+          }
+          interface {
+            identifier {
+              name: "A"
+            }
+          }
+          members {
+            function {
+              name {
+                name: "Which"
+              }
+              param_pattern {
+              }
+              return_term {
+                kind: Expression
+                type {
+                  int_type_literal {
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      impl_declarations {
+        impl {
+          kind: ExternalImpl
+          impl_type {
+            identifier {
+              name: "T"
+            }
+          }
+          interface {
+            identifier {
+              name: "A"
+            }
+          }
+          members {
+            function {
+              name {
+                name: "Which"
+              }
+              param_pattern {
+              }
+              return_term {
+                kind: Expression
+                type {
+                  int_type_literal {
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      impl_declarations {
+        impl {
+          kind: ExternalImpl
+          impl_type {
+            identifier {
+              name: "T"
+            }
+          }
+          interface {
+            identifier {
+              name: "A"
+            }
+          }
+          members {
+            function {
+              name {
+                name: "Which"
+              }
+              param_pattern {
+              }
+              return_term {
+                kind: Expression
+                type {
+                  int_type_literal {
+                  }
+                }
+              }
+              body {
+                statements {
+                  return_expression_statement {
+                    expression {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "XYZ"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "XY"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "XZ"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "YZ"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "JustX"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "JustY"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "JustZ"
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "None"
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "XYZ"
+        }
+      }
+      interface {
+        operator {
+          op: BitwiseAnd
+          arguments {
+            operator {
+              op: BitwiseAnd
+              arguments {
+                identifier {
+                  name: "X"
+                }
+              }
+              arguments {
+                identifier {
+                  name: "Y"
+                }
+              }
+            }
+          }
+          arguments {
+            identifier {
+              name: "Z"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "XY"
+        }
+      }
+      interface {
+        operator {
+          op: BitwiseAnd
+          arguments {
+            identifier {
+              name: "X"
+            }
+          }
+          arguments {
+            identifier {
+              name: "Y"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "XZ"
+        }
+      }
+      interface {
+        operator {
+          op: BitwiseAnd
+          arguments {
+            identifier {
+              name: "X"
+            }
+          }
+          arguments {
+            identifier {
+              name: "Z"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "YZ"
+        }
+      }
+      interface {
+        operator {
+          op: BitwiseAnd
+          arguments {
+            identifier {
+              name: "Y"
+            }
+          }
+          arguments {
+            identifier {
+              name: "Z"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "JustX"
+        }
+      }
+      interface {
+        identifier {
+          name: "X"
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "JustY"
+        }
+      }
+      interface {
+        identifier {
+          name: "Y"
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        identifier {
+          name: "JustZ"
+        }
+      }
+      interface {
+        identifier {
+          name: "Z"
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "XYZ: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "XYZ"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "XY: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "XY"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "XZ: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "XZ"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "YZ: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "YZ"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "JustX: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "JustX"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "JustY: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "JustY"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "JustZ: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "JustZ"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "None: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          compound_member_access {
+                            object {
+                              identifier {
+                                name: "None"
+                              }
+                            }
+                            path {
+                              simple_member_access {
+                                field: "Which"
+                                object {
+                                  identifier {
+                                    name: "A"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

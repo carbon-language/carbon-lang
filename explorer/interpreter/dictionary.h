@@ -8,7 +8,7 @@
 #include <iterator>
 #include <optional>
 
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
 namespace Carbon {
 

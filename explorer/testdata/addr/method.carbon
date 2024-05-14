@@ -2,12 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -17,9 +12,9 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
+  fn GetSetX[addr self: Point*](x: i32) -> i32 {
+    var old: auto = (*self).x;
+    (*self).x = x;
     return old;
   }
 
@@ -35,3 +30,5 @@ fn Main() -> i32 {
   }
   return 1;
 }
+
+// CHECK:STDOUT: result: 0
