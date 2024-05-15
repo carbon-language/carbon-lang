@@ -102,17 +102,15 @@ class DeclNameStack {
     }
 
     // Returns the enclosing_scope_id for a new instruction. This is invalid
-    // when the name resolved. Note this is distinct from the enclosing_scope of
-    // the NameContext, which refers to the scope of the introducer rather than
-    // the scope of the name.
+    // when the name resolved.
     auto enclosing_scope_id_for_new_inst() -> SemIR::NameScopeId {
-      return state == State::Unresolved ? target_scope_id
+      return state == State::Unresolved ? enclosing_scope_id
                                         : SemIR::NameScopeId::Invalid;
     }
 
     // The current scope when this name began. This is the scope that we will
     // return to at the end of the declaration.
-    ScopeIndex enclosing_scope;
+    ScopeIndex initial_scope_index;
 
     State state = State::Empty;
 
@@ -122,7 +120,7 @@ class DeclNameStack {
     // The scope which qualified names are added to. For unqualified names in
     // an unnamed scope, this will be Invalid to indicate the current scope
     // should be used.
-    SemIR::NameScopeId target_scope_id;
+    SemIR::NameScopeId enclosing_scope_id;
 
     // The last location ID used.
     SemIR::LocId loc_id = SemIR::LocId::Invalid;
@@ -159,18 +157,18 @@ class DeclNameStack {
   // state, `FinishName` and `PopScope` must be called, in that order.
   auto PushScopeAndStartName() -> void;
 
-  // Peeks the current target scope of the name on top of the stack. Note that
-  // if we're still processing the name qualifiers, this can change before the
-  // name is completed. Also, if the name up to this point was already declared
-  // and is a scope, this will be that scope, rather than the scope enclosing
-  // it.
-  auto PeekTargetScope() const -> SemIR::NameScopeId {
-    return decl_name_stack_.back().target_scope_id;
+  // Peeks the current enclosing scope of the name on top of the stack. Note
+  // that if we're still processing the name qualifiers, this can change before
+  // the name is completed. Also, if the name up to this point was already
+  // declared and is a scope, this will be that scope, rather than the scope
+  // enclosing it.
+  auto PeekEnclosingScopeId() const -> SemIR::NameScopeId {
+    return decl_name_stack_.back().enclosing_scope_id;
   }
 
-  // Peeks the enclosing scope index of the name on top of the stack.
-  auto PeekEnclosingScope() const -> ScopeIndex {
-    return decl_name_stack_.back().enclosing_scope;
+  // Peeks the resolution scope index of the name on top of the stack.
+  auto PeekInitialScopeIndex() const -> ScopeIndex {
+    return decl_name_stack_.back().initial_scope_index;
   }
 
   // Finishes the current declaration name processing, returning the final

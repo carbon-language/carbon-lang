@@ -83,8 +83,8 @@ static auto GetScopeInst(Context& context, SemIR::NameScopeId scope_id)
 }
 
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                SemIR::NameScopeId target_scope_id) -> void {
-  auto target = GetScopeInst(context, target_scope_id);
+                                SemIR::NameScopeId enclosing_scope_id) -> void {
+  auto target = GetScopeInst(context, enclosing_scope_id);
   if (target && target->Is<SemIR::Namespace>()) {
     // TODO: This assumes that namespaces can only be declared at file scope. If
     // we add support for non-file-scope namespaces, we will need to check the
@@ -109,10 +109,10 @@ auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
 }
 
 auto CheckMethodModifiersOnFunction(Context& context,
-                                    SemIR::NameScopeId target_scope_id)
+                                    SemIR::NameScopeId enclosing_scope_id)
     -> void {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  auto target_id = GetScopeInstId(context, target_scope_id);
+  auto target_id = GetScopeInstId(context, enclosing_scope_id);
   if (target_id.is_valid()) {
     if (auto class_decl =
             context.insts().TryGetAs<SemIR::ClassDecl>(target_id)) {
@@ -137,14 +137,14 @@ auto CheckMethodModifiersOnFunction(Context& context,
 }
 
 auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                  SemIR::NameScopeId target_scope_id,
+                                  SemIR::NameScopeId enclosing_scope_id,
                                   bool is_definition) -> void {
   if (is_definition) {
     ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
                           " that provides a definition");
   }
-  if (target_scope_id.is_valid()) {
-    auto target_id = context.name_scopes().Get(target_scope_id).inst_id;
+  if (enclosing_scope_id.is_valid()) {
+    auto target_id = context.name_scopes().Get(enclosing_scope_id).inst_id;
     if (target_id.is_valid() &&
         !context.insts().Is<SemIR::Namespace>(target_id)) {
       ForbidModifiersOnDecl(context, KeywordModifierSet::Extern, decl_kind,
@@ -155,9 +155,9 @@ auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind,
-                                         SemIR::NameScopeId target_scope_id)
+                                         SemIR::NameScopeId enclosing_scope_id)
     -> void {
-  auto target = GetScopeInst(context, target_scope_id);
+  auto target = GetScopeInst(context, enclosing_scope_id);
   if (target && target->Is<SemIR::InterfaceDecl>()) {
     // Both `default` and `final` allowed in an interface definition.
     return;

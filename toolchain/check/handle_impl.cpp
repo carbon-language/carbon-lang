@@ -69,7 +69,7 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
-  auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
+  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
 
   if (auto class_decl = TryAsClassScope(context, enclosing_scope_id)) {
     return context.classes().Get(class_decl->class_id).self_type_id;
@@ -103,7 +103,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node, SemIR::TypeId constraint_id)
     -> void {
-  auto enclosing_scope_id = context.decl_name_stack().PeekTargetScope();
+  auto enclosing_scope_id = context.decl_name_stack().PeekEnclosingScopeId();
   auto& enclosing_scope = context.name_scopes().Get(enclosing_scope_id);
 
   // TODO: This is also valid in a mixin.
@@ -249,9 +249,9 @@ auto HandleImplDefinitionStart(Context& context,
         .Emit();
   } else {
     impl_info.definition_id = impl_decl_id;
-    impl_info.scope_id =
-        context.name_scopes().Add(impl_decl_id, SemIR::NameId::Invalid,
-                                  context.decl_name_stack().PeekTargetScope());
+    impl_info.scope_id = context.name_scopes().Add(
+        impl_decl_id, SemIR::NameId::Invalid,
+        context.decl_name_stack().PeekEnclosingScopeId());
   }
 
   context.scope_stack().Push(impl_decl_id, impl_info.scope_id);

@@ -488,7 +488,7 @@ class DeferredDefinitionWorklist {
   auto PushEnterDeferredDefinitionScope(Context& context) -> void {
     bool nested = !enclosing_scopes_.empty() &&
                   enclosing_scopes_.back().scope_index ==
-                      context.decl_name_stack().PeekEnclosingScope();
+                      context.decl_name_stack().PeekInitialScopeIndex();
     enclosing_scopes_.push_back(
         {.worklist_start_index = worklist_.size(),
          .scope_index = context.scope_stack().PeekIndex()});
