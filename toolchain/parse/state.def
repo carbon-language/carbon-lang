@@ -670,24 +670,20 @@ CARBON_PARSE_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
-// Handles `export`.
-//
-// export import library "libname";
-// ^~~~~~
-//   1. Import
+// Handles `export <name>`.
 //
 // export Name;
 // ^~~~~~
 //   1. DeclNameAndParamsAsNone
 //   2. ExportFinish
-CARBON_PARSE_STATE(Export)
+CARBON_PARSE_STATE(ExportName)
 
-// Finishes an `export`.
+// Finishes an `export <name>`.
 //
 // export Name;
 //            ^
 //   (state done)
-CARBON_PARSE_STATE(ExportFinish)
+CARBON_PARSE_STATE(ExportNameFinish)
 
 // Handles `import`.
 //
@@ -695,10 +691,10 @@ CARBON_PARSE_STATE(ExportFinish)
 // ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // import ??? ;
 // ^~~~~~~~~~~~
-// export import library "libname";
-//        ^~~~~~~~~~~~~~~~~~~~~~~~~
+// export import library "libname" ;
+// ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //   (state done)
-CARBON_PARSE_STATE(Import)
+CARBON_PARSE_STATE_VARIANTS2(Import, Regular, Export)
 
 // Handles `library` in directive form.
 //

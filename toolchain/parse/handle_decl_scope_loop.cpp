@@ -21,11 +21,14 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
     }
     // Packaging-related keywords manage their packaging state.
     case Lex::TokenKind::Export: {
-      context.PushState(State::Export);
+      if (!context.PositionIs(Lex::TokenKind::Import, Lookahead::NextToken)) {
+        break;
+      }
+      context.PushState(State::ImportAsExport);
       return true;
     }
     case Lex::TokenKind::Import: {
-      context.PushState(State::Import);
+      context.PushState(State::ImportAsRegular);
       return true;
     }
     case Lex::TokenKind::Library: {
@@ -37,18 +40,19 @@ static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
       return true;
     }
     default:
-      // Because a non-packaging keyword was encountered, packaging is complete.
-      // Misplaced packaging keywords may lead to this being re-triggered.
-      if (context.packaging_state() !=
-          Context::PackagingState::AfterNonPackagingDecl) {
-        if (!context.first_non_packaging_token().is_valid()) {
-          context.set_first_non_packaging_token(*context.position());
-        }
-        context.set_packaging_state(
-            Context::PackagingState::AfterNonPackagingDecl);
-      }
-      return false;
+      break;
   }
+
+  // Because a non-packaging keyword was encountered, packaging is complete.
+  // Misplaced packaging keywords may lead to this being re-triggered.
+  if (context.packaging_state() !=
+      Context::PackagingState::AfterNonPackagingDecl) {
+    if (!context.first_non_packaging_token().is_valid()) {
+      context.set_first_non_packaging_token(*context.position());
+    }
+    context.set_packaging_state(Context::PackagingState::AfterNonPackagingDecl);
+  }
+  return false;
 }
 
 // Finishes an invalid declaration, skipping past its end.
@@ -140,6 +144,11 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     case Lex::TokenKind::Constraint: {
       ApplyIntroducer(context, state, NodeKind::NamedConstraintIntroducer,
                       State::TypeAfterIntroducerAsNamedConstraint);
+      return true;
+    }
+    case Lex::TokenKind::Export: {
+      ApplyIntroducer(context, state, NodeKind::ExportIntroducer,
+                      State::ExportName);
       return true;
     }
     case Lex::TokenKind::Extend: {

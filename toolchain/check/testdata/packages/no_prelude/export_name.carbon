@@ -95,6 +95,21 @@ import library "base";
 // CHECK:STDERR:
 export NS;
 
+// --- fail_export_decl.carbon
+
+library "fail_export_decl" api;
+
+class Local {}
+
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: ERROR: Only imported entities are valid for `export`.
+// CHECK:STDERR: export Local;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: Name is declared here.
+// CHECK:STDERR: class Local {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+export Local;
+
 // --- fail_export_member.carbon
 
 library "fail_export_member" api;
@@ -224,7 +239,7 @@ export C;
 
 library "use_repeat_export" api;
 
-// CHECK:STDERR: fail_todo_use_repeat_export.carbon:[[@LINE+18]]:1: In import.
+// CHECK:STDERR: fail_todo_use_repeat_export.carbon:[[@LINE+19]]:1: In import.
 // CHECK:STDERR: import library "repeat_export";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: repeat_export.carbon:4:1: In import.
@@ -233,7 +248,7 @@ library "use_repeat_export" api;
 // CHECK:STDERR: base.carbon:4:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_todo_use_repeat_export.carbon:[[@LINE+9]]:1: In import.
+// CHECK:STDERR: fail_todo_use_repeat_export.carbon:[[@LINE+10]]:1: In import.
 // CHECK:STDERR: import library "repeat_export";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: repeat_export.carbon:4:1: In import.
@@ -242,9 +257,21 @@ library "use_repeat_export" api;
 // CHECK:STDERR: base.carbon:4:1: Name is previously declared here.
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 import library "repeat_export";
 
 var c: C = {.x = ()};
+
+// --- fail_modifiers.carbon
+
+library "fail_modifiers" api;
+
+import library "base";
+
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: ERROR: `private` not allowed on `export` declaration.
+// CHECK:STDERR: private export C;
+// CHECK:STDERR: ^~~~~~~
+private export C;
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
@@ -630,6 +657,25 @@ var c: C = {.x = ()};
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_export_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Local: type = class_type @Local [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Local = %Local.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Local.decl: type = class_decl @Local [template = constants.%Local] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Local {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Local
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -888,14 +934,44 @@ var c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_19.1: () = tuple_literal ()
-// CHECK:STDOUT:   %.loc24_20.1: {.x: ()} = struct_literal (%.loc24_19.1)
-// CHECK:STDOUT:   %.loc24_20.2: ref () = class_element_access file.%c.var, element0
-// CHECK:STDOUT:   %.loc24_19.2: init () = tuple_init () to %.loc24_20.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc24_20.3: init () = converted %.loc24_19.1, %.loc24_19.2 [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc24_20.4: init C = class_init (%.loc24_20.3), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc24_21: init C = converted %.loc24_20.1, %.loc24_20.4 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%c.var, %.loc24_21
+// CHECK:STDOUT:   %.loc25_19.1: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc25_20.1: {.x: ()} = struct_literal (%.loc25_19.1)
+// CHECK:STDOUT:   %.loc25_20.2: ref () = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc25_19.2: init () = tuple_init () to %.loc25_20.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc25_20.3: init () = converted %.loc25_19.1, %.loc25_19.2 [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc25_20.4: init C = class_init (%.loc25_20.3), file.%c.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_21: init C = converted %.loc25_20.1, %.loc25_20.4 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%c.var, %.loc25_21
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: ()} [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %import_ref.1
+// CHECK:STDOUT:     .NS = %NS
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+1, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref ir1, inst+11, loaded
+// CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:     .NSC = %import_ref.3
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+2, unloaded
+// CHECK:STDOUT:   %C: type = bind_export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .x = file.%import_ref.4
+// CHECK:STDOUT:   .Self = file.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

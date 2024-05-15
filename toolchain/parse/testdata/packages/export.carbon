@@ -4,6 +4,10 @@
 //
 // AUTOUPDATE
 
+// --- lib.carbon
+
+library "lib" api;
+
 // --- name.carbon
 
 package Pkg api;
@@ -86,20 +90,28 @@ package Pkg api;
 // CHECK:STDERR:
 export .Bar;
 
-// --- fail_after_decl.carbon
+// --- after_decl.carbon
 
 package Pkg api;
 
 class C;
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+7]]:1: ERROR: `import` and `export` directives must come after the `package` directive (if present) and before any other entities in the file.
+export Foo;
+
+// --- fail_before_import.carbon
+
+package Pkg api;
+
+export Foo;
+
+// CHECK:STDERR: fail_before_import.carbon:[[@LINE+7]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: import library "lib";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_before_import.carbon:[[@LINE-5]]:1: First declaration is here.
 // CHECK:STDERR: export Foo;
 // CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: First declaration is here.
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~
 // CHECK:STDERR:
-export Foo;
+import library "lib";
 
 // --- fail_in_default_library.carbon
 
@@ -118,6 +130,15 @@ package Pkg impl;
 // CHECK:STDERR: ^~~~~~
 export Foo;
 
+// CHECK:STDOUT: - filename: lib.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"lib"'},
+// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: name.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -230,7 +251,7 @@ export Foo;
 // CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_after_decl.carbon
+// CHECK:STDOUT: - filename: after_decl.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
@@ -240,15 +261,29 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export', has_error: yes},
+// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_before_import.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
+// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
+// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
+// CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
+// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_in_default_library.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export', has_error: yes},
+// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
@@ -260,7 +295,7 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
 // CHECK:STDOUT:       {kind: 'PackageImpl', text: 'impl'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export', has_error: yes},
+// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
