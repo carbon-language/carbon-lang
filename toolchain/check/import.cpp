@@ -12,6 +12,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -216,6 +217,77 @@ static auto CopyEnclosingNameScopesFromImportIR(
   return scope_cursor;
 }
 
+// Returns the canonical IR inst for an entity. Returns an invalid ir_id for the
+// current IR.
+static auto GetCanonicalImportIRInst(Context& context,
+                                     const SemIR::File* cursor_ir,
+                                     SemIR::InstId cursor_inst_id)
+    -> SemIR::ImportIRInst {
+  for (;;) {
+    auto inst = cursor_ir->insts().Get(cursor_inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::BindExport bind_export): {
+        cursor_inst_id = bind_export.value_id;
+        continue;
+      }
+      case SemIR::ImportRefLoaded::Kind:
+      case SemIR::ImportRefUnloaded::Kind: {
+        auto import_ref = inst.As<SemIR::AnyImportRef>();
+        auto import_ir_inst =
+            cursor_ir->import_ir_insts().Get(import_ref.import_ir_inst_id);
+        cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+        cursor_inst_id = import_ir_inst.inst_id;
+        continue;
+      }
+      default: {
+        auto ir_id = SemIR::ImportIRId::Invalid;
+        if (cursor_ir != &context.sem_ir()) {
+          // This uses AddImportIR in case it was indirectly found, which can
+          // happen with two or more steps of exports.
+          ir_id = AddImportIR(context, {.node_id = Parse::NodeId::Invalid,
+                                        .sem_ir = cursor_ir,
+                                        .is_export = false});
+        }
+        return {.ir_id = ir_id, .inst_id = cursor_inst_id};
+      }
+    }
+  }
+}
+
+// Adds an ImportRef for an entity, handling merging if needed.
+static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
+                                const SemIR::File& import_sem_ir,
+                                SemIR::InstId import_inst_id,
+                                SemIR::NameScopeId enclosing_scope_id,
+                                SemIR::NameId name_id) -> void {
+  // Leave a placeholder that the inst comes from the other IR.
+  auto& names = context.name_scopes().Get(enclosing_scope_id).names;
+  auto [it, success] = names.insert({name_id, SemIR::InstId::Invalid});
+  if (success) {
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = name_id,
+         .enclosing_scope_id = enclosing_scope_id,
+         .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+    it->second = AddImportRef(
+        context, {.ir_id = ir_id, .inst_id = import_inst_id}, bind_name_id);
+    return;
+  }
+
+  auto prev_ir_inst =
+      GetCanonicalImportIRInst(context, &context.sem_ir(), it->second);
+  auto new_ir_inst =
+      GetCanonicalImportIRInst(context, &import_sem_ir, import_inst_id);
+
+  // Diagnose if the imported instructions aren't equal. However, then we need
+  // to form an instruction for the duplicate diagnostic.
+  if (prev_ir_inst != new_ir_inst) {
+    auto conflict_id =
+        AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
+                     SemIR::BindNameId::Invalid);
+    context.DiagnoseDuplicateName(conflict_id, it->second);
+  }
+}
+
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
                                      Parse::ImportDirectiveId node_id,
@@ -249,21 +321,8 @@ auto ImportLibraryFromCurrentPackage(Context& context,
           context, namespace_type_id, copied_namespaces, ir_id, import_inst_id,
           import_namespace_inst->name_scope_id, enclosing_scope_id, name_id);
     } else {
-      // Leave a placeholder that the inst comes from the other IR.
-      auto bind_name_id = context.bind_names().Add(
-          {.name_id = name_id,
-           .enclosing_scope_id = enclosing_scope_id,
-           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-      auto target_id = AddImportRef(
-          context, {.ir_id = ir_id, .inst_id = import_inst_id}, bind_name_id);
-      auto [it, success] = context.name_scopes()
-                               .Get(enclosing_scope_id)
-                               .names.insert({name_id, target_id});
-      if (!success) {
-        // TODO: Figure out how best to handle when an export is added that's a
-        // conflict. Right now it diagnoses as a conflict around here.
-        context.DiagnoseDuplicateName(target_id, it->second);
-      }
+      AddImportRefOrMerge(context, ir_id, import_sem_ir, import_inst_id,
+                          enclosing_scope_id, name_id);
     }
   }
 

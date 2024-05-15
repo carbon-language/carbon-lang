@@ -30,6 +30,10 @@ struct ImportIRInst : public Printable<ImportIRInst> {
     out << ir_id << ":" << inst_id;
   }
 
+  auto operator==(const ImportIRInst& rhs) const -> bool {
+    return ir_id == rhs.ir_id && inst_id == rhs.inst_id;
+  }
+
   ImportIRId ir_id;
   InstId inst_id;
 };
