@@ -334,6 +334,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   1. TypeAfterIntroducerAsNamedConstraint
 //   2. DeclScopeLoop
 //
+// export <name> ...
+// ^~~~~~
+//   1. ExportName
+//   2. DeclScopeLoop
+//
 // fn ...
 // ^~
 //   1. FunctionIntroducer
@@ -673,7 +678,7 @@ CARBON_PARSE_STATE(FunctionDefinitionFinish)
 // Handles `export <name>`.
 //
 // export Name;
-// ^~~~~~
+//       ^
 //   1. DeclNameAndParamsAsNone
 //   2. ExportFinish
 CARBON_PARSE_STATE(ExportName)
