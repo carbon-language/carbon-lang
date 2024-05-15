@@ -10,20 +10,21 @@
 namespace Carbon::Check {
 
 // Reports a diagnostic if access control modifiers on this are not allowed for
-// a declaration in `target_scope_id`, and updates the declaration state in
+// a declaration in `enclosing_scope_id`, and updates the declaration state in
 // `context`.
 //
-// `target_scope_id` may be Invalid for a declaration in a block scope.
+// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
 auto CheckAccessModifiersOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                SemIR::NameScopeId target_scope_id) -> void;
+                                SemIR::NameScopeId enclosing_scope_id) -> void;
 
 // Reports a diagnostic if the method function modifiers `abstract`, `virtual`,
 // or `impl` are present but not permitted on a function declaration in
-// `target_scope_id`.
+// `enclosing_scope_id`.
 //
-// `target_scope_id` may be Invalid for a declaration in a block scope.
+// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
 auto CheckMethodModifiersOnFunction(Context& context,
-                                    SemIR::NameScopeId target_scope_id) -> void;
+                                    SemIR::NameScopeId enclosing_scope_id)
+    -> void;
 
 // Like `LimitModifiersOnDecl`, except says which modifiers are forbidden, and a
 // `context_string` (and optional `context_loc_id`) specifying the context in
@@ -48,17 +49,17 @@ inline auto LimitModifiersOnDecl(Context& context, KeywordModifierSet allowed,
 // - `extern` on a definition.
 // - `extern` on a scoped entity.
 auto RestrictExternModifierOnDecl(Context& context, Lex::TokenKind decl_kind,
-                                  SemIR::NameScopeId target_scope_id,
+                                  SemIR::NameScopeId enclosing_scope_id,
                                   bool is_definition) -> void;
 
 // Report a diagonostic if `default` and `final` modifiers are used on
 // declarations where they are not allowed. Right now they are only allowed
 // inside interfaces.
 //
-// `target_scope_id` may be Invalid for a declaration in a block scope.
+// `enclosing_scope_id` may be Invalid for a declaration in a block scope.
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          Lex::TokenKind decl_kind,
-                                         SemIR::NameScopeId target_scope_id)
+                                         SemIR::NameScopeId enclosing_scope_id)
     -> void;
 
 }  // namespace Carbon::Check

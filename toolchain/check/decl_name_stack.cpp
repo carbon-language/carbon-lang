@@ -35,8 +35,8 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
 
 auto DeclNameStack::MakeEmptyNameContext() -> NameContext {
   return NameContext{
-      .enclosing_scope = context_->scope_stack().PeekIndex(),
-      .target_scope_id = context_->scope_stack().PeekNameScopeId()};
+      .initial_scope_index = context_->scope_stack().PeekIndex(),
+      .enclosing_scope_id = context_->scope_stack().PeekNameScopeId()};
 }
 
 auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
@@ -83,7 +83,7 @@ auto DeclNameStack::FinishImplName() -> NameContext {
 auto DeclNameStack::PopScope() -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before PopScope";
-  context_->scope_stack().PopTo(decl_name_stack_.back().enclosing_scope);
+  context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index);
   decl_name_stack_.pop_back();
 }
 
@@ -91,7 +91,7 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished)
       << "Missing call to FinishName before Suspend";
   SuspendedName result = {decl_name_stack_.pop_back_val(), {}};
-  auto enclosing_index = result.name_context.enclosing_scope;
+  auto enclosing_index = result.name_context.initial_scope_index;
   auto& scope_stack = context_->scope_stack();
   while (scope_stack.PeekIndex() > enclosing_index) {
     result.scopes.push_back(scope_stack.Suspend());
@@ -105,7 +105,7 @@ auto DeclNameStack::Suspend() -> SuspendedName {
 auto DeclNameStack::Restore(SuspendedName sus) -> void {
   // The enclosing state must be the same when a name is restored.
   CARBON_CHECK(context_->scope_stack().PeekIndex() ==
-               sus.name_context.enclosing_scope)
+               sus.name_context.initial_scope_index)
       << "Name restored at the wrong position in the name stack.";
 
   // clang-tidy warns that the `std::move` below has no effect. While that's
@@ -124,11 +124,11 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
       return;
 
     case NameContext::State::Unresolved:
-      if (!name_context.target_scope_id.is_valid()) {
+      if (!name_context.enclosing_scope_id.is_valid()) {
         context_->AddNameToLookup(name_context.unresolved_name_id, target_id);
       } else {
         auto& name_scope =
-            context_->name_scopes().Get(name_context.target_scope_id);
+            context_->name_scopes().Get(name_context.enclosing_scope_id);
         if (name_context.has_qualifiers) {
           auto inst = context_->insts().Get(name_scope.inst_id);
           if (!inst.Is<SemIR::Namespace>()) {
@@ -144,7 +144,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
 
         // Exports are only tracked when the declaration is at the file-level
         // scope. Otherwise, it's in some other entity, such as a class.
-        if (name_context.enclosing_scope == ScopeIndex::Package) {
+        if (name_context.initial_scope_index == ScopeIndex::Package) {
           context_->AddExport(target_id);
         }
 
@@ -153,7 +153,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id)
         CARBON_CHECK(success)
             << "Duplicate names should have been resolved previously: "
             << name_context.unresolved_name_id << " in "
-            << name_context.target_scope_id;
+            << name_context.enclosing_scope_id;
       }
       break;
 
@@ -195,11 +195,11 @@ auto DeclNameStack::ApplyNameQualifierTo(NameContext& name_context,
   if (TryResolveQualifier(name_context, loc_id)) {
     // For identifier nodes, we need to perform a lookup on the identifier.
     auto resolved_inst_id = context_->LookupNameInDecl(
-        name_context.loc_id, name_id, name_context.target_scope_id);
+        name_context.loc_id, name_id, name_context.enclosing_scope_id);
     if (!resolved_inst_id.is_valid()) {
       // Invalid indicates an unresolved name. Store it and return.
-      name_context.state = NameContext::State::Unresolved;
       name_context.unresolved_name_id = name_id;
+      name_context.state = NameContext::State::Unresolved;
       return;
     } else {
       // Store the resolved instruction and continue for the target scope
@@ -240,7 +240,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
       const auto& class_info = context_->classes().Get(resolved_inst.class_id);
       if (class_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
-        name_context.target_scope_id = class_info.scope_id;
+        name_context.enclosing_scope_id = class_info.scope_id;
         if (!is_unqualified) {
           PushNameQualifierScope(*context_, name_context.resolved_inst_id,
                                  class_info.scope_id);
@@ -255,7 +255,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
           context_->interfaces().Get(resolved_inst.interface_id);
       if (interface_info.is_defined()) {
         name_context.state = NameContext::State::Resolved;
-        name_context.target_scope_id = interface_info.scope_id;
+        name_context.enclosing_scope_id = interface_info.scope_id;
         if (!is_unqualified) {
           PushNameQualifierScope(*context_, name_context.resolved_inst_id,
                                  interface_info.scope_id);
@@ -268,7 +268,7 @@ auto DeclNameStack::UpdateScopeIfNeeded(NameContext& name_context,
     case CARBON_KIND(SemIR::Namespace resolved_inst): {
       auto scope_id = resolved_inst.name_scope_id;
       name_context.state = NameContext::State::Resolved;
-      name_context.target_scope_id = scope_id;
+      name_context.enclosing_scope_id = scope_id;
       auto& scope = context_->name_scopes().Get(scope_id);
       if (scope.is_closed_import) {
         CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,

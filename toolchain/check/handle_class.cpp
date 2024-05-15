@@ -189,13 +189,13 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // Process modifiers.
   CheckAccessModifiersOnDecl(context, Lex::TokenKind::Class,
-                             name_context.target_scope_id);
+                             name_context.enclosing_scope_id);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Class | KeywordModifierSet::Access |
                            KeywordModifierSet::Extern,
                        Lex::TokenKind::Class);
   RestrictExternModifierOnDecl(context, Lex::TokenKind::Class,
-                               name_context.target_scope_id, is_definition);
+                               name_context.enclosing_scope_id, is_definition);
 
   auto modifiers = context.decl_state_stack().innermost().modifier_set;
   if (!!(modifiers & KeywordModifierSet::Access)) {

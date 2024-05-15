@@ -44,19 +44,19 @@ auto HandleReturnType(Context& context, Parse::ReturnTypeId node_id) -> bool {
 }
 
 static auto DiagnoseModifiers(Context& context, bool is_definition,
-                              SemIR::NameScopeId target_scope_id)
+                              SemIR::NameScopeId enclosing_scope_id)
     -> KeywordModifierSet {
   const Lex::TokenKind decl_kind = Lex::TokenKind::Fn;
-  CheckAccessModifiersOnDecl(context, decl_kind, target_scope_id);
+  CheckAccessModifiersOnDecl(context, decl_kind, enclosing_scope_id);
   LimitModifiersOnDecl(context,
                        KeywordModifierSet::Access | KeywordModifierSet::Extern |
                            KeywordModifierSet::Method |
                            KeywordModifierSet::Interface,
                        decl_kind);
-  RestrictExternModifierOnDecl(context, decl_kind, target_scope_id,
+  RestrictExternModifierOnDecl(context, decl_kind, enclosing_scope_id,
                                is_definition);
-  CheckMethodModifiersOnFunction(context, target_scope_id);
-  RequireDefaultFinalOnlyInInterfaces(context, decl_kind, target_scope_id);
+  CheckMethodModifiersOnFunction(context, enclosing_scope_id);
+  RequireDefaultFinalOnlyInInterfaces(context, decl_kind, enclosing_scope_id);
 
   return context.decl_state_stack().innermost().modifier_set;
 }
@@ -223,8 +223,8 @@ static auto BuildFunctionDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
   // Process modifiers.
-  auto modifiers =
-      DiagnoseModifiers(context, is_definition, name_context.target_scope_id);
+  auto modifiers = DiagnoseModifiers(context, is_definition,
+                                     name_context.enclosing_scope_id);
   if (!!(modifiers & KeywordModifierSet::Access)) {
     context.TODO(context.decl_state_stack().innermost().modifier_node_id(
                      ModifierOrder::Access),
