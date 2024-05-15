@@ -87,6 +87,13 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
     while (true) {
       if (cursor_inst_id.is_valid()) {
+        auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
+        if (auto bind_ref = cursor_inst.TryAs<SemIR::BindExport>();
+            bind_ref && bind_ref->value_id.is_valid()) {
+          cursor_inst_id = bind_ref->value_id;
+          continue;
+        }
+
         // If the parse node is valid, use it for the location.
         if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
             loc_id.is_valid()) {
@@ -98,8 +105,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
 
         // If a namespace has an instruction for an import, switch to looking at
         // it.
-        if (auto ns =
-                cursor_ir->insts().TryGetAs<SemIR::Namespace>(cursor_inst_id)) {
+        if (auto ns = cursor_inst.TryAs<SemIR::Namespace>()) {
           if (ns->import_id.is_valid()) {
             cursor_inst_id = ns->import_id;
             continue;

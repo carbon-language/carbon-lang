@@ -222,7 +222,8 @@ struct BaseDecl {
 // Common representation for both kinds of `bind*name` node.
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
-  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias,
+                                       InstKind::BindExport, InstKind::BindName,
                                        InstKind::BindSymbolicName};
 
   InstKind kind;
@@ -234,6 +235,15 @@ struct AnyBindName {
 struct BindAlias {
   static constexpr auto Kind =
       InstKind::BindAlias.Define<Parse::NodeId>("bind_alias");
+
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
+};
+
+struct BindExport {
+  static constexpr auto Kind =
+      InstKind::BindExport.Define<Parse::NodeId>("bind_export");
 
   TypeId type_id;
   BindNameId bind_name_id;
@@ -522,6 +532,9 @@ struct AnyImportRef {
 
   InstKind kind;
   ImportIRInstId import_ir_inst_id;
+  // A BindName is currently only set on directly imported names. It is not
+  // generically available.
+  BindNameId bind_name_id;
 };
 
 // An imported entity that is not yet been loaded.
@@ -531,6 +544,7 @@ struct ImportRefUnloaded {
       InstKind::ImportRefUnloaded.Define<Parse::InvalidNodeId>("import_ref");
 
   ImportIRInstId import_ir_inst_id;
+  BindNameId bind_name_id;
 };
 
 // A imported entity that is loaded, and may be used.
@@ -541,6 +555,7 @@ struct ImportRefLoaded {
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
+  BindNameId bind_name_id;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression

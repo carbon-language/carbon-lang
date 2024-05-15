@@ -201,6 +201,10 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 
+// Export checking.
+CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
+CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntitySource)
+
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(InterfaceRedefinition)
