@@ -46,10 +46,6 @@ auto HandleExportDirective(Context& context, Parse::ExportDirectiveId node_id)
     return true;
   }
 
-  if (!context.constant_values().Get(inst_id).is_constant()) {
-    return context.TODO(node_id, llvm::formatv("Non-constant export: {0}",
-                                               context.insts().Get(inst_id)));
-  }
   auto export_id = context.AddInst(
       {node_id, SemIR::BindExport{.type_id = import_ref->type_id,
                                   .bind_name_id = import_ref->bind_name_id,
