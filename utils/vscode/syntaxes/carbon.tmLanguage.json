@@ -1,137 +1,137 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "carbon",
-	"patterns": [
-		{
-			"include": "#comments"
-		},
-		{
-			"include": "#operators"
-		},
-		{
-			"include": "#strings"
-		},
-		{
-			"include": "#numbers"
-		},
-		{
-			"include": "#reserved-words"
-		},
-		{
-			"include": "#ctrl-statements"
-		},
-		{
-			"include": "#functions"
-		},
-		{
-			"include": "#customs"
-		}
-	],
-	"repository": {
-		"operators": {
-			"patterns": [
-				{
-					"name": "keyword.operator.new.carbon",
-					"match": "\\b(\\+|-|\\*|/|!)\\b"
-				}
-			]
-		},
-		"comments": {
-			"patterns": [
-				{
-					"name": "comment.line.double-dash.carbon",
-					"begin": "//",
-					"end": "\n"
-				}
-			]
-		},
-		"strings": {
-			"patterns": [
-				{
-					"name": "string.quoted.single.carbon",
-					"begin": "'",
-					"end": "'"
-				},
-				{
-					"name": "string.quoted.double.carbon",
-					"begin": "\"",
-					"end": "\""
-				},
-				{
-					"name": "string.quoted.triple.carbon",
-					"begin": "\"\"\"",
-					"end": "\"\"\""
-				}
-			]
-		},
-		"ctrl-statements": {
-			"patterns": [
-				{
-					"name": "keyword.operator.new.carbon",
-					"match": "\\b(impl|Main|extend|partial|Self|Int|UInt|Base|template|as|library)\\b"
-				}
-			]
-		},
-		"reserved-words": {
-			"patterns": [
-				{
-					"name": "keyword.control.carbon",
-					"match": "\\b(package|import|fn|var|for|return|class|api|i8|i16|i32|i64|i128|i256|u8|u16|u32|u64|u128|u256|f8|f16|f32|f64|f128|if|else|auto|let|File|while|match|case|default|returned|base|bool|virtual|abstract|String|true|false)\\b"
-				}
-			]
-		},
-		"functions": {
-			"name": "keyword.operator.new.carbon",
-			"match": "\\b[a-zA-Z]+\\s*\\("
-		},
-		"customs": {
-			"patterns": [
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "(?<=\\bpackage\\s)\\w+"
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "\\w+(?=\\s*:)"
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": ""
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "(?<=\\bvar\\s)\\w+"
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "(?<=\\bimpl\\s)\\w+"
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "(?<=\\bimport\\s)\\w+"
-				},
-				{
-					"name": "entity.other.attribute-name.carbon",
-					"match": "(?<=\\bclass\\s)\\w+"
-				}
-			]
-		},
-		"numbers": {
-			"patterns": [
-				{
-					"name": "constant.numeric.carbon",
-					"match": "\\b\\d+\\b"
-				},
-				{
-					"name": "constant.numeric.carbon",
-					"match": "\\b\\d+\\.\\d+\\b"
-				},
-				{
-					"name": "constant.numeric.carbon",
-					"match": "\\b\\d{1,3}(?:_\\d{3})*\\b"
-				}
-			]
-		}
-	},
-	"scopeName": "source.carbon"
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "carbon",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#operators"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#reserved-words"
+        },
+        {
+            "include": "#ctrl-statements"
+        },
+        {
+            "include": "#functions"
+        },
+        {
+            "include": "#customs"
+        }
+    ],
+    "repository": {
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.new.carbon",
+                    "match": "\\b(\\+|-|\\*|/|!)\\b"
+                }
+            ]
+        },
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.double-dash.carbon",
+                    "begin": "//",
+                    "end": "\n"
+                }
+            ]
+        },
+        "strings": {
+            "patterns": [
+                {
+                    "name": "string.quoted.single.carbon",
+                    "begin": "'",
+                    "end": "'"
+                },
+                {
+                    "name": "string.quoted.double.carbon",
+                    "begin": "\"",
+                    "end": "\""
+                },
+                {
+                    "name": "string.quoted.triple.carbon",
+                    "begin": "\"\"\"",
+                    "end": "\"\"\""
+                }
+            ]
+        },
+        "ctrl-statements": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.new.carbon",
+                    "match": "\\b(impl|Main|extend|partial|Self|Int|UInt|Base|template|as|library)\\b"
+                }
+            ]
+        },
+        "reserved-words": {
+            "patterns": [
+                {
+                    "name": "keyword.control.carbon",
+                    "match": "\\b(package|import|fn|var|for|return|class|api|i8|i16|i32|i64|i128|i256|u8|u16|u32|u64|u128|u256|f8|f16|f32|f64|f128|if|else|auto|let|File|while|match|case|default|returned|base|bool|virtual|abstract|String|true|false)\\b"
+                }
+            ]
+        },
+        "functions": {
+            "name": "keyword.operator.new.carbon",
+            "match": "\\b[a-zA-Z]+\\s*\\("
+        },
+        "customs": {
+            "patterns": [
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "(?<=\\bpackage\\s)\\w+"
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "\\w+(?=\\s*:)"
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": ""
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "(?<=\\bvar\\s)\\w+"
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "(?<=\\bimpl\\s)\\w+"
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "(?<=\\bimport\\s)\\w+"
+                },
+                {
+                    "name": "entity.other.attribute-name.carbon",
+                    "match": "(?<=\\bclass\\s)\\w+"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.carbon",
+                    "match": "\\b\\d+\\b"
+                },
+                {
+                    "name": "constant.numeric.carbon",
+                    "match": "\\b\\d+\\.\\d+\\b"
+                },
+                {
+                    "name": "constant.numeric.carbon",
+                    "match": "\\b\\d{1,3}(?:_\\d{3})*\\b"
+                }
+            ]
+        }
+    },
+    "scopeName": "source.carbon"
 }
