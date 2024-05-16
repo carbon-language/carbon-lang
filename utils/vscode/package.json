@@ -15,16 +15,12 @@
   "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
-    "languages": [
-      {
-        "id": "carbon",
-        "aliases": [],
-        "extensions": [
-          ".carbon"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
+    "languages": [{
+      "id": "carbon",
+      "aliases": ["carbon", "carbon"],
+      "extensions": [".carbon"],
+      "configuration": "./language-configuration.json"
+    }],
     "grammars": [
       {
         "language": "carbon",
@@ -41,5 +37,14 @@
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
+  },
+  "contributes": {
+    "languages": [{
+      "id": "carbon",
+      "aliases": ["carbon", "carbon"],
+      "extensions": [".carbon"],
+      "configuration": "./language-configuration.json"
+    }],
+    
   }
 }
