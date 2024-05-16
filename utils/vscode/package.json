@@ -2,7 +2,7 @@
   "name": "carbon-lang",
   "displayName": "carbon-lang",
   "description": "Carbon Language support",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "url": "https://github.com/carbon-language/carbon-lang"
   },
@@ -15,17 +15,24 @@
   "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
-    "languages": [{
-      "id": "carbon",
-      "aliases": ["carbon", "carbon"],
-      "extensions": [".carbon"],
-      "configuration": "./language-configuration.json"
-    }],
+    "languages": [
+      {
+        "id": "carbon",
+        "aliases": [
+          "carbon",
+          "carbon"
+        ],
+        "extensions": [
+          ".carbon"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
     "grammars": [
       {
         "language": "carbon",
         "scopeName": "source.carbon",
-        "path": "Carbon.plist"
+        "path": "./syntaxes/carbon.tmLanguage.json"
       }
     ]
   },
@@ -37,14 +44,5 @@
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
-  },
-  "contributes": {
-    "languages": [{
-      "id": "carbon",
-      "aliases": ["carbon", "carbon"],
-      "extensions": [".carbon"],
-      "configuration": "./language-configuration.json"
-    }],
-    
   }
 }
