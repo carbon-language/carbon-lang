@@ -99,7 +99,7 @@ def graph(f):
         ["dot", "-T" + fmt],
         stdin=subprocess.PIPE,
         stdout=outfile,
-        encoding="utf8"
+        encoding="utf8",
         # ["cat"], stdin=subprocess.PIPE, stdout=outfile, encoding='utf8'
     )
     global out
