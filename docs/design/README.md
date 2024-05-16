@@ -194,7 +194,7 @@ The `import` declaration imports a
 [library from a package](#files-libraries-packages). It must appear at the top
 of a Carbon source file, the first thing after the
 [optional `package` declaration](#package-declaration). Libraries can optionally
-be split into [api and implementation files](#files-libraries-packages), like
+be split into [API and implementation files](#files-libraries-packages), like
 C++'s header and source files but without requiring a source file in any cases.
 This declaration from the example:
 
@@ -963,13 +963,14 @@ forward declaration that introduces the name before it is defined, plus any
 number of declarations in a
 [`match_first` block](generics/details.md#prioritization-rule). Forward
 declarations can be used to separate interface from implementation, such as to
-declare a name in an [api file](#files-libraries-packages) that is defined in an
-[impl file](#files-libraries-packages). Forward declarations also allow entities
-to be used before they are defined, such as to allow cyclic references. A name
-that has been declared but not defined is called _incomplete_, and in some cases
-there are limitations on what can be done with an incomplete name. Within a
-definition, the defined name is incomplete until the end of the definition is
-reached, but is complete in the bodies of member functions because they are
+declare a name in an [API file](#files-libraries-packages) that is defined in an
+[implementation file](#files-libraries-packages). Forward declarations also
+allow entities to be used before they are defined, such as to allow cyclic
+references. A name that has been declared but not defined is called
+_incomplete_, and in some cases there are limitations on what can be done with
+an incomplete name. Within a definition, the defined name is incomplete until
+the end of the definition is reached, but is complete in the bodies of member
+functions because they are
 [parsed as if they appeared after the definition](#class-functions-and-factory-functions).
 
 A name is valid until the end of the innermost enclosing
@@ -2190,13 +2191,15 @@ selected yet.
 ### Files, libraries, packages
 
 -   **Files** are grouped into libraries, which are in turn grouped into
-    packages.
+    packages. There are two kinds of files:
+    -   API files describe the interface of a library.
+    -   Implementation files implement part of the interface of a library.
 -   **Libraries** are the granularity of code reuse through imports.
 -   **Packages** are the unit of distribution.
 
-Each library must have exactly one `api` file. This file includes declarations
-for all public names of the library. Definitions for those declarations must be
-in some file in the library, either the `api` file or an `impl` file.
+Each library must have exactly one API file. This file includes declarations for
+all public names of the library. Definitions for those declarations must be in
+some file in the library, either the API file or an implementation file.
 
 Every package has its own namespace. This means libraries within a package need
 to coordinate to avoid name conflicts, but not across packages.
@@ -2211,11 +2214,12 @@ to coordinate to avoid name conflicts, but not across packages.
 
 Files start with an optional package declaration, consisting of:
 
+-   optionally, the `impl` modifier keyword, indicating the file is an
+    implementation file rather than an API file,
 -   optionally, the `package` keyword followed by an identifier specifying the
     package name,
 -   optionally, the `library` keyword followed by a string with the library
-    name,
--   either `api` or `impl`, and
+    name, and
 -   a terminating semicolon (`;`).
 
 For example:
@@ -2223,25 +2227,25 @@ For example:
 ```carbon
 // Package name is `Geometry`.
 // Library name is "Shapes".
-// This file is an `api` file, not an `impl` file.
-package Geometry library "Shapes" api;
+// This file is an API file, not an implementation file.
+package Geometry library "Shapes";
 ```
 
 Parts of this declaration may be omitted:
 
--   If the package keyword is not specified, as in `library "Widgets" api;`, the
+-   If the package keyword is not specified, as in `library "Widgets";`, the
     file contributes to the `Main` package. No other package may import from the
     `Main` package, and it cannot be named explicitly.
 
--   If the library keyword is not specified, as in `package Geometry api;`, this
+-   If the library keyword is not specified, as in `package Geometry;`, this
     file contributes to the default library.
 
 -   If both keywords are omitted, the package declaration must be omitted
-    entirely. In this case, the file is an `impl` file belonging to the default
-    library of the `Main` package, which implicitly has an empty `api` file.
-    This library is used to define the entry point for the program, and tests
-    and smaller examples may choose to reside entirely within this library. No
-    other library can import this library even from within the default package.
+    entirely. In this case, the file is the API file for the default library of
+    the `Main` package, which cannot have any implementation files. This library
+    is used to define the entry point for the program, and tests and smaller
+    examples may choose to reside entirely within this library. No other library
+    can import this library even from within the default package.
 
 If the default library of the `Main` package contains a function named `Run`,
 that function is the program entry point. Otherwise, the program's entry point
@@ -2282,11 +2286,11 @@ given library to the top-level scope of the current file as
 [`private`](#name-visibility) names, and similarly for names in
 [namespaces](#namespaces).
 
-Every `impl` file automatically imports the `api` file for its library.
+Every implementation file automatically imports the API file for its library.
 Attempting to perform an import of the current library is invalid.
 
 ```
-package MyPackage library "Widgets" impl;
+impl package MyPackage library "Widgets";
 
 // ❌ Error, this import is performed implicitly.
 import MyPackage library "Widgets";
@@ -2309,7 +2313,7 @@ When the package name is specified, the `import` declaration imports a library
 from another package.
 
 ```carbon
-package MyPackage impl;
+impl package MyPackage;
 
 // Import the "Vector" library from the `LinearAlgebra` package.
 import LinearAlgebra library "Vector";
@@ -2344,17 +2348,17 @@ package can only be imported from within that package.
 
 The names visible from an imported library are determined by these rules:
 
--   Declarations in an `api` file are by default _public_, which means visible
-    to any file that imports that library. This matches class members, which are
+-   Declarations in an API file are by default _public_, which means visible to
+    any file that imports that library. This matches class members, which are
     also [default public](#access-control).
--   A `private` prefix on a declaration in an `api` file makes the name _library
-    private_. This means the name is visible in the file and all `impl` files
-    for the same library.
+-   A `private` prefix on a declaration in an API file makes the name _library
+    private_. This means the name is visible in the file and all implementation
+    files for the same library.
 -   The visibility of a name is determined by its first declaration, considering
-    `api` files before `impl` files. The `private` prefix is only allowed on the
-    first declaration.
--   A name declared in an `impl` file and not the corresponding `api` file is
-    _file private_, meaning visible in just that file. Its first declaration
+    API files before implementation files. The `private` prefix is only allowed
+    on the first declaration.
+-   A name declared in an implementation file and not the corresponding API file
+    is _file private_, meaning visible in just that file. Its first declaration
     must be marked with a `private` prefix. **TODO:** This needs to be finalized
     in a proposal to resolve inconsistency between
     [#665](https://github.com/carbon-language/carbon-lang/issues/665#issuecomment-914661914)
@@ -2363,7 +2367,7 @@ The names visible from an imported library are determined by these rules:
     to: two different libraries can have different private names `foo` without
     conflict, but a private name conflicts with a public name in the same scope.
 
-At most one `api` file in a package transitively used in a program may declare a
+At most one API file in a package transitively used in a program may declare a
 given name public.
 
 > References:
@@ -2383,9 +2387,9 @@ given name public.
 The top-level scope in a file is the scope of the package. This means:
 
 -   Within this scope (and its sub-namespaces), all visible names from the same
-    package appear. This includes names from the same file, names from the `api`
-    file of a library when inside an `impl` file, and names from imported
-    libraries of the same package.
+    package appear. This includes names from the same file, names from the API
+    file of a library when inside an implementation file, and names from
+    imported libraries of the same package.
 -   In scopes where package members might have a name conflict with something
     else, the syntax `package.Foo` can be used to name the `Foo` member of the
     current package.
@@ -2441,7 +2445,7 @@ namespace are considered in scope and may be found by
 package `P` defines some of its members inside a namespace `N`:
 
 ```carbon
-package P api;
+package P;
 
 // Defines namespace `N` within the current package.
 namespace N;
@@ -2642,8 +2646,8 @@ fn F();
 
 Common types that we expect to be used universally will be provided for every
 file are made available as if there was a special "prelude" package that was
-imported automatically into every `api` file. Dedicated type literal syntaxes
-like `i32` and `bool` refer to types defined within this package, based on the
+imported automatically into every API file. Dedicated type literal syntaxes like
+`i32` and `bool` refer to types defined within this package, based on the
 ["all APIs are library APIs" principle](/docs/project/principles/library_apis_only.md).
 
 > **TODO:** Prelude provisionally imports the `Carbon` package which includes

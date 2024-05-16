@@ -252,7 +252,7 @@ expression preceding the period. In a struct literal, the entity is the struct
 type. For example:
 
 ```
-package Foo api;
+package Foo;
 namespace N;
 fn N.F() {}
 

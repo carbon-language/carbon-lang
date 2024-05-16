@@ -2137,7 +2137,7 @@ implications:
 However, there are likely to be differences between computed properties and
 other data members, such as the ability to take the address of them. We might
 want to support "read only" data members, that can be read through the public
-api but only modified with private access, for data members which may need to
+API but only modified with private access, for data members which may need to
 evolve into a computed property. There are also questions regarding how to
 support assigning or modifying computed properties, such as using `+=`.
 
