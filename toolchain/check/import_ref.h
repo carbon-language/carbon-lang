@@ -21,8 +21,8 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
 
 // Adds an import_ref instruction for the specified instruction in the
 // specified IR. The import_ref is initially marked as unused.
-auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
-    -> SemIR::InstId;
+auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
+                  SemIR::BindNameId bind_name_id) -> SemIR::InstId;
 
 // If the passed in instruction ID is an ImportRefUnloaded, turns it into an
 // ImportRefLoaded for use.

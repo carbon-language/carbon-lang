@@ -18,12 +18,13 @@
 namespace Carbon::Check {
 
 // Returns name information for the entity, corresponding to IDs in the import
-// IR rather than the current IR. May return Invalid for a TODO.
+// IR rather than the current IR.
 static auto GetImportName(const SemIR::File& import_sem_ir,
                           SemIR::Inst import_inst)
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   CARBON_KIND_SWITCH(import_inst) {
     case SemIR::BindAlias::Kind:
+    case SemIR::BindExport::Kind:
     case SemIR::BindName::Kind:
     case SemIR::BindSymbolicName::Kind: {
       auto bind_inst = import_inst.As<SemIR::AnyBindName>();
@@ -139,12 +140,17 @@ static auto CopySingleNameScopeFromImportIR(
     SemIR::NameId name_id) -> SemIR::NameScopeId {
   // Produce the namespace for the entry.
   auto make_import_id = [&]() {
+    auto bind_name_id = context.bind_names().Add(
+        {.name_id = name_id,
+         .enclosing_scope_id = enclosing_scope_id,
+         .bind_index = SemIR::CompileTimeBindIndex::Invalid});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         {.ir_id = ir_id, .inst_id = import_inst_id});
     return context.AddInst(
         {import_ir_inst_id,
          SemIR::ImportRefLoaded{.type_id = namespace_type_id,
-                                .import_ir_inst_id = import_ir_inst_id}});
+                                .import_ir_inst_id = import_ir_inst_id,
+                                .bind_name_id = bind_name_id}});
   };
   auto [namespace_scope_id, namespace_const_id, _] =
       AddNamespace(context, namespace_type_id, Parse::NodeId::Invalid, name_id,
@@ -228,11 +234,6 @@ auto ImportLibraryFromCurrentPackage(Context& context,
     auto import_inst = import_sem_ir.insts().Get(import_inst_id);
     auto [import_name_id, import_enclosing_scope_id] =
         GetImportName(import_sem_ir, import_inst);
-    // TODO: This should only be invalid when GetImportName for an inst
-    // isn't yet implemented. Long-term this should be removed.
-    if (!import_name_id.is_valid()) {
-      continue;
-    }
 
     llvm::DenseMap<SemIR::NameScopeId, SemIR::NameScopeId> copied_namespaces;
 
@@ -249,12 +250,18 @@ auto ImportLibraryFromCurrentPackage(Context& context,
           import_namespace_inst->name_scope_id, enclosing_scope_id, name_id);
     } else {
       // Leave a placeholder that the inst comes from the other IR.
-      auto target_id =
-          AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id});
+      auto bind_name_id = context.bind_names().Add(
+          {.name_id = name_id,
+           .enclosing_scope_id = enclosing_scope_id,
+           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+      auto target_id = AddImportRef(
+          context, {.ir_id = ir_id, .inst_id = import_inst_id}, bind_name_id);
       auto [it, success] = context.name_scopes()
                                .Get(enclosing_scope_id)
                                .names.insert({name_id, target_id});
       if (!success) {
+        // TODO: Figure out how best to handle when an export is added that's a
+        // conflict. Right now it diagnoses as a conflict around here.
         context.DiagnoseDuplicateName(target_id, it->second);
       }
     }

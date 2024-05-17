@@ -109,6 +109,7 @@ class Context {
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+                              SemIR::NameScopeId scope_id,
                               const SemIR::NameScope& scope) -> SemIR::InstId;
 
   // Performs a qualified name lookup in a specified scope and in scopes that
