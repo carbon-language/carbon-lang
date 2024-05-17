@@ -116,19 +116,27 @@
 		"customs": {
 			"patterns": [
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.class.carbon",
 					"match": "(?<=\\bpackage\\s)\\w+"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.variable.carbon",
+					"match": "(?<=\\s*\\.)\\w+"
+				},
+				{
+					"name": "support.variable.carbon",
+					"match": "(?<=\\bas\\s)\\w+"
+				},
+				{
+					"name": "support.variable.carbon",
 					"match": "\\w+(?=\\s*:)"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.variable.carbon",
 					"match": "(?<=\\blet\\s)\\w+"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.variable.carbon",
 					"match": "(?<=\\bvar\\s)\\w+"
 				},
 				{
@@ -136,15 +144,15 @@
 					"match": "(?<=\\bfn\\s)\\w+"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.other.carbon",
 					"match": "(?<=\\bimpl\\s)\\w+"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.type.property-name.carbon",
 					"match": "(?<=\\bimport\\s)\\w+"
 				},
 				{
-					"name": "entity.other.attribute-name.carbon",
+					"name": "support.class.carbon",
 					"match": "(?<=\\bclass\\s)\\w+"
 				}
 			]
