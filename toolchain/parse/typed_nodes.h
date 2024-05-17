@@ -208,6 +208,7 @@ struct ExportDirective {
       NodeKind::ExportDirective.Define(NodeCategory::Decl);
 
   ExportIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   AnyNameComponentId name;
 };
 

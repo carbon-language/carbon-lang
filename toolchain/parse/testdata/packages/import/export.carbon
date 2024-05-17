@@ -34,7 +34,7 @@ export import library "a";
 
 class C;
 
-// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:8: ERROR: `import` and `export` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:8: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
 // CHECK:STDERR: export import library "b";
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR: fail_order.carbon:[[@LINE-5]]:1: First declaration is here.

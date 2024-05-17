@@ -391,6 +391,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case BindAlias::Kind:
+      case BindExport::Kind:
       case BindName::Kind:
       case BindSymbolicName::Kind: {
         auto inst = untyped_inst.As<AnyBindName>();

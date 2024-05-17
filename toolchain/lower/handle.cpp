@@ -88,6 +88,16 @@ auto HandleBindAlias(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
+auto HandleBindExport(FunctionContext& context, SemIR::InstId inst_id,
+                      SemIR::BindExport inst) -> void {
+  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
+  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+    return;
+  }
+
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
 auto HandleBindName(FunctionContext& context, SemIR::InstId inst_id,
                     SemIR::BindName inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));

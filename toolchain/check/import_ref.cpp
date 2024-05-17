@@ -52,11 +52,13 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
   return ir_id;
 }
 
-auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst)
-    -> SemIR::InstId {
+auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
+                  SemIR::BindNameId bind_name_id) -> SemIR::InstId {
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
   auto import_ref_id = context.AddPlaceholderInstInNoBlock(
-      {import_ir_inst_id, SemIR::ImportRefUnloaded{import_ir_inst_id}});
+      {import_ir_inst_id,
+       SemIR::ImportRefUnloaded{.import_ir_inst_id = import_ir_inst_id,
+                                .bind_name_id = bind_name_id}});
 
   // We can't insert this instruction into whatever block we happen to be in,
   // because this function is typically called by name lookup in the middle of
@@ -483,7 +485,8 @@ class ImportRefResolver {
                               SemIR::NameScope& new_scope) -> void {
     for (auto [entry_name_id, entry_inst_id] : import_scope.names) {
       auto ref_id = AddImportRef(
-          context_, {.ir_id = import_ir_id_, .inst_id = entry_inst_id});
+          context_, {.ir_id = import_ir_id_, .inst_id = entry_inst_id},
+          SemIR::BindNameId::Invalid);
       CARBON_CHECK(
           new_scope.names.insert({GetLocalNameId(entry_name_id), ref_id})
               .second);
@@ -503,7 +506,8 @@ class ImportRefResolver {
     new_associated_entities.reserve(associated_entities.size());
     for (auto inst_id : associated_entities) {
       new_associated_entities.push_back(
-          AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id}));
+          AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id},
+                       SemIR::BindNameId::Invalid));
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
@@ -536,6 +540,9 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst, inst_id);
       }
       case CARBON_KIND(SemIR::BindAlias inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::BindExport inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::BindName inst): {
@@ -607,7 +614,8 @@ class ImportRefResolver {
 
     // Add a lazy reference to the target declaration.
     auto decl_id = AddImportRef(
-        context_, {.ir_id = import_ir_id_, .inst_id = inst.decl_id});
+        context_, {.ir_id = import_ir_id_, .inst_id = inst.decl_id},
+        SemIR::BindNameId::Invalid);
 
     auto inst_id = context_.AddInstInNoBlock(
         {AddImportIRInst(inst.decl_id),
@@ -658,6 +666,15 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::BindAlias inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    auto value_id = GetLocalConstantId(inst.value_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    return {value_id};
+  }
+
+  auto TryResolveTypedInst(SemIR::BindExport inst) -> ResolveResult {
     auto initial_work = work_stack_.size();
     auto value_id = GetLocalConstantId(inst.value_id);
     if (HasNewWork(initial_work)) {
@@ -1217,7 +1234,10 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // doesn't use ReplaceInstBeforeConstantUse because it would trigger
   // TryEvalInst, which we want to avoid with ImportRefs.
   context.sem_ir().insts().Set(
-      inst_id, SemIR::ImportRefLoaded{type_id, inst->import_ir_inst_id});
+      inst_id,
+      SemIR::ImportRefLoaded{.type_id = type_id,
+                             .import_ir_inst_id = inst->import_ir_inst_id,
+                             .bind_name_id = inst->bind_name_id});
 
   // Store the constant for both the ImportRefLoaded and imported instruction.
   context.constant_values().Set(inst_id, constant_id);
@@ -1242,7 +1262,8 @@ static auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
 
     auto& impl = context.impls().Get(impl_id);
     impl.witness_id = AddImportRef(
-        context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id});
+        context, {.ir_id = import_ir_id, .inst_id = import_impl.witness_id},
+        SemIR::BindNameId::Invalid);
   }
 }
 

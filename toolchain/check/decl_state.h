@@ -71,6 +71,7 @@ struct DeclState {
     Base,
     Class,
     Constraint,
+    Export,
     Fn,
     Impl,
     Interface,

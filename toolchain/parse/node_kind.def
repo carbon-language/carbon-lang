@@ -223,7 +223,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibrarySpecifier, 1, Library)
 //   _external_: IdentifierName or QualifiedName
 // ExportDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportIntroducer, 0, Export)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ExportDirective, 2, CARBON_IF_VALID(Semi))
+CARBON_PARSE_NODE_KIND_BRACKET(ExportDirective, ExportIntroducer,
+                               CARBON_IF_VALID(Semi))
 
 // `namespace`:
 //   NamespaceStart

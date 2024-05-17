@@ -247,7 +247,8 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(loc_id, name_id, name_scopes().Get(scope_id));
+    return LookupNameInExactScope(loc_id, name_id, scope_id,
+                                  name_scopes().Get(scope_id));
   }
 }
 
@@ -282,6 +283,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 // Handles lookup through the import_ir_scopes for LookupNameInExactScope.
 static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
                                    SemIR::NameId name_id,
+                                   SemIR::NameScopeId scope_id,
                                    const SemIR::NameScope& scope)
     -> SemIR::InstId {
   auto identifier_id = name_id.AsIdentifierId();
@@ -298,6 +300,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       });
 
   auto result_id = SemIR::InstId::Invalid;
+  auto bind_name_id = SemIR::BindNameId::Invalid;
   for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
     auto& import_ir = context.import_irs().Get(import_ir_id);
 
@@ -321,8 +324,15 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
-    auto import_inst_id =
-        AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second});
+
+    if (!bind_name_id.is_valid()) {
+      bind_name_id = context.bind_names().Add(
+          {.name_id = name_id,
+           .enclosing_scope_id = scope_id,
+           .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+    }
+    auto import_inst_id = AddImportRef(
+        context, {.ir_id = import_ir_id, .inst_id = it->second}, bind_name_id);
     if (result_id.is_valid()) {
       context.DiagnoseDuplicateName(import_inst_id, result_id);
     } else {
@@ -335,6 +345,7 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
+                                     SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> SemIR::InstId {
   if (auto it = scope.names.find(name_id); it != scope.names.end()) {
@@ -342,7 +353,7 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
     return it->second;
   }
   if (!scope.import_ir_scopes.empty()) {
-    return LookupInImportIRScopes(*this, loc, name_id, scope);
+    return LookupInImportIRScopes(*this, loc, name_id, scope_id, scope);
   }
   return SemIR::InstId::Invalid;
 }
@@ -356,10 +367,12 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scope_ids.empty()) {
-    const auto& scope = name_scopes().Get(scope_ids.pop_back_val());
+    auto scope_id = scope_ids.pop_back_val();
+    const auto& scope = name_scopes().Get(scope_id);
     has_error |= scope.has_error;
 
-    auto scope_result_id = LookupNameInExactScope(node_id, name_id, scope);
+    auto scope_result_id =
+        LookupNameInExactScope(node_id, name_id, scope_id, scope);
     if (!scope_result_id.is_valid()) {
       // Nothing found in this scope: also look in its extended scopes.
       auto extended = llvm::reverse(scope.extended_scopes);
@@ -409,7 +422,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
 
   // Look up `package.Core`.
   auto core_inst_id = context.LookupNameInExactScope(
-      loc, core_name_id,
+      loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (!core_inst_id.is_valid()) {
     context.DiagnoseNameNotFound(loc, core_name_id);
@@ -434,8 +447,8 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto inst_id =
-      LookupNameInExactScope(loc, name_id, name_scopes().Get(core_package_id));
+  auto inst_id = LookupNameInExactScope(loc, name_id, core_package_id,
+                                        name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
     DiagnoseNameNotFound(loc, name_id);
     return SemIR::InstId::BuiltinError;
