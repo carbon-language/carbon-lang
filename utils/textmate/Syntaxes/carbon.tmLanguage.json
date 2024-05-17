@@ -1,30 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "carbon",
+  "foldingStartMarker": "\\{\\s*$",
+  "foldingStopMarker": "^\\s*\\}",
+  "fileTypes": [
+    "carbon"
+  ],
   "patterns": [
     {
       "include": "#comments"
     },
     {
       "include": "#operators"
-    },
-    {
-      "include": "#strings"
-    },
-    {
-      "include": "#string-escapes"
-    },
-    {
-      "include": "#numbers"
-    },
-    {
-      "include": "#reserved-words"
-    },
-    {
-      "include": "#operator-dedicated-keywords-statements"
-    },
-    {
-      "include": "#ctrl-statements"
     },
     {
       "name": "string.quoted.triple.carbon",
@@ -40,6 +27,39 @@
           "include": "#string_escapes"
         }
       ]
+    },
+    {
+      "name": "string.quoted.double",
+      "begin": "\"([^\\s'#]*\\n)?",
+      "end": "\"",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.character.escape.carbon"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#special-keywords"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#reserved-words"
+    },
+    {
+      "include": "#operator-dedicated-keywords-statements"
+    },
+    {
+      "include": "#ctrl-statements"
     },
     {
       "include": "#true-false"
@@ -63,7 +83,7 @@
     "comments": {
       "patterns": [
         {
-          "name": "comment.line.double-dash.carbon",
+          "name": "comment.line.double-slash.carbon",
           "begin": "//",
           "end": "\n"
         }
@@ -89,13 +109,17 @@
       ]
     },
     "string_escapes": {
-      "name": "constant.character.escape.carbon",
-      "match": "\\\\([tnr'\"0\\0]|x[0-9A-F]{2}|u\\{[0-9A-F]{4,}\\})"
+      "patterns": [
+        {
+          "name": "constant.character.escape.carbon",
+          "match": "\\\\([tnr'\"0\\0]|x[0-9A-F]{2}|u\\{[0-9A-F]{4,}\\})"
+        }
+      ]
     },
     "special-keywords": {
       "patterns": [
         {
-          "name": "keyword.control.less.carbon",
+          "name": "keyword.control.carbon",
           "match": "\\b(break|case|continue|default|else|if|for|match|return|returned|then|while)\\b"
         }
       ]
@@ -103,7 +127,7 @@
     "operator-dedicated-keywords-statements": {
       "patterns": [
         {
-          "name": "keyword.carbon",
+          "name": "keyword.operator.new.carbon",
           "match": "\\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\\b"
         }
       ]
@@ -119,7 +143,7 @@
     "true-false": {
       "patterns": [
         {
-          "name": "keyword.operator.new.carbon",
+          "name": "keyword.control.carbon",
           "match": "\\b(true|false)\\b"
         }
       ]
@@ -180,15 +204,15 @@
       "patterns": [
         {
           "name": "constant.numeric.carbon",
-          "match": "\\b\\d+\\b"
+          "match": "0x[_0-9A-F]+(\\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?"
         },
         {
           "name": "constant.numeric.carbon",
-          "match": "\\b\\d+\\.\\d+\\b"
+          "match": "0b[_01]+"
         },
         {
           "name": "constant.numeric.carbon",
-          "match": "\\b\\d{1,3}(?:_\\d{3})*\\b"
+          "match": "[1-9][_0-9]*(\\.[_0-9]+(e[-+]?[1-9][0-9]*)?)?"
         }
       ]
     }
