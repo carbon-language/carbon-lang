@@ -324,6 +324,11 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       // Name doesn't exist in the import scope.
       continue;
     }
+    if (import_ir.sem_ir->insts().Is<SemIR::AnyImportRef>(it->second)) {
+      // This entity was added to name lookup by using an import, and is not
+      // exported.
+      continue;
+    }
 
     if (!bind_name_id.is_valid()) {
       bind_name_id = context.bind_names().Add(
