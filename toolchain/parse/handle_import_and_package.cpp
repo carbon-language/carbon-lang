@@ -183,8 +183,8 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
       context.set_packaging_state(
           Context::PackagingState::InImportsAfterNonPackagingDecl);
       CARBON_DIAGNOSTIC(ImportTooLate, Error,
-                        "`import` and `export` directives must come after the "
-                        "`package` directive (if present) and before any other "
+                        "`import` directives must come after the `package` "
+                        "directive (if present) and before any other "
                         "entities in the file.");
       CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
       context.emitter()
@@ -225,11 +225,15 @@ static auto HandleImportHelper(Context& context,
   }
 }
 
-auto HandleExport(Context& context) -> void {
+auto HandleImportAsRegular(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeChecked(Lex::TokenKind::Export);
+  HandleImportHelper(context, state, /*export_token=*/Lex::TokenIndex::Invalid);
+}
 
+// Diagnoses if `export` is used in an `impl` file.
+static auto RestrictExportToApi(Context& context,
+                                Context::StateStackEntry& state) -> void {
   // Error for both Main//default and every implementation file.
   auto packaging = context.tree().packaging_directive();
   if (!packaging || packaging->api_or_impl == Tree::ApiOrImpl::Impl) {
@@ -238,32 +242,32 @@ auto HandleExport(Context& context) -> void {
     context.emitter().Emit(state.token, ExportFromImpl);
     state.has_error = true;
   }
-
-  if (context.PositionIs(Lex::TokenKind::Import)) {
-    HandleImportHelper(context, state, state.token);
-  } else {
-    if (!VerifyInImports(context, state.token)) {
-      state.has_error = true;
-    }
-    context.AddLeafNode(NodeKind::ExportIntroducer, state.token,
-                        state.has_error);
-    context.PushState(state, State::ExportFinish);
-    context.PushState(State::DeclNameAndParamsAsNone, state.token);
-  }
 }
 
-auto HandleExportFinish(Context& context) -> void {
+auto HandleImportAsExport(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.ConsumeChecked(Lex::TokenKind::Export);
+  RestrictExportToApi(context, state);
+
+  HandleImportHelper(context, state, state.token);
+}
+
+auto HandleExportName(Context& context) -> void {
+  auto state = context.PopState();
+
+  RestrictExportToApi(context, state);
+
+  context.PushState(state, State::ExportNameFinish);
+  context.PushState(State::DeclNameAndParamsAsNone, state.token);
+}
+
+auto HandleExportNameFinish(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddNodeExpectingDeclSemi(state, NodeKind::ExportDirective,
                                    Lex::TokenKind::Export,
                                    /*is_def_allowed=*/false);
-}
-
-auto HandleImport(Context& context) -> void {
-  auto state = context.PopState();
-
-  HandleImportHelper(context, state, /*export_token=*/Lex::TokenIndex::Invalid);
 }
 
 // Handles common logic for `package` and `library`.
