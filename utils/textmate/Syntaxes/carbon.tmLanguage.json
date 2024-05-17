@@ -12,6 +12,9 @@
       "include": "#strings"
     },
     {
+      "include": "#string-escapes"
+    },
+    {
       "include": "#numbers"
     },
     {
@@ -24,7 +27,19 @@
       "include": "#ctrl-statements"
     },
     {
-      "include": "#special-keywords"
+      "name": "string.quoted.triple.carbon",
+      "begin": "'''([^\\s'#]*\\n)?",
+      "end": "'''",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.character.escape.carbon"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
     },
     {
       "include": "#true-false"
@@ -68,10 +83,14 @@
         },
         {
           "name": "string.quoted.triple.carbon",
-          "begin": "\"\"\"",
-          "end": "\"\"\""
+          "begin": "'''",
+          "end": "'''"
         }
       ]
+    },
+    "string_escapes": {
+      "name": "constant.character.escape.carbon",
+      "match": "\\\\([tnr'\"0\\0]|x[0-9A-F]{2}|u\\{[0-9A-F]{4,}\\})"
     },
     "special-keywords": {
       "patterns": [
