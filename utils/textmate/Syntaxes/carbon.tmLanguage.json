@@ -29,21 +29,6 @@
       ]
     },
     {
-      "name": "string.quoted.double",
-      "begin": "\"([^\\s'#]*\\n)?",
-      "end": "\"",
-      "beginCaptures": {
-        "1": {
-          "name": "constant.character.escape.carbon"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#string_escapes"
-        }
-      ]
-    },
-    {
       "include": "#strings"
     },
     {
@@ -66,6 +51,21 @@
     },
     {
       "include": "#functions"
+    },
+    {
+      "name": "string.quoted.double",
+      "begin": "\"([^\\s'#]*\\n)?",
+      "end": "\"",
+      "beginCaptures": {
+        "1": {
+          "name": "constant.character.escape.carbon"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
     },
     {
       "include": "#customs"
