@@ -701,7 +701,7 @@ CARBON_PARSE_STATE(ExportNameFinish)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(Import, Regular, Export)
 
-// Handles `library` in directive form.
+// Handles `library` in declaration form.
 //
 // Always:
 //   (state done)

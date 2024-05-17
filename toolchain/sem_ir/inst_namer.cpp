@@ -391,10 +391,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case BindAlias::Kind:
-      case BindExport::Kind:
       case BindName::Kind:
-      case BindSymbolicName::Kind: {
-        auto inst = untyped_inst.As<AnyBindName>();
+      case BindSymbolicName::Kind:
+      case ExportDecl::Kind: {
+        auto inst = untyped_inst.As<AnyBindNameOrExportDecl>();
         add_inst_name_id(sem_ir_.bind_names().Get(inst.bind_name_id).name_id);
         continue;
       }

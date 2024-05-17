@@ -70,7 +70,7 @@ var w: () = v;
 // CHECK:STDOUT:     .v = %import_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: ref () = import_ref ir1, inst+5, loaded
-// CHECK:STDOUT:   %v: ref () = bind_export v, %import_ref
+// CHECK:STDOUT:   %v: ref () = export v, %import_ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_export.carbon

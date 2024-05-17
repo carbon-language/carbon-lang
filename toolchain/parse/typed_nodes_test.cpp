@@ -144,7 +144,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
 
   ASSERT_EQ(file.decls.size(), 1);
   ErrorBuilder trace;
-  auto library = tree->VerifyExtractAs<LibraryDirective>(file.decls[0], &trace);
+  auto library = tree->VerifyExtractAs<LibraryDecl>(file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.

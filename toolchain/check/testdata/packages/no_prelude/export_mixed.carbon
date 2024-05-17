@@ -178,7 +178,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+11, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+2, unloaded
-// CHECK:STDOUT:   %C: type = bind_export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -204,7 +204,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+11, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %C: type = bind_export C, %import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

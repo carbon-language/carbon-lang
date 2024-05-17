@@ -25,10 +25,10 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   CARBON_KIND_SWITCH(import_inst) {
     case SemIR::BindAlias::Kind:
-    case SemIR::BindExport::Kind:
     case SemIR::BindName::Kind:
-    case SemIR::BindSymbolicName::Kind: {
-      auto bind_inst = import_inst.As<SemIR::AnyBindName>();
+    case SemIR::BindSymbolicName::Kind:
+    case SemIR::ExportDecl::Kind: {
+      auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
       const auto& bind_name =
           import_sem_ir.bind_names().Get(bind_inst.bind_name_id);
       return {bind_name.name_id, bind_name.enclosing_scope_id};
@@ -80,7 +80,7 @@ static auto CopyNameFromImportIR(Context& context,
 // namespace is a different package.
 static auto AddNamespace(
     Context& context, SemIR::TypeId namespace_type_id,
-    Parse::ImportDirectiveId node_id, SemIR::NameId name_id,
+    Parse::ImportDeclId node_id, SemIR::NameId name_id,
     SemIR::NameScopeId enclosing_scope_id, bool diagnose_duplicate_namespace,
     std::optional<llvm::function_ref<SemIR::InstId()>> make_import_id)
     -> std::tuple<SemIR::NameScopeId, SemIR::ConstantId, bool> {
@@ -226,7 +226,7 @@ static auto GetCanonicalImportIRInst(Context& context,
   while (true) {
     auto inst = cursor_ir->insts().Get(cursor_inst_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::BindExport bind_export): {
+      case CARBON_KIND(SemIR::ExportDecl bind_export): {
         cursor_inst_id = bind_export.value_id;
         continue;
       }
@@ -290,7 +290,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
 
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
-                                     Parse::ImportDirectiveId node_id,
+                                     Parse::ImportDeclId node_id,
                                      const SemIR::File& import_sem_ir,
                                      bool is_export) -> void {
   auto ir_id = AddImportIR(
@@ -335,7 +335,7 @@ auto ImportLibraryFromCurrentPackage(Context& context,
 
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
-                                     Parse::ImportDirectiveId node_id,
+                                     Parse::ImportDeclId node_id,
                                      IdentifierId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void {

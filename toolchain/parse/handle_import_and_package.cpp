@@ -12,8 +12,8 @@ namespace Carbon::Parse {
 
 // Provides common error exiting logic that skips to the semi, if present.
 static auto OnParseError(Context& context, Context::StateStackEntry state,
-                         NodeKind directive) -> void {
-  return context.AddNode(directive, context.SkipPastLikelyEnd(state.token),
+                         NodeKind declaration) -> void {
+  return context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
                          state.subtree_start, /*has_error=*/true);
 }
 
@@ -70,16 +70,15 @@ static auto HandleApiOrImpl(Context& context)
   }
 }
 
-// Handles everything after the directive's introducer.
-static auto HandleDirectiveContent(Context& context,
-                                   Context::StateStackEntry state,
-                                   NodeKind directive, bool is_export,
-                                   llvm::function_ref<void()> on_parse_error)
+// Handles everything after the declaration's introducer.
+static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
+                              NodeKind declaration, bool is_export,
+                              llvm::function_ref<void()> on_parse_error)
     -> void {
   Tree::PackagingNames names{
-      .node_id = ImportDirectiveId(NodeId(state.subtree_start)),
+      .node_id = ImportDeclId(NodeId(state.subtree_start)),
       .is_export = is_export};
-  if (directive != NodeKind::LibraryDirective) {
+  if (declaration != NodeKind::LibraryDecl) {
     if (auto package_name_token =
             context.ConsumeIf(Lex::TokenKind::Identifier)) {
       if (names.is_export) {
@@ -92,14 +91,14 @@ static auto HandleDirectiveContent(Context& context,
       }
       names.package_id = context.tokens().GetIdentifier(*package_name_token);
       context.AddLeafNode(NodeKind::PackageName, *package_name_token);
-    } else if (directive == NodeKind::PackageDirective ||
+    } else if (declaration == NodeKind::PackageDecl ||
                !context.PositionIs(Lex::TokenKind::Library)) {
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                         "Expected identifier after `package`.");
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
                         "Expected identifier or `library` after `import`.");
       context.emitter().Emit(*context.position(),
-                             directive == NodeKind::PackageDirective
+                             declaration == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
                                  : ExpectedIdentifierAfterImport);
       on_parse_error();
@@ -109,7 +108,7 @@ static auto HandleDirectiveContent(Context& context,
 
   // Parse the optional library keyword.
   bool accept_default = !names.package_id.is_valid();
-  if (directive == NodeKind::LibraryDirective) {
+  if (declaration == NodeKind::LibraryDecl) {
     auto library_id = HandleLibraryName(context, accept_default);
     if (!library_id) {
       on_parse_error();
@@ -144,7 +143,7 @@ static auto HandleDirectiveContent(Context& context,
   }
 
   std::optional<Tree::ApiOrImpl> api_or_impl;
-  if (directive != NodeKind::ImportDirective) {
+  if (declaration != NodeKind::ImportDecl) {
     api_or_impl = HandleApiOrImpl(context);
     if (!api_or_impl) {
       on_parse_error();
@@ -153,13 +152,13 @@ static auto HandleDirectiveContent(Context& context,
   }
 
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
-    if (directive == NodeKind::ImportDirective) {
+    if (declaration == NodeKind::ImportDecl) {
       context.AddImport(names);
     } else {
-      context.set_packaging_directive(names, *api_or_impl);
+      context.set_packaging_decl(names, *api_or_impl);
     }
 
-    context.AddNode(directive, *semi, state.subtree_start, state.has_error);
+    context.AddNode(declaration, *semi, state.subtree_start, state.has_error);
   } else {
     context.DiagnoseExpectedDeclSemi(context.tokens().GetKind(state.token));
     on_parse_error();
@@ -183,8 +182,8 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
       context.set_packaging_state(
           Context::PackagingState::InImportsAfterNonPackagingDecl);
       CARBON_DIAGNOSTIC(ImportTooLate, Error,
-                        "`import` directives must come after the `package` "
-                        "directive (if present) and before any other "
+                        "`import` declarations must come after the `package` "
+                        "declaration (if present) and before any other "
                         "entities in the file.");
       CARBON_DIAGNOSTIC(FirstDecl, Note, "First declaration is here.");
       context.emitter()
@@ -207,8 +206,8 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
 static auto HandleImportHelper(Context& context,
                                const Context::StateStackEntry& state,
                                Lex::TokenIndex export_token) -> void {
-  auto directive = NodeKind::ImportDirective;
-  auto on_parse_error = [&] { OnParseError(context, state, directive); };
+  auto declaration = NodeKind::ImportDecl;
+  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
 
   auto intro_token = context.ConsumeChecked(Lex::TokenKind::Import);
   context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
@@ -218,8 +217,8 @@ static auto HandleImportHelper(Context& context,
   }
 
   if (VerifyInImports(context, intro_token)) {
-    HandleDirectiveContent(context, state, directive, export_token.is_valid(),
-                           on_parse_error);
+    HandleDeclContent(context, state, declaration, export_token.is_valid(),
+                      on_parse_error);
   } else {
     on_parse_error();
   }
@@ -235,7 +234,7 @@ auto HandleImportAsRegular(Context& context) -> void {
 static auto RestrictExportToApi(Context& context,
                                 Context::StateStackEntry& state) -> void {
   // Error for both Main//default and every implementation file.
-  auto packaging = context.tree().packaging_directive();
+  auto packaging = context.tree().packaging_decl();
   if (!packaging || packaging->api_or_impl == Tree::ApiOrImpl::Impl) {
     CARBON_DIAGNOSTIC(ExportFromImpl, Error,
                       "`export` is only allowed in API files.");
@@ -265,27 +264,28 @@ auto HandleExportName(Context& context) -> void {
 auto HandleExportNameFinish(Context& context) -> void {
   auto state = context.PopState();
 
-  context.AddNodeExpectingDeclSemi(state, NodeKind::ExportDirective,
+  context.AddNodeExpectingDeclSemi(state, NodeKind::ExportDecl,
                                    Lex::TokenKind::Export,
                                    /*is_def_allowed=*/false);
 }
 
 // Handles common logic for `package` and `library`.
-static auto HandlePackageAndLibraryDirectives(Context& context,
-                                              Lex::TokenKind intro_token_kind,
-                                              NodeKind intro,
-                                              NodeKind directive) -> void {
+static auto HandlePackageAndLibraryDecls(Context& context,
+                                         Lex::TokenKind intro_token_kind,
+                                         NodeKind intro, NodeKind declaration)
+    -> void {
   auto state = context.PopState();
 
-  auto on_parse_error = [&] { OnParseError(context, state, directive); };
+  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
 
   auto intro_token = context.ConsumeChecked(intro_token_kind);
   context.AddLeafNode(intro, intro_token);
 
   if (intro_token != Lex::TokenIndex::FirstNonCommentToken) {
-    CARBON_DIAGNOSTIC(PackageTooLate, Error,
-                      "The `{0}` directive must be the first non-comment line.",
-                      Lex::TokenKind);
+    CARBON_DIAGNOSTIC(
+        PackageTooLate, Error,
+        "The `{0}` declaration must be the first non-comment line.",
+        Lex::TokenKind);
     CARBON_DIAGNOSTIC(FirstNonCommentLine, Note,
                       "First non-comment line is here.");
     context.emitter()
@@ -299,20 +299,20 @@ static auto HandlePackageAndLibraryDirectives(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDirectiveContent(context, state, directive, /*is_export=*/false,
-                         on_parse_error);
+  HandleDeclContent(context, state, declaration, /*is_export=*/false,
+                    on_parse_error);
 }
 
 auto HandlePackage(Context& context) -> void {
-  HandlePackageAndLibraryDirectives(context, Lex::TokenKind::Package,
-                                    NodeKind::PackageIntroducer,
-                                    NodeKind::PackageDirective);
+  HandlePackageAndLibraryDecls(context, Lex::TokenKind::Package,
+                               NodeKind::PackageIntroducer,
+                               NodeKind::PackageDecl);
 }
 
 auto HandleLibrary(Context& context) -> void {
-  HandlePackageAndLibraryDirectives(context, Lex::TokenKind::Library,
-                                    NodeKind::LibraryIntroducer,
-                                    NodeKind::LibraryDirective);
+  HandlePackageAndLibraryDecls(context, Lex::TokenKind::Library,
+                               NodeKind::LibraryIntroducer,
+                               NodeKind::LibraryDecl);
 }
 
 }  // namespace Carbon::Parse
