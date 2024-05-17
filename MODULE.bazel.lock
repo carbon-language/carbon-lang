@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 6,
-  "moduleFileHash": "93b7acb43f1cabce8291aa0a0f87b56afabbfb021e6625c01be806a93726e716",
+  "moduleFileHash": "e8ab8befa6e8b97ea295cf5ec5b694124bd41d0842fc98875746a48ee4108eaf",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -70,10 +70,10 @@
                   "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
                   "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch"
                 ],
-                "sha256": "57c598287c774ff0a6919de6bcdf331bb60bb962f8ba74b4ce6a3fc0cb6aaa0c",
-                "strip_prefix": "llvm-project-a7b968a57834a0e522505b56fab0ca4b979cb68f",
+                "sha256": "4c53512522cfd625a75aa7f201e6932f18ebf3fbe8ee89e05883c3d30ca935ac",
+                "strip_prefix": "llvm-project-a68d20e986053ec571223a9f3ead3e146a27dc82",
                 "urls": [
-                  "https://github.com/llvm/llvm-project/archive/a7b968a57834a0e522505b56fab0ca4b979cb68f.tar.gz"
+                  "https://github.com/llvm/llvm-project/archive/a68d20e986053ec571223a9f3ead3e146a27dc82.tar.gz"
                 ],
                 "name": "llvm-raw"
               },
