@@ -84,7 +84,7 @@
 		"operator-dedicated-keywords-statements": {
 			"patterns": [
 				{
-					"name": "keyword.control.less.carbon",
+					"name": "keyword.carbon",
 					"match": "\\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\\b"
 				}
 			]
@@ -92,7 +92,7 @@
 		"reserved-words": {
 			"patterns": [
 				{
-					"name": "keyword.control.less",
+					"name": "support.type.carbon",
 					"match": "\\b(As|bool|Carbon\\.Int|Carbon\\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|type|u8|u16|u32|u64|u128|u256)\\b"
 				}
 			]
@@ -108,7 +108,7 @@
 		"functions": {
 			"patterns": [
 				{
-					"name": "keyword.operator.new.carbon",
+					"name": "support.function.carbon",
 					"match": "\\b[a-zA-Z]+\\s*\\("
 				}
 			]
@@ -130,6 +130,10 @@
 				{
 					"name": "entity.other.attribute-name.carbon",
 					"match": "(?<=\\bvar\\s)\\w+"
+				},
+				{
+					"name": "support.function.carbon",
+					"match": "(?<=\\bfn\\s)\\w+"
 				},
 				{
 					"name": "entity.other.attribute-name.carbon",
