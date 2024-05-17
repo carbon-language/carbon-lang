@@ -14,24 +14,6 @@
       "include": "#operators"
     },
     {
-      "name": "string.quoted.triple.carbon",
-      "begin": "'''([^\\s'#]*\\n)?",
-      "end": "'''",
-      "beginCaptures": {
-        "1": {
-          "name": "constant.character.escape.carbon"
-        }
-      },
-      "patterns": [
-        {
-          "include": "#string_escapes"
-        }
-      ]
-    },
-    {
-      "include": "#strings"
-    },
-    {
       "include": "#special-keywords"
     },
     {
@@ -53,14 +35,24 @@
       "include": "#functions"
     },
     {
-      "name": "string.quoted.double",
-      "begin": "\"([^\\s'#]*\\n)?",
-      "end": "\"",
+      "name": "string.quoted.triple.carbon",
+      "begin": "'''([^\\s'#]*\\n)?",
+      "end": "'''",
       "beginCaptures": {
         "1": {
           "name": "constant.character.escape.carbon"
         }
       },
+      "patterns": [
+        {
+          "include": "#string_escapes"
+        }
+      ]
+    },
+    {
+      "name": "string.quoted.double.carbon",
+      "begin": "\"",
+      "end": "\"",
       "patterns": [
         {
           "include": "#string_escapes"
@@ -86,25 +78,6 @@
           "name": "comment.line.double-slash.carbon",
           "begin": "//",
           "end": "\n"
-        }
-      ]
-    },
-    "strings": {
-      "patterns": [
-        {
-          "name": "string.quoted.single.carbon",
-          "begin": "'",
-          "end": "'"
-        },
-        {
-          "name": "string.quoted.double.carbon",
-          "begin": "\"",
-          "end": "\""
-        },
-        {
-          "name": "string.quoted.triple.carbon",
-          "begin": "'''",
-          "end": "'''"
         }
       ]
     },
