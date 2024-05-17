@@ -31,7 +31,7 @@
       {
         "language": "carbon",
         "scopeName": "source.carbon",
-        "path": "./syntaxes/carbon.tmLanguage.json"
+        "path": "./carbon.tmLanguage.json"
       }
     ]
   },
