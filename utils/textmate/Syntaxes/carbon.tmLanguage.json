@@ -67,7 +67,7 @@
     "operators": {
       "patterns": [
         {
-          "name": "keyword.operator.new.carbon",
+          "name": "keyword.operator.carbon",
           "match": "\\b(\\+|-|\\*|/|!)\\b"
         }
       ]
