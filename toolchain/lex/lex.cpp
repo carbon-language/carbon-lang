@@ -195,7 +195,6 @@ static constexpr SIMDMaskArrayT PrefixMasks = []() constexpr {
   for (int i = 1; i < static_cast<int>(masks.size()); ++i) {
     masks[i] =
         // The SIMD types and constexpr require a C-style cast.
-        // NOLINTNEXTLINE(google-readability-casting)
         (SIMDMaskT)(std::numeric_limits<unsigned __int128>::max() >>
                     ((sizeof(SIMDMaskT) - i) * 8));
   }

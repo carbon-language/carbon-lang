@@ -21,6 +21,10 @@ WarningsAsErrors: '*'
 #       inst_id = name_ref->value_id;
 #                 ^ unchecked access to optional value
 #     }
+# - google-readability-casting is deeply broken, and fires regularly on calls
+#   to constructors. Worse, it suggests switching to a call to a constructor
+#   which doesn't fix the warning. This has been disabled by many major users
+#   of clang-tidy (Chromium, etc).
 # - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-designated-initializers is disabled because it fires on
 #   creation of SemIR typed insts, for which we do not currently want to use
@@ -33,7 +37,7 @@ Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape, -bugprone-macro-parentheses,
   -bugprone-narrowing-conversions, -bugprone-switch-missing-default-case,
-  -bugprone-unchecked-optional-access, google-*,
+  -bugprone-unchecked-optional-access, google-*, -google-readability-casting,
   -google-readability-function-size, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,
