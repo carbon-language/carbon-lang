@@ -116,7 +116,7 @@
     "true-false": {
       "patterns": [
         {
-          "name": "keyword.control.carbon",
+          "name": "constant.language.carbon",
           "match": "\\b(true|false)\\b"
         }
       ]
