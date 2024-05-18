@@ -100,7 +100,7 @@
     "operator-dedicated-keywords-statements": {
       "patterns": [
         {
-          "name": "keyword.operator.new.carbon",
+          "name": "keyword.other.carbon",
           "match": "\\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\\b"
         }
       ]
