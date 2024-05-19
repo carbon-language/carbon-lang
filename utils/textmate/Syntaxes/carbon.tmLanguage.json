@@ -3,9 +3,7 @@
   "name": "carbon",
   "foldingStartMarker": "\\{\\s*$",
   "foldingStopMarker": "^\\s*\\}",
-  "fileTypes": [
-    "carbon"
-  ],
+  "fileTypes": ["carbon"],
   "patterns": [
     {
       "include": "#comments"
