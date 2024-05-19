@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception.
 {
   "comments": {
-    "lineComment": "//",
+    "lineComment": "//"
   },
   // Symbols used as brackets.
   "brackets": [
