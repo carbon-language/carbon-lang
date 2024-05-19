@@ -289,16 +289,16 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Other = %Other
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Other: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, %Other [template = %Other]
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir2, inst+2, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir2, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir3, inst+2, unloaded
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref C = var c
 // CHECK:STDOUT:   %c: ref C = bind_name c, %c.var

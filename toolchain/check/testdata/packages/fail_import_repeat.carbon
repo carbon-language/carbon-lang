@@ -92,11 +92,11 @@ import library default;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Api = %Api
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Api = %Api
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %Api: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_default_import.carbon
