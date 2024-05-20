@@ -185,7 +185,6 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Let:
         case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
-        case Lex::TokenKind::Package:
         case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
@@ -193,6 +192,11 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
 #include "toolchain/parse/node_kind.def"
 
           return false;
+
+        case Lex::TokenKind::Package:
+          // `package.foo` is an expression; any other token after `package` is
+          // a `package` introducer.
+          return context.PositionKind(Lookahead(2)) == Lex::TokenKind::Period;
 
         default:
           return true;

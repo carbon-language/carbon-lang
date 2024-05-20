@@ -38,18 +38,19 @@ library;
 
 // --- fail_trailing_impl.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:18: ERROR: `library` declarations must end with a `;`.
-// CHECK:STDERR: library "NoSemi" api
-// CHECK:STDERR:                  ^~~
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+4]]:25: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: library "trailing_impl" impl
+// CHECK:STDERR:                         ^~~~
+// CHECK:STDERR:
 library "trailing_impl" impl
 
 // --- fail_no_semi.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:18: ERROR: `library` declarations must end with a `;`.
-// CHECK:STDERR: library "NoSemi" api
-// CHECK:STDERR:                  ^~~
 library "NoSemi"
 
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+46]]:21: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: // CHECK:STDOUT:   ]
+// CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -78,11 +79,19 @@ library "NoSemi"
 // CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_trailing_impl.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryName', text: '"trailing_impl"'},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: 'impl', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"NoSemi"'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: 'api', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: '"NoSemi"', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

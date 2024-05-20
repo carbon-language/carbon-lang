@@ -34,12 +34,9 @@ export ();
 
 package Pkg;
 
-// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE+7]]:1: ERROR: The `package` directive must be the first non-comment line.
+// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE+4]]:8: ERROR: `export` introducer should be followed by a name.
 // CHECK:STDERR: export package.Bar;
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE-5]]:1: First non-comment line is here.
-// CHECK:STDERR: package Pkg;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
 export package.Bar;
 
@@ -182,9 +179,9 @@ export Foo;
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
 // CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExportIntroducer', text: 'export'},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
+// CHECK:STDOUT:     {kind: 'ExportDirective', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_keyword_only
