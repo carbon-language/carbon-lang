@@ -7,6 +7,14 @@
 namespace Carbon::Parse {
 
 // Handles processing of a complete `adapt T` declaration.
+auto HandleAdaptAfterIntroducer(Context& context) -> void {
+  auto state = context.PopState();
+  state.state = State::AdaptDecl;
+  context.PushState(state);
+  context.PushState(State::Expr);
+}
+
+// Handles processing of a complete `adapt T` declaration.
 auto HandleAdaptDecl(Context& context) -> void {
   // TODO: This is identical to HandleBaseDecl other than the `NodeKind`,
   // and very similar to `HandleNamespaceFinish` and `HandleAliasFinish`.

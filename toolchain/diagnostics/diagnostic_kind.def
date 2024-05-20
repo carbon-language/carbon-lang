@@ -98,7 +98,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterImport)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryNameOrDefault)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
-CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
 CARBON_DIAGNOSTIC_KIND(ExportImportPackage)
 
 // For-specific diagnostics.

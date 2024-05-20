@@ -182,31 +182,28 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryName, 0, StringLiteral)
 
 // `package`:
 //   PackageIntroducer
+//   _repeated_ _external_: modifier
 //   _optional_ _external_: PackageName
 //   _optional_ _external_: LibrarySpecifier
-//   PackageApi or PackageImpl
 // PackageDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageIntroducer, 0, Package)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageApi, 0, Api)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0, Impl)
 CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer,
                                CARBON_IF_VALID(Semi))
 
 // `import`:
 //   ImportIntroducer
-//   _optional_: ImportExport
+//   _repeated_ _external_: modifier
 //   _optional_ _external_: PackageName
 //   _optional_ _external_: LibrarySpecifier
 // ImportDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportIntroducer, 0, Import)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ImportExport, 0, Export)
 CARBON_PARSE_NODE_KIND_BRACKET(ImportDirective, ImportIntroducer,
                                CARBON_IF_VALID(Semi))
 
 // `library` as directive:
 //   LibraryIntroducer
+//   _repeated_ _external_: modifier
 //   DefaultLibrary or _external_: LibraryName
-//   PackageApi or PackageImpl
 // LibraryDirective
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DefaultLibrary, 0, Default)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(LibraryIntroducer, 0, Library)
@@ -646,6 +643,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral, StructTypeLiteralStart,
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Abstract)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Base)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Default)
+CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Export)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extend)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Extern)
 CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Final)

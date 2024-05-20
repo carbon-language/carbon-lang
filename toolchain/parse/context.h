@@ -304,10 +304,10 @@ class Context {
 
   // Sets the package directive information. Called at most once.
   auto set_packaging_directive(Tree::PackagingNames packaging_names,
-                               Tree::ApiOrImpl api_or_impl) -> void {
+                               bool is_impl) -> void {
     CARBON_CHECK(!tree_->packaging_directive_);
     tree_->packaging_directive_ = {.names = packaging_names,
-                                   .api_or_impl = api_or_impl};
+                                   .is_impl = is_impl};
   }
 
   // Adds an import.

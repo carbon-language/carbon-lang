@@ -30,10 +30,11 @@ enum class KeywordModifierSet : uint32_t {
   Abstract = 1 << 3,
   Base = 1 << 4,
   Default = 1 << 5,
-  Extend = 1 << 6,
-  Final = 1 << 7,
-  Impl = 1 << 8,
-  Virtual = 1 << 9,
+  Export = 1 << 6,
+  Extend = 1 << 7,
+  Final = 1 << 8,
+  Impl = 1 << 9,
+  Virtual = 1 << 10,
 
   // Sets of modifiers:
   Access = Private | Protected,
@@ -74,9 +75,11 @@ struct DeclState {
     Export,
     Fn,
     Impl,
+    Import,
     Interface,
     Let,
     Namespace,
+    PackageOrLibrary,
     Var
   };
 

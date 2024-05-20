@@ -963,8 +963,7 @@ static auto TrackImport(
                         "Explicit import of `api` from `impl` file is "
                         "redundant with implicit import.");
       CARBON_DIAGNOSTIC(ImportSelf, Error, "File cannot import itself.");
-      bool is_impl =
-          !packaging || packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
+      bool is_impl = !packaging || packaging->is_impl;
       unit_info.emitter.Emit(import.node_id,
                              is_impl ? ExplicitImportApi : ImportSelf);
       return;
@@ -1072,8 +1071,7 @@ static auto BuildApiMapAndDiagnosePackaging(
       continue;
     }
 
-    bool is_impl =
-        packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl;
+    bool is_impl = packaging && packaging->is_impl;
 
     // Add to the `api` map and diagnose duplicates. This occurs before the
     // file extension check because we might emit both diagnostics in situations
@@ -1152,7 +1150,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
     const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    if (packaging && packaging->api_or_impl == Parse::Tree::ApiOrImpl::Impl) {
+    if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
       implicit_names.package_id = IdentifierId::Invalid;
