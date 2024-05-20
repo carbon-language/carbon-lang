@@ -6,7 +6,7 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+6]]:1: ERROR: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
 // CHECK:STDERR: import B;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: First declaration is here.
@@ -23,6 +23,6 @@ import B;
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

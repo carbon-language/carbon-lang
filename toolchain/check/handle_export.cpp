@@ -19,8 +19,7 @@ auto HandleExportIntroducer(Context& context,
   return true;
 }
 
-auto HandleExportDirective(Context& context, Parse::ExportDirectiveId node_id)
-    -> bool {
+auto HandleExportDecl(Context& context, Parse::ExportDeclId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName();
   context.decl_name_stack().PopScope();
 
@@ -53,7 +52,7 @@ auto HandleExportDirective(Context& context, Parse::ExportDirectiveId node_id)
   }
 
   auto export_id = context.AddInst(
-      {node_id, SemIR::BindExport{.type_id = import_ref->type_id,
+      {node_id, SemIR::ExportDecl{.type_id = import_ref->type_id,
                                   .bind_name_id = import_ref->bind_name_id,
                                   .value_id = inst_id}});
   context.AddExport(export_id);

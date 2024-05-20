@@ -98,7 +98,7 @@ using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
-using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDirectiveId>;
+using AnyNamespaceId = NodeIdOneOf<NamespaceId, ImportDeclId>;
 using AnyPointerDeferenceExprId =
     NodeIdOneOf<PrefixOperatorStarId, PointerMemberAccessExprId>;
 

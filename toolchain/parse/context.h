@@ -39,7 +39,7 @@ class Context {
   // Possible return values for FindListToken.
   enum class ListTokenKind : int8_t { Comma, Close, CommaClose };
 
-  // Used for restricting ordering of `package` and `import` directives.
+  // Used for restricting ordering of `package` and `import` declarations.
   enum class PackagingState : int8_t {
     FileStart,
     InImports,
@@ -302,12 +302,12 @@ class Context {
   auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
-  // Sets the package directive information. Called at most once.
-  auto set_packaging_directive(Tree::PackagingNames packaging_names,
-                               Tree::ApiOrImpl api_or_impl) -> void {
-    CARBON_CHECK(!tree_->packaging_directive_);
-    tree_->packaging_directive_ = {.names = packaging_names,
-                                   .api_or_impl = api_or_impl};
+  // Sets the package declaration information. Called at most once.
+  auto set_packaging_decl(Tree::PackagingNames packaging_names,
+                          Tree::ApiOrImpl api_or_impl) -> void {
+    CARBON_CHECK(!tree_->packaging_decl_);
+    tree_->packaging_decl_ = {.names = packaging_names,
+                              .api_or_impl = api_or_impl};
   }
 
   // Adds an import.

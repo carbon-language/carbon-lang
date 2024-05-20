@@ -18,7 +18,7 @@ import library "Shapes";
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:         {kind: 'DefaultLibrary', text: 'default'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: named.carbon
@@ -27,6 +27,6 @@ import library "Shapes";
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"Shapes"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

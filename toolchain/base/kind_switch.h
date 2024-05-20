@@ -73,18 +73,18 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
       ::Carbon::Internal::Kind::SwitchOn(carbon_internal_kind_switch_value))
 
 // Produces a case-compatible block of code that also instantiates a local typed
-// variable. typed_variable_declaration looks like `int i`, with a space.
+// variable. typed_variable_decl looks like `int i`, with a space.
 //
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-#define CARBON_KIND(typed_variable_declaration)                                \
-  ::Carbon::Internal::Kind::ForCase<                                           \
-      decltype([]([[maybe_unused]] typed_variable_declaration) {})>()          \
-      : if (typed_variable_declaration = ::Carbon::Internal::Kind::Cast<       \
-                decltype([]([[maybe_unused]] typed_variable_declaration) {})>( \
-                carbon_internal_kind_switch_value);                            \
-            false) {}                                                          \
+#define CARBON_KIND(typed_variable_decl)                                \
+  ::Carbon::Internal::Kind::ForCase<                                    \
+      decltype([]([[maybe_unused]] typed_variable_decl) {})>()          \
+      : if (typed_variable_decl = ::Carbon::Internal::Kind::Cast<       \
+                decltype([]([[maybe_unused]] typed_variable_decl) {})>( \
+                carbon_internal_kind_switch_value);                     \
+            false) {}                                                   \
   else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_

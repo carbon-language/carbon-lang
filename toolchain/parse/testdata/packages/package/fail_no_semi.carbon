@@ -15,6 +15,6 @@ package Geometry api
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
 // CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: 'api', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: 'api', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

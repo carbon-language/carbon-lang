@@ -266,9 +266,9 @@ static auto StringifyTypeExprImpl(const SemIR::File& outer_sem_ir,
         break;
       }
       case BindAlias::Kind:
-      case BindExport::Kind:
-      case BindSymbolicName::Kind: {
-        auto name_id = untyped_inst.As<AnyBindName>().bind_name_id;
+      case BindSymbolicName::Kind:
+      case ExportDecl::Kind: {
+        auto name_id = untyped_inst.As<AnyBindNameOrExportDecl>().bind_name_id;
         out << sem_ir.names().GetFormatted(
             sem_ir.bind_names().Get(name_id).name_id);
         break;
@@ -535,7 +535,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = inst.value_id;
         continue;
       }
-      case CARBON_KIND(BindExport inst): {
+      case CARBON_KIND(ExportDecl inst): {
         inst_id = inst.value_id;
         continue;
       }

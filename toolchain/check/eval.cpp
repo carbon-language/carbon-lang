@@ -1065,7 +1065,7 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case CARBON_KIND(SemIR::BindAlias typed_inst): {
       return context.constant_values().Get(typed_inst.value_id);
     }
-    case CARBON_KIND(SemIR::BindExport typed_inst): {
+    case CARBON_KIND(SemIR::ExportDecl typed_inst): {
       return context.constant_values().Get(typed_inst.value_id);
     }
     case CARBON_KIND(SemIR::NameRef typed_inst): {
