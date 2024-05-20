@@ -74,14 +74,14 @@ TEST(HashingTest, Integers) {
         EXPECT_THAT(hash, Ne(hash_zero));
       }
     };
-    test_int_hash(i);
     test_int_hash(static_cast<int8_t>(i));
     test_int_hash(static_cast<uint8_t>(i));
     test_int_hash(static_cast<int16_t>(i));
     test_int_hash(static_cast<uint16_t>(i));
     test_int_hash(static_cast<int32_t>(i));
     test_int_hash(static_cast<uint32_t>(i));
-    test_int_hash(static_cast<int64_t>(i));
+    // `i` is already an int64_t variable.
+    test_int_hash(i);
     test_int_hash(static_cast<uint64_t>(i));
   }
 }
@@ -332,11 +332,15 @@ template <typename T>
 auto PrintFullWidthHex(llvm::raw_ostream& os, T value) {
   static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
                 sizeof(T) == 8);
+  // Given the nature of a format string and the good formatting, a nested
+  // conditional seems like the most readable structure.
+  // NOLINTBEGIN(readability-avoid-nested-conditional-operator)
   os << llvm::formatv(sizeof(T) == 1   ? "{0:x2}"
                       : sizeof(T) == 2 ? "{0:x4}"
                       : sizeof(T) == 4 ? "{0:x8}"
                                        : "{0:x16}",
                       static_cast<uint64_t>(value));
+  // NOLINTEND(readability-avoid-nested-conditional-operator)
 }
 
 template <typename T>

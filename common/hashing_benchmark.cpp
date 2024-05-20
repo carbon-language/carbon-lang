@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <numbers>
 
 #include "absl/hash/hash.h"
 #include "absl/random/random.h"
@@ -54,8 +55,7 @@ static const std::array<size_t, NumSizes> rand_sizes = []() {
   // an example of why this is an effective strategy for selecting sizes in the
   // range.
   static_assert(NumSizes > 128);
-  constexpr double Phi = 1.61803398875;
-  constexpr size_t Scale = std::max<size_t>(1, MaxSize / Phi);
+  constexpr size_t Scale = std::max<size_t>(1, MaxSize / std::numbers::phi);
   for (auto [i, size] : llvm::enumerate(sizes)) {
     size = (i * Scale) % MaxSize;
   }
@@ -92,6 +92,10 @@ struct RandValues {
     static_assert(sizeof(T) <= EntropyObjSize);
     bytes += sizeof(T);
     T result;
+    // Clang Tidy complains about this `memcpy` despite this being the canonical
+    // formulation. Removing the type `T` would also remove warnings for getting
+    // the size incorrect.
+    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     memcpy(&result, &entropy_bytes[x % EntropySize], sizeof(T));
     return result;
   }
@@ -107,7 +111,12 @@ struct RandValues<std::pair<T, U>> {
     bytes += sizeof(std::pair<T, U>);
     T result0;
     U result1;
+    // Clang Tidy complains about this `memcpy` despite this being the canonical
+    // formulation. Removing the type `T` would also remove warnings for getting
+    // the size incorrect.
+    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     memcpy(&result0, &entropy_bytes[x % EntropySize], sizeof(T));
+    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     memcpy(&result1, &entropy_bytes[x % EntropySize] + sizeof(T), sizeof(U));
     return {result0, result1};
   }
