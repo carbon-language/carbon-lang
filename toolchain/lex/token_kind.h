@@ -28,8 +28,10 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // An array of all the keyword tokens.
   static const llvm::ArrayRef<TokenKind> KeywordTokens;
 
-  using EnumBase::AsInt;
   using EnumBase::EnumBase;
+
+  // Permit conversion to integer for use as an array index.
+  using EnumBase::AsInt;
 
   // Test whether this kind of token is a simple symbol sequence (punctuation,
   // not letters) that appears directly in the source text and can be
