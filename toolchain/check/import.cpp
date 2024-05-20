@@ -223,7 +223,7 @@ static auto GetCanonicalImportIRInst(Context& context,
                                      const SemIR::File* cursor_ir,
                                      SemIR::InstId cursor_inst_id)
     -> SemIR::ImportIRInst {
-  for (;;) {
+  while (true) {
     auto inst = cursor_ir->insts().Get(cursor_inst_id);
     CARBON_KIND_SWITCH(inst) {
       case CARBON_KIND(SemIR::BindExport bind_export): {
