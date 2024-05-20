@@ -62,10 +62,12 @@ static auto HandleLibraryName(Context& context, bool accept_default)
 }
 
 // Handles everything after the directive's introducer.
-static auto HandleDirectiveContent(
-    Context& context, Context::StateStackEntry state, NodeKind directive,
-    bool is_export, bool is_impl,
-    llvm::function_ref<void()> on_parse_error) -> void {
+static auto HandleDirectiveContent(Context& context,
+                                   Context::StateStackEntry state,
+                                   NodeKind directive, bool is_export,
+                                   bool is_impl,
+                                   llvm::function_ref<void()> on_parse_error)
+    -> void {
   Tree::PackagingNames names{
       .node_id = ImportDirectiveId(NodeId(state.subtree_start)),
       .is_export = is_export};

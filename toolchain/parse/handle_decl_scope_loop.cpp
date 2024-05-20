@@ -108,12 +108,15 @@ static constexpr auto DeclIntroducers = [] {
   set(Lex::TokenKind::Let, NodeKind::LetIntroducer, State::Let);
   set(Lex::TokenKind::Var, NodeKind::VariableIntroducer, State::VarAsDecl);
 
-  set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer, State::Package);
-  set_packaging(Lex::TokenKind::Library, NodeKind::LibraryIntroducer, State::Library);
-  set_packaging(Lex::TokenKind::Import, NodeKind::ImportIntroducer, State::Import);
+  set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
+                State::Package);
+  set_packaging(Lex::TokenKind::Library, NodeKind::LibraryIntroducer,
+                State::Library);
+  set_packaging(Lex::TokenKind::Import, NodeKind::ImportIntroducer,
+                State::Import);
   return std::to_array(introducers);
 }();
-}
+}  // namespace
 
 // Attempts to handle the current token as a declaration introducer.
 // Returns true if the current position is a declaration. If we see a
