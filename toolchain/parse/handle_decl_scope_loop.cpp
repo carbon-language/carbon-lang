@@ -180,9 +180,12 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Constraint:
         case Lex::TokenKind::Fn:
+        case Lex::TokenKind::Import:
         case Lex::TokenKind::Interface:
         case Lex::TokenKind::Let:
+        case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
+        case Lex::TokenKind::Package:
         case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(...)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \

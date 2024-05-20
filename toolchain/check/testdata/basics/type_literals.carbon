@@ -5,14 +5,14 @@
 // AUTOUPDATE
 
 // --- iN.carbon
-library "iN" api;
+library "iN";
 
 var test_i8: i8;
 var test_i16: i16;
 var test_i64: i64;
 
 // --- fail_iN_bad_width.carbon
-library "fail_iN_bad_width" api;
+library "fail_iN_bad_width";
 
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `i0` not found.
 // CHECK:STDERR: var test_i0: i0;
@@ -42,14 +42,14 @@ var test_i1000000000: i1000000000;
 var test_i10000000000000000000: i10000000000000000000;
 
 // --- uN.carbon
-library "uN" api;
+library "uN";
 
 var test_u8: u8;
 var test_u16: u16;
 var test_u64: u64;
 
 // --- fail_uN_bad_width.carbon
-library "fail_uN_bad_width" api;
+library "fail_uN_bad_width";
 
 // CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `u0` not found.
 // CHECK:STDERR: var test_u0: u0;
@@ -79,7 +79,7 @@ var test_u1000000000: u1000000000;
 var test_u10000000000000000000: u10000000000000000000;
 
 // --- fail_fN_bad_width.carbon
-library "fail_fN_bad_width" api;
+library "fail_fN_bad_width";
 
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: ERROR: Name `f0` not found.
 // CHECK:STDERR: var test_f0: f0;
@@ -97,7 +97,7 @@ var test_f1000000000: f1000000000;
 var test_f1000000000000: f1000000000000;
 
 // --- fail_fN_todo_unsupported.carbon
-library "fail_fN_todo_unsupported" api;
+library "fail_fN_todo_unsupported";
 
 // TODO: Some or all of these should eventually work.
 // CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+3]]:15: ERROR: Semantics TODO: `Currently only f64 is allowed`.

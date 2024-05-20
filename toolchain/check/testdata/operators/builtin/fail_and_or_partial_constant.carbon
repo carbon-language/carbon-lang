@@ -6,7 +6,7 @@
 
 // --- fail_non_constant_result.carbon
 
-package FailNonConstantResult api;
+package FailNonConstantResult;
 
 fn PartialConstant(x: bool) {
   // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.
@@ -23,7 +23,7 @@ fn PartialConstant(x: bool) {
 
 // --- fail_despite_known_result.carbon
 
-package FailDespiteKnownResult api;
+package FailDespiteKnownResult;
 
 fn KnownValueButNonConstantCondition(x: bool) {
   // We choose not to give these cases constant values, even though we could,

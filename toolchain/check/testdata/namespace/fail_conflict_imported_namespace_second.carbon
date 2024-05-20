@@ -6,13 +6,13 @@
 
 // --- fn.carbon
 
-package Example library "fn" api;
+package Example library "fn";
 
 fn NS();
 
 // --- fail_conflict.carbon
 
-package Example api;
+package Example;
 
 import library "fn";
 

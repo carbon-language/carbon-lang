@@ -6,7 +6,7 @@
 
 // --- call.carbon
 
-library "call" api;
+library "call";
 
 class Class(T:! type, N:! i32) {}
 
@@ -17,7 +17,7 @@ var b: Class((), 0);
 
 // --- fail_too_few.carbon
 
-library "too_few" api;
+library "too_few";
 
 class Class(T:! type, N:! i32) {}
 
@@ -32,7 +32,7 @@ var a: Class(i32*);
 
 // --- fail_too_many.carbon
 
-library "too_many" api;
+library "too_many";
 
 class Class(T:! type, N:! i32) {}
 
@@ -47,7 +47,7 @@ var a: Class(i32*, 1, 2);
 
 // --- fail_no_conversion.carbon
 
-library "no_conversion" api;
+library "no_conversion";
 
 class Class(T:! type, N:! i32) {}
 

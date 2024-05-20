@@ -6,32 +6,32 @@
 
 // --- basic.carbon
 
-library "basic" api;
+library "basic";
 
 class C;
 
 // --- basic.impl.carbon
 
-library "basic" impl;
+impl library "basic";
 
 class C {}
 
 // --- redecl_after_def.carbon
 
-library "redecl_after_def" api;
+library "redecl_after_def";
 
 class C {}
 
 // --- fail_redecl_after_def.impl.carbon
 
-library "redecl_after_def" impl;
+impl library "redecl_after_def";
 
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `class C` is redundant.
 // CHECK:STDERR: class C;
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "redecl_after_def" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "redecl_after_def";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: redecl_after_def.carbon:4:1: Previously declared here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
@@ -40,20 +40,20 @@ class C;
 
 // --- redef_after_def.carbon
 
-library "redef_after_def" api;
+library "redef_after_def";
 
 class C {}
 
 // --- fail_redef_after_def.impl.carbon
 
-library "redef_after_def" impl;
+impl library "redef_after_def";
 
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redefinition of `class C`.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "redef_after_def" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "redef_after_def";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: redef_after_def.carbon:4:1: Previously defined here.
 // CHECK:STDERR: class C {}
 // CHECK:STDERR: ^~~~~~~~~
@@ -62,21 +62,21 @@ class C {}
 
 // --- def_alias.carbon
 
-library "def_alias" api;
+library "def_alias";
 
 class C;
 alias B = C;
 
 // --- fail_def_alias.impl.carbon
 
-library "def_alias" impl;
+impl library "def_alias";
 
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: class B {}
 // CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "def_alias" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "def_alias";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: def_alias.carbon:5:7: Name is previously declared here.
 // CHECK:STDERR: alias B = C;
 // CHECK:STDERR:       ^

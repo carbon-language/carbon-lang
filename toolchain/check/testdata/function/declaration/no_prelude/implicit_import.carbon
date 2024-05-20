@@ -6,32 +6,32 @@
 
 // --- basic.carbon
 
-library "basic" api;
+library "basic";
 
 fn A();
 
 // --- basic.impl.carbon
 
-library "basic" impl;
+impl library "basic";
 
 fn A();
 
 // --- extern_api.carbon
 
-library "extern_api" api;
+library "extern_api";
 
 extern fn A();
 
 // --- fail_extern_api.impl.carbon
 
-library "extern_api" impl;
+impl library "extern_api";
 
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "extern_api" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "extern_api";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: extern_api.carbon:4:1: Previously declared here.
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
@@ -40,20 +40,20 @@ fn A();
 
 // --- extern_impl.carbon
 
-library "extern_impl" api;
+library "extern_impl";
 
 fn A();
 
 // --- fail_extern_impl.impl.carbon
 
-library "extern_impl" impl;
+impl library "extern_impl";
 
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+9]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "extern_impl" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "extern_impl";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: extern_impl.carbon:4:1: Previously declared here.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~

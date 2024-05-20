@@ -6,7 +6,7 @@
 
 // --- redeclare.carbon
 
-library "redeclare" api;
+library "redeclare";
 
 fn F(T:! type) -> T*;
 
@@ -16,7 +16,7 @@ fn F(T:! type) -> T* {
 
 // --- fail_different_return_type.carbon
 
-library "fail_different_return_type" api;
+library "fail_different_return_type";
 
 fn F(T:! type, U:! type) -> T*;
 
@@ -44,7 +44,7 @@ fn F(T:! type, U:! type) -> U* {
 
 // --- fail_reorder.carbon
 
-library "fail_reorder" api;
+library "fail_reorder";
 
 fn F(T:! type, U:! type) -> T*;
 
@@ -72,7 +72,7 @@ fn F(U:! type, T:! type) -> T* {
 
 // --- fail_rename.carbon
 
-library "fail_rename" api;
+library "fail_rename";
 
 fn F(T:! type, U:! type) -> T*;
 

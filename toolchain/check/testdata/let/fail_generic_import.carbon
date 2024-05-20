@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 let T:! type = i32;
 
 // --- fail_implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 // TODO: Should this be valid?
 // CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Cannot implicitly convert from `i32` to `T`.

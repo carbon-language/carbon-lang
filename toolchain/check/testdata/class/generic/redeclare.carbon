@@ -6,7 +6,7 @@
 
 // --- valid.carbon
 
-library "valid" api;
+library "valid";
 
 class Generic(T:! type);
 
@@ -15,7 +15,7 @@ class Generic(T:! type) {
 
 // --- fail_mismatch_param_list.carbon
 
-library "mismatch_param_list" api;
+library "mismatch_param_list";
 
 class A;
 // CHECK:STDERR: fail_mismatch_param_list.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter list.
@@ -29,7 +29,7 @@ class A(T:! type) {}
 
 // --- fail_mismatch_implicit_param_list.carbon
 
-library "implicit_mismatch_param_list" api;
+library "implicit_mismatch_param_list";
 
 class B(N:! i32);
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of implicit parameter list.
@@ -43,7 +43,7 @@ class B[T:! type](N:! T) {}
 
 // --- fail_mismatch_param_count.carbon
 
-library "mismatch_param_count" api;
+library "mismatch_param_count";
 
 class C(T:! type);
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: ERROR: Redeclaration differs because of parameter count of 2.
@@ -57,7 +57,7 @@ class C(T:! type, U:! i32) {}
 
 // --- fail_mismatch_param_type.carbon
 
-library "mismatch_param_type" api;
+library "mismatch_param_type";
 
 class D(T:! type);
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: ERROR: Redeclaration differs at parameter 1.
@@ -71,7 +71,7 @@ class D(T:! i32) {}
 
 // --- fail_mismatch_param_name.carbon
 
-library "mismatch_param_name" api;
+library "mismatch_param_name";
 
 class E(T:! type);
 // CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: ERROR: Redeclaration differs at parameter 1.

@@ -6,32 +6,32 @@
 
 // --- basic.carbon
 
-library "basic" api;
+library "basic";
 
 fn A();
 
 // --- basic.impl.carbon
 
-library "basic" impl;
+impl library "basic";
 
 fn A() {}
 
 // --- extern_api.carbon
 
-library "extern_api" api;
+library "extern_api";
 
 extern fn A();
 
 // --- fail_extern_api.impl.carbon
 
-library "extern_api" impl;
+impl library "extern_api";
 
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclarations of `fn A` in the same library must match use of `extern`.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "extern_api" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "extern_api";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: extern_api.carbon:4:1: Previously declared here.
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
@@ -40,13 +40,13 @@ fn A() {}
 
 // --- extern_impl.carbon
 
-library "extern_impl" api;
+library "extern_impl";
 
 fn A();
 
 // --- fail_extern_impl.impl.carbon
 
-library "extern_impl" impl;
+impl library "extern_impl";
 
 // CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+4]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
 // CHECK:STDERR: extern fn A() {}
@@ -56,20 +56,20 @@ extern fn A() {}
 
 // --- redecl_after_def.carbon
 
-library "redecl_after_def" api;
+library "redecl_after_def";
 
 fn A() {}
 
 // --- fail_redecl_after_def.impl.carbon
 
-library "redecl_after_def" impl;
+impl library "redecl_after_def";
 
 // CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redeclaration of `fn A` is redundant.
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "redecl_after_def" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "redecl_after_def";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: redecl_after_def.carbon:4:1: Previously declared here.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
@@ -78,20 +78,20 @@ fn A();
 
 // --- redef_after_def.carbon
 
-library "redef_after_def" api;
+library "redef_after_def";
 
 fn A() {}
 
 // --- fail_redef_after_def.impl.carbon
 
-library "redef_after_def" impl;
+impl library "redef_after_def";
 
 // CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+10]]:1: ERROR: Redefinition of `fn A`.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "redef_after_def" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "redef_after_def";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: redef_after_def.carbon:4:1: Previously defined here.
 // CHECK:STDERR: fn A() {}
 // CHECK:STDERR: ^~~~~~~~
@@ -100,21 +100,21 @@ fn A() {}
 
 // --- def_alias.carbon
 
-library "def_alias" api;
+library "def_alias";
 
 fn A();
 alias B = A;
 
 // --- fail_def_alias.impl.carbon
 
-library "def_alias" impl;
+impl library "def_alias";
 
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+9]]:1: ERROR: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn B() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: In import.
-// CHECK:STDERR: library "def_alias" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: In import.
+// CHECK:STDERR: impl library "def_alias";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR: def_alias.carbon:5:7: Name is previously declared here.
 // CHECK:STDERR: alias B = A;
 // CHECK:STDERR:       ^

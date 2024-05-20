@@ -11,13 +11,13 @@ import B;
 
 // --- after_library.carbon
 
-library "A" api;
+library "A";
 
 import B;
 
 // --- after_package.carbon
 
-package A api;
+package A;
 
 import B;
 
@@ -37,8 +37,7 @@ import B;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"A"'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 3},
@@ -49,8 +48,7 @@ import B;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'B'},
 // CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 3},

@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;

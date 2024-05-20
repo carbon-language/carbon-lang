@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-package Example library "a" api;
+package Example library "a";
 
 namespace NS;
 
@@ -14,7 +14,7 @@ fn NS.A() {}
 
 // --- b.carbon
 
-package Example library "b" api;
+package Example library "b";
 
 namespace NS;
 
@@ -26,7 +26,7 @@ fn NS.B2() {}
 
 // --- c.carbon
 
-package Example library "c" api;
+package Example library "c";
 
 import library "a";
 import library "b";

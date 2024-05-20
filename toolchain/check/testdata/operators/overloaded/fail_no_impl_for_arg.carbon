@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -17,7 +17,7 @@ interface AddAssign {
 
 // --- fail_no_impl_for_arg.carbon
 
-package User api;
+package User;
 
 import Core;
 

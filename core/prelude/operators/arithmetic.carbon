@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/operators/arithmetic" api;
+package Core library "prelude/operators/arithmetic";
 
 // Addition: `a + b`.
 interface Add {

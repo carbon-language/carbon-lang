@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface Sub {
   fn Op[self: Self](other: Self) -> Self;
@@ -19,7 +19,7 @@ interface SubAssign {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 

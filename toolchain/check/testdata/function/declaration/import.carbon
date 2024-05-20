@@ -10,7 +10,7 @@
 
 // --- api.carbon
 
-library "api" api;
+library "api";
 
 fn A();
 fn B(b: i32) -> i32;
@@ -22,7 +22,7 @@ fn NS.E();
 
 // --- extern_api.carbon
 
-library "extern_api" api;
+library "extern_api";
 
 extern fn A();
 extern fn B(b: i32) -> i32;
@@ -38,7 +38,7 @@ extern fn NS.E();
 
 // --- basics.carbon
 
-library "basics" api;
+library "basics";
 
 import library "api";
 
@@ -50,7 +50,7 @@ var e: () = NS.E();
 
 // --- redecl_api.carbon
 
-library "redecl_api" api;
+library "redecl_api";
 
 import library "api";
 
@@ -68,7 +68,7 @@ var e: () = NS.E();
 
 // --- redecl_extern_api.carbon
 
-library "redecl_extern_api" api;
+library "redecl_extern_api";
 
 import library "extern_api";
 
@@ -86,7 +86,7 @@ var e: () = NS.E();
 
 // --- fail_todo_merge.carbon
 
-library "merge" api;
+library "merge";
 
 import library "api";
 // CHECK:STDERR: fail_todo_merge.carbon:[[@LINE+65]]:1: In import.
@@ -164,7 +164,7 @@ var e: () = NS.E();
 
 // --- fail_todo_merge_reverse.carbon
 
-library "merge_reverse" api;
+library "merge_reverse";
 
 import library "extern_api";
 // CHECK:STDERR: fail_todo_merge_reverse.carbon:[[@LINE+65]]:1: In import.
@@ -242,7 +242,7 @@ var e: () = NS.E();
 
 // --- decl_after_use.carbon
 
-library "decl_after_use" api;
+library "decl_after_use";
 
 import library "extern_api";
 
@@ -252,7 +252,7 @@ fn A();
 
 // --- fail_redecl_mismatch_after_use.carbon
 
-library "redecl_mismatch_after_use" api;
+library "redecl_mismatch_after_use";
 
 import library "extern_api";
 
@@ -272,7 +272,7 @@ fn A() -> i32;
 
 // --- todo_fail_extern_after_use.carbon
 
-library "extern_after_use" api;
+library "extern_after_use";
 
 import library "api";
 
@@ -282,19 +282,19 @@ extern fn A();
 
 // --- unloaded.carbon
 
-library "unloaded" api;
+library "unloaded";
 
 import library "api";
 
 // --- unloaded_extern.carbon
 
-library "unloaded_extern" api;
+library "unloaded_extern";
 
 import library "extern_api";
 
 // --- fail_todo_loaded_merge.carbon
 
-library "loaded_merge" api;
+library "loaded_merge";
 
 import library "api";
 // CHECK:STDERR: fail_todo_loaded_merge.carbon:[[@LINE+64]]:1: In import.

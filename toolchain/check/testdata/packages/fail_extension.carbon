@@ -18,66 +18,66 @@
 // --- fail_main_lib.incorrect
 
 // CHECK:STDERR: fail_main_lib.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: library "lib" api;
+// CHECK:STDERR: library "lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-library "lib" api;
+library "lib";
 
 // --- fail_main_lib_impl.incorrect
 
-// CHECK:STDERR: fail_main_lib_impl.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: library "lib" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_main_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl library "lib";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-library "lib" impl;
+impl library "lib";
 
 // --- fail_package.incorrect
 
 // CHECK:STDERR: fail_package.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: package Package api;
+// CHECK:STDERR: package Package;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-package Package api;
+package Package;
 
 // --- fail_package_impl.incorrect
 
-// CHECK:STDERR: fail_package_impl.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: package Package impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_package_impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl package Package;
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-package Package impl;
+impl package Package;
 
 // --- fail_package_lib.incorrect
 
 // CHECK:STDERR: fail_package_lib.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: package Package library "lib" api;
+// CHECK:STDERR: package Package library "lib";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-package Package library "lib" api;
+package Package library "lib";
 
 // --- fail_package_lib_impl.incorrect
 
-// CHECK:STDERR: fail_package_lib_impl.incorrect:[[@LINE+4]]:1: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: package Package library "lib" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_package_lib_impl.incorrect:[[@LINE+4]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl package Package library "lib";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-package Package library "lib" impl;
+impl package Package library "lib";
 
 // --- fail_swapped_ext.impl.carbon
 
 // CHECK:STDERR: fail_swapped_ext.impl.carbon:[[@LINE+5]]:1: ERROR: File extension of `.carbon` required for `api`.
-// CHECK:STDERR: package SwappedExt api;
+// CHECK:STDERR: package SwappedExt;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_swapped_ext.impl.carbon: File extension of `.impl.carbon` only allowed for `impl`.
 // CHECK:STDERR:
-package SwappedExt api;
+package SwappedExt;
 
 // --- fail_swapped_ext.carbon
 
-// CHECK:STDERR: fail_swapped_ext.carbon:[[@LINE+3]]:1: ERROR: File extension of `.impl.carbon` required for `impl`.
-// CHECK:STDERR: package SwappedExt impl;
-// CHECK:STDERR: ^~~~~~~
-package SwappedExt impl;
+// CHECK:STDERR: fail_swapped_ext.carbon:[[@LINE+3]]:6: ERROR: File extension of `.impl.carbon` required for `impl`.
+// CHECK:STDERR: impl package SwappedExt;
+// CHECK:STDERR:      ^~~~~~~
+impl package SwappedExt;
 
 
 // CHECK:STDOUT: --- fail_main.incorrect

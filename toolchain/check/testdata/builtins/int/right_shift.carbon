@@ -21,7 +21,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // TODO: Also test unsigned / logical right shift.
 
-package ArithShift api;
+package ArithShift;
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 fn Negate(a: i32) -> i32 = "int.snegate";
@@ -36,7 +36,7 @@ let arr2_p: [i32; 3]* = &arr2;
 
 // --- fail_bad_shift.carbon
 
-package BadShift api;
+package BadShift;
 
 fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 fn Negate(a: i32) -> i32 = "int.snegate";

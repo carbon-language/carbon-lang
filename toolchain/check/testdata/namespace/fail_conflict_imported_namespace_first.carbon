@@ -6,13 +6,13 @@
 
 // --- namespace.carbon
 
-package Example library "namespace" api;
+package Example library "namespace";
 
 namespace NS;
 
 // --- fail_conflict.carbon
 
-package Example api;
+package Example;
 
 import library "namespace";
 

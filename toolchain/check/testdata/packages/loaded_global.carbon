@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 fn A();
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: () = A();
 
@@ -20,13 +20,13 @@ var package_a: () = package.A();
 
 // --- same_package.carbon
 
-package SamePackage api;
+package SamePackage;
 
 fn B();
 
 // --- same_package_importer.carbon
 
-package SamePackage library "importer" api;
+package SamePackage library "importer";
 
 import library default;
 

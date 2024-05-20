@@ -6,7 +6,7 @@
 
 // --- fail_adapt_with_base.carbon
 
-library "fail_adapt_with_base" api;
+library "fail_adapt_with_base";
 
 base class Base {}
 
@@ -24,7 +24,7 @@ class AdaptWithBase {
 
 // --- fail_adapt_with_fields.carbon
 
-library "fail_adapt_with_fields" api;
+library "fail_adapt_with_fields";
 
 class AdaptWithField {
   // CHECK:STDERR: fail_adapt_with_fields.carbon:[[@LINE+3]]:3: ERROR: Adapter cannot have fields.
@@ -54,7 +54,7 @@ class AdaptWithFields {
 
 // --- fail_adapt_with_base_and_fields.carbon
 
-library "fail_adapt_with_base_and_fields" api;
+library "fail_adapt_with_base_and_fields";
 
 base class Base {}
 

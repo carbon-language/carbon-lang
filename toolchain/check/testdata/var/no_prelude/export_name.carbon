@@ -10,13 +10,13 @@
 
 // --- base.carbon
 
-library "base" api;
+library "base";
 
 var v: ();
 
 // --- export.carbon
 
-library "export" api;
+library "export";
 
 import library "base";
 
@@ -28,7 +28,7 @@ export v;
 
 // --- fail_todo_use_export.carbon
 
-library "use_export" api;
+library "use_export";
 
 // CHECK:STDERR: fail_todo_use_export.carbon:[[@LINE+9]]:1: In import.
 // CHECK:STDERR: import library "export";

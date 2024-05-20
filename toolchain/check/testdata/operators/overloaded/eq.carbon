@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 import library "prelude";
 
@@ -17,7 +17,7 @@ interface Eq {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 
@@ -38,7 +38,7 @@ fn TestNotEqual(a: C, b: C) -> bool {
 
 // --- fail_no_impl.carbon
 
-package FailNoImpl api;
+package FailNoImpl;
 
 import Core;
 
@@ -62,7 +62,7 @@ fn TestNotEqual(a: D, b: D) -> bool {
 
 // --- fail_no_impl_for_args.carbon
 
-package FailNoImplForArgs api;
+package FailNoImplForArgs;
 
 import Core;
 

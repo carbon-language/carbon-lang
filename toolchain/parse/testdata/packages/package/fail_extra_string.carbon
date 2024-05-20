@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: Expected `api` or `impl`.
+// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: ERROR: `package` declarations must end with a `;`.
 // CHECK:STDERR: package Foo library "bar" "baz";
 // CHECK:STDERR:                           ^~~~~
 package Foo library "bar" "baz";

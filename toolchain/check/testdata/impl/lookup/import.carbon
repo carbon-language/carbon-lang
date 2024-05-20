@@ -6,7 +6,7 @@
 
 // --- impl.carbon
 
-package Impl api;
+package Impl;
 
 interface HasF {
   fn F();

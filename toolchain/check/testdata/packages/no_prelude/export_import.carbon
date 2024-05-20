@@ -10,7 +10,7 @@
 
 // --- base.carbon
 
-library "base" api;
+library "base";
 
 class C {
   var x: ();
@@ -18,31 +18,31 @@ class C {
 
 // --- export.carbon
 
-library "export" api;
+library "export";
 
 export import library "base";
 
 // --- export_copy.carbon
 
-library "export_copy" api;
+library "export_copy";
 
 export import library "base";
 
 // --- non_export.carbon
 
-library "non_export" api;
+library "non_export";
 
 import library "export";
 
 // --- export_export.carbon
 
-library "export_export" api;
+library "export_export";
 
 export import library "export";
 
 // --- import_then_export.carbon
 
-library "import_then_export" api;
+library "import_then_export";
 
 import library "base";
 export import library "export";
@@ -50,7 +50,7 @@ export import library "export";
 // --- export_in_impl.carbon
 
 // This is just providing an API for the implicit import.
-library "export_in_impl" api;
+library "export_in_impl";
 
 // ============================================================================
 // Test files
@@ -58,7 +58,7 @@ library "export_in_impl" api;
 
 // --- use_export.carbon
 
-library "use_export" api;
+library "use_export";
 
 import library "export";
 
@@ -66,7 +66,7 @@ var c: C = {.x = ()};
 
 // --- fail_export_in_impl.impl.carbon
 
-library "export_in_impl" impl;
+impl library "export_in_impl";
 
 // CHECK:STDERR: fail_export_in_impl.impl.carbon:[[@LINE+4]]:1: ERROR: `export` is only allowed in API files.
 // CHECK:STDERR: export import library "base";
@@ -79,13 +79,13 @@ var c: C = {.x = ()};
 
 // --- export_export.impl.carbon
 
-library "export_export" impl;
+impl library "export_export";
 
 var c: C = {.x = ()};
 
 // --- use_export_export.carbon
 
-library "use_export_export" api;
+library "use_export_export";
 
 import library "export_export";
 
@@ -93,7 +93,7 @@ var c: C = {.x = ()};
 
 // --- use_import_then_export.carbon
 
-library "use_import_then_export" api;
+library "use_import_then_export";
 
 import library "import_then_export";
 
@@ -101,7 +101,7 @@ var c: C = {.x = ()};
 
 // --- use_import_when_export.carbon
 
-library "use_import_when_export" api;
+library "use_import_when_export";
 
 export import library "base";
 
@@ -109,7 +109,7 @@ var c: C = {.x = ()};
 
 // --- use_base_and_export.carbon
 
-library "use_base_and_export" api;
+library "use_base_and_export";
 
 import library "base";
 import library "export";
@@ -118,7 +118,7 @@ var c: C = {.x = ()};
 
 // --- use_export_and_base.carbon
 
-library "import_both_reversed" api;
+library "import_both_reversed";
 
 import library "export";
 import library "base";
@@ -127,7 +127,7 @@ var c: C = {.x = ()};
 
 // --- use_export_copy.carbon
 
-library "use_export_copy" api;
+library "use_export_copy";
 
 import library "export";
 import library "export_copy";
@@ -136,7 +136,7 @@ var c: C = {.x = ()};
 
 // --- fail_use_non_export.carbon
 
-library "fail_use_non_export" api;
+library "fail_use_non_export";
 
 import library "non_export";
 
@@ -147,7 +147,7 @@ alias Local = C;
 
 // --- use_non_export_then_base.carbon
 
-library "use_non_export_then_base" api;
+library "use_non_export_then_base";
 
 import library "non_export";
 export import library "base";
@@ -156,7 +156,7 @@ var c: C = {.x = ()};
 
 // --- indirect_use_non_export_then_base.carbon
 
-library "indirect_use_non_export_then_base" api;
+library "indirect_use_non_export_then_base";
 
 import library "use_non_export_then_base";
 

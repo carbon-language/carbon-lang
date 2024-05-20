@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/operators/bitwise" api;
+package Core library "prelude/operators/bitwise";
 
 // Bit complement: `^a`.
 interface BitComplement {

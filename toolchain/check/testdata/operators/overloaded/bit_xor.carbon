@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface BitXor {
   fn Op[self: Self](other: Self) -> Self;
@@ -19,7 +19,7 @@ interface BitXorAssign {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 

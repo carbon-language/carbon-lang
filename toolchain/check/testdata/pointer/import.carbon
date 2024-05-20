@@ -6,14 +6,14 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 var a_orig: i32 = 0;
 var a_ref: i32* = &a_orig;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: i32* = a_ref;
 

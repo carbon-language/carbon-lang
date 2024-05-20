@@ -19,7 +19,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_bad_shift.carbon
 
-package BadShift api;
+package BadShift;
 
 fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 fn Negate(a: i32) -> i32 = "int.snegate";

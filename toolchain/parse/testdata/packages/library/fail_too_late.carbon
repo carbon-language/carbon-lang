@@ -7,12 +7,12 @@
 import Geometry;
 
 // CHECK:STDERR: fail_too_late.carbon:[[@LINE+6]]:1: ERROR: The `library` directive must be the first non-comment line.
-// CHECK:STDERR: library "Shapes" api;
+// CHECK:STDERR: library "Shapes";
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_too_late.carbon:[[@LINE-5]]:1: First non-comment line is here.
 // CHECK:STDERR: import Geometry;
 // CHECK:STDERR: ^~~~~~
-library "Shapes" api;
+library "Shapes";
 
 // CHECK:STDOUT: - filename: fail_too_late.carbon
 // CHECK:STDOUT:   parse_tree: [

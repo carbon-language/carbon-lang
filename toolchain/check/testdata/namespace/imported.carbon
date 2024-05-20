@@ -6,7 +6,7 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 namespace NS;
 namespace NS.ChildNS;
@@ -16,7 +16,7 @@ fn NS.ChildNS.B();
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: () = NS.A();
 var b: () = NS.ChildNS.B();

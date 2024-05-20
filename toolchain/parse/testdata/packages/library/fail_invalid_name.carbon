@@ -7,18 +7,18 @@
 // --- fail_identifier.carbon
 
 // CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library Shapes api;
+// CHECK:STDERR: library Shapes;
 // CHECK:STDERR:         ^~~~~~
 // CHECK:STDERR:
-library Shapes api;
+library Shapes;
 
 // --- fail_raw_identifier.carbon
 
 // CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library r#default api;
+// CHECK:STDERR: library r#default;
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-library r#default api;
+library r#default;
 
 // --- fail_missing.carbon
 
@@ -30,19 +30,26 @@ library;
 
 // --- fail_missing_with_api.carbon
 
-// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:9: ERROR: Expected `default` or a string literal to specify the library name.
-// CHECK:STDERR: library api;
-// CHECK:STDERR:         ^~~
+// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+4]]:8: ERROR: Expected `default` or a string literal to specify the library name.
+// CHECK:STDERR: library;
+// CHECK:STDERR:        ^
 // CHECK:STDERR:
-library api;
+library;
+
+// --- fail_trailing_impl.carbon
+
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:18: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: library "NoSemi" api
+// CHECK:STDERR:                  ^~~
+library "trailing_impl" impl
 
 // --- fail_no_semi.carbon
 
-library "NoSemi" api
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:18: ERROR: `library` declarations must end with a `;`.
+// CHECK:STDERR: library "NoSemi" api
+// CHECK:STDERR:                  ^~~
+library "NoSemi"
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+39]]:21: ERROR: `library` declarations must end with a `;`.
-// CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:                     ^
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -76,7 +83,6 @@ library "NoSemi" api
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"NoSemi"'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: 'api', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: 'api', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

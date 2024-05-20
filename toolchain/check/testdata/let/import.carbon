@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 let a:! bool = true;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 let b:! bool = a;
 

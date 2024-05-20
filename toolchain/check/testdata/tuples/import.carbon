@@ -6,14 +6,14 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 var a_ref: (i32,) = (0,);
 var b_ref: (((i32,), i32), (i32, i32)) = (((0,), 1), (2, 3));
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: (i32,) = a_ref;
 var b: (((i32,), i32), (i32, i32)) = b_ref;

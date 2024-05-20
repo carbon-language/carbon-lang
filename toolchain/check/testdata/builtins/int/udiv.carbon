@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- overflow.carbon
 
-package Overflow api;
+package Overflow;
 
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 fn Sub(a: i32, b: i32) -> i32 = "int.usub";
@@ -34,7 +34,7 @@ let c: i32 = Div(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 // --- fail_div_by_zero.carbon
 
-package FailDivByZero api;
+package FailDivByZero;
 
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 

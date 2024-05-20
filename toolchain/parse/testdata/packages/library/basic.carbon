@@ -6,27 +6,26 @@
 
 // --- default.carbon
 
-library default api;
+library default;
 
 // --- named.carbon
 
-library "Shapes" impl;
+impl library "Shapes";
 
 // CHECK:STDOUT: - filename: default.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'DefaultLibrary', text: 'default'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: named.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"Shapes"'},
-// CHECK:STDOUT:       {kind: 'PackageImpl', text: 'impl'},
 // CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

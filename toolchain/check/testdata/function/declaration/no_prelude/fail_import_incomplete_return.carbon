@@ -6,7 +6,7 @@
 
 // --- fail_incomplete_return.carbon
 
-library "api" api;
+library "api";
 
 class C;
 class D;
@@ -45,7 +45,7 @@ class D {}
 
 // --- fail_use_imported.carbon
 
-library "use_imported" api;
+library "use_imported";
 
 import library "api";
 

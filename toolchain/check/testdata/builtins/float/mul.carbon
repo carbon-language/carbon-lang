@@ -16,7 +16,7 @@ var x: f64 = Mul(2.0, 0.5);
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.mul".
 // CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.mul";

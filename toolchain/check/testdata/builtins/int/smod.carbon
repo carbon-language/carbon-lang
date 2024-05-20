@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_overflow.carbon
 
-package FailOverflow api;
+package FailOverflow;
 
 fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
@@ -39,7 +39,7 @@ let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 // --- fail_div_by_zero.carbon
 
-package FailDivByZero api;
+package FailDivByZero;
 
 fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 

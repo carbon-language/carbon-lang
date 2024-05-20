@@ -26,13 +26,13 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class C {}
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 
@@ -43,7 +43,7 @@ var b_ptr: D* = &b_val;
 
 // --- c.carbon
 
-library "c" api;
+library "c";
 
 import library "a";
 
@@ -58,7 +58,7 @@ var c_ptr: E* = &c_val;
 
 // --- triangle.carbon
 
-library "triangle" api;
+library "triangle";
 
 import library "a";
 import library "b";
@@ -68,7 +68,7 @@ var ptr: D* = &val;
 
 // --- triangle_reverse.carbon
 
-library "triangle_reverse" api;
+library "triangle_reverse";
 
 import library "b";
 import library "a";
@@ -78,7 +78,7 @@ var ptr: D* = &val;
 
 // --- diamond.carbon
 
-library "diamond" api;
+library "diamond";
 
 import library "b";
 import library "c";
@@ -88,7 +88,7 @@ var ptr: E* = &val;
 
 // --- diamond_reverse.carbon
 
-library "diamond_reverse" api;
+library "diamond_reverse";
 
 import library "c";
 import library "b";

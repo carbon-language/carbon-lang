@@ -6,34 +6,34 @@
 
 // --- a.carbon
 
-package Same library "a" api;
+package Same library "a";
 
 namespace A;
 
 // --- b.carbon
 
-package Same library "b" api;
+package Same library "b";
 import library "a";
 
 namespace A.B;
 
 // --- c.carbon
 
-package Same library "c" api;
+package Same library "c";
 import library "b";
 
 namespace A.B.C;
 
 // --- d.carbon
 
-package Same library "d" api;
+package Same library "d";
 import library "c";
 
 fn A.B.C.D() {};
 
 // --- e.carbon
 
-package Same library "e" api;
+package Same library "e";
 import library "d";
 
 var e: () = A.B.C.D();

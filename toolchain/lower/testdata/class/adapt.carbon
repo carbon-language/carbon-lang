@@ -6,7 +6,7 @@
 
 // --- adapt_class.carbon
 
-library "adapt_class" api;
+library "adapt_class";
 
 class PairOfInts {
   var a: i32;
@@ -37,7 +37,7 @@ fn Use() -> i32 {
 
 // --- adapt_int.carbon
 
-library "adapt_int" api;
+library "adapt_int";
 
 class Int {
   adapt i32;

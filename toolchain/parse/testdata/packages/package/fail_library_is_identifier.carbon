@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 // CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+3]]:26: ERROR: Expected a string literal to specify the library name.
-// CHECK:STDERR: package Geometry library Shapes api;
+// CHECK:STDERR: package Geometry library Shapes;
 // CHECK:STDERR:                          ^~~~~~
-package Geometry library Shapes api;
+package Geometry library Shapes;
 
 // CHECK:STDOUT: - filename: fail_library_is_identifier.carbon
 // CHECK:STDOUT:   parse_tree: [

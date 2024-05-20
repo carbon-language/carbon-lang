@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-package Geometry library "Shapes" api;
+package Geometry library "Shapes";
 
 // CHECK:STDOUT: - filename: api_library.carbon
 // CHECK:STDOUT:   parse_tree: [
@@ -13,7 +13,6 @@ package Geometry library "Shapes" api;
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"Shapes"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

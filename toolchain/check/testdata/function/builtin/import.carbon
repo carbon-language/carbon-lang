@@ -6,7 +6,7 @@
 
 // --- core.carbon
 
-package Core api;
+package Core;
 
 import library "prelude";
 
