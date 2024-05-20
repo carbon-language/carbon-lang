@@ -158,9 +158,12 @@ struct UnitInfo {
   struct PackageImports {
     // Use the constructor so that the SmallVector is only constructed
     // as-needed.
-    explicit PackageImports(Parse::ImportDirectiveId node_id)
-        : node_id(node_id) {}
+    explicit PackageImports(IdentifierId package_id,
+                            Parse::ImportDirectiveId node_id)
+        : package_id(package_id), node_id(node_id) {}
 
+    // The identifier of the imported package.
+    IdentifierId package_id;
     // The first `import` directive in the file, which declared the package's
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
@@ -187,11 +190,14 @@ struct UnitInfo {
   ErrorTrackingDiagnosticConsumer err_tracker;
   DiagnosticEmitter<Parse::NodeLoc> emitter;
 
-  // A map of package names to outgoing imports. If a package includes
-  // unavailable library imports, it has an entry with has_load_error set.
-  // Invalid imports (for example, `import Main;`) aren't added because they
-  // won't add identifiers to name lookup.
-  llvm::DenseMap<IdentifierId, PackageImports> package_imports_map;
+  // List of the outgoing imports. If a package includes unavailable library
+  // imports, it has an entry with has_load_error set. Invalid imports (for
+  // example, `import Main;`) aren't added because they won't add identifiers to
+  // name lookup.
+  llvm::SmallVector<PackageImports> package_imports;
+
+  // A map of the package names to the outgoing imports above.
+  llvm::DenseMap<IdentifierId, int32_t> package_imports_map;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.
@@ -212,22 +218,25 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
                                  SemIR::InstId package_inst_id,
                                  SemIR::TypeId namespace_type_id) -> void {
   // Add imports from the current package.
-  auto self_import = unit_info.package_imports_map.find(IdentifierId::Invalid);
-  if (self_import == unit_info.package_imports_map.end()) {
+  auto self_import_map_it =
+      unit_info.package_imports_map.find(IdentifierId::Invalid);
+  if (self_import_map_it == unit_info.package_imports_map.end()) {
     // Push the scope; there are no names to add.
     context.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
     return;
   }
+  UnitInfo::PackageImports& self_import =
+      unit_info.package_imports[self_import_map_it->second];
 
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
   llvm::SmallVector<bool> imported_irs(total_ir_count, false);
-  if (self_import->second.has_load_error) {
+  if (self_import.has_load_error) {
     context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
   }
 
-  for (const auto& import : self_import->second.imports) {
+  for (const auto& import : self_import.imports) {
     const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
 
     auto& imported_ir = imported_irs[import_sem_ir.check_ir_id().index];
@@ -288,7 +297,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   // First create the constant values map for all imported IRs. We'll populate
   // these with mappings for namespaces as we go.
   size_t num_irs = 0;
-  for (auto& [_, package_imports] : unit_info.package_imports_map) {
+  for (auto& package_imports : unit_info.package_imports) {
     num_irs += package_imports.imports.size();
   }
   if (!unit_info.api_for_impl) {
@@ -334,8 +343,8 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
                        namespace_type_id);
   CARBON_CHECK(context.scope_stack().PeekIndex() == ScopeIndex::Package);
 
-  for (auto& [package_id, package_imports] : unit_info.package_imports_map) {
-    if (!package_id.is_valid()) {
+  for (auto& package_imports : unit_info.package_imports) {
+    if (!package_imports.package_id.is_valid()) {
       // Current package is handled above.
       continue;
     }
@@ -348,9 +357,9 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
       CARBON_CHECK(!import.names.is_export)
           << "Imports from other packages can't be exported.";
     }
-    ImportLibrariesFromOtherPackage(context, namespace_type_id,
-                                    package_imports.node_id, package_id,
-                                    import_irs, package_imports.has_load_error);
+    ImportLibrariesFromOtherPackage(
+        context, namespace_type_id, package_imports.node_id,
+        package_imports.package_id, import_irs, package_imports.has_load_error);
   }
 }
 
@@ -998,14 +1007,20 @@ static auto TrackImport(
     return;
   }
 
-  // Get the package imports.
-  auto package_imports_it = unit_info.package_imports_map
-                                .try_emplace(import.package_id, import.node_id)
-                                .first;
+  // Get the package imports, or create them if this is the first.
+  auto [package_imports_map_it, is_inserted] =
+      unit_info.package_imports_map.insert(
+          {import.package_id, unit_info.package_imports.size()});
+  if (is_inserted) {
+    unit_info.package_imports.push_back(
+        UnitInfo::PackageImports(import.package_id, import.node_id));
+  }
+  UnitInfo::PackageImports& package_imports =
+      unit_info.package_imports[package_imports_map_it->second];
 
   if (auto api = api_map.find(import_key); api != api_map.end()) {
     // Add references between the file and imported api.
-    package_imports_it->second.imports.push_back({import, api->second});
+    package_imports.imports.push_back({import, api->second});
     ++unit_info.imports_remaining;
     api->second->incoming_imports.push_back(&unit_info);
 
@@ -1016,7 +1031,7 @@ static auto TrackImport(
     }
   } else {
     // The imported api is missing.
-    package_imports_it->second.has_load_error = true;
+    package_imports.has_load_error = true;
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "Corresponding API for '{0}' not found.", std::string);
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "Imported API '{0}' not found.",
@@ -1196,8 +1211,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // TODO: Better identify cycles, maybe try to untangle them.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        for (auto& [package_id, package_imports] :
-             unit_info.package_imports_map) {
+        for (auto& package_imports : unit_info.package_imports) {
           for (auto* import_it = package_imports.imports.begin();
                import_it != package_imports.imports.end();) {
             if (*import_it->unit_info->unit->sem_ir) {

@@ -112,26 +112,26 @@ fn G(c: Impl.C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Impl = %Impl
 // CHECK:STDOUT:     .Core = %Core
+// CHECK:STDOUT:     .Impl = %Impl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.2: <associated F in HasF> = import_ref ir1, inst+11, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir1, inst+22, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref ir1, inst+13, loaded [template = constants.%C]
+// CHECK:STDOUT:   %Impl: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %import_ref.1 = import_ref ir2, inst+14, unloaded
+// CHECK:STDOUT:   %import_ref.2: <associated F in HasF> = import_ref ir2, inst+11, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir2, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir2, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref ir2, inst+22, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.6: type = import_ref ir2, inst+13, loaded [template = constants.%C]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {
 // CHECK:STDOUT:     %Impl.ref: <namespace> = name_ref Impl, %Impl [template = %Impl]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %import_ref.6 [template = constants.%C]
 // CHECK:STDOUT:     %c.loc4_6.1: C = param c
 // CHECK:STDOUT:     @G.%c: C = bind_name c, %c.loc4_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+2, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir2, inst+2, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir2, inst+6, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {

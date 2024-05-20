@@ -408,7 +408,7 @@ fn Other.G() {}
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref ir1, inst+2, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {}
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.2: F = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.2: F = import_ref ir3, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
