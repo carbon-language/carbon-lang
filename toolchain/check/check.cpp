@@ -262,8 +262,7 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
             // The indirect IR was previously indirectly imported, but it's
             // found through `export import`. We need to mark it for re-export.
             context.import_irs()
-                .Get(context.check_ir_map()[indirect_ir.sem_ir->check_ir_id()
-                                                .index])
+                .Get(context.GetImportIRId(*indirect_ir.sem_ir))
                 .is_export = true;
           }
         }
@@ -271,15 +270,13 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
     } else if (import.names.is_export) {
       // The IR was previously indirectly imported, but it's `export import`.
       // We need to mark it -- and transitive `export import`s -- for re-export.
-      context.import_irs()
-          .Get(context.check_ir_map()[import_sem_ir.check_ir_id().index])
-          .is_export = true;
+      context.import_irs().Get(context.GetImportIRId(import_sem_ir)).is_export =
+          true;
 
       for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
         if (indirect_ir.is_export) {
           context.import_irs()
-              .Get(context
-                       .check_ir_map()[indirect_ir.sem_ir->check_ir_id().index])
+              .Get(context.GetImportIRId(*indirect_ir.sem_ir))
               .is_export = true;
         }
       }
@@ -308,7 +305,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   context.import_irs().Reserve(num_irs);
   context.import_ir_constant_values().reserve(num_irs);
 
-  context.check_ir_map().resize(total_ir_count, SemIR::ImportIRId::Invalid);
+  context.SetTotalIRCount(total_ir_count);
 
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =

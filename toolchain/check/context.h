@@ -275,6 +275,19 @@ class Context {
   // Finalizes the initialization function (__global_init).
   auto FinalizeGlobalInit() -> void;
 
+  // Sets the total number of IRs which exist. This is used to prepare a map
+  // from IR to imported IR.
+  auto SetTotalIRCount(int num_irs) -> void {
+    CARBON_CHECK(check_ir_map_.empty())
+        << "SetTotalIRCount is only called once";
+    check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
+  }
+
+  // Returns the imported IR ID for an IR, or invalid if not imported.
+  auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {
+    return check_ir_map_[sem_ir.check_ir_id().index];
+  }
+
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -316,10 +329,6 @@ class Context {
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();
-  }
-
-  auto check_ir_map() -> llvm::SmallVector<SemIR::ImportIRId>& {
-    return check_ir_map_;
   }
 
   auto import_ir_constant_values()
