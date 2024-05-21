@@ -19,8 +19,15 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
   for (const auto& message : diagnostic.messages) {
     message.loc.FormatLocation(*stream_);
     *stream_ << ": ";
-    if (message.level == DiagnosticLevel::Error) {
-      *stream_ << "ERROR: ";
+    switch (message.level) {
+      case DiagnosticLevel::Error:
+        *stream_ << "ERROR: ";
+        break;
+      case DiagnosticLevel::Warning:
+        *stream_ << "WARNING: ";
+        break;
+      case DiagnosticLevel::Note:
+        break;
     }
     *stream_ << message.format_fn(message) << "\n";
     message.loc.FormatSnippet(*stream_);

@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_collapse.carbon:[[@LINE+4]]:9: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: fail_collapse.carbon:[[@LINE+4]]:9: WARNING: `const` applied repeatedly to the same type has no additional effect.
 // CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
