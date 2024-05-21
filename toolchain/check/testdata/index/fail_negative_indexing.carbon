@@ -6,11 +6,7 @@
 
 var a: (i32, i32) = (12, 6);
 // TODO: Only diagnose this once, and make the diagnostic clearer.
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+7]]:16: ERROR: Name `Negate` not found.
-// CHECK:STDERR: var b: i32 = a[-10];
-// CHECK:STDERR:                ^~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Semantics TODO: `missing or invalid operator interface, also avoid duplicate diagnostic if prelude is unavailable`.
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
 // CHECK:STDERR: var b: i32 = a[-10];
 // CHECK:STDERR:                ^~~
 var b: i32 = a[-10];
@@ -25,6 +21,13 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.5: i32 = int_literal 6 [template]
 // CHECK:STDOUT:   %tuple: (i32, i32) = tuple_value (%.4, %.5) [template]
 // CHECK:STDOUT:   %.6: i32 = int_literal 10 [template]
+// CHECK:STDOUT:   %.7: type = interface_type @Negate [template]
+// CHECK:STDOUT:   %Self: Negate = bind_symbolic_name Self 0 [symbolic]
+// CHECK:STDOUT:   %Op: type = fn_type @Op [template]
+// CHECK:STDOUT:   %.8: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Op = struct_value () [template]
+// CHECK:STDOUT:   %.9: type = assoc_entity_type @Negate, Op [template]
+// CHECK:STDOUT:   %.10: <associated Op in Negate> = assoc_entity element0, file.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,7 +43,21 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %a: ref (i32, i32) = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+67, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.3: <associated Op in Negate> = import_ref ir4, inst+84, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.4 = import_ref ir4, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Negate {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = file.%import_ref.2
+// CHECK:STDOUT:   .Op = file.%import_ref.3
+// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Op[%self: Self]() -> Self;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -55,8 +72,8 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.loc7_28: init (i32, i32) = converted %.loc7_27.1, %.loc7_27.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_28
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc16_17: i32 = int_literal 10 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc16_19: ref <error> = tuple_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc12_17: i32 = int_literal 10 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc12_19: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
