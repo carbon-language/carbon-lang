@@ -40,7 +40,7 @@ auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
-  auto& ir_id = context.check_ir_map()[import_ir.sem_ir->check_ir_id().index];
+  auto& ir_id = context.GetImportIRId(*import_ir.sem_ir);
   if (!ir_id.is_valid()) {
     // Note this updates check_ir_map.
     ir_id = InternalAddImportIR(context, import_ir);
@@ -249,7 +249,7 @@ class ImportRefResolver {
       auto prev_inst_id = cursor_inst_id;
 
       cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id).sem_ir;
-      cursor_ir_id = context_.check_ir_map()[cursor_ir->check_ir_id().index];
+      cursor_ir_id = context_.GetImportIRId(*cursor_ir);
       if (!cursor_ir_id.is_valid()) {
         // TODO: Should we figure out a location to assign here?
         cursor_ir_id = AddImportIR(context_, {.node_id = Parse::NodeId::Invalid,
