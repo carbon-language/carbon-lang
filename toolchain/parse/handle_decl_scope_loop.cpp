@@ -8,19 +8,6 @@
 
 namespace Carbon::Parse {
 
-// Returns true if at the end of the scope.
-static auto IsEndOfScope(Context& context) -> bool {
-  switch (context.PositionKind()) {
-    case Lex::TokenKind::CloseCurlyBrace:
-    case Lex::TokenKind::FileEnd: {
-      return true;
-    }
-
-    default:
-      return false;
-  }
-}
-
 // Finishes an invalid declaration, skipping past its end.
 static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
     -> void {
@@ -68,6 +55,7 @@ struct DeclIntroducerInfo {
   NodeKind node_kind;
   State state;
 };
+}  // namespace
 
 static constexpr auto DeclIntroducers = [] {
   DeclIntroducerInfo introducers[] = {
@@ -116,7 +104,6 @@ static constexpr auto DeclIntroducers = [] {
                 State::Import);
   return std::to_array(introducers);
 }();
-}  // namespace
 
 // Attempts to handle the current token as a declaration introducer.
 // Returns true if the current position is a declaration. If we see a
@@ -140,6 +127,7 @@ static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
     }
 
     case DeclIntroducerKind::PackagingDecl: {
+      // Packaging declarations update the packaging state themselves as needed.
       break;
     }
 
@@ -233,7 +221,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
 auto HandleDeclScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
-  if (IsEndOfScope(context)) {
+  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
+      context.PositionIs(Lex::TokenKind::FileEnd)) {
     // This is the end of the scope, so the loop state ends.
     context.PopAndDiscardState();
     return;
