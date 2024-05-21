@@ -61,7 +61,7 @@ var f: () = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %import_ref
+// CHECK:STDOUT:     .F = %F
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref: F = import_ref ir1, inst+1, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %F: F = export F, %import_ref [template = constants.%struct]

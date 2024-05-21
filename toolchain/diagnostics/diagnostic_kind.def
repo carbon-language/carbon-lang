@@ -203,6 +203,8 @@ CARBON_DIAGNOSTIC_KIND(ConstructionOfAbstractClass)
 // Export checking.
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntity)
 CARBON_DIAGNOSTIC_KIND(ExportNotImportedEntitySource)
+CARBON_DIAGNOSTIC_KIND(ExportRedundant)
+CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfacePreviousDefinition)
