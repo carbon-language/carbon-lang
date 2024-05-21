@@ -24,6 +24,20 @@ auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
 auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
                   SemIR::BindNameId bind_name_id) -> SemIR::InstId;
 
+// Returns the canonical IR inst for an entity. Returns an invalid ir_id for the
+// current IR.
+auto GetCanonicalImportIRInst(Context& context, const SemIR::File* cursor_ir,
+                              SemIR::InstId cursor_inst_id)
+    -> SemIR::ImportIRInst;
+
+// Verifies a new instruction is the same as a previous instruction.
+// prev_import_ir_inst should come from GetCanonicalImportIRInst.
+auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
+                                     SemIR::ImportIRInst prev_import_ir_inst,
+                                     SemIR::ImportIRId new_ir_id,
+                                     const SemIR::File* new_import_ir,
+                                     SemIR::InstId new_inst_id) -> void;
+
 // If the passed in instruction ID is an ImportRefUnloaded, turns it into an
 // ImportRefLoaded for use.
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;

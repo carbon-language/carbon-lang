@@ -23,6 +23,7 @@
 #include "toolchain/sem_ir/builtin_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -300,7 +301,8 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       });
 
   auto result_id = SemIR::InstId::Invalid;
-  auto bind_name_id = SemIR::BindNameId::Invalid;
+  std::optional<SemIR::ImportIRInst> canonical_result_inst;
+
   for (auto [import_ir_id, import_scope_id] : scope.import_ir_scopes) {
     auto& import_ir = context.import_irs().Get(import_ir_id);
 
@@ -330,19 +332,25 @@ static auto LookupInImportIRScopes(Context& context, SemIRLoc loc,
       continue;
     }
 
-    if (!bind_name_id.is_valid()) {
-      bind_name_id = context.bind_names().Add(
+    if (result_id.is_valid()) {
+      // On a conflict, we verify the canonical instruction is the same.
+      if (!canonical_result_inst) {
+        canonical_result_inst =
+            GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
+      }
+      VerifySameCanonicalImportIRInst(context, result_id,
+                                      *canonical_result_inst, import_ir_id,
+                                      import_ir.sem_ir, it->second);
+    } else {
+      // Add the first result found.
+      auto bind_name_id = context.bind_names().Add(
           {.name_id = name_id,
            .enclosing_scope_id = scope_id,
            .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-    }
-    auto import_inst_id = AddImportRef(
-        context, {.ir_id = import_ir_id, .inst_id = it->second}, bind_name_id);
-    if (result_id.is_valid()) {
-      context.DiagnoseDuplicateName(import_inst_id, result_id);
-    } else {
-      LoadImportRef(context, import_inst_id);
-      result_id = import_inst_id;
+      result_id =
+          AddImportRef(context, {.ir_id = import_ir_id, .inst_id = it->second},
+                       bind_name_id);
+      LoadImportRef(context, result_id);
     }
   }
 
