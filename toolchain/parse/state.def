@@ -311,8 +311,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //
 // adapt ...
 // ^~~~~
-//   2. AdaptAfterIntroducer
-//   3. DeclScopeLoop
+//   1. AdaptAfterIntroducer
+//   2. DeclScopeLoop
 //
 // alias ...
 // ^~~~~
