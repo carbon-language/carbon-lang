@@ -179,8 +179,12 @@ repos:
             Part of the Carbon Language project, under the Apache License v2.0 with LLVM
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+          - --skip_pattern
+          # The default skip pattern skips JSON which we use with VSCode and
+          # it, like most file-based parsers, can support comments easily.
+          - '(^LICENSE|\.(ico))$'
           - --custom_format
-          - '\.(carbon|proto|ypp)(\.tmpl)?$'
+          - '\.(carbon|c|json|proto|ypp)(\.tmpl)?$'
           - ''
           - '// '
           - ''
@@ -209,18 +213,15 @@ repos:
           - ''
           - '-- '
           - ''
-          - --custom_format
-          - '\.c$'
-          - ''
-          - '// '
-          - ''
         exclude: |
           (?x)^(
               .bazelversion|
               .github/pull_request_template.md|
+              .vscode/extensions.json|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              utils/vscode/package(-lock)?.json|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|
