@@ -6,26 +6,26 @@
 
 // --- fail_no_api.impl.carbon
 
-// CHECK:STDERR: fail_no_api.impl.carbon:[[@LINE+4]]:1: ERROR: Corresponding API for 'Foo' not found.
-// CHECK:STDERR: package Foo impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_no_api.impl.carbon:[[@LINE+4]]:6: ERROR: Corresponding API for 'Foo' not found.
+// CHECK:STDERR: impl package Foo;
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-package Foo impl;
+impl package Foo;
 
 // --- fail_no_api_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+4]]:1: ERROR: Corresponding API for 'Foo//Bar' not found.
-// CHECK:STDERR: package Foo library "Bar" impl;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_no_api_lib.impl.carbon:[[@LINE+4]]:6: ERROR: Corresponding API for 'Foo//Bar' not found.
+// CHECK:STDERR: impl package Foo library "Bar";
+// CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
-package Foo library "Bar" impl;
+impl package Foo library "Bar";
 
 // --- fail_no_api_main_lib.impl.carbon
 
-// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API for 'Main//Bar' not found.
-// CHECK:STDERR: library "Bar" impl;
-// CHECK:STDERR: ^~~~~~~
-library "Bar" impl;
+// CHECK:STDERR: fail_no_api_main_lib.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Main//Bar' not found.
+// CHECK:STDERR: impl library "Bar";
+// CHECK:STDERR:      ^~~~~~~
+impl library "Bar";
 
 // CHECK:STDOUT: --- fail_no_api.impl.carbon
 // CHECK:STDOUT:

@@ -7,12 +7,12 @@
 import A;
 
 // CHECK:STDERR: fail_after_import.carbon:[[@LINE+6]]:1: ERROR: The `package` declaration must be the first non-comment line.
-// CHECK:STDERR: package B api;
+// CHECK:STDERR: package B;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_after_import.carbon:[[@LINE-5]]:1: First non-comment line is here.
 // CHECK:STDERR: import A;
 // CHECK:STDERR: ^~~~~~
-package B api;
+package B;
 
 // CHECK:STDOUT: - filename: fail_after_import.carbon
 // CHECK:STDOUT:   parse_tree: [

@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- overflow.carbon
 
-package Overflow api;
+package Overflow;
 
 fn Sub(a: i32, b: i32) -> i32 = "int.usub";
 

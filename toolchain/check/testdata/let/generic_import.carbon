@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 let T:! type = i32;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: T*;
 var b: T = *a;

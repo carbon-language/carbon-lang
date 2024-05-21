@@ -155,8 +155,6 @@ using LibraryName = LeafNode<NodeKind::LibraryName>;
 using DefaultLibrary = LeafNode<NodeKind::DefaultLibrary>;
 
 using PackageIntroducer = LeafNode<NodeKind::PackageIntroducer>;
-using PackageApi = LeafNode<NodeKind::PackageApi>;
-using PackageImpl = LeafNode<NodeKind::PackageImpl>;
 
 // `library` in `package` or `import`.
 struct LibrarySpecifier {
@@ -171,19 +169,18 @@ struct PackageDecl {
   static constexpr auto Kind = NodeKind::PackageDecl.Define(NodeCategory::Decl);
 
   PackageIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
-  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
-using ImportExport = LeafNode<NodeKind::ImportExport>;
 struct ImportDecl {
   static constexpr auto Kind = NodeKind::ImportDecl.Define(NodeCategory::Decl);
 
   ImportIntroducerId introducer;
-  std::optional<ImportExportId> export_modifier;
+  llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<PackageNameId> name;
   std::optional<LibrarySpecifierId> library;
 };
@@ -194,8 +191,8 @@ struct LibraryDecl {
   static constexpr auto Kind = NodeKind::LibraryDecl.Define(NodeCategory::Decl);
 
   LibraryIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
   NodeIdOneOf<LibraryName, DefaultLibrary> library_name;
-  NodeIdOneOf<PackageApi, PackageImpl> api_or_impl;
 };
 
 // `export` as a declaration.

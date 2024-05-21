@@ -6,13 +6,13 @@
 
 // --- basic.carbon
 
-library "basic" api;
+library "basic";
 
 extern fn F();
 
 // --- fail_redecl.carbon
 
-library "redecl" api;
+library "redecl";
 
 extern fn F();
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -26,7 +26,7 @@ extern fn F();
 
 // --- fail_redecl_extern.carbon
 
-library "redecl_extern" api;
+library "redecl_extern";
 
 extern fn F();
 // CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.

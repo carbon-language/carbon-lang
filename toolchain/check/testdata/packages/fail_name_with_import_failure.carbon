@@ -6,10 +6,10 @@
 
 // --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:1: ERROR: Corresponding API for 'Implicit' not found.
-// CHECK:STDERR: package Implicit impl;
-// CHECK:STDERR: ^~~~~~~
-package Implicit impl;
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:6: ERROR: Corresponding API for 'Implicit' not found.
+// CHECK:STDERR: impl package Implicit;
+// CHECK:STDERR:      ^~~~~~~
+impl package Implicit;
 
 var a: () = A();
 

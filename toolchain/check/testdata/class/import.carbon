@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class Empty {
 }
@@ -26,7 +26,7 @@ class Incomplete;
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

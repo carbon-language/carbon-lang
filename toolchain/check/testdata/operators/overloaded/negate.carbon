@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface Negate {
   fn Op[self: Self]() -> Self;
@@ -16,7 +16,7 @@ interface Negate {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 

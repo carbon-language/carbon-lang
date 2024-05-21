@@ -4,14 +4,13 @@
 //
 // AUTOUPDATE
 
-package Geometry api;
+package Geometry;
 
 // CHECK:STDOUT: - filename: api.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
-// CHECK:STDOUT:       {kind: 'PackageApi', text: 'api'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

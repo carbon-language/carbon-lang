@@ -100,7 +100,7 @@ class Tree : public Printable<Tree> {
   // The file's packaging.
   struct PackagingDecl {
     PackagingNames names;
-    ApiOrImpl api_or_impl;
+    bool is_impl;
   };
 
   // Wires up the reference to the tokenized buffer. The `Parse` function should

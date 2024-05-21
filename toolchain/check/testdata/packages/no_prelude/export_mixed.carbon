@@ -10,7 +10,7 @@
 
 // --- base.carbon
 
-library "base" api;
+library "base";
 
 class C {
   var x: ();
@@ -22,13 +22,13 @@ class D {
 
 // --- export_import.carbon
 
-library "export_import" api;
+library "export_import";
 
 export import library "base";
 
 // --- export_import_then_name.carbon
 
-library "export_import_then_name" api;
+library "export_import_then_name";
 
 import library "export_import";
 
@@ -36,7 +36,7 @@ export C;
 
 // --- export_name.carbon
 
-library "export_name" api;
+library "export_name";
 
 import library "base";
 
@@ -44,7 +44,7 @@ export C;
 
 // --- export_name_then_import.carbon
 
-library "export_name_then_import" api;
+library "export_name_then_import";
 
 export import library "export_name";
 
@@ -54,7 +54,7 @@ export import library "export_name";
 
 // --- use_export_import_then_name.carbon
 
-library "use_export_import_then_name" api;
+library "use_export_import_then_name";
 
 import library "export_import_then_name";
 
@@ -62,7 +62,7 @@ var c: C = {.x = ()};
 
 // --- use_export_name_then_import.carbon
 
-library "use_export_name_then_import" api;
+library "use_export_name_then_import";
 
 import library "export_name_then_import";
 
@@ -70,7 +70,7 @@ var c: C = {.x = ()};
 
 // --- use_both.carbon
 
-library "use_both" api;
+library "use_both";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -79,7 +79,7 @@ var c: C = {.x = ()};
 
 // --- fail_nonexport_use_both.carbon
 
-library "fail_nonexport_use_both" api;
+library "fail_nonexport_use_both";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -91,7 +91,7 @@ var d: D = {.y = ()};
 
 // --- use_both_reversed.carbon
 
-library "use_both_reversed" api;
+library "use_both_reversed";
 
 import library "export_import_then_name";
 import library "export_name_then_import";
@@ -100,7 +100,7 @@ var c: C = {.x = ()};
 
 // --- use_both_and_export_import.carbon
 
-library "use_both_and_export_import" api;
+library "use_both_and_export_import";
 
 import library "export_import_then_name";
 import library "export_name_then_import";

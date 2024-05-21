@@ -16,7 +16,7 @@ var x: f64 = Add(2.2, 2.3);
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.add".
 // CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.add";

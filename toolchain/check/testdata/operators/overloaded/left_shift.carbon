@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface LeftShift {
   fn Op[self: Self](other: Self) -> Self;
@@ -19,7 +19,7 @@ interface LeftShiftAssign {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 

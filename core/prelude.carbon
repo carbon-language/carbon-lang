@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-package Core library "prelude" api;
+package Core library "prelude";
 
 import library "prelude/operators";
 import library "prelude/types";

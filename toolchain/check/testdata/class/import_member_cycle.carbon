@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class Cycle {
   var a: Cycle*;
@@ -14,7 +14,7 @@ class Cycle {
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

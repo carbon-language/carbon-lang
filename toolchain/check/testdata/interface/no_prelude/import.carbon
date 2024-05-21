@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 interface Empty {
 }
@@ -28,7 +28,7 @@ var f_ref: {.f: ForwardDeclared};
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

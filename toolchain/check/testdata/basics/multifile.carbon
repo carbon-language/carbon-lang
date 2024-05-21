@@ -5,12 +5,12 @@
 // AUTOUPDATE
 
 // --- a.carbon
-package A api;
+package A;
 
 fn A() {}
 
 // --- b.carbon
-package B api;
+package B;
 
 fn B() {}
 

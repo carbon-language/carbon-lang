@@ -6,7 +6,7 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 var a_ref: {.a: i32} = {.a = 0};
 var b_ref: {.a: {.b: i32, .c: (i32,)}, .d: i32} =
@@ -14,7 +14,7 @@ var b_ref: {.a: {.b: i32, .c: (i32,)}, .d: i32} =
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 var a: {.a: i32} = a_ref;
 var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;

@@ -6,13 +6,13 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class ForwardDecl;
 
 // --- a.impl.carbon
 
-library "a" impl;
+impl library "a";
 
 class ForwardDecl {
 }

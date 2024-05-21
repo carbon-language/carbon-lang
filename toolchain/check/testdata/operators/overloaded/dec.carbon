@@ -8,7 +8,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 interface Dec {
   fn Op[addr self: Self*]();
@@ -16,7 +16,7 @@ interface Dec {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 

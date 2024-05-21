@@ -10,19 +10,19 @@
 
 // --- other_define.carbon
 
-package Other library "define" api;
+package Other library "define";
 
 class C {}
 
 // --- other_extern.carbon
 
-package Other library "extern" api;
+package Other library "extern";
 
 extern class C;
 
 // --- other_conflict.carbon
 
-package Other library "conflict" api;
+package Other library "conflict";
 
 fn C() {}
 
@@ -32,7 +32,7 @@ fn C() {}
 
 // --- define.carbon
 
-library "define" api;
+library "define";
 
 import Other library "define";
 
@@ -40,7 +40,7 @@ var c: Other.C = {};
 
 // --- fail_extern.carbon
 
-library "extern" api;
+library "extern";
 
 import Other library "extern";
 
@@ -58,7 +58,7 @@ var c: Other.C = {};
 
 // --- fail_todo_merge_define_extern.carbon
 
-library "merge_define_extern" api;
+library "merge_define_extern";
 
 import Other library "define";
 // CHECK:STDERR: fail_todo_merge_define_extern.carbon:[[@LINE+12]]:1: In import.
@@ -83,7 +83,7 @@ var c: Other.C = {};
 
 // --- fail_conflict.carbon
 
-library "conflict" api;
+library "conflict";
 
 import Other library "define";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.

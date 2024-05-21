@@ -10,14 +10,14 @@
 
 // --- base.carbon
 
-library "base" api;
+library "base";
 
 class C {}
 alias D = C;
 
 // --- export.carbon
 
-library "export" api;
+library "export";
 
 import library "base";
 
@@ -25,7 +25,7 @@ export D;
 
 // --- export_orig.carbon
 
-library "export_orig" api;
+library "export_orig";
 
 import library "base";
 
@@ -37,7 +37,7 @@ export C;
 
 // --- use_export.carbon
 
-library "use_export" api;
+library "use_export";
 
 import library "export";
 
@@ -45,7 +45,7 @@ var d: D = {};
 
 // --- fail_orig_name_not_in_export.carbon
 
-library "fail_orig_name_not_in_export" api;
+library "fail_orig_name_not_in_export";
 
 import library "export";
 
@@ -56,7 +56,7 @@ var c: C = {};
 
 // --- indirect_compat.carbon
 
-library "indirect_compat" api;
+library "indirect_compat";
 
 import library "export";
 import library "export_orig";

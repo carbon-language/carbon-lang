@@ -6,14 +6,14 @@
 
 // --- global.carbon
 
-package Global api;
+package Global;
 
 var x: i32 = 0;
 var y: i32 = package.x;
 
 // --- inside_fn.carbon
 
-package InsideFn api;
+package InsideFn;
 
 var x: i32 = 0;
 
@@ -25,7 +25,7 @@ fn Main() {
 
 // --- namespace.carbon
 
-package Namespace api;
+package Namespace;
 
 namespace NS;
 

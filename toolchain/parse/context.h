@@ -303,11 +303,10 @@ class Context {
                             bool skip_past_likely_end) -> void;
 
   // Sets the package declaration information. Called at most once.
-  auto set_packaging_decl(Tree::PackagingNames packaging_names,
-                          Tree::ApiOrImpl api_or_impl) -> void {
+  auto set_packaging_decl(Tree::PackagingNames packaging_names, bool is_impl)
+      -> void {
     CARBON_CHECK(!tree_->packaging_decl_);
-    tree_->packaging_decl_ = {.names = packaging_names,
-                              .api_or_impl = api_or_impl};
+    tree_->packaging_decl_ = {.names = packaging_names, .is_impl = is_impl};
   }
 
   // Adds an import.

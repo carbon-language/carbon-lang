@@ -4,16 +4,17 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_no_type.carbon:[[@LINE+3]]:17: ERROR: Expected `api` or `impl`.
-// CHECK:STDERR: package Geometry;
-// CHECK:STDERR:                 ^
-package Geometry;
+// Diagnosed in check.
+extend virtual base package Geometry;
 
-// CHECK:STDOUT: - filename: fail_no_type.carbon
+// CHECK:STDOUT: - filename: modifiers.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
+// CHECK:STDOUT:       {kind: 'ExtendModifier', text: 'extend'},
+// CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
+// CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

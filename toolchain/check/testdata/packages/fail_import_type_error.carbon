@@ -6,7 +6,7 @@
 
 // --- fail_implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 // CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: ERROR: Name `x` not found.
 // CHECK:STDERR: var a_ref: x;
@@ -30,7 +30,7 @@ var d_ref: x*;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 // In each of these cases, name lookup should succeed, but they should all have
 // an error type.

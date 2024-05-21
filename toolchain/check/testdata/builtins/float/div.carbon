@@ -18,7 +18,7 @@ let c: f64 = Div(0.0, 0.0);
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.div".
 // CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.div";

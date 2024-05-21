@@ -6,7 +6,7 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 fn F() -> const i32;
 
@@ -15,7 +15,7 @@ var a_ptr_ref: const i32* = &a_ref;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 // Take a reference to avoid unsupported copy logic. This still validates the
 // `const` is handled.

@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 class C { var v: (); }
 alias a = C;
@@ -16,7 +16,7 @@ alias d = c;
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

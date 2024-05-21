@@ -10,13 +10,13 @@
 
 // --- base.carbon
 
-library "base" api;
+library "base";
 
 class C {}
 
 // --- export.carbon
 
-library "export" api;
+library "export";
 
 import library "base";
 
@@ -28,7 +28,7 @@ export C;
 
 // --- use_export.carbon
 
-library "use_export" api;
+library "use_export";
 
 import library "export";
 

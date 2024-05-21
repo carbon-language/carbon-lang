@@ -6,13 +6,13 @@
 
 // --- implicit.carbon
 
-package Implicit api;
+package Implicit;
 
 namespace NS;
 
 // --- implicit.impl.carbon
 
-package Implicit impl;
+impl package Implicit;
 
 fn NS.A() -> i32 { return 0; }
 

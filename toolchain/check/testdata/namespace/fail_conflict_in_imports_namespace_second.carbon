@@ -6,20 +6,20 @@
 
 // --- fn.carbon
 
-package Example library "fn" api;
+package Example library "fn";
 
 fn NS() {}
 
 // --- namespace.carbon
 
-package Example library "namespace" api;
+package Example library "namespace";
 
 namespace NS;
 fn NS.Foo() {}
 
 // --- fail_conflict.carbon
 
-package Example library "fn_then_namespace" api;
+package Example library "fn_then_namespace";
 
 import library "fn";
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE+12]]:1: In import.

@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.sadd".
 // CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.sadd";
@@ -75,7 +75,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 // --- fail_overflow.carbon
 
-package FailOverflow api;
+package FailOverflow;
 
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 

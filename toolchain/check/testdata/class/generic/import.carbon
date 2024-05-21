@@ -6,13 +6,13 @@
 
 // --- foo.carbon
 
-library "foo" api;
+library "foo";
 
 class Class(T:! type);
 
 // --- foo.impl.carbon
 
-library "foo" impl;
+impl library "foo";
 
 class Class(T:! type) {
   var x: T;
@@ -20,7 +20,7 @@ class Class(T:! type) {
 
 // --- fail_bad_foo.impl.carbon
 
-library "foo" impl;
+impl library "foo";
 
 // CHECK:STDERR: fail_bad_foo.impl.carbon:[[@LINE+5]]:13: ERROR: Redeclaration differs at parameter 1.
 // CHECK:STDERR: class Class(U:! type) {

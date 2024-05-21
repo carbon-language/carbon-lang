@@ -6,7 +6,7 @@
 
 // --- fail_non_constant_condition.carbon
 
-package NonConstantCondition api;
+package NonConstantCondition;
 
 fn ConditionIsNonConstant(b: bool) {
   // We choose to not accept this even if both arms evaluate to the same
@@ -21,7 +21,7 @@ fn ConditionIsNonConstant(b: bool) {
 
 // --- fail_non_constant_result.carbon
 
-package NonConstantResult api;
+package NonConstantResult;
 
 fn ChosenBranchIsNonConstant(t: type) {
   // CHECK:STDERR: fail_non_constant_result.carbon:[[@LINE+4]]:10: ERROR: Cannot evaluate type expression.

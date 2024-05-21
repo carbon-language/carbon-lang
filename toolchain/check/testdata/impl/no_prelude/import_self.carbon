@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -14,7 +14,7 @@ interface Add {
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

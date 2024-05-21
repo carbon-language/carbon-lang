@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/types" api;
+package Core library "prelude/types";
 
 // TODO: Add a mechanism to re-export the names declared here.
 

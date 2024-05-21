@@ -138,7 +138,7 @@ TEST_F(TypedNodeTest, For) {
 
 TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   auto* tree = &GetTree(R"carbon(
-    library default impl;
+    impl library default;
   )carbon");
   auto file = tree->ExtractFile();
 
@@ -150,8 +150,11 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
-NodeIdOneOf PackageApi or PackageImpl: PackageImpl consumed
 NodeIdOneOf LibraryName or DefaultLibrary: DefaultLibrary consumed
+Vector: begin
+NodeIdInCategory Modifier: kind ImplModifier consumed
+NodeIdInCategory Modifier error: kind LibraryIntroducer doesn't match
+Vector: end
 NodeIdForKind: LibraryIntroducer consumed
 Aggregate [^:]*: success
 )Trace"));

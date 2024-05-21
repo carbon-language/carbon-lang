@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.uadd".
 // CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.uadd";
@@ -74,7 +74,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 // --- overflow.carbon
 
-package Overflow api;
+package Overflow;
 
 fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 

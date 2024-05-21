@@ -6,13 +6,13 @@
 
 // --- types.carbon
 
-library "types" api;
+library "types";
 
 fn Bool() -> type = "bool.make_type";
 
 // --- use_types.carbon
 
-library "uses_types" api;
+library "uses_types";
 
 import library "types";
 

@@ -4,12 +4,12 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+3]]:18: ERROR: Missing `library` keyword.
-// CHECK:STDERR: package Geometry "Shapes";
-// CHECK:STDERR:                  ^~~~~~~~
-package Geometry "Shapes";
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+3]]:18: ERROR: `package` declarations must end with a `;`.
+// CHECK:STDERR: package Geometry impl;
+// CHECK:STDERR:                  ^~~~
+package Geometry impl;
 
-// CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon
+// CHECK:STDOUT: - filename: fail_trailing_impl.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/base/value_store.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/node_ids.h"
@@ -15,6 +16,21 @@ static auto OnParseError(Context& context, Context::StateStackEntry state,
                          NodeKind declaration) -> void {
   return context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
                          state.subtree_start, /*has_error=*/true);
+}
+
+// Determines whether the specified modifier appears within the introducer of
+// the given declaration.
+// TODO: Restructure how we handle packaging declarations to avoid the need to
+// do this.
+static auto HasModifier(Context& context, Context::StateStackEntry state,
+                        Lex::TokenKind modifier) -> bool {
+  for (auto it = Lex::TokenIterator(state.token); it != context.position();
+       ++it) {
+    if (context.tokens().GetKind(*it) == modifier) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Handles parsing of the library name. Returns the name's ID on success, which
@@ -45,34 +61,10 @@ static auto HandleLibraryName(Context& context, bool accept_default)
   return std::nullopt;
 }
 
-// Returns whether `api` or `impl` is provided, or prints an error and returns
-// nullopt.
-static auto HandleApiOrImpl(Context& context)
-    -> std::optional<Tree::ApiOrImpl> {
-  switch (context.PositionKind()) {
-    case Lex::TokenKind::Api: {
-      context.AddLeafNode(NodeKind::PackageApi,
-                          context.ConsumeChecked(Lex::TokenKind::Api));
-      return Tree::ApiOrImpl::Api;
-      break;
-    }
-    case Lex::TokenKind::Impl: {
-      context.AddLeafNode(NodeKind::PackageImpl,
-                          context.ConsumeChecked(Lex::TokenKind::Impl));
-      return Tree::ApiOrImpl::Impl;
-      break;
-    }
-    default: {
-      CARBON_DIAGNOSTIC(ExpectedApiOrImpl, Error, "Expected `api` or `impl`.");
-      context.emitter().Emit(*context.position(), ExpectedApiOrImpl);
-      return std::nullopt;
-    }
-  }
-}
-
 // Handles everything after the declaration's introducer.
 static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               NodeKind declaration, bool is_export,
+                              bool is_impl,
                               llvm::function_ref<void()> on_parse_error)
     -> void {
   Tree::PackagingNames names{
@@ -142,20 +134,11 @@ static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
     }
   }
 
-  std::optional<Tree::ApiOrImpl> api_or_impl;
-  if (declaration != NodeKind::ImportDecl) {
-    api_or_impl = HandleApiOrImpl(context);
-    if (!api_or_impl) {
-      on_parse_error();
-      return;
-    }
-  }
-
   if (auto semi = context.ConsumeIf(Lex::TokenKind::Semi)) {
     if (declaration == NodeKind::ImportDecl) {
       context.AddImport(names);
     } else {
-      context.set_packaging_decl(names, *api_or_impl);
+      context.set_packaging_decl(names, is_impl);
     }
 
     context.AddNode(declaration, *semi, state.subtree_start, state.has_error);
@@ -201,41 +184,12 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
   }
 }
 
-// Common logic for both `import` and `export import`, distinguished by whether
-// `export_token` is valid.
-static auto HandleImportHelper(Context& context,
-                               const Context::StateStackEntry& state,
-                               Lex::TokenIndex export_token) -> void {
-  auto declaration = NodeKind::ImportDecl;
-  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
-
-  auto intro_token = context.ConsumeChecked(Lex::TokenKind::Import);
-  context.AddLeafNode(NodeKind::ImportIntroducer, intro_token);
-
-  if (export_token.is_valid()) {
-    context.AddLeafNode(NodeKind::ImportExport, export_token);
-  }
-
-  if (VerifyInImports(context, intro_token)) {
-    HandleDeclContent(context, state, declaration, export_token.is_valid(),
-                      on_parse_error);
-  } else {
-    on_parse_error();
-  }
-}
-
-auto HandleImportAsRegular(Context& context) -> void {
-  auto state = context.PopState();
-
-  HandleImportHelper(context, state, /*export_token=*/Lex::TokenIndex::Invalid);
-}
-
 // Diagnoses if `export` is used in an `impl` file.
 static auto RestrictExportToApi(Context& context,
                                 Context::StateStackEntry& state) -> void {
   // Error for both Main//default and every implementation file.
   auto packaging = context.tree().packaging_decl();
-  if (!packaging || packaging->api_or_impl == Tree::ApiOrImpl::Impl) {
+  if (!packaging || packaging->is_impl) {
     CARBON_DIAGNOSTIC(ExportFromImpl, Error,
                       "`export` is only allowed in API files.");
     context.emitter().Emit(state.token, ExportFromImpl);
@@ -243,13 +197,24 @@ static auto RestrictExportToApi(Context& context,
   }
 }
 
-auto HandleImportAsExport(Context& context) -> void {
+auto HandleImport(Context& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeChecked(Lex::TokenKind::Export);
-  RestrictExportToApi(context, state);
+  auto declaration = NodeKind::ImportDecl;
+  auto on_parse_error = [&] { OnParseError(context, state, declaration); };
 
-  HandleImportHelper(context, state, state.token);
+  if (VerifyInImports(context, state.token)) {
+    // Scan the modifiers to see if this import declaration is exported.
+    bool is_export = HasModifier(context, state, Lex::TokenKind::Export);
+    if (is_export) {
+      RestrictExportToApi(context, state);
+    }
+
+    HandleDeclContent(context, state, declaration, is_export,
+                      /*is_impl=*/false, on_parse_error);
+  } else {
+    on_parse_error();
+  }
 }
 
 auto HandleExportName(Context& context) -> void {
@@ -272,16 +237,14 @@ auto HandleExportNameFinish(Context& context) -> void {
 // Handles common logic for `package` and `library`.
 static auto HandlePackageAndLibraryDecls(Context& context,
                                          Lex::TokenKind intro_token_kind,
-                                         NodeKind intro, NodeKind declaration)
-    -> void {
+                                         NodeKind declaration) -> void {
   auto state = context.PopState();
+
+  bool is_impl = HasModifier(context, state, Lex::TokenKind::Impl);
 
   auto on_parse_error = [&] { OnParseError(context, state, declaration); };
 
-  auto intro_token = context.ConsumeChecked(intro_token_kind);
-  context.AddLeafNode(intro, intro_token);
-
-  if (intro_token != Lex::TokenIndex::FirstNonCommentToken) {
+  if (state.token != Lex::TokenIndex::FirstNonCommentToken) {
     CARBON_DIAGNOSTIC(
         PackageTooLate, Error,
         "The `{0}` declaration must be the first non-comment line.",
@@ -289,7 +252,7 @@ static auto HandlePackageAndLibraryDecls(Context& context,
     CARBON_DIAGNOSTIC(FirstNonCommentLine, Note,
                       "First non-comment line is here.");
     context.emitter()
-        .Build(intro_token, PackageTooLate, intro_token_kind)
+        .Build(state.token, PackageTooLate, intro_token_kind)
         .Note(Lex::TokenIndex::FirstNonCommentToken, FirstNonCommentLine)
         .Emit();
     on_parse_error();
@@ -299,19 +262,17 @@ static auto HandlePackageAndLibraryDecls(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDeclContent(context, state, declaration, /*is_export=*/false,
+  HandleDeclContent(context, state, declaration, /*is_export=*/false, is_impl,
                     on_parse_error);
 }
 
 auto HandlePackage(Context& context) -> void {
   HandlePackageAndLibraryDecls(context, Lex::TokenKind::Package,
-                               NodeKind::PackageIntroducer,
                                NodeKind::PackageDecl);
 }
 
 auto HandleLibrary(Context& context) -> void {
   HandlePackageAndLibraryDecls(context, Lex::TokenKind::Library,
-                               NodeKind::LibraryIntroducer,
                                NodeKind::LibraryDecl);
 }
 

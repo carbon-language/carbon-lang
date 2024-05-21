@@ -19,7 +19,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.snegate".
 // CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
@@ -98,7 +98,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 // --- fail_overflow.carbon
 
-package FailOverflow api;
+package FailOverflow;
 
 fn Negate(a: i32) -> i32 = "int.snegate";
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";

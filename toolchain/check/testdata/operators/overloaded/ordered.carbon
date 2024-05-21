@@ -6,7 +6,7 @@
 
 // --- prelude.carbon
 
-package Core api;
+package Core;
 
 import library "prelude";
 
@@ -20,7 +20,7 @@ interface Ordered {
 
 // --- user.carbon
 
-package User api;
+package User;
 
 import Core;
 
@@ -51,7 +51,7 @@ fn TestGreaterEqual(a: C, b: C) -> bool {
 
 // --- fail_no_impl.carbon
 
-package FailNoImpl api;
+package FailNoImpl;
 
 import Core;
 

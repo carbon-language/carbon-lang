@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-library "a" api;
+library "a";
 
 base class Base {
   fn F[self: Self]();
@@ -22,7 +22,7 @@ class Child {
 
 // --- b.carbon
 
-library "b" api;
+library "b";
 
 import library "a";
 

@@ -5,9 +5,9 @@
 // AUTOUPDATE
 
 // CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+3]]:9: ERROR: Expected identifier after `package`.
-// CHECK:STDERR: package library "Shapes" api;
+// CHECK:STDERR: package library "Shapes";
 // CHECK:STDERR:         ^~~~~~~
-package library "Shapes" api;
+package library "Shapes";
 
 // CHECK:STDOUT: - filename: fail_library_skips_name.carbon
 // CHECK:STDOUT:   parse_tree: [

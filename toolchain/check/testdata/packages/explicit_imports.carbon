@@ -6,29 +6,29 @@
 
 // --- api.carbon
 
-package Api api;
+package Api;
 
 // --- api_lib.carbon
 
-package Api library "lib" api;
+package Api library "lib";
 
 // --- same_package.carbon
 
-package Api library "other" api;
+package Api library "other";
 
 import library default;
 import library "lib";
 
 // --- different_package.carbon
 
-package ApiOther api;
+package ApiOther;
 
 import Api;
 import Api library "lib";
 
 // --- main_lib_api.carbon
 
-library "lib" api;
+library "lib";
 
 // --- main_import.carbon
 

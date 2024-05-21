@@ -6,7 +6,7 @@
 
 // --- fail_add_base.carbon
 
-library "fail_add_base" api;
+library "fail_add_base";
 
 class A;
 // CHECK:STDERR: fail_add_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -20,7 +20,7 @@ base class A {}
 
 // --- fail_add_abstract.carbon
 
-library "fail_add_abstract" api;
+library "fail_add_abstract";
 
 class B;
 // CHECK:STDERR: fail_add_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -34,7 +34,7 @@ abstract class B {}
 
 // --- fail_remove_base.carbon
 
-library "fail_remove_base" api;
+library "fail_remove_base";
 
 base class C;
 // CHECK:STDERR: fail_remove_base.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -48,7 +48,7 @@ class C {}
 
 // --- fail_base_to_abstract.carbon
 
-library "fail_base_to_abstract" api;
+library "fail_base_to_abstract";
 
 base class D;
 // CHECK:STDERR: fail_base_to_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -62,7 +62,7 @@ abstract class D {}
 
 // --- fail_remove_abstract.carbon
 
-library "fail_remove_abstract" api;
+library "fail_remove_abstract";
 
 abstract class E;
 // CHECK:STDERR: fail_remove_abstract.carbon:[[@LINE+7]]:1: ERROR: Class redeclared with different inheritance kind.
@@ -76,7 +76,7 @@ class E {}
 
 // --- fail_abstract_to_base.carbon
 
-library "fail_abstract_to_base" api;
+library "fail_abstract_to_base";
 
 abstract class F;
 // CHECK:STDERR: fail_abstract_to_base.carbon:[[@LINE+6]]:1: ERROR: Class redeclared with different inheritance kind.

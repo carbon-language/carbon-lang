@@ -16,7 +16,7 @@ let a: f64 = Negate(1.5);
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "float.negate".
 // CHECK:STDERR: fn TooFew() -> f64 = "float.negate";

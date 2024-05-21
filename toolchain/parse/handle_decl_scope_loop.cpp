@@ -8,53 +8,6 @@
 
 namespace Carbon::Parse {
 
-// Handles positions which are end of scope and packaging declarations. Returns
-// true when either applies. When the position is neither, returns false, and
-// may still update packaging state.
-static auto TryHandleEndOrPackagingDecl(Context& context) -> bool {
-  switch (context.PositionKind()) {
-    case Lex::TokenKind::CloseCurlyBrace:
-    case Lex::TokenKind::FileEnd: {
-      // This is the end of the scope, so the loop state ends.
-      context.PopAndDiscardState();
-      return true;
-    }
-    // Packaging-related keywords manage their packaging state.
-    case Lex::TokenKind::Export: {
-      if (!context.PositionIs(Lex::TokenKind::Import, Lookahead::NextToken)) {
-        break;
-      }
-      context.PushState(State::ImportAsExport);
-      return true;
-    }
-    case Lex::TokenKind::Import: {
-      context.PushState(State::ImportAsRegular);
-      return true;
-    }
-    case Lex::TokenKind::Library: {
-      context.PushState(State::Library);
-      return true;
-    }
-    case Lex::TokenKind::Package: {
-      context.PushState(State::Package);
-      return true;
-    }
-    default:
-      break;
-  }
-
-  // Because a non-packaging keyword was encountered, packaging is complete.
-  // Misplaced packaging keywords may lead to this being re-triggered.
-  if (context.packaging_state() !=
-      Context::PackagingState::AfterNonPackagingDecl) {
-    if (!context.first_non_packaging_token().is_valid()) {
-      context.set_first_non_packaging_token(*context.position());
-    }
-    context.set_packaging_state(Context::PackagingState::AfterNonPackagingDecl);
-  }
-  return false;
-}
-
 // Finishes an invalid declaration, skipping past its end.
 static auto FinishAndSkipInvalidDecl(Context& context, int32_t subtree_start)
     -> void {
@@ -88,118 +41,113 @@ static auto ApplyIntroducer(Context& context, Context::StateStackEntry state,
   context.PushState(state, next_state);
 }
 
-// Handles `base` as a declaration.
-static auto HandleBaseAsDecl(Context& context, Context::StateStackEntry state)
-    -> void {
-  // At this point, `base` has been ruled out as a modifier (`base class`). If
-  // it's followed by a colon, it's an introducer (`extend base: BaseType;`).
-  // Otherwise it's an error.
-  if (context.PositionIs(Lex::TokenKind::Colon, Lookahead::NextToken)) {
-    ApplyIntroducer(context, state, NodeKind::BaseIntroducer, State::BaseDecl);
-    context.PushState(State::Expr);
-    context.AddLeafNode(NodeKind::BaseColon, context.Consume());
-  } else {
-    // TODO: If the next token isn't a colon or `class`, try to recover
-    // based on whether we're in a class, whether we have an `extend`
-    // modifier, and the following tokens.
-    context.AddLeafNode(NodeKind::InvalidParse, context.Consume(),
-                        /*has_error=*/true);
-    CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
-                      "`class` or `:` expected after `base`.");
-    context.emitter().Emit(*context.position(), ExpectedAfterBase);
-    FinishAndSkipInvalidDecl(context, state.subtree_start);
-  }
-}
+namespace {
+// The kind of declaration introduced by an introducer keyword.
+enum class DeclIntroducerKind : int8_t {
+  Unrecognized,
+  PackagingDecl,
+  NonPackagingDecl,
+};
 
+// Information about a keyword that might be an introducer keyword.
+struct DeclIntroducerInfo {
+  DeclIntroducerKind introducer_kind;
+  NodeKind node_kind;
+  State state;
+};
+}  // namespace
+
+static constexpr auto DeclIntroducers = [] {
+  DeclIntroducerInfo introducers[] = {
+#define CARBON_TOKEN(Name) \
+  {DeclIntroducerKind::Unrecognized, NodeKind::InvalidParse, State::Invalid},
+#include "toolchain/lex/token_kind.def"
+  };
+  auto set = [&](Lex::TokenKind token_kind, NodeKind node_kind, State state) {
+    introducers[token_kind.AsInt()] = {DeclIntroducerKind::NonPackagingDecl,
+                                       node_kind, state};
+  };
+  auto set_packaging = [&](Lex::TokenKind token_kind, NodeKind node_kind,
+                           State state) {
+    introducers[token_kind.AsInt()] = {DeclIntroducerKind::PackagingDecl,
+                                       node_kind, state};
+  };
+
+  set(Lex::TokenKind::Adapt, NodeKind::AdaptIntroducer,
+      State::AdaptAfterIntroducer);
+  set(Lex::TokenKind::Alias, NodeKind::AliasIntroducer, State::Alias);
+  set(Lex::TokenKind::Base, NodeKind::BaseIntroducer,
+      State::BaseAfterIntroducer);
+  set(Lex::TokenKind::Choice, NodeKind::ChoiceIntroducer,
+      State::ChoiceIntroducer);
+  set(Lex::TokenKind::Class, NodeKind::ClassIntroducer,
+      State::TypeAfterIntroducerAsClass);
+  set(Lex::TokenKind::Constraint, NodeKind::NamedConstraintIntroducer,
+      State::TypeAfterIntroducerAsNamedConstraint);
+  set(Lex::TokenKind::Export, NodeKind::ExportIntroducer, State::ExportName);
+  // TODO: Treat `extend` as a declaration introducer.
+  set(Lex::TokenKind::Fn, NodeKind::FunctionIntroducer,
+      State::FunctionIntroducer);
+  set(Lex::TokenKind::Impl, NodeKind::ImplIntroducer,
+      State::ImplAfterIntroducer);
+  set(Lex::TokenKind::Interface, NodeKind::InterfaceIntroducer,
+      State::TypeAfterIntroducerAsInterface);
+  set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart, State::Namespace);
+  set(Lex::TokenKind::Let, NodeKind::LetIntroducer, State::Let);
+  set(Lex::TokenKind::Var, NodeKind::VariableIntroducer, State::VarAsDecl);
+
+  set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
+                State::Package);
+  set_packaging(Lex::TokenKind::Library, NodeKind::LibraryIntroducer,
+                State::Library);
+  set_packaging(Lex::TokenKind::Import, NodeKind::ImportIntroducer,
+                State::Import);
+  return std::to_array(introducers);
+}();
+
+// Attempts to handle the current token as a declaration introducer.
 // Returns true if the current position is a declaration. If we see a
 // declaration introducer keyword token, replace the placeholder node and switch
 // to a state to parse the rest of the declaration.
 static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
                             bool saw_modifier) -> bool {
-  switch (context.PositionKind()) {
-    case Lex::TokenKind::Adapt: {
-      ApplyIntroducer(context, state, NodeKind::AdaptIntroducer,
-                      State::AdaptDecl);
-      context.PushState(State::Expr);
-      return true;
-    }
-    case Lex::TokenKind::Alias: {
-      ApplyIntroducer(context, state, NodeKind::AliasIntroducer, State::Alias);
-      return true;
-    }
-    case Lex::TokenKind::Base: {
-      HandleBaseAsDecl(context, state);
-      return true;
-    }
-    case Lex::TokenKind::Choice: {
-      ApplyIntroducer(context, state, NodeKind::ChoiceIntroducer,
-                      State::ChoiceIntroducer);
-      return true;
-    }
-    case Lex::TokenKind::Class: {
-      ApplyIntroducer(context, state, NodeKind::ClassIntroducer,
-                      State::TypeAfterIntroducerAsClass);
-      return true;
-    }
-    case Lex::TokenKind::Constraint: {
-      ApplyIntroducer(context, state, NodeKind::NamedConstraintIntroducer,
-                      State::TypeAfterIntroducerAsNamedConstraint);
-      return true;
-    }
-    case Lex::TokenKind::Export: {
-      ApplyIntroducer(context, state, NodeKind::ExportIntroducer,
-                      State::ExportName);
-      return true;
-    }
-    case Lex::TokenKind::Extend: {
-      // TODO: Treat this `extend` token as a declaration introducer
-      HandleUnrecognizedDecl(context, state.subtree_start);
-      return true;
-    }
-    case Lex::TokenKind::Fn: {
-      ApplyIntroducer(context, state, NodeKind::FunctionIntroducer,
-                      State::FunctionIntroducer);
-      return true;
-    }
-    case Lex::TokenKind::Impl: {
-      ApplyIntroducer(context, state, NodeKind::ImplIntroducer,
-                      State::ImplAfterIntroducer);
-      return true;
-    }
-    case Lex::TokenKind::Interface: {
-      ApplyIntroducer(context, state, NodeKind::InterfaceIntroducer,
-                      State::TypeAfterIntroducerAsInterface);
-      return true;
-    }
-    case Lex::TokenKind::Namespace: {
-      ApplyIntroducer(context, state, NodeKind::NamespaceStart,
-                      State::Namespace);
-      return true;
-    }
-    case Lex::TokenKind::Let: {
-      ApplyIntroducer(context, state, NodeKind::LetIntroducer, State::Let);
-      return true;
-    }
-    case Lex::TokenKind::Var: {
-      ApplyIntroducer(context, state, NodeKind::VariableIntroducer,
-                      State::VarAsDecl);
-      return true;
-    }
+  const auto& info = DeclIntroducers[context.PositionKind().AsInt()];
 
-    case Lex::TokenKind::Semi: {
-      if (saw_modifier) {
-        // Modifiers require an introducer keyword.
-        HandleUnrecognizedDecl(context, state.subtree_start);
-      } else {
-        context.ReplacePlaceholderNode(state.subtree_start, NodeKind::EmptyDecl,
-                                       context.Consume());
+  switch (info.introducer_kind) {
+    case DeclIntroducerKind::Unrecognized: {
+      // A `;` with no modifiers is an empty declaration.
+      if (!saw_modifier) {
+        if (auto loc = context.ConsumeIf(Lex::TokenKind::Semi)) {
+          context.ReplacePlaceholderNode(state.subtree_start,
+                                         NodeKind::EmptyDecl, *loc);
+          return true;
+        }
       }
-      return true;
+      return false;
     }
 
-    default:
-      return false;
+    case DeclIntroducerKind::PackagingDecl: {
+      // Packaging declarations update the packaging state themselves as needed.
+      break;
+    }
+
+    case DeclIntroducerKind::NonPackagingDecl: {
+      // Because a non-packaging keyword was encountered, packaging is complete.
+      // Misplaced packaging keywords may lead to this being re-triggered.
+      if (context.packaging_state() !=
+          Context::PackagingState::AfterNonPackagingDecl) {
+        if (!context.first_non_packaging_token().is_valid()) {
+          context.set_first_non_packaging_token(*context.position());
+        }
+        context.set_packaging_state(
+            Context::PackagingState::AfterNonPackagingDecl);
+      }
+      break;
+    }
   }
+
+  ApplyIntroducer(context, state, info.node_kind, info.state);
+  return true;
 }
 
 // Returns true if position_kind could be either an introducer or modifier, and
@@ -209,6 +157,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
     -> bool {
   switch (position_kind) {
     case Lex::TokenKind::Base:
+    case Lex::TokenKind::Export:
     case Lex::TokenKind::Extend:
     case Lex::TokenKind::Impl:
       // This is an ambiguous token, so now we check what the next token is.
@@ -222,8 +171,10 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Constraint:
         case Lex::TokenKind::Fn:
+        case Lex::TokenKind::Import:
         case Lex::TokenKind::Interface:
         case Lex::TokenKind::Let:
+        case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
         case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(...)
@@ -232,6 +183,11 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
 #include "toolchain/parse/node_kind.def"
 
           return false;
+
+        case Lex::TokenKind::Package:
+          // `package.foo` is an expression; any other token after `package` is
+          // a `package` introducer.
+          return context.PositionKind(Lookahead(2)) == Lex::TokenKind::Period;
 
         default:
           return true;
@@ -265,7 +221,10 @@ static auto TryHandleAsModifier(Context& context) -> bool {
 auto HandleDeclScopeLoop(Context& context) -> void {
   // This maintains the current state unless we're at the end of the scope.
 
-  if (TryHandleEndOrPackagingDecl(context)) {
+  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
+      context.PositionIs(Lex::TokenKind::FileEnd)) {
+    // This is the end of the scope, so the loop state ends.
+    context.PopAndDiscardState();
     return;
   }
 

@@ -6,7 +6,7 @@
 
 // --- a.carbon
 
-package A api;
+package A;
 
 fn F() {}
 

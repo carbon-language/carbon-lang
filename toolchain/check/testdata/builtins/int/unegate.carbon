@@ -19,7 +19,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_bad_decl.carbon
 
-package FailBadDecl api;
+package FailBadDecl;
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: ERROR: Invalid signature for builtin function "int.unegate".
 // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
@@ -97,7 +97,7 @@ fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
 
 // --- overflow.carbon
 
-package Overflow api;
+package Overflow;
 
 fn Negate(a: i32) -> i32 = "int.unegate";
 fn Sub(a: i32, b: i32) -> i32 = "int.usub";

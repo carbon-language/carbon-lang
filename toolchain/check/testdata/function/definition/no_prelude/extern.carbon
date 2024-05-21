@@ -6,7 +6,7 @@
 
 // --- fail_extern_def.carbon
 
-library "extern_def" api;
+library "extern_def";
 
 // CHECK:STDERR: fail_extern_def.carbon:[[@LINE+4]]:1: ERROR: `extern` not allowed on `fn` declaration that provides a definition.
 // CHECK:STDERR: extern fn F() {}
@@ -16,7 +16,7 @@ extern fn F() {}
 
 // --- fail_def_for_extern_decl.carbon
 
-library "def_for_extern_decl" api;
+library "def_for_extern_decl";
 
 extern fn F();
 // CHECK:STDERR: fail_def_for_extern_decl.carbon:[[@LINE+7]]:1: ERROR: Redeclarations of `fn F` in the same library must match use of `extern`.
@@ -30,7 +30,7 @@ fn F() {}
 
 // --- fail_extern_diag_suppressed.carbon
 
-library "extern_diag_suppressed" api;
+library "extern_diag_suppressed";
 
 extern fn F();
 // CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+7]]:1: ERROR: Redeclaration of `fn F` is redundant.
@@ -45,7 +45,7 @@ fn F() {}
 
 // --- fail_extern_decl_after_def.carbon
 
-library "extern_decl_after_def" api;
+library "extern_decl_after_def";
 
 fn F() {}
 // CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+6]]:1: ERROR: Redeclaration of `fn F` is redundant.

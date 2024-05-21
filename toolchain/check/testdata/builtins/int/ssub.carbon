@@ -17,7 +17,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 // --- fail_overflow.carbon
 
-package FailOverflow api;
+package FailOverflow;
 
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
