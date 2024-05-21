@@ -164,7 +164,7 @@ struct LibrarySpecifier {
 };
 
 // First line of the file, such as:
-//   `package MyPackage library "MyLibrary" impl;`
+//   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
   static constexpr auto Kind = NodeKind::PackageDecl.Define(NodeCategory::Decl);
 
