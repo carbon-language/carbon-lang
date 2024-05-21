@@ -40,6 +40,10 @@ static auto InstBlockProfileArgFunction(llvm::FoldingSetNodeID& id,
     id.AddInteger(-1);
     return;
   }
+  if (inst_block_id == InstBlockId::Empty) {
+    id.AddInteger(0);
+    return;
+  }
 
   auto inst_block = sem_ir.inst_blocks().Get(inst_block_id);
   id.AddInteger(inst_block.size());
