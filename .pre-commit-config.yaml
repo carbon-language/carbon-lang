@@ -217,6 +217,7 @@ repos:
           (?x)^(
               .bazelversion|
               .github/pull_request_template.md|
+              .vscode/extensions.json|
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
