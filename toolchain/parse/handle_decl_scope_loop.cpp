@@ -187,7 +187,8 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Package:
           // `package.foo` is an expression; any other token after `package` is
           // a `package` introducer.
-          return context.PositionKind(Lookahead(2)) == Lex::TokenKind::Period;
+          return context.PositionKind(static_cast<Lookahead>(2)) ==
+                 Lex::TokenKind::Period;
 
         default:
           return true;
