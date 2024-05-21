@@ -221,21 +221,24 @@ static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
-  llvm::SmallVector<int> imported_irs(total_ir_count, -1);
+  llvm::SmallVector<int> ir_to_result_index(total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
   for (const auto& import : imports.imports) {
     const auto& direct_ir = **import.unit_info->unit->sem_ir;
-    imported_irs[direct_ir.check_ir_id().index] = results.size();
+    ir_to_result_index[direct_ir.check_ir_id().index] = results.size();
     results.push_back({.node_id = import.names.node_id,
                        .sem_ir = &direct_ir,
                        .is_export = import.names.is_export});
   }
 
   // Loop through direct imports for any indirect exports. The underlying vector
-  // is appended during iteration, so take the size at the start.
-  for (int direct_index : llvm::seq(results.size())) {
+  // is appended during iteration, so take the size first.
+  const int direct_imports = results.size();
+  for (int direct_index : llvm::seq(direct_imports)) {
+    bool is_export = results[direct_index].is_export;
+
     for (const auto& indirect_ir :
          results[direct_index].sem_ir->import_irs().array_ref()) {
       if (!indirect_ir.is_export) {
@@ -243,8 +246,7 @@ static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
       }
 
       auto& indirect_index =
-          imported_irs[indirect_ir.sem_ir->check_ir_id().index];
-      bool is_export = results[direct_index].is_export;
+          ir_to_result_index[indirect_ir.sem_ir->check_ir_id().index];
       if (indirect_index == -1) {
         indirect_index = results.size();
         // TODO: In the case of a recursive `export import`, this only points at
