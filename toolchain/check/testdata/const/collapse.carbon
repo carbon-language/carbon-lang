@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 // OK, `const (const i32)` is the same type as `const i32`.
-// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: WARNING: `const` applied repeatedly to the same type has no additional effect.
 // CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
 fn F(p: const i32**) -> const (const i32)** {
