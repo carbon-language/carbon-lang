@@ -165,9 +165,8 @@ struct LibrarySpecifier {
 
 // First line of the file, such as:
 //   `package MyPackage library "MyLibrary" impl;`
-struct PackageDirective {
-  static constexpr auto Kind =
-      NodeKind::PackageDirective.Define(NodeCategory::Decl);
+struct PackageDecl {
+  static constexpr auto Kind = NodeKind::PackageDecl.Define(NodeCategory::Decl);
 
   PackageIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -177,9 +176,8 @@ struct PackageDirective {
 
 // `import TheirPackage library "TheirLibrary";`
 using ImportIntroducer = LeafNode<NodeKind::ImportIntroducer>;
-struct ImportDirective {
-  static constexpr auto Kind =
-      NodeKind::ImportDirective.Define(NodeCategory::Decl);
+struct ImportDecl {
+  static constexpr auto Kind = NodeKind::ImportDecl.Define(NodeCategory::Decl);
 
   ImportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -187,22 +185,20 @@ struct ImportDirective {
   std::optional<LibrarySpecifierId> library;
 };
 
-// `library` as directive.
+// `library` as declaration.
 using LibraryIntroducer = LeafNode<NodeKind::LibraryIntroducer>;
-struct LibraryDirective {
-  static constexpr auto Kind =
-      NodeKind::LibraryDirective.Define(NodeCategory::Decl);
+struct LibraryDecl {
+  static constexpr auto Kind = NodeKind::LibraryDecl.Define(NodeCategory::Decl);
 
   LibraryIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   NodeIdOneOf<LibraryName, DefaultLibrary> library_name;
 };
 
-// `export` as a directive.
+// `export` as a declaration.
 using ExportIntroducer = LeafNode<NodeKind::ExportIntroducer>;
-struct ExportDirective {
-  static constexpr auto Kind =
-      NodeKind::ExportDirective.Define(NodeCategory::Decl);
+struct ExportDecl {
+  static constexpr auto Kind = NodeKind::ExportDecl.Define(NodeCategory::Decl);
 
   ExportIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;

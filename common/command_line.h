@@ -223,7 +223,7 @@ class CommandBuilder;
 // The result of parsing arguments can be a parse error, a successfully parsed
 // command line, or a meta-success due to triggering a meta-action during the
 // parse such as rendering help text.
-enum class ParseResult {
+enum class ParseResult : int8_t {
   // Signifies an error parsing arguments. It will have been diagnosed using
   // the streams provided to the parser, and no useful parsed arguments are
   // available.
@@ -285,7 +285,7 @@ struct ArgInfo {
 };
 
 // The kinds of arguments that can be parsed.
-enum class ArgKind {
+enum class ArgKind : int8_t {
   Invalid,
   Flag,
   Integer,
@@ -578,7 +578,7 @@ struct CommandInfo {
 //
 // Commands with _meta_ actions are also a separate kind from those with
 // normal actions.
-enum class CommandKind {
+enum class CommandKind : int8_t {
   Invalid,
   RequiresSubcommand,
   Action,

@@ -15,6 +15,6 @@ extend virtual base package Geometry;
 // CHECK:STDOUT:       {kind: 'VirtualModifier', text: 'virtual'},
 // CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

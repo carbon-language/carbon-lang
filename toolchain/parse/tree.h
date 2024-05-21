@@ -80,7 +80,7 @@ class Tree : public Printable<Tree> {
   class PostorderIterator;
   class SiblingIterator;
 
-  // For PackagingDirective.
+  // For PackagingDecl.
   enum class ApiOrImpl : uint8_t {
     Api,
     Impl,
@@ -89,16 +89,16 @@ class Tree : public Printable<Tree> {
   // Names in packaging, whether the file's packaging or an import. Links back
   // to the node for diagnostics.
   struct PackagingNames {
-    ImportDirectiveId node_id;
+    ImportDeclId node_id;
     IdentifierId package_id = IdentifierId::Invalid;
     StringLiteralValueId library_id = StringLiteralValueId::Invalid;
-    // Whether an import is exported. This is on the file's packaging directive
-    // even though it doesn't apply, for consistency in structure.
+    // Whether an import is exported. This is on the file's packaging
+    // declaration even though it doesn't apply, for consistency in structure.
     bool is_export = false;
   };
 
   // The file's packaging.
-  struct PackagingDirective {
+  struct PackagingDecl {
     PackagingNames names;
     bool is_impl;
   };
@@ -180,8 +180,8 @@ class Tree : public Printable<Tree> {
     return T(n);
   }
 
-  auto packaging_directive() const -> const std::optional<PackagingDirective>& {
-    return packaging_directive_;
+  auto packaging_decl() const -> const std::optional<PackagingDecl>& {
+    return packaging_decl_;
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
   auto deferred_definitions() const
@@ -376,7 +376,7 @@ class Tree : public Printable<Tree> {
   // nodes as some tokens may have been skipped.
   bool has_errors_ = false;
 
-  std::optional<PackagingDirective> packaging_directive_;
+  std::optional<PackagingDecl> packaging_decl_;
   llvm::SmallVector<PackagingNames> imports_;
   ValueStore<DeferredDefinitionIndex> deferred_definitions_;
 };

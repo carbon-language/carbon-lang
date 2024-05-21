@@ -17,7 +17,7 @@ impl library "Shapes";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'DefaultLibrary', text: 'default'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: named.carbon
@@ -26,6 +26,6 @@ impl library "Shapes";
 // CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'LibraryName', text: '"Shapes"'},
-// CHECK:STDOUT:     {kind: 'LibraryDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

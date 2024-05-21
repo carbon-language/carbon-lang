@@ -17,8 +17,8 @@ auto HandleImportIntroducer(Context& context,
   return true;
 }
 
-auto HandleImportDirective(Context& context,
-                           Parse::ImportDirectiveId /*node_id*/) -> bool {
+auto HandleImportDecl(Context& context, Parse::ImportDeclId /*node_id*/)
+    -> bool {
   LimitModifiersOnDecl(context, KeywordModifierSet::Export,
                        Lex::TokenKind::Import);
   context.decl_state_stack().Pop(DeclState::Import);
@@ -31,8 +31,8 @@ auto HandleLibraryIntroducer(Context& context,
   return true;
 }
 
-auto HandleLibraryDirective(Context& context,
-                            Parse::LibraryDirectiveId /*node_id*/) -> bool {
+auto HandleLibraryDecl(Context& context, Parse::LibraryDeclId /*node_id*/)
+    -> bool {
   LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
                        Lex::TokenKind::Library);
   context.decl_state_stack().Pop(DeclState::PackageOrLibrary);
@@ -45,8 +45,8 @@ auto HandlePackageIntroducer(Context& context,
   return true;
 }
 
-auto HandlePackageDirective(Context& context,
-                            Parse::PackageDirectiveId /*node_id*/) -> bool {
+auto HandlePackageDecl(Context& context, Parse::PackageDeclId /*node_id*/)
+    -> bool {
   LimitModifiersOnDecl(context, KeywordModifierSet::Impl,
                        Lex::TokenKind::Package);
   context.decl_state_stack().Pop(DeclState::PackageOrLibrary);

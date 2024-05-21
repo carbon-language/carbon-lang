@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 package A;
-// CHECK:STDERR: fail_after_package.carbon:[[@LINE+6]]:1: ERROR: The `package` directive must be the first non-comment line.
+// CHECK:STDERR: fail_after_package.carbon:[[@LINE+6]]:1: ERROR: The `package` declaration must be the first non-comment line.
 // CHECK:STDERR: package B;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR: fail_after_package.carbon:[[@LINE-4]]:1: First non-comment line is here.
@@ -18,8 +18,8 @@ package B;
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'A'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

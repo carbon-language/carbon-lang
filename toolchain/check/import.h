@@ -16,7 +16,7 @@ namespace Carbon::Check {
 // though they are several layers deep.
 auto ImportLibraryFromCurrentPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
-                                     Parse::ImportDirectiveId node_id,
+                                     Parse::ImportDeclId node_id,
                                      const SemIR::File& import_sem_ir,
                                      bool is_export) -> void;
 
@@ -29,7 +29,7 @@ auto ImportLibraryFromCurrentPackage(Context& context,
 // the package failed to import correctly.
 auto ImportLibrariesFromOtherPackage(Context& context,
                                      SemIR::TypeId namespace_type_id,
-                                     Parse::ImportDirectiveId node_id,
+                                     Parse::ImportDeclId node_id,
                                      IdentifierId package_id,
                                      llvm::ArrayRef<SemIR::ImportIR> import_irs,
                                      bool has_load_error) -> void;

@@ -222,9 +222,20 @@ struct BaseDecl {
 // Common representation for both kinds of `bind*name` node.
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
-  static constexpr InstKind Kinds[] = {InstKind::BindAlias,
-                                       InstKind::BindExport, InstKind::BindName,
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
                                        InstKind::BindSymbolicName};
+
+  InstKind kind;
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
+};
+
+struct AnyBindNameOrExportDecl {
+  // TODO: Also handle BindTemplateName once it exists.
+  static constexpr InstKind Kinds[] = {InstKind::BindAlias, InstKind::BindName,
+                                       InstKind::BindSymbolicName,
+                                       InstKind::ExportDecl};
 
   InstKind kind;
   TypeId type_id;
@@ -235,15 +246,6 @@ struct AnyBindName {
 struct BindAlias {
   static constexpr auto Kind =
       InstKind::BindAlias.Define<Parse::NodeId>("bind_alias");
-
-  TypeId type_id;
-  BindNameId bind_name_id;
-  InstId value_id;
-};
-
-struct BindExport {
-  static constexpr auto Kind =
-      InstKind::BindExport.Define<Parse::NodeId>("bind_export");
 
   TypeId type_id;
   BindNameId bind_name_id;
@@ -442,6 +444,15 @@ struct Deref {
 
   TypeId type_id;
   InstId pointer_id;
+};
+
+struct ExportDecl {
+  static constexpr auto Kind =
+      InstKind::ExportDecl.Define<Parse::NodeId>("export");
+
+  TypeId type_id;
+  BindNameId bind_name_id;
+  InstId value_id;
 };
 
 // Represents accessing the `type` field in a facet value, which is notionally a

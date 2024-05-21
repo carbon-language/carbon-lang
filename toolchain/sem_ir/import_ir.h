@@ -16,7 +16,7 @@ struct ImportIR : public Printable<ImportIR> {
   auto Print(llvm::raw_ostream& out) const -> void { out << node_id; }
 
   // The node ID for the import.
-  Parse::ImportDirectiveId node_id;
+  Parse::ImportDeclId node_id;
   // The imported IR.
   const File* sem_ir;
   // True if this is part of an `export import`.

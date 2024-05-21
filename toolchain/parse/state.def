@@ -716,7 +716,7 @@ CARBON_PARSE_STATE(ExportNameFinish)
 //   (state done)
 CARBON_PARSE_STATE(Import)
 
-// Handles `library` in directive form.
+// Handles `library` in declaration form.
 //
 // library "libname" ;
 //         ^~~~~~~~~~~

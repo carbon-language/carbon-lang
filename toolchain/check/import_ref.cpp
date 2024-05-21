@@ -542,9 +542,6 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::BindAlias inst): {
         return TryResolveTypedInst(inst);
       }
-      case CARBON_KIND(SemIR::BindExport inst): {
-        return TryResolveTypedInst(inst);
-      }
       case CARBON_KIND(SemIR::BindName inst): {
         // TODO: This always returns `ConstantId::NotConstant`.
         return {TryEvalInst(context_, inst_id, inst)};
@@ -559,6 +556,9 @@ class ImportRefResolver {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::ConstType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ExportDecl inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::FieldDecl inst): {
@@ -666,15 +666,6 @@ class ImportRefResolver {
   }
 
   auto TryResolveTypedInst(SemIR::BindAlias inst) -> ResolveResult {
-    auto initial_work = work_stack_.size();
-    auto value_id = GetLocalConstantId(inst.value_id);
-    if (HasNewWork(initial_work)) {
-      return ResolveResult::Retry();
-    }
-    return {value_id};
-  }
-
-  auto TryResolveTypedInst(SemIR::BindExport inst) -> ResolveResult {
     auto initial_work = work_stack_.size();
     auto value_id = GetLocalConstantId(inst.value_id);
     if (HasNewWork(initial_work)) {
@@ -868,6 +859,15 @@ class ImportRefResolver {
     return {
         TryEvalInst(context_, SemIR::InstId::Invalid,
                     SemIR::ConstType{SemIR::TypeId::TypeType, inner_type_id})};
+  }
+
+  auto TryResolveTypedInst(SemIR::ExportDecl inst) -> ResolveResult {
+    auto initial_work = work_stack_.size();
+    auto value_id = GetLocalConstantId(inst.value_id);
+    if (HasNewWork(initial_work)) {
+      return ResolveResult::Retry();
+    }
+    return {value_id};
   }
 
   auto TryResolveTypedInst(SemIR::FieldDecl inst, SemIR::InstId import_inst_id)

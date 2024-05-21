@@ -26,7 +26,7 @@ impl package.Name as package.Interface {}
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: impl_disambiguate.carbon
@@ -35,7 +35,7 @@ impl package.Name as package.Interface {}
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'DisambiguateImpl'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
@@ -50,7 +50,7 @@ impl package.Name as package.Interface {}
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'DisambiguateImplPackage'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:             {kind: 'PackageExpr', text: 'package'},
 // CHECK:STDOUT:             {kind: 'IdentifierName', text: 'Name'},

@@ -419,7 +419,7 @@ auto Context::LookupQualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
 static auto GetCorePackage(Context& context, SemIRLoc loc)
     -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
-  auto packaging = context.parse_tree().packaging_directive();
+  auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == core_ident_id) {
     return SemIR::NameScopeId::Package;
   }

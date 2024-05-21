@@ -88,7 +88,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
     while (true) {
       if (cursor_inst_id.is_valid()) {
         auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
-        if (auto bind_ref = cursor_inst.TryAs<SemIR::BindExport>();
+        if (auto bind_ref = cursor_inst.TryAs<SemIR::ExportDecl>();
             bind_ref && bind_ref->value_id.is_valid()) {
           cursor_inst_id = bind_ref->value_id;
           continue;
@@ -159,15 +159,15 @@ struct UnitInfo {
     // Use the constructor so that the SmallVector is only constructed
     // as-needed.
     explicit PackageImports(IdentifierId package_id,
-                            Parse::ImportDirectiveId node_id)
+                            Parse::ImportDeclId node_id)
         : package_id(package_id), node_id(node_id) {}
 
     // The identifier of the imported package.
     IdentifierId package_id;
-    // The first `import` directive in the file, which declared the package's
+    // The first `import` declaration in the file, which declared the package's
     // identifier (even if the import failed). Used for associating diagnostics
     // not specific to a single import.
-    Parse::ImportDirectiveId node_id;
+    Parse::ImportDeclId node_id;
     // Whether there's an import that failed to load.
     bool has_load_error = false;
     // The list of valid imports.
@@ -332,7 +332,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   if (unit_info.api_for_impl) {
     SetApiImportIR(
         context,
-        {.node_id = context.parse_tree().packaging_directive()->names.node_id,
+        {.node_id = context.parse_tree().packaging_decl()->names.node_id,
          .sem_ir = &**unit_info.api_for_impl->unit->sem_ir});
   } else {
     SetApiImportIR(context,
@@ -874,8 +874,8 @@ static auto CheckParseTree(
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 
 // Returns a key form of the package object. file_package_id is only used for
-// imports, not the main package directive; as a consequence, it will be invalid
-// for the main package directive.
+// imports, not the main package declaration; as a consequence, it will be
+// invalid for the main package declaration.
 static auto GetImportKey(UnitInfo& unit_info, IdentifierId file_package_id,
                          Parse::Tree::PackagingNames names) -> ImportKey {
   auto* stores = unit_info.unit->value_stores;
@@ -910,7 +910,7 @@ static auto TrackImport(
     llvm::DenseMap<ImportKey, UnitInfo*>& api_map,
     llvm::DenseMap<ImportKey, Parse::NodeId>* explicit_import_map,
     UnitInfo& unit_info, Parse::Tree::PackagingNames import) -> void {
-  const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+  const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
 
   IdentifierId file_package_id =
       packaging ? packaging->names.package_id : IdentifierId::Invalid;
@@ -1050,8 +1050,8 @@ static auto BuildApiMapAndDiagnosePackaging(
     -> llvm::DenseMap<ImportKey, UnitInfo*> {
   llvm::DenseMap<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
-    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
-    // An import key formed from the `package` or `library` directive. Or, for
+    const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
+    // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
     auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
                                                packaging->names)
@@ -1062,9 +1062,10 @@ static auto BuildApiMapAndDiagnosePackaging(
     // APIs.
     if (import_key.first == ExplicitMainName) {
       CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
-                        "`Main//default` must omit `package` directive.");
-      CARBON_DIAGNOSTIC(ExplicitMainLibrary, Error,
-                        "Use `library` directive in `Main` package libraries.");
+                        "`Main//default` must omit `package` declaration.");
+      CARBON_DIAGNOSTIC(
+          ExplicitMainLibrary, Error,
+          "Use `library` declaration in `Main` package libraries.");
       unit_info.emitter.Emit(packaging->names.node_id,
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
@@ -1099,9 +1100,9 @@ static auto BuildApiMapAndDiagnosePackaging(
       }
     }
 
-    // Validate file extensions. Note imports rely the packaging directive, not
-    // the extension. If the input is not a regular file, for example because it
-    // is stdin, no filename checking is performed.
+    // Validate file extensions. Note imports rely the packaging declaration,
+    // not the extension. If the input is not a regular file, for example
+    // because it is stdin, no filename checking is performed.
     if (unit_info.unit->tokens->source().is_regular_file()) {
       auto filename = unit_info.unit->tokens->source().filename();
       static constexpr llvm::StringLiteral ApiExt = ".carbon";
@@ -1149,7 +1150,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
-    const auto& packaging = unit_info.unit->parse_tree->packaging_directive();
+    const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;

@@ -34,7 +34,7 @@ export import library "a";
 
 class C;
 
-// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: ERROR: `import` directives must come after the `package` directive (if present) and before any other entities in the file.
+// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: ERROR: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file.
 // CHECK:STDERR: export import library "b";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_order.carbon:[[@LINE-5]]:1: First declaration is here.
@@ -65,11 +65,11 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Bar'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: default.carbon
@@ -77,12 +77,12 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:         {kind: 'DefaultLibrary', text: 'default'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: named.carbon
@@ -90,12 +90,12 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_order.carbon
@@ -103,18 +103,18 @@ export import library "lib";
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"a"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:       {kind: 'IdentifierName', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_in_default_library.carbon
@@ -124,7 +124,7 @@ export import library "lib";
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_in_impl.carbon
@@ -133,11 +133,11 @@ export import library "lib";
 // CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'PackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDirective', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDirective', text: ';', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
