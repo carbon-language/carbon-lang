@@ -212,6 +212,56 @@ struct UnitInfo {
   UnitInfo* api_for_impl = nullptr;
 };
 
+// Collects transitive imports, handling deduplication.
+static auto CollectTransitiveImports(const UnitInfo::PackageImports& imports,
+                                     int total_ir_count)
+    -> llvm::SmallVector<SemIR::ImportIR> {
+  llvm::SmallVector<SemIR::ImportIR> results;
+
+  // Track whether an IR was imported in full, including `export import`. This
+  // distinguishes from IRs that are indirectly added without all names being
+  // exported to this IR.
+  llvm::SmallVector<int> imported_irs(total_ir_count, -1);
+
+  // First add direct imports. This means that if an entity is imported both
+  // directly and indirectly, the import path will reflect the direct import.
+  for (const auto& import : imports.imports) {
+    const auto& direct_ir = **import.unit_info->unit->sem_ir;
+    imported_irs[direct_ir.check_ir_id().index] = results.size();
+    results.push_back({.node_id = import.names.node_id,
+                       .sem_ir = &direct_ir,
+                       .is_export = import.names.is_export});
+  }
+
+  // Loop through direct imports for any indirect exports. The underlying vector
+  // is appended during iteration, so take the size at the start.
+  for (int direct_index : llvm::seq(results.size())) {
+    for (const auto& indirect_ir :
+         results[direct_index].sem_ir->import_irs().array_ref()) {
+      if (!indirect_ir.is_export) {
+        continue;
+      }
+
+      auto& indirect_index =
+          imported_irs[indirect_ir.sem_ir->check_ir_id().index];
+      bool is_export = results[direct_index].is_export;
+      if (indirect_index == -1) {
+        indirect_index = results.size();
+        // TODO: In the case of a recursive `export import`, this only points at
+        // the outermost import. May want something that better reflects the
+        // recursion.
+        results.push_back({.node_id = results[direct_index].node_id,
+                           .sem_ir = indirect_ir.sem_ir,
+                           .is_export = is_export});
+      } else if (is_export) {
+        results[indirect_index].is_export = true;
+      }
+    }
+  }
+
+  return results;
+}
+
 // Imports the current package.
 static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
                                  int total_ir_count,
@@ -228,60 +278,13 @@ static auto ImportCurrentPackage(Context& context, UnitInfo& unit_info,
   UnitInfo::PackageImports& self_import =
       unit_info.package_imports[self_import_map_it->second];
 
-  // Track whether an IR was imported in full, including `export import`. This
-  // distinguishes from IRs that are indirectly added without all names being
-  // exported to this IR.
-  llvm::SmallVector<bool> imported_irs(total_ir_count, false);
   if (self_import.has_load_error) {
     context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
   }
 
-  for (const auto& import : self_import.imports) {
-    const auto& import_sem_ir = **import.unit_info->unit->sem_ir;
-
-    auto& imported_ir = imported_irs[import_sem_ir.check_ir_id().index];
-    if (!imported_ir) {
-      imported_ir = true;
-
-      // Import the IR and its exported imports.
-      ImportLibraryFromCurrentPackage(context, namespace_type_id,
-                                      import.names.node_id, import_sem_ir,
-                                      import.names.is_export);
-
-      for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
-        if (indirect_ir.is_export) {
-          auto& imported_indirect_ir =
-              imported_irs[indirect_ir.sem_ir->check_ir_id().index];
-          if (!imported_indirect_ir) {
-            imported_indirect_ir = true;
-
-            ImportLibraryFromCurrentPackage(
-                context, namespace_type_id, import.names.node_id,
-                *indirect_ir.sem_ir, import.names.is_export);
-          } else if (import.names.is_export) {
-            // The indirect IR was previously indirectly imported, but it's
-            // found through `export import`. We need to mark it for re-export.
-            context.import_irs()
-                .Get(context.GetImportIRId(*indirect_ir.sem_ir))
-                .is_export = true;
-          }
-        }
-      }
-    } else if (import.names.is_export) {
-      // The IR was previously indirectly imported, but it's `export import`.
-      // We need to mark it -- and transitive `export import`s -- for re-export.
-      context.import_irs().Get(context.GetImportIRId(import_sem_ir)).is_export =
-          true;
-
-      for (const auto& indirect_ir : import_sem_ir.import_irs().array_ref()) {
-        if (indirect_ir.is_export) {
-          context.import_irs()
-              .Get(context.GetImportIRId(*indirect_ir.sem_ir))
-              .is_export = true;
-        }
-      }
-    }
-  }
+  ImportLibrariesFromCurrentPackage(
+      context, namespace_type_id,
+      CollectTransitiveImports(self_import, total_ir_count));
 
   context.scope_stack().Push(
       package_inst_id, SemIR::NameScopeId::Package,
@@ -346,17 +349,11 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
       continue;
     }
 
-    llvm::SmallVector<SemIR::ImportIR> import_irs;
-    for (auto import : package_imports.imports) {
-      import_irs.push_back({.node_id = import.names.node_id,
-                            .sem_ir = &**import.unit_info->unit->sem_ir,
-                            .is_export = false});
-      CARBON_CHECK(!import.names.is_export)
-          << "Imports from other packages can't be exported.";
-    }
     ImportLibrariesFromOtherPackage(
         context, namespace_type_id, package_imports.node_id,
-        package_imports.package_id, import_irs, package_imports.has_load_error);
+        package_imports.package_id,
+        CollectTransitiveImports(package_imports, total_ir_count),
+        package_imports.has_load_error);
   }
 }
 
