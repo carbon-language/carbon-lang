@@ -127,7 +127,7 @@ class Formatter {
     llvm::SaveAndRestore constants_scope(scope_, InstNamer::ScopeId::Constants);
     out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::Constants) << " ";
     OpenBrace();
-    FormatCodeBlock(sem_ir_.constants().GetAsVector());
+    FormatCodeBlock(sem_ir_.constants().array_ref());
     CloseBrace();
     out_ << "\n\n";
   }

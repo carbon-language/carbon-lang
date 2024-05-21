@@ -12,6 +12,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/sem_ir/bind_name.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/function.h"
@@ -26,22 +27,6 @@
 #include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
-
-struct BindNameInfo : public Printable<BindNameInfo> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name: " << name_id << ", enclosing_scope: " << enclosing_scope_id
-        << ", index: " << bind_index << "}";
-  }
-
-  // The name.
-  NameId name_id;
-  // The enclosing scope.
-  NameScopeId enclosing_scope_id;
-  // The index for a compile-time binding. Invalid for a runtime binding.
-  CompileTimeBindIndex bind_index;
-};
-
-class File;
 
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
@@ -108,16 +93,16 @@ class File : public Printable<File> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return value_stores_->identifiers();
   }
-  auto ints() -> ValueStore<IntId>& { return value_stores_->ints(); }
-  auto ints() const -> const ValueStore<IntId>& {
+  auto ints() -> CanonicalValueStore<IntId>& { return value_stores_->ints(); }
+  auto ints() const -> const CanonicalValueStore<IntId>& {
     return value_stores_->ints();
   }
   auto reals() -> ValueStore<RealId>& { return value_stores_->reals(); }
   auto reals() const -> const ValueStore<RealId>& {
     return value_stores_->reals();
   }
-  auto floats() -> ValueStore<FloatId>& { return value_stores_->floats(); }
-  auto floats() const -> const ValueStore<FloatId>& {
+  auto floats() -> FloatValueStore& { return value_stores_->floats(); }
+  auto floats() const -> const FloatValueStore& {
     return value_stores_->floats();
   }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
@@ -128,10 +113,8 @@ class File : public Printable<File> {
     return value_stores_->string_literal_values();
   }
 
-  auto bind_names() -> ValueStore<BindNameId>& { return bind_names_; }
-  auto bind_names() const -> const ValueStore<BindNameId>& {
-    return bind_names_;
-  }
+  auto bind_names() -> BindNameStore& { return bind_names_; }
+  auto bind_names() const -> const BindNameStore& { return bind_names_; }
   auto functions() -> ValueStore<FunctionId>& { return functions_; }
   auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
   auto classes() -> ValueStore<ClassId>& { return classes_; }
@@ -208,7 +191,7 @@ class File : public Printable<File> {
   std::string filename_;
 
   // Storage for bind names.
-  ValueStore<BindNameId> bind_names_;
+  BindNameStore bind_names_;
 
   // Storage for callable objects.
   ValueStore<FunctionId> functions_;

@@ -38,6 +38,7 @@ cc_library(
         ":index_base",
         ":yaml",
         "//common:check",
+        "//common:hashing",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],

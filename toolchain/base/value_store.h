@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "common/check.h"
+#include "common/hashing.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -21,13 +22,13 @@
 
 namespace Carbon {
 
-// The value of a real literal.
+// The value of a real literal token.
 //
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
 //
-// TODO: For SemIR, replace this with a Rational type, per the design:
-// docs/design/expressions/literals.md
+// These values are not canonicalized, because we don't expect them to repeat
+// and don't use them in SemIR values.
 class Real : public Printable<Real> {
  public:
   auto Print(llvm::raw_ostream& output_stream) const -> void {
@@ -48,9 +49,12 @@ class Real : public Printable<Real> {
   bool is_decimal;
 };
 
-// Corresponds to an integer value represented by an APInt.
+// Corresponds to an integer value represented by an APInt. This is used both
+// for integer literal tokens, which are unsigned and have an unspecified
+// bit-width, and integer values in SemIR, which have a signedness and bit-width
+// matching their type.
 struct IntId : public IdBase, public Printable<IntId> {
-  using ValueType = const llvm::APInt;
+  using ValueType = llvm::APInt;
   static const IntId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -60,9 +64,10 @@ struct IntId : public IdBase, public Printable<IntId> {
 };
 constexpr IntId IntId::Invalid(IntId::InvalidIndex);
 
-// Corresponds to a float value represented by an APFloat.
+// Corresponds to a float value represented by an APFloat. This is used for
+// floating-point values in SemIR.
 struct FloatId : public IdBase, public Printable<FloatId> {
-  using ValueType = const llvm::APFloat;
+  using ValueType = llvm::APFloat;
   static const FloatId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -72,9 +77,30 @@ struct FloatId : public IdBase, public Printable<FloatId> {
 };
 constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
 
+// DenseMapInfo for llvm::APFloat, for use in the canonical float value store.
+// TODO: Remove this once our new hash table is available.
+struct APFloatDenseMapInfo {
+  static auto getEmptyKey() -> llvm::APFloat {
+    // Use a floating-point semantics value that we never otherwise use.
+    return llvm::APFloat::getZero(
+        llvm::APFloat::EnumToSemantics(llvm::APFloat::S_Float8E5M2));
+  }
+  static auto getTombstoneKey() -> llvm::APFloat {
+    return llvm::APFloat::getNaN(
+        llvm::APFloat::EnumToSemantics(llvm::APFloat::S_Float8E5M2));
+  }
+  static auto getHashValue(const llvm::APFloat& val) -> unsigned {
+    return hash_value(val);
+  }
+  static auto isEqual(const llvm::APFloat& lhs, const llvm::APFloat& rhs)
+      -> bool {
+    return lhs.bitwiseIsEqual(rhs);
+  }
+};
+
 // Corresponds to a Real value.
 struct RealId : public IdBase, public Printable<RealId> {
-  using ValueType = const Real;
+  using ValueType = Real;
   static const RealId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -86,7 +112,7 @@ constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
 // Corresponds to a StringRef.
 struct StringId : public IdBase, public Printable<StringId> {
-  using ValueType = const std::string;
+  using ValueType = std::string;
   static const StringId Invalid;
   using IdBase::IdBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -191,10 +217,62 @@ class ValueStore
   llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
 };
 
+// A wrapper for accumulating immutable values with deduplication, providing IDs
+// to later retrieve the value.
+//
+// IdT::ValueType must represent the type being indexed.
+template <typename IdT,
+          typename DenseMapInfoT = llvm::DenseMapInfo<typename IdT::ValueType>>
+class CanonicalValueStore {
+ public:
+  using ValueType = typename IdT::ValueType;
+
+  // Stores a canonical copy of the value and returns an ID to reference it.
+  auto Add(ValueType value) -> IdT {
+    auto [it, added] = map_.insert({value, IdT::Invalid});
+    if (added) {
+      it->second = values_.Add(value);
+    }
+    return it->second;
+  }
+
+  // Returns the value for an ID.
+  auto Get(IdT id) const -> const ValueType& { return values_.Get(id); }
+
+  // Reserves space.
+  auto Reserve(size_t size) -> void {
+    values_.Reserve(size);
+    map_.reserve(size);
+  }
+
+  // These are to support printable structures, and are not guaranteed.
+  auto OutputYaml() const -> Yaml::OutputMapping {
+    return values_.OutputYaml();
+  }
+
+  auto array_ref() const -> llvm::ArrayRef<ValueType> {
+    return values_.array_ref();
+  }
+  auto size() const -> size_t { return values_.size(); }
+
+ private:
+  // We store two copies of each value: one in the ValueStore for fast mapping
+  // from IdT to value, and another in the DenseMap for the reverse mapping.
+  //
+  // We could avoid this by storing the map instead as a DenseSet<IdT>, but
+  // there's no way to provide a DenseMapInfo that looks the IDs up in the
+  // vector.
+  //
+  // TODO: Switch to a better representation that avoids the duplication.
+  ValueStore<IdT> values_;
+  llvm::DenseMap<ValueType, IdT, DenseMapInfoT> map_;
+};
+
 // Storage for StringRefs. The caller is responsible for ensuring storage is
 // allocated.
 template <>
-class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
+class CanonicalValueStore<StringId>
+    : public Yaml::Printable<CanonicalValueStore<StringId>> {
  public:
   // Returns an ID to reference the value. May return an existing ID if the
   // string was previously added.
@@ -244,7 +322,8 @@ class ValueStore<StringId> : public Yaml::Printable<ValueStore<StringId>> {
 template <typename IdT>
 class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
  public:
-  explicit StringStoreWrapper(ValueStore<StringId>* values) : values_(values) {}
+  explicit StringStoreWrapper(CanonicalValueStore<StringId>* values)
+      : values_(values) {}
 
   auto Add(llvm::StringRef value) -> IdT {
     return IdT(values_->Add(value).index);
@@ -263,8 +342,10 @@ class StringStoreWrapper : public Printable<StringStoreWrapper<IdT>> {
   auto size() const -> size_t { return values_->size(); }
 
  private:
-  ValueStore<StringId>* values_;
+  CanonicalValueStore<StringId>* values_;
 };
+
+using FloatValueStore = CanonicalValueStore<FloatId, APFloatDenseMapInfo>;
 
 // Stores that will be used across compiler phases for a given compilation unit.
 // This is provided mainly so that they don't need to be passed separately.
@@ -283,12 +364,12 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   auto identifiers() const -> const StringStoreWrapper<IdentifierId>& {
     return identifiers_;
   }
-  auto ints() -> ValueStore<IntId>& { return ints_; }
-  auto ints() const -> const ValueStore<IntId>& { return ints_; }
+  auto ints() -> CanonicalValueStore<IntId>& { return ints_; }
+  auto ints() const -> const CanonicalValueStore<IntId>& { return ints_; }
   auto reals() -> ValueStore<RealId>& { return reals_; }
   auto reals() const -> const ValueStore<RealId>& { return reals_; }
-  auto floats() -> ValueStore<FloatId>& { return floats_; }
-  auto floats() const -> const ValueStore<FloatId>& { return floats_; }
+  auto floats() -> FloatValueStore& { return floats_; }
+  auto floats() const -> const FloatValueStore& { return floats_; }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return string_literal_values_;
   }
@@ -313,11 +394,11 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   }
 
  private:
-  ValueStore<IntId> ints_;
+  CanonicalValueStore<IntId> ints_;
   ValueStore<RealId> reals_;
-  ValueStore<FloatId> floats_;
+  FloatValueStore floats_;
 
-  ValueStore<StringId> strings_;
+  CanonicalValueStore<StringId> strings_;
   StringStoreWrapper<IdentifierId> identifiers_;
   StringStoreWrapper<StringLiteralValueId> string_literal_values_;
 };

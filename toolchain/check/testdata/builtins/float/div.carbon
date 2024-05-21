@@ -62,9 +62,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.5: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.6: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %.7: f64 = float_literal +Inf [template]
-// CHECK:STDOUT:   %.8: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %.9: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %.10: f64 = float_literal NaN [template]
+// CHECK:STDOUT:   %.8: f64 = float_literal NaN [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -99,11 +97,11 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%.7]
 // CHECK:STDOUT:   %b.loc9: f64 = bind_name b, %.loc9_27.2
 // CHECK:STDOUT:   %Div.ref.loc10: Div = name_ref Div, %Div.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc10_18: f64 = float_literal 0 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc10_23: f64 = float_literal 0 [template = constants.%.9]
-// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%.loc10_18, %.loc10_23) [template = constants.%.10]
-// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%.10]
+// CHECK:STDOUT:   %.loc10_18: f64 = float_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_23: f64 = float_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%.loc10_18, %.loc10_23) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%.8]
 // CHECK:STDOUT:   %c: f64 = bind_name c, %.loc10_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

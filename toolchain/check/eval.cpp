@@ -141,9 +141,9 @@ static auto GetConstantValue(Context& context, SemIR::InstBlockId inst_block_id,
 
     const_insts.push_back(const_inst_id);
   }
-  // TODO: If the new block is identical to the original block, return the
-  // original ID.
-  return context.inst_blocks().Add(const_insts);
+  // TODO: If the new block is identical to the original block, and we know the
+  // old ID was canonical, return the original ID.
+  return context.inst_blocks().GetOrAddCanonical(const_insts);
 }
 
 // The constant value of a type block is that type block, but we still need to
@@ -1054,6 +1054,8 @@ auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     case CARBON_KIND(SemIR::BindSymbolicName bind): {
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.
+      bind.bind_name_id =
+          context.bind_names().GetOrAddCanonical(bind.bind_name_id);
       bind.value_id = SemIR::InstId::Invalid;
       return MakeConstantResult(context, bind, Phase::Symbolic);
     }

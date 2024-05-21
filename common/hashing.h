@@ -279,6 +279,16 @@ class Hasher {
   // state along with the contents.
   auto HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void;
 
+  // Incorporate a dynamically sized sequence of bytes represented as an array
+  // of objects into the hasher's state.
+  template <typename T>
+    requires std::has_unique_object_representations_v<T>
+  auto HashSizedBytes(llvm::ArrayRef<T> data) -> void {
+    HashSizedBytes(llvm::ArrayRef<std::byte>(
+        reinterpret_cast<const std::byte*>(data.data()),
+        data.size() * sizeof(T)));
+  }
+
   // An out-of-line, throughput-optimized routine for incorporating a
   // dynamically sized sequence when the sequence size is guaranteed to be >32.
   // The size is always incorporated into the state.

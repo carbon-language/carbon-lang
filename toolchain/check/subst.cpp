@@ -108,7 +108,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       for (auto i : llvm::reverse(llvm::seq(size))) {
         new_inst_block.Set(i, worklist.Pop());
       }
-      return new_inst_block.id().index;
+      return new_inst_block.GetCanonical().index;
     }
     case SemIR::IdKind::For<SemIR::TypeBlockId>: {
       auto old_type_block_id = static_cast<SemIR::TypeBlockId>(arg);
@@ -119,7 +119,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         new_type_block.Set(size - i - 1,
                            context.GetTypeIdForTypeInst(worklist.Pop()));
       }
-      return new_type_block.id().index;
+      return new_type_block.GetCanonical().index;
     }
     default:
       return arg;
