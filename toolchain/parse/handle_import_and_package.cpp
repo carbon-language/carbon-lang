@@ -20,8 +20,8 @@ static auto OnParseError(Context& context, Context::StateStackEntry state,
 
 // Determines whether the specified modifier appears within the introducer of
 // the given declaration.
-// TODO: Restructure how we handle packaging declarations to avoid the need to do
-// this.
+// TODO: Restructure how we handle packaging declarations to avoid the need to
+// do this.
 static auto HasModifier(Context& context, Context::StateStackEntry state,
                         Lex::TokenKind modifier) -> bool {
   for (auto it = Lex::TokenIterator(state.token); it != context.position();
@@ -64,7 +64,7 @@ static auto HandleLibraryName(Context& context, bool accept_default)
 // Handles everything after the declaration's introducer.
 static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
                               NodeKind declaration, bool is_export,
-                                   bool is_impl,
+                              bool is_impl,
                               llvm::function_ref<void()> on_parse_error)
     -> void {
   Tree::PackagingNames names{
@@ -237,8 +237,7 @@ auto HandleExportNameFinish(Context& context) -> void {
 // Handles common logic for `package` and `library`.
 static auto HandlePackageAndLibraryDecls(Context& context,
                                          Lex::TokenKind intro_token_kind,
-                                         NodeKind declaration)
-    -> void {
+                                         NodeKind declaration) -> void {
   auto state = context.PopState();
 
   bool is_impl = HasModifier(context, state, Lex::TokenKind::Impl);
@@ -263,8 +262,8 @@ static auto HandlePackageAndLibraryDecls(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDeclContent(context, state, declaration, /*is_export=*/false,
-                    is_impl, on_parse_error);
+  HandleDeclContent(context, state, declaration, /*is_export=*/false, is_impl,
+                    on_parse_error);
 }
 
 auto HandlePackage(Context& context) -> void {
