@@ -16,7 +16,9 @@ fn Run() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run: type = fn_type @Run [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: Run = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Run = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = ptr_type String [template]
 // CHECK:STDOUT:   %.3: String = string_literal "hello" [template]
 // CHECK:STDOUT: }
@@ -27,15 +29,21 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct] {}
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc11_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc11_10.2: type = converted %int.make_type_32, %.loc11_10.1 [template = i32]
 // CHECK:STDOUT:   %x.var: ref i32 = var x
 // CHECK:STDOUT:   %x: ref i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc11: String = string_literal "hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_16: String = string_literal "hello" [template = constants.%.3]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

@@ -51,15 +51,17 @@ fn Run() {
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %Field: type = class_type @Field [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type Field, i32 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.x: i32} [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.2: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type Field, i32 [template]
+// CHECK:STDOUT:   %.4: type = struct_type {.x: i32} [template]
 // CHECK:STDOUT:   %ForwardDeclared: type = class_type @ForwardDeclared [template]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %.4: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: F = struct_value () [template]
+// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = ptr_type ForwardDeclared [template]
 // CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: G = struct_value () [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,6 +76,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty [template = constants.%Empty] {}
 // CHECK:STDOUT:   %Field.decl: type = class_decl @Field [template = constants.%Field] {}
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc11: type = class_decl @ForwardDeclared [template = constants.%ForwardDeclared] {}
 // CHECK:STDOUT:   %ForwardDeclared.decl.loc13: type = class_decl @ForwardDeclared [template = constants.%ForwardDeclared] {}
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {}
@@ -85,20 +88,23 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
-// CHECK:STDOUT:   %.loc8: <unbound element of class Field> = field_decl x, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc8_8: <unbound element of class Field> = field_decl x, element0 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Field
-// CHECK:STDOUT:   .x = %.loc8
+// CHECK:STDOUT:   .x = %.loc8_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %self.loc14_8.1: ForwardDeclared = param self
 // CHECK:STDOUT:     %self.loc14_8.2: ForwardDeclared = bind_name self, %self.loc14_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %.loc15_23: type = ptr_type ForwardDeclared [template = constants.%.5]
 // CHECK:STDOUT:     %self.loc15_13.1: ForwardDeclared* = param self
@@ -113,6 +119,8 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[@ForwardDeclared.%self.loc14_8.2: ForwardDeclared]();
 // CHECK:STDOUT:
@@ -158,19 +166,19 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+2, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+5, loaded [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+12, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+31, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref ir1, inst+21, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir1, inst+39, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %import_ref.5 = import_ref ir1, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+6, unloaded
-// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir1, inst+8, loaded [template = imports.%.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.9: G = import_ref ir1, inst+28, loaded [template = constants.%struct.6]
-// CHECK:STDOUT:   %import_ref.10: F = import_ref ir1, inst+18, loaded [template = constants.%struct.5]
-// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+18, unloaded
+// CHECK:STDOUT:   %import_ref.7: <unbound element of class Field> = import_ref ir1, inst+17, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.9: G = import_ref ir1, inst+36, loaded [template = constants.%struct.6]
+// CHECK:STDOUT:   %import_ref.10: F = import_ref ir1, inst+27, loaded [template = constants.%struct.5]
+// CHECK:STDOUT:   %import_ref.11 = import_ref ir1, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref ir1, inst+36, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref ir1, inst+27, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {

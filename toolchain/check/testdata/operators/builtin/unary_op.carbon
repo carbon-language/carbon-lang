@@ -19,13 +19,15 @@ fn Constant() {
 // CHECK:STDOUT: --- unary_op.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Not: type = fn_type @Not [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Not = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Not: type = fn_type @Not [template]
+// CHECK:STDOUT:   %struct.2: Not = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Constant: type = fn_type @Constant [template]
-// CHECK:STDOUT:   %struct.2: Constant = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: Constant = struct_value () [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,19 +38,39 @@ fn Constant() {
 // CHECK:STDOUT:     .Constant = %Constant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Not.decl: Not = fn_decl @Not [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Not.decl: Not = fn_decl @Not [template = constants.%struct.2] {
+// CHECK:STDOUT:     %bool.make_type.loc7_11: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7_11 [template = bool]
+// CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7_11, %.loc7_11.1 [template = bool]
 // CHECK:STDOUT:     %b.loc7_8.1: bool = param b
 // CHECK:STDOUT:     @Not.%b: bool = bind_name b, %b.loc7_8.1
+// CHECK:STDOUT:     %bool.make_type.loc7_20: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc7_20.1: type = value_of_initializer %bool.make_type.loc7_20 [template = bool]
+// CHECK:STDOUT:     %.loc7_20.2: type = converted %bool.make_type.loc7_20, %.loc7_20.1 [template = bool]
 // CHECK:STDOUT:     @Not.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %bool.make_type.loc11: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc11_15.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
+// CHECK:STDOUT:   %.loc11_15.2: type = converted %bool.make_type.loc11, %.loc11_15.1 [template = bool]
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.3]
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %bool.make_type.loc12: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc12_16.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
+// CHECK:STDOUT:   %.loc12_16.2: type = converted %bool.make_type.loc12, %.loc12_16.1 [template = bool]
 // CHECK:STDOUT:   %.loc12_27: bool = bool_literal false [template = constants.%.3]
 // CHECK:STDOUT:   %.loc12_23: bool = not %.loc12_27 [template = constants.%.2]
 // CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23
-// CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
@@ -64,7 +86,10 @@ fn Constant() {
 // CHECK:STDOUT:   if %.loc15_13 br !if.expr.then.loc15 else br !if.expr.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc15:
-// CHECK:STDOUT:   br !if.expr.result.loc15(bool)
+// CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc15_27.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
+// CHECK:STDOUT:   %.loc15_27.2: type = converted %bool.make_type.loc15, %.loc15_27.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc15(%.loc15_27.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc15:
 // CHECK:STDOUT:   %.loc15_38: () = tuple_literal ()
@@ -84,7 +109,10 @@ fn Constant() {
 // CHECK:STDOUT:   if %.loc16_13 br !if.expr.then.loc16 else br !if.expr.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16:
-// CHECK:STDOUT:   br !if.expr.result.loc16(bool)
+// CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:   %.loc16_28.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
+// CHECK:STDOUT:   %.loc16_28.2: type = converted %bool.make_type.loc16, %.loc16_28.1 [template = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
 // CHECK:STDOUT:   %.loc16_39: () = tuple_literal ()

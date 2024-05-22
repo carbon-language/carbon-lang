@@ -13,12 +13,14 @@ fn F() -> i32 {
 // CHECK:STDOUT: --- literal_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {.x: i32, .y: i32, .z: i32} [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: i32, .y: i32, .z: i32} [template]
 // CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.2: F = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type {.x: i32, .y: i32, .z: i32} [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 3 [template]
@@ -34,21 +36,39 @@ fn F() -> i32 {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {
-// CHECK:STDOUT:     %.loc7: type = struct_type {.x: i32, .y: i32, .z: i32} [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32.loc7_16: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_32.loc7_16 [template = i32]
+// CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_32.loc7_16, %.loc7_16.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc7_25: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_25.1: type = value_of_initializer %int.make_type_32.loc7_25 [template = i32]
+// CHECK:STDOUT:     %.loc7_25.2: type = converted %int.make_type_32.loc7_25, %.loc7_25.1 [template = i32]
+// CHECK:STDOUT:     %int.make_type_32.loc7_34: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %int.make_type_32.loc7_34 [template = i32]
+// CHECK:STDOUT:     %.loc7_34.2: type = converted %int.make_type_32.loc7_34, %.loc7_34.1 [template = i32]
+// CHECK:STDOUT:     %.loc7_37: type = struct_type {.x: i32, .y: i32, .z: i32} [template = constants.%.2]
 // CHECK:STDOUT:     @G.%return: ref {.x: i32, .y: i32, .z: i32} = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc9_11.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:     %.loc9_11.2: type = converted %int.make_type_32.loc9, %.loc9_11.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> {.x: i32, .y: i32, .z: i32};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.3]
-// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc10_25.1: ref {.x: i32, .y: i32, .z: i32} = temporary_storage
 // CHECK:STDOUT:   %G.call: init {.x: i32, .y: i32, .z: i32} = call %G.ref() to %.loc10_25.1
 // CHECK:STDOUT:   %.loc10_34: i32 = int_literal 3 [template = constants.%.5]

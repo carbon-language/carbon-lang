@@ -47,9 +47,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.4: type = unbound_element_type Class, T [symbolic]
 // CHECK:STDOUT:   %.5: type = struct_type {.k: T} [symbolic]
 // CHECK:STDOUT:   %.6: type = ptr_type {.k: T} [symbolic]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %Run: type = fn_type @Run [template]
-// CHECK:STDOUT:   %struct.3: Run = struct_value () [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, (i32) [template]
+// CHECK:STDOUT:   %struct.4: Run = struct_value () [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, (@Run.%.loc21_15.2) [template]
 // CHECK:STDOUT:   %.7: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.8: type = struct_type {.k: i32} [template]
 // CHECK:STDOUT:   %.9: type = ptr_type Class [template]
@@ -66,9 +68,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %T.loc7_13.1: type = param T
 // CHECK:STDOUT:     %T.loc7_13.2: type = bind_symbolic_name T 0, %T.loc7_13.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.3] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.4] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:     %.loc16_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc16_13.2: type = converted %int.make_type_32, %.loc16_13.1 [template = i32]
 // CHECK:STDOUT:     @Run.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
@@ -101,10 +108,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %.loc9_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: Class = name_ref Class, file.%Class.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %Class: type = class_type @Class, (i32) [template = constants.%Class.3]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc21_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc21_15.2: type = converted %int.make_type_32, %.loc21_15.1 [template = i32]
+// CHECK:STDOUT:   %Class: type = class_type @Class, (%.loc21_15.2) [template = constants.%Class.3]
 // CHECK:STDOUT:   %v.var: ref Class = var v
 // CHECK:STDOUT:   %v: ref Class = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc21_29: i32 = int_literal 0 [template = constants.%.7]

@@ -15,11 +15,13 @@ fn Main() {
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Echo: type = fn_type @Echo [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Echo = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Echo: type = fn_type @Echo [template]
+// CHECK:STDOUT:   %struct.2: Echo = struct_value () [template]
 // CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.2: Main = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: Main = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,13 +32,24 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Echo.decl: Echo = fn_decl @Echo [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Echo.decl: Echo = fn_decl @Echo [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32.loc7_12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_12.1: type = value_of_initializer %int.make_type_32.loc7_12 [template = i32]
+// CHECK:STDOUT:     %.loc7_12.2: type = converted %int.make_type_32.loc7_12, %.loc7_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc7_9.1: i32 = param a
 // CHECK:STDOUT:     @Echo.%a: i32 = bind_name a, %a.loc7_9.1
+// CHECK:STDOUT:     %int.make_type_32.loc7_20: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_20.1: type = value_of_initializer %int.make_type_32.loc7_20 [template = i32]
+// CHECK:STDOUT:     %.loc7_20.2: type = converted %int.make_type_32.loc7_20, %.loc7_20.1 [template = i32]
 // CHECK:STDOUT:     @Echo.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {}
+// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.3] {}
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -46,11 +59,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_32, %.loc12_10.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %Echo.ref: Echo = name_ref Echo, file.%Echo.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc12: i32 = int_literal 1 [template = constants.%.2]
-// CHECK:STDOUT:   %Echo.call: init i32 = call %Echo.ref(%.loc12)
+// CHECK:STDOUT:   %Echo.ref: Echo = name_ref Echo, file.%Echo.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc12_21: i32 = int_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %Echo.call: init i32 = call %Echo.ref(%.loc12_21)
 // CHECK:STDOUT:   assign %b.var, %Echo.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

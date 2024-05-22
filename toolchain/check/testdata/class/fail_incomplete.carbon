@@ -144,22 +144,24 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %struct.3: ConvertFromStruct = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %.4: type = ptr_type Class [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.4: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %G: type = fn_type @G [template]
-// CHECK:STDOUT:   %struct.4: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: G = struct_value () [template]
 // CHECK:STDOUT:   %MemberAccess: type = fn_type @MemberAccess [template]
-// CHECK:STDOUT:   %struct.5: MemberAccess = struct_value () [template]
+// CHECK:STDOUT:   %struct.6: MemberAccess = struct_value () [template]
 // CHECK:STDOUT:   %Copy: type = fn_type @Copy [template]
-// CHECK:STDOUT:   %struct.6: Copy = struct_value () [template]
+// CHECK:STDOUT:   %struct.7: Copy = struct_value () [template]
 // CHECK:STDOUT:   %Let: type = fn_type @Let [template]
-// CHECK:STDOUT:   %struct.7: Let = struct_value () [template]
+// CHECK:STDOUT:   %struct.8: Let = struct_value () [template]
 // CHECK:STDOUT:   %TakeIncomplete: type = fn_type @TakeIncomplete [template]
-// CHECK:STDOUT:   %struct.8: TakeIncomplete = struct_value () [template]
+// CHECK:STDOUT:   %struct.9: TakeIncomplete = struct_value () [template]
 // CHECK:STDOUT:   %ReturnIncomplete: type = fn_type @ReturnIncomplete [template]
-// CHECK:STDOUT:   %struct.9: ReturnIncomplete = struct_value () [template]
+// CHECK:STDOUT:   %struct.10: ReturnIncomplete = struct_value () [template]
 // CHECK:STDOUT:   %CallTakeIncomplete: type = fn_type @CallTakeIncomplete [template]
-// CHECK:STDOUT:   %struct.10: CallTakeIncomplete = struct_value () [template]
+// CHECK:STDOUT:   %struct.11: CallTakeIncomplete = struct_value () [template]
 // CHECK:STDOUT:   %CallReturnIncomplete: type = fn_type @CallReturnIncomplete [template]
-// CHECK:STDOUT:   %struct.11: CallReturnIncomplete = struct_value () [template]
+// CHECK:STDOUT:   %struct.12: CallReturnIncomplete = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -189,21 +191,29 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %Class.ref.loc45: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ConvertFromStruct.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.4] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc47: type = ptr_type Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc47_14: type = ptr_type Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc47_6.1: Class* = param p
 // CHECK:STDOUT:     @G.%p: Class* = bind_name p, %p.loc47_6.1
+// CHECK:STDOUT:     %int.make_type_32.loc47: init type = call constants.%struct.4() [template = i32]
+// CHECK:STDOUT:     %.loc47_20.1: type = value_of_initializer %int.make_type_32.loc47 [template = i32]
+// CHECK:STDOUT:     %.loc47_20.2: type = converted %int.make_type_32.loc47, %.loc47_20.1 [template = i32]
 // CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MemberAccess.decl: MemberAccess = fn_decl @MemberAccess [template = constants.%struct.5] {
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %MemberAccess.decl: MemberAccess = fn_decl @MemberAccess [template = constants.%struct.6] {
 // CHECK:STDOUT:     %Class.ref.loc58: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc58: type = ptr_type Class [template = constants.%.4]
+// CHECK:STDOUT:     %.loc58_25: type = ptr_type Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc58_17.1: Class* = param p
 // CHECK:STDOUT:     @MemberAccess.%p: Class* = bind_name p, %p.loc58_17.1
+// CHECK:STDOUT:     %int.make_type_32.loc58: init type = call constants.%struct.4() [template = i32]
+// CHECK:STDOUT:     %.loc58_31.1: type = value_of_initializer %int.make_type_32.loc58 [template = i32]
+// CHECK:STDOUT:     %.loc58_31.2: type = converted %int.make_type_32.loc58, %.loc58_31.1 [template = i32]
 // CHECK:STDOUT:     @MemberAccess.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Copy.decl: Copy = fn_decl @Copy [template = constants.%struct.6] {
+// CHECK:STDOUT:   %Copy.decl: Copy = fn_decl @Copy [template = constants.%struct.7] {
 // CHECK:STDOUT:     %Class.ref.loc76_12: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc76: type = ptr_type Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc76_9.1: Class* = param p
@@ -211,28 +221,28 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %Class.ref.loc76_23: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Copy.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Let.decl: Let = fn_decl @Let [template = constants.%struct.7] {
+// CHECK:STDOUT:   %Let.decl: Let = fn_decl @Let [template = constants.%struct.8] {
 // CHECK:STDOUT:     %Class.ref.loc80: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc80: type = ptr_type Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc80_8.1: Class* = param p
 // CHECK:STDOUT:     @Let.%p: Class* = bind_name p, %p.loc80_8.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %TakeIncomplete.decl: TakeIncomplete = fn_decl @TakeIncomplete [template = constants.%struct.8] {
+// CHECK:STDOUT:   %TakeIncomplete.decl: TakeIncomplete = fn_decl @TakeIncomplete [template = constants.%struct.9] {
 // CHECK:STDOUT:     %Class.ref.loc91: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc91_19.1: Class = param c
 // CHECK:STDOUT:     @TakeIncomplete.%c: Class = bind_name c, %c.loc91_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReturnIncomplete.decl: ReturnIncomplete = fn_decl @ReturnIncomplete [template = constants.%struct.9] {
+// CHECK:STDOUT:   %ReturnIncomplete.decl: ReturnIncomplete = fn_decl @ReturnIncomplete [template = constants.%struct.10] {
 // CHECK:STDOUT:     %Class.ref.loc93: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ReturnIncomplete.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CallTakeIncomplete.decl: CallTakeIncomplete = fn_decl @CallTakeIncomplete [template = constants.%struct.10] {
+// CHECK:STDOUT:   %CallTakeIncomplete.decl: CallTakeIncomplete = fn_decl @CallTakeIncomplete [template = constants.%struct.11] {
 // CHECK:STDOUT:     %Class.ref.loc95: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc95: type = ptr_type Class [template = constants.%.4]
 // CHECK:STDOUT:     %p.loc95_23.1: Class* = param p
 // CHECK:STDOUT:     @CallTakeIncomplete.%p: Class* = bind_name p, %p.loc95_23.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %CallReturnIncomplete.decl: CallReturnIncomplete = fn_decl @CallReturnIncomplete [template = constants.%struct.11] {}
+// CHECK:STDOUT:   %CallReturnIncomplete.decl: CallReturnIncomplete = fn_decl @CallReturnIncomplete [template = constants.%struct.12] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
@@ -254,6 +264,8 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:   %.loc45: {} = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: Class*) -> i32 {
 // CHECK:STDOUT: !entry:
@@ -291,11 +303,11 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallTakeIncomplete(%p: Class*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc106: TakeIncomplete = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%struct.8]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc106: TakeIncomplete = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%struct.9]
 // CHECK:STDOUT:   %p.ref: Class* = name_ref p, %p
 // CHECK:STDOUT:   %.loc106: ref Class = deref %p.ref
 // CHECK:STDOUT:   %TakeIncomplete.call.loc106: init () = call %TakeIncomplete.ref.loc106(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %TakeIncomplete.ref.loc118: TakeIncomplete = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%struct.8]
+// CHECK:STDOUT:   %TakeIncomplete.ref.loc118: TakeIncomplete = name_ref TakeIncomplete, file.%TakeIncomplete.decl [template = constants.%struct.9]
 // CHECK:STDOUT:   %.loc118: {} = struct_literal ()
 // CHECK:STDOUT:   %TakeIncomplete.call.loc118: init () = call %TakeIncomplete.ref.loc118(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return
@@ -303,7 +315,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnIncomplete() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReturnIncomplete.ref: ReturnIncomplete = name_ref ReturnIncomplete, file.%ReturnIncomplete.decl [template = constants.%struct.9]
+// CHECK:STDOUT:   %ReturnIncomplete.ref: ReturnIncomplete = name_ref ReturnIncomplete, file.%ReturnIncomplete.decl [template = constants.%struct.10]
 // CHECK:STDOUT:   %ReturnIncomplete.call: init <error> = call %ReturnIncomplete.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

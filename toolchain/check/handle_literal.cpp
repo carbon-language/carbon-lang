@@ -113,11 +113,9 @@ auto HandleStringLiteral(Context& context, Parse::StringLiteralId node_id)
 
 auto HandleBoolTypeLiteral(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  // TODO: Migrate once functions can be in prelude.carbon.
-  // auto fn_inst_id = context.LookupNameInCore(node_id, "Bool");
-  // auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
-  // context.node_stack().Push(node_id, type_inst_id);
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinBoolType);
+  auto fn_inst_id = context.LookupNameInCore(node_id, "Bool");
+  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 
@@ -135,13 +133,11 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed() ? "Int" : "UInt",
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
-  // TODO: Migrate to a call to `Core.Int` or `Core.UInt`.
   auto width_id = MakeI32Literal(context, node_id, size_id);
-  context.AddInstAndPush(
-      {node_id, SemIR::IntType{.type_id = context.GetBuiltinType(
-                                   SemIR::BuiltinKind::TypeType),
-                               .int_kind = int_kind,
-                               .bit_width_id = width_id}});
+  auto fn_inst_id = context.LookupNameInCore(
+      node_id, int_kind == SemIR::IntKind::Signed ? "Int" : "UInt");
+  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 
@@ -152,7 +148,9 @@ auto HandleIntTypeLiteral(Context& context, Parse::IntTypeLiteralId node_id)
   // Special case: `i32` has a custom builtin for now.
   // TODO: Remove this special case.
   if (context.ints().Get(size_id) == 32) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinIntType);
+    auto fn_inst_id = context.LookupNameInCore(node_id, "Int32");
+    auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
+    context.node_stack().Push(node_id, type_inst_id);
     return true;
   }
   return HandleIntOrUnsignedIntTypeLiteral(context, node_id,
@@ -175,17 +173,12 @@ auto HandleFloatTypeLiteral(Context& context, Parse::FloatTypeLiteralId node_id)
   if (text != "f64") {
     return context.TODO(node_id, "Currently only f64 is allowed");
   }
-  // TODO: Migrate once functions can be in prelude.carbon.
-  // auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
-  // auto width_inst_id = context.AddInstInNoBlock(
-  //     {node_id,
-  //      SemIR::IntLiteral{
-  //          context.GetBuiltinType(SemIR::BuiltinKind::IntType),
-  //          context.ints().Add(llvm::APInt(/*numBits=*/32, /*val=*/64))}});
-  // auto type_inst_id =
-  //     PerformCall(context, node_id, fn_inst_id, {width_inst_id});
-  // context.node_stack().Push(node_id, type_inst_id);
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinFloatType);
+  auto tok_id = context.parse_tree().node_token(node_id);
+  auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
+  auto width_id = MakeI32Literal(context, node_id, size_id);
+  auto fn_inst_id = context.LookupNameInCore(node_id, "Float");
+  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 

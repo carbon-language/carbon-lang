@@ -18,6 +18,9 @@ impl bool as I {}
 // CHECK:STDOUT:   %Self: I = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type @I, type [template]
 // CHECK:STDOUT:   %.3: <associated type in I> = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %.4: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -27,7 +30,11 @@ impl bool as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:     %.loc12_6.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc12_6.2: type = converted %bool.make_type, %.loc12_6.1 [template = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -47,4 +54,6 @@ impl bool as I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:

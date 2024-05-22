@@ -66,12 +66,14 @@ fn Main() {
 // CHECK:STDOUT:   %Run0: type = fn_type @Run0 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct.1: Run0 = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %Run1: type = fn_type @Run1 [template]
-// CHECK:STDOUT:   %struct.2: Run1 = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: Run1 = struct_value () [template]
 // CHECK:STDOUT:   %Run2: type = fn_type @Run2 [template]
-// CHECK:STDOUT:   %struct.3: Run2 = struct_value () [template]
+// CHECK:STDOUT:   %struct.4: Run2 = struct_value () [template]
 // CHECK:STDOUT:   %Main: type = fn_type @Main [template]
-// CHECK:STDOUT:   %struct.4: Main = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: Main = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT: }
@@ -86,23 +88,37 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run0.decl: Run0 = fn_decl @Run0 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %Run1.decl: Run1 = fn_decl @Run1 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Run1.decl: Run1 = fn_decl @Run1 [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc8_12.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
+// CHECK:STDOUT:     %.loc8_12.2: type = converted %int.make_type_32.loc8, %.loc8_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc8_9.1: i32 = param a
 // CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc8_9.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Run2.decl: Run2 = fn_decl @Run2 [template = constants.%struct.3] {
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Run2.decl: Run2 = fn_decl @Run2 [template = constants.%struct.4] {
+// CHECK:STDOUT:     %int.make_type_32.loc9_12: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc9_12.1: type = value_of_initializer %int.make_type_32.loc9_12 [template = i32]
+// CHECK:STDOUT:     %.loc9_12.2: type = converted %int.make_type_32.loc9_12, %.loc9_12.1 [template = i32]
 // CHECK:STDOUT:     %a.loc9_9.1: i32 = param a
 // CHECK:STDOUT:     @Run2.%a: i32 = bind_name a, %a.loc9_9.1
+// CHECK:STDOUT:     %int.make_type_32.loc9_20: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc9_20.1: type = value_of_initializer %int.make_type_32.loc9_20 [template = i32]
+// CHECK:STDOUT:     %.loc9_20.2: type = converted %int.make_type_32.loc9_20, %.loc9_20.1 [template = i32]
 // CHECK:STDOUT:     %b.loc9_17.1: i32 = param b
 // CHECK:STDOUT:     @Run2.%b: i32 = bind_name b, %b.loc9_17.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.4] {}
+// CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.5] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run1(%a: i32) {
 // CHECK:STDOUT: !entry:
@@ -123,15 +139,15 @@ fn Main() {
 // CHECK:STDOUT:   %.loc27_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc27_11: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Run0.call.loc27: init () = call %Run0.ref.loc27(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run1.ref.loc36: Run1 = name_ref Run1, file.%Run1.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %Run1.ref.loc36: Run1 = name_ref Run1, file.%Run1.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %Run1.call.loc36: init () = call %Run1.ref.loc36(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run1.ref.loc44: Run1 = name_ref Run1, file.%Run1.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %Run1.ref.loc44: Run1 = name_ref Run1, file.%Run1.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc44_8: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc44_11: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %Run1.call.loc44: init () = call %Run1.ref.loc44(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run2.ref.loc53: Run2 = name_ref Run2, file.%Run2.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %Run2.ref.loc53: Run2 = name_ref Run2, file.%Run2.decl [template = constants.%struct.4]
 // CHECK:STDOUT:   %Run2.call.loc53: init () = call %Run2.ref.loc53(<invalid>) [template = <error>]
-// CHECK:STDOUT:   %Run2.ref.loc60: Run2 = name_ref Run2, file.%Run2.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %Run2.ref.loc60: Run2 = name_ref Run2, file.%Run2.decl [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc60: i32 = int_literal 0 [template = constants.%.3]
 // CHECK:STDOUT:   %Run2.call.loc60: init () = call %Run2.ref.loc60(<invalid>) [template = <error>]
 // CHECK:STDOUT:   return

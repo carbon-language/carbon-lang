@@ -41,6 +41,8 @@ fn Run() {
 // CHECK:STDOUT:   %struct.1: F = struct_value () [template]
 // CHECK:STDOUT:   %Unused: type = fn_type @Unused [template]
 // CHECK:STDOUT:   %struct.2: Unused = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type Base, i32 [template]
 // CHECK:STDOUT:   %.3: type = struct_type {.x: i32, .unused: i32} [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
@@ -57,6 +59,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %Child.decl: type = class_decl @Child [template = constants.%Child] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -71,15 +75,21 @@ fn Run() {
 // CHECK:STDOUT:     %self.loc6_13.1: Base = param self
 // CHECK:STDOUT:     %self.loc6_13.2: Base = bind_name self, %self.loc6_13.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <unbound element of class Base> = field_decl x, element0 [template]
-// CHECK:STDOUT:   %.loc9: <unbound element of class Base> = field_decl unused, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
+// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32.loc8, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc8_8: <unbound element of class Base> = field_decl x, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc9_15.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:   %.loc9_15.2: type = converted %int.make_type_32.loc9, %.loc9_15.1 [template = i32]
+// CHECK:STDOUT:   %.loc9_13: <unbound element of class Base> = field_decl unused, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Unused = %Unused.decl
-// CHECK:STDOUT:   .x = %.loc8
-// CHECK:STDOUT:   .unused = %.loc9
+// CHECK:STDOUT:   .x = %.loc8_8
+// CHECK:STDOUT:   .unused = %.loc9_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
@@ -95,6 +105,8 @@ fn Run() {
 // CHECK:STDOUT: fn @F[@Base.%self.loc5_8.2: Base]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Unused[@Base.%self.loc6_13.2: Base]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -129,16 +141,16 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1 = import_ref ir1, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+25, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+37, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run.decl: Run = fn_decl @Run [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %import_ref.3: F = import_ref ir1, inst+7, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+18, loaded [template = imports.%.1]
+// CHECK:STDOUT:   %import_ref.5: <unbound element of class Base> = import_ref ir1, inst+26, loaded [template = imports.%.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir1, inst+33, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+38, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref ir1, inst+42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {

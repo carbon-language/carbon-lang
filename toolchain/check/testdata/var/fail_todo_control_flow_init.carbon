@@ -58,6 +58,8 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template]
 // CHECK:STDOUT:   %.3: bool = bool_literal false [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %struct: Bool = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,11 +79,21 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %.loc33_10.2: type = converted %.loc33_10.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %x2.var: ref () = var x2
 // CHECK:STDOUT:   %x2: ref () = bind_name x2, %x2.var
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %bool.make_type.loc43: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %.loc43_8.1: type = value_of_initializer %bool.make_type.loc43 [template = bool]
+// CHECK:STDOUT:   %.loc43_8.2: type = converted %bool.make_type.loc43, %.loc43_8.1 [template = bool]
 // CHECK:STDOUT:   %y.var: ref bool = var y
 // CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %bool.make_type.loc52: init type = call constants.%struct() [template = bool]
+// CHECK:STDOUT:   %.loc52_9.1: type = value_of_initializer %bool.make_type.loc52 [template = bool]
+// CHECK:STDOUT:   %.loc52_9.2: type = converted %bool.make_type.loc52, %.loc52_9.1 [template = bool]
 // CHECK:STDOUT:   %y2.var: ref bool = var y2
 // CHECK:STDOUT:   %y2: ref bool = bind_name y2, %y2.var
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

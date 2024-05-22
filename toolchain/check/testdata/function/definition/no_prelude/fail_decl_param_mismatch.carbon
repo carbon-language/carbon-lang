@@ -25,12 +25,9 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:6: ERROR: Redeclaration differs at parameter 1.
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: ERROR: Name `Core` not found.
 // CHECK:STDERR: fn H(x: bool) {}
-// CHECK:STDERR:      ^
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:6: Previous declaration's corresponding parameter here.
-// CHECK:STDERR: fn H(x: ());
-// CHECK:STDERR:      ^
+// CHECK:STDERR:         ^~~~
 // CHECK:STDERR:
 fn H(x: bool) {}
 
@@ -125,30 +122,30 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x.loc27_6.1: () = param x
 // CHECK:STDOUT:     @H.%x: () = bind_name x, %x.loc27_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc35: <invalid> = fn_decl @.3 [template = constants.%struct.6] {
-// CHECK:STDOUT:     %x.loc35_6.1: bool = param x
-// CHECK:STDOUT:     @.3.%x: bool = bind_name x, %x.loc35_6.1
+// CHECK:STDOUT:   %.decl.loc32: <invalid> = fn_decl @.3 [template = constants.%struct.6] {
+// CHECK:STDOUT:     %x.loc32_6.1: <error> = param x
+// CHECK:STDOUT:     @.3.%x: <error> = bind_name x, %x.loc32_6.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: I = fn_decl @I [template = constants.%struct.7] {}
-// CHECK:STDOUT:   %.decl.loc45: <invalid> = fn_decl @.4 [template = constants.%struct.8] {
-// CHECK:STDOUT:     %.loc45_12.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc45_12.2: type = converted %.loc45_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.decl.loc42: <invalid> = fn_decl @.4 [template = constants.%struct.8] {
+// CHECK:STDOUT:     %.loc42_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc42_12.2: type = converted %.loc42_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @.4.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl: J = fn_decl @J [template = constants.%struct.9] {
-// CHECK:STDOUT:     %.loc47_12.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc47_12.2: type = converted %.loc47_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc44_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc44_12.2: type = converted %.loc44_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @J.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc55: <invalid> = fn_decl @.5 [template = constants.%struct.10] {}
+// CHECK:STDOUT:   %.decl.loc52: <invalid> = fn_decl @.5 [template = constants.%struct.10] {}
 // CHECK:STDOUT:   %K.decl: K = fn_decl @K [template = constants.%struct.11] {
-// CHECK:STDOUT:     %.loc57_12.1: () = tuple_literal ()
-// CHECK:STDOUT:     %.loc57_12.2: type = converted %.loc57_12.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc54_12.1: () = tuple_literal ()
+// CHECK:STDOUT:     %.loc54_12.2: type = converted %.loc54_12.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:     @K.%return: ref () = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc64: <invalid> = fn_decl @.6 [template = constants.%struct.12] {
-// CHECK:STDOUT:     %.loc64_12.1: {} = struct_literal ()
-// CHECK:STDOUT:     %.loc64_12.2: type = converted %.loc64_12.1, constants.%.7 [template = constants.%.7]
+// CHECK:STDOUT:   %.decl.loc61: <invalid> = fn_decl @.6 [template = constants.%struct.12] {
+// CHECK:STDOUT:     %.loc61_12.1: {} = struct_literal ()
+// CHECK:STDOUT:     %.loc61_12.2: type = converted %.loc61_12.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:     @.6.%return: ref {} = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -169,7 +166,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%x: ());
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.3(%x: bool) {
+// CHECK:STDOUT: fn @.3(%x: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -178,10 +175,10 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.4() -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc45_24: () = tuple_literal ()
+// CHECK:STDOUT:   %.loc42_24: () = tuple_literal ()
 // CHECK:STDOUT:   %tuple: () = tuple_value () [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc45_25: () = converted %.loc45_24, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   return %.loc45_25
+// CHECK:STDOUT:   %.loc42_25: () = converted %.loc42_24, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   return %.loc42_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @J() -> ();
@@ -195,9 +192,9 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.6() -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc64_24: {} = struct_literal ()
+// CHECK:STDOUT:   %.loc61_24: {} = struct_literal ()
 // CHECK:STDOUT:   %struct: {} = struct_value () [template = constants.%struct.13]
-// CHECK:STDOUT:   %.loc64_25: {} = converted %.loc64_24, %struct [template = constants.%struct.13]
-// CHECK:STDOUT:   return %.loc64_25
+// CHECK:STDOUT:   %.loc61_25: {} = converted %.loc61_24, %struct [template = constants.%struct.13]
+// CHECK:STDOUT:   return %.loc61_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

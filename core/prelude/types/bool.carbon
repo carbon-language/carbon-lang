@@ -1,11 +1,7 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-// AUTOUPDATE
 
-package Core library "prelude";
+package Core library "prelude/types/bool";
 
-export import library "prelude/types/bool";
-export import library "prelude/operators";
-export import library "prelude/types";
+fn Bool() -> type = "bool.make_type";

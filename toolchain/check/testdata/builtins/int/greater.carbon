@@ -27,16 +27,20 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: --- int_greater.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Greater: type = fn_type @Greater [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Greater = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %struct.2: Bool = struct_value () [template]
+// CHECK:STDOUT:   %Greater: type = fn_type @Greater [template]
+// CHECK:STDOUT:   %struct.3: Greater = struct_value () [template]
 // CHECK:STDOUT:   %Negate: type = fn_type @Negate [template]
-// CHECK:STDOUT:   %struct.2: Negate = struct_value () [template]
+// CHECK:STDOUT:   %struct.4: Negate = struct_value () [template]
 // CHECK:STDOUT:   %True: type = class_type @True [template]
 // CHECK:STDOUT:   %.2: type = struct_type {} [template]
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F: type = fn_type @F [template]
-// CHECK:STDOUT:   %struct.3: F = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: F = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = ptr_type {} [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
@@ -45,7 +49,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.8: bool = bool_literal true [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal -1 [template]
 // CHECK:STDOUT:   %RuntimeCall: type = fn_type @RuntimeCall [template]
-// CHECK:STDOUT:   %struct.4: RuntimeCall = struct_value () [template]
+// CHECK:STDOUT:   %struct.6: RuntimeCall = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,21 +63,41 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %Greater.decl: Greater = fn_decl @Greater [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Greater.decl: Greater = fn_decl @Greater [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc2_15: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc2_15.1: type = value_of_initializer %int.make_type_32.loc2_15 [template = i32]
+// CHECK:STDOUT:     %.loc2_15.2: type = converted %int.make_type_32.loc2_15, %.loc2_15.1 [template = i32]
 // CHECK:STDOUT:     %a.loc2_12.1: i32 = param a
 // CHECK:STDOUT:     @Greater.%a: i32 = bind_name a, %a.loc2_12.1
+// CHECK:STDOUT:     %int.make_type_32.loc2_23: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc2_23.1: type = value_of_initializer %int.make_type_32.loc2_23 [template = i32]
+// CHECK:STDOUT:     %.loc2_23.2: type = converted %int.make_type_32.loc2_23, %.loc2_23.1 [template = i32]
 // CHECK:STDOUT:     %b.loc2_20.1: i32 = param b
 // CHECK:STDOUT:     @Greater.%b: i32 = bind_name b, %b.loc2_20.1
+// CHECK:STDOUT:     %bool.make_type.loc2: init type = call constants.%struct.2() [template = bool]
+// CHECK:STDOUT:     %.loc2_31.1: type = value_of_initializer %bool.make_type.loc2 [template = bool]
+// CHECK:STDOUT:     %.loc2_31.2: type = converted %bool.make_type.loc2, %.loc2_31.1 [template = bool]
 // CHECK:STDOUT:     @Greater.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.4] {
+// CHECK:STDOUT:     %int.make_type_32.loc3_14: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc3_14.1: type = value_of_initializer %int.make_type_32.loc3_14 [template = i32]
+// CHECK:STDOUT:     %.loc3_14.2: type = converted %int.make_type_32.loc3_14, %.loc3_14.1 [template = i32]
 // CHECK:STDOUT:     %a.loc3_11.1: i32 = param a
 // CHECK:STDOUT:     @Negate.%a: i32 = bind_name a, %a.loc3_11.1
+// CHECK:STDOUT:     %int.make_type_32.loc3_22: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc3_22.1: type = value_of_initializer %int.make_type_32.loc3_22 [template = i32]
+// CHECK:STDOUT:     %.loc3_22.2: type = converted %int.make_type_32.loc3_22, %.loc3_22.1 [template = i32]
 // CHECK:STDOUT:     @Negate.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: type = class_decl @True [template = constants.%True] {}
 // CHECK:STDOUT:   %False.decl: type = class_decl @False [template = constants.%False] {}
-// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
+// CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.5] {
 // CHECK:STDOUT:     %True.ref: type = name_ref True, %True.decl [template = constants.%True]
 // CHECK:STDOUT:     %true_.loc8_6.1: True = param true_
 // CHECK:STDOUT:     @F.%true_: True = bind_name true_, %true_.loc8_6.1
@@ -81,11 +105,23 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:     %false_.loc8_19.1: False = param false_
 // CHECK:STDOUT:     @F.%false_: False = bind_name false_, %false_.loc8_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.4] {
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.6] {
+// CHECK:STDOUT:     %int.make_type_32.loc16_19: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16_19 [template = i32]
+// CHECK:STDOUT:     %.loc16_19.2: type = converted %int.make_type_32.loc16_19, %.loc16_19.1 [template = i32]
 // CHECK:STDOUT:     %a.loc16_16.1: i32 = param a
 // CHECK:STDOUT:     @RuntimeCall.%a: i32 = bind_name a, %a.loc16_16.1
+// CHECK:STDOUT:     %int.make_type_32.loc16_27: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc16_27.1: type = value_of_initializer %int.make_type_32.loc16_27 [template = i32]
+// CHECK:STDOUT:     %.loc16_27.2: type = converted %int.make_type_32.loc16_27, %.loc16_27.1 [template = i32]
 // CHECK:STDOUT:     %b.loc16_24.1: i32 = param b
 // CHECK:STDOUT:     @RuntimeCall.%b: i32 = bind_name b, %b.loc16_24.1
+// CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%struct.2() [template = bool]
+// CHECK:STDOUT:     %.loc16_35.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
+// CHECK:STDOUT:     %.loc16_35.2: type = converted %bool.make_type.loc16, %.loc16_35.1 [template = bool]
 // CHECK:STDOUT:     @RuntimeCall.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -100,6 +136,10 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Greater(%a: i32, %b: i32) -> bool = "int.greater";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a: i32) -> i32 = "int.snegate";
@@ -107,7 +147,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: fn @F(%true_: True, %false_: False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: False = name_ref false_, %false_
-// CHECK:STDOUT:   %Greater.ref.loc9: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Greater.ref.loc9: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc9_25: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc9_28: i32 = int_literal 2 [template = constants.%.5]
 // CHECK:STDOUT:   %int.greater.loc9: init bool = call %Greater.ref.loc9(%.loc9_25, %.loc9_28) [template = constants.%.6]
@@ -126,7 +166,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9 [template = constants.%False]
 // CHECK:STDOUT:   %false_.ref.loc10: False = name_ref false_, %false_
-// CHECK:STDOUT:   %Greater.ref.loc10: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Greater.ref.loc10: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc10_25: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_28: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.greater.loc10: init bool = call %Greater.ref.loc10(%.loc10_25, %.loc10_28) [template = constants.%.6]
@@ -145,7 +185,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc10:
 // CHECK:STDOUT:   %.loc10_14.3: type = block_arg !if.expr.result.loc10 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc11: True = name_ref true_, %true_
-// CHECK:STDOUT:   %Greater.ref.loc11: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Greater.ref.loc11: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_27: i32 = int_literal 0 [template = constants.%.7]
 // CHECK:STDOUT:   %int.greater.loc11: init bool = call %Greater.ref.loc11(%.loc11_24, %.loc11_27) [template = constants.%.8]
@@ -164,8 +204,8 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc11:
 // CHECK:STDOUT:   %.loc11_13.3: type = block_arg !if.expr.result.loc11 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref.loc12: False = name_ref false_, %false_
-// CHECK:STDOUT:   %Greater.ref.loc12: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %Negate.ref.loc12: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %Greater.ref.loc12: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
+// CHECK:STDOUT:   %Negate.ref.loc12: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc12_32: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc12: init i32 = call %Negate.ref.loc12(%.loc12_32) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc12_36: i32 = int_literal 0 [template = constants.%.7]
@@ -187,9 +227,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !if.expr.result.loc12:
 // CHECK:STDOUT:   %.loc12_14.3: type = block_arg !if.expr.result.loc12 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc13: True = name_ref true_, %true_
-// CHECK:STDOUT:   %Greater.ref.loc13: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Greater.ref.loc13: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc13_24: i32 = int_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %Negate.ref.loc13: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %Negate.ref.loc13: Negate = name_ref Negate, file.%Negate.decl [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc13_34: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %int.snegate.loc13: init i32 = call %Negate.ref.loc13(%.loc13_34) [template = constants.%.9]
 // CHECK:STDOUT:   %.loc13_23.1: i32 = value_of_initializer %int.snegate.loc13 [template = constants.%.9]
@@ -214,7 +254,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a: i32, %b: i32) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Greater.ref: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %Greater.ref: Greater = name_ref Greater, file.%Greater.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %a.ref: i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.greater: init bool = call %Greater.ref(%a.ref, %b.ref)

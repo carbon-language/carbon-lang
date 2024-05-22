@@ -21,16 +21,18 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type Class, i32 [template]
-// CHECK:STDOUT:   %.2: type = ptr_type Class [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type Class, Class* [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.n: i32, .next: Class*} [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type Class, i32 [template]
+// CHECK:STDOUT:   %.3: type = ptr_type Class [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type Class, Class* [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.n: i32, .next: Class*} [template]
 // CHECK:STDOUT:   %Make: type = fn_type @Make [template]
-// CHECK:STDOUT:   %.5: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Make = struct_value () [template]
+// CHECK:STDOUT:   %struct.2: Make = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = ptr_type {.n: i32, .next: Class*} [template]
 // CHECK:STDOUT:   %MakeReorder: type = fn_type @MakeReorder [template]
-// CHECK:STDOUT:   %struct.2: MakeReorder = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: MakeReorder = struct_value () [template]
 // CHECK:STDOUT:   %.7: type = struct_type {.next: Class*, .n: i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -43,21 +45,30 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %Make.decl: Make = fn_decl @Make [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %Make.decl: Make = fn_decl @Make [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
+// CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_32.loc12, %.loc12_12.1 [template = i32]
 // CHECK:STDOUT:     %n.loc12_9.1: i32 = param n
 // CHECK:STDOUT:     @Make.%n: i32 = bind_name n, %n.loc12_9.1
 // CHECK:STDOUT:     %Class.ref.loc12_23: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc12: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:     %.loc12_28: type = ptr_type Class [template = constants.%.3]
 // CHECK:STDOUT:     %next.loc12_17.1: Class* = param next
 // CHECK:STDOUT:     @Make.%next: Class* = bind_name next, %next.loc12_17.1
 // CHECK:STDOUT:     %Class.ref.loc12_34: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MakeReorder.decl: MakeReorder = fn_decl @MakeReorder [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %MakeReorder.decl: MakeReorder = fn_decl @MakeReorder [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc16: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc16_19.1: type = value_of_initializer %int.make_type_32.loc16 [template = i32]
+// CHECK:STDOUT:     %.loc16_19.2: type = converted %int.make_type_32.loc16, %.loc16_19.1 [template = i32]
 // CHECK:STDOUT:     %n.loc16_16.1: i32 = param n
 // CHECK:STDOUT:     @MakeReorder.%n: i32 = bind_name n, %n.loc16_16.1
 // CHECK:STDOUT:     %Class.ref.loc16_30: type = name_ref Class, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc16: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:     %.loc16_35: type = ptr_type Class [template = constants.%.3]
 // CHECK:STDOUT:     %next.loc16_24.1: Class* = param next
 // CHECK:STDOUT:     @MakeReorder.%next: Class* = bind_name next, %next.loc16_24.1
 // CHECK:STDOUT:     %Class.ref.loc16_41: type = name_ref Class, %Class.decl [template = constants.%Class]
@@ -66,16 +77,21 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc8: <unbound element of class Class> = field_decl n, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc8_8: <unbound element of class Class> = field_decl n, element0 [template]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_18: type = ptr_type Class [template = constants.%.3]
 // CHECK:STDOUT:   %.loc9_11: <unbound element of class Class> = field_decl next, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc8
+// CHECK:STDOUT:   .n = %.loc8_8
 // CHECK:STDOUT:   .next = %.loc9_11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n: i32, %next: Class*) -> %return: Class {
 // CHECK:STDOUT: !entry:

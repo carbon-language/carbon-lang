@@ -38,9 +38,13 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: --- fail_non_constant_condition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ConditionIsNonConstant: type = fn_type @ConditionIsNonConstant [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: ConditionIsNonConstant = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Bool = struct_value () [template]
+// CHECK:STDOUT:   %ConditionIsNonConstant: type = fn_type @ConditionIsNonConstant [template]
+// CHECK:STDOUT:   %struct.2: ConditionIsNonConstant = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.3: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,11 +54,19 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     .ConditionIsNonConstant = %ConditionIsNonConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ConditionIsNonConstant.decl: ConditionIsNonConstant = fn_decl @ConditionIsNonConstant [template = constants.%struct] {
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %ConditionIsNonConstant.decl: ConditionIsNonConstant = fn_decl @ConditionIsNonConstant [template = constants.%struct.2] {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.1() [template = bool]
+// CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
 // CHECK:STDOUT:     %b.loc4_27.1: bool = param b
 // CHECK:STDOUT:     @ConditionIsNonConstant.%b: bool = bind_name b, %b.loc4_27.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b: bool) {
 // CHECK:STDOUT: !entry:
@@ -62,10 +74,16 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   br !if.expr.result(i32)
+// CHECK:STDOUT:   %int.make_type_32.loc12_20: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc12_20.1: type = value_of_initializer %int.make_type_32.loc12_20 [template = i32]
+// CHECK:STDOUT:   %.loc12_20.2: type = converted %int.make_type_32.loc12_20, %.loc12_20.1 [template = i32]
+// CHECK:STDOUT:   br !if.expr.result(%.loc12_20.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   br !if.expr.result(i32)
+// CHECK:STDOUT:   %int.make_type_32.loc12_29: init type = call constants.%struct.3() [template = i32]
+// CHECK:STDOUT:   %.loc12_24.1: type = value_of_initializer %int.make_type_32.loc12_29 [template = i32]
+// CHECK:STDOUT:   %.loc12_24.2: type = converted %int.make_type_32.loc12_29, %.loc12_24.1 [template = i32]
+// CHECK:STDOUT:   br !if.expr.result(%.loc12_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc12_10: type = block_arg !if.expr.result
@@ -76,13 +94,17 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_constant_result.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: type = fn_type @ChosenBranchIsNonConstant [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: ChosenBranchIsNonConstant = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: ChosenBranchIsNonConstant = struct_value () [template]
 // CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.4: bool = bool_literal false [template]
 // CHECK:STDOUT: }
@@ -93,10 +115,12 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     .ChosenBranchIsNonConstant = %ChosenBranchIsNonConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: ChosenBranchIsNonConstant = fn_decl @ChosenBranchIsNonConstant [template = constants.%struct] {
+// CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: ChosenBranchIsNonConstant = fn_decl @ChosenBranchIsNonConstant [template = constants.%struct.1] {
 // CHECK:STDOUT:     %t.loc4_30.1: type = param t
 // CHECK:STDOUT:     @ChosenBranchIsNonConstant.%t: type = bind_name t, %t.loc4_30.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t: type) {
@@ -109,7 +133,10 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%t.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   br !if.expr.result.loc9(i32)
+// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:   %.loc9_25.2: type = converted %int.make_type_32.loc9, %.loc9_25.1 [template = i32]
+// CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_25.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
@@ -121,7 +148,10 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   if %.loc13_13 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
-// CHECK:STDOUT:   br !if.expr.result.loc13(i32)
+// CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc13_24.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
+// CHECK:STDOUT:   %.loc13_24.2: type = converted %int.make_type_32.loc13, %.loc13_24.1 [template = i32]
+// CHECK:STDOUT:   br !if.expr.result.loc13(%.loc13_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc13:
 // CHECK:STDOUT:   %t.ref.loc13: type = name_ref t, %t
@@ -135,4 +165,6 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
