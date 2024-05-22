@@ -5,7 +5,6 @@
 // AUTOUPDATE
 
 var a: (i32, i32) = (12, 6);
-// TODO: Only diagnose this once, and make the diagnostic clearer.
 // CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: ERROR: Cannot access member of interface Negate in type i32 that does not implement that interface.
 // CHECK:STDERR: var b: i32 = a[-10];
 // CHECK:STDERR:                ^~~
