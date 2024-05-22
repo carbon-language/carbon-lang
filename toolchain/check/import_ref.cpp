@@ -1266,12 +1266,12 @@ class ImportRefResolver {
   llvm::SmallVector<Work> work_stack_;
 };
 
-// Returns a pair of ImportIRInsts equivalent to the ImportRef currently being
+// Returns a list of ImportIRInsts equivalent to the ImportRef currently being
 // loaded (including the one pointed at directly by the ImportRef), and the
 // final instruction's type ID.
 //
 // This addresses cases where an ImportRefUnloaded may point at another
-// ImportRefUnloaded. The ImportRefResolver requires a SemIR with
+// ImportRefUnloaded. The ImportRefResolver requires a SemIR with a
 // constant-evaluated version of the instruction to work with.
 static auto GetInstForLoad(Context& context,
                            SemIR::ImportIRInstId import_ir_inst_id)
