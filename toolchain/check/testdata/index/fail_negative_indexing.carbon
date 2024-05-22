@@ -71,8 +71,8 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.loc7_28: init (i32, i32) = converted %.loc7_27.1, %.loc7_27.6 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_28
 // CHECK:STDOUT:   %a.ref: ref (i32, i32) = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12_17: i32 = int_literal 10 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc12_19: ref <error> = tuple_index %a.ref, <error>
+// CHECK:STDOUT:   %.loc11_17: i32 = int_literal 10 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc11_19: ref <error> = tuple_index %a.ref, <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
