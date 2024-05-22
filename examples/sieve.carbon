@@ -4,9 +4,6 @@
 
 // Compute and return the number of primes less than 1000.
 
-import Core library "prelude/operators/arithmetic";
-import Core library "prelude/operators/comparison";
-
 // TODO: Copied from core/prelude/types/i32.carbon.
 // Because we don't deduplicate interfaces, the implementations in that file are
 // treated as implementing a different interface from the one we import above.

@@ -6,11 +6,6 @@ package Core library "prelude/types/i32";
 
 import library "prelude/operators";
 
-// TODO: Remove these once prelude/operators re-exports their contents.
-import library "prelude/operators/arithmetic";
-import library "prelude/operators/bitwise";
-import library "prelude/operators/comparison";
-
 impl i32 as Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }

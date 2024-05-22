@@ -6,8 +6,8 @@
 
 package Core library "prelude";
 
-import library "prelude/operators";
-import library "prelude/types";
+export import library "prelude/operators";
+export import library "prelude/types";
 
 // TODO: Uncomment once name deduplication works.
 // TODO: These are here for name lookup. Add a way to export import and move them out.
