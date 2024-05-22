@@ -45,14 +45,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_32.loc11, %.loc11_6.1 [template = i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %InstanceCall.decl: InstanceCall = fn_decl @InstanceCall [template = constants.%struct.4] {
 // CHECK:STDOUT:     %int.make_type_32.loc18: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc18_20.1: type = value_of_initializer %int.make_type_32.loc18 [template = i32]

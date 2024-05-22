@@ -53,21 +53,21 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     .PartialConstant = %PartialConstant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
 // CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7, %.loc7_11.1 [template = bool]
 // CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type.loc8: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc8_11.1: type = value_of_initializer %bool.make_type.loc8 [template = bool]
 // CHECK:STDOUT:     %.loc8_11.2: type = converted %bool.make_type.loc8, %.loc8_11.1 [template = bool]
 // CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Or.decl: Or = fn_decl @Or [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type.loc10: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc10_12.1: type = value_of_initializer %bool.make_type.loc10 [template = bool]
@@ -75,11 +75,11 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     @Or.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.5] {}
-// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %PartialConstant.decl: PartialConstant = fn_decl @PartialConstant [template = constants.%struct.6] {
 // CHECK:STDOUT:     %bool.make_type.loc21: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc21_23.1: type = value_of_initializer %bool.make_type.loc21 [template = bool]
@@ -87,7 +87,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %x.loc21_20.1: bool = param x
 // CHECK:STDOUT:     @PartialConstant.%x: bool = bind_name x, %x.loc21_20.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

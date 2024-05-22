@@ -27,11 +27,11 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32.loc10_13: init type = call constants.%struct() [template = i32]
 // CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %int.make_type_32.loc10_13 [template = i32]
 // CHECK:STDOUT:   %.loc10_13.2: type = converted %int.make_type_32.loc10_13, %.loc10_13.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %int.make_type_32.loc10_22: init type = call constants.%struct() [template = i32]
 // CHECK:STDOUT:   %.loc10_22.1: type = value_of_initializer %int.make_type_32.loc10_22 [template = i32]
 // CHECK:STDOUT:   %.loc10_22.2: type = converted %int.make_type_32.loc10_22, %.loc10_22.1 [template = i32]

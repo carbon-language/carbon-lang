@@ -30,10 +30,10 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type.loc7_9: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_9.1: type = value_of_initializer %bool.make_type.loc7_9 [template = bool]

@@ -73,15 +73,15 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [template = constants.%.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %int.make_type_32.loc12: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:     %.loc12_6.1: type = value_of_initializer %int.make_type_32.loc12 [template = i32]
 // CHECK:STDOUT:     %.loc12_6.2: type = converted %int.make_type_32.loc12, %.loc12_6.1 [template = i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, %Simple.decl [template = constants.%.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %NonInstanceCall.decl: NonInstanceCall = fn_decl @NonInstanceCall [template = constants.%struct.6] {
 // CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:     %.loc17_23.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]
@@ -89,7 +89,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %n.loc17_20.1: i32 = param n
 // CHECK:STDOUT:     @NonInstanceCall.%n: i32 = bind_name n, %n.loc17_20.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %InstanceCall.decl: InstanceCall = fn_decl @InstanceCall [template = constants.%struct.7] {
 // CHECK:STDOUT:     %int.make_type_32.loc21: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:     %.loc21_20.1: type = value_of_initializer %int.make_type_32.loc21 [template = i32]
@@ -97,7 +97,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %n.loc21_17.1: i32 = param n
 // CHECK:STDOUT:     @InstanceCall.%n: i32 = bind_name n, %n.loc21_17.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: NonInstanceCallIndirect = fn_decl @NonInstanceCallIndirect [template = constants.%struct.8] {
 // CHECK:STDOUT:     %int.make_type_32.loc25: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:     %.loc25_34.1: type = value_of_initializer %int.make_type_32.loc25 [template = i32]
@@ -106,7 +106,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %p.loc25_28.1: i32* = param p
 // CHECK:STDOUT:     @NonInstanceCallIndirect.%p: i32* = bind_name p, %p.loc25_28.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: InstanceCallIndirect = fn_decl @InstanceCallIndirect [template = constants.%struct.9] {
 // CHECK:STDOUT:     %int.make_type_32.loc29: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:     %.loc29_31.1: type = value_of_initializer %int.make_type_32.loc29 [template = i32]

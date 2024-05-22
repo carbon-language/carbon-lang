@@ -31,8 +31,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Main.decl: Main = fn_decl @Main [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32.loc8_15: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %int.make_type_32.loc8_20: init type = call constants.%struct.1() [template = i32]

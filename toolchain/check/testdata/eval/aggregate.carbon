@@ -57,9 +57,9 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:     .struct_access = %struct_access
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc7_18: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc7_23: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc7_26.1: (type, type) = tuple_literal (%int.make_type_32.loc7_18, %int.make_type_32.loc7_23)
 // CHECK:STDOUT:   %.loc7_26.2: type = value_of_initializer %int.make_type_32.loc7_18 [template = i32]
@@ -69,27 +69,27 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc7_26.6: type = converted %.loc7_26.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %tuple_copy.var: ref (i32, i32) = var tuple_copy
 // CHECK:STDOUT:   %tuple_copy: ref (i32, i32) = bind_name tuple_copy, %tuple_copy.var
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc9_23: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc9_23.1: type = value_of_initializer %int.make_type_32.loc9_23 [template = i32]
 // CHECK:STDOUT:   %.loc9_23.2: type = converted %int.make_type_32.loc9_23, %.loc9_23.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc9_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc9_32.1: type = value_of_initializer %int.make_type_32.loc9_32 [template = i32]
 // CHECK:STDOUT:   %.loc9_32.2: type = converted %int.make_type_32.loc9_32, %.loc9_32.1 [template = i32]
-// CHECK:STDOUT:   %import_ref.7: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc9_41: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc9_41.1: type = value_of_initializer %int.make_type_32.loc9_41 [template = i32]
 // CHECK:STDOUT:   %.loc9_41.2: type = converted %int.make_type_32.loc9_41, %.loc9_41.1 [template = i32]
 // CHECK:STDOUT:   %.loc9_44: type = struct_type {.a: i32, .b: i32, .c: i32} [template = constants.%.7]
 // CHECK:STDOUT:   %struct_copy.var: ref {.a: i32, .b: i32, .c: i32} = var struct_copy
 // CHECK:STDOUT:   %struct_copy: ref {.a: i32, .b: i32, .c: i32} = bind_name struct_copy, %struct_copy.var
-// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.9: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.10: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.11: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.9: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.10: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.11: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc11_24: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_19.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
@@ -97,8 +97,8 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc11_25: type = array_type %.loc11_24, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %tuple_index.var: ref [i32; 1] = var tuple_index
 // CHECK:STDOUT:   %tuple_index: ref [i32; 1] = bind_name tuple_index, %tuple_index.var
-// CHECK:STDOUT:   %import_ref.12: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.13: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.12: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.13: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc13_26: i32 = int_literal 1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
@@ -106,7 +106,7 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc13_27: type = array_type %.loc13_26, i32 [template = constants.%.13]
 // CHECK:STDOUT:   %struct_access.var: ref [i32; 1] = var struct_access
 // CHECK:STDOUT:   %struct_access: ref [i32; 1] = bind_name struct_access, %struct_access.var
-// CHECK:STDOUT:   %import_ref.14: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.14: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

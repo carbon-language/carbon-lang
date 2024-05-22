@@ -32,10 +32,10 @@ alias b = bool;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct.2() [template = bool]
 // CHECK:STDOUT:   %b: <error> = bind_alias b, <error> [template = <error>]
 // CHECK:STDOUT: }

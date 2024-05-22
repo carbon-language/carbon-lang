@@ -64,9 +64,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Less.decl: Less = fn_decl @Less [template = constants.%struct.3] {
 // CHECK:STDOUT:     %.loc2_12.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_12: init type = call constants.%struct.1(%.loc2_12.1) [template = f64]
@@ -85,8 +85,8 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc2_28.2: type = converted %bool.make_type.loc2, %.loc2_28.1 [template = bool]
 // CHECK:STDOUT:     @Less.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Negate.decl: Negate = fn_decl @Negate [template = constants.%struct.4] {
 // CHECK:STDOUT:     %.loc3_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc3_14: init type = call constants.%struct.1(%.loc3_14.1) [template = f64]
@@ -110,9 +110,9 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %false_.loc8_19.1: False = param false_
 // CHECK:STDOUT:     @F.%false_: False = bind_name false_, %false_.loc8_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.6] {
 // CHECK:STDOUT:     %.loc16_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc16_19: init type = call constants.%struct.1(%.loc16_19.1) [template = f64]

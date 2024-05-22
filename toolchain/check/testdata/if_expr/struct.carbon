@@ -37,8 +37,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32.loc7_14: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc7_14.1: type = value_of_initializer %int.make_type_32.loc7_14 [template = i32]
@@ -50,7 +50,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %s.loc7_6.1: {.a: i32, .b: i32} = param s
 // CHECK:STDOUT:     @G.%s: {.a: i32, .b: i32} = bind_name s, %s.loc7_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.3() [template = bool]
 // CHECK:STDOUT:     %.loc9_12.1: type = value_of_initializer %bool.make_type [template = bool]
@@ -58,8 +58,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %cond.loc9_6.1: bool = param cond
 // CHECK:STDOUT:     @F.%cond: bool = bind_name cond, %cond.loc9_6.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

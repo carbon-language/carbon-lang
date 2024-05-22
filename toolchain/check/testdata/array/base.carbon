@@ -48,7 +48,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc7_14: i32 = int_literal 1 [template = constants.%.2]
 // CHECK:STDOUT:   %.loc7_9.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -57,7 +57,7 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %a.var: ref [i32; 1] = var a
 // CHECK:STDOUT:   %a: ref [i32; 1] = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc8_9.1: i32 = int_literal 64 [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.2(%.loc8_9.1) [template = f64]
 // CHECK:STDOUT:   %.loc8_14: i32 = int_literal 2 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc8_9.2: type = value_of_initializer %float.make_type [template = f64]

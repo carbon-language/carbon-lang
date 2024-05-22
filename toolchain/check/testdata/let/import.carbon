@@ -31,7 +31,7 @@ let b:! bool = a;
 // CHECK:STDOUT:     .Core = %Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
 // CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]
@@ -58,7 +58,7 @@ let b:! bool = a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: bool = import_ref ir0, inst+11, loaded [symbolic = constants.%a]
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
 // CHECK:STDOUT:   %.loc4_9.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc4_9.2: type = converted %bool.make_type, %.loc4_9.1 [template = bool]

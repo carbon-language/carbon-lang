@@ -6,6 +6,5 @@
 
 package Core library "prelude";
 
-export import library "prelude/types/bool";
 export import library "prelude/operators";
 export import library "prelude/types";

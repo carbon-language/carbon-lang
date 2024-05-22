@@ -4,6 +4,8 @@
 
 package Core library "prelude/types";
 
+export import library "prelude/types/bool";
+
 // TODO: Start importing `prelude/types/i32` here once we stop eagerly importing
 // all `impl`s from all imported files. Currently, this introduces too much
 // noise in the toolchain tests.

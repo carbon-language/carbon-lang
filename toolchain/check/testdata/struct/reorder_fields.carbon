@@ -42,14 +42,14 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %MakeI32.decl: MakeI32 = fn_decl @MakeI32 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc7_17.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:     %.loc7_17.2: type = converted %int.make_type_32.loc7, %.loc7_17.1 [template = i32]
 // CHECK:STDOUT:     @MakeI32.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %MakeF64.decl: MakeF64 = fn_decl @MakeF64 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %.loc8_17.1: i32 = int_literal 64 [template = constants.%.2]
 // CHECK:STDOUT:     %float.make_type.loc8: init type = call constants.%struct.3(%.loc8_17.1) [template = f64]
@@ -57,8 +57,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %.loc8_17.3: type = converted %float.make_type.loc8, %.loc8_17.2 [template = f64]
 // CHECK:STDOUT:     @MakeF64.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.5] {
 // CHECK:STDOUT:     %int.make_type_32.loc10: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc10_16.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
@@ -70,10 +70,10 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %.loc10_28: type = struct_type {.a: i32, .b: f64} [template = constants.%.3]
 // CHECK:STDOUT:     @F.%return: ref {.a: i32, .b: f64} = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

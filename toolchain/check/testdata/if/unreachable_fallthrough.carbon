@@ -33,8 +33,8 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:     .If = %If.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If.decl: If = fn_decl @If [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %bool.make_type [template = bool]

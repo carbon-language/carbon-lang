@@ -120,8 +120,8 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32.loc5_9: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_32.loc5_9 [template = i32]
@@ -133,8 +133,8 @@ fn D() {}
 // CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_32.loc5_17, %.loc5_17.1 [template = i32]
 // CHECK:STDOUT:     @B.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.4] {
 // CHECK:STDOUT:     %int.make_type_32.loc6_10: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc6_14.1: (type,) = tuple_literal (%int.make_type_32.loc6_10)
@@ -235,13 +235,13 @@ fn D() {}
 // CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %a.var: ref () = var a
 // CHECK:STDOUT:   %a: ref () = bind_name a, %a.var
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %int.make_type_32.loc7: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
 // CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_32.loc7, %.loc7_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %int.make_type_32.loc8: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_32.loc8, %.loc8_13.1 [template = i32]
@@ -303,8 +303,8 @@ fn D() {}
 // CHECK:STDOUT:   %import_ref.4 = import_ref ir1, inst+58, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32.loc27_9: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc27_9.1: type = value_of_initializer %int.make_type_32.loc27_9 [template = i32]

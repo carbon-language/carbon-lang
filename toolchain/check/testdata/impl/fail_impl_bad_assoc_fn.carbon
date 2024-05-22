@@ -326,43 +326,43 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %PossiblyF.decl: PossiblyF = fn_decl @PossiblyF [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %FAlias.decl: type = class_decl @FAlias [template = constants.%FAlias] {}
 // CHECK:STDOUT:   %FExtraParam.decl: type = class_decl @FExtraParam [template = constants.%FExtraParam] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FExtraImplicitParam.decl: type = class_decl @FExtraImplicitParam [template = constants.%FExtraImplicitParam] {}
 // CHECK:STDOUT:   %FExtraReturnType.decl: type = class_decl @FExtraReturnType [template = constants.%FExtraReturnType] {}
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%.6] {}
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FMissingParam.decl: type = class_decl @FMissingParam [template = constants.%FMissingParam] {}
-// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FMissingImplicitParam.decl: type = class_decl @FMissingImplicitParam [template = constants.%FMissingImplicitParam] {}
-// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FMissingReturnType.decl: type = class_decl @FMissingReturnType [template = constants.%FMissingReturnType] {}
-// CHECK:STDOUT:   %import_ref.10: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.11: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.10: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.11: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FDifferentParamType.decl: type = class_decl @FDifferentParamType [template = constants.%FDifferentParamType] {}
-// CHECK:STDOUT:   %import_ref.12: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.13: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.12: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.13: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FDifferentImplicitParamType.decl: type = class_decl @FDifferentImplicitParamType [template = constants.%FDifferentImplicitParamType] {}
-// CHECK:STDOUT:   %import_ref.14: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.15: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.14: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.15: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FDifferentReturnType.decl: type = class_decl @FDifferentReturnType [template = constants.%FDifferentReturnType] {}
-// CHECK:STDOUT:   %import_ref.16: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.17: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.16: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.17: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %FDifferentParamName.decl: type = class_decl @FDifferentParamName [template = constants.%FDifferentParamName] {}
-// CHECK:STDOUT:   %import_ref.18: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.19: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
-// CHECK:STDOUT:   %import_ref.20: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.18: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.19: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.20: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %SelfNested.decl: type = interface_decl @SelfNested [template = constants.%.9] {}
-// CHECK:STDOUT:   %import_ref.21: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.15]
+// CHECK:STDOUT:   %import_ref.21: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.15]
 // CHECK:STDOUT:   %SelfNestedBadParam.decl: type = class_decl @SelfNestedBadParam [template = constants.%SelfNestedBadParam] {}
-// CHECK:STDOUT:   %import_ref.22: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.15]
-// CHECK:STDOUT:   %import_ref.23: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.15]
+// CHECK:STDOUT:   %import_ref.22: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.15]
+// CHECK:STDOUT:   %import_ref.23: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.15]
 // CHECK:STDOUT:   %SelfNestedBadReturnType.decl: type = class_decl @SelfNestedBadReturnType [template = constants.%SelfNestedBadReturnType] {}
-// CHECK:STDOUT:   %import_ref.24: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.15]
+// CHECK:STDOUT:   %import_ref.24: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.15]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

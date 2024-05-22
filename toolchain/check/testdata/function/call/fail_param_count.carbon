@@ -88,7 +88,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Run0.decl: Run0 = fn_decl @Run0 [template = constants.%struct.1] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Run1.decl: Run1 = fn_decl @Run1 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32.loc8: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc8_12.1: type = value_of_initializer %int.make_type_32.loc8 [template = i32]
@@ -96,8 +96,8 @@ fn Main() {
 // CHECK:STDOUT:     %a.loc8_9.1: i32 = param a
 // CHECK:STDOUT:     @Run1.%a: i32 = bind_name a, %a.loc8_9.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Run2.decl: Run2 = fn_decl @Run2 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %int.make_type_32.loc9_12: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc9_12.1: type = value_of_initializer %int.make_type_32.loc9_12 [template = i32]

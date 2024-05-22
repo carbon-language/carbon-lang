@@ -50,18 +50,18 @@ fn TestOp() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir5, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir5, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Op in Inc> = import_ref ir5, inst+65, loaded [template = constants.%.9]
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir5, inst+61, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref ir4, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.3: <associated Op in Inc> = import_ref ir4, inst+65, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir4, inst+61, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, %import_ref.1 [template = constants.%.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestOp.decl: TestOp = fn_decl @TestOp [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir5, inst+49, loaded [template = constants.%.2]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir5, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref ir4, inst+49, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref ir4, inst+61, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Inc {

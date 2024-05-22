@@ -45,7 +45,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %If.decl: If = fn_decl @If [template = constants.%struct.5] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.4() [template = bool]
 // CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]

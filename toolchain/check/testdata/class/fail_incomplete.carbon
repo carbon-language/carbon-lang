@@ -191,7 +191,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %Class.ref.loc45: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @ConvertFromStruct.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc47_14: type = ptr_type Class [template = constants.%.4]
@@ -202,7 +202,7 @@ fn CallReturnIncomplete() {
 // CHECK:STDOUT:     %.loc47_20.2: type = converted %int.make_type_32.loc47, %.loc47_20.1 [template = i32]
 // CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %MemberAccess.decl: MemberAccess = fn_decl @MemberAccess [template = constants.%struct.6] {
 // CHECK:STDOUT:     %Class.ref.loc58: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc58_25: type = ptr_type Class [template = constants.%.4]

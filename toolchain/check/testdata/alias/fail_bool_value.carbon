@@ -27,7 +27,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc10: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%struct() [template = bool]
 // CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc11_13.2: type = converted %bool.make_type, %.loc11_13.1 [template = bool]

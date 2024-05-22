@@ -63,10 +63,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {}
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %SelfBase.decl: SelfBase = fn_decl @SelfBase [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Base.ref.loc18: type = name_ref Base, %Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %self.loc18_21.1: Base = param self
@@ -83,7 +83,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     @AddrSelfBase.%self: Base* = bind_name self, %self.loc22_30.1
 // CHECK:STDOUT:     @AddrSelfBase.%.loc22: Base* = addr_pattern @AddrSelfBase.%self
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Call.decl: Call = fn_decl @Call [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, %Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %.loc26_19: type = ptr_type Derived [template = constants.%.9]

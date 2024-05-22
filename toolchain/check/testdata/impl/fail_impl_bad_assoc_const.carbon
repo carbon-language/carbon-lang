@@ -30,7 +30,7 @@ impl bool as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %import_ref: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct]
 // CHECK:STDOUT:   impl_decl @impl {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct() [template = bool]
 // CHECK:STDOUT:     %.loc12_6.1: type = value_of_initializer %bool.make_type [template = bool]

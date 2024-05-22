@@ -61,8 +61,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     .If3 = %If3.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If1.decl: If1 = fn_decl @If1 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
@@ -74,8 +74,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc7_20.2: type = converted %int.make_type_32.loc7, %.loc7_20.1 [template = i32]
 // CHECK:STDOUT:     @If1.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If2.decl: If2 = fn_decl @If2 [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type.loc18: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc18_11.1: type = value_of_initializer %bool.make_type.loc18 [template = bool]
@@ -87,8 +87,8 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %.loc18_20.2: type = converted %int.make_type_32.loc18, %.loc18_20.1 [template = i32]
 // CHECK:STDOUT:     @If2.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %If3.decl: If3 = fn_decl @If3 [template = constants.%struct.5] {
 // CHECK:STDOUT:     %bool.make_type.loc29: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc29_11.1: type = value_of_initializer %bool.make_type.loc29 [template = bool]

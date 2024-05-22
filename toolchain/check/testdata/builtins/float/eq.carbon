@@ -64,9 +64,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Eq.decl: Eq = fn_decl @Eq [template = constants.%struct.3] {
 // CHECK:STDOUT:     %.loc2_10.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_10: init type = call constants.%struct.1(%.loc2_10.1) [template = f64]
@@ -95,9 +95,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     %false_.loc7_19.1: False = param false_
 // CHECK:STDOUT:     @F.%false_: False = bind_name false_, %false_.loc7_19.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.5] {
 // CHECK:STDOUT:     %.loc12_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc12_19: init type = call constants.%struct.1(%.loc12_19.1) [template = f64]
@@ -205,9 +205,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:     .WrongResult = %WrongResult.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %WrongResult.decl: WrongResult = fn_decl @WrongResult [template = constants.%struct.2] {
 // CHECK:STDOUT:     %.loc7_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc7_19: init type = call constants.%struct.1(%.loc7_19.1) [template = f64]

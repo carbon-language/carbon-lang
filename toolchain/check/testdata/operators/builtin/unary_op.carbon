@@ -38,8 +38,8 @@ fn Constant() {
 // CHECK:STDOUT:     .Constant = %Constant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Not.decl: Not = fn_decl @Not [template = constants.%struct.2] {
 // CHECK:STDOUT:     %bool.make_type.loc7_11: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7_11 [template = bool]
@@ -51,14 +51,14 @@ fn Constant() {
 // CHECK:STDOUT:     %.loc7_20.2: type = converted %bool.make_type.loc7_20, %.loc7_20.1 [template = bool]
 // CHECK:STDOUT:     @Not.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %bool.make_type.loc11: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:   %.loc11_15.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
 // CHECK:STDOUT:   %.loc11_15.2: type = converted %bool.make_type.loc11, %.loc11_15.1 [template = bool]
 // CHECK:STDOUT:   %.loc11_26: bool = bool_literal true [template = constants.%.2]
 // CHECK:STDOUT:   %.loc11_22: bool = not %.loc11_26 [template = constants.%.3]
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc11_22
-// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %bool.make_type.loc12: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:   %.loc12_16.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
 // CHECK:STDOUT:   %.loc12_16.2: type = converted %bool.make_type.loc12, %.loc12_16.1 [template = bool]
@@ -66,8 +66,8 @@ fn Constant() {
 // CHECK:STDOUT:   %.loc12_23: bool = not %.loc12_27 [template = constants.%.2]
 // CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc12_23
 // CHECK:STDOUT:   %Constant.decl: Constant = fn_decl @Constant [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";

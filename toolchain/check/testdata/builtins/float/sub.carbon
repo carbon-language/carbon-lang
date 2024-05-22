@@ -70,9 +70,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Sub.decl: Sub = fn_decl @Sub [template = constants.%struct.2] {
 // CHECK:STDOUT:     %.loc2_11.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc2_11: init type = call constants.%struct.1(%.loc2_11.1) [template = f64]
@@ -92,9 +92,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc2_27.3: type = converted %float.make_type.loc2_27, %.loc2_27.2 [template = f64]
 // CHECK:STDOUT:     @Sub.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %RuntimeCall.decl: RuntimeCall = fn_decl @RuntimeCall [template = constants.%struct.3] {
 // CHECK:STDOUT:     %.loc4_19.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc4_19: init type = call constants.%struct.1(%.loc4_19.1) [template = f64]
@@ -115,7 +115,7 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     @RuntimeCall.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %float.make_type.loc8: init type = call constants.%struct.1(%.loc8_8.1) [template = f64]
 // CHECK:STDOUT:   %.loc8_8.2: type = value_of_initializer %float.make_type.loc8 [template = f64]
 // CHECK:STDOUT:   %.loc8_8.3: type = converted %float.make_type.loc8, %.loc8_8.2 [template = f64]
@@ -185,8 +185,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .RuntimeCallBadReturnType = %RuntimeCallBadReturnType.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %TooFew.decl: TooFew = fn_decl @TooFew [template = constants.%struct.2] {
 // CHECK:STDOUT:     %.loc8_14.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc8_14: init type = call constants.%struct.1(%.loc8_14.1) [template = f64]
@@ -200,10 +200,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc8_22.3: type = converted %float.make_type.loc8_22, %.loc8_22.2 [template = f64]
 // CHECK:STDOUT:     @TooFew.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %TooMany.decl: TooMany = fn_decl @TooMany [template = constants.%struct.3] {
 // CHECK:STDOUT:     %.loc13_15.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc13_15: init type = call constants.%struct.1(%.loc13_15.1) [template = f64]
@@ -229,9 +229,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc13_39.3: type = converted %float.make_type.loc13_39, %.loc13_39.2 [template = f64]
 // CHECK:STDOUT:     @TooMany.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.8: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.7: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.9: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %BadReturnType.decl: BadReturnType = fn_decl @BadReturnType [template = constants.%struct.5] {
 // CHECK:STDOUT:     %.loc17_21.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc17_21: init type = call constants.%struct.1(%.loc17_21.1) [template = f64]
@@ -250,9 +250,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc17_37.2: type = converted %bool.make_type.loc17, %.loc17_37.1 [template = bool]
 // CHECK:STDOUT:     @BadReturnType.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.10: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.11: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.12: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.10: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.11: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.12: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %JustRight.decl: JustRight = fn_decl @JustRight [template = constants.%struct.6] {
 // CHECK:STDOUT:     %.loc18_17.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc18_17: init type = call constants.%struct.1(%.loc18_17.1) [template = f64]
@@ -272,8 +272,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc18_33.3: type = converted %float.make_type.loc18_33, %.loc18_33.2 [template = f64]
 // CHECK:STDOUT:     @JustRight.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.13: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.14: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.13: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.14: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: RuntimeCallTooFew = fn_decl @RuntimeCallTooFew [template = constants.%struct.7] {
 // CHECK:STDOUT:     %.loc20_25.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc20_25: init type = call constants.%struct.1(%.loc20_25.1) [template = f64]
@@ -287,10 +287,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc20_33.3: type = converted %float.make_type.loc20_33, %.loc20_33.2 [template = f64]
 // CHECK:STDOUT:     @RuntimeCallTooFew.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.15: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.16: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.17: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.18: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.15: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.16: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.17: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.18: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %RuntimeCallTooMany.decl: RuntimeCallTooMany = fn_decl @RuntimeCallTooMany [template = constants.%struct.8] {
 // CHECK:STDOUT:     %.loc24_26.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc24_26: init type = call constants.%struct.1(%.loc24_26.1) [template = f64]
@@ -316,9 +316,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc24_50.3: type = converted %float.make_type.loc24_50, %.loc24_50.2 [template = f64]
 // CHECK:STDOUT:     @RuntimeCallTooMany.%return: ref f64 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.19: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.20: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.21: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %import_ref.19: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.20: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.21: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.4]
 // CHECK:STDOUT:   %RuntimeCallBadReturnType.decl: RuntimeCallBadReturnType = fn_decl @RuntimeCallBadReturnType [template = constants.%struct.9] {
 // CHECK:STDOUT:     %.loc28_32.1: i32 = int_literal 64 [template = constants.%.1]
 // CHECK:STDOUT:     %float.make_type.loc28_32: init type = call constants.%struct.1(%.loc28_32.1) [template = f64]

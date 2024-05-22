@@ -32,14 +32,14 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.loc7_13.1: i32 = int_literal 64 [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.1(%.loc7_13.1) [template = f64]
 // CHECK:STDOUT:   %.loc7_13.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc7_13.3: type = converted %float.make_type, %.loc7_13.2 [template = f64]
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64} [template = constants.%.3]
 // CHECK:STDOUT:   %x.var: ref {.a: f64} = var x
 // CHECK:STDOUT:   %x: ref {.a: f64} = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.3]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.3() [template = i32]
 // CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32, %.loc11_8.1 [template = i32]

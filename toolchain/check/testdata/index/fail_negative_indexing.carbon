@@ -38,9 +38,9 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc7_9: init type = call constants.%struct.1() [template = i32]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc7_14: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc7_17.1: (type, type) = tuple_literal (%int.make_type_32.loc7_9, %int.make_type_32.loc7_14)
 // CHECK:STDOUT:   %.loc7_17.2: type = value_of_initializer %int.make_type_32.loc7_9 [template = i32]
@@ -50,17 +50,17 @@ var b: i32 = a[-10];
 // CHECK:STDOUT:   %.loc7_17.6: type = converted %.loc7_17.1, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref (i32, i32) = var a
 // CHECK:STDOUT:   %a: ref (i32, i32) = bind_name a, %a.var
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_32.loc11, %.loc11_8.1 [template = i32]
 // CHECK:STDOUT:   %b.var: ref i32 = var b
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %import_ref.4: type = import_ref ir5, inst+67, loaded [template = constants.%.8]
-// CHECK:STDOUT:   %import_ref.5 = import_ref ir5, inst+69, unloaded
-// CHECK:STDOUT:   %import_ref.6: <associated Op in Negate> = import_ref ir5, inst+84, loaded [template = constants.%.10]
-// CHECK:STDOUT:   %import_ref.7 = import_ref ir5, inst+80, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref ir5, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref ir4, inst+67, loaded [template = constants.%.8]
+// CHECK:STDOUT:   %import_ref.5 = import_ref ir4, inst+69, unloaded
+// CHECK:STDOUT:   %import_ref.6: <associated Op in Negate> = import_ref ir4, inst+84, loaded [template = constants.%.10]
+// CHECK:STDOUT:   %import_ref.7 = import_ref ir4, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir4, inst+80, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Negate {

@@ -46,14 +46,14 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref.loc9: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32.loc11: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_32.loc11 [template = i32]
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_32.loc11, %.loc11_14.1 [template = i32]
 // CHECK:STDOUT:     @A.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32.loc13: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %int.make_type_32.loc13 [template = i32]
@@ -63,7 +63,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %A.ref: A = name_ref A, %A.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %C: A = bind_alias C, %A.decl [template = constants.%struct.2]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %D.decl: D = fn_decl @D [template = constants.%struct.4] {
 // CHECK:STDOUT:     %int.make_type_32.loc17: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc17_11.1: type = value_of_initializer %int.make_type_32.loc17 [template = i32]

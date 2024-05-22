@@ -32,14 +32,14 @@ var test_type: type = i32;
 // CHECK:STDOUT:     .test_type = %test_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc7_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc7_15.2: type = converted %int.make_type_32, %.loc7_15.1 [template = i32]
 // CHECK:STDOUT:   %test_i32.var: ref i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   %.loc8_15.1: i32 = int_literal 64 [template = constants.%.3]
-// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir4, inst+30, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Float = import_ref ir3, inst+31, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%struct.2(%.loc8_15.1) [template = f64]
 // CHECK:STDOUT:   %.loc8_15.2: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc8_15.3: type = converted %float.make_type, %.loc8_15.2 [template = f64]
@@ -49,7 +49,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc9
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";

@@ -56,7 +56,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     .Float = %Float.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Float.decl: Float = fn_decl @Float [template = constants.%struct.2] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc4_16.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -101,7 +101,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1 [template = f64]
 // CHECK:STDOUT:   %f.var: ref f64 = var f
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %GetFloat.decl: GetFloat = fn_decl @GetFloat [template = constants.%struct.3] {
 // CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
@@ -162,7 +162,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc10_28.2: type = converted %float.make_type.loc10, %.loc10_28.1 [template = <error>]
 // CHECK:STDOUT:   %invalid_float.var: ref <error> = var invalid_float
 // CHECK:STDOUT:   %invalid_float: ref <error> = bind_name invalid_float, %invalid_float.var
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir5, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:   %.loc12_15.1: type = value_of_initializer %int.make_type_32 [template = i32]
 // CHECK:STDOUT:   %.loc12_15.2: type = converted %int.make_type_32, %.loc12_15.1 [template = i32]

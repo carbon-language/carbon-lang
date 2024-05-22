@@ -35,7 +35,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %ReturnType.decl: ReturnType = fn_decl @ReturnType [template = constants.%struct.1] {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.3] {
 // CHECK:STDOUT:     %ReturnType.ref: ReturnType = name_ref ReturnType, %ReturnType.decl [template = constants.%struct.1]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()

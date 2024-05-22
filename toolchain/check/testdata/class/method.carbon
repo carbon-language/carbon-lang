@@ -107,10 +107,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {}
-// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
-// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc16_12.1: Class = param self
@@ -120,7 +120,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc16_29.2: type = converted %int.make_type_32.loc16, %.loc16_29.1 [template = i32]
 // CHECK:STDOUT:     @F.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Call.decl: Call = fn_decl @Call [template = constants.%struct.4] {
 // CHECK:STDOUT:     %Class.ref.loc20: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc20_9.1: Class = param c
@@ -130,7 +130,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc20_22.2: type = converted %int.make_type_32.loc20, %.loc20_22.1 [template = i32]
 // CHECK:STDOUT:     @Call.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallAlias.decl: CallAlias = fn_decl @CallAlias [template = constants.%struct.5] {
 // CHECK:STDOUT:     %Class.ref.loc26: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.loc26_14.1: Class = param c
@@ -140,21 +140,21 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc26_27.2: type = converted %int.make_type_32.loc26, %.loc26_27.1 [template = i32]
 // CHECK:STDOUT:     @CallAlias.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallOnConstBoundMethod.decl: CallOnConstBoundMethod = fn_decl @CallOnConstBoundMethod [template = constants.%struct.6] {
 // CHECK:STDOUT:     %int.make_type_32.loc30: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc30_32.1: type = value_of_initializer %int.make_type_32.loc30 [template = i32]
 // CHECK:STDOUT:     %.loc30_32.2: type = converted %int.make_type_32.loc30, %.loc30_32.1 [template = i32]
 // CHECK:STDOUT:     @CallOnConstBoundMethod.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallWithAddr.decl: CallWithAddr = fn_decl @CallWithAddr [template = constants.%struct.8] {
 // CHECK:STDOUT:     %int.make_type_32.loc34: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc34_22.1: type = value_of_initializer %int.make_type_32.loc34 [template = i32]
 // CHECK:STDOUT:     %.loc34_22.2: type = converted %int.make_type_32.loc34, %.loc34_22.1 [template = i32]
 // CHECK:STDOUT:     @CallWithAddr.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.9: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.9: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallFThroughPointer.decl: CallFThroughPointer = fn_decl @CallFThroughPointer [template = constants.%struct.9] {
 // CHECK:STDOUT:     %Class.ref.loc39: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc39_32: type = ptr_type Class [template = constants.%.2]
@@ -165,7 +165,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc39_38.2: type = converted %int.make_type_32.loc39, %.loc39_38.1 [template = i32]
 // CHECK:STDOUT:     @CallFThroughPointer.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.10: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.10: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallGThroughPointer.decl: CallGThroughPointer = fn_decl @CallGThroughPointer [template = constants.%struct.10] {
 // CHECK:STDOUT:     %Class.ref.loc43: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %.loc43_32: type = ptr_type Class [template = constants.%.2]
@@ -180,14 +180,14 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %Class.ref.loc47: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     @Make.%return: ref Class = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.11: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.11: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallFOnInitializingExpr.decl: CallFOnInitializingExpr = fn_decl @CallFOnInitializingExpr [template = constants.%struct.12] {
 // CHECK:STDOUT:     %int.make_type_32.loc49: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc49_33.1: type = value_of_initializer %int.make_type_32.loc49 [template = i32]
 // CHECK:STDOUT:     %.loc49_33.2: type = converted %int.make_type_32.loc49, %.loc49_33.1 [template = i32]
 // CHECK:STDOUT:     @CallFOnInitializingExpr.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.12: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.12: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %CallGOnInitializingExpr.decl: CallGOnInitializingExpr = fn_decl @CallGOnInitializingExpr [template = constants.%struct.13] {
 // CHECK:STDOUT:     %int.make_type_32.loc53: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:     %.loc53_33.1: type = value_of_initializer %int.make_type_32.loc53 [template = i32]

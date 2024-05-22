@@ -30,7 +30,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
-// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir4, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.2] {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, %x
 // CHECK:STDOUT:     %.loc11: type = bind_value %x.ref

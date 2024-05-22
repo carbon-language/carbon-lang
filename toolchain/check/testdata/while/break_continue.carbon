@@ -66,56 +66,56 @@ fn While() {
 // CHECK:STDOUT:     .While = %While.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.1: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %A.decl: A = fn_decl @A [template = constants.%struct.2] {
 // CHECK:STDOUT:     %bool.make_type.loc7: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %bool.make_type.loc7 [template = bool]
 // CHECK:STDOUT:     %.loc7_11.2: type = converted %bool.make_type.loc7, %.loc7_11.1 [template = bool]
 // CHECK:STDOUT:     @A.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %B.decl: B = fn_decl @B [template = constants.%struct.3] {
 // CHECK:STDOUT:     %bool.make_type.loc8: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc8_11.1: type = value_of_initializer %bool.make_type.loc8 [template = bool]
 // CHECK:STDOUT:     %.loc8_11.2: type = converted %bool.make_type.loc8, %.loc8_11.1 [template = bool]
 // CHECK:STDOUT:     @B.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.3: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %C.decl: C = fn_decl @C [template = constants.%struct.4] {
 // CHECK:STDOUT:     %bool.make_type.loc9: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc9_11.1: type = value_of_initializer %bool.make_type.loc9 [template = bool]
 // CHECK:STDOUT:     %.loc9_11.2: type = converted %bool.make_type.loc9, %.loc9_11.1 [template = bool]
 // CHECK:STDOUT:     @C.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %D.decl: D = fn_decl @D [template = constants.%struct.5] {
 // CHECK:STDOUT:     %bool.make_type.loc10: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc10_11.1: type = value_of_initializer %bool.make_type.loc10 [template = bool]
 // CHECK:STDOUT:     %.loc10_11.2: type = converted %bool.make_type.loc10, %.loc10_11.1 [template = bool]
 // CHECK:STDOUT:     @D.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.5: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %E.decl: E = fn_decl @E [template = constants.%struct.6] {
 // CHECK:STDOUT:     %bool.make_type.loc11: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11 [template = bool]
 // CHECK:STDOUT:     %.loc11_11.2: type = converted %bool.make_type.loc11, %.loc11_11.1 [template = bool]
 // CHECK:STDOUT:     @E.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.6: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.7] {
 // CHECK:STDOUT:     %bool.make_type.loc12: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc12_11.1: type = value_of_initializer %bool.make_type.loc12 [template = bool]
 // CHECK:STDOUT:     %.loc12_11.2: type = converted %bool.make_type.loc12, %.loc12_11.1 [template = bool]
 // CHECK:STDOUT:     @F.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.8] {
 // CHECK:STDOUT:     %bool.make_type.loc13: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc13_11.1: type = value_of_initializer %bool.make_type.loc13 [template = bool]
 // CHECK:STDOUT:     %.loc13_11.2: type = converted %bool.make_type.loc13, %.loc13_11.1 [template = bool]
 // CHECK:STDOUT:     @G.%return: ref bool = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir2, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.8: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.1]
 // CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.9] {
 // CHECK:STDOUT:     %bool.make_type.loc14: init type = call constants.%struct.1() [template = bool]
 // CHECK:STDOUT:     %.loc14_11.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
