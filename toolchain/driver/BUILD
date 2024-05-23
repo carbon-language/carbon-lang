@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@llvm-project//llvm:binary_alias.bzl", "binary_alias")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
@@ -13,10 +15,66 @@ filegroup(
     data = glob(["testdata/**/*.carbon"]),
 )
 
+# Build rules to construct the install data tree for the Carbon toolchain.
+#
+# The directory `install` should mirror a Unix-y [FHS] style installation of
+# Carbon under some prefix (`/usr`, `/usr/local`, or possibly a home directory
+# or a custom prefix). When installed, user facing binaries, which we largely
+# expect to be solely the `carbon` driver will be at `install/bin/carbon`. We
+# collect data, private executables, and other internals used by the toolchain
+# in `install/lib/carbon`. While using a `lib` subdirectory isn't a perfect fit
+# for the FHS, having a single location where private data is collected is
+# significantly superior to spreading them across the system. This also matches
+# similar patterns used by Clang itself and several other language toolchains
+# and standard libraries.
+#
+# Code that needs data files in the toolchain should add them to paths below
+# `install/lib/carbon` here and use data dependencies on these paths so that we
+# are always testing against a realistic layout.
+
+# Copy Clang and LLVM toolchain files into a synthetic LLVM installation under
+# `install/lib/carbon/llvm` so that parts of Clang that expect to find an LLVM
+# installation at relative paths work correctly without exposing these as
+# user-facing components.
+copy_file(
+    name = "copy_lld",
+    src = "@llvm-project//lld:lld",
+    out = "install/lib/carbon/llvm/bin/lld",
+    allow_symlink = False,
+    is_executable = True,
+)
+
+[
+    binary_alias(
+        name = "install/lib/carbon/llvm/bin/" + bin_name,
+        binary = ":copy_lld",
+    )
+    for bin_name in [
+        "ld.lld",
+        "ld64.lld",
+        "lld-link",
+        "wasm-ld",
+    ]
+]
+
+filegroup(
+    name = "llvm_link_data",
+    data = ["install/lib/carbon/llvm/bin/" + bin_name for bin_name in [
+        "lld",
+        "ld.lld",
+        "ld64.lld",
+        "lld-link",
+        "wasm-ld",
+    ]],
+)
+
 cc_library(
     name = "clang_runner",
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
+    data = [
+        ":llvm_link_data",
+    ],
     deps = [
         "//common:command_line",
         "//common:ostream",

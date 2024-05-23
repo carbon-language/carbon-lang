@@ -943,6 +943,9 @@ auto Driver::Link(const LinkOptions& options,
   // We link using a C++ mode of the driver.
   clang_args.push_back("--driver-mode=g++");
 
+  // Use LLD, which we provide in our install directory, for linking.
+  clang_args.push_back("-fuse-ld=lld");
+
   // Add OS-specific flags based on the target.
   AddOSFlags(codegen_options.target, clang_args);
 
@@ -951,7 +954,15 @@ auto Driver::Link(const LinkOptions& options,
   clang_args.append(options.object_filenames.begin(),
                     options.object_filenames.end());
 
-  ClangRunner runner("FIXME", codegen_options.target, vlog_stream_);
+  // Compute the install directory from the data directory.
+  // TODO: A future PR will move other data into the install directory, at which
+  // point we can compute it outside of the driver and pass it in which will be
+  // a bit cleaner.
+  llvm::SmallString<256> install_path(data_dir_);
+  llvm::sys::path::append(install_path, llvm::sys::path::Style::posix,
+                          "toolchain/driver/install");
+
+  ClangRunner runner(install_path, codegen_options.target, vlog_stream_);
   return {.success = runner.Run(clang_args)};
 }
 

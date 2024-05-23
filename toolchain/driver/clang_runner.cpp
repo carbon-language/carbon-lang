@@ -30,22 +30,9 @@
 
 namespace Carbon {
 
-static auto GetExecutablePath(llvm::StringRef exe_name) -> std::string {
-  // If the `exe_name` isn't already a valid path, look it up.
-  if (!llvm::sys::fs::exists(exe_name)) {
-    if (llvm::ErrorOr<std::string> path_result =
-            llvm::sys::findProgramByName(exe_name)) {
-      return *path_result;
-    }
-  }
-
-  return exe_name.str();
-}
-
-ClangRunner::ClangRunner(llvm::StringRef exe_name, llvm::StringRef target,
+ClangRunner::ClangRunner(llvm::StringRef install_path, llvm::StringRef target,
                          llvm::raw_ostream* vlog_stream)
-    : exe_name_(exe_name),
-      exe_path_(GetExecutablePath(exe_name)),
+    : install_path_(install_path),
       target_(target),
       vlog_stream_(vlog_stream),
       diagnostic_ids_(new clang::DiagnosticIDs()) {}
@@ -70,7 +57,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Render the arguments into null-terminated C-strings for use by the Clang
   // driver. Command lines can get quite long in build systems so this tries to
   // minimize the memory allocation overhead.
-  std::array<llvm::StringRef, 1> exe_arg = {exe_name_};
+
+  // Start with a dummy executable name. We'll manually set the install
+  // directory below.
+  std::array<llvm::StringRef, 1> exe_arg = {"clang-runner"};
   auto args_range =
       llvm::concat<const llvm::StringRef>(exe_arg, maybe_v_arg, args);
   int total_size = 0;
@@ -91,7 +81,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     cstr_arg_storage[i] = '\0';
     ++i;
   }
-  for (const char* cstr_arg : llvm::ArrayRef(cstr_args).drop_front()) {
+  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
     CARBON_VLOG() << "    '" << cstr_arg << "'\n";
   }
 
@@ -113,7 +103,15 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options);
 
-  clang::driver::Driver driver(exe_path_, target_, diagnostics);
+  clang::driver::Driver driver("clang-runner", target_, diagnostics);
+
+  // Configure the install directory to find other tools and data files.
+  //
+  // We directly override the detected directory as we use a synthetic path
+  // above. This makes it appear that our binary was in the installed binaries
+  // directory, and allows finding tools relative to it.
+  driver.Dir = GetLLVMInstallBinPath();
+  CARBON_VLOG() << "Setting bin directory to: " << driver.Dir << "\n";
 
   // TODO: Directly run in-process rather than using a subprocess. This is both
   // more efficient and makes debugging (much) easier. Needs code like:
@@ -147,6 +145,25 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
   // Return whether the command was executed successfully.
   return result == 0 && failing_commands.empty();
+}
+
+// Compute the LLVM install's `bin` path from the Carbon install path.
+//
+// The Carbon toolchain install tree contains a mini LLVM install tree that it
+// redirects Clang and LLVM tools to in order to find data and binary paths. We
+// don't want to expose this install to the broader system, and so while it
+// mirrors a system LLVM install, it nests within the private install area of
+// Carbon itself. See the `BUILD` file for more details about the layout of this
+// tree.
+//
+// TODO: Might be worth factoring out a library specifically for managing the
+// Carbon toolchain's installation path and locating relevant files associated
+// with it rather than doing this one-off here.
+auto ClangRunner::GetLLVMInstallBinPath() const -> std::string {
+  llvm::SmallString<256> path(install_path_);
+  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
+                          "lib/carbon/llvm/bin");
+  return path.str().str();
 }
 
 }  // namespace Carbon

@@ -55,7 +55,7 @@ static auto RunWithCapturedOutput(std::string& out, std::string& err,
 TEST(ClangRunnerTest, Version) {
   TestRawOstream test_os;
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner("./toolchain/driver/run_clang_test", target, &test_os);
+  ClangRunner runner("/test", target, &test_os);
 
   std::string out;
   std::string err;
@@ -73,7 +73,7 @@ TEST(ClangRunnerTest, Version) {
   // The target should match what we provided.
   EXPECT_THAT(out, HasSubstr((llvm::Twine("Target: ") + target).str()));
   // The installation should come from the above path of the test binary.
-  EXPECT_THAT(out, HasSubstr("InstalledDir: ./toolchain/driver"));
+  EXPECT_THAT(out, HasSubstr("InstalledDir: /test/lib/carbon/llvm/bin"));
 }
 
 // Utility to write a test file. We don't need the full power provided here yet,
@@ -123,7 +123,7 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner("./toolchain/driver/run_clang_test", target, &verbose_os);
+  ClangRunner runner("/test/install/path", target, &verbose_os);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,
