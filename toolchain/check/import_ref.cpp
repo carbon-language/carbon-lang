@@ -12,6 +12,7 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -1265,20 +1266,58 @@ class ImportRefResolver {
   llvm::SmallVector<Work> work_stack_;
 };
 
+// Returns a list of ImportIRInsts equivalent to the ImportRef currently being
+// loaded (including the one pointed at directly by the ImportRef), and the
+// final instruction's type ID.
+//
+// This addresses cases where an ImportRefUnloaded may point at another
+// ImportRefUnloaded. The ImportRefResolver requires a SemIR with a
+// constant-evaluated version of the instruction to work with.
+static auto GetInstForLoad(Context& context,
+                           SemIR::ImportIRInstId import_ir_inst_id)
+    -> std::pair<llvm::SmallVector<SemIR::ImportIRInst>, SemIR::TypeId> {
+  std::pair<llvm::SmallVector<SemIR::ImportIRInst>, SemIR::TypeId> result = {
+      {}, SemIR::TypeId::Invalid};
+  auto& [import_ir_insts, type_id] = result;
+
+  auto import_ir_inst = context.import_ir_insts().Get(import_ir_inst_id);
+  // The first ImportIRInst is added directly because the IR doesn't need to be
+  // localized.
+  import_ir_insts.push_back(import_ir_inst);
+  const auto* cursor_ir = context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+
+  while (true) {
+    auto cursor_inst = cursor_ir->insts().Get(import_ir_inst.inst_id);
+
+    auto import_ref = cursor_inst.TryAs<SemIR::ImportRefUnloaded>();
+    if (!import_ref) {
+      type_id = cursor_inst.type_id();
+      return result;
+    }
+
+    import_ir_inst =
+        cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
+    cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+    import_ir_insts.push_back({.ir_id = context.GetImportIRId(*cursor_ir),
+                               .inst_id = import_ir_inst.inst_id});
+  }
+}
+
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
   if (!inst) {
     return;
   }
-  auto import_ir_inst = context.import_ir_insts().Get(inst->import_ir_inst_id);
 
-  const SemIR::File& import_ir =
-      *context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-  auto import_inst = import_ir.insts().Get(import_ir_inst.inst_id);
+  auto [indirect_insts, load_type_id] =
+      GetInstForLoad(context, inst->import_ir_inst_id);
 
-  ImportRefResolver resolver(context, import_ir_inst.ir_id);
-  auto type_id = resolver.ResolveType(import_inst.type_id());
-  auto constant_id = resolver.Resolve(import_ir_inst.inst_id);
+  // The last indirect instruction is the one to resolve. Pop it here because
+  // Resolve will assign the constant.
+  auto load_ir_inst = indirect_insts.pop_back_val();
+  ImportRefResolver resolver(context, load_ir_inst.ir_id);
+  auto type_id = resolver.ResolveType(load_type_id);
+  auto constant_id = resolver.Resolve(load_ir_inst.inst_id);
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
   // doesn't use ReplaceInstBeforeConstantUse because it would trigger
@@ -1289,8 +1328,12 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
                              .import_ir_inst_id = inst->import_ir_inst_id,
                              .bind_name_id = inst->bind_name_id});
 
-  // Store the constant for both the ImportRefLoaded and imported instruction.
+  // Store the constant for both the ImportRefLoaded and indirect instructions.
   context.constant_values().Set(inst_id, constant_id);
+  for (const auto& import_ir_inst : indirect_insts) {
+    context.import_ir_constant_values()[import_ir_inst.ir_id.index].Set(
+        import_ir_inst.inst_id, constant_id);
+  }
 }
 
 // Imports the impl `import_impl_id` from the imported IR `import_ir`.
