@@ -46,8 +46,7 @@ class CopyOnWriteBlock {
   // Gets a canonical block ID containing the resulting elements. This assumes
   // the original block ID, if specified, was also canonical.
   auto GetCanonical() const -> BlockIdType {
-    return id_ == source_id_ ? id_
-                             : (file_.*ValueStore)().GetOrAddCanonical(id_);
+    return id_ == source_id_ ? id_ : (file_.*ValueStore)().MakeCanonical(id_);
   }
 
   // Sets the element at index `i` within the block. Lazily allocates a new

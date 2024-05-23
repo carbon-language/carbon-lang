@@ -203,6 +203,8 @@ struct CompileTimeBindIndex : public IndexBase,
 
 constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
     CompileTimeBindIndex(InvalidIndex);
+// Note that InvalidIndex - 1 and InvalidIndex - 2 are used by
+// DenseMapInfo<BindNameInfo>.
 
 // The ID of a function.
 struct FunctionId : public IdBase, public Printable<FunctionId> {

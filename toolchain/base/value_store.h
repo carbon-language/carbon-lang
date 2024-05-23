@@ -78,16 +78,15 @@ struct FloatId : public IdBase, public Printable<FloatId> {
 constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
 
 // DenseMapInfo for llvm::APFloat, for use in the canonical float value store.
+// LLVM has an implementation of this but it strangely lives in the non-public
+// header lib/IR/LLVMContextImpl.h, so we use our own.
 // TODO: Remove this once our new hash table is available.
 struct APFloatDenseMapInfo {
   static auto getEmptyKey() -> llvm::APFloat {
-    // Use a floating-point semantics value that we never otherwise use.
-    return llvm::APFloat::getZero(
-        llvm::APFloat::EnumToSemantics(llvm::APFloat::S_Float8E5M2));
+    return llvm::APFloat(llvm::APFloat::Bogus(), 1);
   }
   static auto getTombstoneKey() -> llvm::APFloat {
-    return llvm::APFloat::getNaN(
-        llvm::APFloat::EnumToSemantics(llvm::APFloat::S_Float8E5M2));
+    return llvm::APFloat(llvm::APFloat::Bogus(), 2);
   }
   static auto getHashValue(const llvm::APFloat& val) -> unsigned {
     return hash_value(val);

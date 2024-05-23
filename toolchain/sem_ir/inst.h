@@ -139,6 +139,8 @@ class Inst : public Printable<Inst> {
     } else {
       kind_ = TypedInst::Kind.AsInt();
     }
+    CARBON_CHECK(kind_ >= 0)
+        << "Negative kind values are reserved for DenseMapInfo.";
     if constexpr (Internal::HasTypeIdMember<TypedInst>) {
       type_id_ = typed_inst.type_id;
     }
@@ -453,6 +455,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   }
 };
 
+// See common/hashing.h.
 inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   Hasher hasher(seed);
   hasher.Hash(value);

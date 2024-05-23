@@ -1068,8 +1068,8 @@ auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::TupleType>(
-      *this, type_blocks().GetOrAddCanonical(type_ids));
+  return GetTypeImpl<SemIR::TupleType>(*this,
+                                       type_blocks().AddCanonical(type_ids));
 }
 
 auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,

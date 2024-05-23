@@ -36,14 +36,16 @@ inline auto CarbonHashValue(const BindNameInfo& value, uint64_t seed)
 // DenseMapInfo for BindNameInfo.
 struct BindNameInfoDenseMapInfo {
   static auto getEmptyKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId(-1),
+    return BindNameInfo{.name_id = NameId::Invalid,
                         .enclosing_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex::Invalid};
+                        .bind_index = CompileTimeBindIndex(
+                            CompileTimeBindIndex::InvalidIndex - 1)};
   }
   static auto getTombstoneKey() -> BindNameInfo {
-    return BindNameInfo{.name_id = NameId(-1),
+    return BindNameInfo{.name_id = NameId::Invalid,
                         .enclosing_scope_id = NameScopeId::Invalid,
-                        .bind_index = CompileTimeBindIndex::Invalid};
+                        .bind_index = CompileTimeBindIndex(
+                            CompileTimeBindIndex::InvalidIndex - 2)};
   }
   static auto getHashValue(const BindNameInfo& val) -> unsigned {
     return static_cast<uint64_t>(HashValue(val));
@@ -60,7 +62,7 @@ struct BindNameStore : public ValueStore<BindNameId> {
  public:
   // Convert an ID to a canonical ID. All calls to this with equivalent
   // `BindNameInfo`s will return the same `BindNameId`.
-  auto GetOrAddCanonical(BindNameId id) -> BindNameId {
+  auto MakeCanonical(BindNameId id) -> BindNameId {
     return canonical_ids_.insert({Get(id), id}).first->second;
   }
 

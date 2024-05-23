@@ -283,6 +283,7 @@ struct HashableType {
 
   int ignored = 0;
 
+  // See common/hashing.h.
   friend auto CarbonHashValue(const HashableType& value, uint64_t seed)
       -> HashCode {
     Hasher hasher(seed);

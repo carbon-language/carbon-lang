@@ -50,7 +50,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
 
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
-  auto GetOrAddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {
+  auto AddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {
     auto [it, added] = canonical_blocks_.insert({{content}, IdT::Invalid});
     if (added) {
       auto id = Add(content);
@@ -63,7 +63,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   // Promotes an existing block ID to a canonical block ID, or returns an
   // existing canonical block ID if the block was already added. The specified
   // block must not be modified after this point.
-  auto GetOrAddCanonical(IdT id) -> IdT {
+  auto MakeCanonical(IdT id) -> IdT {
     return canonical_blocks_.insert({{Get(id)}, id}).first->second;
   }
 
@@ -108,6 +108,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     // succeeds.
     mutable llvm::ArrayRef<ElementType> data;
 
+    // See common/hashing.h.
     friend auto CarbonHashValue(CanonicalBlock block, uint64_t seed)
         -> HashCode {
       Hasher hasher(seed);
@@ -117,12 +118,15 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   };
 
   struct CanonicalBlockDenseMapInfo {
+    // Blocks whose data() points to the start of `SpecialData` are used to
+    // represent the special "empty" and "tombstone" states.
     static constexpr ElementType SpecialData[1] = {ElementType::Invalid};
     static auto getEmptyKey() -> CanonicalBlock {
-      return CanonicalBlock{{SpecialData, SpecialData}};
+      return CanonicalBlock{
+          llvm::ArrayRef(SpecialData, static_cast<size_t>(0))};
     }
     static auto getTombstoneKey() -> CanonicalBlock {
-      return CanonicalBlock{{SpecialData, SpecialData + 1}};
+      return CanonicalBlock{llvm::ArrayRef(SpecialData, 1)};
     }
     static auto getHashValue(CanonicalBlock val) -> unsigned {
       return static_cast<uint64_t>(HashValue(val));
