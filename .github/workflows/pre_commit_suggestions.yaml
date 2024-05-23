@@ -60,3 +60,16 @@ jobs:
           cat ./diff | \
           GITHUB_EVENT_PATH=./event \
             reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review
+
+  delete-stale-suggestions:
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      github.actor != 'jonmeow'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stale suggestions
+      - uses: Ardiannn08/resolve-outdated-comment@v1.1
+        with:
+          token: ${{ secrets.CARBON_INFRA_BOT_FOR_REVIEWDOG }}
+          filter-user: 'CarbonInfraBot'
+          mode: 'delete'
