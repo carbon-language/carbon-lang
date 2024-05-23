@@ -26,8 +26,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
 
+  // TODO: We should try to thread the executable path into here.
+  const InstallPaths install_paths("");
   llvm::raw_null_ostream null_ostream;
-  Driver driver(fs, "", null_ostream, null_ostream);
+  Driver driver(fs, &install_paths, "", null_ostream, null_ostream);
 
   // TODO: Get checking to a point where it can handle invalid parse trees
   // without crashing.

@@ -30,22 +30,9 @@
 
 namespace Carbon {
 
-static auto GetExecutablePath(llvm::StringRef exe_name) -> std::string {
-  // If the `exe_name` isn't already a valid path, look it up.
-  if (!llvm::sys::fs::exists(exe_name)) {
-    if (llvm::ErrorOr<std::string> path_result =
-            llvm::sys::findProgramByName(exe_name)) {
-      return *path_result;
-    }
-  }
-
-  return exe_name.str();
-}
-
-ClangRunner::ClangRunner(llvm::StringRef exe_name, llvm::StringRef target,
-                         llvm::raw_ostream* vlog_stream)
-    : exe_name_(exe_name),
-      exe_path_(GetExecutablePath(exe_name)),
+ClangRunner::ClangRunner(const InstallPaths* install_paths,
+                         llvm::StringRef target, llvm::raw_ostream* vlog_stream)
+    : installation_(install_paths),
       target_(target),
       vlog_stream_(vlog_stream),
       diagnostic_ids_(new clang::DiagnosticIDs()) {}
@@ -70,7 +57,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // Render the arguments into null-terminated C-strings for use by the Clang
   // driver. Command lines can get quite long in build systems so this tries to
   // minimize the memory allocation overhead.
-  std::array<llvm::StringRef, 1> exe_arg = {exe_name_};
+
+  // Start with a dummy executable name. We'll manually set the install
+  // directory below.
+  std::array<llvm::StringRef, 1> exe_arg = {"clang-runner"};
   auto args_range =
       llvm::concat<const llvm::StringRef>(exe_arg, maybe_v_arg, args);
   int total_size = 0;
@@ -91,7 +81,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
     cstr_arg_storage[i] = '\0';
     ++i;
   }
-  for (const char* cstr_arg : llvm::ArrayRef(cstr_args).drop_front()) {
+  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
     CARBON_VLOG() << "    '" << cstr_arg << "'\n";
   }
 
@@ -113,7 +103,15 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
       /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options);
 
-  clang::driver::Driver driver(exe_path_, target_, diagnostics);
+  clang::driver::Driver driver("clang-runner", target_, diagnostics);
+
+  // Configure the install directory to find other tools and data files.
+  //
+  // We directly override the detected directory as we use a synthetic path
+  // above. This makes it appear that our binary was in the installed binaries
+  // directory, and allows finding tools relative to it.
+  driver.Dir = installation_->llvm_install_bin();
+  CARBON_VLOG() << "Setting bin directory to: " << driver.Dir << "\n";
 
   // TODO: Directly run in-process rather than using a subprocess. This is both
   // more efficient and makes debugging (much) easier. Needs code like:

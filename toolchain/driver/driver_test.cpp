@@ -14,6 +14,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "testing/base/gtest_main.h"
 #include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
@@ -40,7 +41,10 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 
 class DriverTest : public testing::Test {
  protected:
-  DriverTest() : driver_(fs_, "", test_output_stream_, test_error_stream_) {
+  DriverTest()
+      : installation_(Testing::GetTestExePath()),
+        driver_(fs_, &installation_, "", test_output_stream_,
+                test_error_stream_) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;
@@ -87,6 +91,7 @@ class DriverTest : public testing::Test {
   }
 
   llvm::vfs::InMemoryFileSystem fs_;
+  const InstallPaths installation_;
   TestRawOstream test_output_stream_;
   TestRawOstream test_error_stream_;
 

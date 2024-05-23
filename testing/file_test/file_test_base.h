@@ -184,7 +184,9 @@ struct FileTestFactory {
   const char* name;
 
   // A factory function for tests.
-  std::function<FileTestBase*(llvm::StringRef path)> factory_fn;
+  std::function<FileTestBase*(llvm::StringRef exe_path,
+                              llvm::StringRef test_name)>
+      factory_fn;
 };
 
 // Must be implemented by the individual file_test to initialize tests.
@@ -198,9 +200,11 @@ struct FileTestFactory {
 extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard GetFileTestFactory implementation.
-#define CARBON_FILE_TEST_FACTORY(Name)                                   \
-  auto GetFileTestFactory() -> FileTestFactory {                         \
-    return {#Name, [](llvm::StringRef path) { return new Name(path); }}; \
+#define CARBON_FILE_TEST_FACTORY(Name)                                       \
+  auto GetFileTestFactory() -> FileTestFactory {                             \
+    return {#Name, [](llvm::StringRef exe_path, llvm::StringRef test_name) { \
+              return new Name(exe_path, test_name);                          \
+            }};                                                              \
   }
 
 }  // namespace Carbon::Testing

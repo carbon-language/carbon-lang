@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"
 #include "toolchain/driver/driver.h"
+#include "toolchain/install/install_paths.h"
 
 auto main(int argc, char** argv) -> int {
   Carbon::InitLLVM init_llvm(argc, argv);
@@ -30,12 +31,16 @@ auto main(int argc, char** argv) -> int {
   llvm::SmallVector<llvm::StringRef> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
 
+  Carbon::InstallPaths install_paths(exe_path);
+
   // Construct the data directory relative to the executable location.
+  // TODO: Will be removed when everything moves to the install_paths.
   llvm::SmallString<256> data_dir(llvm::sys::path::parent_path(exe_path));
   llvm::sys::path::append(data_dir, llvm::sys::path::Style::posix,
                           "carbon.runfiles/_main/");
 
-  Carbon::Driver driver(*fs, data_dir, llvm::outs(), llvm::errs());
+  Carbon::Driver driver(*fs, &install_paths, data_dir, llvm::outs(),
+                        llvm::errs());
   bool success = driver.RunCommand(args).success;
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

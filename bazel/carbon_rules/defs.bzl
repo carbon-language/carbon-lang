@@ -48,6 +48,4 @@ def carbon_binary(name, srcs):
                 ["--output=$(location %s)" % name]),
         srcs = objs,
         outs = [name],
-        # `link` has a dependency on ld, which should be in /usr/bin.
-        env = {"PATH": "/usr/bin"},
     )

@@ -18,7 +18,8 @@ namespace {
 
 class ExplorerFileTest : public FileTestBase {
  public:
-  explicit ExplorerFileTest(llvm::StringRef test_name)
+  explicit ExplorerFileTest(llvm::StringRef /*exe_path*/,
+                            llvm::StringRef test_name)
       : FileTestBase(test_name),
         prelude_line_re_(R"(prelude.carbon:(\d+))"),
         timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {

@@ -18,6 +18,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/TargetParser/Host.h"
+#include "testing/base/gtest_main.h"
 #include "testing/base/test_raw_ostream.h"
 
 namespace Carbon {
@@ -54,8 +55,9 @@ static auto RunWithCapturedOutput(std::string& out, std::string& err,
 
 TEST(ClangRunnerTest, Version) {
   TestRawOstream test_os;
+  InstallPaths install_paths(Testing::GetTestExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner("./toolchain/driver/run_clang_test", target, &test_os);
+  ClangRunner runner(&install_paths, target, &test_os);
 
   std::string out;
   std::string err;
@@ -72,8 +74,9 @@ TEST(ClangRunnerTest, Version) {
   EXPECT_THAT(out, HasSubstr("clang version"));
   // The target should match what we provided.
   EXPECT_THAT(out, HasSubstr((llvm::Twine("Target: ") + target).str()));
-  // The installation should come from the above path of the test binary.
-  EXPECT_THAT(out, HasSubstr("InstalledDir: ./toolchain/driver"));
+  // Clang's install should be our private LLVM install bin directory.
+  EXPECT_THAT(out, HasSubstr(std::string("InstalledDir: ") +
+                             install_paths.llvm_install_bin()));
 }
 
 // Utility to write a test file. We don't need the full power provided here yet,
@@ -120,10 +123,11 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   std::filesystem::path foo_file = WriteTestFile("foo.o", "");
   std::filesystem::path bar_file = WriteTestFile("bar.o", "");
 
+  InstallPaths install_paths(Testing::GetTestExePath());
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner("./toolchain/driver/run_clang_test", target, &verbose_os);
+  ClangRunner runner(&install_paths, target, &verbose_os);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,

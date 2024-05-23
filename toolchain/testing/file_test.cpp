@@ -23,8 +23,11 @@ namespace {
 // phase subdirectories.
 class ToolchainFileTest : public FileTestBase {
  public:
-  explicit ToolchainFileTest(llvm::StringRef test_name)
-      : FileTestBase(test_name), component_(GetComponent(test_name)) {}
+  explicit ToolchainFileTest(llvm::StringRef exe_path,
+                             llvm::StringRef test_name)
+      : FileTestBase(test_name),
+        component_(GetComponent(test_name)),
+        installation_(exe_path) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
@@ -39,7 +42,7 @@ class ToolchainFileTest : public FileTestBase {
       CARBON_RETURN_IF_ERROR(AddFile(fs, file));
     }
 
-    Driver driver(fs, data_dir, stdout, stderr);
+    Driver driver(fs, &installation_, data_dir, stdout, stderr);
     auto driver_result = driver.RunCommand(test_args);
 
     RunResult result{
@@ -152,6 +155,7 @@ class ToolchainFileTest : public FileTestBase {
   }
 
   const llvm::StringRef component_;
+  const InstallPaths installation_;
 };
 
 }  // namespace
