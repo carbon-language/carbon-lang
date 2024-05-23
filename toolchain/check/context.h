@@ -341,15 +341,13 @@ class Context {
   auto identifiers() -> StringStoreWrapper<IdentifierId>& {
     return sem_ir().identifiers();
   }
-  auto ints() -> ValueStore<IntId>& { return sem_ir().ints(); }
+  auto ints() -> CanonicalValueStore<IntId>& { return sem_ir().ints(); }
   auto reals() -> ValueStore<RealId>& { return sem_ir().reals(); }
-  auto floats() -> ValueStore<FloatId>& { return sem_ir().floats(); }
+  auto floats() -> FloatValueStore& { return sem_ir().floats(); }
   auto string_literal_values() -> StringStoreWrapper<StringLiteralValueId>& {
     return sem_ir().string_literal_values();
   }
-  auto bind_names() -> ValueStore<SemIR::BindNameId>& {
-    return sem_ir().bind_names();
-  }
+  auto bind_names() -> SemIR::BindNameStore& { return sem_ir().bind_names(); }
   auto functions() -> ValueStore<SemIR::FunctionId>& {
     return sem_ir().functions();
   }

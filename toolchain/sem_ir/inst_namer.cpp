@@ -27,7 +27,7 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
   scopes.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
 
   // Build the constants scope.
-  CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().GetAsVector());
+  CollectNamesInBlock(ScopeId::Constants, sem_ir.constants().array_ref());
 
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir.top_inst_block_id());

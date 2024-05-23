@@ -57,8 +57,8 @@ class ConstantValueStore {
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {
  public:
-  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator), constants_(&sem_ir) {}
+  explicit ConstantStore(File& sem_ir, llvm::BumpPtrAllocator& /*allocator*/)
+      : sem_ir_(sem_ir) {}
 
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.
@@ -69,25 +69,14 @@ class ConstantStore {
 
   // Returns a copy of the constant IDs as a vector, in an arbitrary but
   // stable order. This should not be used anywhere performance-sensitive.
-  auto GetAsVector() const -> llvm::SmallVector<InstId, 0>;
+  auto array_ref() const -> llvm::ArrayRef<InstId> { return constants_; }
 
   auto size() const -> int { return constants_.size(); }
 
  private:
-  // TODO: We store two copies of each constant instruction: one in insts() and
-  // one here. We could avoid one of those copies and store just an InstId here,
-  // at the cost of some more indirection when recomputing profiles during
-  // lookup. Once we have a representative data set, we should measure the
-  // impact on compile time from that change.
-  struct ConstantNode : llvm::FoldingSetNode {
-    Inst inst;
-    ConstantId constant_id;
-
-    auto Profile(llvm::FoldingSetNodeID& id, File* sem_ir) -> void;
-  };
-
-  llvm::BumpPtrAllocator* allocator_;
-  llvm::ContextualFoldingSet<ConstantNode, File*> constants_;
+  File& sem_ir_;
+  llvm::DenseMap<Inst, ConstantId> map_;
+  llvm::SmallVector<InstId, 0> constants_;
 };
 
 }  // namespace Carbon::SemIR

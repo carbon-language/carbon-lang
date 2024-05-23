@@ -44,9 +44,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %.4: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %.5: f64 = float_literal 2 [template]
 // CHECK:STDOUT:   %.6: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.7: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.8: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.9: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.7: bool = bool_literal false [template]
 // CHECK:STDOUT:   %RuntimeCall: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %struct.3: RuntimeCall = struct_value () [template]
 // CHECK:STDOUT: }
@@ -122,11 +120,11 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %.loc8_13.3: type = block_arg !if.expr.result.loc8 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref: False = name_ref false_, %false_
 // CHECK:STDOUT:   %Neq.ref.loc9: Neq = name_ref Neq, file.%Neq.decl [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc9_21: f64 = float_literal 1 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_26: f64 = float_literal 1 [template = constants.%.8]
-// CHECK:STDOUT:   %float.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_21, %.loc9_26) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.neq.loc9 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.neq.loc9, %.loc9_14.1 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc9_21: f64 = float_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_26: f64 = float_literal 1 [template = constants.%.4]
+// CHECK:STDOUT:   %float.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_21, %.loc9_26) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.neq.loc9 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.neq.loc9, %.loc9_14.1 [template = constants.%.7]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:

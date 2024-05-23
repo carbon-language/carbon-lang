@@ -5,8 +5,6 @@
 #include "toolchain/sem_ir/name.h"
 
 #include "llvm/ADT/StringSwitch.h"
-#include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/inst_profile.h"
 
 namespace Carbon::SemIR {
 

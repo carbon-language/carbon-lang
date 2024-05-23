@@ -1076,10 +1076,8 @@ auto Context::GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId {
 
 auto Context::GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId {
-  // TODO: Deduplicate the type block here. Currently requesting the same tuple
-  // type more than once will create multiple type blocks, all but one of which
-  // is unused.
-  return GetTypeImpl<SemIR::TupleType>(*this, type_blocks().Add(type_ids));
+  return GetTypeImpl<SemIR::TupleType>(*this,
+                                       type_blocks().AddCanonical(type_ids));
 }
 
 auto Context::GetAssociatedEntityType(SemIR::InterfaceId interface_id,
