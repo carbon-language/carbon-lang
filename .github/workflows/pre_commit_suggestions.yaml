@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete stale suggestions
-      - uses: Ardiannn08/resolve-outdated-comment@v1.1
+        uses: Ardiannn08/resolve-outdated-comment@v1.1
         with:
           token: ${{ secrets.CARBON_INFRA_BOT_FOR_REVIEWDOG }}
           filter-user: 'CarbonInfraBot'
