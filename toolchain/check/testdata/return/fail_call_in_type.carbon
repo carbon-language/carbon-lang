@@ -18,8 +18,10 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %ReturnType: type = fn_type @ReturnType [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct.1: ReturnType = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %Six: type = fn_type @Six [template]
-// CHECK:STDOUT:   %struct.2: Six = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: Six = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -33,7 +35,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %ReturnType.decl: ReturnType = fn_decl @ReturnType [template = constants.%struct.1] {
 // CHECK:STDOUT:     @ReturnType.%return: ref type = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %Six.decl: Six = fn_decl @Six [template = constants.%struct.3] {
 // CHECK:STDOUT:     %ReturnType.ref: ReturnType = name_ref ReturnType, %ReturnType.decl [template = constants.%struct.1]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc13_24.1: type = value_of_initializer %ReturnType.call
@@ -44,8 +47,13 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnType() -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return i32
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc9_37.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc9_37.2: type = converted %int.make_type_32, %.loc9_37.1 [template = i32]
+// CHECK:STDOUT:   return %.loc9_37.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:

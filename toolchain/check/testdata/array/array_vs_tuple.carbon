@@ -15,7 +15,9 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %G: type = fn_type @G [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: G = struct_value () [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %.2: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.3: type = array_type %.2, i32 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type [i32; 3] [template]
@@ -35,12 +37,19 @@ fn G() {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct] {}
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {}
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int.make_type_32.loc9: init type = call constants.%struct.2() [template = i32]
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 3 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_11.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:   %.loc9_11.2: type = converted %int.make_type_32.loc9, %.loc9_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc9_17: type = array_type %.loc9_16, i32 [template = constants.%.3]
 // CHECK:STDOUT:   %a.var: ref [i32; 3] = var a
 // CHECK:STDOUT:   %a: ref [i32; 3] = bind_name a, %a.var
@@ -60,8 +69,17 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_29.11: init [i32; 3] = array_init (%.loc9_29.4, %.loc9_29.7, %.loc9_29.10) to %a.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc9_30: init [i32; 3] = converted %.loc9_29.1, %.loc9_29.11 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_30
-// CHECK:STDOUT:   %.loc10_24.1: (type, type, type) = tuple_literal (i32, i32, i32)
-// CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, constants.%.7 [template = constants.%.7]
+// CHECK:STDOUT:   %int.make_type_32.loc10_11: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc10_16: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc10_21: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:   %.loc10_24.1: (type, type, type) = tuple_literal (%int.make_type_32.loc10_11, %int.make_type_32.loc10_16, %int.make_type_32.loc10_21)
+// CHECK:STDOUT:   %.loc10_24.2: type = value_of_initializer %int.make_type_32.loc10_11 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.3: type = converted %int.make_type_32.loc10_11, %.loc10_24.2 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.4: type = value_of_initializer %int.make_type_32.loc10_16 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.5: type = converted %int.make_type_32.loc10_16, %.loc10_24.4 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.6: type = value_of_initializer %int.make_type_32.loc10_21 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.7: type = converted %int.make_type_32.loc10_21, %.loc10_24.6 [template = i32]
+// CHECK:STDOUT:   %.loc10_24.8: type = converted %.loc10_24.1, constants.%.7 [template = constants.%.7]
 // CHECK:STDOUT:   %b.var: ref (i32, i32, i32) = var b
 // CHECK:STDOUT:   %b: ref (i32, i32, i32) = bind_name b, %b.var
 // CHECK:STDOUT:   %.loc10_29: i32 = int_literal 1 [template = constants.%.5]
@@ -79,4 +97,6 @@ fn G() {
 // CHECK:STDOUT:   assign %b.var, %.loc10_37
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:

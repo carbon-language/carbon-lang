@@ -84,24 +84,26 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT: --- user.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = interface_type @Add [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = interface_type @Add [template]
 // CHECK:STDOUT:   %Self: Add = bind_symbolic_name Self 0 [symbolic]
 // CHECK:STDOUT:   %Op.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: Op = struct_value () [template]
-// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %struct.2: Op = struct_value () [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (%struct.1) [template]
+// CHECK:STDOUT:   %Op.2: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %struct.3: Op = struct_value () [template]
+// CHECK:STDOUT:   %.3: <witness> = interface_witness (%struct.2) [template]
 // CHECK:STDOUT:   %.4: i32 = int_literal 1 [template]
 // CHECK:STDOUT:   %.5: i32 = int_literal 2 [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type @Add, Op [template]
-// CHECK:STDOUT:   %.7: <associated Op in Add> = assoc_entity element0, file.%import_ref.6 [template]
-// CHECK:STDOUT:   %.8: <bound method> = bound_method %.4, %struct.1 [template]
+// CHECK:STDOUT:   %.7: <associated Op in Add> = assoc_entity element0, file.%import_ref.8 [template]
+// CHECK:STDOUT:   %.8: <bound method> = bound_method %.4, %struct.2 [template]
 // CHECK:STDOUT:   %.9: i32 = int_literal 3 [template]
 // CHECK:STDOUT:   %.10: type = array_type %.9, i32 [template]
 // CHECK:STDOUT:   %.11: type = ptr_type [i32; 3] [template]
 // CHECK:STDOUT:   %.12: i32 = int_literal 4 [template]
-// CHECK:STDOUT:   %.13: <bound method> = bound_method %.9, %struct.1 [template]
+// CHECK:STDOUT:   %.13: <bound method> = bound_method %.9, %struct.2 [template]
 // CHECK:STDOUT:   %.14: i32 = int_literal 7 [template]
 // CHECK:STDOUT:   %.15: type = tuple_type (i32, i32, i32) [template]
 // CHECK:STDOUT:   %.16: i32 = int_literal 0 [template]
@@ -114,36 +116,44 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %import_ref.1: type = import_ref ir1, inst+6, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref ir1, inst+8, unloaded
-// CHECK:STDOUT:   %import_ref.3: <associated Op in Add> = import_ref ir1, inst+28, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.4: Op = import_ref ir1, inst+24, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref ir1, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.4: <associated Op in Add> = import_ref ir1, inst+28, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.5: Op = import_ref ir1, inst+24, loaded [template = constants.%struct.3]
 // CHECK:STDOUT:   impl_decl @impl {
+// CHECK:STDOUT:     %int.make_type_32.loc6: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
+// CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_32.loc6, %.loc6_6.1 [template = i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, %Core [template = %Core]
-// CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.1 [template = constants.%.1]
+// CHECK:STDOUT:     %Add.ref: type = name_ref Add, %import_ref.2 [template = constants.%.2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir1, inst+2, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %int.make_type_32.loc10: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc10_20: i32 = int_literal 2 [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref ir1, inst+6, loaded [template = constants.%.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref ir1, inst+24, unloaded
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref ir1, inst+24, unloaded
+// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc10_18: <bound method> = bound_method %.loc10_16, %.1 [template = constants.%.8]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_18(%.loc10_16, %.loc10_20) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc10_11.1: type = value_of_initializer %int.make_type_32.loc10 [template = i32]
+// CHECK:STDOUT:   %.loc10_11.2: type = converted %int.make_type_32.loc10, %.loc10_11.1 [template = i32]
 // CHECK:STDOUT:   %.loc10_21: type = array_type %int.sadd, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %arr.var: ref [i32; 3] = var arr
 // CHECK:STDOUT:   %arr: ref [i32; 3] = bind_name arr, %arr.var
-// CHECK:STDOUT:   %import_ref.7: type = import_ref ir1, inst+6, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref ir1, inst+6, loaded [template = constants.%.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = file.%import_ref.2
-// CHECK:STDOUT:   .Op = file.%import_ref.3
-// CHECK:STDOUT:   witness = (file.%import_ref.4)
+// CHECK:STDOUT:   .Self = file.%import_ref.3
+// CHECK:STDOUT:   .Op = file.%import_ref.4
+// CHECK:STDOUT:   witness = (file.%import_ref.5)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: i32 as Add {
-// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.1] {
+// CHECK:STDOUT:   %Op.decl: Op = fn_decl @Op.1 [template = constants.%struct.2] {
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, i32 [template = i32]
 // CHECK:STDOUT:     %self.loc7_9.1: i32 = param self
 // CHECK:STDOUT:     %self.loc7_9.2: i32 = bind_name self, %self.loc7_9.1
@@ -160,6 +170,8 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   witness = %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[@impl.%self.loc7_9.2: i32](@impl.%other.loc7_21.2: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self: Self](%other: Self) -> Self;
@@ -170,7 +182,7 @@ var arr: [i32; 1 + 2] = (3, 4, 3 + 4);
 // CHECK:STDOUT:   %.loc10_29: i32 = int_literal 4 [template = constants.%.12]
 // CHECK:STDOUT:   %.loc10_32: i32 = int_literal 3 [template = constants.%.9]
 // CHECK:STDOUT:   %.loc10_36: i32 = int_literal 4 [template = constants.%.12]
-// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.1: Op = interface_witness_access @impl.%.1, element0 [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc10_34: <bound method> = bound_method %.loc10_32, %.1 [template = constants.%.13]
 // CHECK:STDOUT:   %int.sadd: init i32 = call %.loc10_34(%.loc10_32, %.loc10_36) [template = constants.%.14]
 // CHECK:STDOUT:   %.loc10_37.1: (i32, i32, i32) = tuple_literal (%.loc10_26, %.loc10_29, %int.sadd)

@@ -27,8 +27,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %struct.2: G = struct_value () [template]
 // CHECK:STDOUT:   %H: type = fn_type @H [template]
 // CHECK:STDOUT:   %struct.3: H = struct_value () [template]
+// CHECK:STDOUT:   %Bool: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %struct.4: Bool = struct_value () [template]
 // CHECK:STDOUT:   %If: type = fn_type @If [template]
-// CHECK:STDOUT:   %struct.4: If = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: If = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,7 +45,11 @@ fn If(b: bool) {
 // CHECK:STDOUT:   %F.decl: F = fn_decl @F [template = constants.%struct.1] {}
 // CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {}
 // CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %If.decl: If = fn_decl @If [template = constants.%struct.4] {
+// CHECK:STDOUT:   %import_ref: Bool = import_ref ir7, inst+2, loaded [template = constants.%struct.4]
+// CHECK:STDOUT:   %If.decl: If = fn_decl @If [template = constants.%struct.5] {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%struct.4() [template = bool]
+// CHECK:STDOUT:     %.loc11_10.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc11_10.2: type = converted %bool.make_type, %.loc11_10.1 [template = bool]
 // CHECK:STDOUT:     %b.loc11_7.1: bool = param b
 // CHECK:STDOUT:     @If.%b: bool = bind_name b, %b.loc11_7.1
 // CHECK:STDOUT:   }
@@ -63,6 +69,8 @@ fn If(b: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:

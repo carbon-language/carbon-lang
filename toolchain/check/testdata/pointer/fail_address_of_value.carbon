@@ -98,14 +98,16 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: --- fail_address_of_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: G = struct_value () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %G: type = fn_type @G [template]
+// CHECK:STDOUT:   %struct.2: G = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.a: i32} [template]
 // CHECK:STDOUT:   %H: type = fn_type @H [template]
-// CHECK:STDOUT:   %struct.2: H = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: H = struct_value () [template]
 // CHECK:STDOUT:   %AddressOfLiteral: type = fn_type @AddressOfLiteral [template]
-// CHECK:STDOUT:   %struct.3: AddressOfLiteral = struct_value () [template]
+// CHECK:STDOUT:   %struct.4: AddressOfLiteral = struct_value () [template]
 // CHECK:STDOUT:   %.3: i32 = int_literal 0 [template]
 // CHECK:STDOUT:   %.4: type = ptr_type i32 [template]
 // CHECK:STDOUT:   %.5: bool = bool_literal true [template]
@@ -121,20 +123,20 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.15: i32 = int_literal 5 [template]
 // CHECK:STDOUT:   %.16: type = ptr_type {.a: i32} [template]
 // CHECK:STDOUT:   %AddressOfOperator: type = fn_type @AddressOfOperator [template]
-// CHECK:STDOUT:   %struct.4: AddressOfOperator = struct_value () [template]
+// CHECK:STDOUT:   %struct.5: AddressOfOperator = struct_value () [template]
 // CHECK:STDOUT:   %.17: bool = bool_literal false [template]
 // CHECK:STDOUT:   %AddressOfCall: type = fn_type @AddressOfCall [template]
-// CHECK:STDOUT:   %struct.5: AddressOfCall = struct_value () [template]
+// CHECK:STDOUT:   %struct.6: AddressOfCall = struct_value () [template]
 // CHECK:STDOUT:   %AddressOfType: type = fn_type @AddressOfType [template]
-// CHECK:STDOUT:   %struct.6: AddressOfType = struct_value () [template]
+// CHECK:STDOUT:   %struct.7: AddressOfType = struct_value () [template]
 // CHECK:STDOUT:   %.18: type = ptr_type type [template]
 // CHECK:STDOUT:   %.19: type = const_type i32 [template]
 // CHECK:STDOUT:   %.20: type = ptr_type const i32 [template]
 // CHECK:STDOUT:   %AddressOfTupleElementValue: type = fn_type @AddressOfTupleElementValue [template]
-// CHECK:STDOUT:   %struct.7: AddressOfTupleElementValue = struct_value () [template]
+// CHECK:STDOUT:   %struct.8: AddressOfTupleElementValue = struct_value () [template]
 // CHECK:STDOUT:   %tuple: (i32, i32) = tuple_value (%.11, %.12) [template]
 // CHECK:STDOUT:   %AddressOfParam: type = fn_type @AddressOfParam [template]
-// CHECK:STDOUT:   %struct.8: AddressOfParam = struct_value () [template]
+// CHECK:STDOUT:   %struct.9: AddressOfParam = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -150,23 +152,40 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     .AddressOfParam = %AddressOfParam.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %G.decl: G = fn_decl @G [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32.loc7: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc7_11.1: type = value_of_initializer %int.make_type_32.loc7 [template = i32]
+// CHECK:STDOUT:     %.loc7_11.2: type = converted %int.make_type_32.loc7, %.loc7_11.1 [template = i32]
 // CHECK:STDOUT:     @G.%return: ref i32 = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.2] {
-// CHECK:STDOUT:     %.loc9: type = struct_type {.a: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %H.decl: H = fn_decl @H [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32.loc9: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc9_16.1: type = value_of_initializer %int.make_type_32.loc9 [template = i32]
+// CHECK:STDOUT:     %.loc9_16.2: type = converted %int.make_type_32.loc9, %.loc9_16.1 [template = i32]
+// CHECK:STDOUT:     %.loc9_19: type = struct_type {.a: i32} [template = constants.%.2]
 // CHECK:STDOUT:     @H.%return: ref {.a: i32} = var <return slot>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddressOfLiteral.decl: AddressOfLiteral = fn_decl @AddressOfLiteral [template = constants.%struct.3] {}
-// CHECK:STDOUT:   %AddressOfOperator.decl: AddressOfOperator = fn_decl @AddressOfOperator [template = constants.%struct.4] {}
-// CHECK:STDOUT:   %AddressOfCall.decl: AddressOfCall = fn_decl @AddressOfCall [template = constants.%struct.5] {}
-// CHECK:STDOUT:   %AddressOfType.decl: AddressOfType = fn_decl @AddressOfType [template = constants.%struct.6] {}
-// CHECK:STDOUT:   %AddressOfTupleElementValue.decl: AddressOfTupleElementValue = fn_decl @AddressOfTupleElementValue [template = constants.%struct.7] {}
-// CHECK:STDOUT:   %AddressOfParam.decl: AddressOfParam = fn_decl @AddressOfParam [template = constants.%struct.8] {
+// CHECK:STDOUT:   %AddressOfLiteral.decl: AddressOfLiteral = fn_decl @AddressOfLiteral [template = constants.%struct.4] {}
+// CHECK:STDOUT:   %AddressOfOperator.decl: AddressOfOperator = fn_decl @AddressOfOperator [template = constants.%struct.5] {}
+// CHECK:STDOUT:   %AddressOfCall.decl: AddressOfCall = fn_decl @AddressOfCall [template = constants.%struct.6] {}
+// CHECK:STDOUT:   %AddressOfType.decl: AddressOfType = fn_decl @AddressOfType [template = constants.%struct.7] {}
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %AddressOfTupleElementValue.decl: AddressOfTupleElementValue = fn_decl @AddressOfTupleElementValue [template = constants.%struct.8] {}
+// CHECK:STDOUT:   %import_ref.5: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %AddressOfParam.decl: AddressOfParam = fn_decl @AddressOfParam [template = constants.%struct.9] {
+// CHECK:STDOUT:     %int.make_type_32.loc91: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc91_26.1: type = value_of_initializer %int.make_type_32.loc91 [template = i32]
+// CHECK:STDOUT:     %.loc91_26.2: type = converted %int.make_type_32.loc91, %.loc91_26.1 [template = i32]
 // CHECK:STDOUT:     %param.loc91_19.1: i32 = param param
 // CHECK:STDOUT:     @AddressOfParam.%param: i32 = bind_name param, %param.loc91_19.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.6: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32;
 // CHECK:STDOUT:
@@ -205,7 +224,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !and.result:
 // CHECK:STDOUT:   %.loc49_10.2: bool = block_arg !and.result [template = constants.%.17]
 // CHECK:STDOUT:   %.loc49_3: bool* = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %H.ref: H = name_ref H, file.%H.decl [template = constants.%struct.2]
+// CHECK:STDOUT:   %H.ref: H = name_ref H, file.%H.decl [template = constants.%struct.3]
 // CHECK:STDOUT:   %H.call: init {.a: i32} = call %H.ref()
 // CHECK:STDOUT:   %.loc54_5.1: ref {.a: i32} = temporary_storage
 // CHECK:STDOUT:   %.loc54_5.2: ref {.a: i32} = temporary %.loc54_5.1, %H.call
@@ -219,7 +238,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.1]
+// CHECK:STDOUT:   %G.ref: G = name_ref G, file.%G.decl [template = constants.%struct.2]
 // CHECK:STDOUT:   %G.call: init i32 = call %G.ref()
 // CHECK:STDOUT:   %.loc67: i32* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -227,8 +246,12 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int.make_type_32.loc75: init type = call constants.%struct.1() [template = i32]
 // CHECK:STDOUT:   %.loc75: type* = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc80_5: type = const_type i32 [template = constants.%.19]
+// CHECK:STDOUT:   %int.make_type_32.loc80: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc80_5.1: type = value_of_initializer %int.make_type_32.loc80 [template = i32]
+// CHECK:STDOUT:   %.loc80_5.2: type = converted %int.make_type_32.loc80, %.loc80_5.1 [template = i32]
+// CHECK:STDOUT:   %.loc80_5.3: type = const_type i32 [template = constants.%.19]
 // CHECK:STDOUT:   %.loc80_14: type = ptr_type const i32 [template = constants.%.20]
 // CHECK:STDOUT:   %.loc80_3: type* = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
@@ -249,7 +272,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfParam(%param: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc95_22: type = ptr_type i32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:   %.loc95_22.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:   %.loc95_22.2: type = converted %int.make_type_32, %.loc95_22.1 [template = i32]
+// CHECK:STDOUT:   %.loc95_22.3: type = ptr_type i32 [template = constants.%.4]
 // CHECK:STDOUT:   %param_addr.var: ref i32* = var param_addr
 // CHECK:STDOUT:   %param_addr: ref i32* = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %param.ref: i32 = name_ref param, %param

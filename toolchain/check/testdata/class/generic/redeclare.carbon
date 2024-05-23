@@ -150,15 +150,17 @@ class E(U:! type) {}
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct.1: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %N.1: i32 = bind_symbolic_name N 0 [symbolic]
 // CHECK:STDOUT:   %B.1: type = generic_class_type @B [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct.1: B = struct_value () [template]
+// CHECK:STDOUT:   %struct.2: B = struct_value () [template]
 // CHECK:STDOUT:   %B.2: type = class_type @B [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %N.2: T = bind_symbolic_name N 1 [symbolic]
 // CHECK:STDOUT:   %.2: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: <invalid> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = class_type @.1 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -169,11 +171,15 @@ class E(U:! type) {}
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %B.decl: B = class_decl @B [template = constants.%struct.1] {
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.1]
+// CHECK:STDOUT:   %B.decl: B = class_decl @B [template = constants.%struct.2] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.1() [template = i32]
+// CHECK:STDOUT:     %.loc4_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc4_13.2: type = converted %int.make_type_32, %.loc4_13.1 [template = i32]
 // CHECK:STDOUT:     %N.loc4_9.1: i32 = param N
 // CHECK:STDOUT:     %N.loc4_9.2: i32 = bind_symbolic_name N 0, %N.loc4_9.1 [symbolic = constants.%N.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %T.loc12_9.1: type = param T
 // CHECK:STDOUT:     %T.loc12_9.2: type = bind_symbolic_name T 0, %T.loc12_9.1 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.2 [symbolic = constants.%T]
@@ -189,6 +195,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -197,9 +205,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct.1: C = struct_value () [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %U: i32 = bind_symbolic_name U 1 [symbolic]
 // CHECK:STDOUT:   %.2: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: <invalid> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = class_type @.1 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -214,9 +224,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.3] {
 // CHECK:STDOUT:     %T.loc12_9.1: type = param T
 // CHECK:STDOUT:     %T.loc12_9.2: type = bind_symbolic_name T 0, %T.loc12_9.1 [symbolic = constants.%T]
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_32, %.loc12_23.1 [template = i32]
 // CHECK:STDOUT:     %U.loc12_19.1: i32 = param U
 // CHECK:STDOUT:     %U.loc12_19.2: i32 = bind_symbolic_name U 1, %U.loc12_19.1 [symbolic = constants.%U]
 // CHECK:STDOUT:   }
@@ -229,6 +243,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -237,9 +253,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct.1: D = struct_value () [template]
 // CHECK:STDOUT:   %D.2: type = class_type @D [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %struct.2: Int32 = struct_value () [template]
 // CHECK:STDOUT:   %T.2: i32 = bind_symbolic_name T 0 [symbolic]
 // CHECK:STDOUT:   %.2: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %struct.2: <invalid> = struct_value () [template]
+// CHECK:STDOUT:   %struct.3: <invalid> = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = class_type @.1 [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -254,7 +272,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.loc4_9.1: type = param T
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T 0, %T.loc4_9.1 [symbolic = constants.%T.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.2] {
+// CHECK:STDOUT:   %import_ref: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct.2]
+// CHECK:STDOUT:   %.decl: <invalid> = class_decl @.1 [template = constants.%struct.3] {
+// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%struct.2() [template = i32]
+// CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_32 [template = i32]
+// CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_32, %.loc12_13.1 [template = i32]
 // CHECK:STDOUT:     %T.loc12_9.1: i32 = param T
 // CHECK:STDOUT:     %T.loc12_9.2: i32 = bind_symbolic_name T 0, %T.loc12_9.1 [symbolic = constants.%T.2]
 // CHECK:STDOUT:   }
@@ -266,6 +288,8 @@ class E(U:! type) {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
 // CHECK:STDOUT:

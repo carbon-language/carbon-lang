@@ -45,10 +45,13 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type SomeClass, i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %Int32: type = fn_type @Int32 [template]
+// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %struct: Int32 = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type SomeClass, i32 [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
-// CHECK:STDOUT:   %.3: type = ptr_type {.a: i32, .b: i32} [template]
+// CHECK:STDOUT:   %.4: type = ptr_type {.a: i32, .b: i32} [template]
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,18 +64,28 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [template = constants.%SomeClass] {}
+// CHECK:STDOUT:   %import_ref.1: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.2: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [template = constants.%SomeClassAdapter] {}
 // CHECK:STDOUT:   %StructAdapter.decl: type = class_decl @StructAdapter [template = constants.%StructAdapter] {}
+// CHECK:STDOUT:   %import_ref.3: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
+// CHECK:STDOUT:   %import_ref.4: Int32 = import_ref ir3, inst+3, loaded [template = constants.%struct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %.loc5: <unbound element of class SomeClass> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc6: <unbound element of class SomeClass> = field_decl b, element1 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc5: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_32.loc5 [template = i32]
+// CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_32.loc5, %.loc5_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc5_8: <unbound element of class SomeClass> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %int.make_type_32.loc6: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_32.loc6 [template = i32]
+// CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_32.loc6, %.loc6_10.1 [template = i32]
+// CHECK:STDOUT:   %.loc6_8: <unbound element of class SomeClass> = field_decl b, element1 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
-// CHECK:STDOUT:   .a = %.loc5
-// CHECK:STDOUT:   .b = %.loc6
+// CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   .b = %.loc6_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
@@ -84,12 +97,20 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @StructAdapter {
-// CHECK:STDOUT:   %.loc14: type = struct_type {.a: i32, .b: i32} [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_32.loc14_14: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc14_14.1: type = value_of_initializer %int.make_type_32.loc14_14 [template = i32]
+// CHECK:STDOUT:   %.loc14_14.2: type = converted %int.make_type_32.loc14_14, %.loc14_14.1 [template = i32]
+// CHECK:STDOUT:   %int.make_type_32.loc14_23: init type = call constants.%struct() [template = i32]
+// CHECK:STDOUT:   %.loc14_23.1: type = value_of_initializer %int.make_type_32.loc14_23 [template = i32]
+// CHECK:STDOUT:   %.loc14_23.2: type = converted %int.make_type_32.loc14_23, %.loc14_23.1 [template = i32]
+// CHECK:STDOUT:   %.loc14_26: type = struct_type {.a: i32, .b: i32} [template = constants.%.3]
 // CHECK:STDOUT:   adapt_decl {.a: i32, .b: i32}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_not_extend.carbon
 // CHECK:STDOUT:

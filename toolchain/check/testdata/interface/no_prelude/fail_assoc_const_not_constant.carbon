@@ -5,9 +5,13 @@
 // AUTOUPDATE
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:7: ERROR: Pattern in associated constant declaration must be a single `:!` binding.
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: ERROR: Pattern in associated constant declaration must be a single `:!` binding.
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: ERROR: Name `Core` not found.
+  // CHECK:STDERR:   let a: i32;
+  // CHECK:STDERR:          ^~~
   let a: i32;
 }
 
@@ -31,10 +35,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%.1] {}
-// CHECK:STDOUT:   %I.ref.loc15: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   %I.ref.loc19: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
-// CHECK:STDOUT:   %I.ref.loc18: type = name_ref I, %I.decl [template = constants.%.1]
+// CHECK:STDOUT:   %I.ref.loc22: type = name_ref I, %I.decl [template = constants.%.1]
 // CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
 // CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
 // CHECK:STDOUT: }

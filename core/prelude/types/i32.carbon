@@ -4,6 +4,8 @@
 
 package Core library "prelude/types/i32";
 
+// For Int32():
+import library "prelude/types";
 import library "prelude/operators";
 
 impl i32 as Add {

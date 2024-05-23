@@ -4,6 +4,8 @@
 
 package Core library "prelude/operators/comparison";
 
+export import library "prelude/types/bool";
+
 // Equality comparison: `a == b` and `a != b`.
 interface Eq {
   fn Equal[self: Self](other: Self) -> bool;
