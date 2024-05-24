@@ -73,7 +73,6 @@ using AnyImplAsId = NodeIdInCategory<NodeCategory::ImplAs>;
 using AnyMemberNameOrMemberExprId =
     NodeIdInCategory<NodeCategory::MemberName | NodeCategory::MemberExpr>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
-using AnyNameComponentId = NodeIdInCategory<NodeCategory::NameComponent>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
 

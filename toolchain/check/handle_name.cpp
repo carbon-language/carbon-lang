@@ -125,35 +125,19 @@ auto HandleSelfValueNameExpr(Context& context,
   return HandleNameAsExpr(context, node_id, SemIR::NameId::SelfValue);
 }
 
-auto HandleQualifiedName(Context& context, Parse::QualifiedNameId node_id)
+auto HandleNameQualifier(Context& context, Parse::NameQualifierId node_id)
     -> bool {
-  auto [node_id2, name_id2] = context.node_stack().PopNameWithNodeId();
-
-  Parse::NodeId node_id1 = context.node_stack().PeekNodeId();
-  switch (context.parse_tree().node_kind(node_id1)) {
-    case Parse::NodeKind::QualifiedName:
-      // This is the second or subsequent QualifiedName in a chain.
-      // Nothing to do: the first QualifiedName remains as a
-      // bracketing node for later QualifiedNames.
-      break;
-
-    case Parse::NodeKind::IdentifierName: {
-      // This is the first QualifiedName in a chain, and starts with an
-      // identifier name.
-      auto name_id =
-          context.node_stack().Pop<Parse::NodeKind::IdentifierName>();
-      context.decl_name_stack().ApplyNameQualifier(node_id1, name_id);
-      // Add the QualifiedName so that it can be used for bracketing.
-      context.node_stack().Push(node_id);
-      break;
-    }
-
-    default:
-      CARBON_FATAL() << "Unexpected node kind on left side of qualified "
-                        "declaration name";
+  auto params_id = context.node_stack().PopIf<Parse::NodeKind::TuplePattern>();
+  auto implicit_params_id =
+      context.node_stack().PopIf<Parse::NodeKind::ImplicitParamList>();
+  if (params_id || implicit_params_id) {
+    // TODO: Pass the parameters into decl_name_stack.
+    context.TODO(node_id, "name qualifier with parameters");
+    return false;
   }
 
-  context.decl_name_stack().ApplyNameQualifier(node_id2, name_id2);
+  auto [name_node_id, name_id] = context.node_stack().PopNameWithNodeId();
+  context.decl_name_stack().ApplyNameQualifier(name_node_id, name_id);
   return true;
 }
 

@@ -26,9 +26,8 @@ enum class NodeCategory : uint32_t {
   MemberExpr = 1 << 3,
   MemberName = 1 << 4,
   Modifier = 1 << 5,
-  NameComponent = 1 << 6,
-  Pattern = 1 << 7,
-  Statement = 1 << 8,
+  Pattern = 1 << 6,
+  Statement = 1 << 7,
   None = 0,
 
   LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Statement)

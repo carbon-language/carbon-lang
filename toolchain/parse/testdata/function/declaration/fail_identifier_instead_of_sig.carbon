@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+3]]:8: ERROR: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+3]]:8: ERROR: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR: fn foo bar;
 // CHECK:STDERR:        ^~~
 fn foo bar;

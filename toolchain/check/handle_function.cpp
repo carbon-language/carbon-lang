@@ -211,8 +211,12 @@ static auto BuildFunctionDecl(Context& context,
     return_slot = SemIR::Function::ReturnSlot::Absent;
   }
 
-  SemIR::InstBlockId param_refs_id =
-      context.node_stack().Pop<Parse::NodeKind::TuplePattern>();
+  auto param_refs_id =
+      context.node_stack().PopIf<Parse::NodeKind::TuplePattern>();
+  if (!param_refs_id) {
+    context.TODO(node_id, "function with positional parameters");
+    param_refs_id = SemIR::InstBlockId::Empty;
+  }
   // TODO: Use Invalid rather than Empty if there was no implicit parameter
   // list.
   SemIR::InstBlockId implicit_param_refs_id =
@@ -253,7 +257,7 @@ static auto BuildFunctionDecl(Context& context,
       .enclosing_scope_id = name_context.enclosing_scope_id_for_new_inst(),
       .decl_id = context.AddPlaceholderInst({node_id, function_decl}),
       .implicit_param_refs_id = implicit_param_refs_id,
-      .param_refs_id = param_refs_id,
+      .param_refs_id = *param_refs_id,
       .return_type_id = return_type_id,
       .return_storage_id = return_storage_id,
       .is_extern = is_extern,
@@ -297,12 +301,14 @@ static auto BuildFunctionDecl(Context& context,
 
   if (SemIR::IsEntryPoint(context.sem_ir(), function_decl.function_id)) {
     // TODO: Update this once valid signatures for the entry point are decided.
-    if (!context.inst_blocks().Get(implicit_param_refs_id).empty() ||
-        !context.inst_blocks().Get(param_refs_id).empty() ||
-        (return_type_id.is_valid() &&
-         return_type_id !=
+    if (!context.inst_blocks()
+             .Get(function_info.implicit_param_refs_id)
+             .empty() ||
+        !context.inst_blocks().Get(function_info.param_refs_id).empty() ||
+        (function_info.return_type_id.is_valid() &&
+         function_info.return_type_id !=
              context.GetBuiltinType(SemIR::BuiltinKind::IntType) &&
-         return_type_id != context.GetTupleType({}))) {
+         function_info.return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "Invalid signature for `Main.Run` function. Expected "
                         "`fn ()` or `fn () -> i32`.");
