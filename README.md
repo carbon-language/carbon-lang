@@ -349,6 +349,9 @@ Past Carbon focused talks from the community:
 
 ### 2024
 
+-   [Carbon: An experiment in different tradeoffs](https://llvm.swoogo.com/2024eurollvm/session/2086974/carbon-an-experiment-in-different-tradeoffs),
+    panel session at EuroLLVM 2024
+    -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
 -   [Generic Arity: Definition-Checked Variadics in Carbon](https://schedule.cppnow.org/session/generic-arity-definition-checked-variadics-in-carbon/),
     C++Now
 
