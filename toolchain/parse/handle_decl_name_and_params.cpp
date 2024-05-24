@@ -6,7 +6,6 @@
 
 namespace Carbon::Parse {
 
-// Handles DeclNameAndParams.
 auto HandleDeclNameAndParams(Context& context) -> void {
   auto state = context.PopState();
 
@@ -61,12 +60,6 @@ auto HandleDeclNameAndParams(Context& context) -> void {
       break;
   }
 }
-
-// TODO: Check this in check.
-//    CARBON_DIAGNOSTIC(ParamsRequiredByIntroducer, Error,
-//                      "`{0}` requires a `(` for parameters.", Lex::TokenKind);
-//    context.emitter().Emit(*context.position(), ParamsRequiredByIntroducer,
-//                           context.tokens().GetKind(state.token));
 
 auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   auto state = context.PopState();
