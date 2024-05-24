@@ -50,7 +50,7 @@ def main() -> None:
 
         p = subprocess.run([bazel] + bazel_args)
 
-        # If this was the last attempt, we're done. Alternately,
+        # If this was the last attempt, we're done.
         if attempt == script_args.attempts:
             exit(p.returncode)
 
@@ -60,7 +60,7 @@ def main() -> None:
         # `2`  -- Command line or environment problem.
         # `3`  -- Tests failed or timed out, we don't retry at this layer
         #         on execution timeout.
-        # `4`  -- No tests found, which should be impossible here.
+        # `4`  -- Test command but no tests found.
         # `8`  -- Explicitly interrupted build.
         #
         # Note that `36` is documented as "likely permanent", but we retry
