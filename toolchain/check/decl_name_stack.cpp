@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -57,10 +58,11 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 auto DeclNameStack::FinishName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished)
       << "Finished name twice";
-  auto params_id =
-      context_->node_stack().PopIf<Parse::NodeKind::TuplePattern>();
-  auto implicit_params_id =
-      context_->node_stack().PopIf<Parse::NodeKind::ImplicitParamList>();
+  auto [params_loc_id, params_id] =
+      context_->node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  auto [implicit_params_loc_id, implicit_params_id] =
+      context_->node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
   auto [loc_id, name_id] = context_->node_stack().PopNameWithNodeId();
 
   ApplyNameQualifier(loc_id, name_id);
@@ -69,7 +71,10 @@ auto DeclNameStack::FinishName() -> NameContext {
     // TODO: Say which kind of declaraation we're parsing.
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
                       "Declaration cannot have parameters.");
-    context_->emitter().Emit(decl_name_stack_.back().loc_id,
+    // Point to the lexically first parameter list in the diagnostic.
+    context_->emitter().Emit(implicit_params_id
+                                 ? static_cast<SemIRLoc>(implicit_params_loc_id)
+                                 : params_loc_id,
                              UnexpectedDeclNameParams);
   }
 
