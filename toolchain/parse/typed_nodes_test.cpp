@@ -231,7 +231,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory MemberName: kind IdentifierName consumed
+NodeIdInCategory MemberExpr\|MemberName: kind IdentifierName consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));
@@ -251,13 +251,21 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
+Aggregate [^:]*: begin
+Aggregate [^:]*: begin
 Optional [^:]*: begin
 NodeIdForKind: TuplePattern consumed
 Optional [^:]*: found
 Optional [^:]*: begin
-NodeIdForKind error: wrong kind QualifiedName, expected ImplicitParamList
+NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
 Optional [^:]*: missing
-NodeIdInCategory NameComponent: kind QualifiedName consumed
+NodeIdForKind: IdentifierName consumed
+Aggregate [^:]*: success
+Vector: begin
+NodeIdForKind: NameQualifier consumed
+NodeIdForKind error: wrong kind AbstractModifier, expected NameQualifier
+Vector: end
+Aggregate [^:]*: success
 Vector: begin
 NodeIdInCategory Modifier: kind AbstractModifier consumed
 NodeIdInCategory Modifier: kind PrivateModifier consumed
